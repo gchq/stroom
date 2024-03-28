@@ -145,6 +145,14 @@ public class ValueSpinner
         spinner.setMinStep(minStep);
     }
 
+    public long getDelta() {
+        return spinner.getDelta();
+    }
+
+    public void setDelta(final int delta) {
+        spinner.setDelta(delta);
+    }
+
     public void setWrapValues(final boolean wrapValues) {
         spinner.setWrapValues(wrapValues);
     }

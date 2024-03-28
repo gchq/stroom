@@ -56,7 +56,7 @@ class TestBasicSearch extends AbstractCoreIntegrationTest {
 //        final String indexName = "TEST";
 //        final DocRef indexRef = commonTestScenarioCreator.createIndex(indexName, indexFields);
 //        final IndexDoc index = indexStore.readDocument(indexRef);
-//        final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
+//        final IndexShardKey indexShardKey = IndexShardKey.createTestKey(index);
 //
 //        // Do some work.
 //        for (int i = 1; i <= indexTestSize; i++) {

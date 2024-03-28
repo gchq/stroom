@@ -3,7 +3,6 @@ package stroom.widget.datepicker.client;
 import stroom.item.client.EventBinder;
 import stroom.svg.client.SvgIconBox;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
@@ -37,14 +36,9 @@ public class DateTimeBox
                     showPopup();
                 }
             }));
-            registerHandler(textBox.addKeyUpHandler(event -> {
-                final String newStringValue = GwtNullSafe.isBlankString(textBox.getValue())
-                        ? null
-                        : textBox.getValue();
-                if (!Objects.equals(newStringValue, stringValue)) {
-                    stringValue = newStringValue;
-                    ValueChangeEvent.fire(DateTimeBox.this, stringValue);
-                }
+            registerHandler(textBox.addValueChangeHandler(event -> {
+                stringValue = textBox.getValue();
+                ValueChangeEvent.fire(DateTimeBox.this, stringValue);
             }));
             registerHandler(textBox.addBlurHandler(event -> onBlur()));
             registerHandler(textBox.addFocusHandler(event -> onFocus()));

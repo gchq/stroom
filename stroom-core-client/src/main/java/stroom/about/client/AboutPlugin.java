@@ -53,10 +53,10 @@ public class AboutPlugin extends Plugin implements ShowAboutHandler {
     @Override
     public void onReveal(final BeforeRevealMenubarEvent event) {
         MenuKeys.addHelpMenu(event.getMenuItems());
-        event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU, new Separator(2));
+        event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU, new Separator(10));
         event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU,
                 new IconMenuItem.Builder()
-                        .priority(3)
+                        .priority(11)
                         .icon(SvgImage.OO)
                         .text("About")
                         .command(() -> provider.get().forceReveal())

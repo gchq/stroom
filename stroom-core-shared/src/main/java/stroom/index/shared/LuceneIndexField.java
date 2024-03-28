@@ -101,6 +101,7 @@ public class LuceneIndexField implements IndexField {
                 .indexed(indexField.isIndexed())
                 .stored(indexField.isStored())
                 .caseSensitive(indexField.isCaseSensitive())
+                .termPositions(indexField.isTermPositions())
                 .build();
     }
 

@@ -1,9 +1,6 @@
 package stroom.index.impl.db;
 
-import stroom.datasource.api.v2.QueryField;
 import stroom.db.util.ExpressionMapper;
-import stroom.db.util.ExpressionMapper.Converter;
-import stroom.db.util.ExpressionMapper.MultiConverter;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
@@ -46,6 +43,7 @@ import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Result;
+import org.jooq.impl.DSL;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -54,7 +52,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -285,18 +282,30 @@ class IndexShardDaoImpl implements IndexShardDao {
     }
 
     @Override
-    public void delete(final Long id) {
-        genericDao.delete(id);
+    public boolean delete(final Long id) {
+        return genericDao.delete(id);
     }
 
     @Override
-    public void setStatus(final Long id,
-                          final IndexShard.IndexShardStatus status) {
-        JooqUtil.context(indexDbConnProvider, context -> context
+    public boolean setStatus(final Long id,
+                             final IndexShardStatus status) {
+        final Condition currentStateCondition = switch (status) {
+            case NEW -> DSL.falseCondition();
+            case OPENING -> INDEX_SHARD.STATUS.eq(IndexShardStatus.CLOSED.getPrimitiveValue())
+                    .or(INDEX_SHARD.STATUS.eq(IndexShardStatus.NEW.getPrimitiveValue()));
+            case OPEN -> INDEX_SHARD.STATUS.eq(IndexShardStatus.OPENING.getPrimitiveValue());
+            case CLOSING -> INDEX_SHARD.STATUS.eq(IndexShardStatus.OPEN.getPrimitiveValue());
+            case CLOSED -> INDEX_SHARD.STATUS.eq(IndexShardStatus.CLOSING.getPrimitiveValue());
+            case DELETED -> DSL.trueCondition();
+            case CORRUPT -> INDEX_SHARD.STATUS.ne(IndexShardStatus.DELETED.getPrimitiveValue());
+        };
+
+        return JooqUtil.contextResult(indexDbConnProvider, context -> context
                 .update(INDEX_SHARD)
                 .set(INDEX_SHARD.STATUS, status.getPrimitiveValue())
                 .where(INDEX_SHARD.ID.eq(id))
-                .execute());
+                .and(currentStateCondition)
+                .execute()) > 0;
     }
 
     @Override
@@ -388,8 +397,6 @@ class IndexShardDaoImpl implements IndexShardDao {
         private final ExpressionMapper expressionMapper;
         private final IndexStore indexStore;
 
-        private final Map<String, List<String>> indexNameToUuidsMap = new ConcurrentHashMap<>();
-
         @Inject
         private IndexShardExpressionMapper(final ExpressionMapperFactory expressionMapperFactory,
                                            final IndexStore indexStore) {
@@ -417,34 +424,6 @@ class IndexShardDaoImpl implements IndexShardDao {
                     .stream()
                     .map(DocRef::getUuid)
                     .collect(Collectors.toList());
-        }
-
-        public <T> void map(final QueryField dataSourceField,
-                            final Field<T> field,
-                            final Converter<T> converter) {
-            expressionMapper.map(dataSourceField, field, converter);
-        }
-
-        public <T> void map(final QueryField dataSourceField,
-                            final Field<T> field,
-                            final Converter<T> converter, final boolean useName) {
-            expressionMapper.map(dataSourceField, field, converter, useName);
-        }
-
-        public <T> void multiMap(final QueryField dataSourceField,
-                                 final Field<T> field,
-                                 final MultiConverter<T> converter) {
-            expressionMapper.multiMap(dataSourceField, field, converter);
-        }
-
-        public <T> void multiMap(final QueryField dataSourceField,
-                                 final Field<T> field,
-                                 final MultiConverter<T> converter, final boolean useName) {
-            expressionMapper.multiMap(dataSourceField, field, converter, useName);
-        }
-
-        public void ignoreField(final QueryField dataSourceField) {
-            expressionMapper.ignoreField(dataSourceField);
         }
 
         public Condition apply(final ExpressionItem expressionItem) {

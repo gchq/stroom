@@ -26,6 +26,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 public class UnknownComponentPresenter extends AbstractComponentPresenter<HTMLView> {
 
+    public static final String TAB_TYPE = "Unknown-component";
     private static final ComponentType TYPE = new ComponentType(
             99,
             "Unknown",
@@ -39,7 +40,7 @@ public class UnknownComponentPresenter extends AbstractComponentPresenter<HTMLVi
     }
 
     @Override
-    public ComponentType getType() {
+    public ComponentType getComponentType() {
         return TYPE;
     }
 
@@ -51,5 +52,10 @@ public class UnknownComponentPresenter extends AbstractComponentPresenter<HTMLVi
     public void read(final ComponentConfig componentConfig) {
         super.read(componentConfig);
         getView().setHTML("<div style=\"padding:5px\">Unknown component type: " + componentConfig.getType() + "</div>");
+    }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
     }
 }

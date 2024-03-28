@@ -103,6 +103,10 @@ public final class TimePreferencesViewImpl
         timeZoneOffsetMinutes.setValue(0);
         timeZoneOffsetMinutes.setMinStep(15);
         timeZoneOffsetMinutes.setMaxStep(15);
+        timeZoneOffsetMinutes.setDelta(15);
+
+        // FIXME:  Browsers don't support minute offsets so disable this for now.
+        timeZoneOffsetMinutes.setVisible(false);
     }
 
     @Override

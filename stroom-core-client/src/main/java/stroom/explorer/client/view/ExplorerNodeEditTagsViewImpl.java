@@ -28,9 +28,9 @@ import stroom.widget.popup.client.view.HideRequestUiHandlers;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
-import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.regexp.shared.SplitResult;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -115,24 +115,24 @@ public class ExplorerNodeEditTagsViewImpl
         addFromInputButton.addClickHandler(this::onAddFromInputClicked);
 
         nodeTagsListBox.setMultipleSelect(true);
-        nodeTagsListBox.addKeyUpHandler(this::handleNodeTagsKeyUpEvent);
+        nodeTagsListBox.addKeyDownHandler(this::handleNodeTagsKeyDownEvent);
         nodeTagsListBox.addClickHandler(this::handleNodeTagsClickEvent);
         nodeTagsListBox.addDoubleClickHandler(this::handleNodeTagsDoubleClickEvent);
         allTagsListBox.setTitle("All tags currently in use across all documents");
 
         textBox.addKeyPressHandler(tagsKeyPressHandler);
-        textBox.addKeyUpHandler(this::handleTextBoxKeyUpEvent);
+        textBox.addKeyDownHandler(this::handleTextBoxKeyDownEvent);
         textBox.setTitle("Enter tags manually or filter 'All Known Tags'");
 
         allTagsListBox.setMultipleSelect(true);
-        allTagsListBox.addKeyUpHandler(this::handleAllTagsKeyUpEvent);
+        allTagsListBox.addKeyDownHandler(this::handleAllTagsKeyDownEvent);
         allTagsListBox.addClickHandler(this::handleAllTagsClickEvent);
         allTagsListBox.addDoubleClickHandler(this::handleAllTagsDoubleClickEvent);
         allTagsListBox.setTitle("All tags currently in use across all documents");
 
     }
 
-    private void handleNodeTagsKeyUpEvent(final KeyUpEvent event) {
+    private void handleNodeTagsKeyDownEvent(final KeyDownEvent event) {
         switch (event.getNativeKeyCode()) {
             case KeyCodes.KEY_DELETE:
             case KeyCodes.KEY_BACKSPACE:
@@ -204,7 +204,7 @@ public class ExplorerNodeEditTagsViewImpl
         updateAllTagsListBoxContents();
     }
 
-    private void handleAllTagsKeyUpEvent(final KeyUpEvent event) {
+    private void handleAllTagsKeyDownEvent(final KeyDownEvent event) {
         //            GWT.log("allTagsListBox eventTarget: " + event.getNativeEvent().getEventTarget());
         //noinspection EnhancedSwitchMigration
         switch (event.getNativeKeyCode()) {
@@ -249,7 +249,7 @@ public class ExplorerNodeEditTagsViewImpl
         }
     }
 
-    private void handleTextBoxKeyUpEvent(final KeyUpEvent event) {
+    private void handleTextBoxKeyDownEvent(final KeyDownEvent event) {
 //            GWT.log("textBox eventTarget: " + event.getNativeEvent().getEventTarget());
         //noinspection EnhancedSwitchMigration
         switch (event.getNativeKeyCode()) {

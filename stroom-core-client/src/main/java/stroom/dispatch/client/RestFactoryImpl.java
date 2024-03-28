@@ -48,11 +48,6 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
     }
 
     @Override
-    public <R> Rest<R> createQuiet() {
-        return new QuietRestImpl<>(this);
-    }
-
-    @Override
     public void fireEvent(final GwtEvent<?> event) {
         eventBus.fireEvent(event);
     }

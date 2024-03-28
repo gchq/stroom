@@ -5,7 +5,10 @@ import stroom.core.client.event.CloseContentEvent;
 import stroom.data.table.client.Refreshable;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.KeyBinding.Action;
 
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -20,12 +23,28 @@ public abstract class NodeToolsContentPlugin<P extends MyPresenterWidget<?>>
 
     @Inject
     public NodeToolsContentPlugin(final EventBus eventBus,
-                           final ContentManager contentManager,
-                           final Provider<P> presenterProvider,
-                           final ClientSecurityContext securityContext) {
+                                  final ContentManager contentManager,
+                                  final Provider<P> presenterProvider,
+                                  final ClientSecurityContext securityContext) {
         super(eventBus, securityContext);
         this.contentManager = contentManager;
         this.presenterProvider = presenterProvider;
+
+        final Action openAction = getOpenAction();
+        if (openAction != null) {
+            final String requiredAppPermission = getRequiredAppPermission();
+            final Command command;
+            if (requiredAppPermission != null) {
+                command = () -> {
+                    if (getSecurityContext().hasAppPermission(requiredAppPermission)) {
+                        open();
+                    }
+                };
+            } else {
+                command = this::open;
+            }
+            KeyBinding.addCommand(openAction, command);
+        }
     }
 
     public void open() {
@@ -54,4 +73,8 @@ public abstract class NodeToolsContentPlugin<P extends MyPresenterWidget<?>>
             refreshable.refresh();
         }
     }
+
+    protected abstract String getRequiredAppPermission();
+
+    protected abstract Action getOpenAction();
 }

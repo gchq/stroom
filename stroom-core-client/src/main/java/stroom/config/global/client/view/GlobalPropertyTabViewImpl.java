@@ -65,6 +65,15 @@ public class GlobalPropertyTabViewImpl
         getUiHandlers().changeNameFilter(nameFilter.getText());
     }
 
+    @Override
+    public void focusFilter() {
+        nameFilter.focus();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Binder extends UiBinder<Widget, GlobalPropertyTabViewImpl> {
 
     }

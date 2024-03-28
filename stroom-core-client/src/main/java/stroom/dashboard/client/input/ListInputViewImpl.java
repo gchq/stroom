@@ -64,41 +64,18 @@ public class ListInputViewImpl extends ViewWithUiHandlers<ListInputUiHandlers> i
 
     @Override
     public String getSelectedValue() {
-        return value.getValue();
+        return value.getText();
     }
 
-//    @UiHandler("params")
-//    public void onParamsKeyDown(final KeyDownEvent event) {
-//        switch (event.getNativeKeyCode()) {
-//            case KeyCodes.KEY_ENTER:
-//            case KeyCodes.KEY_TAB:
-//            case KeyCodes.KEY_ESCAPE:
-//                onParamsChanged();
-//                break;
-//            default:
-//                if (getUiHandlers() != null) {
-//                    getUiHandlers().onDirty();
-//                }
-//        }
-//    }
-//
-//    @UiHandler("params")
-//    public void onParamsBlur(final BlurEvent event) {
-//        onParamsChanged();
-//    }
-//
-//
-//
-//    private void onParamsChanged() {
-//        if (getUiHandlers() != null) {
-//            getUiHandlers().onValueChanged(params.getText());
-//        }
-//    }
+    @Override
+    public void setAllowTextEntry(final boolean allowTextEntry) {
+        value.setAllowTextEntry(allowTextEntry);
+    }
 
     @UiHandler("value")
     public void onSelectionChange(final ValueChangeEvent<String> event) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onValueChanged(value.getValue());
+            getUiHandlers().onValueChanged(value.getText());
         }
     }
 

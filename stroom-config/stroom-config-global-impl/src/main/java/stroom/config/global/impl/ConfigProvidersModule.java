@@ -243,15 +243,6 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.index.impl.IndexCacheConfig getIndexCacheConfig(
-            final ConfigMapper configMapper) {
-        return configMapper.getConfigObject(
-                stroom.index.impl.IndexCacheConfig.class);
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
     stroom.index.impl.IndexConfig getIndexConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
@@ -274,6 +265,15 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.index.impl.IndexShardSearchConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.index.impl.IndexShardWriterCacheConfig getIndexShardWriterCacheConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.index.impl.IndexShardWriterCacheConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")

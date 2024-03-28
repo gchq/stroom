@@ -438,12 +438,22 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
                 '}';
     }
 
+    /**
+     * @return A {@link DocRef} with uuid and type.
+     */
     public DocRef asDocRef() {
         // Doesn't really have a name
         return DocRef.builder()
                 .type(ENTITY_TYPE)
                 .uuid(uuid)
                 .build();
+    }
+
+    /**
+     * @return A new builder for creating a {@link DocRef} for this document's type.
+     */
+    public static DocRef.TypedBuilder buildDocRef() {
+        return DocRef.builder(ENTITY_TYPE);
     }
 
     public Builder copy() {
@@ -453,6 +463,10 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
     public static Builder builder() {
         return new Builder();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder {
 

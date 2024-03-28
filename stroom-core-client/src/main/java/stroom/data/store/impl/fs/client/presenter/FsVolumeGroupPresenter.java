@@ -38,6 +38,7 @@ import java.util.List;
 
 public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
 
+    public static final String TAB_TYPE = "DataVolumes";
     private static final FsVolumeGroupResource FS_VOLUME_GROUP_RESOURCE =
             GWT.create(FsVolumeGroupResource.class);
 
@@ -169,5 +170,10 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
     @Override
     public String getLabel() {
         return "Data Volumes";
+    }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
     }
 }

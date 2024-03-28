@@ -26,8 +26,11 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-public class IFrameContentPresenter extends MyPresenterWidget<IFrameContentPresenter.IFrameContentView>
+public class IFrameContentPresenter
+        extends MyPresenterWidget<IFrameContentPresenter.IFrameContentView>
         implements TabData, IFrameLoadUiHandlers {
+
+    public static final String TAB_TYPE = "IFrame";
 
     private SvgImage icon = SvgImage.DEPENDENCIES;
 
@@ -74,6 +77,15 @@ public class IFrameContentPresenter extends MyPresenterWidget<IFrameContentPrese
     public void onTitleChange(final String title) {
         RefreshContentTabEvent.fire(this, this);
     }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface IFrameContentView extends View, HasUiHandlers<IFrameLoadUiHandlers> {
 

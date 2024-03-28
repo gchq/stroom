@@ -325,7 +325,7 @@ public class QueryEditPresenter
         destroyCurrentVis();
     }
 
-    private void startStop() {
+    void startStop() {
         if (queryModel.isSearching()) {
             queryModel.stop();
         } else {

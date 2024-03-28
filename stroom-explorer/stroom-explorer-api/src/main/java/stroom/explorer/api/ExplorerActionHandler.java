@@ -29,6 +29,8 @@ import java.util.Set;
  * This interface is intended to be used by the explorer for document store operations that need not know much about the
  * documents that are stored just how to create, copy, move and delete them.
  */
+// TODO could move HasFindDocsByName/HasFindDocsByContent into DocumentActionHandler
+//  as they are not specific to docs in the explorer
 public interface ExplorerActionHandler
         extends HasDocumentType, HasDependencies, HasFindDocsByName, HasFindDocsByContent {
 
@@ -44,7 +46,7 @@ public interface ExplorerActionHandler
      * Copy an existing document identified by uuid, to the specified location.
      *
      * @param docRef         The docref of the document you want to copy.
-     * @param name        The suggested name of the copied document.
+     * @param name           The suggested name of the copied document.
      * @param makeNameUnique Determine if the copied document should be forced to have a unique name.
      * @param existingNames  Names of documents that already exist in the destination folder.
      * @return A doc ref for the new document copy.

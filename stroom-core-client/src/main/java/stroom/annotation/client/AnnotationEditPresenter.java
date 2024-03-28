@@ -136,7 +136,7 @@ public class AnnotationEditPresenter
         this.assignedToPresenter.setDisplayValueFunction(userName -> {
             if (userName != null) {
                 if (!GwtNullSafe.isBlankString(userName.getFullName())) {
-                    return userName.getUserIdentityForAudit() + " ("  + userName.getFullName() + ")";
+                    return userName.getUserIdentityForAudit() + " (" + userName.getFullName() + ")";
                 } else {
                     return userName.getUserIdentityForAudit();
                 }
@@ -927,8 +927,8 @@ public class AnnotationEditPresenter
             linkedEventPresenter.edit(annotationDetail.getAnnotation(), refresh -> {
                 if (refresh) {
                     final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-                    final Rest<AnnotationDetail> rest = restFactory.create();
-                    rest
+                    restFactory.builder()
+                            .forType(AnnotationDetail.class)
                             .onSuccess(this::updateHistory)
                             .call(annotationResource)
                             .get(annotationDetail.getAnnotation().getId());

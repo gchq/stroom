@@ -114,7 +114,7 @@ public class UserPreferencesManager {
         String timeZone = null;
         switch (userTimeZone.getUse()) {
             case UTC: {
-                timeZone = "GMT";
+                timeZone = "UTC";
                 break;
             }
             case ID: {
@@ -122,22 +122,51 @@ public class UserPreferencesManager {
                 break;
             }
             case OFFSET: {
-                final int hours = GwtNullSafe.requireNonNullElse(userTimeZone.getOffsetHours(), 0);
-                final int minutes = GwtNullSafe.requireNonNullElse(userTimeZone.getOffsetMinutes(), 0);
-                final String hoursStr = ClientStringUtil.zeroPad(2, hours);
-                final String minutesStr = ClientStringUtil.zeroPad(2, minutes);
-                String offset = hoursStr + minutesStr;
-                if (hours >= 0 && minutes >= 0) {
-                    offset = "+" + offset;
-                } else {
-                    offset = "-" + offset;
-                }
-
-                timeZone = "GMT" + offset;
+                timeZone = getPosixOffset(userTimeZone);
                 break;
             }
         }
         return timeZone;
+    }
+
+    /**
+     * An offset specifies the hours, and optionally minutes and seconds, difference from UTC.
+     * It has the format hh[:mm[:ss]] optionally with a leading sign (+ or -).
+     * The positive sign is used for zones west of Greenwich.
+     * (Note that this is the opposite of the ISO-8601 sign convention which is output on format.)
+     * hh can have one or two digits; mm and ss (if used) must have two.
+     *
+     * @param userTimeZone The user time zone to get the POSIX compliant offset string for.
+     * @return The POSIX compliant timezone offset string.
+     */
+    private String getPosixOffset(final UserTimeZone userTimeZone) {
+
+        final int hours = GwtNullSafe.requireNonNullElse(userTimeZone.getOffsetHours(), 0);
+        int minutes = GwtNullSafe.requireNonNullElse(userTimeZone.getOffsetMinutes(), 0);
+
+        // FIXME:  Browsers don't support minute offsets so disable this for now.
+        minutes = 0;
+
+        String offset = "";
+        if (hours != 0 && minutes != 0) {
+            final String hoursString = "" + hours;
+            final String minutesString = ClientStringUtil.zeroPad(2, minutes);
+            offset = hoursString + ":" + minutesString;
+            if (hours >= 0 && minutes >= 0) {
+                offset = "-" + offset;
+            } else {
+                offset = "+" + offset;
+            }
+        } else if (hours != 0) {
+            offset = "" + hours;
+            if (hours >= 0) {
+                offset = "-" + offset;
+            } else {
+                offset = "+" + offset;
+            }
+        }
+
+        return "Etc/GMT" + offset;
     }
 
     public UserPreferences getCurrentUserPreferences() {

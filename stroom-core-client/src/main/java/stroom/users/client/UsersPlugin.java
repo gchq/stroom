@@ -10,7 +10,10 @@ import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.KeyBinding.Action;
 
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -27,11 +30,27 @@ public class UsersPlugin extends NodeToolsPlugin {
                        final UiConfigCache clientPropertyCache) {
         super(eventBus, securityContext);
         this.clientPropertyCache = clientPropertyCache;
+
+        final Action openAction = getOpenAction();
+        if (openAction != null) {
+            final String requiredAppPermission = getRequiredAppPermission();
+            final Command command;
+            if (requiredAppPermission != null) {
+                command = () -> {
+                    if (getSecurityContext().hasAppPermission(requiredAppPermission)) {
+                        open();
+                    }
+                };
+            } else {
+                command = this::open;
+            }
+            KeyBinding.addCommand(openAction, command);
+        }
     }
 
     @Override
     protected void addChildItems(BeforeRevealMenubarEvent event) {
-        if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
+        if (getSecurityContext().hasAppPermission(getRequiredAppPermission())) {
             MenuKeys.addSecurityMenu(event.getMenuItems());
             clientPropertyCache.get()
                     .onSuccess(uiConfig -> {
@@ -49,6 +68,25 @@ public class UsersPlugin extends NodeToolsPlugin {
         }
     }
 
+    private void open() {
+        postMessage("manageUsers");
+//                final Hyperlink hyperlink = new Builder()
+//                        .text("Users")
+//                        .href(usersUiUrl)
+//                        .type(HyperlinkType.TAB + "|Users")
+//                        .icon(icon)
+//                        .build();
+//                HyperlinkEvent.fire(this, hyperlink);
+    }
+
+    private String getRequiredAppPermission() {
+        return PermissionNames.MANAGE_USERS_PERMISSION;
+    }
+
+    private Action getOpenAction() {
+        return Action.GOTO_USER_ACCOUNTS;
+    }
+
     private void addManageUsers(final BeforeRevealMenubarEvent event,
                                 final ExtendedUiConfig uiConfig) {
         final IconMenuItem usersMenuItem;
@@ -57,17 +95,8 @@ public class UsersPlugin extends NodeToolsPlugin {
                 .priority(2)
                 .icon(icon)
                 .text("Manage Accounts")
-                .command(() -> {
-                    postMessage("manageUsers");
-
-//                final Hyperlink hyperlink = new Builder()
-//                        .text("Users")
-//                        .href(usersUiUrl)
-//                        .type(HyperlinkType.TAB + "|Users")
-//                        .icon(icon)
-//                        .build();
-//                HyperlinkEvent.fire(this, hyperlink);
-                })
+                .action(getOpenAction())
+                .command(this::open)
                 .build();
         event.getMenuItems().addMenuItem(MenuKeys.SECURITY_MENU, usersMenuItem);
     }

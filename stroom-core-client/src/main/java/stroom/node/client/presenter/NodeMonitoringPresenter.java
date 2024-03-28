@@ -71,6 +71,8 @@ import java.util.function.Consumer;
 public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
         implements Refreshable {
 
+    public static final String TAB_TYPE = "Nodes";
+
     private static final NumberFormat THOUSANDS_FORMATTER = NumberFormat.getFormat("#,###");
     private static final String CLASS_BASE = "nodePingBar";
     private static final String PING_BAR_CLASS = CLASS_BASE + "-bar";
@@ -388,6 +390,11 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
     @Override
     public String getLabel() {
         return "Nodes";
+    }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
     }
 
 

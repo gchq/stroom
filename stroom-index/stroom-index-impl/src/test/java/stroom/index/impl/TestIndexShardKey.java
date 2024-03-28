@@ -26,16 +26,15 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestIndexShardKeyUtil {
+class TestIndexShardKey {
 
     @Test
     void testMultishard() {
         final LuceneIndexDoc index = new LuceneIndexDoc();
         index.setUuid(UUID.randomUUID().toString());
         index.setShardsPerPartition(5);
-        final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
+        final IndexShardKey indexShardKey = IndexShardKey.createKey(index);
 
         assertThat(indexShardKey.getIndexUuid()).isEqualTo(index.getUuid());
-        assertThat(indexShardKey.getShardNo() >= 0).isTrue();
     }
 }

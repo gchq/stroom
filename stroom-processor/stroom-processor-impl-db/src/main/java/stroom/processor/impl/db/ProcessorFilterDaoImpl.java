@@ -38,6 +38,7 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -310,17 +311,23 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                                 .on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
                                 .where(PROCESSOR_FILTER.ID.eq(id))
                                 .fetchOptional())
-                .map(record -> {
-                    final Processor processor = RECORD_TO_PROCESSOR_MAPPER.apply(record);
-                    final ProcessorFilter processorFilter = RECORD_TO_PROCESSOR_FILTER_MAPPER.apply(record);
-                    final ProcessorFilterTracker processorFilterTracker =
-                            RECORD_TO_PROCESSOR_FILTER_TRACKER_MAPPER.apply(record);
+                .map(this::mapRecord);
+    }
 
-                    processorFilter.setProcessor(processor);
-                    processorFilter.setProcessorFilterTracker(processorFilterTracker);
-
-                    return marshaller.unmarshal(processorFilter);
-                });
+    @Override
+    public Optional<ProcessorFilter> fetchByUuid(final String uuid) {
+        Objects.requireNonNull(uuid);
+        return JooqUtil.contextResult(processorDbConnProvider, context ->
+                        context
+                                .select()
+                                .from(PROCESSOR_FILTER)
+                                .join(PROCESSOR_FILTER_TRACKER)
+                                .on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(PROCESSOR_FILTER_TRACKER.ID))
+                                .join(PROCESSOR)
+                                .on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
+                                .where(PROCESSOR_FILTER.UUID.eq(uuid))
+                                .fetchOptional())
+                .map(this::mapRecord);
     }
 
     @Override
@@ -341,21 +348,17 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                         .orderBy(orderFields)
                         .limit(offset, limit)
                         .fetch())
-                .map(record -> {
-                    final Processor processor = RECORD_TO_PROCESSOR_MAPPER.apply(record);
-                    final ProcessorFilter processorFilter = RECORD_TO_PROCESSOR_FILTER_MAPPER.apply(record);
-                    final ProcessorFilterTracker processorFilterTracker =
-                            RECORD_TO_PROCESSOR_FILTER_TRACKER_MAPPER.apply(record);
-
-                    processorFilter.setProcessor(processor);
-                    processorFilter.setProcessorFilterTracker(processorFilterTracker);
-
-                    try {
-                        return marshaller.unmarshal(processorFilter);
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                });
+                .map(this::mapRecord);
         return ResultPage.createCriterialBasedList(list, criteria);
+    }
+
+    private ProcessorFilter mapRecord(final Record record) {
+        final Processor processor = RECORD_TO_PROCESSOR_MAPPER.apply(record);
+        final ProcessorFilter processorFilter = RECORD_TO_PROCESSOR_FILTER_MAPPER.apply(record);
+        final ProcessorFilterTracker processorFilterTracker =
+                RECORD_TO_PROCESSOR_FILTER_TRACKER_MAPPER.apply(record);
+        processorFilter.setProcessor(processor);
+        processorFilter.setProcessorFilterTracker(processorFilterTracker);
+        return marshaller.unmarshal(processorFilter);
     }
 }

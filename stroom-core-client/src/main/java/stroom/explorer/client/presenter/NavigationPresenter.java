@@ -29,6 +29,8 @@ import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
+import stroom.explorer.client.event.FocusExplorerFilterEvent;
+import stroom.explorer.client.event.FocusExplorerTreeEvent;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
 import stroom.explorer.client.event.LocateDocEvent;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
@@ -52,6 +54,8 @@ import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -76,7 +80,9 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         implements NavigationUiHandlers,
         RefreshExplorerTreeEvent.Handler,
         HighlightExplorerNodeEvent.Handler,
-        ShowMainEvent.Handler {
+        ShowMainEvent.Handler,
+        FocusExplorerFilterEvent.Handler,
+        FocusExplorerTreeEvent.Handler {
 
     private final DocumentTypeCache documentTypeCache;
     private final TypeFilterPresenter typeFilterPresenter;
@@ -192,6 +198,11 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
             }
             showAlertsBtn.setVisible(uiConfig.isDependencyWarningsEnabled());
         });
+
+        KeyBinding.addCommand(Action.FOCUS_EXPLORER_FILTER, () ->
+                FocusExplorerFilterEvent.fire(this));
+        KeyBinding.addCommand(Action.GOTO_EXPLORER_TREE, () ->
+                FocusExplorerTreeEvent.fire(this));
     }
 
     @Override
@@ -233,6 +244,11 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
 
         // Register for highlight events.
         registerHandler(getEventBus().addHandler(HighlightExplorerNodeEvent.getType(), this));
+
+        // Register for events to focus the explorer tree filter
+        registerHandler(getEventBus().addHandler(FocusExplorerFilterEvent.getType(), this));
+
+        registerHandler(getEventBus().addHandler(FocusExplorerTreeEvent.getType(), this));
 
 //        explorerTree.addChangeHandler(fetchExplorerNodeResult -> {
 //            final boolean treeHasNodeInfo = GwtNullSafe.stream(fetchExplorerNodeResult.getRootNodes())
@@ -396,6 +412,16 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         RevealContentEvent.fire(this, MainPresenter.EXPLORER, this);
     }
 
+    @Override
+    public void onFocusExplorerFilter(final FocusExplorerFilterEvent event) {
+        getView().focusQuickFilter();
+    }
+
+    @Override
+    public void onFocusExplorerTree(final FocusExplorerTreeEvent event) {
+        explorerTree.focus();
+    }
+
     @ProxyCodeSplit
     public interface NavigationProxy extends Proxy<NavigationPresenter> {
 
@@ -412,5 +438,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         void setNavigationWidget(Widget widget);
 
         void setActivityWidget(Widget widget);
+
+        void focusQuickFilter();
     }
 }

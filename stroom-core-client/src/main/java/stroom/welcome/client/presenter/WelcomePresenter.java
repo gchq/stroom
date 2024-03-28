@@ -36,9 +36,11 @@ import com.gwtplatform.mvp.client.View;
 
 public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.WelcomeView> {
 
+    public static final String WELCOME = "Welcome";
+    public static final String TAB_TYPE = WELCOME;
+
     private static final SessionInfoResource SESSION_INFO_RESOURCE = GWT.create(SessionInfoResource.class);
 
-    public static final String WELCOME = "Welcome";
 
     @Inject
     public WelcomePresenter(final EventBus eventBus,
@@ -82,6 +84,11 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
     @Override
     public String getLabel() {
         return WELCOME;
+    }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
     }
 
 

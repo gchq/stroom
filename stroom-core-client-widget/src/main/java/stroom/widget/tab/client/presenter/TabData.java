@@ -18,6 +18,7 @@ package stroom.widget.tab.client.presenter;
 
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.util.client.KeyBinding.Action;
 
 public interface TabData {
 
@@ -30,4 +31,23 @@ public interface TabData {
     String getLabel();
 
     boolean isCloseable();
+
+    String getType();
+//
+//        if (this instanceof HasType) {
+//            return ((HasType) this).getType();
+//        } else {
+//            return null;
+//        }
+//    }
+
+    /**
+     * @param action
+     * @return True if the {@link Action} was consumed, i.e. it should not propagate
+     * to parent elements
+     */
+    default boolean handleKeyAction(final Action action) {
+        // override as required
+        return false;
+    }
 }

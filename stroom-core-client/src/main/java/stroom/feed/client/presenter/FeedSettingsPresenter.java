@@ -35,8 +35,6 @@ import stroom.util.shared.ResultPage;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.InputEvent;
-import com.google.gwt.event.dom.client.InputHandler;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.inject.Inject;
@@ -76,9 +74,8 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
         });
 
         // Add listeners for dirty events.
-        final InputHandler inputHandler = event -> setDirty(true);
         final ValueChangeHandler<Boolean> checkHandler = event -> setDirty(true);
-        registerHandler(view.getClassification().addDomHandler(inputHandler, InputEvent.getType()));
+        registerHandler(view.getClassification().addValueChangeHandler(e -> setDirty(true)));
         registerHandler(view.getReference().addValueChangeHandler(checkHandler));
         registerHandler(view.getDataEncoding().addValueChangeHandler(event -> {
             final String dataEncoding = ensureEncoding(view.getDataEncoding().getValue());

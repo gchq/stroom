@@ -150,4 +150,9 @@ public class MockProcessorFilterService implements ProcessorFilterService {
     public Optional<String> getPipelineName(final ProcessorType processorType, final String uuid) {
         return Optional.empty();
     }
+
+    @Override
+    public Optional<ProcessorFilter> fetchByUuid(final String uuid) {
+        return dao.fetchByUuid(uuid);
+    }
 }

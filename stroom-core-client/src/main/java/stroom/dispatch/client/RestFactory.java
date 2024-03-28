@@ -37,12 +37,6 @@ public interface RestFactory {
     @Deprecated
     <R> Rest<R> create();
 
-    /**
-     * Deprecated, use {@link RestFactory#builder(boolean)} instead
-     */
-    @Deprecated
-    <R> Rest<R> createQuiet();
-
 
     // --------------------------------------------------------------------------------
 

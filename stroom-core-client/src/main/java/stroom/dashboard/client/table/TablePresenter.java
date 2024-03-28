@@ -48,7 +48,6 @@ import stroom.datasource.api.v2.ConditionSet;
 import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.ExportFileCompleteUtil;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
@@ -88,7 +87,6 @@ import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -124,6 +122,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class TablePresenter extends AbstractComponentPresenter<TableView>
         implements HasDirtyHandlers, ResultComponent, HasSelection, TableUiHandlers {
 
+    public static final String TAB_TYPE = "table-component";
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     public static final ComponentType TYPE = new ComponentType(1, "table", "Table", ComponentUse.PANEL);
     private static final Version CURRENT_MODEL_VERSION = new Version(6, 1, 26);
@@ -155,6 +154,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private long[] maxResults = TableComponentSettings.DEFAULT_MAX_RESULTS;
     private boolean pause;
     private int currentRequestCount;
+    private SelectionPopup<Column, ColumnSelectionItem> addColumnPopup;
 
     @Inject
     public TablePresenter(final EventBus eventBus,
@@ -318,15 +318,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         if (currentSearchModel != null) {
             columnSelectionListModel.setDataSourceRef(currentSearchModel.getIndexLoader().getLoadedDataSourceRef());
 
-            final SelectionPopup<Column, ColumnSelectionItem> addColumnPopup = new SelectionPopup<>();
-            addColumnPopup.init(columnSelectionListModel);
+            if (addColumnPopup == null) {
+                addColumnPopup = new SelectionPopup<>();
+                addColumnPopup.init(columnSelectionListModel);
+            }
 
             final Element target = event.getNativeEvent().getEventTarget().cast();
             addColumnPopup.addAutoHidePartner(target);
-            final PopupPosition popupPosition = new PopupPosition(
-                    target.getAbsoluteLeft() - 3,
-                    target.getAbsoluteTop() + target.getClientHeight() + 1);
-            addColumnPopup.show(popupPosition);
+            addColumnPopup.show(target);
 
             final List<HandlerRegistration> handlerRegistrations = new ArrayList<>();
             final MultiSelectionModel<ColumnSelectionItem> selectionModel = addColumnPopup.getSelectionModel();
@@ -409,8 +408,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                                 downloadPresenter.downloadAllTables(),
                                                 downloadPresenter.isSample(),
                                                 downloadPresenter.getPercent());
-                                final Rest<ResourceGeneration> rest = restFactory.create();
-                                rest
+                                restFactory
+                                        .builder()
+                                        .forType(ResourceGeneration.class)
                                         .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager,
                                                 null,
                                                 result))
@@ -856,7 +856,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     @Override
-    public ComponentType getType() {
+    public ComponentType getComponentType() {
         return TYPE;
     }
 
@@ -1053,6 +1053,15 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     public SearchModel getCurrentSearchModel() {
         return currentSearchModel;
     }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface TableView extends View, HasUiHandlers<TableUiHandlers> {
 

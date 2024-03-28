@@ -376,6 +376,11 @@ appConfig:
       refreshAfterWrite: null
     ramBufferSizeMB: 1024
     writer:
+      activeShardCache:
+        expireAfterAccess: null
+        expireAfterWrite: "PT1H"
+        maximumSize: 100
+        refreshAfterWrite: null
       cache:
         coreItems: 50
         maxItems: 100
