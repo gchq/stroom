@@ -271,6 +271,10 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Template extends SafeHtmlTemplates {
 
         @Template("<div class=\"{0}\"><div class=\"{1}\"></div></div>")

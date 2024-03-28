@@ -1648,6 +1648,10 @@ button.main-menu svg {
     flex-direction: column;
 }
 
+.form-group > div:has(> label) {
+    display: flex;
+}
+
 
 .form-group:not(:first-child) {
     margin-top: 0.3em;
@@ -1657,6 +1661,51 @@ button.main-menu svg {
    us doing something with client side validation */
 .form-group .invalid-feedback {
     margin-top: 0;
+}
+
+.form-group-label-container .form-label{
+    margin-bottom: 0;
+}
+
+.form-group-label-container {
+    display: flex;
+    flex-direction: row;
+    gap: var(--control__gap--horizontal);
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+
+.form-group-help {
+    margin-bottom: 0rem;
+}
+
+.form-group-help-tooltip {
+    /* width: 500px; */
+    max-width: 500px;
+    border-width: 2px;
+    border-color: var(--heading-color);
+    border-style: solid;
+    border-radius: 6px;
+}
+
+.form-group-help-tooltip .popupContent {
+    margin: 5px;
+    font-weight: 500;
+}
+
+.form-group-help-tooltip .popupContent div {
+    font-weight: 500;
+}
+
+.form-group-help.icon-button {
+    width: 18px;
+    height: 18px;
+}
+
+.form-group-help svg {
+    width: 16px;
+    height: 16px;
+    /* margin-bottom: 0.6em; */
 }
 
 .form-heading {

@@ -112,6 +112,10 @@ public class ConditionalFormattingRule {
         return new Builder(this);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static final class Builder {
 
         private String id;

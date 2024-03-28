@@ -35,6 +35,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.data.grid.client.PagerViewImpl;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.view.LinkTabPanelViewImpl;
+import stroom.event.client.StaticEventBus;
 import stroom.explorer.client.presenter.AbstractFindPresenter;
 import stroom.explorer.client.presenter.EntityCheckTreePresenter;
 import stroom.explorer.client.presenter.EntityCheckTreePresenter.EntityCheckTreeView;
@@ -103,6 +104,8 @@ public class AppModule extends AbstractPresenterModule {
     protected void configure() {
         // Default implementation of standard resources
         bind(EventBus.class).to(SimpleEventBus.class).in(Singleton.class);
+        bind(StaticEventBus.class).asEagerSingleton();
+
         bind(TokenFormatter.class).to(ParameterTokenFormatter.class).in(Singleton.class);
         bind(RootPresenter.class).asEagerSingleton();
         bind(PlaceManager.class).to(InactivePlaceManager.class).in(Singleton.class);

@@ -177,6 +177,22 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
             return this;
         }
 
+        /**
+         * Same as passing {@code true} to {@link Builder#modal(Boolean)}
+         */
+        public Builder modal() {
+            this.modal = true;
+            return this;
+        }
+
+        /**
+         * Same as passing {@code false} to {@link Builder#modal(Boolean)}
+         */
+        public Builder modeless() {
+            this.modal = false;
+            return this;
+        }
+
         public Builder addAutoHidePartner(final Element... autoHidePartner) {
             if (autoHidePartner != null) {
                 for (final Element element : autoHidePartner) {
