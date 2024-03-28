@@ -70,6 +70,10 @@ public class VisualisationSettingsViewImpl extends ViewImpl
         functionName.setEnabled(!readOnly);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Binder extends UiBinder<Widget, VisualisationSettingsViewImpl> {
 
     }

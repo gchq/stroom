@@ -20,9 +20,10 @@ public class AnalyticNotificationStreamDestination extends AnalyticNotificationD
     private final boolean useSourceFeedIfPossible;
 
     @JsonCreator
-    public AnalyticNotificationStreamDestination(@JsonProperty("destinationFeed") final DocRef destinationFeed,
-                                                 @JsonProperty("useSourceFeedIfPossible")
-                                                 final boolean useSourceFeedIfPossible) {
+    public AnalyticNotificationStreamDestination(
+            @JsonProperty("destinationFeed") final DocRef destinationFeed,
+            @JsonProperty("useSourceFeedIfPossible") final boolean useSourceFeedIfPossible) {
+
         this.destinationFeed = destinationFeed;
         this.useSourceFeedIfPossible = useSourceFeedIfPossible;
     }
@@ -68,6 +69,10 @@ public class AnalyticNotificationStreamDestination extends AnalyticNotificationD
     public static Builder builder() {
         return new Builder();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder {
 

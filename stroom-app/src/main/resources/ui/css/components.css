@@ -2172,3 +2172,20 @@ button.main-menu svg {
 .docRefLinkContainer:hover .svg-image {
     opacity: .8;
 }
+
+.AnalyticEmailDestinationViewImpl #analyticEmailDestinationSubjectTemplate,
+.AnalyticEmailDestinationViewImpl #analyticEmailDestinationBodyTemplate {
+    width: 1000px;
+}
+
+.AnalyticEmailDestinationViewImpl #analyticEmailDestinationSubjectTemplate .EditorViewImpl {
+    height: 60px;
+}
+
+.AnalyticEmailDestinationViewImpl .Button {
+    width: 200px;
+}
+
+.AnalyticEmailDestinationViewImpl #analyticEmailDestinationBodyTemplate .EditorViewImpl {
+    min-height: 300px;
+}
