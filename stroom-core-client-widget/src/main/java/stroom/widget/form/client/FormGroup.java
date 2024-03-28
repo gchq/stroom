@@ -7,9 +7,11 @@ import stroom.widget.tooltip.client.event.ShowHelpEvent;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.LabelElement;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.Composite;
@@ -17,7 +19,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Collections;
@@ -33,7 +34,6 @@ public class FormGroup extends Composite implements HasWidgets {
 
     private String id;
     private Widget widget;
-    private String description = null;
     private String helpText = null;
     private boolean isHelpShowing = false;
     private String labelText = null;
@@ -46,22 +46,40 @@ public class FormGroup extends Composite implements HasWidgets {
         formLabel.addStyleName("form-group-label");
 
         helpButton.addStyleName("form-group-help info");
-        helpButton.addClickHandler(event -> showHelpPopup(event.getRelativeElement()));
+        helpButton.addClickHandler(event -> showHelpPopup());
         helpButton.addKeyDownHandler(event -> {
             if (KeyCodes.KEY_SPACE == event.getNativeKeyCode()) {
-                showHelpPopup(event.getRelativeElement());
+                showHelpPopup();
             }
         });
+        // Accessible using F1
+        helpButton.getElement().setTabIndex(-2);
         helpButton.setVisible(false);
 
         labelPanel.add(formLabel);
         labelPanel.add(helpButton);
 
         initWidget(formGroup);
+
+        formGroup.addDomHandler(
+                event ->
+                        handleKeyEvent(event.getNativeEvent()),
+                KeyDownEvent.getType());
+    }
+
+    private void handleKeyEvent(final NativeEvent nativeEvent) {
+        if (KeyCodes.KEY_F1 == nativeEvent.getKeyCode()) {
+            showHelpPopup();
+            nativeEvent.preventDefault();
+        }
     }
 
     private boolean isHelpShowing() {
         return isHelpShowing;
+    }
+
+    private void showHelpPopup() {
+        showHelpPopup(helpButton.getElement());
     }
 
     private void showHelpPopup(final Element element) {
@@ -100,7 +118,7 @@ public class FormGroup extends Composite implements HasWidgets {
         }
     }
 
-    public void setDescription(final String description) {
+//    public void setDescription(final String description) {
 //        this.description = description;
 //        if (GwtNullSafe.isBlankString(description)) {
 //            this.description = null;
@@ -109,7 +127,7 @@ public class FormGroup extends Composite implements HasWidgets {
 //            this.description = description.trim();
 //            helpButton.setVisible(true);
 //        }
-    }
+//    }
 
     public void setHelpText(final String helpText) {
         this.helpText = helpText;
@@ -191,18 +209,22 @@ public class FormGroup extends Composite implements HasWidgets {
         }
     }
 
-    private static class HelpPopup extends PopupPanel {
 
-        public HelpPopup(final SafeHtml content) {
-//        public HelpPopup(final Supplier<String> popupTextSupplier) {
-            // PopupPanel's constructor takes 'auto-hide' as its boolean parameter.
-            // If this is set, the panel closes itself automatically when the user
-            // clicks outside of it.
-            super(true);
+    // --------------------------------------------------------------------------------
 
-//            setWidget(new Label(popupTextSupplier.get(), true));
-            setWidget(new HTMLPanel(content));
-//            setWidget(new HTMLPanel(SafeHtmlUtils.fromTrustedString("<b>hello</b>")));
-        }
-    }
+
+//    private static class HelpPopup extends PopupPanel {
+//
+//        public HelpPopup(final SafeHtml content) {
+////        public HelpPopup(final Supplier<String> popupTextSupplier) {
+//            // PopupPanel's constructor takes 'auto-hide' as its boolean parameter.
+//            // If this is set, the panel closes itself automatically when the user
+//            // clicks outside of it.
+//            super(true);
+//
+////            setWidget(new Label(popupTextSupplier.get(), true));
+//            setWidget(new HTMLPanel(content));
+////            setWidget(new HTMLPanel(SafeHtmlUtils.fromTrustedString("<b>hello</b>")));
+//        }
+//    }
 }

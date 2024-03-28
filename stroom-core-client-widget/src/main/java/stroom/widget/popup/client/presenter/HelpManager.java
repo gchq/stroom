@@ -1,5 +1,6 @@
 package stroom.widget.popup.client.presenter;
 
+import stroom.widget.popup.client.view.AbstractPopupPanel;
 import stroom.widget.popup.client.view.Popup;
 import stroom.widget.popup.client.view.PopupUtil;
 import stroom.widget.tooltip.client.event.ShowHelpEvent;
@@ -7,7 +8,6 @@ import stroom.widget.tooltip.client.event.ShowHelpEvent;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -73,15 +73,13 @@ public class HelpManager {
     // --------------------------------------------------------------------------------
 
 
-    private static class HelpPopup extends PopupPanel implements Popup {
-
-        private String caption = null;
+    private static class HelpPopup extends AbstractPopupPanel implements Popup {
 
         public HelpPopup(final SafeHtml content) {
             // PopupPanel's constructor takes 'auto-hide' as its boolean parameter.
             // If this is set, the panel closes itself automatically when the user
             // clicks outside of it.
-            super(true);
+            super(true, false, PopupType.POPUP);
 
             setWidget(new HTMLPanel(content));
         }
@@ -98,7 +96,12 @@ public class HelpManager {
 
         @Override
         public void setCaption(final String caption) {
-            this.caption = caption;
+            // No caption
+        }
+
+        @Override
+        protected void onCloseAction() {
+            super.hide(true);
         }
     }
 }

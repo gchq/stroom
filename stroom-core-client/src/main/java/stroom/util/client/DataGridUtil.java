@@ -1,6 +1,7 @@
 package stroom.util.client;
 
 import stroom.cell.expander.client.ExpanderCell;
+import stroom.cell.info.client.ColourSwatchCell;
 import stroom.cell.info.client.CommandLink;
 import stroom.cell.info.client.CommandLinkCell;
 import stroom.cell.info.client.SvgCell;
@@ -372,6 +373,11 @@ public class DataGridUtil {
     public static <T_ROW> ColumnBuilder<T_ROW, String, String, Cell<String>> textColumnBuilder(
             final Function<T_ROW, String> cellExtractor) {
         return new ColumnBuilder<>(cellExtractor, Function.identity(), TextCell::new);
+    }
+
+    public static <T_ROW> ColumnBuilder<T_ROW, String, String, ColourSwatchCell> colourSwatchColumnBuilder(
+            final Function<T_ROW, String> cssColourExtractor) {
+        return new ColumnBuilder<>(cssColourExtractor, Function.identity(), ColourSwatchCell::new);
     }
 
     /**

@@ -17,8 +17,7 @@
         </form:FormGroup>
 
         <form:FormGroup addStyleNames="dock-min"
-                        label="Hide Matching Rows"
-                        description="TODO">
+                        label="Hide Matching Rows">
             <g:HTMLPanel addStyleNames="dock-min">
                 <label style="markdown">
                     <p>When checked, prevents matching rows from appearing in the table.</p>
@@ -29,10 +28,7 @@
 
         <form:FormGroup addStyleNames="dock-min"
                         identity="cfRuleBackgroundColor"
-                        label="Row Background Colour"
-                        description="Sets the background colour of matching rows.
-                        &#10;
-                        &#10;The colour is a valid CSS colour name (e.g. 'red') or a colour in RGB Hexadecimal form (e.g. '#FF0000')">
+                        label="Row Background Colour">
             <g:HTMLPanel addStyleNames="dock-min">
                 <label style="markdown">
                     <p>
@@ -49,9 +45,7 @@
 
         <form:FormGroup addStyleNames="dock-min"
                         identity="cfRuleTextColor"
-                        label="Text Colour"
-                        description="Sets the text colour of matching rows. The colour is a valid CSS
-                        colour name (e.g. 'red') or a colour in RGB Hexadecimal form (e.g. '#FF0000')">
+                        label="Text Colour">
             <g:HTMLPanel addStyleNames="dock-min">
                 <label style="markdown">
                     <p>
@@ -69,7 +63,6 @@
         <form:FormGroup addStyleNames="dock-min"
                         identity="cfRuleEnabledState"
                         label="Rule Enabled State">
-
             <g:HTMLPanel addStyleNames="dock-min">
                 <label style="markdown">
                     <p>Enables or disables this rule. When disabled this rule will be ignored.</p>

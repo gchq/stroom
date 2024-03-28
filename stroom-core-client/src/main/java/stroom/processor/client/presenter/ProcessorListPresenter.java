@@ -74,6 +74,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         implements Refreshable, HasDocumentRead<Object> {
@@ -92,10 +93,10 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
     private final MyDataGrid<ProcessorListRow> dataGrid;
     private final MultiSelectionModelImpl<ProcessorListRow> selectionModel;
 
-    private final RestSaveQueue<Integer, Boolean> processorEnabledSaveQueue;
-    private final RestSaveQueue<Integer, Boolean> processorFilterEnabledSaveQueue;
-    private final RestSaveQueue<Integer, Integer> processorFilterPrioritySaveQueue;
-    private final RestSaveQueue<Integer, Integer> processorFilterMaxProcessingTasksSaveQueue;
+    private final RestSaveQueue<Integer, Boolean, Boolean> processorEnabledSaveQueue;
+    private final RestSaveQueue<Integer, Boolean, Boolean> processorFilterEnabledSaveQueue;
+    private final RestSaveQueue<Integer, Integer, Boolean> processorFilterPrioritySaveQueue;
+    private final RestSaveQueue<Integer, Integer, Boolean> processorFilterMaxProcessingTasksSaveQueue;
 
     private boolean allowUpdate;
 
@@ -137,33 +138,47 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                 onChangeData(data);
             }
         };
-        processorEnabledSaveQueue = new RestSaveQueue<Integer, Boolean>(eventBus, restFactory) {
+
+        final Supplier<Rest<Boolean>> restSupplier = () ->
+                restFactory.builder()
+                        .forBoolean();
+
+        processorEnabledSaveQueue = new RestSaveQueue<Integer, Boolean, Boolean>(eventBus, restSupplier) {
             @Override
-            protected void doAction(final Rest<?> rest, final Integer key, final Boolean value) {
+            protected void doAction(final Rest<Boolean> rest,
+                                    final Integer key,
+                                    final Boolean value) {
                 rest
                         .call(PROCESSOR_RESOURCE)
                         .setEnabled(key, value);
             }
         };
-        processorFilterEnabledSaveQueue = new RestSaveQueue<Integer, Boolean>(eventBus, restFactory) {
+        processorFilterEnabledSaveQueue = new RestSaveQueue<Integer, Boolean, Boolean>(eventBus, restSupplier) {
             @Override
-            protected void doAction(final Rest<?> rest, final Integer key, final Boolean value) {
+            protected void doAction(final Rest<Boolean> rest,
+                                    final Integer key,
+                                    final Boolean value) {
                 rest
                         .call(PROCESSOR_FILTER_RESOURCE)
                         .setEnabled(key, value);
             }
         };
-        processorFilterPrioritySaveQueue = new RestSaveQueue<Integer, Integer>(eventBus, restFactory) {
+        processorFilterPrioritySaveQueue = new RestSaveQueue<Integer, Integer, Boolean>(eventBus, restSupplier) {
             @Override
-            protected void doAction(final Rest<?> rest, final Integer key, final Integer value) {
+            protected void doAction(final Rest<Boolean> rest,
+                                    final Integer key,
+                                    final Integer value) {
                 rest
                         .call(PROCESSOR_FILTER_RESOURCE)
                         .setPriority(key, value);
             }
         };
-        processorFilterMaxProcessingTasksSaveQueue = new RestSaveQueue<Integer, Integer>(eventBus, restFactory) {
+        processorFilterMaxProcessingTasksSaveQueue = new RestSaveQueue<Integer, Integer, Boolean>(
+                eventBus, restSupplier) {
             @Override
-            protected void doAction(final Rest<?> rest, final Integer key, final Integer value) {
+            protected void doAction(final Rest<Boolean> rest,
+                                    final Integer key,
+                                    final Integer value) {
                 rest
                         .call(PROCESSOR_FILTER_RESOURCE)
                         .setMaxProcessingTasks(key, value);
