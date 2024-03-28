@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 class TestNullSafe {
@@ -853,6 +854,24 @@ class TestNullSafe {
                 .addCase(" ", other)
                 .addCase("\n", other)
                 .addCase("\t", other)
+                .addCase("foo", "foo")
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testNonBlankStringElseGet() {
+        final String string = "bar";
+        final Supplier<String> stringSupplier = () -> string;
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(String.class)
+                .withTestFunction(testCase ->
+                        NullSafe.nonBlankStringElseGet(testCase.getInput(), stringSupplier))
+                .withSimpleEqualityAssertion()
+                .addCase(null, string)
+                .addCase("", string)
+                .addCase(" ", string)
+                .addCase("\n", string)
+                .addCase("\t", string)
                 .addCase("foo", "foo")
                 .build();
     }

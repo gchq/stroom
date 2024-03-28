@@ -1,7 +1,5 @@
 package stroom.config.global.impl;
 
-import stroom.analytics.impl.AnalyticsConfig;
-import stroom.analytics.impl.EmailConfig;
 import stroom.config.common.UriFactory;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigPropertyValidationException;
@@ -21,7 +19,6 @@ import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.ui.config.shared.UiConfig;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -62,7 +59,6 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     private final Provider<OpenIdConfiguration> openIdConfigProvider;
     private final Provider<ExplorerConfig> explorerConfigProvider;
     private final Provider<AuthenticationConfig> authenticationConfigProvider;
-    private final Provider<AnalyticsConfig> analyticsConfigProvider;
 
     @Inject
     GlobalConfigResourceImpl(final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
@@ -73,8 +69,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                              final Provider<NodeInfo> nodeInfoProvider,
                              final Provider<OpenIdConfiguration> openIdConfigProvider,
                              final Provider<ExplorerConfig> explorerConfigProvider,
-                             final Provider<AuthenticationConfig> authenticationConfigProvider,
-                             final Provider<AnalyticsConfig> analyticsConfigProvider) {
+                             final Provider<AuthenticationConfig> authenticationConfigProvider) {
 
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
         this.globalConfigServiceProvider = Objects.requireNonNull(globalConfigServiceProvider);
@@ -85,7 +80,6 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         this.openIdConfigProvider = openIdConfigProvider;
         this.explorerConfigProvider = explorerConfigProvider;
         this.authenticationConfigProvider = authenticationConfigProvider;
-        this.analyticsConfigProvider = analyticsConfigProvider;
     }
 
 
@@ -300,9 +294,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                 uiConfig.get(),
                 isExternalIdp,
                 explorerConfigProvider.get().getDependencyWarningsEnabled(),
-                authenticationConfigProvider.get().getMaxApiKeyExpiryAge().toMillis(),
-                NullSafe.get(analyticsConfigProvider.get().getEmailConfig(), EmailConfig::getDefaultSubjectTemplate),
-                NullSafe.get(analyticsConfigProvider.get().getEmailConfig(), EmailConfig::getDefaultBodyTemplate));
+                authenticationConfigProvider.get().getMaxApiKeyExpiryAge().toMillis());
     }
 
     private Query buildRawQuery(final String userInput) {

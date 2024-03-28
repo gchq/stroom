@@ -1,7 +1,7 @@
 package stroom.analytics.client.presenter;
 
-import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.schedule.client.ScheduleBox;
+import stroom.widget.datepicker.client.DateTimeBox;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.gwtplatform.mvp.client.HasUiHandlers;

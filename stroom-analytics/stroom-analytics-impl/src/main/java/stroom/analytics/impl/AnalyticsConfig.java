@@ -82,6 +82,10 @@ public class AnalyticsConfig extends AbstractConfig implements IsStroomConfig, H
         return streamingAnalyticCache;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     @BootStrapConfig
     public static class AnalyticsDbConfig extends AbstractDbConfig implements IsStroomConfig {
 

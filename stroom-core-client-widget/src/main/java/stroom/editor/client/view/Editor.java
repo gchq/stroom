@@ -199,16 +199,16 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
         }
     }
 
-    public void setFirstLineNumber(final int firstLineNumber) {
-        firstLineNumberDirty = true;
-        this.firstLineNumber = firstLineNumber;
-        updateFirstLineNumber();
+    public void setMaxLines(final int maxLines) {
+        maxLinesDirty = true;
+        this.maxLines = maxLines;
+        updateMaxLines();
     }
 
-    private void updateFirstLineNumber() {
-        if (started && firstLineNumberDirty) {
-            editor.setFirstLineNumber(firstLineNumber);
-            firstLineNumberDirty = false;
+    private void updateMaxLines() {
+        if (started && maxLinesDirty) {
+            editor.setMaxLines(maxLines);
+            maxLinesDirty = false;
         }
     }
 

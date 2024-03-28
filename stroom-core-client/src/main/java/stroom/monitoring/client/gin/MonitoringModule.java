@@ -29,24 +29,24 @@ import stroom.data.grid.client.WrapperView;
 import stroom.data.grid.client.WrapperViewImpl;
 import stroom.data.store.impl.fs.client.ManageFsVolumesPlugin;
 import stroom.index.client.ManageIndexVolumesPlugin;
-import stroom.widget.datepicker.client.DateTimePopup;
-import stroom.widget.datepicker.client.DateTimePopup.DateTimeView;
 import stroom.job.client.presenter.JobPresenter;
 import stroom.job.client.presenter.JobPresenter.JobView;
-import stroom.schedule.client.SchedulePopup;
-import stroom.schedule.client.SchedulePopup.ScheduleView;
-import stroom.widget.datepicker.client.DateTimeViewImpl;
 import stroom.job.client.view.JobViewImpl;
-import stroom.schedule.client.ScheduleViewImpl;
 import stroom.monitoring.client.DatabaseTablesMonitoringPlugin;
 import stroom.monitoring.client.JobListPlugin;
 import stroom.monitoring.client.NodeMonitoringPlugin;
 import stroom.node.client.ManageGlobalPropertiesPlugin;
+import stroom.schedule.client.SchedulePopup;
+import stroom.schedule.client.SchedulePopup.ScheduleView;
+import stroom.schedule.client.ScheduleViewImpl;
 import stroom.task.client.TaskManagerPlugin;
 import stroom.task.client.presenter.TaskManagerPresenter;
 import stroom.task.client.presenter.TaskManagerPresenter.TaskManagerView;
 import stroom.task.client.view.TaskManagerViewImpl;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.widget.datepicker.client.DateTimePopup;
+import stroom.widget.datepicker.client.DateTimePopup.DateTimeView;
+import stroom.widget.datepicker.client.DateTimeViewImpl;
 
 public class MonitoringModule extends PluginModule {
 

@@ -22,11 +22,11 @@ import stroom.pipeline.destination.RollingDestinationFactory;
 import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.PipelineFactoryException;
-import stroom.util.shared.scheduler.FrequencyExpressions;
 import stroom.util.scheduler.CronTrigger;
 import stroom.util.scheduler.FrequencyTrigger;
 import stroom.util.scheduler.Trigger;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.scheduler.FrequencyExpressions;
 
 import java.io.IOException;
 

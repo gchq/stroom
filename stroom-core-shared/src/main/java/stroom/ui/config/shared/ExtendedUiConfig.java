@@ -41,25 +41,12 @@ public class ExtendedUiConfig {
     @JsonPropertyDescription("The maximum expiry age for new API keys in millis. Defaults to 365 days.")
     private final long maxApiKeyExpiryAgeMs;
 
-    @JsonProperty
-    @JsonPropertyDescription("The default email subject template to use for analytic rule emails. The template uses " +
-            "a sub-set of the Jinja templating language. If this property is not set, the user will not be presented " +
-            "with an initial subject template value.")
-    private final String defaultSubjectTemplate;
-
-    @JsonProperty
-    @JsonPropertyDescription("The default email body template to use for analytic rule emails. The template uses " +
-            "a sub-set of the Jinja templating language. If this property is not set, the user will not be presented " +
-            "with an initial body template value.")
-    private final String defaultBodyTemplate;
 
     public ExtendedUiConfig() {
         this.externalIdentityProvider = false;
         this.uiConfig = new UiConfig();
         this.dependencyWarningsEnabled = false;
         this.maxApiKeyExpiryAgeMs = 365L * 24 * 60 * 60 * 1_000;
-        this.defaultSubjectTemplate = "";
-        this.defaultBodyTemplate = "";
     }
 
     @JsonCreator
@@ -67,16 +54,12 @@ public class ExtendedUiConfig {
             @JsonProperty("uiConfig") final UiConfig uiConfig,
             @JsonProperty("externalIdentityProvider") final boolean externalIdentityProvider,
             @JsonProperty("dependencyWarningsEnabled") final boolean dependencyWarningsEnabled,
-            @JsonProperty("maxApiKeyExpiryAgeMs") final long maxApiKeyExpiryAgeMs,
-            @JsonProperty("defaultSubjectTemplate") final String defaultSubjectTemplate,
-            @JsonProperty("defaultBodyTemplate") final String defaultBodyTemplate) {
+            @JsonProperty("maxApiKeyExpiryAgeMs") final long maxApiKeyExpiryAgeMs) {
 
         this.uiConfig = uiConfig;
         this.externalIdentityProvider = externalIdentityProvider;
         this.dependencyWarningsEnabled = dependencyWarningsEnabled;
         this.maxApiKeyExpiryAgeMs = maxApiKeyExpiryAgeMs;
-        this.defaultSubjectTemplate = defaultSubjectTemplate;
-        this.defaultBodyTemplate = defaultBodyTemplate;
     }
 
     public UiConfig getUiConfig() {
@@ -240,14 +223,6 @@ public class ExtendedUiConfig {
 
     public long getMaxApiKeyExpiryAgeMs() {
         return maxApiKeyExpiryAgeMs;
-    }
-
-    public String getDefaultSubjectTemplate() {
-        return defaultSubjectTemplate;
-    }
-
-    public String getDefaultBodyTemplate() {
-        return defaultBodyTemplate;
     }
 
     @Override

@@ -46,64 +46,20 @@ public class EmailConfig extends AbstractConfig implements IsStroomConfig {
     @JsonPropertyDescription("The from name to use in password reset emails.")
     private final String fromName;
 
-    @JsonProperty
-    @JsonPropertyDescription("The default email subject template to use for analytic rule emails. The template uses " +
-            "a sub-set of the Jinja templating language. If this property is not set, the user will not be presented " +
-            "with an initial subject template value.")
-    private final String defaultSubjectTemplate;
-
-    @JsonProperty
-    @JsonPropertyDescription("The default email body template to use for analytic rule emails. The template uses " +
-            "a sub-set of the Jinja templating language. If this property is not set, the user will not be presented " +
-            "with an initial body template value.")
-    private final String defaultBodyTemplate;
-
-
     public EmailConfig() {
         smtpConfig = new SmtpConfig();
         fromAddress = "noreply@stroom";
         fromName = "Stroom Analytics";
-        defaultSubjectTemplate = """
-                Detector '{{ detectorName }}' Alert""";
-        defaultBodyTemplate = """
-                <p>Detector <em>{{ detectorName }}</em> {{ detectorVersion }} fired at {{ detectTime }}</p>
-                                
-                {% if (values | length) > 0 %}
-                  <p>Detail: {{ headline }}</p>
-                  <p>
-                    <ul>
-                      {% for key, val in values.items() %}
-                        <li><strong>{{ key | e }}</strong>: {{ val | e }}</li>
-                      {% endfor %}
-                    </ul>
-                  </p>
-                {% endif %}
-                                
-                {% if (linkedEvents | length) > 0 %}
-                  <p>Linked Events:</p>
-                  <p>
-                    <ul>
-                      {% for linkedEvent in linkedEvents %}
-                        <li>Environment: {{ linkedEvent.stroom | e }}, Stream ID: {{ linkedEvent.streamId | e }}, Event ID: {{ linkedEvent.eventId | e }}</li>
-                      {% endfor %}""\";
-                    </ul>
-                  </p>
-                {% endif %}
-                """;
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
     public EmailConfig(@JsonProperty("smtp") final SmtpConfig smtpConfig,
                        @JsonProperty("fromAddress") final String fromAddress,
-                       @JsonProperty("fromName") final String fromName,
-                       @JsonProperty("defaultSubjectTemplate") final String defaultSubjectTemplate,
-                       @JsonProperty("defaultBodyTemplate") final String defaultBodyTemplate) {
+                       @JsonProperty("fromName") final String fromName) {
         this.smtpConfig = smtpConfig;
         this.fromAddress = fromAddress;
         this.fromName = fromName;
-        this.defaultSubjectTemplate = defaultSubjectTemplate;
-        this.defaultBodyTemplate = defaultBodyTemplate;
     }
 
     @JsonProperty(PROP_NAME_SMTP)
@@ -119,22 +75,12 @@ public class EmailConfig extends AbstractConfig implements IsStroomConfig {
         return fromName;
     }
 
-    public String getDefaultSubjectTemplate() {
-        return defaultSubjectTemplate;
-    }
-
-    public String getDefaultBodyTemplate() {
-        return defaultBodyTemplate;
-    }
-
     @Override
     public String toString() {
         return "EmailConfig{" +
-                "smtpConfig=" + smtpConfig +
-                ", fromAddress='" + fromAddress + '\'' +
-                ", fromName='" + fromName + '\'' +
-                ", defaultSubjectTemplate='" + defaultSubjectTemplate + '\'' +
-                ", defaultBodyTemplate='" + defaultBodyTemplate + '\'' +
-                '}';
+               "smtpConfig=" + smtpConfig +
+               ", fromAddress='" + fromAddress + '\'' +
+               ", fromName='" + fromName + '\'' +
+               '}';
     }
 }

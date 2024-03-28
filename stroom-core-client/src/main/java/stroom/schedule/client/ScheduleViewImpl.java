@@ -18,11 +18,11 @@ package stroom.schedule.client;
 
 import stroom.item.client.SelectionBox;
 import stroom.schedule.client.SchedulePopup.ScheduleView;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.scheduler.CronExpression;
 import stroom.util.shared.scheduler.CronExpressions;
 import stroom.util.shared.scheduler.FrequencyExpression;
 import stroom.util.shared.scheduler.FrequencyExpressions;
-import stroom.svg.shared.SvgImage;
 import stroom.util.shared.scheduler.ScheduleType;
 import stroom.widget.button.client.Button;
 

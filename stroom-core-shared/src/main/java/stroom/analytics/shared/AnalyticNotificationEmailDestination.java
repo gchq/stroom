@@ -24,11 +24,13 @@ public class AnalyticNotificationEmailDestination extends AnalyticNotificationDe
     private final String bodyTemplate;
 
     @JsonCreator
-    public AnalyticNotificationEmailDestination(@JsonProperty("to") final String to,
-                                                @JsonProperty("cc") final String cc,
-                                                @JsonProperty("bcc") final String bcc,
-                                                @JsonProperty("subjectTemplate") final String subjectTemplate,
-                                                @JsonProperty("bodyTemplate") final String bodyTemplate) {
+    public AnalyticNotificationEmailDestination(
+            @JsonProperty("to") final String to,
+            @JsonProperty("cc") final String cc,
+            @JsonProperty("bcc") final String bcc,
+            @JsonProperty("subjectTemplate") final String subjectTemplate,
+            @JsonProperty("bodyTemplate") final String bodyTemplate) {
+
         this.to = to;
         this.cc = cc;
         this.bcc = bcc;
@@ -57,6 +59,17 @@ public class AnalyticNotificationEmailDestination extends AnalyticNotificationDe
     }
 
     @Override
+    public String toString() {
+        return "AnalyticNotificationEmailDestination{" +
+               "to='" + to + '\'' +
+               ", cc='" + cc + '\'' +
+               ", bcc='" + bcc + '\'' +
+               ", subjectTemplate='" + subjectTemplate + '\'' +
+               ", bodyTemplate='" + bodyTemplate + '\'' +
+               '}';
+    }
+
+    @Override
     public boolean equals(final Object object) {
         if (this == object) {
             return true;
@@ -66,26 +79,14 @@ public class AnalyticNotificationEmailDestination extends AnalyticNotificationDe
         }
         final AnalyticNotificationEmailDestination that = (AnalyticNotificationEmailDestination) object;
         return Objects.equals(to, that.to) && Objects.equals(cc, that.cc) && Objects.equals(
-                bcc,
-                that.bcc) && Objects.equals(subjectTemplate, that.subjectTemplate) && Objects.equals(
-                bodyTemplate,
-                that.bodyTemplate);
+                bcc, that.bcc)
+               && Objects.equals(subjectTemplate,
+                that.subjectTemplate) && Objects.equals(bodyTemplate, that.bodyTemplate);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(to, cc, bcc, subjectTemplate, bodyTemplate);
-    }
-
-    @Override
-    public String toString() {
-        return "AnalyticNotificationEmailDestination{" +
-                "to='" + to + '\'' +
-                ", cc='" + cc + '\'' +
-                ", bcc='" + bcc + '\'' +
-                ", subjectTemplate='" + subjectTemplate + '\'' +
-                ", bodyTemplate='" + bodyTemplate + '\'' +
-                '}';
     }
 
     public Builder copy() {
@@ -144,10 +145,13 @@ public class AnalyticNotificationEmailDestination extends AnalyticNotificationDe
             return this;
         }
 
-
         public AnalyticNotificationEmailDestination build() {
             return new AnalyticNotificationEmailDestination(
-                    to, cc, bcc, subjectTemplate, bodyTemplate);
+                    to,
+                    cc,
+                    bcc,
+                    subjectTemplate,
+                    bodyTemplate);
         }
     }
 }

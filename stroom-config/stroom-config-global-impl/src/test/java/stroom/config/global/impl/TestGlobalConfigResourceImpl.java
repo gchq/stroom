@@ -1,6 +1,5 @@
 package stroom.config.global.impl;
 
-import stroom.analytics.impl.AnalyticsConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
@@ -424,7 +423,6 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 () -> nodeInfo,
                 StroomOpenIdConfig::new,
                 ExplorerConfig::new,
-                AuthenticationConfig::new,
-                AnalyticsConfig::new);
+                AuthenticationConfig::new);
     }
 }

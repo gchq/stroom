@@ -18,6 +18,8 @@ package stroom.analytics.client.view;
 
 import stroom.analytics.client.presenter.AnalyticEmailDestinationPresenter.AnalyticEmailDestinationView;
 import stroom.document.client.event.DirtyUiHandlers;
+import stroom.svg.shared.SvgImage;
+import stroom.widget.button.client.Button;
 
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -45,11 +47,19 @@ public class AnalyticEmailDestinationViewImpl
     @UiField
     SimplePanel subjectTemplatePanel;
     @UiField
+    Button testSubjectTemplateBtn;
+    @UiField
     SimplePanel bodyTemplatePanel;
+    @UiField
+    Button testBodyTemplateBtn;
+    @UiField
+    Button sendTestEmailBtn;
 
     @Inject
     public AnalyticEmailDestinationViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        testSubjectTemplateBtn.setIcon(SvgImage.TICK);
+        testBodyTemplateBtn.setIcon(SvgImage.TICK);
     }
 
     @Override
@@ -87,26 +97,6 @@ public class AnalyticEmailDestinationViewImpl
         this.bcc.setValue(bcc);
     }
 
-//    @Override
-//    public String getSubjectTemplate() {
-//        return null;
-//    }
-//
-//    @Override
-//    public void setSubjectTemplate() {
-//
-//    }
-//
-//    @Override
-//    public String getBodyTemplate() {
-//        return null;
-//    }
-//
-//    @Override
-//    public void setBodyTemplate() {
-//
-//    }
-
     @Override
     public void setSubjectTemplateEditorView(final View view) {
         if (view != null) {
@@ -136,6 +126,20 @@ public class AnalyticEmailDestinationViewImpl
         getUiHandlers().onDirty();
     }
 
+    @Override
+    public Button getSendTestEmailBtn() {
+        return sendTestEmailBtn;
+    }
+
+    @Override
+    public Button getTestSubjectTemplateBtn() {
+        return testSubjectTemplateBtn;
+    }
+
+    @Override
+    public Button getTestBodyTemplateBtn() {
+        return testBodyTemplateBtn;
+    }
 
     // --------------------------------------------------------------------------------
 

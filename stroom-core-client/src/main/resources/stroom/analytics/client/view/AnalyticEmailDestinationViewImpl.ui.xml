@@ -1,24 +1,52 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="analyticEmailDestinationEmailAddress" label="To">
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:b="urn:import:stroom.widget.button.client">
+    <g:FlowPanel styleName="max form AnalyticEmailDestinationViewImpl">
+        <form:FormGroup identity="analyticEmailDestinationEmailAddress"
+                        label="To">
             <g:TextBox ui:field="to"/>
         </form:FormGroup>
-        <form:FormGroup identity="analyticEmailDestinationEmailAddress" label="Cc">
+
+        <form:FormGroup identity="analyticEmailDestinationEmailAddress"
+                        label="Cc">
             <g:TextBox ui:field="cc"/>
         </form:FormGroup>
-        <form:FormGroup identity="analyticEmailDestinationEmailAddress" label="Bcc">
+
+        <form:FormGroup identity="analyticEmailDestinationEmailAddress"
+                        label="Bcc">
             <g:TextBox ui:field="bcc"/>
         </form:FormGroup>
-        <form:FormGroup identity="analyticEmailDestinationSubjectTemplate" label="Email Subject Template">
-            <g:SimplePanel ui:field="subjectTemplatePanel"
-                           addStyleNames="dock-max stroom-control__no-padding"/>
+
+        <form:FormGroup identity="analyticEmailDestinationSubjectTemplate"
+                        label="Email Subject Template">
+            <g:FlowPanel styleName="dock-min form">
+                <g:SimplePanel ui:field="subjectTemplatePanel"
+                               addStyleNames="dock-max stroom-control__no-padding"/>
+                <b:Button addStyleNames="dock-min allow-focus"
+                          ui:field="testSubjectTemplateBtn"
+                          text="Test Template"/>
+            </g:FlowPanel>
         </form:FormGroup>
-        <form:FormGroup identity="analyticEmailDestinationBodyTemplate" label="Email Body Template">
-            <g:SimplePanel ui:field="bodyTemplatePanel"
-                           addStyleNames="dock-max stroom-control__no-padding"/>
+
+        <form:FormGroup identity="analyticEmailDestinationBodyTemplate"
+                        label="Email Body Template">
+            <g:FlowPanel styleName="dock-min form">
+                <g:SimplePanel ui:field="bodyTemplatePanel"
+                               addStyleNames="dock-max stroom-control__no-padding"/>
+                <b:Button addStyleNames="dock-min allow-focus"
+                          ui:field="testBodyTemplateBtn"
+                          text="Test Template"/>
+            </g:FlowPanel>
+        </form:FormGroup>
+
+        <form:FormGroup identity="analyticEmailDestinationTesting"
+                        label="Test Email Notification">
+            <b:Button addStyleNames="dock-min allow-focus"
+                      ui:field="sendTestEmailBtn"
+                      text="Send Test Email"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>
