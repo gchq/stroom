@@ -1,5 +1,7 @@
-package stroom.widget.popup.client.presenter;
+package stroom.widget.help.client.presenter;
 
+import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.view.AbstractPopupPanel;
 import stroom.widget.popup.client.view.Popup;
 import stroom.widget.popup.client.view.PopupUtil;
