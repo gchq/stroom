@@ -22,37 +22,13 @@ import stroom.editor.client.view.Marker;
 import stroom.util.shared.TextRange;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 
-import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.dom.client.HasMouseDownHandlers;
-import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
-import com.google.gwt.user.client.ui.Focus;
-import com.google.gwt.user.client.ui.HasText;
-import com.google.gwt.user.client.ui.RequiresResize;
-import com.gwtplatform.mvp.client.View;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
 import java.util.List;
 import java.util.function.Function;
 
-public interface EditorView extends View, Focus, HasKeyDownHandlers, HasFormatHandlers, HasText, HasMouseDownHandlers,
-        HasContextMenuHandlers, HasValueChangeHandlers<String>, RequiresResize {
-
-    String getEditorId();
-
-    void setText(final String text);
-
-    void setText(final String text, final boolean format);
-
-    boolean isClean();
-
-    void markClean();
-
-    void insertTextAtCursor(String text);
-
-    void replaceSelectedText(String text);
-
-    void insertSnippet(String snippet);
+public interface EditorView
+        extends BaseEditorView, HasFormatHandlers, HasContextMenuHandlers, HasMouseDownHandlers {
 
     void setFirstLineNumber(int firstLineNumber);
 
@@ -73,15 +49,7 @@ public interface EditorView extends View, Focus, HasKeyDownHandlers, HasFormatHa
      */
     void setFormattedHighlights(final Function<String, List<TextRange>> highlightsFunction);
 
-    void setReadOnly(final boolean readOnly);
-
-    void setMode(final AceEditorMode mode);
-
-    void setTheme(final AceEditorTheme theme);
-
-    void setUserKeyBindingsPreference(final boolean useVimBindings);
-
-    void setUserLiveAutoCompletePreference(final boolean isOn);
+    void setText(final String text, final boolean format);
 
     Action getFormatAction();
 

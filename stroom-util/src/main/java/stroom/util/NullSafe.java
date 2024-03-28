@@ -152,6 +152,15 @@ public class NullSafe {
     }
 
     /**
+     * @return str if it is non-null and non-blank, else return the value supplied by otherSupplier
+     */
+    public static String nonBlankStringElseGet(final String str, final Supplier<String> otherSupplier) {
+        return str != null && !str.isBlank()
+                ? str
+                : Objects.requireNonNull(otherSupplier).get();
+    }
+
+    /**
      * @return True if str is null or empty
      */
     public static boolean isEmptyString(final String str) {

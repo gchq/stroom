@@ -340,9 +340,9 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 
                         final ListConfigResponse response = new ListConfigResponse(
                                 QuickFilterPredicateFactory.filterStream(
-                                        criteria.getQuickFilterInput(),
-                                        fieldMappers,
-                                        FULL_PROP_LIST.stream())
+                                                criteria.getQuickFilterInput(),
+                                                fieldMappers,
+                                                FULL_PROP_LIST.stream())
                                         .peek(configProperty ->
                                                 configProperty.setYamlOverrideValue(node.getNodeName()))
                                         .collect(Collectors.toList()),
