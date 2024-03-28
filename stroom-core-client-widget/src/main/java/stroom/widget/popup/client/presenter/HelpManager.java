@@ -12,11 +12,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 public class HelpManager {
-
-    private static AtomicBoolean isShowing = new AtomicBoolean(false);
 
     @Inject
     public HelpManager(final EventBus eventBus) {
@@ -28,18 +24,12 @@ public class HelpManager {
         final HelpPopup popup = new HelpPopup(showHelpEvent.getContent());
         popup.setVisible(false);
         popup.setModal(false);
-//        popup.setWidth("500px");
         // Add the markdown class so that it gets styled like rendered markdown, so we are
-        // consistent with that
-        popup.setStyleName("quickFilter-tooltip form-group-help-tooltip markdown");
+        // consistent with that. Add quickFilter-tooltip so it get styling consistent
+        // with quickfilter popups
+        popup.setStyleName("quickFilter-tooltip help-button-tooltip markdown");
 
         final PopupPosition popupPosition = showHelpEvent.getPopupPosition();
-
-//        popup.addCloseHandler(event -> {
-////            GWT.log("Closing");
-////            isShowing.set(false);
-////            closeTime = System.currentTimeMillis();
-//        });
 
         final String uniqueId = elementToUniqueId(showHelpEvent.getElement());
 
@@ -50,14 +40,7 @@ public class HelpManager {
                 popupPosition,
                 null,
                 PopupType.POPUP,
-                () -> {
-//            final long timeSinceClose = System.currentTimeMillis() - closeTime;
-//            GWT.log("onShow called, isShowing: " + isShowing.get() + " timeSinceClose: " + timeSinceClose);
-//            if (timeSinceClose > 150) {
-//                isShowing.set(true);
-//                popup.show();
-//            }
-                });
+                null);
     }
 
     private static String elementToUniqueId(final Element element) {
