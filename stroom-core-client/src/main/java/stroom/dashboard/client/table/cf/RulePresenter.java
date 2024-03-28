@@ -22,12 +22,13 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.util.shared.RandomId;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-public class RulePresenter extends MyPresenterWidget<RulePresenter.RuleView> {
+public class RulePresenter extends MyPresenterWidget<RulePresenter.RuleView> implements Focus {
 
     private final EditExpressionPresenter editExpressionPresenter;
     private ConditionalFormattingRule originalRule;
@@ -76,6 +77,15 @@ public class RulePresenter extends MyPresenterWidget<RulePresenter.RuleView> {
                 .enabled(getView().isEnabled())
                 .build();
     }
+
+    @Override
+    public void focus() {
+        editExpressionPresenter.focus();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface RuleView extends View {
 

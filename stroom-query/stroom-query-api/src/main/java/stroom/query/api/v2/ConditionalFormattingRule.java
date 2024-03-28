@@ -23,13 +23,13 @@ public class ConditionalFormattingRule {
     @JsonProperty("expression")
     private final ExpressionOperator expression;
     @JsonProperty("hide")
-    private final boolean hide;
+    private boolean hide;
     @JsonProperty("backgroundColor")
     private final String backgroundColor;
     @JsonProperty("textColor")
     private final String textColor;
     @JsonProperty("enabled")
-    private final boolean enabled;
+    private boolean enabled;
 
     @JsonCreator
     public ConditionalFormattingRule(@JsonProperty("id") final String id,
@@ -58,6 +58,10 @@ public class ConditionalFormattingRule {
         return hide;
     }
 
+    public void setHide(final boolean hide) {
+        this.hide = hide;
+    }
+
     public String getBackgroundColor() {
         return backgroundColor;
     }
@@ -68,6 +72,10 @@ public class ConditionalFormattingRule {
 
     public boolean isEnabled() {
         return enabled;
+    }
+
+    public void setEnabled(final boolean enabled) {
+        this.enabled = enabled;
     }
 
     @Override
@@ -111,6 +119,10 @@ public class ConditionalFormattingRule {
     public Builder copy() {
         return new Builder(this);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static final class Builder {
 

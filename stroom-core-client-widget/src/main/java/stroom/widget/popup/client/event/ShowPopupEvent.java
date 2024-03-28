@@ -16,6 +16,7 @@
 
 package stroom.widget.popup.client.event;
 
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -126,6 +127,10 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
         return autoHidePartners;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Handler extends EventHandler {
 
         void onShow(ShowPopupEvent event);
@@ -177,12 +182,25 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
             return this;
         }
 
+        /**
+         * Same as passing {@code true} to {@link Builder#modal(Boolean)}
+         */
+        public Builder modal() {
+            this.modal = true;
+            return this;
+        }
+
+        /**
+         * Same as passing {@code false} to {@link Builder#modal(Boolean)}
+         */
+        public Builder modeless() {
+            this.modal = false;
+            return this;
+        }
+
         public Builder addAutoHidePartner(final Element... autoHidePartner) {
-            if (autoHidePartner != null) {
-                for (final Element element : autoHidePartner) {
-                    this.autoHidePartners.add(element);
-                }
-            }
+
+            this.autoHidePartners.addAll(GwtNullSafe.asList(autoHidePartner));
             return this;
         }
 
@@ -202,7 +220,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
         }
 
         public void fire() {
-            // By default we will automatically hide popups unless they have a handler that alters the behaviour.
+            // By default, we will automatically hide popups unless they have a handler that alters the behaviour.
             if (hideRequestHandler == null) {
                 hideRequestHandler = e -> HidePopupEvent.builder(presenterWidget)
                         .autoClose(e.isAutoClose())
@@ -211,7 +229,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
             }
 
             Element[] elements = null;
-            if (autoHidePartners.size() > 0) {
+            if (GwtNullSafe.hasItems(autoHidePartners)) {
                 elements = autoHidePartners.toArray(new Element[0]);
             }
 
