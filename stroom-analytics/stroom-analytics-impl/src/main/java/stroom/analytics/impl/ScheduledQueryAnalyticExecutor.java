@@ -132,7 +132,7 @@ public class ScheduledQueryAnalyticExecutor {
             info(() -> "Processing " + LogUtil.namedCount("scheduled analytic rule", NullSafe.size(analytics)));
             final WorkQueue workQueue = new WorkQueue(executorProvider.get(), 1, 1);
             for (final AnalyticRuleDoc analytic : analytics) {
-                final Runnable runnable = () -> processScheduledQueryAnalytics(
+                final Runnable runnable = () -> process(
                         analytic,
                         taskContext);
                 try {
@@ -156,15 +156,15 @@ public class ScheduledQueryAnalyticExecutor {
         }
     }
 
-    private void processScheduledQueryAnalytics(final AnalyticRuleDoc analytic,
-                                                final TaskContext parentTaskContext) {
+    private void process(final AnalyticRuleDoc analytic,
+                         final TaskContext parentTaskContext) {
         if (!parentTaskContext.isTerminated()) {
             final String ruleIdentity = AnalyticUtil.getAnalyticRuleIdentity(analytic);
             try {
                 final String ownerUuid = securityContext.getDocumentOwnerUuid(analytic.asDocRef());
                 final UserIdentity userIdentity = securityContext.createIdentityByUserUuid(ownerUuid);
                 securityContext.asUser(userIdentity, () ->
-                        processScheduledQueryAnalytic(
+                        process(
                                 ruleIdentity,
                                 analytic,
                                 userIdentity,
@@ -175,10 +175,10 @@ public class ScheduledQueryAnalyticExecutor {
         }
     }
 
-    private void processScheduledQueryAnalytic(final String ruleIdentity,
-                                               final AnalyticRuleDoc analytic,
-                                               final UserIdentity userIdentity,
-                                               final TaskContext parentTaskContext) {
+    private void process(final String ruleIdentity,
+                         final AnalyticRuleDoc analytic,
+                         final UserIdentity userIdentity,
+                         final TaskContext parentTaskContext) {
         // Load schedules for the analytic.
         final ExecutionScheduleRequest request = ExecutionScheduleRequest
                 .builder()
@@ -197,15 +197,7 @@ public class ScheduledQueryAnalyticExecutor {
                     securityContext.asUser(userIdentity, () -> securityContext.useAsRead(() -> {
                         boolean success = true;
                         while (success && !parentTaskContext.isTerminated()) {
-                            success = taskContextFactory.childContextResult(
-                                    parentTaskContext,
-                                    "Scheduled Query Analytic: " +
-                                            ruleIdentity,
-                                    taskContext -> processScheduledQueryAnalytic(
-                                            ruleIdentity,
-                                            analytic,
-                                            executionSchedule,
-                                            taskContext)).get();
+                            success = process(ruleIdentity, analytic, parentTaskContext, executionSchedule);
                         }
                     }));
                 } catch (final RuntimeException e) {
@@ -217,10 +209,35 @@ public class ScheduledQueryAnalyticExecutor {
         workQueue.join();
     }
 
-    private boolean processScheduledQueryAnalytic(final String ruleIdentity,
-                                                  final AnalyticRuleDoc analytic,
-                                                  final ExecutionSchedule executionSchedule,
-                                                  final TaskContext taskContext) {
+    private boolean process(final String ruleIdentity,
+                            final AnalyticRuleDoc analytic,
+                            final TaskContext parentTaskContext,
+                            final ExecutionSchedule executionSchedule) {
+        final Optional<ExecutionSchedule> optionalSchedule = executionScheduleDao
+                .fetchScheduleById(executionSchedule.getId());
+        if (optionalSchedule.isEmpty()) {
+            return false;
+        }
+        final ExecutionSchedule schedule = optionalSchedule.get();
+        if (!schedule.isEnabled()) {
+            return false;
+        }
+
+        return taskContextFactory.childContextResult(
+                parentTaskContext,
+                "Scheduled Query Analytic: " +
+                        ruleIdentity,
+                taskContext -> process(
+                        ruleIdentity,
+                        analytic,
+                        schedule,
+                        taskContext)).get();
+    }
+
+    private boolean process(final String ruleIdentity,
+                            final AnalyticRuleDoc analytic,
+                            final ExecutionSchedule executionSchedule,
+                            final TaskContext taskContext) {
         final ExecutionTracker currentTracker = executionScheduleDao.getTracker(executionSchedule).orElse(null);
         final Schedule schedule = executionSchedule.getSchedule();
         final ScheduleBounds scheduleBounds = executionSchedule.getScheduleBounds();
@@ -257,7 +274,7 @@ public class ScheduledQueryAnalyticExecutor {
                     errorFeedName,
                     null,
                     taskContext,
-                    (t) -> processScheduledQueryAnalytic(
+                    (t) -> process(
                             ruleIdentity,
                             analytic,
                             trigger,
@@ -269,13 +286,13 @@ public class ScheduledQueryAnalyticExecutor {
         return false;
     }
 
-    private boolean processScheduledQueryAnalytic(final String ruleIdentity,
-                                                  final AnalyticRuleDoc analytic,
-                                                  final Trigger trigger,
-                                                  final Instant executionTime,
-                                                  final Instant effectiveExecutionTime,
-                                                  final ExecutionSchedule executionSchedule,
-                                                  final ExecutionTracker currentTracker) {
+    private boolean process(final String ruleIdentity,
+                            final AnalyticRuleDoc analytic,
+                            final Trigger trigger,
+                            final Instant executionTime,
+                            final Instant effectiveExecutionTime,
+                            final ExecutionSchedule executionSchedule,
+                            final ExecutionTracker currentTracker) {
         boolean success = false;
         final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
         ExecutionResult executionResult = new ExecutionResult(null, null);

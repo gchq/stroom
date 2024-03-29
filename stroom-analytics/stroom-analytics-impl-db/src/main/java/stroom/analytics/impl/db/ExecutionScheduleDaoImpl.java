@@ -79,6 +79,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
         return ResultPage.createCriterialBasedList(list, request);
     }
 
+    @Override
     public Optional<ExecutionSchedule> fetchScheduleById(final int id) {
         final Collection<Condition> conditions = JooqUtil.conditions(Optional.of(EXECUTION_SCHEDULE.ID.eq(id)));
 

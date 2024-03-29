@@ -13,6 +13,8 @@ public interface ExecutionScheduleDao {
 
     ResultPage<ExecutionSchedule> fetchExecutionSchedule(ExecutionScheduleRequest request);
 
+    Optional<ExecutionSchedule> fetchScheduleById(int id);
+
     ExecutionSchedule createExecutionSchedule(ExecutionSchedule executionSchedule);
 
     ExecutionSchedule updateExecutionSchedule(ExecutionSchedule executionSchedule);
