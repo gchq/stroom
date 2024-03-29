@@ -12,7 +12,6 @@ import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.search.elastic.ElasticIndexCache;
-import stroom.search.elastic.ElasticIndexService;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.extraction.StoredDataQueue;
 import stroom.task.api.ExecutorProvider;
@@ -39,7 +38,6 @@ public class ElasticSearchFactory {
 
     private final WordListProvider wordListProvider;
     private final ElasticSearchTaskHandler elasticSearchTaskHandler;
-    private final ElasticIndexService elasticIndexService;
     private final ElasticIndexCache elasticIndexCache;
     private final IndexFieldCache indexFieldCache;
     private final TaskContextFactory taskContextFactory;
@@ -48,14 +46,12 @@ public class ElasticSearchFactory {
     @Inject
     public ElasticSearchFactory(final WordListProvider wordListProvider,
                                 final ElasticSearchTaskHandler elasticSearchTaskHandler,
-                                final ElasticIndexService elasticIndexService,
                                 final ElasticIndexCache elasticIndexCache,
                                 final IndexFieldCache indexFieldCache,
                                 final TaskContextFactory taskContextFactory,
                                 final ExecutorProvider executorProvider) {
         this.wordListProvider = wordListProvider;
         this.elasticSearchTaskHandler = elasticSearchTaskHandler;
-        this.elasticIndexService = elasticIndexService;
         this.elasticIndexCache = elasticIndexCache;
         this.indexFieldCache = indexFieldCache;
         this.taskContextFactory = taskContextFactory;
@@ -112,10 +108,10 @@ public class ElasticSearchFactory {
                         }).run(), executor);
     }
 
-    private co.elastic.clients.elasticsearch._types.query_dsl.Query getQuery(
-            final ExpressionOperator expression,
-            final IndexFieldCache indexFieldCache,
-            final DateTimeSettings dateTimeSettings) {
+    private co.elastic.clients.elasticsearch._types.query_dsl.Query getQuery(final DocRef indexDocRef,
+                                                                             final IndexFieldCache indexFieldCache,
+                                                                             final ExpressionOperator expression,
+                                                                             final DateTimeSettings dateTimeSettings) {
         final SearchExpressionQueryBuilder builder = new SearchExpressionQueryBuilder(
                 indexDocRef,
                 indexFieldCache,

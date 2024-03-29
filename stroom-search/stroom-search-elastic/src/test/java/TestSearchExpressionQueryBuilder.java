@@ -25,13 +25,6 @@ public class TestSearchExpressionQueryBuilder {
 
     @Test
     public void testBuildQuery() {
-        final ElasticIndexField answerField = ElasticIndexField
-                .builder()
-                .fldName("answer")
-                .nativeType("long")
-                .fldType(FieldType.LONG)
-                .build();
-
         final MockIndexFieldCache indexFieldCache = new MockIndexFieldCache();
         final ExpressionOperator.Builder expressionBuilder = ExpressionOperator.builder().op(Op.AND);
         final SearchExpressionQueryBuilder builder = new SearchExpressionQueryBuilder(
@@ -41,13 +34,20 @@ public class TestSearchExpressionQueryBuilder {
                 DateTimeSettings.builder().build()
         );
 
+        final ElasticIndexField answerField = ElasticIndexField
+                .builder()
+                .fldName("answer")
+                .nativeType("long")
+                .fldType(FieldType.LONG)
+                .build();
+
         indexFieldCache.put(answerField.getFldName(), answerField);
         final Long answerFieldValue = 42L;
 
         // Single numeric EQUALS condition contained within the default AND clause
 
         expressionBuilder.addTerm(answerField.getFldName(), Condition.EQUALS, answerFieldValue.toString());
-        QueryBuilder queryBuilder = builder.buildQuery(expressionBuilder.build());
+        Query queryBuilder = builder.buildQuery(expressionBuilder.build());
 
         Assertions.assertTrue(queryBuilder.isBool(), "Is a `bool` query");
         BoolQuery boolQuery = queryBuilder.bool();

@@ -69,7 +69,6 @@ import co.elastic.clients.elasticsearch.indices.GetFieldMappingResponse;
 import co.elastic.clients.elasticsearch.indices.get_field_mapping.TypeFieldMappings;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
-import org.elasticsearch.client.indices.GetFieldMappingsResponse.FieldMappingMetadata;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -223,46 +222,47 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         return fieldMappings
                 .entrySet()
                 .stream()
-                .map(field -> createQueryField(fieldMappings, field.getKey(), field.getValue()))
+                .map(field -> {
+                    final String fieldName = field.getKey();
+                    final FieldMapping fieldMeta = field.getValue();
+                    String nativeType = getFieldTypeFromMapping(fieldName, field.getValue());
+
+                    if (nativeType == null) {
+                        // If field type is null, this is a system field, so ignore
+                        return null;
+                    } else if (Kind.Alias.jsonValue().equals(nativeType)) {
+                        // Determine the mapping type of the field the alias is referring to
+                        try {
+                            final String aliasPath = getAliasPathFromMapping(fieldName, field.getValue());
+                            final FieldMapping targetFieldMeta = fieldMappings.get(aliasPath);
+                            nativeType = getFieldTypeFromMapping(aliasPath, targetFieldMeta);
+                        } catch (Exception e) {
+                            LOGGER.error("Could not determine mapping type for alias field '{}'", fieldName);
+                        }
+                    }
+
+                    try {
+                        final String fullName = fieldMeta.fullName();
+                        final FieldType elasticFieldType =
+                                ElasticNativeTypes.fromNativeType(fullName, nativeType);
+
+                        return toDataSourceField(elasticFieldType, fieldName, fieldIsIndexed(field.getValue()));
+                    } catch (UnsupportedTypeException e) {
+                        LOGGER.debug(e::getMessage, e);
+                        return null;
+                    } catch (IllegalArgumentException e) {
+                        LOGGER.warn(e::getMessage, e);
+                        return null;
+                    }
+                })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-    }
-
-    private QueryField createQueryField(final Map<String, FieldMappingMetadata> fieldMappings,
-                                        final String fieldName,
-                                        final FieldMappingMetadata fieldMeta) {
-        String nativeType = getFieldPropertyFromMapping(fieldName, fieldMeta, "type");
-
-        if (nativeType == null) {
-            // If field type is null, this is a system field, so ignore
-            return null;
-        } else if (Kind.Alias.jsonValue().equals(nativeType)) {
-            // Determine the mapping type of the field the alias is referring to
-            try {
-                final String aliasPath = getFieldPropertyFromMapping(fieldName, fieldMeta, "path");
-                final FieldMappingMetadata targetFieldMeta = fieldMappings.get(aliasPath);
-                nativeType = getFieldPropertyFromMapping(aliasPath, targetFieldMeta, "type");
-            } catch (Exception e) {
-                LOGGER.error("Could not determine mapping type for alias field '{}'", fieldName);
-            }
-        }
-
-        try {
-            final String fullName = fieldMeta.fullName();
-            final FieldType elasticFieldType =
-                    ElasticNativeTypes.fromNativeType(fullName, nativeType);
-
-            return toDataSourceField(elasticFieldType, fieldName, fieldIsIndexed(fieldMeta));
-        } catch (IllegalArgumentException e) {
-            LOGGER.warn(e::getMessage);
-            return null;
-        }
     }
 
     /**
      * Returns an `AbstractField` instance, based on the field's data type
      */
-    public QueryField toDataSourceField(final FieldType elasticIndexFieldType,
+    private QueryField toDataSourceField(final FieldType elasticIndexFieldType,
                                         final String fieldName,
                                         final Boolean isIndexed)
             throws IllegalArgumentException {

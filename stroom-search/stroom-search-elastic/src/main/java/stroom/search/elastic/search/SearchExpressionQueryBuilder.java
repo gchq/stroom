@@ -228,7 +228,7 @@ public class SearchExpressionQueryBuilder {
                 return buildDictionaryQuery(condition, fieldName, docRef, indexField);
             }
             default -> throw new UnsupportedOperationException("Unsupported condition '" +
-                    condition.getDisplayValue() + "' for " + indexField.getFieldUse().getDisplayValue() +
+                    condition.getDisplayValue() + "' for " + indexField.getDisplayValue() +
                     " field type");
         }
     }
@@ -478,7 +478,7 @@ public class SearchExpressionQueryBuilder {
                 mustQueries.must(QueryBuilders.term(q -> q
                         .field(fieldName)
                         .value(getIpV4Address(condition, fieldName, line))));
-            } else if (indexField.getFieldType().equals("keyword")) {
+            } else if (indexField.getFldType().equals(FieldType.KEYWORD)) {
                 mustQueries.must(buildKeywordQuery(fieldName, line));
             } else {
                 mustQueries.must(buildTextQuery(fieldName, line));

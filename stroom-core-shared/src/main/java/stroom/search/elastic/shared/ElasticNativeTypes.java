@@ -17,6 +17,7 @@ public class ElasticNativeTypes {
         NATIVE_TYPE_MAP.put("byte", FieldType.INTEGER);
         NATIVE_TYPE_MAP.put("version", FieldType.INTEGER);
 
+        NATIVE_TYPE_MAP.put("long", FieldType.LONG);
         NATIVE_TYPE_MAP.put("unsigned_long", FieldType.LONG);
 
         NATIVE_TYPE_MAP.put("float", FieldType.FLOAT);
@@ -26,6 +27,7 @@ public class ElasticNativeTypes {
         NATIVE_TYPE_MAP.put("double", FieldType.DOUBLE);
 
         NATIVE_TYPE_MAP.put("date", FieldType.DATE);
+        NATIVE_TYPE_MAP.put("date_nanos", FieldType.DATE);
 
         NATIVE_TYPE_MAP.put("text", FieldType.TEXT);
 
@@ -39,12 +41,13 @@ public class ElasticNativeTypes {
     /**
      * Given a native Elasticsearch data type, return an equivalent Stroom field type
      */
-    public static FieldType fromNativeType(final String fieldName, final String nativeType) {
+    public static FieldType fromNativeType(final String fieldName, final String nativeType)
+            throws UnsupportedTypeException {
         if (NATIVE_TYPE_MAP.containsKey(nativeType)) {
             return NATIVE_TYPE_MAP.get(nativeType);
         }
 
-        throw new IllegalArgumentException("Field '" + fieldName + "' has an unsupported mapping type '" +
+        throw new UnsupportedTypeException("Field '" + fieldName + "' has an unsupported mapping type '" +
                 nativeType + "'");
     }
 }
