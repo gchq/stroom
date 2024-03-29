@@ -400,6 +400,44 @@ paths:
       summary: Find the analytic process tracker for the specified process
       tags:
       - AnalyticProcess
+  /analyticRule/v1/sendTestEmail:
+    post:
+      operationId: testEmailTemplates
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyticNotificationEmailDestination'
+        description: emailDestination
+        required: true
+      responses:
+        default:
+          content:
+            application/json: {}
+          description: default response
+      summary: Tests the email subject/body templates using an example detection event.
+      tags:
+      - Queries
+  /analyticRule/v1/testTemplate:
+    post:
+      operationId: testTemplate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StringWrapper'
+        description: template
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StringWrapper'
+          description: default response
+      summary: Tests the email template using an example detection event.
+      tags:
+      - Queries
   /analyticRule/v1/{uuid}:
     get:
       operationId: fetchAnalyticRule
@@ -7495,7 +7533,11 @@ components:
         properties:
           bcc:
             type: string
+          bodyTemplate:
+            type: string
           cc:
+            type: string
+          subjectTemplate:
             type: string
           to:
             type: string
@@ -7585,11 +7627,15 @@ components:
     AnalyticUiDefaultConfig:
       type: object
       properties:
+        defaultBodyTemplate:
+          type: string
         defaultDestinationFeed:
           $ref: '#/components/schemas/DocRef'
         defaultErrorFeed:
           $ref: '#/components/schemas/DocRef'
         defaultNode:
+          type: string
+        defaultSubjectTemplate:
           type: string
     Annotation:
       type: object
@@ -14914,6 +14960,11 @@ components:
         offset:
           type: integer
           format: int32
+    StringWrapper:
+      type: object
+      properties:
+        string:
+          type: string
     StroomStatsStoreDoc:
       type: object
       properties:
