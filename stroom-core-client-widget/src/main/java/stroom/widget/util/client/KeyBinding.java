@@ -469,6 +469,10 @@ public class KeyBinding {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class MyKeyCodes {
 
         /**

@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleAware {
@@ -219,22 +218,20 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
                 List.of(new DetectionLinkedEvent(null, streamId.get(), eventId.get()));
         final Detection detection = Detection
                 .builder()
-                .detectTime(DateUtil.createNormalDateTimeString())
-                .detectorName(analyticRuleDoc.getName())
-                .detectorUuid(analyticRuleDoc.getUuid())
-                .detectorVersion(analyticRuleDoc.getVersion())
-                .detailedDescription(analyticRuleDoc.getDescription())
-                .detectionUniqueId(UUID.randomUUID().toString())
-                .detectionRevision(0)
-                .executionSchedule(NullSafe
+                .withDetectTime(DateUtil.createNormalDateTimeString())
+                .withDetectorName(analyticRuleDoc.getName())
+                .withDetectorUuid(analyticRuleDoc.getUuid())
+                .withDetectorVersion(analyticRuleDoc.getVersion())
+                .withDetailedDescription(analyticRuleDoc.getDescription())
+                .withRandomDetectionUniqueId()
+                .withDetectionRevision(0)
+                .withExecutionSchedule(NullSafe
                         .get(executionSchedule, ExecutionSchedule::getName))
-                .executionTime(NullSafe
-                        .get(executionTime, DateUtil::createNormalDateTimeString))
-                .effectiveExecutionTime(NullSafe
-                        .get(effectiveExecutionTime, DateUtil::createNormalDateTimeString))
-                .defunct(false)
-                .values(values)
-                .linkedEvents(linkedEvents)
+                .withExecutionTime(executionTime)
+                .withEffectiveExecutionTime(effectiveExecutionTime)
+                .notDefunct()
+                .withValues(values)
+                .withLinkedEvents(linkedEvents)
                 .build();
 
         final DetectionConsumer detectionConsumer = getDetectionConsumer();

@@ -38,6 +38,18 @@
     border-radius: 0;
 }
 
+.stroom-font-size-small .editor.single-line-editor {
+    height: 16px;
+}
+
+.stroom-font-size-medium .editor.single-line-editor {
+    height: 18px;
+}
+
+.stroom-font-size-large .editor.single-line-editor {
+    height: 20px;
+}
+
 .editor .ace_tooltip {
     background-color: var(--tooltip__background-color);
     color: var(--tooltip__text-color);

@@ -16,6 +16,7 @@
 
 package stroom.analytics.impl;
 
+import stroom.analytics.api.AnalyticsService;
 import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.explorer.api.HasDataSourceDocRefs;
 import stroom.job.api.ScheduledJobsBinder;
@@ -60,6 +61,8 @@ public class AnalyticsModule extends AbstractModule {
                 .bind(AnalyticProcessResourceImpl.class)
                 .bind(AnalyticDataShardResourceImpl.class)
                 .bind(ExecutionScheduleResourceImpl.class);
+
+        bind(AnalyticsService.class).to(AnalyticsServiceImpl.class);
 
         // Live federated search provision.
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)

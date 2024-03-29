@@ -20,6 +20,7 @@ package stroom.dashboard.client.query;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.dashboard.shared.ComponentSelectionHandler;
+import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -74,7 +75,7 @@ public class SelectionHandlerListPresenter
                         return TickBoxState.fromBoolean(row.isEnabled());
                     }
                 };
-        dataGrid.addColumn(enabledColumn, "Enabled", 50);
+        dataGrid.addColumn(enabledColumn, "Enabled", ColumnSizeConstants.ENABLED_COL);
 
         // Component.
         final Column<ComponentSelectionHandler, String> componentColumn =

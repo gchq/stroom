@@ -115,6 +115,11 @@ public class AnalyticNotificationViewImpl
     }
 
     @Override
+    public Widget getDestinationWidget() {
+        return destinationContainer.getWidget();
+    }
+
+    @Override
     public void setErrorFeedView(final View view) {
         this.errorFeed.setWidget(view.asWidget());
     }
@@ -138,6 +143,10 @@ public class AnalyticNotificationViewImpl
     public void onDestinationType(final ValueChangeEvent<AnalyticNotificationDestinationType> event) {
         getUiHandlers().onDirty();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, AnalyticNotificationViewImpl> {
 

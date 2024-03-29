@@ -488,7 +488,24 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         colSettings.add(new ColSettings(true, true));
     }
 
-    public void addResizableColumn(final Column<R, ?> column, final Header<?> header, final int width) {
+    /**
+     * Add a resizable column that will initially expand so that the table fills the available space.
+     * Unless manually resized, it will expand to fill but not go below the initialMinimumWidth.
+     * Once the user resizes it, it becomes a fixed width column under their control.
+     *
+     * @param initialMinimumWidth Initial minimum width in pixels. Ignored once the user has resized it.
+     */
+    public void addAutoResizableColumn(final Column<R, ?> column,
+                                       final Header<?> header,
+                                       final int initialMinimumWidth) {
+        super.addColumn(column, header);
+        setAutoColumnWidth(column, 100, initialMinimumWidth);
+        colSettings.add(new ColSettings(true, true));
+    }
+
+    public void addResizableColumn(final Column<R, ?> column,
+                                   final Header<?> header,
+                                   final int width) {
         super.addColumn(column, header);
         setColumnWidth(column, width, Unit.PX);
         colSettings.add(new ColSettings(true, true));

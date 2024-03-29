@@ -132,6 +132,10 @@ public class AnalyticNotificationConfig {
         return new Builder(this);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Builder {
 
         private boolean limitNotifications;

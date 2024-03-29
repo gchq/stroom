@@ -24,6 +24,7 @@
 
     <inherits name="stroom.Stroom"/>
     <inherits name="stroom.core.Core"/>
+    <inherits name='stroom.event.Event' />
     <inherits name="stroom.dictionary.Dictionary" />
     <inherits name="stroom.task.Task"/>
     <inherits name="stroom.main.Main"/>
@@ -48,6 +49,7 @@
     <inherits name="stroom.widget.button.Button"/>
     <inherits name="stroom.widget.button.Button" />
     <inherits name="stroom.widget.form.Form" />
+    <inherits name="stroom.widget.help.Help" />
     <inherits name="stroom.widget.popup.Popup"/>
     <inherits name="stroom.widget.progress.Progress" />
     <inherits name="stroom.widget.tickbox.TickBox"/>
