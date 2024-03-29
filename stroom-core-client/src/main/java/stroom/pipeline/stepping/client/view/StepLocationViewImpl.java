@@ -18,43 +18,33 @@ package stroom.pipeline.stepping.client.view;
 
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.stepping.client.presenter.StepLocationPresenter.StepLocationView;
-import stroom.pipeline.stepping.client.presenter.StepLocationUIHandlers;
+import stroom.widget.valuespinner.client.ValueSpinner;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HasText;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+import com.gwtplatform.mvp.client.ViewImpl;
 
-public class StepLocationViewImpl extends ViewWithUiHandlers<StepLocationUIHandlers> implements StepLocationView {
+public class StepLocationViewImpl extends ViewImpl implements StepLocationView {
 
-    private static final String EMPTY = "&nbsp;-&nbsp;";
     private final Widget widget;
     @UiField
-    HTML lblMetaId;
+    ValueSpinner metaId;
     @UiField
-    TextBox txtMetaId;
+    ValueSpinner partNo;
     @UiField
-    HTML lblPartNo;
-    @UiField
-    TextBox txtPartNo;
-    @UiField
-    HTML lblRecordNo;
-    @UiField
-    TextBox txtRecordNo;
-    private StepLocation stepLocation;
-    private boolean editing;
+    ValueSpinner recordNo;
 
     @Inject
     public StepLocationViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        metaId.setMax(Long.MAX_VALUE);
+        metaId.setMin(0);
+        partNo.setMax(Long.MAX_VALUE);
+        partNo.setMin(1);
+        recordNo.setMax(Long.MAX_VALUE);
+        recordNo.setMin(1);
     }
 
     @Override
@@ -62,131 +52,21 @@ public class StepLocationViewImpl extends ViewWithUiHandlers<StepLocationUIHandl
         return widget;
     }
 
-    @UiHandler("lblMetaId")
-    public void onClickMetaId(final ClickEvent event) {
-        setEditing(true);
-        txtMetaId.setFocus(true);
+    @Override
+    public void focus() {
+        metaId.focus();
     }
 
-    @UiHandler("lblPartNo")
-    public void onClickPartNo(final ClickEvent event) {
-        setEditing(true);
-        txtPartNo.setFocus(true);
-    }
-
-    @UiHandler("lblRecordNo")
-    public void onClickRecordNo(final ClickEvent event) {
-        setEditing(true);
-        txtRecordNo.setFocus(true);
-    }
-
-    @UiHandler("txtMetaId")
-    void onKeyDownMetaId(final KeyDownEvent event) {
-        if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-            setEditing(false);
-        }
-    }
-
-    @UiHandler("txtPartNo")
-    void onKeyDownPartNo(final KeyDownEvent event) {
-        if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-            setEditing(false);
-        }
-    }
-
-    @UiHandler("txtRecordNo")
-    void onKeyDownRecordNo(final KeyDownEvent event) {
-        if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-            setEditing(false);
-        }
-    }
-
-    public void setEditing(final boolean editing) {
-        this.editing = editing;
-        if (editing) {
-            final Long metaId = getLong(lblMetaId);
-            final Long partNo = getLong(lblPartNo);
-            final Long recordNo = getLong(lblRecordNo);
-
-            if (metaId != null) {
-                txtMetaId.setText(metaId.toString());
-            } else {
-                txtMetaId.setText("");
-            }
-            if (partNo != null) {
-                txtPartNo.setText(partNo.toString());
-            } else {
-                txtPartNo.setText("");
-            }
-            if (recordNo != null) {
-                txtRecordNo.setText(recordNo.toString());
-            } else {
-                txtRecordNo.setText("");
-            }
-
-            txtMetaId.setVisible(true);
-            txtPartNo.setVisible(true);
-            txtRecordNo.setVisible(true);
-            lblMetaId.setVisible(false);
-            lblPartNo.setVisible(false);
-            lblRecordNo.setVisible(false);
-        } else {
-            fireMoveEvent();
-
-            lblMetaId.setVisible(true);
-            lblPartNo.setVisible(true);
-            lblRecordNo.setVisible(true);
-            txtMetaId.setVisible(false);
-            txtPartNo.setVisible(false);
-            txtRecordNo.setVisible(false);
-        }
-    }
-
-    private void fireMoveEvent() {
-        final Long metaId = getLong(txtMetaId);
-        final Long partNo = getLong(txtPartNo);
-        final Long recordNo = getLong(txtRecordNo);
-
-        if (metaId != null && partNo != null && recordNo != null) {
-            // Fire location change.
-            if (getUiHandlers() != null) {
-                // Convert 1 based part and record numbers used for display into 0 based part index and record index.
-                final StepLocation newLocation =
-                        new StepLocation(metaId, partNo - 1, recordNo - 1);
-                getUiHandlers().changeLocation(newLocation);
-            }
-        } else {
-            // Do not fire an event and just reset to previous location.
-            setStepLocation(stepLocation);
-        }
+    @Override
+    public StepLocation getStepLocation() {
+        return new StepLocation(metaId.getValue(), partNo.getValue() - 1, recordNo.getValue() - 1);
     }
 
     @Override
     public void setStepLocation(final StepLocation stepLocation) {
-        this.stepLocation = stepLocation;
-
-        if (editing) {
-            setEditing(false);
-        }
-
-        if (stepLocation == null) {
-            lblMetaId.setHTML(EMPTY);
-            lblPartNo.setHTML(EMPTY);
-            lblRecordNo.setHTML(EMPTY);
-        } else {
-            lblMetaId.setHTML(Long.toString(stepLocation.getMetaId()));
-            // Convert 0 based part index and record index into 1 based part and record numbers used for display.
-            lblPartNo.setHTML(Long.toString(stepLocation.getPartIndex() + 1));
-            lblRecordNo.setHTML(Long.toString(stepLocation.getRecordIndex() + 1));
-        }
-    }
-
-    private Long getLong(final HasText textBox) {
-        try {
-            return Long.valueOf(textBox.getText().trim());
-        } catch (final NumberFormatException e) {
-            return null;
-        }
+        metaId.setValue(stepLocation.getMetaId());
+        partNo.setValue(stepLocation.getPartIndex() + 1);
+        recordNo.setValue(stepLocation.getRecordIndex() + 1);
     }
 
     public interface Binder extends UiBinder<Widget, StepLocationViewImpl> {

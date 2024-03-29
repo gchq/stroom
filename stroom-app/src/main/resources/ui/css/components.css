@@ -1347,6 +1347,14 @@
     color: var(--text-color--disabled);
 }
 
+.stepLocationLink {
+    cursor: pointer;
+}
+
+.stepLocationLink:hover {
+   text-decoration: underline;
+}
+
 .stepLocationViewImpl-left {
 }
 
@@ -1359,24 +1367,6 @@
 
 .stepLocationViewImpl-layout {
     white-space: nowrap;
-}
-
-.stepLocationViewImpl-html {
-    display: inline-block;
-}
-
-.stepLocationViewImpl-label {
-    display: inline-block;
-    cursor: pointer;
-}
-
-.stepLocationViewImpl-textBox {
-    display: inline-block;
-    width: 30px;
-    height: 14px;
-    padding: 0px;
-    margin: 0px;
-    border: none;
 }
 
 .dictionarySettingsViewImpl-label {

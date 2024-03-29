@@ -98,7 +98,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     private final PipelineTreePresenter pipelineTreePresenter;
     private final SourcePresenter sourcePresenter;
     private final Provider<ElementPresenter> elementPresenterProvider;
-    private final StepLocationPresenter stepLocationPresenter;
+    private final StepLocationLinkPresenter stepLocationLinkPresenter;
     private final StepControlPresenter stepControlPresenter;
     private final SteppingFilterPresenter steppingFilterPresenter;
     private final RestFactory restFactory;
@@ -125,7 +125,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                              final RestFactory restFactory,
                              final SourcePresenter sourcePresenter,
                              final Provider<ElementPresenter> elementPresenterProvider,
-                             final StepLocationPresenter stepLocationPresenter,
+                             final StepLocationLinkPresenter stepLocationLinkPresenter,
                              final StepControlPresenter stepControlPresenter,
                              final SteppingFilterPresenter steppingFilterPresenter) {
         super(eventBus, view);
@@ -134,11 +134,11 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         this.pipelineTreePresenter = pipelineTreePresenter;
         this.sourcePresenter = sourcePresenter;
         this.elementPresenterProvider = elementPresenterProvider;
-        this.stepLocationPresenter = stepLocationPresenter;
+        this.stepLocationLinkPresenter = stepLocationLinkPresenter;
         this.stepControlPresenter = stepControlPresenter;
         this.steppingFilterPresenter = steppingFilterPresenter;
 
-        view.addWidgetRight(stepLocationPresenter.getView().asWidget());
+        view.addWidgetRight(stepLocationLinkPresenter.getView().asWidget());
         view.addWidgetRight(stepControlPresenter.getView().asWidget());
         view.setTreeView(pipelineTreePresenter.getView());
 
@@ -189,7 +189,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                     final PipelineElement selectedElement = getSelectedPipeElement();
                     onSelect(selectedElement);
                 }));
-        registerHandler(stepLocationPresenter.addStepControlHandler(event ->
+        registerHandler(stepLocationLinkPresenter.addStepControlHandler(event ->
                 step(event.getStepType(), event.getStepLocation())));
         registerHandler(stepControlPresenter.addStepControlHandler(event ->
                 step(event.getStepType(), event.getStepLocation())));
@@ -714,7 +714,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                 // record that was found and update the request with the new
                 // position ready for the next step.
                 request.setStepLocation(result.getStepLocation());
-                stepLocationPresenter.setStepLocation(result.getStepLocation());
+                stepLocationLinkPresenter.setStepLocation(result.getStepLocation());
             }
 
             // Sync step filters.
