@@ -20,6 +20,7 @@ import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.table.client.Refreshable;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
@@ -73,13 +74,13 @@ public class UserDataProvider implements Refreshable {
                 @Override
                 protected void exec(final Range range,
                                     final Consumer<ResultPage<User>> dataConsumer,
-                                    final Consumer<Throwable> throwableConsumer) {
+                                    final Consumer<RestError> errorConsumer) {
                     CriteriaUtil.setRange(criteria, range);
                     restFactory
                             .create(USER_RESOURCE)
                             .method(res -> res.find(criteria))
                             .onSuccess(dataConsumer)
-                            .onFailure(throwableConsumer)
+                            .onFailure(errorConsumer)
                             .exec();
                 }
 

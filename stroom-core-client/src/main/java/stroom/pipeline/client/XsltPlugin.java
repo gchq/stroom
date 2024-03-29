@@ -18,6 +18,7 @@
 package stroom.pipeline.client;
 
 import stroom.core.client.ContentManager;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -65,7 +66,7 @@ public class XsltPlugin extends DocumentPlugin<XsltDoc> {
     @Override
     public void load(final DocRef docRef,
                      final Consumer<XsltDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
+                     final Consumer<RestError> errorConsumer) {
         restFactory
                 .create(XSLT_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
@@ -78,7 +79,7 @@ public class XsltPlugin extends DocumentPlugin<XsltDoc> {
     public void save(final DocRef docRef,
                      final XsltDoc document,
                      final Consumer<XsltDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
+                     final Consumer<RestError> errorConsumer) {
         restFactory
                 .create(XSLT_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))

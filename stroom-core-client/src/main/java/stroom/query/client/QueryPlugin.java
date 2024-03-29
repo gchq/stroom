@@ -18,6 +18,7 @@
 package stroom.query.client;
 
 import stroom.core.client.ContentManager;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -65,7 +66,7 @@ public class QueryPlugin extends DocumentPlugin<QueryDoc> {
     @Override
     public void load(final DocRef docRef,
                      final Consumer<QueryDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
+                     final Consumer<RestError> errorConsumer) {
         restFactory
                 .create(QUERY_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
@@ -78,7 +79,7 @@ public class QueryPlugin extends DocumentPlugin<QueryDoc> {
     public void save(final DocRef docRef,
                      final QueryDoc document,
                      final Consumer<QueryDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
+                     final Consumer<RestError> errorConsumer) {
         restFactory
                 .create(QUERY_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))

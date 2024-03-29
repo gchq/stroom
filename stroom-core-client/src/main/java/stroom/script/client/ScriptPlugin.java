@@ -18,6 +18,7 @@
 package stroom.script.client;
 
 import stroom.core.client.ContentManager;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -65,7 +66,7 @@ public class ScriptPlugin extends DocumentPlugin<ScriptDoc> {
     @Override
     public void load(final DocRef docRef,
                      final Consumer<ScriptDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
+                     final Consumer<RestError> errorConsumer) {
         restFactory
                 .create(SCRIPT_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
@@ -78,7 +79,7 @@ public class ScriptPlugin extends DocumentPlugin<ScriptDoc> {
     public void save(final DocRef docRef,
                      final ScriptDoc document,
                      final Consumer<ScriptDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
+                     final Consumer<RestError> errorConsumer) {
         restFactory
                 .create(SCRIPT_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))

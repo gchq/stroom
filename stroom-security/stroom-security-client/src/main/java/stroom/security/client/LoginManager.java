@@ -80,7 +80,8 @@ public class LoginManager implements HasHandlers {
                 .create(STROOM_SESSION_RESOURCE)
                 .method(res -> res.logout(getLocation()))
                 .onSuccess(response -> setLocation(response.getUrl()))
-                .onFailure(throwable -> AlertEvent.fireErrorFromException(LoginManager.this, throwable, null))
+                .onFailure(restError -> AlertEvent
+                        .fireErrorFromException(LoginManager.this, restError.getException(), null))
                 .exec();
     }
 

@@ -21,6 +21,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -93,14 +94,14 @@ public class ProcessorTaskListPresenter
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<ProcessorTask>> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
+                                final Consumer<RestError> errorConsumer) {
                 if (criteria.getExpression() != null) {
                     CriteriaUtil.setRange(criteria, range);
                     restFactory
                             .create(PROCESSOR_TASK_RESOURCE)
                             .method(res -> res.find(criteria))
                             .onSuccess(dataConsumer)
-                            .onFailure(throwableConsumer)
+                            .onFailure(errorConsumer)
                             .exec();
                 }
             }

@@ -28,6 +28,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.job.client.JobTypeCell;
 import stroom.job.shared.FindJobNodeCriteria;
@@ -105,13 +106,13 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<JobNode>> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
+                                final Consumer<RestError> errorConsumer) {
                 findJobNodeCriteria.getJobName().setString(jobName);
                 restFactory
                         .create(JOB_NODE_RESOURCE)
                         .method(res -> res.find(findJobNodeCriteria))
                         .onSuccess(dataConsumer)
-                        .onFailure(throwableConsumer)
+                        .onFailure(errorConsumer)
                         .exec();
             }
 

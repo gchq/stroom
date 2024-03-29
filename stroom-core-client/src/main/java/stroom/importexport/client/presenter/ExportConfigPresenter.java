@@ -185,7 +185,7 @@ public class ExportConfigPresenter
                     .create(CONTENT_RESOURCE)
                     .method(res -> res.exportContent(new DocRefs(docRefs)))
                     .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
-                    .onFailure(throwable -> ExportFileCompleteUtil.onFailure(this, throwable))
+                    .onFailure(restError -> ExportFileCompleteUtil.onFailure(this, restError))
                     .exec();
         }
     }

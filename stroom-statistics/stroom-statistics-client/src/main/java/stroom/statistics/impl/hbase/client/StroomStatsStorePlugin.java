@@ -19,6 +19,7 @@ package stroom.statistics.impl.hbase.client;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.ContentManager;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -155,7 +156,7 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
     @Override
     public void load(final DocRef docRef,
                      final Consumer<StroomStatsStoreDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
+                     final Consumer<RestError> errorConsumer) {
         restFactory
                 .create(STATS_STORE_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
@@ -168,7 +169,7 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
     public void save(final DocRef docRef,
                      final StroomStatsStoreDoc document,
                      final Consumer<StroomStatsStoreDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
+                     final Consumer<RestError> errorConsumer) {
         restFactory
                 .create(STATS_STORE_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))

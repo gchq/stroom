@@ -24,6 +24,7 @@ import stroom.data.shared.UploadDataRequest;
 import stroom.dispatch.client.AbstractSubmitCompleteHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.importexport.client.presenter.ImportUtil;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.ResourceKey;
 import stroom.widget.popup.client.event.DisablePopupEvent;
@@ -56,7 +57,7 @@ public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.D
                                final RestFactory restFactory) {
         super(eventBus, view);
 
-        view.getForm().setAction(restFactory.getImportFileURL());
+        view.getForm().setAction(ImportUtil.getImportFileURL());
         view.getForm().setEncoding(FormPanel.ENCODING_MULTIPART);
         view.getForm().setMethod(FormPanel.METHOD_POST);
 

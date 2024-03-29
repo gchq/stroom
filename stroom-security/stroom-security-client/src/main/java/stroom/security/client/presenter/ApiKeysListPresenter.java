@@ -13,6 +13,7 @@ import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
@@ -108,10 +109,10 @@ public class ApiKeysListPresenter
             @Override
             protected void exec(final Range range,
                                 final Consumer<ApiKeyResultPage> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
+                                final Consumer<RestError> errorConsumer) {
                 ApiKeysListPresenter.this.range = range;
                 ApiKeysListPresenter.this.dataConsumer = dataConsumer;
-                fetchData(range, dataConsumer, throwableConsumer);
+                fetchData(range, dataConsumer, errorConsumer);
             }
         };
         dataProvider.addDataDisplay(dataGrid);
@@ -187,9 +188,9 @@ public class ApiKeysListPresenter
             refresh();
         };
 
-        final Consumer<Throwable> onFailure = throwable -> {
+        final Consumer<RestError> onFailure = restError -> {
             // Something went wrong so refresh the data.
-            AlertEvent.fireError(this, throwable.getMessage(), null);
+            AlertEvent.fireError(this, restError.getMessage(), null);
             refresh();
         };
 
@@ -308,7 +309,7 @@ public class ApiKeysListPresenter
 
     private void fetchData(final Range range,
                            final Consumer<ApiKeyResultPage> dataConsumer,
-                           final Consumer<Throwable> throwableConsumer) {
+                           final Consumer<RestError> errorConsumer) {
         restFactory
                 .create(API_KEY_RESOURCE)
                 .method(res -> res.find(criteria))

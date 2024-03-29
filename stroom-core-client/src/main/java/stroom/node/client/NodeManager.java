@@ -1,5 +1,6 @@
 package stroom.node.client;
 
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.FetchNodeStatusResponse;
@@ -26,35 +27,35 @@ public class NodeManager {
     }
 
     public void fetchNodeStatus(final Consumer<FetchNodeStatusResponse> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer,
+                                final Consumer<RestError> errorConsumer,
                                 final FindNodeStatusCriteria findNodeStatusCriteria) {
         restFactory
                 .create(NODE_RESOURCE)
                 .method(res -> res.find(findNodeStatusCriteria))
                 .onSuccess(dataConsumer)
-                .onFailure(throwableConsumer)
+                .onFailure(errorConsumer)
                 .exec();
     }
 
     public void ping(final String nodeName,
                      final Consumer<Long> pingConsumer,
-                     final Consumer<Throwable> throwableConsumer) {
+                     final Consumer<RestError> errorConsumer) {
         restFactory
                 .create(NODE_RESOURCE)
                 .method(res -> res.ping(nodeName))
                 .onSuccess(pingConsumer)
-                .onFailure(throwableConsumer)
+                .onFailure(errorConsumer)
                 .exec();
     }
 
     public void info(final String nodeName,
                      final Consumer<ClusterNodeInfo> infoConsumer,
-                     final Consumer<Throwable> throwableConsumer) {
+                     final Consumer<RestError> errorConsumer) {
         restFactory
                 .create(NODE_RESOURCE)
                 .method(res -> res.info(nodeName))
                 .onSuccess(infoConsumer)
-                .onFailure(throwableConsumer)
+                .onFailure(errorConsumer)
                 .exec();
     }
 
@@ -79,22 +80,22 @@ public class NodeManager {
     }
 
     public void listAllNodes(final Consumer<List<String>> nodeListConsumer,
-                             final Consumer<Throwable> throwableConsumer) {
+                             final Consumer<RestError> errorConsumer) {
         restFactory
                 .create(NODE_RESOURCE)
                 .method(NodeResource::listAllNodes)
                 .onSuccess(nodeListConsumer)
-                .onFailure(throwableConsumer)
+                .onFailure(errorConsumer)
                 .exec();
     }
 
     public void listEnabledNodes(final Consumer<List<String>> nodeListConsumer,
-                                 final Consumer<Throwable> throwableConsumer) {
+                                 final Consumer<RestError> errorConsumer) {
         restFactory
                 .create(NODE_RESOURCE)
                 .method(NodeResource::listEnabledNodes)
                 .onSuccess(nodeListConsumer)
-                .onFailure(throwableConsumer)
+                .onFailure(errorConsumer)
                 .exec();
     }
 }

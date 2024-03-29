@@ -24,6 +24,7 @@ import stroom.core.client.HasSave;
 import stroom.core.client.HasSaveRegistry;
 import stroom.core.client.UrlParameters;
 import stroom.core.client.presenter.Plugin;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
@@ -1110,7 +1111,7 @@ public class DocumentPluginEventManager extends Plugin {
                 .build();
     }
 
-    private void handleFailure(final Throwable t) {
+    private void handleFailure(final RestError t) {
         AlertEvent.fireError(
                 DocumentPluginEventManager.this,
                 t.getMessage(),

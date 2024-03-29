@@ -19,19 +19,14 @@ public interface RestFactory {
     interface MethodExecutor<T extends DirectRestService, R> {
 
         /**
-         * Set quiet if we don't want REST call to register on the task spinner.
-         *
-         * @param quiet Set to true to not fire {@link stroom.task.client.TaskStartEvent}
-         *              or {@link stroom.task.client.TaskEndEvent} events.
+         * Set a task listener if we want to listen to the request start and finish events.
          **/
-        MethodExecutor<T, R> quiet(boolean quiet);
+        MethodExecutor<T, R> taskListener(TaskListener taskListener);
 
-        MethodExecutor<T, R> onSuccess(Consumer<R> consumer);
+        MethodExecutor<T, R> onSuccess(Consumer<R> resultConsumer);
 
-        MethodExecutor<T, R> onFailure(Consumer<Throwable> consumer);
+        MethodExecutor<T, R> onFailure(Consumer<RestError> errorConsumer);
 
         void exec();
     }
-
-    String getImportFileURL();
 }

@@ -23,6 +23,7 @@ import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DeleteDocumentEvent;
@@ -106,13 +107,13 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<Dependency>> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
+                                final Consumer<RestError> errorConsumer) {
                 CriteriaUtil.setRange(criteria, range);
                 restFactory
                         .create(CONTENT_RESOURCE)
                         .method(res -> res.fetchDependencies(criteria))
                         .onSuccess(dataConsumer)
-                        .onFailure(throwableConsumer)
+                        .onFailure(errorConsumer)
                         .exec();
             }
         };

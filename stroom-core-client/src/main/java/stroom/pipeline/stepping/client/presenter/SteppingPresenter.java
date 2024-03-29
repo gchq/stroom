@@ -605,8 +605,8 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                     .create(STEPPING_RESOURCE)
                     .method(res -> res.step(request))
                     .onSuccess(this::readResult)
-                    .onFailure(caught -> {
-                        AlertEvent.fireErrorFromException(SteppingPresenter.this, caught, null);
+                    .onFailure(restError -> {
+                        AlertEvent.fireErrorFromException(SteppingPresenter.this, restError.getException(), null);
                         busyTranslating = false;
                     })
                     .exec();

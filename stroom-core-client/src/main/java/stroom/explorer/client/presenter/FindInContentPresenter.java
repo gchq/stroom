@@ -3,6 +3,7 @@ package stroom.explorer.client.presenter;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.MyCellTable;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.StringMatch;
 import stroom.document.client.event.OpenDocumentEvent;
@@ -117,7 +118,7 @@ public class FindInContentPresenter
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<FindInContentResult>> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
+                                final Consumer<RestError> errorConsumer) {
                 final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
                 currentQuery = new FindInContentRequest(pageRequest,
                         currentQuery.getSortList(),
@@ -155,7 +156,7 @@ public class FindInContentPresenter
 
                                 resetFocus();
                             })
-                            .onFailure(throwableConsumer)
+                            .onFailure(errorConsumer)
                             .exec();
                 }
             }

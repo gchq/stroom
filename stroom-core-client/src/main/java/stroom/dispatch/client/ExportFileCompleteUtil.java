@@ -54,10 +54,10 @@ public final class ExportFileCompleteUtil {
         }
     }
 
-    public static void onFailure(final PresenterWidget<?> parent, final Throwable t) {
+    public static void onFailure(final PresenterWidget<?> parent, final RestError restError) {
         if (parent != null) {
-            if (t != null) {
-                AlertEvent.fireError(parent, t.getMessage(), () -> EnablePopupEvent.builder(parent).fire());
+            if (restError != null) {
+                AlertEvent.fireError(parent, restError.getMessage(), () -> EnablePopupEvent.builder(parent).fire());
             } else {
                 EnablePopupEvent.builder(parent).fire();
             }

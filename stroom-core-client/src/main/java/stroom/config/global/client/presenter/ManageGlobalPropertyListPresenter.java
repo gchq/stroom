@@ -191,9 +191,9 @@ public class ManageGlobalPropertyListPresenter
                                 .stream()
                                 .filter(nodeName -> !nodeName.equals(lastNodeName))
                                 .forEach(this::refreshPropertiesForNode),
-                throwable ->
+                error ->
                         showError(
-                                throwable,
+                                error.getException(),
                                 "Error getting list of all nodes. Only properties for one node will be shown"));
     }
 

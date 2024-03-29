@@ -19,6 +19,7 @@ package stroom.folder.client;
 
 import stroom.core.client.ContentManager;
 import stroom.core.client.event.CloseContentEvent.Handler;
+import stroom.dispatch.client.RestError;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
@@ -68,7 +69,7 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
     @Override
     public void load(final DocRef docRef,
                      final Consumer<DocRef> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
+                     final Consumer<RestError> errorConsumer) {
 
     }
 
@@ -76,7 +77,7 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
     public void save(final DocRef docRef,
                      final DocRef document,
                      final Consumer<DocRef> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
+                     final Consumer<RestError> errorConsumer) {
 
     }
 

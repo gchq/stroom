@@ -29,6 +29,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
@@ -432,13 +433,13 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, Lucene
                     @Override
                     protected void exec(final Range range,
                                         final Consumer<ResultPage<IndexShard>> dataConsumer,
-                                        final Consumer<Throwable> throwableConsumer) {
+                                        final Consumer<RestError> errorConsumer) {
                         CriteriaUtil.setRange(queryCriteria, range);
                         restFactory
                                 .create(INDEX_RESOURCE)
                                 .method(res -> res.find(queryCriteria))
                                 .onSuccess(dataConsumer)
-                                .onFailure(throwableConsumer)
+                                .onFailure(errorConsumer)
                                 .exec();
                     }
 

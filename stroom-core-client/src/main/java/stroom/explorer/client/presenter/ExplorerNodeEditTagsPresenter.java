@@ -18,6 +18,7 @@
 package stroom.explorer.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.RefreshDocumentEvent;
@@ -208,7 +209,7 @@ public class ExplorerNodeEditTagsPresenter
 
     }
 
-    private void handleFailure(final Throwable t) {
+    private void handleFailure(final RestError t) {
         AlertEvent.fireError(
                 ExplorerNodeEditTagsPresenter.this,
                 t.getMessage(),

@@ -31,6 +31,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.node.client.NodeManager;
@@ -164,11 +165,11 @@ public class TaskManagerListPresenter
             @Override
             protected void exec(final Range range,
                                 final Consumer<TaskProgressResponse> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
+                                final Consumer<RestError> errorConsumer) {
                 TaskManagerListPresenter.this.range = range;
                 TaskManagerListPresenter.this.dataConsumer = dataConsumer;
                 delayedUpdate.reset();
-                fetchNodes(range, dataConsumer, throwableConsumer);
+                fetchNodes(range, dataConsumer, errorConsumer);
             }
         };
         dataProvider.addDataDisplay(dataGrid);
@@ -436,10 +437,10 @@ public class TaskManagerListPresenter
 
     public void fetchNodes(final Range range,
                            final Consumer<TaskProgressResponse> dataConsumer,
-                           final Consumer<Throwable> throwableConsumer) {
+                           final Consumer<RestError> errorConsumer) {
         nodeManager.listAllNodes(
                 nodeNames -> fetchTasksForNodes(range, dataConsumer, nodeNames),
-                throwableConsumer);
+                errorConsumer);
     }
 
     private void fetchTasksForNodes(final Range range,

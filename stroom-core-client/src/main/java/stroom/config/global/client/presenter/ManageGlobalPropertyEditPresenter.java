@@ -21,6 +21,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.OverrideValue;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeManager;
 import stroom.security.client.api.ClientSecurityContext;
@@ -226,8 +227,8 @@ public final class ManageGlobalPropertyEditPresenter
                 .method(res -> res.getPropertyByName(propertyName))
                 .onSuccess(configProperty ->
                         show(configProperty, hideRunnable))
-                .onFailure(throwable ->
-                        showError(throwable, "Error fetching property " + propertyName))
+                .onFailure(error ->
+                        showError(error, "Error fetching property " + propertyName))
                 .exec();
     }
 
@@ -485,10 +486,10 @@ public final class ManageGlobalPropertyEditPresenter
         }
     }
 
-    private void showError(final Throwable throwable, final String message) {
+    private void showError(final RestError error, final String message) {
         AlertEvent.fireError(
                 ManageGlobalPropertyEditPresenter.this,
-                message + " - " + throwable.getMessage(),
+                message + " - " + error.getMessage(),
                 null,
                 null);
     }

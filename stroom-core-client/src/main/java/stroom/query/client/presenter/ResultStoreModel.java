@@ -1,6 +1,7 @@
 package stroom.query.client.presenter;
 
 import stroom.data.client.presenter.CriteriaUtil;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeManager;
 import stroom.query.api.v2.DestroyReason;
@@ -45,19 +46,19 @@ public class ResultStoreModel {
 
     public void fetch(final Range range,
                       final Consumer<ResultPage<ResultStoreInfo>> dataConsumer,
-                      final Consumer<Throwable> throwableConsumer) {
+                      final Consumer<RestError> errorConsumer) {
         this.range = range;
         this.dataConsumer = dataConsumer;
         delayedUpdate.reset();
-        fetchNodes(range, dataConsumer, throwableConsumer);
+        fetchNodes(range, dataConsumer, errorConsumer);
     }
 
     private void fetchNodes(final Range range,
                             final Consumer<ResultPage<ResultStoreInfo>> dataConsumer,
-                            final Consumer<Throwable> throwableConsumer) {
+                            final Consumer<RestError> errorConsumer) {
         nodeManager.listAllNodes(
                 nodeNames -> fetchTasksForNodes(range, dataConsumer, nodeNames),
-                throwableConsumer);
+                errorConsumer);
     }
 
     private void fetchTasksForNodes(final Range range,

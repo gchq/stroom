@@ -132,8 +132,8 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                                 createRule(analyticUiDefaultConfig, query, analyticProcessType);
                             }
                         })
-                        .onFailure(throwable -> {
-                            AlertEvent.fireErrorFromException(this, throwable, null);
+                        .onFailure(restError -> {
+                            AlertEvent.fireErrorFromException(this, restError.getException(), null);
                         })
                         .exec();
             }

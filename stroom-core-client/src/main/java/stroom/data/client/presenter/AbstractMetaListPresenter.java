@@ -33,6 +33,7 @@ import stroom.data.shared.DataResource;
 import stroom.data.table.client.Refreshable;
 import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.ExportFileCompleteUtil;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionPopup;
@@ -146,14 +147,14 @@ public abstract class AbstractMetaListPresenter
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<MetaRow>> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
+                                final Consumer<RestError> errorConsumer) {
                 if (criteria.getExpression() != null) {
                     CriteriaUtil.setRange(criteria, range);
                     restFactory
                             .create(META_RESOURCE)
                             .method(res -> res.findMetaRow(criteria))
                             .onSuccess(dataConsumer)
-                            .onFailure(throwableConsumer)
+                            .onFailure(errorConsumer)
                             .exec();
                 } else {
                     dataConsumer.accept(new ResultPage<>(Collections.emptyList()));

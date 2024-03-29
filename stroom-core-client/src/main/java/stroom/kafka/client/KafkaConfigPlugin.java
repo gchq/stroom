@@ -18,6 +18,7 @@
 package stroom.kafka.client;
 
 import stroom.core.client.ContentManager;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -75,7 +76,7 @@ public class KafkaConfigPlugin extends DocumentPlugin<KafkaConfigDoc> {
     @Override
     public void load(final DocRef docRef,
                      final Consumer<KafkaConfigDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
+                     final Consumer<RestError> errorConsumer) {
         restFactory
                 .create(KAFKA_CONFIG_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
@@ -88,7 +89,7 @@ public class KafkaConfigPlugin extends DocumentPlugin<KafkaConfigDoc> {
     public void save(final DocRef docRef,
                      final KafkaConfigDoc document,
                      final Consumer<KafkaConfigDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
+                     final Consumer<RestError> errorConsumer) {
         restFactory
                 .create(KAFKA_CONFIG_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))

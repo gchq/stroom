@@ -183,10 +183,10 @@ public class DataRetentionImpactPresenter
                         refreshVisibleData();
                     }
                 })
-                .onFailure(throwable -> {
+                .onFailure(error -> {
                     isQueryRunning = false;
                     updateButtonStates();
-                    AlertEvent.fireErrorFromException(this, throwable, null);
+                    AlertEvent.fireErrorFromException(this, error.getException(), null);
                 })
                 .exec();
     }
@@ -203,11 +203,11 @@ public class DataRetentionImpactPresenter
                         updateButtonStates();
 //                        GWT.log("Cancel finished (success)");
                     })
-                    .onFailure(throwable -> {
+                    .onFailure(error -> {
                         // Have to assume it is still running
                         isQueryRunning = true;
                         updateButtonStates();
-                        AlertEvent.fireErrorFromException(this, throwable, null);
+                        AlertEvent.fireErrorFromException(this, error.getException(), null);
                     })
                     .exec();
         }

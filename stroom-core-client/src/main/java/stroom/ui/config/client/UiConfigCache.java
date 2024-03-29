@@ -81,7 +81,7 @@ public class UiConfigCache implements HasHandlers {
                     clientProperties = result;
                     future.setResult(result);
                     PropertyChangeEvent.fire(UiConfigCache.this, result);
-                }).onFailure(future::setThrowable)
+                }).onFailure(error -> future.setThrowable(error.getException()))
                 .exec();
         return future;
     }

@@ -21,6 +21,7 @@ import stroom.analytics.client.presenter.AnalyticRulePresenter;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleResource;
 import stroom.core.client.ContentManager;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -65,7 +66,7 @@ public class AnalyticsPlugin extends DocumentPlugin<AnalyticRuleDoc> {
     @Override
     public void load(final DocRef docRef,
                      final Consumer<AnalyticRuleDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
+                     final Consumer<RestError> errorConsumer) {
         restFactory
                 .create(ANALYTIC_RULE_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
@@ -78,7 +79,7 @@ public class AnalyticsPlugin extends DocumentPlugin<AnalyticRuleDoc> {
     public void save(final DocRef docRef,
                      final AnalyticRuleDoc document,
                      final Consumer<AnalyticRuleDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
+                     final Consumer<RestError> errorConsumer) {
         restFactory
                 .create(ANALYTIC_RULE_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))

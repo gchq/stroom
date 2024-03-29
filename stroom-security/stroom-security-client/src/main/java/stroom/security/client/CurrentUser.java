@@ -126,7 +126,7 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
                 .method(res ->
                         res.checkDocumentPermission(new CheckDocumentPermissionRequest(documentUuid, permission)))
                 .onSuccess(future::setResult)
-                .onFailure(future::setThrowable)
+                .onFailure(restError -> future.setThrowable(restError.getException()))
                 .exec();
 
         return future;

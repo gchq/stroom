@@ -24,6 +24,7 @@ import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobResource;
@@ -149,12 +150,12 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
                     @Override
                     protected void exec(final Range range,
                                         final Consumer<ResultPage<Job>> dataConsumer,
-                                        final Consumer<Throwable> throwableConsumer) {
+                                        final Consumer<RestError> errorConsumer) {
                         restFactory
                                 .create(JOB_RESOURCE)
                                 .method(JobResource::list)
                                 .onSuccess(dataConsumer)
-                                .onFailure(throwableConsumer)
+                                .onFailure(errorConsumer)
                                 .exec();
                     }
 

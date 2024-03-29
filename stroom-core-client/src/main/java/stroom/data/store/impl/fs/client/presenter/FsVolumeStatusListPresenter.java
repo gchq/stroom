@@ -28,6 +28,7 @@ import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeResource;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.data.store.impl.fs.shared.S3ClientConfig;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.GwtNullSafe;
@@ -89,13 +90,13 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
                 @Override
                 protected void exec(final Range range,
                                     final Consumer<ResultPage<FsVolume>> dataConsumer,
-                                    final Consumer<Throwable> throwableConsumer) {
+                                    final Consumer<RestError> errorConsumer) {
                     CriteriaUtil.setRange(criteria, range);
                     restFactory
                             .create(FS_VOLUME_RESOURCE)
                             .method(res -> res.find(criteria))
                             .onSuccess(dataConsumer)
-                            .onFailure(throwableConsumer)
+                            .onFailure(errorConsumer)
                             .exec();
                 }
             };

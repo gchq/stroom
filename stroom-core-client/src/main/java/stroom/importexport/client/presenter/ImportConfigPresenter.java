@@ -60,7 +60,7 @@ public class ImportConfigPresenter
         super(eventBus, view, proxy);
         this.restFactory = restFactory;
 
-        view.getForm().setAction(restFactory.getImportFileURL());
+        view.getForm().setAction(ImportUtil.getImportFileURL());
         view.getForm().setEncoding(FormPanel.ENCODING_MULTIPART);
         view.getForm().setMethod(FormPanel.METHOD_POST);
     }
