@@ -16,10 +16,10 @@
 
 package stroom.index.client.presenter;
 
+import stroom.datasource.api.v2.AnalyzerType;
+import stroom.datasource.api.v2.FieldType;
 import stroom.index.client.presenter.IndexFieldEditPresenter.IndexFieldEditView;
-import stroom.index.shared.AnalyzerType;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFieldType;
+import stroom.index.shared.LuceneIndexField;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -43,10 +43,10 @@ public class IndexFieldEditPresenter extends MyPresenterWidget<IndexFieldEditVie
         super(eventBus, view);
     }
 
-    public void read(final IndexField indexField, final Set<String> otherFieldNames) {
+    public void read(final LuceneIndexField indexField, final Set<String> otherFieldNames) {
         this.otherFieldNames = otherFieldNames;
-        getView().setFieldUse(indexField.getFieldType());
-        getView().setFieldName(indexField.getFieldName());
+        getView().setType(indexField.getFldType());
+        getView().setFieldName(indexField.getFldName());
         getView().setStored(indexField.isStored());
         getView().setIndexed(indexField.isIndexed());
         getView().setTermPositions(indexField.isTermPositions());
@@ -54,7 +54,7 @@ public class IndexFieldEditPresenter extends MyPresenterWidget<IndexFieldEditVie
         getView().setCaseSensitive(indexField.isCaseSensitive());
     }
 
-    public IndexField write() {
+    public LuceneIndexField write() {
         String name = getView().getFieldName();
         name = name.trim();
 
@@ -65,12 +65,12 @@ public class IndexFieldEditPresenter extends MyPresenterWidget<IndexFieldEditVie
             throw new ValidationException("An index field with this name already exists");
         }
 
-        return IndexField
+        return LuceneIndexField
                 .builder()
-                .fieldType(getView().getFieldUse())
-                .fieldName(name)
-                .stored(getView().isStored())
+                .fldType(getView().getType())
+                .fldName(name)
                 .indexed(getView().isIndexed())
+                .stored(getView().isStored())
                 .termPositions(getView().isTermPositions())
                 .analyzerType(getView().getAnalyzerType())
                 .caseSensitive(getView().isCaseSensitive())
@@ -90,9 +90,9 @@ public class IndexFieldEditPresenter extends MyPresenterWidget<IndexFieldEditVie
 
     public interface IndexFieldEditView extends View, Focus {
 
-        IndexFieldType getFieldUse();
+        FieldType getType();
 
-        void setFieldUse(IndexFieldType fieldUse);
+        void setType(FieldType type);
 
         String getFieldName();
 

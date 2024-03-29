@@ -17,6 +17,7 @@
 package stroom.search.elastic.shared;
 
 import stroom.docref.DocRef;
+import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.svg.shared.SvgImage;
 
@@ -29,6 +30,9 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
+@Description(
+        "Defines the connection details for a single Elasticsearch cluster.\n" +
+                "This Elastic Cluster Document can then be used by one or more Elastic Index Documents.")
 @JsonPropertyOrder({
         "type",
         "uuid",

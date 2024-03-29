@@ -17,6 +17,7 @@
 package stroom.search.elastic.shared;
 
 import stroom.docref.DocRef;
+import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.svg.shared.SvgImage;
@@ -32,6 +33,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+@Description(
+        "Defines an index that exists within an Elasticsearch cluster.\n" +
+                "This Document is used in the configuration of the {{< pipe-elm \"ElasticIndexingFilter\" >}} " +
+                "pipeline element.\n" +
+                "\n" +
+                "{{% see-also %}}" +
+                "[Elasticsearch]({{< relref \"docs/user-guide/indexing/elasticsearch\" >}})" +
+                "{{% /see-also %}}")
 @JsonPropertyOrder({
         "type",
         "uuid",

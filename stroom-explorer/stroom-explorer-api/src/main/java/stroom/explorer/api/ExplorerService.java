@@ -17,15 +17,19 @@
 
 package stroom.explorer.api;
 
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.ExplorerDocContentMatch;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource.TagFetchMode;
 import stroom.explorer.shared.FetchExplorerNodeResult;
-import stroom.explorer.shared.FindExplorerNodeCriteria;
-import stroom.explorer.shared.FindExplorerNodeQuery;
+import stroom.explorer.shared.FetchExplorerNodesRequest;
+import stroom.explorer.shared.FetchHighlightsRequest;
+import stroom.explorer.shared.FindInContentRequest;
+import stroom.explorer.shared.FindInContentResult;
+import stroom.explorer.shared.FindRequest;
+import stroom.explorer.shared.FindResult;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
@@ -37,7 +41,7 @@ import java.util.Set;
 
 public interface ExplorerService extends Clearable {
 
-    FetchExplorerNodeResult getData(FindExplorerNodeCriteria criteria);
+    FetchExplorerNodeResult getData(FetchExplorerNodesRequest criteria);
 
     ExplorerNode create(String docType,
                         String docName,
@@ -60,15 +64,15 @@ public interface ExplorerService extends Clearable {
 
     /**
      * @param docRefs The nodes to add tags to.
-     * @param tags Tags to add (if not already present) to all the nodes represented by docRefs.
-     *             Will not error if tags are already present.
+     * @param tags    Tags to add (if not already present) to all the nodes represented by docRefs.
+     *                Will not error if tags are already present.
      */
     void addTags(List<DocRef> docRefs, Set<String> tags);
 
     /**
      * @param docRefs The nodes to remove tags from.
-     * @param tags Tags to remove (if present) from all the nodes represented by docRefs.
-     *             Will not error if tags are not present.
+     * @param tags    Tags to remove (if present) from all the nodes represented by docRefs.
+     *                Will not error if tags are not present.
      */
     void removeTags(List<DocRef> docRefs, Set<String> tags);
 
@@ -90,7 +94,11 @@ public interface ExplorerService extends Clearable {
 
     List<DocumentType> getVisibleTypes();
 
-    ResultPage<ExplorerDocContentMatch> findContent(FindExplorerNodeQuery request);
+    ResultPage<FindResult> find(FindRequest request);
+
+    ResultPage<FindInContentResult> findInContent(FindInContentRequest request);
+
+    DocContentHighlights fetchHighlights(FetchHighlightsRequest request);
 
     Optional<ExplorerNode> getFromDocRef(DocRef docRef);
 

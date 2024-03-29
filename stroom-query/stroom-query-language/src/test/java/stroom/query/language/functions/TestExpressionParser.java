@@ -884,7 +884,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         testCases.add(vStrA, "=", vStrA, vTrue);
         testCases.add(vStrA, "=", vStrB, vFals);
         testCases.add(vStrA, "=", vTrue, vFals);
-        testCases.add(vStrA, "=", vFals, vFals);
+        testCases.add(vStrA, "=", vFals, vTrue);
         testCases.add(vStrA, "=", vStra, vFals);
 
         // mixed types, equals

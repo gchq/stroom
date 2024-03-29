@@ -16,13 +16,19 @@
 
 package stroom.test.common;
 
+import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public final class ProjectPathUtil {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProjectPathUtil.class);
 
     public static Path resolveDir(final String projectDir) {
         Path root = Paths.get(".").toAbsolutePath().normalize();
@@ -35,5 +41,54 @@ public final class ProjectPathUtil {
         }
 
         return dir;
+    }
+
+    /**
+     * @return The absolute path to the projects git repo root dir or throw if it cannot be found.
+     */
+    public static Path getRepoRoot() {
+
+        final Path startDir;
+        Path currDir = null;
+
+        // From a PSVM this should be the repo root, but from a test
+        // this is likely the gradle module dir
+        final String userDirStr = System.getProperty("user.dir");
+        if (!NullSafe.isBlankString(userDirStr)) {
+            startDir = Paths.get(userDirStr).toAbsolutePath().normalize();
+        } else {
+            startDir = Paths.get(".").toAbsolutePath().normalize();
+        }
+        LOGGER.debug("startDir: {}", startDir);
+        currDir = startDir;
+
+        final Path gitDit = Paths.get(".git");
+
+        for (; ; ) {
+            if (!Files.isDirectory(currDir)) {
+                throw new RuntimeException(LogUtil.message("currDir '{}' is not a directory or does not exist",
+                        currDir.toAbsolutePath().normalize()));
+            }
+
+            // See if there is a .git dir in here to identify it as a git repo.
+            // This assumes that the .git dir is in the repo root
+            final Path relGitDir = currDir.resolve(gitDit);
+            if (Files.isDirectory(relGitDir)) {
+                // found the root, happy days
+                break;
+            }
+            // Go up one and have another go
+            final Path parent = currDir.getParent();
+            if (parent == null) {
+                // Reached the top
+                throw new RuntimeException(LogUtil.message(
+                        "Unable to find project's repo root from start point {}",
+                        startDir));
+            }
+            currDir = parent
+                    .toAbsolutePath()
+                    .normalize();
+        }
+        return currDir;
     }
 }

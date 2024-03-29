@@ -21,10 +21,9 @@ import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.script.shared.ScriptDoc;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.shared.EqualsUtil;
 import stroom.visualisation.client.presenter.VisualisationSettingsPresenter.VisualisationSettingsView;
 import stroom.visualisation.shared.VisualisationDoc;
 
@@ -38,13 +37,13 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 public class VisualisationSettingsPresenter extends DocumentEditPresenter<VisualisationSettingsView, VisualisationDoc> {
 
-    private final EntityDropDownPresenter scriptPresenter;
+    private final DocSelectionBoxPresenter scriptPresenter;
     private final EditorPresenter editorPresenter;
 
     @Inject
     public VisualisationSettingsPresenter(final EventBus eventBus,
                                           final VisualisationSettingsView view,
-                                          final EntityDropDownPresenter scriptPresenter,
+                                          final DocSelectionBoxPresenter scriptPresenter,
                                           final EditorPresenter editorPresenter) {
         super(eventBus, view);
         this.scriptPresenter = scriptPresenter;
@@ -72,12 +71,7 @@ public class VisualisationSettingsPresenter extends DocumentEditPresenter<Visual
 
     @Override
     protected void onBind() {
-        registerHandler(scriptPresenter.addDataSelectionHandler(event -> {
-            if (!EqualsUtil.isEquals(scriptPresenter.getSelectedEntityReference(),
-                    getEntity().getScriptRef())) {
-                setDirty(true);
-            }
-        }));
+        registerHandler(scriptPresenter.addDataSelectionHandler(event -> setDirty(true)));
     }
 
     @Override

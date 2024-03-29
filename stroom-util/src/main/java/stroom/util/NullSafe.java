@@ -143,6 +143,15 @@ public class NullSafe {
     }
 
     /**
+     * @return str if it is non-null and non-blank, else return other
+     */
+    public static String nonBlankStringElse(final String str, final String other) {
+        return str != null && !str.isBlank()
+                ? str
+                : other;
+    }
+
+    /**
      * @return True if str is null or empty
      */
     public static boolean isEmptyString(final String str) {
@@ -154,6 +163,24 @@ public class NullSafe {
      */
     public static boolean isTrue(final Boolean val) {
         return val != null && val;
+    }
+
+    /**
+     * @return The un-boxed value if non-null, else zero.
+     */
+    public static int getInt(final Integer val) {
+        return val != null
+                ? val
+                : 0;
+    }
+
+    /**
+     * @return The un-boxed value if non-null, else zero.
+     */
+    public static long getLong(final Long val) {
+        return val != null
+                ? val
+                : 0;
     }
 
     public static Optional<String> nonBlank(final String str) {
@@ -189,6 +216,13 @@ public class NullSafe {
      */
     public static <T> boolean isEmptyCollection(final Collection<T> collection) {
         return collection == null || collection.isEmpty();
+    }
+
+    /**
+     * @return True if the array is null or empty
+     */
+    public static <T> boolean isEmptyArray(final T[] arr) {
+        return arr == null || arr.length == 0;
     }
 
     /**
@@ -250,6 +284,13 @@ public class NullSafe {
                     .apply(value);
             return map == null || map.isEmpty();
         }
+    }
+
+    /**
+     * @return True if the collection is non-null and not empty
+     */
+    public static <T> boolean hasItems(final T... items) {
+        return items != null && items.length > 0;
     }
 
     /**
@@ -333,6 +374,8 @@ public class NullSafe {
     public static <T> Stream<T> stream(final T... items) {
         if (items == null || items.length == 0) {
             return Stream.empty();
+        } else if (items.length == 1) {
+            return Stream.of(items[0]);
         } else {
             return Arrays.stream(items);
         }

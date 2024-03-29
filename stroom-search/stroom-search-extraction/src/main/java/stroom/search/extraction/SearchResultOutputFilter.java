@@ -37,6 +37,11 @@ import java.util.List;
 @ConfigurableElement(
         type = "SearchResultOutputFilter",
         category = Category.FILTER,
+        description = """
+                Used in a search extraction pipeline for extracting field values that have \
+                not been stored in the index and where the field definitions are defined in the Index settings.
+                Consumes XML events in the `records:2` namespace to convert them into a form so \
+                that they can be used in a Dashboard/Query/Analytic.""",
         roles = {
                 PipelineElementType.ROLE_TARGET},
         icon = SvgImage.PIPELINE_SEARCH_OUTPUT)

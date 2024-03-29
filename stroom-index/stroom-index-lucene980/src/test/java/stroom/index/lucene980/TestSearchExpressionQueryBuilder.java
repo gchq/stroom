@@ -1,14 +1,14 @@
 package stroom.index.lucene980;
 
+import stroom.datasource.api.v2.AnalyzerType;
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
-import stroom.index.shared.AnalyzerType;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFieldsMap;
+import stroom.index.shared.LuceneIndexField;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.common.v2.MockIndexFieldCache;
 
 import org.junit.jupiter.api.Test;
 
@@ -59,17 +59,17 @@ public class TestSearchExpressionQueryBuilder {
             }
         };
 
-
-        final IndexFieldsMap indexFieldsMap = new IndexFieldsMap();
-        indexFieldsMap.put(IndexField.createField("test", analyzerType));
+        final MockIndexFieldCache indexFieldCache = new MockIndexFieldCache();
+        indexFieldCache.put("test", LuceneIndexField.createField("test", analyzerType));
 
         final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
+                new DocRef("test", "test"),
+                indexFieldCache,
                 wordListProvider,
-                indexFieldsMap,
                 DateTimeSettings.builder().build());
 
         final ExpressionOperator expressionOperator = ExpressionOperator.builder()
-                .addTerm(
+                .addDocRefTerm(
                         "test",
                         ExpressionTerm.Condition.IN_DICTIONARY,
                         dictionaryRef)

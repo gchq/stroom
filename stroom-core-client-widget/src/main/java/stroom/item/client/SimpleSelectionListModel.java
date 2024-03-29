@@ -22,6 +22,7 @@ public class SimpleSelectionListModel<T> implements SelectionListModel<T, Simple
     @Override
     public void onRangeChange(final SimpleSelectionItemWrapper<T> parent,
                               final String filter,
+                              final boolean filterChange,
                               final PageRequest pageRequest,
                               final Consumer<ResultPage<SimpleSelectionItemWrapper<T>>> consumer) {
         if (!GwtNullSafe.isBlankString(filter)) {
@@ -117,5 +118,10 @@ public class SimpleSelectionListModel<T> implements SelectionListModel<T, Simple
     @Override
     public T unwrap(final SimpleSelectionItemWrapper<T> selectionItem) {
         return GwtNullSafe.get(selectionItem, SimpleSelectionItemWrapper::getItem);
+    }
+
+    @Override
+    public boolean isEmptyItem(final SimpleSelectionItemWrapper<T> selectionItem) {
+        return nonSelectItem != null && nonSelectItem.equals(selectionItem);
     }
 }

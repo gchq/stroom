@@ -16,12 +16,12 @@
 
 package stroom.index.impl;
 
+import stroom.datasource.api.v2.FieldType;
+import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
 import stroom.index.shared.AllPartition;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFieldType;
-import stroom.index.shared.IndexFieldsMap;
 import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.Partition;
 import stroom.index.shared.TimePartition;
 import stroom.pipeline.LocationFactoryProxy;
@@ -35,13 +35,12 @@ import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
-import stroom.query.language.functions.ValString;
+import stroom.query.common.v2.IndexFieldCache;
+import stroom.query.language.functions.Val;
 import stroom.search.extraction.FieldValue;
-import stroom.search.extraction.IndexStructure;
-import stroom.search.extraction.IndexStructureCache;
+import stroom.search.extraction.IndexFieldUtil;
 import stroom.svg.shared.SvgImage;
 import stroom.util.CharBuffer;
-import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -63,7 +62,8 @@ import java.util.TreeMap;
         type = "IndexingFilter",
         category = Category.FILTER,
         description = """
-                A filter to send source data to an index.
+                A filter consuming XML events in the `records:2` namespace to index/store the fields
+                and their values in a Lucene Index.
                 """,
         roles = {
                 PipelineElementType.ROLE_TARGET,
@@ -83,11 +83,11 @@ class IndexingFilter extends AbstractXMLFilter {
     private final LocationFactoryProxy locationFactory;
     private final Indexer indexer;
     private final ErrorReceiverProxy errorReceiverProxy;
-    private final IndexStructureCache indexStructureCache;
+    private final LuceneIndexDocCache luceneIndexDocCache;
+    private final IndexFieldCache indexFieldCache;
     private final CharBuffer debugBuffer = new CharBuffer(10);
-    private IndexFieldsMap indexFieldsMap;
     private DocRef indexRef;
-    private stroom.index.shared.IndexDoc index;
+    private LuceneIndexDoc index;
     private final TimePartitionFactory timePartitionFactory = new TimePartitionFactory();
     private final TreeMap<Long, TimePartition> timePartitionTreeMap = new TreeMap<>();
     private final Map<Partition, IndexShardKey> indexShardKeyMap = new HashMap<>();
@@ -103,12 +103,14 @@ class IndexingFilter extends AbstractXMLFilter {
                    final LocationFactoryProxy locationFactory,
                    final Indexer indexer,
                    final ErrorReceiverProxy errorReceiverProxy,
-                   final IndexStructureCache indexStructureCache) {
+                   final LuceneIndexDocCache luceneIndexDocCache,
+                   final IndexFieldCache indexFieldCache) {
         this.metaHolder = metaHolder;
         this.locationFactory = locationFactory;
         this.indexer = indexer;
         this.errorReceiverProxy = errorReceiverProxy;
-        this.indexStructureCache = indexStructureCache;
+        this.luceneIndexDocCache = luceneIndexDocCache;
+        this.indexFieldCache = indexFieldCache;
     }
 
     /**
@@ -123,14 +125,11 @@ class IndexingFilter extends AbstractXMLFilter {
             }
 
             // Get the index and index fields from the cache.
-            final IndexStructure indexStructure = indexStructureCache.get(indexRef);
-            if (indexStructure == null) {
+            index = luceneIndexDocCache.get(indexRef);
+            if (index == null) {
                 log(Severity.FATAL_ERROR, "Unable to load index", null);
                 throw LoggedException.create("Unable to load index");
             }
-
-            index = indexStructure.getIndex();
-            indexFieldsMap = indexStructure.getIndexFieldsMap();
 
             // Create a key to create shards with.
             if (metaHolder == null || metaHolder.getMeta() == null || index.getPartitionBy() == null) {
@@ -138,13 +137,13 @@ class IndexingFilter extends AbstractXMLFilter {
                 // create a basic key.
                 final Partition partition = AllPartition.INSTANCE;
                 defaultPartition = partition;
-                final IndexShardKey indexShardKey = IndexShardKeyUtil.createKey(index, partition);
+                final IndexShardKey indexShardKey = IndexShardKey.createKey(index, partition);
                 indexShardKeyMap.put(indexShardKey.getPartition(), indexShardKey);
             } else {
                 final long metaCreateMs = metaHolder.getMeta().getCreateMs();
                 final TimePartition timePartition = timePartitionFactory.create(index, metaCreateMs);
                 defaultPartition = timePartition;
-                final IndexShardKey indexShardKey = IndexShardKeyUtil.createKey(index, timePartition);
+                final IndexShardKey indexShardKey = IndexShardKey.createKey(index, timePartition);
                 indexShardKeyMap.put(indexShardKey.getPartition(), indexShardKey);
                 timePartitionTreeMap.put(timePartition.getPartitionFromTime(), timePartition);
             }
@@ -176,7 +175,7 @@ class IndexingFilter extends AbstractXMLFilter {
 
                 if (!name.isEmpty() && !value.isEmpty()) {
                     // See if we can get this field.
-                    final IndexField indexField = indexFieldsMap.get(name);
+                    final IndexField indexField = indexFieldCache.get(indexRef, name);
                     if (indexField != null) {
                         // Index the current content if we are to store or index
                         // this field.
@@ -233,7 +232,7 @@ class IndexingFilter extends AbstractXMLFilter {
                 }
 
                 final IndexShardKey indexShardKey =
-                        indexShardKeyMap.computeIfAbsent(partition, k -> IndexShardKeyUtil.createKey(index, k));
+                        indexShardKeyMap.computeIfAbsent(partition, k -> IndexShardKey.createKey(index, k));
 
                 indexer.addDocument(indexShardKey, document);
             } catch (final RuntimeException e) {
@@ -246,101 +245,56 @@ class IndexingFilter extends AbstractXMLFilter {
 
     private void processIndexContent(final IndexField indexField, final String value) {
         try {
-            if (currentEventTime == null &&
-                    IndexFieldType.DATE_FIELD.equals(indexField.getFieldType()) &&
-                    indexField.getFieldName().equals(index.getTimeField())) {
-                try {
-                    // Set the current event time if this is a recognised event time field.
-                    currentEventTime = DateUtil.parseUnknownString(value);
-                } catch (final RuntimeException e) {
-                    LOGGER.trace(e.getMessage(), e);
+            final Val val = convertValue(indexField, value);
+            if (val != null) {
+                if (currentEventTime == null &&
+                        FieldType.DATE.equals(indexField.getFldType()) &&
+                        indexField.getFldName().equals(index.getTimeField())) {
+                    try {
+                        // Set the current event time if this is a recognised event time field.
+                        currentEventTime = val.toLong();
+                    } catch (final RuntimeException e) {
+                        LOGGER.trace(e.getMessage(), e);
+                    }
                 }
+
+                // Add the current field to the document if it is not null.
+                final FieldValue fieldValue = new FieldValue(indexField, val);
+
+                // Output some debug.
+                if (LOGGER.isDebugEnabled()) {
+                    debugBuffer.append("processIndexContent() - Adding to index indexName=");
+                    debugBuffer.append(indexRef.getName());
+                    debugBuffer.append(" name=");
+                    debugBuffer.append(indexField.getFldName());
+                    debugBuffer.append(" value=");
+                    debugBuffer.append(value);
+
+                    final String debug = debugBuffer.toString();
+                    debugBuffer.clear();
+
+                    LOGGER.debug(debug);
+                }
+
+                document.add(fieldValue);
             }
-
-
-//            Field field = null;
-//
-//            if (IndexFieldType.INTEGER_FIELD.equals(indexField.getFieldType())) {
-//                FieldValue fieldValue = new FieldValue(indexField, ValString.create(value));
-//
-//                try {
-//                    final int val = Integer.parseInt(value);
-//                    field = FieldFactory.createInt(indexField, val);
-//                } catch (final Exception e) {
-//                    LOGGER.trace(e.getMessage(), e);
-//                }
-//            } else if (IndexFieldType.LONG_FIELD.equals(indexField.getFieldType())) {
-//                try {
-//                    final long val = Long.parseLong(value);
-//                    field = FieldFactory.create(indexField, val);
-//                } catch (final Exception e) {
-//                    LOGGER.trace(e.getMessage(), e);
-//                }
-//            } else if (IndexFieldType.FLOAT_FIELD.equals(indexField.getFieldType())) {
-//                try {
-//                    final float val = Float.parseFloat(value);
-//                    field = FieldFactory.createFloat(indexField, val);
-//                } catch (final Exception e) {
-//                    LOGGER.trace(e.getMessage(), e);
-//                }
-//            } else if (IndexFieldType.DOUBLE_FIELD.equals(indexField.getFieldType())) {
-//                try {
-//                    final double val = Double.parseDouble(value);
-//                    field = FieldFactory.createDouble(indexField, val);
-//                } catch (final Exception e) {
-//                    LOGGER.trace(e.getMessage(), e);
-//                }
-//            } else if (IndexFieldType.DATE_FIELD.equals(indexField.getFieldType())) {
-//                try {
-//                    final long val = DateUtil.parseUnknownString(value);
-//
-//                    // Set the current event time if this is a recognised event time field.
-//                    if (currentEventTime == null && indexField.getFieldName().equals(index.getTimeField())) {
-//                        currentEventTime = val;
-//                    }
-//
-//                    field = FieldFactory.create(indexField, val);
-//                } catch (final RuntimeException e) {
-//                    LOGGER.trace(e.getMessage(), e);
-//                }
-//            } else if (indexField.getFieldType().isNumeric()) {
-//                try {
-//                    final long val = Long.parseLong(value);
-//                    field = FieldFactory.create(indexField, val);
-//                } catch (final Exception e) {
-//                    LOGGER.trace(e.getMessage(), e);
-//                }
-//            } else {
-//                field = FieldFactory.create(indexField, value);
-//            }
-
-            // Add the current field to the document if it is not null.
-            final FieldValue fieldValue = new FieldValue(indexField, ValString.create(value));
-
-            // Output some debug.
-            if (LOGGER.isDebugEnabled()) {
-                debugBuffer.append("processIndexContent() - Adding to index indexName=");
-                debugBuffer.append(indexRef.getName());
-                debugBuffer.append(" name=");
-                debugBuffer.append(indexField.getFieldName());
-                debugBuffer.append(" value=");
-                debugBuffer.append(value);
-
-                final String debug = debugBuffer.toString();
-                debugBuffer.clear();
-
-                LOGGER.debug(debug);
-            }
-
-            document.add(fieldValue);
 
         } catch (final RuntimeException e) {
             log(Severity.ERROR, e.getMessage(), e);
         }
     }
 
+    private Val convertValue(final IndexField indexField, final String value) {
+        try {
+            return IndexFieldUtil.convertValue(indexField, value);
+        } catch (final RuntimeException e) {
+            log(Severity.ERROR, e.getMessage(), e);
+        }
+        return null;
+    }
+
     @PipelineProperty(description = "The index to send records to.", displayPriority = 1)
-    @PipelinePropertyDocRef(types = stroom.index.shared.IndexDoc.DOCUMENT_TYPE)
+    @PipelinePropertyDocRef(types = LuceneIndexDoc.DOCUMENT_TYPE)
     public void setIndex(final DocRef indexRef) {
         this.indexRef = indexRef;
     }

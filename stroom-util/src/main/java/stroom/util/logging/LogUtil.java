@@ -7,6 +7,9 @@ import stroom.util.shared.ModelStringUtil;
 import com.google.common.base.Strings;
 import org.slf4j.helpers.MessageFormatter;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
@@ -15,6 +18,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -393,5 +397,24 @@ public final class LogUtil {
                 path,
                 Path::toAbsolutePath,
                 Path::normalize);
+    }
+
+    /**
+     * Log the current thread's stack trace to the logConsumer, prefixed with message and a new line.
+     */
+    public static void logStackTrace(final String message,
+                                     final Consumer<String> logConsumer) {
+        if (logConsumer != null) {
+            try {
+                final Writer writer = new StringWriter();
+                final PrintWriter pw = new PrintWriter(writer);
+                new Exception("Dumping Stack Trace").printStackTrace(pw);
+                logConsumer.accept(
+                        Objects.requireNonNullElse(message, "Dumping stack trace") + "\n" + writer);
+            } catch (Exception e) {
+                logConsumer.accept(
+                        "Error dumping stack trace: " + e.getMessage());
+            }
+        }
     }
 }

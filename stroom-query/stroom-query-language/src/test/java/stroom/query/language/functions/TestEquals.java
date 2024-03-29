@@ -1,8 +1,9 @@
 package stroom.query.language.functions;
 
+import java.time.Duration;
 import java.util.stream.Stream;
 
-class TestEquals extends AbstractFunctionTest<Equals> {
+class TestEquals extends AbstractEqualityFunctionTest<Equals> {
 
     @Override
     Class<Equals> getFunctionType() {
@@ -10,73 +11,87 @@ class TestEquals extends AbstractFunctionTest<Equals> {
     }
 
     @Override
-    Stream<TestCase> getTestCases() {
+    String getOperator() {
+        return Equals.NAME;
+    }
+
+    @Override
+    boolean addInverseTest() {
+        return false;
+    }
+
+    @Override
+    Stream<Values> getTestCaseValues() {
         return Stream.of(
-                TestCase.of(
-                        "string true",
-                        ValBoolean.TRUE,
-                        ValString.create("abc"),
-                        ValString.create("abc")),
-                TestCase.of(
-                        "string false",
-                        ValBoolean.FALSE,
-                        ValString.create("abc"),
-                        ValString.create("def")),
-                TestCase.of(
-                        "int true",
-                        ValBoolean.TRUE,
-                        ValInteger.create(123),
-                        ValInteger.create(123)),
-                TestCase.of(
-                        "int false",
-                        ValBoolean.FALSE,
-                        ValInteger.create(123),
-                        ValInteger.create(456)),
-                TestCase.of(
-                        "long true",
-                        ValBoolean.TRUE,
-                        ValLong.create(123L),
-                        ValLong.create(123L)),
-                TestCase.of(
-                        "long false",
-                        ValBoolean.FALSE,
-                        ValLong.create(123L),
-                        ValLong.create(456L)),
-                TestCase.of(
-                        "double true",
-                        ValBoolean.TRUE,
-                        ValDouble.create(1.230),
-                        ValDouble.create(1.23)),
-                TestCase.of(
-                        "double false",
-                        ValBoolean.FALSE,
-                        ValDouble.create(1.23),
-                        ValDouble.create(1.2301)),
-                TestCase.of(
-                        "boolean true",
-                        ValBoolean.TRUE,
-                        ValBoolean.TRUE,
-                        ValBoolean.TRUE),
-                TestCase.of(
-                        "boolean false",
-                        ValBoolean.FALSE,
-                        ValBoolean.TRUE,
-                        ValBoolean.FALSE),
-                TestCase.of(
-                        "mixed double true",
-                        ValBoolean.TRUE,
-                        ValString.create("1.230000"),
-                        ValDouble.create(1.23)),
-                TestCase.of(
-                        "mixed boolean true",
-                        ValBoolean.TRUE,
-                        ValString.create("true"),
-                        ValBoolean.TRUE),
-                TestCase.of(
-                        "mixed boolean 2 true",
-                        ValBoolean.TRUE,
-                        ValBoolean.TRUE,
-                        ValLong.create(1))
+                Values.of(2, 1, false),
+                Values.of(2, 1L, false),
+                Values.of(2, 1D, false),
+                Values.of(2, 1F, false),
+                Values.of(2, 2, true),
+                Values.of(2, 2L, true),
+                Values.of(2, 2D, true),
+                Values.of(2, 2.0D, true),
+                Values.of(2, 2F, true),
+                Values.of(2, 2.0F, true),
+
+                Values.of(2L, 1L, false),
+                Values.of(2L, 1, false),
+                Values.of(2L, 1D, false),
+                Values.of(2L, 1F, false),
+                Values.of(2L, 2L, true),
+                Values.of(2L, 2, true),
+                Values.of(2L, 2D, true),
+                Values.of(2L, 2.0D, true),
+                Values.of(2L, 2F, true),
+                Values.of(2L, 2.0F, true),
+
+                Values.of(1.2D, 1.1D, false),
+                Values.of(1.2D, 1, false),
+                Values.of(1.2D, 1L, false),
+                Values.of(1.2D, 1.1F, false),
+                Values.of(1.1D, 1.1D, true),
+                Values.of(1D, 1D, true),
+                Values.of(1D, 1, true),
+                Values.of(1D, 1L, true),
+                Values.of(1.1D, 1.1F, true),
+
+                Values.of(1.2F, 1.1F, false),
+                Values.of(1.2F, 1, false),
+                Values.of(1.2F, 1L, false),
+                Values.of(1.2F, 1.1D, false),
+                Values.of(1.1F, 1.1F, true),
+                Values.of(1F, 1, true),
+                Values.of(1F, 1L, true),
+                Values.of(1.1F, 1.1D, true),
+
+                Values.of(true, false, false),
+                Values.of(true, true, true),
+
+                Values.of("dog", "cat", false),
+                Values.of("CAT", "cat", false),
+                Values.of("cat", "cat", true),
+
+                Values.of("1", "1", true),
+                Values.of("1", "2", false),
+
+                Values.of(true, "true", true),
+                Values.of(true, 1, true),
+                Values.of(true, 1L, true),
+                Values.of(true, 1F, true),
+                Values.of(true, 1.0F, true),
+                Values.of(true, 1D, true),
+                Values.of(true, 1.0D, true),
+
+                Values.of(false, "false", true),
+                Values.of(false, 0, true),
+                Values.of(false, 0L, true),
+                Values.of(false, 0F, true),
+                Values.of(false, 0.0F, true),
+                Values.of(false, 0.0D, true),
+
+                Values.of(Duration.ofSeconds(2), Duration.ofSeconds(1), false),
+                Values.of(Duration.ofSeconds(1), Duration.ofSeconds(1), true),
+                Values.of(Duration.ofSeconds(1), 1_000, true)
         );
     }
 }

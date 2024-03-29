@@ -27,13 +27,15 @@ import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.ReprocessDataInfo;
+import stroom.util.shared.HasFetchByUuid;
 import stroom.util.shared.HasIntCrud;
 import stroom.util.shared.ResultPage;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface ProcessorFilterService extends HasIntCrud<ProcessorFilter> {
+public interface ProcessorFilterService
+        extends HasIntCrud<ProcessorFilter>, HasFetchByUuid<ProcessorFilter> {
 
     ProcessorFilter create(CreateProcessFilterRequest request);
 
@@ -53,6 +55,8 @@ public interface ProcessorFilterService extends HasIntCrud<ProcessorFilter> {
     ResultPage<ProcessorFilter> find(DocRef pipelineDocRef);
 
     void setPriority(Integer id, Integer priority);
+
+    void setMaxProcessingTasks(Integer id, Integer maxProcessingTasks);
 
     void setEnabled(Integer id, Boolean enabled);
 

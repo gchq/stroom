@@ -31,7 +31,7 @@ import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tab.client.event.MaximiseEvent;
-import stroom.widget.util.client.DoubleSelectTester;
+import stroom.widget.util.client.DoubleClickTester;
 import stroom.widget.util.client.KeyBinding;
 
 import com.google.gwt.dom.client.Element;
@@ -39,6 +39,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.dom.client.HasDoubleClickHandlers;
 import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.http.client.UrlBuilder;
 import com.google.gwt.user.client.Timer;
@@ -81,7 +82,9 @@ public class MainPresenter
 
         // Handle key presses.
         view.asWidget().addDomHandler(event ->
-                KeyBinding.getAction(event.getNativeEvent()), KeyDownEvent.getType());
+                KeyBinding.test(event.getNativeEvent()), KeyDownEvent.getType());
+        view.asWidget().addDomHandler(event ->
+                KeyBinding.test(event.getNativeEvent()), KeyUpEvent.getType());
 
         addRegisteredHandler(TaskStartEvent.getType(), event -> {
             // DebugPane.debug("taskStart:" + event.getTaskCount());
@@ -145,7 +148,7 @@ public class MainPresenter
                     }
                 };
                 click = true;
-                clickTimer.schedule(DoubleSelectTester.DOUBLE_SELECT_DELAY);
+                clickTimer.schedule(DoubleClickTester.DOUBLE_CLICK_PERIOD);
             }
         }));
         addRegisteredHandler(MaximiseEvent.getType(), event -> view.maximise(event.getView()));

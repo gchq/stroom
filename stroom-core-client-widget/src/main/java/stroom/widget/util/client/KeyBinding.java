@@ -1,8 +1,11 @@
 package stroom.widget.util.client;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,6 +17,14 @@ public class KeyBinding {
 
     private static final List<Binding> BINDINGS = new ArrayList<>();
     private static final Map<Action, Command> COMMANDS = new HashMap<>();
+
+    private static int shiftCount = 0;
+    private static final Timer doubleShiftTimer = new Timer() {
+        @Override
+        public void run() {
+            shiftCount = 0;
+        }
+    };
 
     static {
         add(Action.MOVE_UP, KeyCodes.KEY_W, KeyCodes.KEY_K, KeyCodes.KEY_UP);
@@ -36,7 +47,10 @@ public class KeyBinding {
         add(Action.ITEM_CLOSE, new Builder().keyCode(KeyCodes.KEY_W).alt(true).build());
         add(Action.ITEM_CLOSE_ALL, new Builder().keyCode(KeyCodes.KEY_W).shift(true).alt(true).build());
 
-        add(Action.FIND, new Builder().keyCode(KeyCodes.KEY_F).shift(true).ctrl(true).build());
+        add(Action.FIND, new Builder().keyCode(KeyCodes.KEY_F).alt(true).shift(true).build());
+        add(Action.FIND_IN_CONTENT, new Builder().keyCode(KeyCodes.KEY_F).ctrl(true).shift(true).build());
+        add(Action.RECENT_ITEMS, new Builder().keyCode(KeyCodes.KEY_E).ctrl(true).build());
+        add(Action.LOCATE, new Builder().keyCode(KeyCodes.KEY_L).alt(true).build());
     }
 
     public static void addCommand(final Action action, final Command command) {
@@ -52,16 +66,76 @@ public class KeyBinding {
         return null;
     }
 
-    public static Action getAction(final NativeEvent e) {
-        final Shortcut shortcut = new Builder()
-                .keyCode(e.getKeyCode())
-                .shift(e.getShiftKey())
-                .ctrl(e.getCtrlKey())
-                .alt(e.getAltKey())
-                .meta(e.getMetaKey())
-                .build();
+    public static Action test(final NativeEvent e) {
+//        log(e);
 
-//        GWT.log("SHORTCUT = " + shortcut);
+        Command command = null;
+        if (BrowserEvents.KEYDOWN.equals(e.getType())) {
+            if (e.getKeyCode() == KeyCodes.KEY_SHIFT &&
+                    e.getShiftKey() &&
+                    !e.getCtrlKey() &&
+                    !e.getAltKey() &&
+                    !e.getMetaKey()) {
+                if (shiftCount == 0) {
+                    shiftCount = 1;
+                    doubleShiftTimer.cancel();
+                    doubleShiftTimer.schedule(DoubleClickTester.DOUBLE_CLICK_PERIOD);
+                } else if (shiftCount == 2) {
+                    shiftCount = 0;
+                    command = COMMANDS.get(Action.FIND);
+                    if (command != null) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        command.execute();
+                    }
+                }
+            } else {
+                shiftCount = 0;
+                doubleShiftTimer.cancel();
+            }
+        } else if (BrowserEvents.KEYUP.equals(e.getType())) {
+//            GWT.log("key up " + e.getKeyCode());
+            if (e.getKeyCode() == KeyCodes.KEY_SHIFT &&
+                    !e.getShiftKey() &&
+                    !e.getCtrlKey() &&
+                    !e.getAltKey() &&
+                    !e.getMetaKey()) {
+//                GWT.log("key up shift");
+                if (shiftCount == 1) {
+                    shiftCount = 2;
+                }
+            } else {
+                shiftCount = 0;
+                doubleShiftTimer.cancel();
+            }
+        }
+
+        if (command == null && BrowserEvents.KEYDOWN.equals(e.getType())) {
+            return onKeyDown(e);
+        }
+
+        return null;
+    }
+
+    private static void log(final NativeEvent e) {
+        GWT.log(e.getType() +
+                "\nkeyCode=" +
+                e.getKeyCode() +
+                "\nshift=" +
+                e.getShiftKey() +
+                "\nctrlKey=" +
+                e.getCtrlKey() +
+                "\naltKey=" +
+                e.getAltKey() +
+                "\nmetaKey=" +
+                e.getMetaKey() +
+                "\n\n");
+    }
+
+    private static Action onKeyDown(final NativeEvent e) {
+        final Shortcut shortcut = getShortcut(e);
+
+//        GWT.log("KEYDOWN = " + shortcut);
 
         final Binding binding = getBinding(shortcut);
         if (binding != null) {
@@ -83,6 +157,16 @@ public class KeyBinding {
         return null;
     }
 
+    private static Shortcut getShortcut(final NativeEvent e) {
+        return new Builder()
+                .keyCode(e.getKeyCode())
+                .shift(e.getShiftKey())
+                .ctrl(e.getCtrlKey())
+                .alt(e.getAltKey())
+                .meta(e.getMetaKey())
+                .build();
+    }
+
     private static Binding getBinding(final Shortcut shortcut) {
         // Favour exact matches
         for (final Binding binding : BINDINGS) {
@@ -101,78 +185,6 @@ public class KeyBinding {
 
         return null;
     }
-
-//    public static boolean is(final NativeEvent e,
-//                             final Action... actions) {
-//        final Shortcut eventAsBinding = new Builder()
-//                .keyCode(e.getKeyCode())
-//                .shift(e.getShiftKey())
-//                .ctrl(e.getCtrlKey())
-//                .alt(e.getAltKey())
-//                .meta(e.getMetaKey())
-//                .build();
-//
-//        for (final Action action : actions) {
-//            final boolean matchesAction = matchesAction(eventAsBinding, action);
-//            if (matchesAction) {
-//                e.preventDefault();
-//                e.stopPropagation();
-//                return true;
-//            }
-//        }
-//
-//        return false;
-//    }
-//
-//    public static boolean isCommand(final NativeEvent e) {
-//        final Shortcut eventAsBinding = new Builder()
-//                .keyCode(e.getKeyCode())
-//                .shift(e.getShiftKey())
-//                .ctrl(e.getCtrlKey())
-//                .alt(e.getAltKey())
-//                .meta(e.getMetaKey())
-//                .build();
-//
-//        // Check to see if the keypress is supposed to execute a command.
-//        if (eventAsBinding.hasModifiers()) {
-//            for (final Entry<Action, Command> entry : COMMANDS.entrySet()) {
-//                final boolean matchesAction = matchesAction(eventAsBinding, entry.getKey());
-//                if (matchesAction) {
-//                    GWT.log("Execute command: " + getShortcut(entry.getKey()));
-//                    entry.getValue().execute();
-//                    e.preventDefault();
-//                    e.stopPropagation();
-//                    return true;
-//                }
-//            }
-//        }
-//        return false;
-//    }
-//
-//
-//    private static boolean matchesAction(final Shortcut eventAsBinding, final Action action) {
-//        final List<Shortcut> bindings = BINDINGS.get(action);
-//        if (bindings != null) {
-//            for (final Shortcut binding : bindings) {
-//                // If the binding requires the use of modifiers then test the modifiers that are present on the
-//                // event.
-//                if (binding.hasModifiers()) {
-//                    if (eventAsBinding.equals(binding)) {
-//                        GWT.log(action.toString());
-//                        GWT.log("eventAsBinding: " + eventAsBinding);
-//                        GWT.log("binding: " + binding);
-//                        return true;
-//                    }
-//                } else if (binding.keyCode == eventAsBinding.keyCode) {
-//                    GWT.log(action.toString());
-//                    GWT.log("eventAsBinding: " + eventAsBinding);
-//                    GWT.log("binding: " + binding);
-//                    return true;
-//                }
-//            }
-//        }
-//        return false;
-//    }
 
     public enum Action {
         MOVE_UP,
@@ -193,7 +205,10 @@ public class KeyBinding {
         ITEM_SAVE_ALL,
         ITEM_CLOSE,
         ITEM_CLOSE_ALL,
-        FIND
+        FIND,
+        FIND_IN_CONTENT,
+        RECENT_ITEMS,
+        LOCATE
     }
 
     static void add(final Action action,
@@ -215,6 +230,10 @@ public class KeyBinding {
             BINDINGS.add(new Binding.Builder().shortcut(shortcut).action(action).build());
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class Binding {
 
@@ -255,6 +274,10 @@ public class KeyBinding {
             }
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class Shortcut {
 
@@ -327,7 +350,13 @@ public class KeyBinding {
             if (sb.length() > 0) {
                 sb.append("+");
             }
-            sb.append((char) keyCode);
+            if (keyCode == KeyCodes.KEY_SPACE) {
+                sb.append("space");
+            } else if (keyCode == KeyCodes.KEY_TAB) {
+                sb.append("tab");
+            } else {
+                sb.append((char) keyCode);
+            }
             return sb.toString();
         }
 
@@ -335,6 +364,10 @@ public class KeyBinding {
             return shift || ctrl || alt || meta;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder {
 

@@ -19,7 +19,7 @@ package stroom.pipeline.structure.client.presenter;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.feed.shared.FeedDoc;
 import stroom.item.client.SelectionBox;
@@ -47,8 +47,8 @@ public class NewPipelineReferencePresenter
 
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
 
-    private final EntityDropDownPresenter pipelinePresenter;
-    private final EntityDropDownPresenter feedPresenter;
+    private final DocSelectionBoxPresenter pipelinePresenter;
+    private final DocSelectionBoxPresenter feedPresenter;
     private final RestFactory restFactory;
     private final SelectionBox<String> dataTypeWidget;
     private boolean dirty;
@@ -57,8 +57,8 @@ public class NewPipelineReferencePresenter
     @Inject
     public NewPipelineReferencePresenter(final EventBus eventBus,
                                          final NewPipelineReferenceView view,
-                                         final EntityDropDownPresenter pipelinePresenter,
-                                         final EntityDropDownPresenter feedPresenter,
+                                         final DocSelectionBoxPresenter pipelinePresenter,
+                                         final DocSelectionBoxPresenter feedPresenter,
                                          final RestFactory restFactory,
                                          final UiConfigCache uiConfigCache) {
         super(eventBus, view);

@@ -8,7 +8,7 @@ import java.util.Objects;
  * < 1 byte >< 3 bytes >
  * <p>
  * referenceCount stored as a 3 byte unsigned integer so a max
- * of ~1.6 million.
+ * of ~16 million.
  */
 public class ValueStoreMeta {
 

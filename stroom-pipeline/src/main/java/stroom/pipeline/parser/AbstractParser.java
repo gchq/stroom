@@ -36,6 +36,7 @@ import stroom.pipeline.filter.XMLFilterForkFactory;
 import stroom.pipeline.reader.ByteStreamDecoder.DecoderException;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.io.StreamUtil;
+import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
 import net.sf.saxon.trans.XPathException;
@@ -265,19 +266,19 @@ public abstract class AbstractParser extends AbstractElement implements TakesInp
     }
 
     protected void info(final String message, final Throwable t) {
-        errorReceiverProxy.log(Severity.INFO, null, getElementId(), message, t);
+        errorReceiverProxy.log(Severity.INFO, getLocation(), getElementId(), message, t);
     }
 
     protected void warning(final String message, final Throwable t) {
-        errorReceiverProxy.log(Severity.WARNING, null, getElementId(), message, t);
+        errorReceiverProxy.log(Severity.WARNING, getLocation(), getElementId(), message, t);
     }
 
     protected void error(final String message, final Throwable t) {
-        errorReceiverProxy.log(Severity.ERROR, null, getElementId(), message, t);
+        errorReceiverProxy.log(Severity.ERROR, getLocation(), getElementId(), message, t);
     }
 
     protected void fatal(final String message, final Throwable t) {
-        errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), message, t);
+        errorReceiverProxy.log(Severity.FATAL_ERROR, getLocation(), getElementId(), message, t);
     }
 
     protected void info(final Throwable t) {
@@ -294,6 +295,12 @@ public abstract class AbstractParser extends AbstractElement implements TakesInp
 
     protected void fatal(final Throwable t) {
         fatal(t.getMessage(), t);
+    }
+
+    private Location getLocation() {
+        return locationFactory == null
+                ? null
+                : locationFactory.create();
     }
 
     public ErrorReceiverProxy getErrorReceiverProxy() {

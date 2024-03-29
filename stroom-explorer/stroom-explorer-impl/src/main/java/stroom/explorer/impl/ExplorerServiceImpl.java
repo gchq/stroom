@@ -18,6 +18,7 @@
 package stroom.explorer.impl;
 
 import stroom.collection.api.CollectionService;
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerActionHandler;
@@ -28,7 +29,6 @@ import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.explorer.shared.ExplorerDocContentMatch;
 import stroom.explorer.shared.ExplorerFields;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.Builder;
@@ -36,8 +36,12 @@ import stroom.explorer.shared.ExplorerNodeKey;
 import stroom.explorer.shared.ExplorerResource.TagFetchMode;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
-import stroom.explorer.shared.FindExplorerNodeCriteria;
-import stroom.explorer.shared.FindExplorerNodeQuery;
+import stroom.explorer.shared.FetchExplorerNodesRequest;
+import stroom.explorer.shared.FetchHighlightsRequest;
+import stroom.explorer.shared.FindInContentRequest;
+import stroom.explorer.shared.FindInContentResult;
+import stroom.explorer.shared.FindRequest;
+import stroom.explorer.shared.FindResult;
 import stroom.explorer.shared.NodeFlag;
 import stroom.explorer.shared.NodeFlag.NodeFlagGroups;
 import stroom.explorer.shared.PermissionInheritance;
@@ -81,6 +85,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -125,119 +130,122 @@ class ExplorerServiceImpl
     }
 
     @Override
-    public FetchExplorerNodeResult getData(final FindExplorerNodeCriteria criteria) {
+    public FetchExplorerNodeResult getData(final FetchExplorerNodesRequest criteria) {
         final DurationTimer timer = DurationTimer.start();
         final LocalMetrics metrics = Metrics.createLocalMetrics(LOGGER.isDebugEnabled());
         try {
-            List<ExplorerNode> rootNodes;
-            List<ExplorerNodeKey> openedItems = new ArrayList<>();
-            Set<ExplorerNodeKey> temporaryOpenItems;
-
-            final ExplorerTreeFilter filter = criteria.getFilter();
+            if (LOGGER.isDebugEnabled()) {
+                logOpenItems(
+                        OpenItemsImpl.create(criteria.getOpenItems()),
+                        OpenItemsImpl.create(criteria.getTemporaryOpenedItems()),
+                        OpenItemsImpl.create(criteria.getEnsureVisible()));
+            }
 
             // Get a copy of the master tree model, so we can add the favourites into it.
             final TreeModel masterTreeModelClone = explorerTreeModel.getModel().createMutableCopy();
-
-            // Generate a hashset of all favourites for the user, so we can mark matching nodes with a star
-            final Set<String> userFavouriteUuids = explorerFavService.get().getUserFavourites()
-                    .stream()
-                    .map(DocRef::getUuid)
-                    .collect(Collectors.toSet());
-            buildFavouritesNode(masterTreeModelClone);
-
             // See if we need to open any more folders to see nodes we want to ensure are visible.
             final Set<ExplorerNodeKey> forcedOpenItems = getForcedOpenItems(masterTreeModelClone, criteria);
 
-            if (LOGGER.isDebugEnabled()) {
-                logOpenItems(criteria.getOpenItems(), criteria.getTemporaryOpenedItems(), criteria.getEnsureVisible());
-            }
-
-            final Set<ExplorerNodeKey> allOpenItems = new HashSet<>();
-            allOpenItems.addAll(criteria.getOpenItems());
-            allOpenItems.addAll(criteria.getTemporaryOpenedItems());
-            allOpenItems.addAll(forcedOpenItems);
-
-            final FilteredTreeModel filteredModel = new FilteredTreeModel(
-                    masterTreeModelClone.getId(),
-                    masterTreeModelClone.getCreationTime());
-
-            // A transient holder for the filter, predicate
-            final NodeInclusionChecker nodeInclusionChecker = new NodeInclusionChecker(securityContext, filter);
-            final boolean includeNodeInfo = criteria.getShowAlerts();
-
-            // Recurse down the tree adding items that should be included
-            final NodeStates nodeStates = addDescendants(
-                    null,
-                    null,
+            final Set<ExplorerNodeKey> allOpen = new HashSet<>();
+            allOpen.addAll(NullSafe.set(criteria.getOpenItems()));
+            allOpen.addAll(NullSafe.set(criteria.getTemporaryOpenedItems()));
+            allOpen.addAll(NullSafe.set(forcedOpenItems));
+            final OpenItems openItems = OpenItemsImpl.createWithForced(allOpen, forcedOpenItems);
+            final FetchExplorerNodeResult result = getData(
+                    criteria.getFilter(),
                     masterTreeModelClone,
-                    filteredModel,
-                    filter,
-                    nodeInclusionChecker,
-                    false,
-                    allOpenItems,
-                    userFavouriteUuids,
-                    0,
-                    includeNodeInfo,
-                    metrics);
-
-            // Sort the tree model
-            filteredModel.sort(this::getPriority);
-
-            // If the name filter has changed then we want to temporarily expand all nodes.
-            if (filter.isNameFilterChange()) {
-                if (NullSafe.isBlankString(filter.getNameFilter())) {
-                    temporaryOpenItems = new HashSet<>();
-                } else {
-                    temporaryOpenItems = new HashSet<>(nodeStates.openNodes);
-                }
-
-                rootNodes = addRoots(
-                        filteredModel,
-                        criteria.getOpenItems(),
-                        forcedOpenItems,
-                        temporaryOpenItems,
-                        openedItems,
-                        metrics);
-            } else {
-                temporaryOpenItems = null;
-
-                rootNodes = addRoots(
-                        filteredModel,
-                        criteria.getOpenItems(),
-                        forcedOpenItems,
-                        criteria.getTemporaryOpenedItems(),
-                        openedItems, metrics);
-            }
-
-            rootNodes = decorateTree(
-                    criteria,
-                    rootNodes,
-                    filter,
-                    nodeInclusionChecker);
-
-            rootNodes = ensureRootNodes(rootNodes, filter);
-
-            if (LOGGER.isTraceEnabled()) {
-                logOpenItems(new HashSet<>(openedItems), temporaryOpenItems, null);
-            }
-
-            final FetchExplorerNodeResult result = new FetchExplorerNodeResult(
-                    rootNodes, openedItems, temporaryOpenItems, nodeInclusionChecker.getQualifiedNameFilterInput());
-
+                    openItems,
+                    metrics,
+                    criteria.getShowAlerts());
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("getData() metrics:\n{}", LogUtil.toPaddedMultiLine("  ", metrics.toString()));
                 logResult(LOGGER::debug, criteria, result, timer.get());
             }
-
             return result;
+
         } catch (Exception e) {
             LOGGER.error("Error fetching nodes with criteria {}", criteria, e);
             throw e;
         }
     }
 
+    private FetchExplorerNodeResult getData(final ExplorerTreeFilter filter,
+                                            final TreeModel masterTreeModelClone,
+                                            final OpenItems openItems,
+                                            final LocalMetrics metrics,
+                                            final boolean includeNodeInfo) {
+        // Generate a hashset of all favourites for the user, so we can mark matching nodes with a star
+        final Set<String> userFavouriteUuids = explorerFavService.get().getUserFavourites()
+                .stream()
+                .map(DocRef::getUuid)
+                .collect(Collectors.toSet());
+        buildFavouritesNode(masterTreeModelClone);
+
+        final FilteredTreeModel filteredModel = new FilteredTreeModel(
+                masterTreeModelClone.getId(),
+                masterTreeModelClone.getCreationTime());
+
+        // A transient holder for the filter, predicate
+        final NodeInclusionChecker nodeInclusionChecker = new NodeInclusionChecker(securityContext, filter);
+
+        // Recurse down the tree adding items that should be included
+        final NodeStates nodeStates = addDescendants(
+                null,
+                null,
+                masterTreeModelClone,
+                filteredModel,
+                filter,
+                nodeInclusionChecker,
+                false,
+                openItems,
+                userFavouriteUuids,
+                0,
+                includeNodeInfo,
+                metrics);
+
+        // Sort the tree model
+        filteredModel.sort(this::getPriority);
+
+        // If the name filter has changed then we want to temporarily expand all nodes.
+        Set<ExplorerNodeKey> temporaryOpenItems;
+        if (filter.isNameFilterChange()) {
+            if (NullSafe.isBlankString(filter.getNameFilter()) || nodeStates.openNodes.isEmpty()) {
+                temporaryOpenItems = Collections.emptySet();
+            } else {
+                temporaryOpenItems = new HashSet<>(nodeStates.openNodes);
+                openItems.addAll(nodeStates.openNodes);
+            }
+        } else {
+            temporaryOpenItems = null;
+        }
+
+        List<ExplorerNodeKey> openedItems = new ArrayList<>();
+        List<ExplorerNode> rootNodes = addRoots(
+                filteredModel,
+                openItems,
+                openedItems,
+                metrics);
+
+        rootNodes = decorateTree(
+                rootNodes,
+                filter,
+                nodeInclusionChecker);
+
+        rootNodes = ensureRootNodes(rootNodes, filter);
+
+        if (LOGGER.isTraceEnabled()) {
+            logOpenItems(
+                    OpenItemsImpl.create(openedItems),
+                    OpenItemsImpl.create(temporaryOpenItems),
+                    null);
+        }
+
+        return new FetchExplorerNodeResult(
+                rootNodes, openedItems, temporaryOpenItems, nodeInclusionChecker.getQualifiedNameFilterInput());
+    }
+
     private void logResult(final Consumer<String> loggerFunc,
-                           final FindExplorerNodeCriteria criteria,
+                           final FetchExplorerNodesRequest criteria,
                            final FetchExplorerNodeResult result,
                            final Duration duration) {
         final ExplorerTreeFilter filter = criteria.getFilter();
@@ -273,23 +281,17 @@ class ExplorerServiceImpl
                 NullSafe.size(result.getTemporaryOpenedItems())));
     }
 
-    private static void logOpenItems(final Set<ExplorerNodeKey> openItems,
-                                     final Set<ExplorerNodeKey> tempOpenItems,
-                                     final Set<ExplorerNodeKey> ensureVisible) {
+    private static void logOpenItems(final OpenItems openItems,
+                                     final OpenItems tempOpenItems,
+                                     final OpenItems ensureVisible) {
         if (NullSafe.hasItems(openItems)) {
-            LOGGER.trace(() -> LogUtil.message("openItems:\n{}", NullSafe.stream(openItems)
-                    .map(Objects::toString)
-                    .collect(Collectors.joining("\n"))));
+            LOGGER.trace(() -> LogUtil.message("openItems:\n{}", openItems));
         }
         if (NullSafe.hasItems(tempOpenItems)) {
-            LOGGER.trace(() -> LogUtil.message("tempOpenItems:\n{}", NullSafe.stream(tempOpenItems)
-                    .map(Objects::toString)
-                    .collect(Collectors.joining("\n"))));
+            LOGGER.trace(() -> LogUtil.message("tempOpenItems:\n{}", openItems));
         }
         if (NullSafe.hasItems(ensureVisible)) {
-            LOGGER.trace(() -> LogUtil.message("ensureVisible:\n{}", NullSafe.stream(ensureVisible)
-                    .map(Objects::toString)
-                    .collect(Collectors.joining("\n"))));
+            LOGGER.trace(() -> LogUtil.message("ensureVisible:\n{}", openItems));
         }
     }
 
@@ -304,11 +306,7 @@ class ExplorerServiceImpl
         // so we have to just check its direct children
         final boolean foundNodeInfo = NullSafe.stream(favouritesNode.getChildren())
                 .anyMatch(ExplorerNode::hasDescendantNodeInfo);
-//        final List<NodeInfo> nodeInfoList = foundNodeInfo
-//                ? Collections.singletonList(buildBrancNodeInfo())
-//                : null;
         favouritesNode = favouritesNode.copy()
-//                .nodeInfoList(nodeInfoList)
                 .setNodeFlag(NodeFlag.DESCENDANT_NODE_INFO, foundNodeInfo)
                 .build();
 
@@ -325,7 +323,7 @@ class ExplorerServiceImpl
 
         // We may have no nodes under Favourites/System so ensure they are always present.
         // If a quick filter is active then mark them as non-matches.
-        final ExplorerNode newRootNode = removeMatchingNode(nodes, rootNodeConstant)
+        return removeMatchingNode(nodes, rootNodeConstant)
                 .orElseGet(() ->
                         rootNodeConstant.copy()
                                 .addNodeFlag(NodeFlag.LEAF)
@@ -333,7 +331,6 @@ class ExplorerServiceImpl
                                         NodeFlagGroups.FILTER_MATCH_PAIR,
                                         NullSafe.isBlankString(filter.getNameFilter()))
                                 .build());
-        return newRootNode;
     }
 
     private static Optional<ExplorerNode> removeMatchingNode(final List<ExplorerNode> nodes,
@@ -375,28 +372,26 @@ class ExplorerServiceImpl
         }
     }
 
-    private List<ExplorerNode> decorateTree(final FindExplorerNodeCriteria criteria,
-                                            final List<ExplorerNode> rootNodes,
+    private List<ExplorerNode> decorateTree(final List<ExplorerNode> rootNodes,
                                             final ExplorerTreeFilter filter,
                                             final NodeInclusionChecker nodeInclusionChecker) {
-        if (rootNodes.size() > 0) {
-            final ExplorerNode rootNode = rootNodes.get(rootNodes.size() - 1);
+        if (!rootNodes.isEmpty()) {
+            final ExplorerNode rootNode = rootNodes.getLast();
             return rootNodes
                     .stream()
                     .map(node -> {
                         if (node == rootNode) {
-                            return replaceRootNode(criteria, node, filter, nodeInclusionChecker);
+                            return replaceRootNode(node, filter, nodeInclusionChecker);
                         }
                         return node;
                     })
                     .collect(Collectors.toList());
         } else {
-            return Collections.singletonList(replaceRootNode(criteria, null, filter, nodeInclusionChecker));
+            return Collections.singletonList(replaceRootNode(null, filter, nodeInclusionChecker));
         }
     }
 
-    private ExplorerNode replaceRootNode(final FindExplorerNodeCriteria criteria,
-                                         final ExplorerNode rootNode,
+    private ExplorerNode replaceRootNode(final ExplorerNode rootNode,
                                          final ExplorerTreeFilter filter,
                                          final NodeInclusionChecker nodeInclusionChecker) {
         final ExplorerNode.Builder rootNodeBuilder;
@@ -413,8 +408,8 @@ class ExplorerServiceImpl
                             NullSafe.isBlankString(filter.getNameFilter()));
         }
 
-        if (criteria.getFilter() != null
-                && NullSafe.set(criteria.getFilter().getNodeFlags()).contains(NodeFlag.DATA_SOURCE)) {
+        if (filter != null
+                && NullSafe.set(filter.getNodeFlags()).contains(NodeFlag.DATA_SOURCE)) {
 
             final ExplorerDecorator explorerDecorator = explorerDecoratorProvider.get();
             if (explorerDecorator != null) {
@@ -513,11 +508,11 @@ class ExplorerServiceImpl
     }
 
     private Set<ExplorerNodeKey> getForcedOpenItems(final TreeModel masterTreeModel,
-                                                    final FindExplorerNodeCriteria criteria) {
+                                                    final FetchExplorerNodesRequest criteria) {
         final Set<ExplorerNodeKey> forcedOpen = new HashSet<>();
 
         // Add parents of nodes that we have been requested to ensure are visible.
-        if (criteria.getEnsureVisible() != null && criteria.getEnsureVisible().size() > 0) {
+        if (criteria.getEnsureVisible() != null && !criteria.getEnsureVisible().isEmpty()) {
             for (final ExplorerNodeKey ensureVisible : criteria.getEnsureVisible()) {
                 ExplorerNode parent = masterTreeModel.getParent(ensureVisible.getUuid());
                 while (parent != null) {
@@ -535,6 +530,7 @@ class ExplorerServiceImpl
         if (criteria.getMinDepth() != null && criteria.getMinDepth() > 0) {
             forceMinDepthOpen(masterTreeModel, forcedOpen, null, null,
                     criteria.getMinDepth(), 1);
+            forcedOpen.add(ExplorerConstants.FAVOURITES_NODE.getUniqueKey());
         }
 
         return forcedOpen;
@@ -574,7 +570,7 @@ class ExplorerServiceImpl
                                       final ExplorerTreeFilter filter,
                                       final NodeInclusionChecker nodeInclusionChecker,
                                       final boolean ignoreNameFilter,
-                                      final Set<ExplorerNodeKey> allOpenItems,
+                                      final OpenItems allOpenItems,
                                       final Set<String> userFavourites,
                                       final int currentDepth,
                                       final boolean includeNodeInfo,
@@ -590,7 +586,7 @@ class ExplorerServiceImpl
                 // Add all children if the name filter has changed or the parent item is open.
                 final boolean addAllChildren = (filter.isNameFilterChange() && filter.getNameFilter() != null)
                         || parent == null
-                        || allOpenItems.contains(parent.getUniqueKey());
+                        || allOpenItems.isOpen(parent.getUniqueKey());
 
                 // We need to add at least one item to the tree to be able to determine if the parent is a leaf node.
                 final Iterator<ExplorerNode> iterator = children.iterator();
@@ -634,7 +630,6 @@ class ExplorerServiceImpl
 
                     if (includeNodeInfo && result.hasIssues && result.isFolder) {
                         // Mark the node as having descendants with issues
-//                        builder.addNodeInfo(buildBrancNodeInfo());
                         builder.addNodeFlag(NodeFlag.DESCENDANT_NODE_INFO);
                     }
                     decoratedChild = builder.build();
@@ -722,7 +717,7 @@ class ExplorerServiceImpl
 
             if (NullSafe.hasItems(childrenWithDescendantInfo)) {
                 // At least one descendant has node info, but there may be filter/perms limiting what
-                // the user can see or they are in un-opened branches, so we need to walk the full tree
+                // the user can see, or they are in un-opened branches, so we need to walk the full tree
                 // to check based on what we can see
                 for (final ExplorerNode childNode : childrenWithDescendantInfo) {
                     final boolean isNodeIncluded = metrics.measure("isNodeIncluded", () ->
@@ -767,10 +762,9 @@ class ExplorerServiceImpl
     }
 
     private List<ExplorerNode> addRoots(final FilteredTreeModel filteredModel,
-                                        final Set<ExplorerNodeKey> openItems,
-                                        final Set<ExplorerNodeKey> forcedOpenItems,
-                                        final Set<ExplorerNodeKey> temporaryOpenItems,
-                                        final List<ExplorerNodeKey> openedItems, final LocalMetrics metrics) {
+                                        final OpenItems openItems,
+                                        final List<ExplorerNodeKey> openedItems,
+                                        final LocalMetrics metrics) {
         return metrics.measure("addRoots", () -> {
             final List<ExplorerNode> rootNodes = new ArrayList<>();
             final List<ExplorerNode> children = filteredModel.getChildren(null);
@@ -787,8 +781,6 @@ class ExplorerServiceImpl
                                     child,
                                     filteredModel,
                                     openItems,
-                                    forcedOpenItems,
-                                    temporaryOpenItems,
                                     0,
                                     openedItems,
                                     metrics);
@@ -802,9 +794,7 @@ class ExplorerServiceImpl
     private ExplorerNode addChildren(final ExplorerNode rootNode,
                                      final ExplorerNode parent,
                                      final FilteredTreeModel filteredModel,
-                                     final Set<ExplorerNodeKey> openItems,
-                                     final Set<ExplorerNodeKey> forcedOpenItems,
-                                     final Set<ExplorerNodeKey> temporaryOpenItems,
+                                     final OpenItems openItems,
                                      final int currentDepth,
                                      final List<ExplorerNodeKey> openedItems,
                                      final LocalMetrics metrics) {
@@ -814,19 +804,16 @@ class ExplorerServiceImpl
 
             final ExplorerNodeKey parentNodeKey = parent.getUniqueKey();
 
-            // See if we need to force this item open.
-            boolean force = false;
-            if (forcedOpenItems.contains(parentNodeKey)) {
-                force = true;
+            // Remember if this item was forced open. This allows us to filter down the items that were actually opened
+            // in the filtered tree as a result of forcing.
+            if (openItems.isForcedOpen(parentNodeKey)) {
                 openedItems.add(parentNodeKey);
-            } else if (temporaryOpenItems != null && temporaryOpenItems.contains(parentNodeKey)) {
-                force = true;
             }
 
             final List<ExplorerNode> children = filteredModel.getChildren(parent);
             if (!parent.hasNodeFlagGroup(NodeFlagGroups.EXPANDER_GROUP) && NullSafe.isEmptyCollection(children)) {
                 builder.setGroupedNodeFlag(NodeFlagGroups.EXPANDER_GROUP, NodeFlag.LEAF);
-            } else if (force || openItems.contains(parentNodeKey)) {
+            } else if (openItems.isOpen(parentNodeKey)) {
                 final List<ExplorerNode> newChildren = new ArrayList<>();
                 for (final ExplorerNode child : NullSafe.list(children)) {
                     final ExplorerNode copy = addChildren(
@@ -834,8 +821,6 @@ class ExplorerServiceImpl
                             child,
                             filteredModel,
                             openItems,
-                            forcedOpenItems,
-                            temporaryOpenItems,
                             currentDepth + 1,
                             openedItems,
                             metrics);
@@ -1000,7 +985,7 @@ class ExplorerServiceImpl
 
                 // Copy the item to the destination folder.
                 String name = sourceNode.getDocRef().getName();
-                if (allowRename && docName != null && docName.trim().length() > 0) {
+                if (allowRename && docName != null && !docName.trim().isEmpty()) {
                     name = docName;
                 }
                 final DocRef destinationDocRef = handler.copyDocument(
@@ -1056,7 +1041,7 @@ class ExplorerServiceImpl
         final ExplorerNode destinationFolder = remappings.get(sourceFolder);
         if (destinationFolder != null) {
             final List<ExplorerNode> children = childMap.get(sourceFolder);
-            if (children != null && children.size() > 0) {
+            if (children != null && !children.isEmpty()) {
                 children.forEach(child -> {
                     copy(child, destinationFolder, false, null, permissionInheritance, resultMessage, remappings);
                     recurseCopy(child, permissionInheritance, resultMessage, remappings, childMap);
@@ -1072,7 +1057,7 @@ class ExplorerServiceImpl
                                 final Map<ExplorerNode, List<ExplorerNode>> childMap) {
         explorerNodes.forEach(explorerNode -> {
             final List<ExplorerNode> children = explorerNodeService.getChildren(explorerNode.getDocRef());
-            if (children != null && children.size() > 0) {
+            if (children != null && !children.isEmpty()) {
                 childMap.put(explorerNode, children);
                 createChildMap(children, childMap);
             }
@@ -1258,14 +1243,14 @@ class ExplorerServiceImpl
             if (!deleted.contains(explorerNode)) {
                 // Get any children that might need to be deleted.
                 List<ExplorerNode> children = explorerNodeService.getChildren(explorerNode.getDocRef());
-                if (children != null && children.size() > 0) {
+                if (children != null && !children.isEmpty()) {
                     // Recursive delete.
                     recursiveDelete(children, deleted, resultDocRefs, resultMessage);
                 }
 
                 // Check to see if we still have children.
                 children = explorerNodeService.getChildren(explorerNode.getDocRef());
-                if (children != null && children.size() > 0) {
+                if (children != null && !children.isEmpty()) {
                     final String message = "Unable to delete '" + explorerNode.getName() +
                             "' because the folder is not empty";
                     resultMessage.append(message);
@@ -1443,8 +1428,90 @@ class ExplorerServiceImpl
     }
 
     @Override
-    public ResultPage<ExplorerDocContentMatch> findContent(final FindExplorerNodeQuery request) {
-        final List<ExplorerDocContentMatch> list = new ArrayList<>();
+    public ResultPage<FindResult> find(final FindRequest request) {
+        final LocalMetrics metrics = Metrics.createLocalMetrics(LOGGER.isDebugEnabled());
+        try {
+            if (request.getFilter() == null) {
+                return ResultPage.empty();
+            }
+            final boolean recentItemsMode = request.getFilter().getRecentItems() != null;
+            if (recentItemsMode) {
+                if (request.getFilter().getRecentItems().isEmpty()) {
+                    return ResultPage.empty();
+                }
+            } else if (NullSafe.isBlankString(request.getFilter().getNameFilter())) {
+                return ResultPage.empty();
+            }
+
+            // Get a copy of the master tree model, so we can add the favourites into it.
+            final TreeModel masterTreeModelClone = explorerTreeModel.getModel().createMutableCopy();
+
+            final FetchExplorerNodeResult result = getData(
+                    request.getFilter(),
+                    masterTreeModelClone,
+                    OpenItemsImpl.all(),
+                    metrics,
+                    false);
+            final List<FindResult> results = new ArrayList<>();
+            addResults("", result.getRootNodes(), results);
+
+            // If this is recent items mode then filter by recent items.
+            if (recentItemsMode) {
+                final Map<DocRef, FindResult> resultMap = results
+                        .stream()
+                        .filter(findResult ->
+                                !ExplorerConstants.FAVOURITES_NODE.getName().equals(findResult.getPath()))
+                        .collect(Collectors.toMap(FindResult::getDocRef, Function.identity()));
+                final List<FindResult> recentItems = request
+                        .getFilter().getRecentItems()
+                        .stream()
+                        .map(resultMap::get)
+                        .filter(Objects::nonNull)
+                        .toList();
+                return ResultPage.createPageLimitedList(recentItems, request.getPageRequest());
+            } else {
+                results.sort(Comparator
+                        .<FindResult, String>comparing(res -> res.getDocRef().getName(), Comparator.naturalOrder())
+                        .thenComparing(FindResult::getPath)
+                        .thenComparing(res -> res.getDocRef().getType())
+                        .thenComparing(res -> res.getDocRef().getUuid()));
+            }
+
+            return ResultPage.createPageLimitedList(results, request.getPageRequest());
+
+        } catch (Exception e) {
+            LOGGER.error("Error finding nodes with request {}", request, e);
+            throw e;
+        }
+    }
+
+    private void addResults(final String parent,
+                            final List<ExplorerNode> nodes,
+                            final List<FindResult> results) {
+        if (nodes != null) {
+            for (final ExplorerNode node : nodes) {
+                if (node.hasNodeFlag(NodeFlag.FILTER_MATCH) &&
+                        node.getDocRef() != null &&
+                        !Objects.equals(ExplorerConstants.SYSTEM, node.getType()) &&
+                        !Objects.equals(ExplorerConstants.FAVOURITES, node.getType())) {
+                    results.add(new FindResult(
+                            node.getDocRef(),
+                            parent,
+                            node.getIcon()));
+                }
+                addResults(
+                        parent.isEmpty()
+                                ? node.getName()
+                                : parent + " / " + node.getName(),
+                        node.getChildren(),
+                        results);
+            }
+        }
+    }
+
+    @Override
+    public ResultPage<FindInContentResult> findInContent(final FindInContentRequest request) {
+        final List<FindInContentResult> list = new ArrayList<>();
         for (final DocumentType documentType : explorerActionHandlers.getTypes()) {
             final ExplorerActionHandler explorerActionHandler =
                     explorerActionHandlers.getHandler(documentType.getType());
@@ -1472,7 +1539,7 @@ class ExplorerServiceImpl
                     }
                 }
 
-                final ExplorerDocContentMatch explorerDocContentMatch = ExplorerDocContentMatch.builder()
+                final FindInContentResult explorerDocContentMatch = FindInContentResult.builder()
                         .docContentMatch(docContentMatch)
                         .path(parentPath.toString())
                         .icon(explorerActionHandler.getDocumentType().getIcon())
@@ -1481,11 +1548,15 @@ class ExplorerServiceImpl
             }
         }
 
-        PageRequest pageRequest = request.getPageRequest();
-        if (list.size() < pageRequest.getOffset()) {
-            return ResultPage.createUnboundedList(Collections.emptyList());
-        }
+        final PageRequest pageRequest = request.getPageRequest();
         return ResultPage.createPageLimitedList(list, pageRequest);
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final FetchHighlightsRequest request) {
+        final ExplorerActionHandler explorerActionHandler =
+                explorerActionHandlers.getHandler(request.getDocRef().getType());
+        return explorerActionHandler.fetchHighlights(request.getDocRef(), request.getExtension(), request.getFilter());
     }
 
     @Override
@@ -1501,11 +1572,11 @@ class ExplorerServiceImpl
     @Override
     public Suggestions getSuggestions(final FetchSuggestionsRequest request) {
         return securityContext.secureResult(() -> {
-            if (ExplorerFields.TAG.getName().equals(request.getField().getFieldName())) {
+            if (ExplorerFields.TAG.getFldName().equals(request.getField().getFldName())) {
                 final Set<String> tags = getTags();
                 return new Suggestions(new ArrayList<>(tags), false);
             } else {
-                throw new RuntimeException(LogUtil.message("Unexpected field " + request.getField().getFieldName()));
+                throw new RuntimeException(LogUtil.message("Unexpected field " + request.getField().getFldName()));
             }
         });
     }
@@ -1534,6 +1605,6 @@ class ExplorerServiceImpl
 
     private enum TagOperation {
         ADD,
-        REMOVE;
+        REMOVE
     }
 }

@@ -25,6 +25,7 @@ import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.DataRetentionFields;
 import stroom.meta.shared.FindMetaCriteria;
@@ -233,7 +234,7 @@ class DataServiceImpl implements DataService {
                     .keySet()
                     .stream()
                     .sorted()
-                    .collect(Collectors.toList());
+                    .toList();
             sortedKeys.forEach(key -> {
                 final String value = attributeMap.get(key);
                 if (value != null &&
@@ -242,7 +243,7 @@ class DataServiceImpl implements DataService {
                         !DataRetentionFields.RETENTION_UNTIL.equals(key) &&
                         !DataRetentionFields.RETENTION_RULE.equals(key)) {
 
-                    if (MetaFields.DURATION.getName().equals(key)) {
+                    if (MetaFields.DURATION.getFldName().equals(key)) {
                         entries.add(new DataInfoSection.Entry(key, convertDuration(value)));
                     } else if (key.toLowerCase().contains("time")) {
                         entries.add(new DataInfoSection.Entry(key, convertTime(value)));
@@ -260,7 +261,10 @@ class DataServiceImpl implements DataService {
             // Add additional data retention information.
             sections.add(new DataInfoSection("Retention", getDataRententionEntries(attributeMap)));
 
-            sections.add(new DataInfoSection("Files", Collections.singletonList(new Entry("", files))));
+            // Files are often very long so change the delimiter to \n
+            final String filesStr = String.join("\n", AttributeMapUtil.valueAsList(files));
+
+            sections.add(new DataInfoSection("Files", Collections.singletonList(new Entry("", filesStr))));
         }
         return sections;
     }

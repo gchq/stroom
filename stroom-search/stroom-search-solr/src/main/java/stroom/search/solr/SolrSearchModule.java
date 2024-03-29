@@ -21,6 +21,7 @@ import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.SearchProvider;
 import stroom.search.solr.indexing.SolrIndexingElementModule;
 import stroom.search.solr.search.SolrSearchProvider;
@@ -43,7 +44,7 @@ public class SolrSearchModule extends AbstractModule {
     protected void configure() {
         install(new SolrIndexingElementModule());
 
-        bind(SolrIndexCache.class).to(SolrIndexCacheImpl.class);
+        bind(SolrIndexDocCache.class).to(SolrIndexDocCacheImpl.class);
         bind(SolrIndexClientCache.class).to(SolrIndexClientCacheImpl.class);
         bind(SolrIndexStore.class).to(SolrIndexStoreImpl.class);
 
@@ -51,12 +52,14 @@ public class SolrSearchModule extends AbstractModule {
                 .addBinding(SolrSearchProvider.class);
         GuiceUtil.buildMultiBinder(binder(), SearchProvider.class)
                 .addBinding(SolrSearchProvider.class);
+        GuiceUtil.buildMultiBinder(binder(), IndexFieldProvider.class)
+                .addBinding(SolrSearchProvider.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
-                .addBinding(SolrIndexCacheImpl.class);
+                .addBinding(SolrIndexDocCacheImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-                .addBinding(SolrIndexCacheImpl.class)
+                .addBinding(SolrIndexDocCacheImpl.class)
                 .addBinding(SolrIndexClientCacheImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)

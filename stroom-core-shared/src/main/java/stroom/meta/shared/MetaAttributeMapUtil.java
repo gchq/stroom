@@ -21,29 +21,29 @@ public class MetaAttributeMapUtil {
             // Non grouped fields
             final String feedName = meta.getFeedName();
             if (feedName != null) {
-                map.put(MetaFields.FEED.getName(), feedName);
+                map.put(MetaFields.FEED.getFldName(), feedName);
             }
             final String pipelineUuid = meta.getPipelineUuid();
             if (pipelineUuid != null) {
-                map.put(MetaFields.PIPELINE.getName(), new DocRef("Pipeline", pipelineUuid));
+                map.put(MetaFields.PIPELINE.getFldName(), new DocRef("Pipeline", pipelineUuid));
             }
             if (meta.getStatus() != null) {
-                map.put(MetaFields.STATUS.getName(), meta.getStatus().getDisplayValue());
+                map.put(MetaFields.STATUS.getFldName(), meta.getStatus().getDisplayValue());
             }
             if (meta.getTypeName() != null) {
-                map.put(MetaFields.TYPE.getName(), meta.getTypeName());
+                map.put(MetaFields.TYPE.getFldName(), meta.getTypeName());
             }
 
             // Id's
-            map.put(MetaFields.ID.getName(), meta.getId());
+            map.put(MetaFields.ID.getFldName(), meta.getId());
             if (meta.getParentMetaId() != null) {
-                map.put(MetaFields.PARENT_ID.getName(), meta.getParentMetaId());
+                map.put(MetaFields.PARENT_ID.getFldName(), meta.getParentMetaId());
             }
 
             // Times
-            map.put(MetaFields.CREATE_TIME.getName(), meta.getCreateMs());
-            map.put(MetaFields.EFFECTIVE_TIME.getName(), meta.getEffectiveMs());
-            map.put(MetaFields.STATUS_TIME.getName(), meta.getStatusMs());
+            map.put(MetaFields.CREATE_TIME.getFldName(), meta.getCreateMs());
+            map.put(MetaFields.EFFECTIVE_TIME.getFldName(), meta.getEffectiveMs());
+            map.put(MetaFields.STATUS_TIME.getFldName(), meta.getStatusMs());
 
 //            FIELDS.add(META_INTERNAL_PROCESSOR_ID);
 //            FIELDS.add(META_PROCESSOR_FILTER_ID);

@@ -382,7 +382,20 @@
 	border: 1px solid var(--control__border-color);
 	background: var(--control__background-color);
 	color: var(--control__text-color);
-	white-space: pre;
+	padding: 5px;
+  	-webkit-user-select: text;
+  	-moz-user-select: text;
+  	user-select: text;
+}
+
+.infoLine {
+    display: flex;
+    gap: 5px;
+}
+
+.docRefLinkCopy,
+.docRefLinkOpen {
+    cursor: pointer;
 }
 
 .userTaskView-layout {
@@ -1025,19 +1038,38 @@
     padding-left: 5px;
 }
 
+.columnFunctionEditorViewImpl {
+
+}
+
 .columnFunctionEditorViewImpl-resizePanel {
     display: block;
 }
 
 .columnFunctionEditorViewImpl-editorContainer {
     border: 1px solid var(--control__border-color);
-    background-color: var(--control__background-color);
+    background-color: var(--dashboard-panel__background-color);
 }
 
 .columnFunctionEditorViewImpl-labelPanel {
     display: flex;
     /* align-items: center; */
     justify-content: flex-end;
+    padding: 5px;
+}
+
+.columnFunctionEditorViewImpl-completionLabel {
+}
+
+.columnFunctionEditorViewImpl .quickFilter-textBox,
+.QueryHelpViewImpl .quickFilter-textBox {
+    border-color: transparent;
+    border-bottom-color: var(--control__border-color);
+    border-radius: 0;
+}
+
+.QueryEditViewImpl {
+    border-top: 1px solid var(--control__border-color);
 }
 
 .characterNavigator {
@@ -1851,7 +1883,7 @@ button.main-menu svg {
     flex-grow: 0;
     align-items: end;
     white-space: nowrap;
-    opacity: .7;
+    color: var(--navigation__text-color);
 }
 
 .findCell-sub {
@@ -2077,4 +2109,17 @@ button.main-menu svg {
     margin-bottom: 0px;
 }
 
+.docRefLinkContainer {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
 
+.docRefLinkContainer .svg-image {
+    opacity: 0;
+}
+
+.dataGridCell:hover .docRefLinkContainer .svg-image,
+.docRefLinkContainer:hover .svg-image {
+    opacity: .8;
+}

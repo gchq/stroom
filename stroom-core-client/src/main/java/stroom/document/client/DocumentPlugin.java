@@ -89,7 +89,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 //    }
 
     /**
-     * 4. This method will open an document and show it in the content pane.
+     * 4. This method will open a document and show it in the content pane.
      */
     @SuppressWarnings("unchecked")
     public MyPresenterWidget<?> open(final DocRef docRef, final boolean forceOpen, final boolean fullScreen) {

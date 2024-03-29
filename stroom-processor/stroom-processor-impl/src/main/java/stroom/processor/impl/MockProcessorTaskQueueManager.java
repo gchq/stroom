@@ -27,6 +27,7 @@ import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.TaskStatus;
+import stroom.task.shared.TaskId;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -50,7 +51,7 @@ public class MockProcessorTaskQueueManager implements ProcessorTaskQueueManager 
     }
 
     @Override
-    public ProcessorTaskList assignTasks(final String nodeName, final int count) {
+    public ProcessorTaskList assignTasks(final TaskId sourceTaskId, final String nodeName, final int count) {
         List<ProcessorTask> taskList = Collections.emptyList();
         final ExpressionCriteria criteria = new ExpressionCriteria();
         final List<ProcessorFilter> processorFilters = processorFilterService

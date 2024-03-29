@@ -1,13 +1,22 @@
 package stroom.query.language.functions;
 
+import stroom.util.logging.LogUtil;
+
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public final class ValSerialiser {
-    private static final Serialiser[] SERIALISERS = new Serialiser[10];
+
+    private static final int maxId = Arrays.stream(Type.values())
+            .mapToInt(Type::getId)
+            .max()
+            .orElse(0);
+    private static final Serialiser[] SERIALISERS = new Serialiser[maxId + 1];
 
     static {
         SERIALISERS[Type.NULL.getId()] = new Serialiser(
@@ -38,6 +47,9 @@ public final class ValSerialiser {
         SERIALISERS[Type.ERR.getId()] = new Serialiser(
                 input -> ValErr.create(input.readString()),
                 (output, value) -> output.writeString(((ValErr) value).getMessage()));
+        SERIALISERS[Type.DURATION.getId()] = new Serialiser(
+                input -> ValDuration.create(input.readLong()),
+                (output, value) -> output.writeLong(value.toLong()));
     }
 
     public static Val read(final Input input) {
@@ -50,6 +62,9 @@ public final class ValSerialiser {
         final byte id = val.type().getId();
         output.writeByte(id);
         final Serialiser serialiser = SERIALISERS[id];
+        Objects.requireNonNull(serialiser, () -> LogUtil.message("No serialiser found for val type: {}, id: {}",
+                val.type(), id));
+
         serialiser.writer.accept(output, val);
     }
 
@@ -77,7 +92,21 @@ public final class ValSerialiser {
         }
     }
 
-    private static class Serialiser {
+    /**
+     * For testing to ensure we have all types covered
+     */
+    static Serialiser getSerialiser(final int id) {
+        return SERIALISERS[id];
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * Package private for testing
+     */
+    static class Serialiser {
 
         final Function<Input, Val> reader;
         final BiConsumer<Output, Val> writer;

@@ -37,6 +37,8 @@ public class CreateProcessFilterRequest {
     @JsonProperty
     private final int priority;
     @JsonProperty
+    private final int maxProcessingTasks;
+    @JsonProperty
     private final boolean autoPriority;
     @JsonProperty
     private final boolean reprocess;
@@ -52,6 +54,7 @@ public class CreateProcessFilterRequest {
                                       @JsonProperty("pipeline") final DocRef pipeline,
                                       @JsonProperty("queryData") final QueryData queryData,
                                       @JsonProperty("priority") final int priority,
+                                      @JsonProperty("maxProcessingTasks") final int maxProcessingTasks,
                                       @JsonProperty("autoPriority") final boolean autoPriority,
                                       @JsonProperty("reprocess") final boolean reprocess,
                                       @JsonProperty("enabled") final boolean enabled,
@@ -61,6 +64,7 @@ public class CreateProcessFilterRequest {
         this.pipeline = pipeline;
         this.queryData = queryData;
         this.priority = priority;
+        this.maxProcessingTasks = maxProcessingTasks;
         this.autoPriority = autoPriority;
         this.reprocess = reprocess;
         this.enabled = enabled;
@@ -82,6 +86,10 @@ public class CreateProcessFilterRequest {
 
     public int getPriority() {
         return priority;
+    }
+
+    public int getMaxProcessingTasks() {
+        return maxProcessingTasks;
     }
 
     public boolean isAutoPriority() {
@@ -163,6 +171,7 @@ public class CreateProcessFilterRequest {
         private DocRef pipeline;
         private QueryData queryData;
         private int priority = 10;
+        private int maxProcessingTasks = 0;
         private boolean autoPriority;
         private boolean reprocess;
         private boolean enabled = true;
@@ -177,6 +186,7 @@ public class CreateProcessFilterRequest {
             this.pipeline = request.pipeline;
             this.queryData = request.queryData;
             this.priority = request.priority;
+            this.maxProcessingTasks = request.maxProcessingTasks;
             this.autoPriority = request.autoPriority;
             this.reprocess = request.reprocess;
             this.enabled = request.enabled;
@@ -201,6 +211,11 @@ public class CreateProcessFilterRequest {
 
         public Builder priority(final int priority) {
             this.priority = priority;
+            return this;
+        }
+
+        public Builder maxProcessingTasks(final int maxProcessingTasks) {
+            this.maxProcessingTasks = maxProcessingTasks;
             return this;
         }
 
@@ -235,6 +250,7 @@ public class CreateProcessFilterRequest {
                     pipeline,
                     queryData,
                     priority,
+                    maxProcessingTasks,
                     autoPriority,
                     reprocess,
                     enabled,

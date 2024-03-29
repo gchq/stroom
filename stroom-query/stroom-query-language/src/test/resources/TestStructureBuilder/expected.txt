@@ -361,3 +361,31 @@ select StreamId
    </SELECT>
 </TOKEN_GROUP>
 -----
+// From example index
+from View
+// eval MaxD=max(parseDuration('PT10M'))
+where EventTime < now() - 2dx
+select StreamId, EventId, Feed
+=====
+<TOKEN_GROUP>
+   <FROM>
+      <STRING>View</STRING>
+   </FROM>
+   <WHERE>
+      <STRING>EventTime</STRING>
+      <LESS_THAN><</LESS_THAN>
+      <FUNCTION_GROUP FUNCTION_NAME="now">
+      </FUNCTION_GROUP>
+      <MINUS>-</MINUS>
+      <DURATION>2d</DURATION>
+      <STRING>x</STRING>
+   </WHERE>
+   <SELECT>
+      <STRING>StreamId</STRING>
+      <COMMA>,</COMMA>
+      <STRING>EventId</STRING>
+      <COMMA>,</COMMA>
+      <STRING>Feed</STRING>
+   </SELECT>
+</TOKEN_GROUP>
+-----

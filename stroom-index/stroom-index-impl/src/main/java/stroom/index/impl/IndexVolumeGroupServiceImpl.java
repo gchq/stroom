@@ -19,6 +19,7 @@ import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.Clearable;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -37,7 +38,7 @@ import java.util.stream.Collectors;
         EntityAction.UPDATE,
         EntityAction.CREATE,
         EntityAction.DELETE})
-public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
+public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Clearable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexVolumeGroupServiceImpl.class);
 
@@ -141,7 +142,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                     var indexVolumesInGroup = indexVolumeDao.getAll().stream()
                             .filter(indexVolume ->
                                     indexVolume.getIndexVolumeGroupId().equals(id))
-                            .collect(Collectors.toList());
+                            .toList();
                     indexVolumesInGroup.forEach(indexVolume ->
                             indexVolumeDao.delete(indexVolume.getId()));
                     indexVolumeGroupDao.delete(id);
@@ -259,5 +260,11 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                 LOGGER.error(e::getMessage, e);
             }
         }
+    }
+
+    @Override
+    public void clear() {
+        createdDefaultVolumes = false;
+        creatingDefaultVolumes = false;
     }
 }

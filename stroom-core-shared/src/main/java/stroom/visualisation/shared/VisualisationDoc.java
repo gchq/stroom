@@ -17,6 +17,7 @@
 package stroom.visualisation.shared;
 
 import stroom.docref.DocRef;
+import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.svg.shared.SvgImage;
 
@@ -28,6 +29,13 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
+@Description(
+        "Defines a data visualisation that can be used in a [Dashboard]({{< relref \"#dashboard\" >}}) " +
+                "Document.\n" +
+                "The Visualisation defines the settings that will be available to the user when it is embedded in a " +
+                "Dashboard.\n" +
+                "A Visualisation is dependent on a [Script]({{< relref \"#script\" >}}) Document for the Javascript " +
+                "code to make it work.")
 @JsonPropertyOrder({
         "type",
         "uuid",

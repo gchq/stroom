@@ -46,9 +46,8 @@ LATEST_SUFFIX="-LATEST"
 # This is the branch containing the current stable release of stroom
 # It is used to determine which releases we push the swagger ui to ghpages for
 # As 7 is still in beta, this is currently 6.1
-CURRENT_STROOM_RELEASE_BRANCH="6.1"
 # The version of stroom-resources used for running the DB
-STROOM_RESOURCES_GIT_TAG="stroom-stacks-v7.0-beta.192-2"
+STROOM_RESOURCES_GIT_TAG="stroom-stacks-v7.3-beta.12-proxy-v7.0.32-2"
 SWAGGER_UI_GIT_TAG="v3.49.0"
 doDockerBuild=false
 STROOM_RESOURCES_DIR="${BUILD_DIR}/stroom-resources" 
@@ -330,7 +329,7 @@ releaseToDockerHub() {
     --build-arg GIT_TAG="${BUILD_TAG:-${SNAPSHOT_FLOATING_TAG}}" \
     "${contextRoot}"
 
-  if [[ ! -n "${LOCAL_BUILD}" ]]; then
+  if [[ -z "${LOCAL_BUILD}" ]]; then
     echo -e "Pushing the docker image to ${GREEN}${dockerRepo}${NC} with" \
       "tags: ${GREEN}${allTagArgs[*]}${NC}"
     docker \
@@ -486,11 +485,10 @@ echo -e "BUILD_BRANCH:                  [${GREEN}${BUILD_BRANCH}${NC}]"
 echo -e "BUILD_TAG:                     [${GREEN}${BUILD_TAG}${NC}]"
 echo -e "BUILD_IS_PULL_REQUEST:         [${GREEN}${BUILD_IS_PULL_REQUEST}${NC}]"
 echo -e "BUILD_VERSION:                 [${GREEN}${BUILD_VERSION}${NC}]"
-echo -e "CURRENT_STROOM_RELEASE_BRANCH: [${GREEN}${CURRENT_STROOM_RELEASE_BRANCH}${NC}]"
 echo -e "STROOM_RESOURCES_GIT_TAG:      [${GREEN}${STROOM_RESOURCES_GIT_TAG}${NC}]"
 echo -e "LOCAL_BUILD:                   [${GREEN}${LOCAL_BUILD}${NC}]"
 echo -e "docker version:                [${GREEN}$(docker --version)${NC}]"
-echo -e "docker-compose version:        [${GREEN}$(docker-compose --version)${NC}]"
+echo -e "docker-compose version:        [${GREEN}$(docker compose version)${NC}]"
 echo -e "git version:                   [${GREEN}$(git --version)${NC}]"
 
 # Normal commit/PR/tag build

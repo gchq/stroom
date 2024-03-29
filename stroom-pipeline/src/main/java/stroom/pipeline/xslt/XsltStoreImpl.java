@@ -17,6 +17,7 @@
 
 package stroom.pipeline.xslt;
 
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
@@ -42,6 +43,11 @@ import java.util.Set;
 @Singleton
 class XsltStoreImpl implements XsltStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.TRANSFORMATION,
+            XsltDoc.DOCUMENT_TYPE,
+            "XSL Translation",
+            XsltDoc.ICON);
     private final Store<XsltDoc> store;
 
     @Inject
@@ -90,11 +96,7 @@ class XsltStoreImpl implements XsltStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.TRANSFORMATION,
-                XsltDoc.DOCUMENT_TYPE,
-                "XSL Translation",
-                XsltDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -192,6 +194,13 @@ class XsltStoreImpl implements XsltStore {
     @Override
     public List<DocContentMatch> findByContent(final StringMatch filter) {
         return store.findByContent(filter);
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final DocRef docRef,
+                                                final String extension,
+                                                final StringMatch filter) {
+        return store.fetchHighlights(docRef, extension, filter);
     }
 
     @Override

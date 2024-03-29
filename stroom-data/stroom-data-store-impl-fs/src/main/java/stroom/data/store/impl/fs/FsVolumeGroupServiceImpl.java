@@ -11,6 +11,7 @@ import stroom.util.entityevent.EntityEventBus;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.Clearable;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -23,7 +24,7 @@ import java.util.List;
         EntityAction.UPDATE,
         EntityAction.CREATE,
         EntityAction.DELETE})
-public class FsVolumeGroupServiceImpl implements FsVolumeGroupService {
+public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsVolumeGroupServiceImpl.class);
 
@@ -232,5 +233,11 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService {
                 LOGGER.error(e::getMessage, e);
             }
         }
+    }
+
+    @Override
+    public void clear() {
+        createdDefaultVolumes = false;
+        creatingDefaultVolumes = false;
     }
 }

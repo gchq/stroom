@@ -18,7 +18,6 @@ import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.SimpleEventBus;
-import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.view.client.CellPreviewEvent;
 
 import java.util.List;
@@ -28,14 +27,14 @@ public class DataGridSelectionEventManager<T>
         implements SelectAllEvent.HasSelectAllHandlers {
 
     private final EventBus eventBus = new SimpleEventBus();
-    private final DataGrid<T> dataGrid;
+    private final MyDataGrid<T> dataGrid;
     private final MultiSelectionModel<T> selectionModel;
     private final boolean allowMultiSelect;
     private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
     // Required for multiple selection using shift and control key modifiers.
     private T multiSelectStart;
 
-    public DataGridSelectionEventManager(final DataGrid<T> dataGrid,
+    public DataGridSelectionEventManager(final MyDataGrid<T> dataGrid,
                                          final MultiSelectionModel<T> selectionModel,
                                          final boolean allowMultiSelect) {
         super(dataGrid);
@@ -103,7 +102,11 @@ public class DataGridSelectionEventManager<T>
                 // the parent of the target is the td.
                 if (!"td".equalsIgnoreCase(parentTag)) {
                     final Cell<?> cell = dataGrid.getColumn(event.getColumn()).getCell();
-                    if (cell != null && cell.getConsumedEvents() != null) {
+                    if (cell instanceof EventCell) {
+                        final EventCell eventCell = (EventCell) cell;
+                        consumed = eventCell.isConsumed(event);
+
+                    } else if (cell != null && cell.getConsumedEvents() != null) {
                         if (cell.getConsumedEvents().contains(BrowserEvents.CLICK)
                                 || cell.getConsumedEvents().contains(BrowserEvents.MOUSEDOWN)
                                 || cell.getConsumedEvents().contains(BrowserEvents.MOUSEUP)) {
@@ -114,16 +117,18 @@ public class DataGridSelectionEventManager<T>
             }
 
             if (!consumed) {
-                // We set focus here so that we can use the keyboard to navigate once we have focus.
-                dataGrid.setFocus(true);
-
-                GwtNullSafe.consume(event.getValue(), value -> {
+                int index = -1;
+                if (event.getValue() != null) {
                     final List<T> rows = dataGrid.getVisibleItems();
-                    final int index = rows.indexOf(value);
-                    if (index != -1) {
-                        dataGrid.setKeyboardSelectedRow(index);
-                    }
-                });
+                    index = rows.indexOf(event.getValue());
+                }
+                if (index == -1) {
+                    index = dataGrid.getKeyboardSelectedRow();
+                }
+                if (index != -1) {
+                    // We set focus here so that we can use the keyboard to navigate once we have focus.
+                    dataGrid.setKeyboardSelectedRow(index, true);
+                }
 
                 GwtNullSafe.consume(event.getValue(), row -> {
                     final boolean doubleClick = doubleClickTest.test(row);

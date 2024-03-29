@@ -1509,9 +1509,29 @@ paths:
       summary: Download a query
       tags:
       - Dashboards
+  /dashboard/v1/downloadSearchResults:
+    post:
+      operationId: downloadDashboardSearchResultsLocal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DownloadSearchResultsRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceGeneration'
+          description: default response
+      summary: Download search results
+      tags:
+      - Dashboards
   /dashboard/v1/downloadSearchResults/{nodeName}:
     post:
-      operationId: downloadDashboardSearchResults
+      operationId: downloadDashboardSearchResultsNode
       parameters:
       - in: path
         name: nodeName
@@ -1535,9 +1555,29 @@ paths:
       summary: Download search results
       tags:
       - Dashboards
-  /dashboard/v1/search/{nodeName}:
+  /dashboard/v1/search:
     post:
       operationId: dashboardSearch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardSearchRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSearchResponse'
+          description: default response
+      summary: Perform a new search or get new results
+      tags:
+      - Dashboards
+  /dashboard/v1/search/{nodeName}:
+    post:
+      operationId: dashboardSearch_1
       parameters:
       - in: path
         name: nodeName
@@ -1878,7 +1918,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResultPageFieldInfo'
+                $ref: '#/components/schemas/ResultPageQueryField'
           description: default response
       summary: Find data source fields
       tags:
@@ -2376,7 +2416,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FindExplorerNodeCriteria'
+              $ref: '#/components/schemas/FetchExplorerNodesRequest'
         description: request
         required: true
       responses:
@@ -2414,14 +2454,14 @@ paths:
       summary: Fetch permissions for explorer items
       tags:
       - Explorer (v2)
-  /explorer/v2/findExplorerNodes:
+  /explorer/v2/fetchHighlights:
     post:
-      operationId: findExplorerNodes
+      operationId: fetchHighlights
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FindExplorerNodeQuery'
+              $ref: '#/components/schemas/FetchHighlightsRequest'
         description: request
         required: true
       responses:
@@ -2429,9 +2469,49 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResultPageExplorerDocContentMatch'
+                $ref: '#/components/schemas/DocContentHighlights'
           description: default response
-      summary: Find explorer nodes using a query
+      summary: Fetch match highlights on found content
+      tags:
+      - Explorer (v2)
+  /explorer/v2/find:
+    post:
+      operationId: find
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPageFindResult'
+          description: default response
+      summary: Find documents with names and types matching the supplied request
+      tags:
+      - Explorer (v2)
+  /explorer/v2/findInContent:
+    post:
+      operationId: findInContent
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindInContentRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPageFindInContentResult'
+          description: default response
+      summary: Find documents with content matching the supplied request
       tags:
       - Explorer (v2)
   /explorer/v2/getFromDocRef:
@@ -2613,6 +2693,26 @@ paths:
       summary: Exports all configuration to a file.
       tags:
       - Export
+  /expression/v1/validate:
+    post:
+      operationId: validate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateExpressionRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateExpressionResult'
+          description: default response
+      summary: Validate an expression
+      tags:
+      - Expressions
   /feed/v1/fetchSupportedEncodings:
     get:
       operationId: fetchSupportedEncodings
@@ -3036,7 +3136,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/IndexDoc'
+                $ref: '#/components/schemas/LuceneIndexDoc'
           description: default response
       summary: Fetch a index doc by its UUID
       tags:
@@ -3053,7 +3153,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/IndexDoc'
+              $ref: '#/components/schemas/LuceneIndexDoc'
         description: doc
         required: true
       responses:
@@ -3061,7 +3161,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/IndexDoc'
+                $ref: '#/components/schemas/LuceneIndexDoc'
           description: default response
       summary: Update an index doc
       tags:
@@ -4604,6 +4704,33 @@ paths:
       summary: Sets the enabled/disabled state for a filter
       tags:
       - Processor Filters
+  /processorFilter/v1/{id}/maxProcessingTasks:
+    put:
+      operationId: setProcessorFilterMaxProcessingTasks
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: integer
+              format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: "Sets the optional cluster-wide limit on the number of tasks that may\
+        \ be processed for this filter, at any one time"
+      tags:
+      - Processor Filters
   /processorFilter/v1/{id}/priority:
     put:
       operationId: setProcessorFilterPriority
@@ -4722,9 +4849,29 @@ paths:
       summary: Finds processor task summaries
       tags:
       - Processor Tasks
+  /query/v1/downloadSearchResults:
+    post:
+      operationId: downloadQuerySearchResultsLocal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DownloadQueryResultsRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceGeneration'
+          description: default response
+      summary: Download search results
+      tags:
+      - Queries
   /query/v1/downloadSearchResults/{nodeName}:
     post:
-      operationId: downloadQuerySearchResults
+      operationId: downloadQuerySearchResultsNode
       parameters:
       - in: path
         name: nodeName
@@ -4819,9 +4966,29 @@ paths:
       summary: Fetch all (optionally filtered) query help items
       tags:
       - Queries
+  /query/v1/search:
+    post:
+      operationId: querySearchLocal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuerySearchRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSearchResponse'
+          description: default response
+      summary: Perform a new search or get new results
+      tags:
+      - Queries
   /query/v1/search/{nodeName}:
     post:
-      operationId: querySearch
+      operationId: querySearchNode
       parameters:
       - in: path
         name: nodeName
@@ -7444,6 +7611,8 @@ components:
           format: int32
         nodeName:
           type: string
+        sourceTaskId:
+          $ref: '#/components/schemas/TaskId'
     AuthenticationState:
       type: object
       properties:
@@ -7555,10 +7724,6 @@ components:
             type: string
         docRef:
           $ref: '#/components/schemas/DocRef'
-    BooleanField:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/QueryField'
     BuildInfo:
       type: object
       properties:
@@ -8039,6 +8204,9 @@ components:
         maxMetaCreateTimeMs:
           type: integer
           format: int64
+        maxProcessingTasks:
+          type: integer
+          format: int32
         minMetaCreateTimeMs:
           type: integer
           format: int64
@@ -8337,10 +8505,6 @@ components:
           type: string
       xml:
         name: dataRetentionPolicy
-    DateField:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/QueryField'
     DateTimeFormatSettings:
       type: object
       allOf:
@@ -8458,17 +8622,26 @@ components:
           type: string
         version:
           type: string
+    DocContentHighlights:
+      type: object
+      properties:
+        docRef:
+          $ref: '#/components/schemas/DocRef'
+        highlights:
+          type: array
+          items:
+            $ref: '#/components/schemas/StringMatchLocation'
+        text:
+          type: string
     DocContentMatch:
       type: object
       properties:
         docRef:
           $ref: '#/components/schemas/DocRef'
-        matchLength:
-          type: integer
-          format: int64
-        matchOffset:
-          type: integer
-          format: int64
+        extension:
+          type: string
+        location:
+          $ref: '#/components/schemas/StringMatchLocation'
         sample:
           type: string
     DocRef:
@@ -8494,10 +8667,6 @@ components:
       - uuid
       xml:
         name: doc
-    DocRefField:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/QueryField'
     DocRefInfo:
       type: object
       properties:
@@ -8580,6 +8749,7 @@ components:
           - CLIPBOARD
           - CLOSE
           - CODE
+          - COLLAPSE_ALL
           - COLLAPSE_UP
           - COPY
           - DATABASE
@@ -8625,6 +8795,7 @@ components:
           - ELLIPSES_VERTICAL
           - ERROR
           - EXCLAMATION
+          - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
           - FAST_BACKWARD
@@ -8660,6 +8831,7 @@ components:
           - INSERT
           - JOBS
           - KEY
+          - LOCATE
           - LOCKED
           - LOGO
           - LOGOUT
@@ -8780,10 +8952,6 @@ components:
           type: string
         version:
           type: string
-    DoubleField:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/QueryField'
     DownloadQueryResultsRequest:
       type: object
       properties:
@@ -8935,8 +9103,27 @@ components:
           - TEXT
           - KEYWORD
           - IPV4_ADDRESS
+          - DOC_REF
+        fldName:
+          type: string
+        fldType:
+          type: string
+          enum:
+          - ID
+          - BOOLEAN
+          - INTEGER
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - DATE
+          - TEXT
+          - KEYWORD
+          - IPV4_ADDRESS
+          - DOC_REF
         indexed:
           type: boolean
+        nativeType:
+          type: string
     ElasticIndexTestResponse:
       type: object
       properties:
@@ -9041,194 +9228,6 @@ components:
           type: boolean
         leaf:
           type: boolean
-    ExplorerDocContentMatch:
-      type: object
-      properties:
-        docContentMatch:
-          $ref: '#/components/schemas/DocContentMatch'
-        icon:
-          type: string
-          enum:
-          - ADD
-          - ADD_ABOVE
-          - ADD_BELOW
-          - ADD_MULTIPLE
-          - ALERT
-          - ALERT_SIMPLE
-          - ARROW_DOWN
-          - ARROW_LEFT
-          - ARROW_RIGHT
-          - ARROW_UP
-          - AUTO_REFRESH
-          - BACKWARD
-          - BORDERED_CIRCLE
-          - CANCEL
-          - CASE_SENSITIVE
-          - CLEAR
-          - CLIPBOARD
-          - CLOSE
-          - CODE
-          - COLLAPSE_UP
-          - COPY
-          - DATABASE
-          - DELETE
-          - DEPENDENCIES
-          - DISABLE
-          - DOCUMENT_ANALYTIC_OUTPUT_STORE
-          - DOCUMENT_ANALYTIC_RULE
-          - DOCUMENT_ANNOTATIONS_INDEX
-          - DOCUMENT_DASHBOARD
-          - DOCUMENT_DICTIONARY
-          - DOCUMENT_DOCUMENTATION
-          - DOCUMENT_ELASTIC_CLUSTER
-          - DOCUMENT_ELASTIC_INDEX
-          - DOCUMENT_FAVOURITES
-          - DOCUMENT_FEED
-          - DOCUMENT_FOLDER
-          - DOCUMENT_INDEX
-          - DOCUMENT_KAFKA_CONFIG
-          - DOCUMENT_PIPELINE
-          - DOCUMENT_QUERY
-          - DOCUMENT_RECEIVE_DATA_RULE_SET
-          - DOCUMENT_SCRIPT
-          - DOCUMENT_SEARCHABLE
-          - DOCUMENT_SELECT_ALL_OR_NONE
-          - DOCUMENT_SIGMA_RULE
-          - DOCUMENT_SOLR_INDEX
-          - DOCUMENT_STATISTIC_STORE
-          - DOCUMENT_STROOM_STATS_STORE
-          - DOCUMENT_SYSTEM
-          - DOCUMENT_TEXT_CONVERTER
-          - DOCUMENT_VIEW
-          - DOCUMENT_VISUALISATION
-          - DOCUMENT_XMLSCHEMA
-          - DOCUMENT_XSLT
-          - DOT
-          - DOUBLE_ARROW
-          - DOWN
-          - DOWNLOAD
-          - DROP_DOWN
-          - EDIT
-          - ELLIPSES_HORIZONTAL
-          - ELLIPSES_VERTICAL
-          - ERROR
-          - EXCLAMATION
-          - EXPAND_DOWN
-          - EXPLORER
-          - FAST_BACKWARD
-          - FAST_FORWARD
-          - FATAL
-          - FATAL_DARK
-          - FAVOURITES
-          - FAVOURITES_OUTLINE
-          - FEED
-          - FIELD
-          - FIELDS_EXPRESSION
-          - FIELDS_FILTER
-          - FIELDS_FORMAT
-          - FIELDS_GROUP
-          - FIELDS_SORTAZ
-          - FIELDS_SORTZA
-          - FILE
-          - FILE_FORMATTED
-          - FILE_RAW
-          - FILTER
-          - FIND
-          - FOLDER
-          - FOLDER_TREE
-          - FORMAT
-          - FORWARD
-          - FUNCTION
-          - GENERATE
-          - HELP
-          - HIDE
-          - HIDE_MENU
-          - HISTORY
-          - INFO
-          - INSERT
-          - JOBS
-          - KEY
-          - LOCKED
-          - LOGO
-          - LOGOUT
-          - MENU
-          - MONITORING
-          - MOVE
-          - NODES
-          - OK
-          - OO
-          - OPEN
-          - OPERATOR
-          - PASSWORD
-          - PAUSE
-          - PEN
-          - PIPELINE_ELASTIC_INDEX
-          - PIPELINE_FILE
-          - PIPELINE_FILES
-          - PIPELINE_HADOOP
-          - PIPELINE_ID
-          - PIPELINE_INDEX
-          - PIPELINE_JSON
-          - PIPELINE_KAFKA
-          - PIPELINE_RECORD_COUNT
-          - PIPELINE_RECORD_OUTPUT
-          - PIPELINE_REFERENCE_DATA
-          - PIPELINE_SEARCH_OUTPUT
-          - PIPELINE_SOLR
-          - PIPELINE_SPLIT
-          - PIPELINE_STATISTICS
-          - PIPELINE_STREAM
-          - PIPELINE_STROOM_STATS
-          - PIPELINE_STROOM_STATS_STORE
-          - PIPELINE_TEXT
-          - PIPELINE_XML
-          - PIPELINE_XML_SEARCH
-          - PIPELINE_XSD
-          - PIPELINE_XSLT
-          - PLAY
-          - PROCESS
-          - PROPERTIES
-          - QUESTION
-          - RAW
-          - REFRESH
-          - REGEX
-          - REMOVE
-          - RESIZE
-          - RESIZE_HANDLE
-          - SAVE
-          - SAVEAS
-          - SEARCH
-          - SETTINGS
-          - SHARD_CLOSE
-          - SHARD_FLUSH
-          - SHARE
-          - SHIELD
-          - SHOW
-          - SHOW_MENU
-          - STEP
-          - STEPPING
-          - STEPPING_CIRCLE
-          - STEP_BACKWARD
-          - STEP_FORWARD
-          - STOP
-          - TABLE
-          - TABLE_NESTED
-          - TAB_CLOSE
-          - TAGS
-          - TEXT_WRAP
-          - TICK
-          - UNDO
-          - UNLOCK
-          - UP
-          - UPLOAD
-          - USER
-          - USERS
-          - VOLUMES
-          - WARNING
-        isFavourite:
-          type: boolean
-        path:
-          type: string
     ExplorerNode:
       type: object
       properties:
@@ -9261,6 +9260,7 @@ components:
           - CLIPBOARD
           - CLOSE
           - CODE
+          - COLLAPSE_ALL
           - COLLAPSE_UP
           - COPY
           - DATABASE
@@ -9306,6 +9306,7 @@ components:
           - ELLIPSES_VERTICAL
           - ERROR
           - EXCLAMATION
+          - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
           - FAST_BACKWARD
@@ -9341,6 +9342,7 @@ components:
           - INSERT
           - JOBS
           - KEY
+          - LOCATE
           - LOCKED
           - LOGO
           - LOGOUT
@@ -9588,6 +9590,10 @@ components:
             - L
             - O
           uniqueItems: true
+        recentItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocRef'
         requiredPermissions:
           type: array
           items:
@@ -9813,6 +9819,40 @@ components:
           items:
             $ref: '#/components/schemas/ExplorerNodeKey'
           uniqueItems: true
+    FetchExplorerNodesRequest:
+      type: object
+      properties:
+        ensureVisible:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExplorerNodeKey'
+          uniqueItems: true
+        filter:
+          $ref: '#/components/schemas/ExplorerTreeFilter'
+        minDepth:
+          type: integer
+          format: int32
+        openItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExplorerNodeKey'
+          uniqueItems: true
+        showAlerts:
+          type: boolean
+        temporaryOpenedItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExplorerNodeKey'
+          uniqueItems: true
+    FetchHighlightsRequest:
+      type: object
+      properties:
+        docRef:
+          $ref: '#/components/schemas/DocRef'
+        extension:
+          type: string
+        filter:
+          $ref: '#/components/schemas/StringMatch'
     FetchLinkedScriptRequest:
       type: object
       properties:
@@ -9874,63 +9914,12 @@ components:
         dataSource:
           $ref: '#/components/schemas/DocRef'
         field:
-          $ref: '#/components/schemas/FieldInfo'
+          $ref: '#/components/schemas/QueryField'
         text:
           type: string
       required:
       - dataSource
       - field
-    FieldInfo:
-      type: object
-      properties:
-        conditions:
-          type: string
-          enum:
-          - "'=', '!=', 'between', '>', '>=', '<', '<='"
-          - "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='"
-          - "'=', '!='"
-          - "'=', '!=', 'between', '>', '>=', '<', '<='"
-          - "'=', '!=', 'in', 'in dictionary'"
-          - "'is', 'in folder'"
-          - "'=', '!=', 'in', 'in dictionary'"
-          - "'is', 'in folder', '=', '!=', 'in', 'in dictionary'"
-          - "'=', '!=', 'in', 'in dictionary'"
-          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
-          - "'=', '!=', 'in', 'in dictionary', 'matches regex'"
-          - "'=', '!=', 'in', 'in dictionary'"
-          - "'=', '!=', 'in', 'in dictionary'"
-          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
-          - "'=', '!='"
-          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
-          - "'=', '!=', 'in', 'in dictionary'"
-          - "'is', '=', '!='"
-          - '''between'''
-          - "'=', '!=', 'in'"
-          - "'=', '!=', 'in'"
-          - "'=', '!=', 'in', 'in dictionary'"
-          - "'=', '!=', 'in', 'in dictionary', 'is'"
-          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
-          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
-        docRefType:
-          type: string
-        fieldName:
-          type: string
-        fieldType:
-          type: string
-          enum:
-          - ID
-          - BOOLEAN
-          - INTEGER
-          - LONG
-          - FLOAT
-          - DOUBLE
-          - DATE
-          - TEXT
-          - KEYWORD
-          - IPV4_ADDRESS
-          - DOC_REF
-        queryable:
-          type: boolean
     Filter:
       type: object
       description: A pair of regular expression filters (inclusion and exclusion)
@@ -10033,45 +10022,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PipelineProperty'
-    FindExplorerNodeCriteria:
-      type: object
-      properties:
-        ensureVisible:
-          type: array
-          items:
-            $ref: '#/components/schemas/ExplorerNodeKey'
-          uniqueItems: true
-        filter:
-          $ref: '#/components/schemas/ExplorerTreeFilter'
-        minDepth:
-          type: integer
-          format: int32
-        openItems:
-          type: array
-          items:
-            $ref: '#/components/schemas/ExplorerNodeKey'
-          uniqueItems: true
-        showAlerts:
-          type: boolean
-        temporaryOpenedItems:
-          type: array
-          items:
-            $ref: '#/components/schemas/ExplorerNodeKey'
-          uniqueItems: true
-    FindExplorerNodeQuery:
-      type: object
-      properties:
-        filter:
-          $ref: '#/components/schemas/StringMatch'
-        pageRequest:
-          $ref: '#/components/schemas/PageRequest'
-        sort:
-          type: string
-          writeOnly: true
-        sortList:
-          type: array
-          items:
-            $ref: '#/components/schemas/CriteriaFieldSort'
     FindFieldInfoCriteria:
       type: object
       properties:
@@ -10104,6 +10054,211 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
+    FindInContentRequest:
+      type: object
+      properties:
+        filter:
+          $ref: '#/components/schemas/StringMatch'
+        pageRequest:
+          $ref: '#/components/schemas/PageRequest'
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaFieldSort'
+    FindInContentResult:
+      type: object
+      properties:
+        docContentMatch:
+          $ref: '#/components/schemas/DocContentMatch'
+        icon:
+          type: string
+          enum:
+          - ADD
+          - ADD_ABOVE
+          - ADD_BELOW
+          - ADD_MULTIPLE
+          - ALERT
+          - ALERT_SIMPLE
+          - ARROW_DOWN
+          - ARROW_LEFT
+          - ARROW_RIGHT
+          - ARROW_UP
+          - AUTO_REFRESH
+          - BACKWARD
+          - BORDERED_CIRCLE
+          - CANCEL
+          - CASE_SENSITIVE
+          - CLEAR
+          - CLIPBOARD
+          - CLOSE
+          - CODE
+          - COLLAPSE_ALL
+          - COLLAPSE_UP
+          - COPY
+          - DATABASE
+          - DELETE
+          - DEPENDENCIES
+          - DISABLE
+          - DOCUMENT_ANALYTIC_OUTPUT_STORE
+          - DOCUMENT_ANALYTIC_RULE
+          - DOCUMENT_ANNOTATIONS_INDEX
+          - DOCUMENT_DASHBOARD
+          - DOCUMENT_DICTIONARY
+          - DOCUMENT_DOCUMENTATION
+          - DOCUMENT_ELASTIC_CLUSTER
+          - DOCUMENT_ELASTIC_INDEX
+          - DOCUMENT_FAVOURITES
+          - DOCUMENT_FEED
+          - DOCUMENT_FOLDER
+          - DOCUMENT_INDEX
+          - DOCUMENT_KAFKA_CONFIG
+          - DOCUMENT_PIPELINE
+          - DOCUMENT_QUERY
+          - DOCUMENT_RECEIVE_DATA_RULE_SET
+          - DOCUMENT_SCRIPT
+          - DOCUMENT_SEARCHABLE
+          - DOCUMENT_SELECT_ALL_OR_NONE
+          - DOCUMENT_SIGMA_RULE
+          - DOCUMENT_SOLR_INDEX
+          - DOCUMENT_STATISTIC_STORE
+          - DOCUMENT_STROOM_STATS_STORE
+          - DOCUMENT_SYSTEM
+          - DOCUMENT_TEXT_CONVERTER
+          - DOCUMENT_VIEW
+          - DOCUMENT_VISUALISATION
+          - DOCUMENT_XMLSCHEMA
+          - DOCUMENT_XSLT
+          - DOT
+          - DOUBLE_ARROW
+          - DOWN
+          - DOWNLOAD
+          - DROP_DOWN
+          - EDIT
+          - ELLIPSES_HORIZONTAL
+          - ELLIPSES_VERTICAL
+          - ERROR
+          - EXCLAMATION
+          - EXPAND_ALL
+          - EXPAND_DOWN
+          - EXPLORER
+          - FAST_BACKWARD
+          - FAST_FORWARD
+          - FATAL
+          - FATAL_DARK
+          - FAVOURITES
+          - FAVOURITES_OUTLINE
+          - FEED
+          - FIELD
+          - FIELDS_EXPRESSION
+          - FIELDS_FILTER
+          - FIELDS_FORMAT
+          - FIELDS_GROUP
+          - FIELDS_SORTAZ
+          - FIELDS_SORTZA
+          - FILE
+          - FILE_FORMATTED
+          - FILE_RAW
+          - FILTER
+          - FIND
+          - FOLDER
+          - FOLDER_TREE
+          - FORMAT
+          - FORWARD
+          - FUNCTION
+          - GENERATE
+          - HELP
+          - HIDE
+          - HIDE_MENU
+          - HISTORY
+          - INFO
+          - INSERT
+          - JOBS
+          - KEY
+          - LOCATE
+          - LOCKED
+          - LOGO
+          - LOGOUT
+          - MENU
+          - MONITORING
+          - MOVE
+          - NODES
+          - OK
+          - OO
+          - OPEN
+          - OPERATOR
+          - PASSWORD
+          - PAUSE
+          - PEN
+          - PIPELINE_ELASTIC_INDEX
+          - PIPELINE_FILE
+          - PIPELINE_FILES
+          - PIPELINE_HADOOP
+          - PIPELINE_ID
+          - PIPELINE_INDEX
+          - PIPELINE_JSON
+          - PIPELINE_KAFKA
+          - PIPELINE_RECORD_COUNT
+          - PIPELINE_RECORD_OUTPUT
+          - PIPELINE_REFERENCE_DATA
+          - PIPELINE_SEARCH_OUTPUT
+          - PIPELINE_SOLR
+          - PIPELINE_SPLIT
+          - PIPELINE_STATISTICS
+          - PIPELINE_STREAM
+          - PIPELINE_STROOM_STATS
+          - PIPELINE_STROOM_STATS_STORE
+          - PIPELINE_TEXT
+          - PIPELINE_XML
+          - PIPELINE_XML_SEARCH
+          - PIPELINE_XSD
+          - PIPELINE_XSLT
+          - PLAY
+          - PROCESS
+          - PROPERTIES
+          - QUESTION
+          - RAW
+          - REFRESH
+          - REGEX
+          - REMOVE
+          - RESIZE
+          - RESIZE_HANDLE
+          - SAVE
+          - SAVEAS
+          - SEARCH
+          - SETTINGS
+          - SHARD_CLOSE
+          - SHARD_FLUSH
+          - SHARE
+          - SHIELD
+          - SHOW
+          - SHOW_MENU
+          - STEP
+          - STEPPING
+          - STEPPING_CIRCLE
+          - STEP_BACKWARD
+          - STEP_FORWARD
+          - STOP
+          - TABLE
+          - TABLE_NESTED
+          - TAB_CLOSE
+          - TAGS
+          - TEXT_WRAP
+          - TICK
+          - UNDO
+          - UNLOCK
+          - UP
+          - UPLOAD
+          - USER
+          - USERS
+          - VOLUMES
+          - WARNING
+        isFavourite:
+          type: boolean
+        path:
+          type: string
     FindIndexShardCriteria:
       type: object
       properties:
@@ -10176,6 +10331,209 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
+    FindRequest:
+      type: object
+      properties:
+        filter:
+          $ref: '#/components/schemas/ExplorerTreeFilter'
+        pageRequest:
+          $ref: '#/components/schemas/PageRequest'
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaFieldSort'
+    FindResult:
+      type: object
+      properties:
+        docRef:
+          $ref: '#/components/schemas/DocRef'
+        icon:
+          type: string
+          enum:
+          - ADD
+          - ADD_ABOVE
+          - ADD_BELOW
+          - ADD_MULTIPLE
+          - ALERT
+          - ALERT_SIMPLE
+          - ARROW_DOWN
+          - ARROW_LEFT
+          - ARROW_RIGHT
+          - ARROW_UP
+          - AUTO_REFRESH
+          - BACKWARD
+          - BORDERED_CIRCLE
+          - CANCEL
+          - CASE_SENSITIVE
+          - CLEAR
+          - CLIPBOARD
+          - CLOSE
+          - CODE
+          - COLLAPSE_ALL
+          - COLLAPSE_UP
+          - COPY
+          - DATABASE
+          - DELETE
+          - DEPENDENCIES
+          - DISABLE
+          - DOCUMENT_ANALYTIC_OUTPUT_STORE
+          - DOCUMENT_ANALYTIC_RULE
+          - DOCUMENT_ANNOTATIONS_INDEX
+          - DOCUMENT_DASHBOARD
+          - DOCUMENT_DICTIONARY
+          - DOCUMENT_DOCUMENTATION
+          - DOCUMENT_ELASTIC_CLUSTER
+          - DOCUMENT_ELASTIC_INDEX
+          - DOCUMENT_FAVOURITES
+          - DOCUMENT_FEED
+          - DOCUMENT_FOLDER
+          - DOCUMENT_INDEX
+          - DOCUMENT_KAFKA_CONFIG
+          - DOCUMENT_PIPELINE
+          - DOCUMENT_QUERY
+          - DOCUMENT_RECEIVE_DATA_RULE_SET
+          - DOCUMENT_SCRIPT
+          - DOCUMENT_SEARCHABLE
+          - DOCUMENT_SELECT_ALL_OR_NONE
+          - DOCUMENT_SIGMA_RULE
+          - DOCUMENT_SOLR_INDEX
+          - DOCUMENT_STATISTIC_STORE
+          - DOCUMENT_STROOM_STATS_STORE
+          - DOCUMENT_SYSTEM
+          - DOCUMENT_TEXT_CONVERTER
+          - DOCUMENT_VIEW
+          - DOCUMENT_VISUALISATION
+          - DOCUMENT_XMLSCHEMA
+          - DOCUMENT_XSLT
+          - DOT
+          - DOUBLE_ARROW
+          - DOWN
+          - DOWNLOAD
+          - DROP_DOWN
+          - EDIT
+          - ELLIPSES_HORIZONTAL
+          - ELLIPSES_VERTICAL
+          - ERROR
+          - EXCLAMATION
+          - EXPAND_ALL
+          - EXPAND_DOWN
+          - EXPLORER
+          - FAST_BACKWARD
+          - FAST_FORWARD
+          - FATAL
+          - FATAL_DARK
+          - FAVOURITES
+          - FAVOURITES_OUTLINE
+          - FEED
+          - FIELD
+          - FIELDS_EXPRESSION
+          - FIELDS_FILTER
+          - FIELDS_FORMAT
+          - FIELDS_GROUP
+          - FIELDS_SORTAZ
+          - FIELDS_SORTZA
+          - FILE
+          - FILE_FORMATTED
+          - FILE_RAW
+          - FILTER
+          - FIND
+          - FOLDER
+          - FOLDER_TREE
+          - FORMAT
+          - FORWARD
+          - FUNCTION
+          - GENERATE
+          - HELP
+          - HIDE
+          - HIDE_MENU
+          - HISTORY
+          - INFO
+          - INSERT
+          - JOBS
+          - KEY
+          - LOCATE
+          - LOCKED
+          - LOGO
+          - LOGOUT
+          - MENU
+          - MONITORING
+          - MOVE
+          - NODES
+          - OK
+          - OO
+          - OPEN
+          - OPERATOR
+          - PASSWORD
+          - PAUSE
+          - PEN
+          - PIPELINE_ELASTIC_INDEX
+          - PIPELINE_FILE
+          - PIPELINE_FILES
+          - PIPELINE_HADOOP
+          - PIPELINE_ID
+          - PIPELINE_INDEX
+          - PIPELINE_JSON
+          - PIPELINE_KAFKA
+          - PIPELINE_RECORD_COUNT
+          - PIPELINE_RECORD_OUTPUT
+          - PIPELINE_REFERENCE_DATA
+          - PIPELINE_SEARCH_OUTPUT
+          - PIPELINE_SOLR
+          - PIPELINE_SPLIT
+          - PIPELINE_STATISTICS
+          - PIPELINE_STREAM
+          - PIPELINE_STROOM_STATS
+          - PIPELINE_STROOM_STATS_STORE
+          - PIPELINE_TEXT
+          - PIPELINE_XML
+          - PIPELINE_XML_SEARCH
+          - PIPELINE_XSD
+          - PIPELINE_XSLT
+          - PLAY
+          - PROCESS
+          - PROPERTIES
+          - QUESTION
+          - RAW
+          - REFRESH
+          - REGEX
+          - REMOVE
+          - RESIZE
+          - RESIZE_HANDLE
+          - SAVE
+          - SAVEAS
+          - SEARCH
+          - SETTINGS
+          - SHARD_CLOSE
+          - SHARD_FLUSH
+          - SHARE
+          - SHIELD
+          - SHOW
+          - SHOW_MENU
+          - STEP
+          - STEPPING
+          - STEPPING_CIRCLE
+          - STEP_BACKWARD
+          - STEP_FORWARD
+          - STOP
+          - TABLE
+          - TABLE_NESTED
+          - TAB_CLOSE
+          - TAGS
+          - TEXT_WRAP
+          - TICK
+          - UNDO
+          - UNLOCK
+          - UP
+          - UPLOAD
+          - USER
+          - USERS
+          - VOLUMES
+          - WARNING
+        path:
+          type: string
     FindResultStoreCriteria:
       type: object
       properties:
@@ -10309,10 +10667,6 @@ components:
       description: A result structure used primarily for visualisation data
       required:
       - componentId
-    FloatField:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/QueryField'
     Format:
       type: object
       description: Describes the formatting that will be applied to values in a field
@@ -10565,10 +10919,6 @@ components:
             type: string
           windowSize:
             type: string
-    IdField:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/QueryField'
     ImportConfigRequest:
       type: object
       properties:
@@ -10635,93 +10985,6 @@ components:
           type: array
           items:
             type: string
-    IndexDoc:
-      type: object
-      properties:
-        createTimeMs:
-          type: integer
-          format: int64
-        createUser:
-          type: string
-        defaultExtractionPipeline:
-          $ref: '#/components/schemas/DocRef'
-        description:
-          type: string
-        fields:
-          type: array
-          items:
-            $ref: '#/components/schemas/IndexField'
-        maxDocsPerShard:
-          type: integer
-          format: int32
-        name:
-          type: string
-        partitionBy:
-          type: string
-          enum:
-          - DAY
-          - WEEK
-          - MONTH
-          - YEAR
-        partitionSize:
-          type: integer
-          format: int32
-        retentionDayAge:
-          type: integer
-          format: int32
-        shardsPerPartition:
-          type: integer
-          format: int32
-        timeField:
-          type: string
-        type:
-          type: string
-        updateTimeMs:
-          type: integer
-          format: int64
-        updateUser:
-          type: string
-        uuid:
-          type: string
-        version:
-          type: string
-        volumeGroupName:
-          type: string
-    IndexField:
-      type: object
-      properties:
-        analyzerType:
-          type: string
-          enum:
-          - KEYWORD
-          - ALPHA
-          - NUMERIC
-          - ALPHA_NUMERIC
-          - WHITESPACE
-          - STOP
-          - STANDARD
-        caseSensitive:
-          type: boolean
-        fieldName:
-          type: string
-        fieldType:
-          type: string
-          enum:
-          - ID
-          - BOOLEAN_FIELD
-          - INTEGER_FIELD
-          - LONG_FIELD
-          - FLOAT_FIELD
-          - DOUBLE_FIELD
-          - DATE_FIELD
-          - FIELD
-          - NUMERIC_FIELD
-        indexed:
-          type: boolean
-        stored:
-          type: boolean
-        termPositions:
-          type: boolean
     IndexShard:
       type: object
       properties:
@@ -10863,14 +11126,6 @@ components:
           type: string
         validationRegex:
           type: string
-    IntegerField:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/QueryField'
-    IpV4AddressField:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/QueryField'
     Job:
       type: object
       properties:
@@ -10980,10 +11235,6 @@ components:
         properties:
           text:
             type: string
-    KeywordField:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/QueryField'
     LayoutConfig:
       type: object
       discriminator:
@@ -11047,6 +11298,8 @@ components:
       - $ref: '#/components/schemas/ComponentSettings'
       - type: object
         properties:
+          allowTextEntry:
+            type: boolean
           dictionary:
             $ref: '#/components/schemas/DocRef'
           key:
@@ -11072,6 +11325,8 @@ components:
           format: int32
         type:
           type: string
+        unknown:
+          type: boolean
       required:
       - type
     LoginRequest:
@@ -11090,10 +11345,109 @@ components:
           type: string
         requirePasswordChange:
           type: boolean
-    LongField:
+    LuceneIndexDoc:
       type: object
-      allOf:
-      - $ref: '#/components/schemas/QueryField'
+      properties:
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        defaultExtractionPipeline:
+          $ref: '#/components/schemas/DocRef'
+        description:
+          type: string
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/LuceneIndexField'
+        maxDocsPerShard:
+          type: integer
+          format: int32
+        name:
+          type: string
+        partitionBy:
+          type: string
+          enum:
+          - DAY
+          - WEEK
+          - MONTH
+          - YEAR
+        partitionSize:
+          type: integer
+          format: int32
+        retentionDayAge:
+          type: integer
+          format: int32
+        shardsPerPartition:
+          type: integer
+          format: int32
+        timeField:
+          type: string
+        type:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        uuid:
+          type: string
+        version:
+          type: string
+        volumeGroupName:
+          type: string
+    LuceneIndexField:
+      type: object
+      properties:
+        analyzerType:
+          type: string
+          enum:
+          - KEYWORD
+          - ALPHA
+          - NUMERIC
+          - ALPHA_NUMERIC
+          - WHITESPACE
+          - STOP
+          - STANDARD
+        caseSensitive:
+          type: boolean
+        fieldName:
+          type: string
+        fieldType:
+          type: string
+          enum:
+          - ID
+          - BOOLEAN_FIELD
+          - INTEGER_FIELD
+          - LONG_FIELD
+          - FLOAT_FIELD
+          - DOUBLE_FIELD
+          - DATE_FIELD
+          - FIELD
+          - NUMERIC_FIELD
+        fldName:
+          type: string
+        fldType:
+          type: string
+          enum:
+          - ID
+          - BOOLEAN
+          - INTEGER
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - DATE
+          - TEXT
+          - KEYWORD
+          - IPV4_ADDRESS
+          - DOC_REF
+        indexed:
+          type: boolean
+        stored:
+          type: boolean
+        termPositions:
+          type: boolean
     MapDefinition:
       type: object
       properties:
@@ -11523,6 +11877,7 @@ components:
           - CLIPBOARD
           - CLOSE
           - CODE
+          - COLLAPSE_ALL
           - COLLAPSE_UP
           - COPY
           - DATABASE
@@ -11568,6 +11923,7 @@ components:
           - ELLIPSES_VERTICAL
           - ERROR
           - EXCLAMATION
+          - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
           - FAST_BACKWARD
@@ -11603,6 +11959,7 @@ components:
           - INSERT
           - JOBS
           - KEY
+          - LOCATE
           - LOCKED
           - LOGO
           - LOGOUT
@@ -11953,6 +12310,9 @@ components:
         maxMetaCreateTimeMs:
           type: integer
           format: int64
+        maxProcessingTasks:
+          type: integer
+          format: int32
         minMetaCreateTimeMs:
           type: integer
           format: int64
@@ -12301,8 +12661,6 @@ components:
           type: string
     QueryField:
       type: object
-      discriminator:
-        propertyName: type
       properties:
         conditionSet:
           type: string
@@ -12334,7 +12692,9 @@ components:
           - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
         docRefType:
           type: string
-        fieldType:
+        fldName:
+          type: string
+        fldType:
           type: string
           enum:
           - ID
@@ -12354,8 +12714,6 @@ components:
           type: boolean
         type:
           type: string
-      required:
-      - type
     QueryHelpData:
       type: object
       discriminator:
@@ -12393,8 +12751,8 @@ components:
       - $ref: '#/components/schemas/QueryHelpData'
       - type: object
         properties:
-          fieldInfo:
-            $ref: '#/components/schemas/FieldInfo'
+          field:
+            $ref: '#/components/schemas/QueryField'
     QueryHelpFunctionSignature:
       type: object
       allOf:
@@ -12490,6 +12848,7 @@ components:
           - CLIPBOARD
           - CLOSE
           - CODE
+          - COLLAPSE_ALL
           - COLLAPSE_UP
           - COPY
           - DATABASE
@@ -12535,6 +12894,7 @@ components:
           - ELLIPSES_VERTICAL
           - ERROR
           - EXCLAMATION
+          - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
           - FAST_BACKWARD
@@ -12570,6 +12930,7 @@ components:
           - INSERT
           - JOBS
           - KEY
+          - LOCATE
           - LOCKED
           - LOGO
           - LOGOUT
@@ -13004,7 +13365,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Dependency'
-    ResultPageExplorerDocContentMatch:
+    ResultPageFindInContentResult:
       type: object
       description: A page of results.
       properties:
@@ -13013,8 +13374,8 @@ components:
         values:
           type: array
           items:
-            $ref: '#/components/schemas/ExplorerDocContentMatch'
-    ResultPageFieldInfo:
+            $ref: '#/components/schemas/FindInContentResult'
+    ResultPageFindResult:
       type: object
       description: A page of results.
       properties:
@@ -13023,7 +13384,7 @@ components:
         values:
           type: array
           items:
-            $ref: '#/components/schemas/FieldInfo'
+            $ref: '#/components/schemas/FindResult'
     ResultPageFsVolume:
       type: object
       description: A page of results.
@@ -13124,6 +13485,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProcessorTaskSummary'
+    ResultPageQueryField:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueryField'
     ResultPageQueryHelpRow:
       type: object
       description: A page of results.
@@ -13720,18 +14091,16 @@ components:
     SharedElementData:
       type: object
       properties:
-        codeIndicators:
-          $ref: '#/components/schemas/Indicators'
         formatInput:
           type: boolean
         formatOutput:
           type: boolean
+        indicators:
+          $ref: '#/components/schemas/Indicators'
         input:
           type: string
         output:
           type: string
-        outputIndicators:
-          $ref: '#/components/schemas/Indicators'
     SharedStepData:
       type: object
       properties:
@@ -13865,10 +14234,28 @@ components:
           - DATE_FIELD
           - FIELD
           - NUMERIC_FIELD
+        fldName:
+          type: string
+        fldType:
+          type: string
+          enum:
+          - ID
+          - BOOLEAN
+          - INTEGER
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - DATE
+          - TEXT
+          - KEYWORD
+          - IPV4_ADDRESS
+          - DOC_REF
         indexed:
           type: boolean
         multiValued:
           type: boolean
+        nativeType:
+          type: string
         omitNorms:
           type: boolean
         omitPositions:
@@ -14114,6 +14501,14 @@ components:
       properties:
         elementId:
           type: string
+        errorType:
+          type: string
+          enum:
+          - CODE
+          - GENERIC
+          - INPUT
+          - OUTPUT
+          - UNKNOWN
         location:
           $ref: '#/components/schemas/Location'
         message:
@@ -14247,6 +14642,15 @@ components:
           - REGEX
         pattern:
           type: string
+    StringMatchLocation:
+      type: object
+      properties:
+        length:
+          type: integer
+          format: int32
+        offset:
+          type: integer
+          format: int32
     StroomStatsStoreDoc:
       type: object
       properties:
@@ -14693,10 +15097,16 @@ components:
           type: string
         version:
           type: string
-    TextField:
+    TextInputComponentSettings:
       type: object
       allOf:
-      - $ref: '#/components/schemas/QueryField'
+      - $ref: '#/components/schemas/ComponentSettings'
+      - type: object
+        properties:
+          key:
+            type: string
+          value:
+            type: string
     ThemeConfig:
       type: object
       properties:
@@ -15009,6 +15419,17 @@ components:
           type: string
         timeZone:
           $ref: '#/components/schemas/TimeZone'
+    ValidateExpressionRequest:
+      type: object
+      properties:
+        dateTimeSettings:
+          $ref: '#/components/schemas/DateTimeSettings'
+        expressionItem:
+          $ref: '#/components/schemas/ExpressionItem'
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueryField'
     ValidateExpressionResult:
       type: object
       properties:

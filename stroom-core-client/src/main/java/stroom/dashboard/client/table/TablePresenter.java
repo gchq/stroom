@@ -45,12 +45,9 @@ import stroom.dashboard.shared.TableResultRequest;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.datasource.api.v2.ConditionSet;
-import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.LongField;
+import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.QueryField;
-import stroom.datasource.api.v2.TextField;
 import stroom.dispatch.client.ExportFileCompleteUtil;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
@@ -90,7 +87,6 @@ import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -157,6 +153,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private long[] maxResults = TableComponentSettings.DEFAULT_MAX_RESULTS;
     private boolean pause;
     private int currentRequestCount;
+    private SelectionPopup<Column, ColumnSelectionItem> addColumnPopup;
 
     @Inject
     public TablePresenter(final EventBus eventBus,
@@ -320,15 +317,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         if (currentSearchModel != null) {
             columnSelectionListModel.setDataSourceRef(currentSearchModel.getIndexLoader().getLoadedDataSourceRef());
 
-            final SelectionPopup<Column, ColumnSelectionItem> addColumnPopup = new SelectionPopup<>();
-            addColumnPopup.init(columnSelectionListModel);
+            if (addColumnPopup == null) {
+                addColumnPopup = new SelectionPopup<>();
+                addColumnPopup.init(columnSelectionListModel);
+            }
 
             final Element target = event.getNativeEvent().getEventTarget().cast();
             addColumnPopup.addAutoHidePartner(target);
-            final PopupPosition popupPosition = new PopupPosition(
-                    target.getAbsoluteLeft() - 3,
-                    target.getAbsoluteTop() + target.getClientHeight() + 1);
-            addColumnPopup.show(popupPosition);
+            addColumnPopup.show(target);
 
             final List<HandlerRegistration> handlerRegistrations = new ArrayList<>();
             final MultiSelectionModel<ColumnSelectionItem> selectionModel = addColumnPopup.getSelectionModel();
@@ -411,8 +407,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                                 downloadPresenter.downloadAllTables(),
                                                 downloadPresenter.isSample(),
                                                 downloadPresenter.getPercent());
-                                final Rest<ResourceGeneration> rest = restFactory.create();
-                                rest
+                                restFactory
+                                        .builder()
+                                        .forType(ResourceGeneration.class)
                                         .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager,
                                                 null,
                                                 result))
@@ -523,14 +520,20 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         try {
             switch (colType) {
                 case NUMBER:
-                    return new LongField(column.getName(), true);
+                    return QueryField.createLong(column.getName());
 
                 case DATE_TIME:
-                    return new DateField(column.getName(), true);
+                    return QueryField.createDate(column.getName());
 
                 default:
                     // CONTAINS only supported for legacy content, not for use in UI
-                    return new TextField(column.getName(), ConditionSet.BASIC_TEXT, null, true);
+                    return QueryField
+                            .builder()
+                            .fldName(column.getName())
+                            .fldType(FieldType.TEXT)
+                            .conditionSet(ConditionSet.BASIC_TEXT)
+                            .queryable(true)
+                            .build();
 
             }
         } catch (Exception e) {
@@ -970,7 +973,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         final List<Column> columns = getTableSettings().getColumns();
         if (columns != null && columns.size() > 0) {
             for (final Column column : columns) {
-                abstractFields.add(new TextField(column.getName(), true));
+                abstractFields.add(QueryField.createText(column.getName(), true));
             }
         }
         return abstractFields;

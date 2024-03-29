@@ -19,7 +19,6 @@ package stroom.pipeline.shared;
 import stroom.util.shared.Indicators;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -32,9 +31,7 @@ public class SharedElementData {
     @JsonProperty
     private final String output;
     @JsonProperty
-    private final Indicators codeIndicators;
-    @JsonProperty
-    private final Indicators outputIndicators;
+    private final Indicators indicators;
     @JsonProperty
     private final boolean formatInput;
     @JsonProperty
@@ -43,14 +40,12 @@ public class SharedElementData {
     @JsonCreator
     public SharedElementData(@JsonProperty("input") final String input,
                              @JsonProperty("output") final String output,
-                             @JsonProperty("codeIndicators") final Indicators codeIndicators,
-                             @JsonProperty("outputIndicators") final Indicators outputIndicators,
+                             @JsonProperty("indicators") final Indicators indicators,
                              @JsonProperty("formatInput") final boolean formatInput,
                              @JsonProperty("formatOutput") final boolean formatOutput) {
         this.input = input;
         this.output = output;
-        this.codeIndicators = codeIndicators;
-        this.outputIndicators = outputIndicators;
+        this.indicators = indicators;
         this.formatInput = formatInput;
         this.formatOutput = formatOutput;
     }
@@ -63,18 +58,15 @@ public class SharedElementData {
         return output;
     }
 
-    public Indicators getCodeIndicators() {
-        return codeIndicators;
+    public Indicators getIndicators() {
+        return indicators;
     }
 
-    public Indicators getOutputIndicators() {
-        return outputIndicators;
-    }
-
-    @JsonIgnore
-    public Indicators getAllIndicators() {
-        return Indicators.combine(outputIndicators, codeIndicators);
-    }
+//    public Indicators getIndicators(final ErrorType... includedErrorTypes) {
+//        return GwtNullSafe.get(
+//                indicators,
+//                indicators2 -> indicators2.filter(includedErrorTypes));
+//    }
 
     public boolean isFormatInput() {
         return formatInput;
@@ -84,5 +76,15 @@ public class SharedElementData {
         return formatOutput;
     }
 
+    @Override
+    public String toString() {
+        return "SharedElementData{" +
+                "input='" + input + '\'' +
+                ", output='" + output + '\'' +
+                ", indicators=" + indicators +
+                ", formatInput=" + formatInput +
+                ", formatOutput=" + formatOutput +
+                '}';
+    }
 }
 

@@ -74,7 +74,7 @@ public class TargetNodeSetFactoryImpl implements TargetNodeSetFactory {
     public Set<String> getEnabledActiveTargetNodeSet() throws NullClusterStateException, NodeNotFoundException {
         final ClusterState clusterState = getClusterState();
         final Set<String> nodes = clusterState.getEnabledActiveNodes();
-        if (nodes != null && nodes.size() > 0) {
+        if (nodes != null && !nodes.isEmpty()) {
             return Set.copyOf(nodes);
         } else {
             throw new NodeNotFoundException("No enabled and active nodes can be found");
@@ -85,7 +85,7 @@ public class TargetNodeSetFactoryImpl implements TargetNodeSetFactory {
     public Set<String> getEnabledTargetNodeSet() throws NullClusterStateException, NodeNotFoundException {
         final ClusterState clusterState = getClusterState();
         final Set<String> nodes = clusterState.getEnabledNodes();
-        if (nodes != null && nodes.size() > 0) {
+        if (nodes != null && !nodes.isEmpty()) {
             return Set.copyOf(nodes);
         } else {
             throw new NodeNotFoundException("No enabled nodes can be found");

@@ -5,9 +5,12 @@ import stroom.cell.info.client.CommandLink;
 import stroom.cell.info.client.CommandLinkCell;
 import stroom.cell.info.client.SvgCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.presenter.CopyTextCell;
+import stroom.data.client.presenter.DocRefCell;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
+import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.svg.client.Preset;
 import stroom.util.shared.BaseCriteria;
@@ -30,6 +33,7 @@ import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -333,8 +337,19 @@ public class DataGridUtil {
 
     public static <T_ROW> ColumnBuilder<T_ROW, String, String, Cell<String>> textColumnBuilder(
             final Function<T_ROW, String> cellExtractor) {
-
         return new ColumnBuilder<>(cellExtractor, Function.identity(), TextCell::new);
+    }
+
+    public static <T_ROW> ColumnBuilder<T_ROW, String, String, Cell<String>> copyTextColumnBuilder(
+            final Function<T_ROW, String> cellExtractor) {
+        return new ColumnBuilder<>(cellExtractor, Function.identity(), CopyTextCell::new);
+    }
+
+    public static <T_ROW> ColumnBuilder<T_ROW, DocRef, DocRef, Cell<DocRef>> docRefColumnBuilder(
+            final Function<T_ROW, DocRef> cellExtractor,
+            final EventBus eventBus,
+            final boolean allowLinkByName) {
+        return new ColumnBuilder<>(cellExtractor, Function.identity(), () -> new DocRefCell(eventBus, allowLinkByName));
     }
 
     public static <T_ROW> ColumnBuilder<T_ROW, CommandLink, CommandLink, Cell<CommandLink>> commandLinkColumnBuilder(
@@ -421,16 +436,6 @@ public class DataGridUtil {
 
         public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withSorting(
                 final String fieldName,
-                final BooleanSupplier isSortableSupplier) {
-
-            this.isSorted = true;
-            this.isSortableSupplier = isSortableSupplier;
-            this.fieldName = Objects.requireNonNull(fieldName);
-            return this;
-        }
-
-        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withSorting(
-                final String fieldName,
                 final boolean isIgnoreCase) {
             this.isSorted = true;
             this.isIgnoreCaseOrdering = isIgnoreCase;
@@ -447,26 +452,6 @@ public class DataGridUtil {
         public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> centerAligned() {
             horizontalAlignment = HasHorizontalAlignment.ALIGN_CENTER;
             return this;
-        }
-
-        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withHorizontalAlignment(
-                final HorizontalAlignmentConstant alignment) {
-            horizontalAlignment = Objects.requireNonNull(alignment);
-            return this;
-        }
-
-        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withVerticalAlignment(
-                final VerticalAlignmentConstant alignment) {
-            verticalAlignment = Objects.requireNonNull(alignment);
-            return this;
-        }
-
-        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> topAligned() {
-            return withVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
-        }
-
-        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> bottomAligned() {
-            return withVerticalAlignment(HasVerticalAlignment.ALIGN_BOTTOM);
         }
 
         /**

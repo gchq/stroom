@@ -17,6 +17,7 @@
 
 package stroom.dashboard.impl.script;
 
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
@@ -48,6 +49,11 @@ import java.util.stream.Collectors;
 @Singleton
 class ScriptStoreImpl implements ScriptStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            ScriptDoc.DOCUMENT_TYPE,
+            ScriptDoc.DOCUMENT_TYPE,
+            ScriptDoc.ICON);
     private final Store<ScriptDoc> store;
     private final SecurityContext securityContext;
 
@@ -99,11 +105,7 @@ class ScriptStoreImpl implements ScriptStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.CONFIGURATION,
-                ScriptDoc.DOCUMENT_TYPE,
-                ScriptDoc.DOCUMENT_TYPE,
-                ScriptDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -217,6 +219,13 @@ class ScriptStoreImpl implements ScriptStore {
     @Override
     public List<DocContentMatch> findByContent(final StringMatch filter) {
         return store.findByContent(filter);
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final DocRef docRef,
+                                                final String extension,
+                                                final StringMatch filter) {
+        return store.fetchHighlights(docRef, extension, filter);
     }
 
     @Override

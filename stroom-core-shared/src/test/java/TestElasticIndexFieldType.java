@@ -1,5 +1,4 @@
 import stroom.search.elastic.shared.ElasticIndexFieldType;
-import stroom.search.elastic.shared.UnsupportedTypeException;
 
 import org.junit.jupiter.api.Test;
 
@@ -10,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class TestElasticIndexFieldType {
 
     @Test
-    public void testFromNativeType() throws UnsupportedTypeException {
+    public void testFromNativeType() {
         assertSame(ElasticIndexFieldType.BOOLEAN,
                 ElasticIndexFieldType.fromNativeType("name", "boolean"));
         assertSame(ElasticIndexFieldType.INTEGER,

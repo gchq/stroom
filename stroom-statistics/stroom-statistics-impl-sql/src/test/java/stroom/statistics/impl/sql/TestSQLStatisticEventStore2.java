@@ -17,7 +17,7 @@
 package stroom.statistics.impl.sql;
 
 
-import stroom.datasource.api.v2.TextField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -337,7 +337,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
             final String dateTerm = fromDateStr + "," + toDateStr;
 
             rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
-            rootOperator.addTerm(new TextField(null), Condition.EQUALS, "xxx");
+            rootOperator.addDateTerm(QueryField.createText(null), Condition.EQUALS, "xxx");
 
             final StatisticStoreDoc dataSource = new StatisticStoreDoc();
             dataSource.setName("MyDataSource");

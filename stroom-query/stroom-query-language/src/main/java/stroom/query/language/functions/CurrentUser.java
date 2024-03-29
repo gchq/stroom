@@ -124,9 +124,4 @@ class CurrentUser extends AbstractFunction {
                     : DEFAULT;
         }
     }
-
-    @Override
-    public Type getCommonReturnType() {
-        return Type.STRING;
-    }
 }

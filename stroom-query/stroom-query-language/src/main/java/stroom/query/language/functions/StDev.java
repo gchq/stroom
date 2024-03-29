@@ -148,11 +148,6 @@ class StDev extends AbstractManyChildFunction implements AggregateFunction {
         }
     }
 
-    @Override
-    public Type getCommonReturnType() {
-        return Type.DOUBLE;
-    }
-
     private static final class Gen extends AbstractManyChildGenerator {
 
         Gen(final Generator[] generators) {

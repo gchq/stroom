@@ -16,8 +16,7 @@
 
 package stroom.index.lucene553;
 
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFieldType;
+import stroom.index.shared.LuceneIndexField;
 
 import org.apache.lucene553.document.FieldType;
 import org.apache.lucene553.document.FieldType.NumericType;
@@ -44,7 +43,7 @@ final class FieldTypeFactory {
         return fieldType;
     }
 
-    static FieldType create(final IndexField indexField) {
+    static FieldType create(final LuceneIndexField indexField) {
         final FieldType fieldType = new FieldType();
 
         // Set the index options.
@@ -70,25 +69,25 @@ final class FieldTypeFactory {
         fieldType.setStoreTermVectorPositions(indexField.isTermPositions());
         fieldType.setStoreTermVectorPayloads(false);
 
-        if (IndexFieldType.ID.equals(indexField.getFieldType())) {
+        if (stroom.datasource.api.v2.FieldType.ID.equals(indexField.getFldType())) {
             fieldType.setNumericPrecisionStep(Integer.MAX_VALUE);
             fieldType.setNumericType(NumericType.LONG);
-        } else if (IndexFieldType.INTEGER_FIELD.equals(indexField.getFieldType())) {
+        } else if (stroom.datasource.api.v2.FieldType.INTEGER.equals(indexField.getFldType())) {
             fieldType.setNumericPrecisionStep(DEFAULT_PRECISION_STEP);
             fieldType.setNumericType(NumericType.INT);
-        } else if (IndexFieldType.LONG_FIELD.equals(indexField.getFieldType())) {
+        } else if (stroom.datasource.api.v2.FieldType.LONG.equals(indexField.getFldType())) {
             fieldType.setNumericPrecisionStep(DEFAULT_PRECISION_STEP);
             fieldType.setNumericType(NumericType.LONG);
-        } else if (IndexFieldType.FLOAT_FIELD.equals(indexField.getFieldType())) {
+        } else if (stroom.datasource.api.v2.FieldType.FLOAT.equals(indexField.getFldType())) {
             fieldType.setNumericPrecisionStep(DEFAULT_PRECISION_STEP);
             fieldType.setNumericType(NumericType.FLOAT);
-        } else if (IndexFieldType.DOUBLE_FIELD.equals(indexField.getFieldType())) {
+        } else if (stroom.datasource.api.v2.FieldType.DOUBLE.equals(indexField.getFldType())) {
             fieldType.setNumericPrecisionStep(DEFAULT_PRECISION_STEP);
             fieldType.setNumericType(NumericType.DOUBLE);
-        } else if (IndexFieldType.DATE_FIELD.equals(indexField.getFieldType())) {
+        } else if (stroom.datasource.api.v2.FieldType.DATE.equals(indexField.getFldType())) {
             fieldType.setNumericPrecisionStep(DEFAULT_PRECISION_STEP);
             fieldType.setNumericType(NumericType.LONG);
-        } else if (IndexFieldType.NUMERIC_FIELD.equals(indexField.getFieldType())) {
+        } else if (stroom.datasource.api.v2.FieldType.LONG.equals(indexField.getFldType())) {
             fieldType.setNumericPrecisionStep(DEFAULT_PRECISION_STEP);
             fieldType.setNumericType(NumericType.LONG);
         }

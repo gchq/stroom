@@ -48,15 +48,17 @@ public interface MultiSelectionModel<T> {
     void setSelected(T item);
 
     /**
-     * Sets the selected state of the specified item.
-     */
-    void setSelected(T item, boolean selected);
-
-    /**
      * Sets the specified item as the only selected item, i.e. clears the current selection and sets a
      * single item selected.
      */
     void setSelected(T item, SelectionType selectionType);
+
+    void setSelected(T item, SelectionType selectionType, boolean fireEvents);
+
+    /**
+     * Sets the selected state of the specified item.
+     */
+    void setSelected(T item, boolean selected);
 
     /**
      * Sets the selected state of the specified item.
@@ -64,9 +66,19 @@ public interface MultiSelectionModel<T> {
     void setSelected(T item, boolean selected, SelectionType selectionType);
 
     /**
+     * Sets the selected state of the specified item.
+     */
+    void setSelected(T item, boolean selected, SelectionType selectionType, boolean fireEvents);
+
+    /**
      * Clears all selected items.
      */
     void clear();
+
+    /**
+     * Clears all selected items.
+     */
+    void clear(boolean fireEvents);
 
     /**
      * Add a handler to listen to selection actions on the multi selection model.

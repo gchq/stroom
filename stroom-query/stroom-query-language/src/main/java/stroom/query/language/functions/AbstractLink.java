@@ -22,11 +22,6 @@ abstract class AbstractLink extends AbstractManyChildFunction {
         super(name, minParams, maxParams);
     }
 
-    @Override
-    public Type getCommonReturnType() {
-        return Type.STRING;
-    }
-
     abstract static class AbstractLinkGen extends AbstractManyChildGenerator {
 
         AbstractLinkGen(final Generator[] childGenerators) {

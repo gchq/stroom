@@ -77,6 +77,12 @@ class ProcessorFilterResourceImpl implements ProcessorFilterResource {
     }
 
     @Override
+    public boolean setMaxProcessingTasks(final Integer id, final Integer maxProcessingTasks) {
+        processorFilterServiceProvider.get().setMaxProcessingTasks(id, maxProcessingTasks);
+        return true;
+    }
+
+    @Override
     public boolean setEnabled(final Integer id, final Boolean enabled) {
         processorFilterServiceProvider.get().setEnabled(id, enabled);
         return true;

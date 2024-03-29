@@ -214,13 +214,13 @@ public class ManageGlobalPropertyListPresenter
                     nodeToClusterEffectiveValuesMap.keySet().forEach(
                             propName -> {
                                 nodeToClusterEffectiveValuesMap.computeIfAbsent(
-                                        propName,
-                                        k -> new HashMap<>())
+                                                propName,
+                                                k -> new HashMap<>())
                                         .remove(nodeName);
 
                                 nodeToClusterSourcesMap.computeIfAbsent(
-                                        propName,
-                                        k -> new HashMap<>())
+                                                propName,
+                                                k -> new HashMap<>())
                                         .remove(nodeName);
                             });
 
@@ -263,8 +263,8 @@ public class ManageGlobalPropertyListPresenter
                                      final String source) {
 
         nodeToClusterEffectiveValuesMap.computeIfAbsent(
-                propName,
-                k -> new HashMap<>())
+                        propName,
+                        k -> new HashMap<>())
                 .put(nodeName, effectiveValue);
 
 //        if (propName.equals("stroom.statistics.sql.db.connectionPool.maxPoolSize")) {
@@ -273,8 +273,8 @@ public class ManageGlobalPropertyListPresenter
 //        }
 
         nodeToClusterSourcesMap.computeIfAbsent(
-                propName,
-                k -> new HashMap<>())
+                        propName,
+                        k -> new HashMap<>())
                 .put(nodeName, source);
     }
 
@@ -348,9 +348,7 @@ public class ManageGlobalPropertyListPresenter
         // Name.
         dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(ConfigPropertyRow::getNameAsString, SafeHtmlUtils::fromString)
-                        .topAligned()
                         .withSorting(GlobalConfigResource.FIELD_DEF_NAME.getDisplayName())
-                        .withStyleName(MyDataGrid.RESOURCES.dataGridStyle().dataGridCellVerticalTop())
                         .build(),
                 GlobalConfigResource.FIELD_DEF_NAME.getDisplayName(),
                 450);
@@ -358,13 +356,12 @@ public class ManageGlobalPropertyListPresenter
         // Effective Value
         dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(
-                        DataGridUtil.highlightedCellExtractor(
-                                ConfigPropertyRow::getEffectiveValueAsString,
-                                (ConfigPropertyRow row) ->
-                                        MULTIPLE_VALUES_MSG.equals(row.getEffectiveValueAsString()),
-                                ERROR_CSS_COLOUR))
+                                DataGridUtil.highlightedCellExtractor(
+                                        ConfigPropertyRow::getEffectiveValueAsString,
+                                        (ConfigPropertyRow row) ->
+                                                MULTIPLE_VALUES_MSG.equals(row.getEffectiveValueAsString()),
+                                        ERROR_CSS_COLOUR))
                         .withSorting(GlobalConfigResource.FIELD_DEF_VALUE.getDisplayName())
-                        .withStyleName(MyDataGrid.RESOURCES.dataGridStyle().dataGridCellVerticalTop())
                         .build(),
                 GlobalConfigResource.FIELD_DEF_VALUE.getDisplayName(),
                 300);
@@ -372,13 +369,12 @@ public class ManageGlobalPropertyListPresenter
         // Source
         dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(
-                        DataGridUtil.highlightedCellExtractor(
-                                ConfigPropertyRow::getSourceAsString,
-                                (ConfigPropertyRow row) ->
-                                        MULTIPLE_SOURCES_MSG.equals(row.getSourceAsString()),
-                                ERROR_CSS_COLOUR))
+                                DataGridUtil.highlightedCellExtractor(
+                                        ConfigPropertyRow::getSourceAsString,
+                                        (ConfigPropertyRow row) ->
+                                                MULTIPLE_SOURCES_MSG.equals(row.getSourceAsString()),
+                                        ERROR_CSS_COLOUR))
                         .withSorting(GlobalConfigResource.FIELD_DEF_SOURCE.getDisplayName())
-                        .withStyleName(MyDataGrid.RESOURCES.dataGridStyle().dataGridCellVerticalTop())
                         .build(),
                 GlobalConfigResource.FIELD_DEF_SOURCE.getDisplayName(),
                 75);
@@ -386,9 +382,6 @@ public class ManageGlobalPropertyListPresenter
         // Description
         dataGrid.addAutoResizableColumn(
                 DataGridUtil.htmlColumnBuilder(ConfigPropertyRow::getDescription, SafeHtmlUtils::fromString)
-                        .topAligned()
-                        .withStyleName(MyDataGrid.RESOURCES.dataGridStyle().dataGridCellWrapText())
-                        .withStyleName(MyDataGrid.RESOURCES.dataGridStyle().dataGridCellVerticalTop())
                         .build(),
                 GlobalConfigResource.FIELD_DEF_DESCRIPTION.getDisplayName(),
                 750);

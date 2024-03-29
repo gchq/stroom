@@ -23,7 +23,7 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.item.client.SelectionBox;
 import stroom.meta.shared.MetaResource;
 import stroom.pipeline.shared.data.PipelineProperty;
@@ -58,7 +58,7 @@ public class NewPropertyPresenter
     private static final FsVolumeGroupResource VOLUME_GROUP_RESOURCE = GWT.create(FsVolumeGroupResource.class);
 
     private final RestFactory restFactory;
-    private final EntityDropDownPresenter entityDropDownPresenter;
+    private final DocSelectionBoxPresenter entityDropDownPresenter;
     private boolean dirty;
 
     private PipelineProperty defaultProperty;
@@ -88,7 +88,7 @@ public class NewPropertyPresenter
     @Inject
     public NewPropertyPresenter(final EventBus eventBus,
                                 final NewPropertyView view,
-                                final EntityDropDownPresenter entityDropDownPresenter,
+                                final DocSelectionBoxPresenter entityDropDownPresenter,
                                 final RestFactory restFactory) {
         super(eventBus, view);
         this.entityDropDownPresenter = entityDropDownPresenter;

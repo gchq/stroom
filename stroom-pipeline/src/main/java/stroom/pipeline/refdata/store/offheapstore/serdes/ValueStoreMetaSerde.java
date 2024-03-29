@@ -6,6 +6,7 @@ import stroom.lmdb.serde.UnsignedBytes;
 import stroom.lmdb.serde.UnsignedBytesInstances;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreMeta;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ModelStringUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +18,7 @@ import java.nio.ByteBuffer;
  * < 1 byte >< 3 bytes >
  * <p>
  * referenceCount stored as a 3 byte unsigned integer so a max
- * of ~1.6 million.
+ * of ~16 million.
  */
 public class ValueStoreMetaSerde implements Serde<ValueStoreMeta> {
 
@@ -102,10 +103,14 @@ public class ValueStoreMetaSerde implements Serde<ValueStoreMeta> {
         try {
             REF_COUNT_UNSIGNED_BYTES.increment(destBuffer, REFERENCE_COUNT_OFFSET);
         } catch (Exception e) {
-            throw new RuntimeException(LogUtil.message("Error incrementing reference count. Current value {}. {}",
-                    REF_COUNT_UNSIGNED_BYTES.get(sourceBuffer, sourceBuffer.position()),
+            throw new RuntimeException(LogUtil.message(
+                    "Error incrementing reference count. Current value {}. {}",
+                    ModelStringUtil.formatCsv(REF_COUNT_UNSIGNED_BYTES.get(sourceBuffer, REFERENCE_COUNT_OFFSET)),
                     e.getMessage()), e);
         }
     }
 
+    public static long getMaxReferenceCount() {
+        return REF_COUNT_UNSIGNED_BYTES.maxValue();
+    }
 }

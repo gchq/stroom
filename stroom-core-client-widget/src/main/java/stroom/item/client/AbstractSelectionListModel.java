@@ -15,6 +15,7 @@ public abstract class AbstractSelectionListModel<T, I extends SelectionItem> imp
     @Override
     public void onRangeChange(final I parent,
                               final String filter,
+                              final boolean filterChange,
                               final PageRequest pageRequest,
                               final Consumer<ResultPage<I>> consumer) {
         if (filter != null && !filter.isEmpty()) {
@@ -72,5 +73,10 @@ public abstract class AbstractSelectionListModel<T, I extends SelectionItem> imp
     @Override
     public boolean displayPager() {
         return items.size() > 100;
+    }
+
+    @Override
+    public boolean isEmptyItem(final I selectionItem) {
+        return false;
     }
 }

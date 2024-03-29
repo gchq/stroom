@@ -30,9 +30,9 @@ public interface IndexShardService {
 
     IndexShard createIndexShard(IndexShardKey indexShardKey, String ownerNodeName);
 
-    Boolean delete(IndexShard indexShard);
+    boolean delete(IndexShard indexShard);
 
-    Boolean setStatus(Long id, IndexShard.IndexShardStatus status);
+    boolean setStatus(Long id, IndexShard.IndexShardStatus status);
 
     void update(long indexShardId,
                 Integer documentCount,

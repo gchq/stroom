@@ -8,104 +8,104 @@
   "partitionSize" : 1,
   "shardsPerPartition" : 1,
   "fields" : [ {
-    "fieldType" : "ID",
-    "fieldName" : "StreamId",
+    "fldName" : "StreamId",
+    "fldType" : "ID",
     "analyzerType" : "KEYWORD",
     "indexed" : true,
     "stored" : true,
     "termPositions" : false,
     "caseSensitive" : false
   }, {
-    "fieldType" : "ID",
-    "fieldName" : "EventId",
+    "fldName" : "EventId",
+    "fldType" : "ID",
     "analyzerType" : "KEYWORD",
     "indexed" : true,
     "stored" : true,
     "termPositions" : false,
     "caseSensitive" : false
   }, {
-    "fieldType" : "FIELD",
-    "fieldName" : "Feed",
+    "fldName" : "Feed",
+    "fldType" : "TEXT",
     "analyzerType" : "ALPHA_NUMERIC",
     "indexed" : true,
     "stored" : false,
     "termPositions" : false,
     "caseSensitive" : false
   }, {
-    "fieldType" : "FIELD",
-    "fieldName" : "Feed (Keyword)",
+    "fldName" : "Feed (Keyword)",
+    "fldType" : "TEXT",
     "analyzerType" : "KEYWORD",
     "indexed" : true,
     "stored" : false,
     "termPositions" : false,
     "caseSensitive" : false
   }, {
-    "fieldType" : "DATE_FIELD",
-    "fieldName" : "timestamp",
+    "fldName" : "timestamp",
+    "fldType" : "DATE",
     "analyzerType" : "KEYWORD",
     "indexed" : true,
     "stored" : false,
     "termPositions" : false,
     "caseSensitive" : false
   }, {
-    "fieldType" : "NUMERIC_FIELD",
-    "fieldName" : "actual_download",
+    "fldName" : "actual_download",
+    "fldType" : "LONG",
     "analyzerType" : "NUMERIC",
     "indexed" : true,
     "stored" : false,
     "termPositions" : false,
     "caseSensitive" : false
   }, {
-    "fieldType" : "NUMERIC_FIELD",
-    "fieldName" : "actual_upload",
+    "fldName" : "actual_upload",
+    "fldType" : "LONG",
     "analyzerType" : "NUMERIC",
     "indexed" : true,
     "stored" : false,
     "termPositions" : false,
     "caseSensitive" : false
   }, {
-    "fieldType" : "NUMERIC_FIELD",
-    "fieldName" : "advertised_download",
+    "fldName" : "advertised_download",
+    "fldType" : "LONG",
     "analyzerType" : "NUMERIC",
     "indexed" : true,
     "stored" : false,
     "termPositions" : false,
     "caseSensitive" : false
   }, {
-    "fieldType" : "NUMERIC_FIELD",
-    "fieldName" : "advertised_upload",
+    "fldName" : "advertised_upload",
+    "fldType" : "LONG",
     "analyzerType" : "NUMERIC",
     "indexed" : true,
     "stored" : false,
     "termPositions" : false,
     "caseSensitive" : false
   }, {
-    "fieldType" : "FIELD",
-    "fieldName" : "connection_type",
+    "fldName" : "connection_type",
+    "fldType" : "TEXT",
     "analyzerType" : "KEYWORD",
     "indexed" : true,
     "stored" : false,
     "termPositions" : false,
     "caseSensitive" : false
   }, {
-    "fieldType" : "FIELD",
-    "fieldName" : "isp",
+    "fldName" : "isp",
+    "fldType" : "TEXT",
     "analyzerType" : "STANDARD",
     "indexed" : true,
     "stored" : false,
     "termPositions" : false,
     "caseSensitive" : false
   }, {
-    "fieldType" : "FIELD",
-    "fieldName" : "isp_user",
+    "fldName" : "isp_user",
+    "fldType" : "TEXT",
     "analyzerType" : "STANDARD",
     "indexed" : true,
     "stored" : false,
     "termPositions" : false,
     "caseSensitive" : false
   }, {
-    "fieldType" : "NUMERIC_FIELD",
-    "fieldName" : "min_rtt",
+    "fldName" : "min_rtt",
+    "fldType" : "LONG",
     "analyzerType" : "NUMERIC",
     "indexed" : true,
     "stored" : false,

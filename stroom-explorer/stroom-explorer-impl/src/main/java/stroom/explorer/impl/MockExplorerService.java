@@ -17,16 +17,20 @@
 
 package stroom.explorer.impl;
 
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.ExplorerDocContentMatch;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource.TagFetchMode;
 import stroom.explorer.shared.FetchExplorerNodeResult;
-import stroom.explorer.shared.FindExplorerNodeCriteria;
-import stroom.explorer.shared.FindExplorerNodeQuery;
+import stroom.explorer.shared.FetchExplorerNodesRequest;
+import stroom.explorer.shared.FetchHighlightsRequest;
+import stroom.explorer.shared.FindInContentRequest;
+import stroom.explorer.shared.FindInContentResult;
+import stroom.explorer.shared.FindRequest;
+import stroom.explorer.shared.FindResult;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.util.shared.ResultPage;
 
@@ -39,7 +43,7 @@ import java.util.Set;
 class MockExplorerService implements ExplorerService {
 
     @Override
-    public FetchExplorerNodeResult getData(final FindExplorerNodeCriteria criteria) {
+    public FetchExplorerNodeResult getData(final FetchExplorerNodesRequest criteria) {
         return null;
     }
 
@@ -121,7 +125,17 @@ class MockExplorerService implements ExplorerService {
     }
 
     @Override
-    public ResultPage<ExplorerDocContentMatch> findContent(final FindExplorerNodeQuery request) {
+    public ResultPage<FindResult> find(final FindRequest request) {
+        return null;
+    }
+
+    @Override
+    public ResultPage<FindInContentResult> findInContent(final FindInContentRequest request) {
+        return null;
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final FetchHighlightsRequest request) {
         return null;
     }
 

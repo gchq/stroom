@@ -17,6 +17,7 @@
 
 package stroom.pipeline.xmlschema;
 
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
@@ -47,6 +48,11 @@ import java.util.Set;
 public class XmlSchemaStoreImpl implements XmlSchemaStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(XmlSchemaStoreImpl.class);
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.TRANSFORMATION,
+            XmlSchemaDoc.DOCUMENT_TYPE,
+            "XML Schema",
+            XmlSchemaDoc.ICON);
 
     private final Store<XmlSchemaDoc> store;
 
@@ -96,11 +102,7 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.TRANSFORMATION,
-                XmlSchemaDoc.DOCUMENT_TYPE,
-                "XML Schema",
-                XmlSchemaDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -222,5 +224,12 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
     @Override
     public List<DocContentMatch> findByContent(final StringMatch filter) {
         return store.findByContent(filter);
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final DocRef docRef,
+                                                final String extension,
+                                                final StringMatch filter) {
+        return store.fetchHighlights(docRef, extension, filter);
     }
 }

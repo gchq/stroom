@@ -1,7 +1,7 @@
 package stroom.query.client.presenter;
 
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
 import stroom.query.client.DataSourceClient;
@@ -29,6 +29,7 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
     @Override
     public void onRangeChange(final FieldInfoSelectionItem parent,
                               final String filter,
+                              final boolean filterChange,
                               final PageRequest pageRequest,
                               final Consumer<ResultPage<FieldInfoSelectionItem>> consumer) {
         if (dataSourceRef != null) {
@@ -77,7 +78,7 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
     }
 
     @Override
-    public void findFieldByName(final String fieldName, final Consumer<FieldInfo> consumer) {
+    public void findFieldByName(final String fieldName, final Consumer<QueryField> consumer) {
         dataSourceClient.findFieldByName(dataSourceRef, fieldName, consumer);
     }
 
@@ -97,15 +98,20 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
     }
 
     @Override
-    public FieldInfoSelectionItem wrap(final FieldInfo item) {
+    public FieldInfoSelectionItem wrap(final QueryField item) {
         return new FieldInfoSelectionItem(item);
     }
 
     @Override
-    public FieldInfo unwrap(final FieldInfoSelectionItem selectionItem) {
+    public QueryField unwrap(final FieldInfoSelectionItem selectionItem) {
         if (selectionItem == null) {
             return null;
         }
-        return selectionItem.getFieldInfo();
+        return selectionItem.getField();
+    }
+
+    @Override
+    public boolean isEmptyItem(final FieldInfoSelectionItem selectionItem) {
+        return unwrap(selectionItem) == null;
     }
 }

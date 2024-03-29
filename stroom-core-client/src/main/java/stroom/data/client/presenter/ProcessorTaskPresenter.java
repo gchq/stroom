@@ -61,13 +61,13 @@ public class ProcessorTaskPresenter extends MyPresenterWidget<ProcessorTaskPrese
             if (row != null) {
                 final ExpressionOperator.Builder root = ExpressionOperator.builder();
                 if (row.getPipeline() != null) {
-                    root.addTerm(ProcessorTaskFields.PIPELINE, Condition.IS_DOC_REF, row.getPipeline());
+                    root.addDocRefTerm(ProcessorTaskFields.PIPELINE, Condition.IS_DOC_REF, row.getPipeline());
                 }
                 if (row.getFeed() != null) {
-                    root.addTerm(ProcessorTaskFields.FEED, Condition.EQUALS, row.getFeed());
+                    root.addDateTerm(ProcessorTaskFields.FEED, Condition.EQUALS, row.getFeed());
                 }
                 if (row.getStatus() != null) {
-                    root.addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, row.getStatus().getDisplayValue());
+                    root.addDateTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, row.getStatus().getDisplayValue());
                 }
 
                 processorTaskListPresenter.setExpression(root.build());

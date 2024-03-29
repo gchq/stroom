@@ -16,6 +16,8 @@
 
 package stroom.query.api.v2;
 
+import stroom.util.shared.GwtNullSafe;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -105,6 +107,10 @@ public final class NumberFormatSettings implements FormatSettings {
         return new Builder(this);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     /**
      * Builder for constructing a {@link NumberFormatSettings}
      */
@@ -140,7 +146,9 @@ public final class NumberFormatSettings implements FormatSettings {
         }
 
         public NumberFormatSettings build() {
-            return new NumberFormatSettings(decimalPlaces, useSeparator);
+            return new NumberFormatSettings(
+                    GwtNullSafe.requireNonNullElse(decimalPlaces, DEFAULT_DECIMAL_PLACES),
+                    GwtNullSafe.requireNonNullElse(useSeparator, DEFAULT_USE_SEPARATOR));
         }
     }
 }

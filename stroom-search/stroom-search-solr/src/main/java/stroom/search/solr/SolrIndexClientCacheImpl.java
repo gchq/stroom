@@ -31,6 +31,7 @@ import org.apache.solr.client.solrj.SolrClient;
 
 import java.io.IOException;
 import java.util.IdentityHashMap;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -54,9 +55,6 @@ public class SolrIndexClientCacheImpl implements SolrIndexClientCache, Clearable
     }
 
     private SolrClient create(SolrConnectionConfig solrConnectionConfig) {
-        if (solrConnectionConfig == null) {
-            throw new NullPointerException("Null key supplied");
-        }
         return new SolrClientFactory().create(solrConnectionConfig);
     }
 
@@ -94,6 +92,7 @@ public class SolrIndexClientCacheImpl implements SolrIndexClientCache, Clearable
     }
 
     private SolrClient borrowClient(final SolrConnectionConfig key) {
+        Objects.requireNonNull(key, "Null key supplied");
         final SolrClient solrClient = cache.get(key);
         synchronized (this) {
             useMap.computeIfAbsent(solrClient, k -> new State()).increment();

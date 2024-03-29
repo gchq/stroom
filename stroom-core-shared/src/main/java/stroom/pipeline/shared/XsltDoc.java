@@ -17,6 +17,7 @@
 package stroom.pipeline.shared;
 
 import stroom.docref.DocRef;
+import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.HasData;
@@ -29,6 +30,11 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
+@Description(
+        "The content of this Document is an {{< glossary \"XSLT\" >}} document for transforming data in a pipeline." +
+                "\n" +
+                "This Document is used by the {{< pipe-elm \"XSLTFilter\" >}} pipeline element."
+)
 @JsonPropertyOrder({
         "type",
         "uuid",

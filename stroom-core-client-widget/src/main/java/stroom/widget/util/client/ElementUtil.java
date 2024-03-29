@@ -6,15 +6,27 @@ public class ElementUtil {
 
     public static boolean hasClassName(final Element element,
                                        final String className) {
-        return hasClassName(element, className, 0, 0);
+        return findMatching(element, className, 0, 0) != null;
     }
 
     public static boolean hasClassName(final Element element,
                                        final String className,
                                        final int depth,
                                        final int maxDepth) {
+        return findMatching(element, className, depth, maxDepth) != null;
+    }
+
+    public static Element findMatching(final Element element,
+                                       final String className) {
+        return findMatching(element, className, 0, 0);
+    }
+
+    public static Element findMatching(final Element element,
+                                       final String className,
+                                       final int depth,
+                                       final int maxDepth) {
         if (element == null) {
-            return false;
+            return null;
         }
 
         /*
@@ -28,14 +40,14 @@ public class ElementUtil {
          */
         final String elementClassName = element.getAttribute("class");
         if (elementClassName.contains(className)) {
-            return true;
+            return element;
         }
 
         if (depth < maxDepth) {
-            return hasClassName(element.getParentElement(), className, depth + 1, maxDepth);
+            return findMatching(element.getParentElement(), className, depth + 1, maxDepth);
         }
 
-        return false;
+        return null;
     }
 
     public static Rect getClientRect(Element el) {
@@ -143,5 +155,75 @@ public class ElementUtil {
 
     public static native double getSubPixelScrollWidth(Element el) /*-{
         return el.scrollWidth || 0;
+    }-*/;
+
+    public static native void focus(Element el) /*-{
+        el.focus();
+    }-*/;
+
+    public static native void focus(Element el, boolean focusVisible, boolean preventScroll) /*-{
+        el.focus({ focusVisible: focusVisible, preventScroll: preventScroll });
+    }-*/;
+
+    public static native void scrollIntoView(Element el, boolean alignToTop) /*-{
+        el.scrollIntoView(alignToTop);
+    }-*/;
+
+    public static native void scrollIntoViewNearest(Element el) /*-{
+        el.scrollIntoView({behaviour: "smooth", block: "nearest", inline: "nearest"});
+    }-*/;
+
+    public static native void scrollIntoViewVertical(Element elem) /*-{
+        var top = elem.offsetTop;
+        var height = elem.offsetHeight;
+
+        if (elem.parentNode != elem.offsetParent) {
+            top -= elem.parentNode.offsetTop;
+        }
+
+        var cur = elem.parentNode;
+        while (cur && (cur.nodeType == 1)) {
+            if (top < cur.scrollTop) {
+                cur.scrollTop = top;
+            }
+            if (top + height > cur.scrollTop + cur.clientHeight) {
+                cur.scrollTop = (top + height) - cur.clientHeight;
+            }
+
+            var offsetTop = cur.offsetTop;
+            if (cur.parentNode != cur.offsetParent) {
+                offsetTop -= cur.parentNode.offsetTop;
+            }
+
+            top += offsetTop - cur.scrollTop;
+            cur = cur.parentNode;
+        }
+    }-*/;
+
+    public static native void scrollIntoViewHorizontal(Element elem) /*-{
+        var left = elem.offsetLeft;
+        var width = elem.offsetWidth;
+
+        if (elem.parentNode != elem.offsetParent) {
+            left -= elem.parentNode.offsetLeft;
+        }
+
+        var cur = elem.parentNode;
+        while (cur && (cur.nodeType == 1)) {
+            if (left < cur.scrollLeft) {
+                cur.scrollLeft = left;
+            }
+            if (left + width > cur.scrollLeft + cur.clientWidth) {
+                cur.scrollLeft = (left + width) - cur.clientWidth;
+            }
+
+            var offsetLeft = cur.offsetLeft;
+            if (cur.parentNode != cur.offsetParent) {
+                offsetLeft -= cur.parentNode.offsetLeft;
+            }
+
+            left += offsetLeft - cur.scrollLeft;
+            cur = cur.parentNode;
+        }
     }-*/;
 }

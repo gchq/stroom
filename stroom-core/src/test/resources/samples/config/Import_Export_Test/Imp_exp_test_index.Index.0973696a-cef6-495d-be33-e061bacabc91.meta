@@ -8,16 +8,16 @@
   "partitionSize" : 1,
   "shardsPerPartition" : 1,
   "fields" : [ {
-    "fieldType" : "NUMERIC_FIELD",
-    "fieldName" : "New Field 0",
+    "fldName" : "New Field 0",
+    "fldType" : "LONG",
     "analyzerType" : "STANDARD",
     "indexed" : true,
     "stored" : true,
     "termPositions" : true,
     "caseSensitive" : true
   }, {
-    "fieldType" : "ID",
-    "fieldName" : "New Field 1",
+    "fldName" : "New Field 1",
+    "fldType" : "ID",
     "analyzerType" : "KEYWORD",
     "indexed" : true,
     "stored" : true,

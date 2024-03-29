@@ -1,6 +1,5 @@
 package stroom.docref;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -18,7 +17,7 @@ public interface HasFindDocsByName {
     default List<DocRef> findByName(final String name) {
         // GWT so no List.of()
         return name != null
-                ? findByNames(Arrays.asList(name), false)
+                ? findByNames(Collections.singletonList(name), false)
                 : Collections.emptyList();
     }
 
@@ -29,7 +28,7 @@ public interface HasFindDocsByName {
     default List<DocRef> findByName(final String name, final boolean allowWildCards) {
         // GWT so no List.of()
         return name != null
-                ? findByNames(Arrays.asList(name), allowWildCards)
+                ? findByNames(Collections.singletonList(name), allowWildCards)
                 : Collections.emptyList();
     }
 

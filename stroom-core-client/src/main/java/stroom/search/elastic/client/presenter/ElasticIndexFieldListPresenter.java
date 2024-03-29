@@ -69,9 +69,9 @@ public class ElasticIndexFieldListPresenter extends DocumentEditPresenter<Elasti
     }
 
     private void addColumns() {
-        addStringColumn("Name", 300, ElasticIndexField::getFieldName);
-        addStringColumn("Field Type", 150, row -> row.getFieldUse().getDisplayValue());
-        addStringColumn("Native Type", 150, ElasticIndexField::getFieldType);
+        addStringColumn("Name", 300, ElasticIndexField::getFldName);
+        addStringColumn("Field Type", 150, row -> row.getFldType().getDisplayValue());
+        addStringColumn("Native Type", 150, ElasticIndexField::getNativeType);
         addBooleanColumn("Indexed", 100, ElasticIndexField::isIndexed);
         dataGrid.addEndColumn(new EndColumn<>());
     }
@@ -123,7 +123,7 @@ public class ElasticIndexFieldListPresenter extends DocumentEditPresenter<Elasti
     protected void onRead(final DocRef docRef, final ElasticIndexDoc document, final boolean readOnly) {
         if (document != null) {
             fields = document.getFields().stream()
-                    .sorted(Comparator.comparing(ElasticIndexField::getFieldName, String.CASE_INSENSITIVE_ORDER))
+                    .sorted(Comparator.comparing(ElasticIndexField::getFldName, String.CASE_INSENSITIVE_ORDER))
                     .collect(Collectors.toList());
 
             final StringBuilder sb = new StringBuilder();

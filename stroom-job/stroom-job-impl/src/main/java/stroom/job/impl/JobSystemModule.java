@@ -36,6 +36,8 @@ public class JobSystemModule extends AbstractModule {
     protected void configure() {
 
         bind(JobManager.class).to(JobManagerImpl.class);
+        bind(JobNodeTrackerCache.class).to(JobNodeTrackerCacheImpl.class);
+        bind(DistributedTaskFactoryRegistry.class).to(DistributedTaskFactoryRegistryImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(JobResourceImpl.class)

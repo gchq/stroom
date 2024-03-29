@@ -17,6 +17,7 @@
 
 package stroom.search.elastic;
 
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
@@ -42,6 +43,11 @@ import java.util.Set;
 @Singleton
 public class ElasticIndexStoreImpl implements ElasticIndexStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            ElasticIndexDoc.DOCUMENT_TYPE,
+            "Elastic Index",
+            ElasticIndexDoc.ICON);
     private final Store<ElasticIndexDoc> store;
     private final ElasticIndexService elasticIndexService;
 
@@ -94,11 +100,7 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.INDEXING,
-                ElasticIndexDoc.DOCUMENT_TYPE,
-                "Elastic Index",
-                ElasticIndexDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -205,5 +207,12 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
     @Override
     public List<DocContentMatch> findByContent(final StringMatch filter) {
         return store.findByContent(filter);
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final DocRef docRef,
+                                                final String extension,
+                                                final StringMatch filter) {
+        return store.fetchHighlights(docRef, extension, filter);
     }
 }

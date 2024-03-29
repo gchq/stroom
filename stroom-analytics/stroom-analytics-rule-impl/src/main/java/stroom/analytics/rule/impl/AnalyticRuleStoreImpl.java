@@ -23,6 +23,7 @@ import stroom.analytics.shared.AnalyticRuleDoc.Builder;
 import stroom.analytics.shared.ScheduledQueryAnalyticProcessConfig;
 import stroom.analytics.shared.StreamingAnalyticProcessConfig;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
@@ -58,6 +59,11 @@ import java.util.function.BiConsumer;
 class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnalyticRuleStoreImpl.class);
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            AnalyticRuleDoc.DOCUMENT_TYPE,
+            "Analytic Rule",
+            AnalyticRuleDoc.ICON);
 
     private final Store<AnalyticRuleDoc> store;
     private final SecurityContext securityContext;
@@ -162,11 +168,7 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.SEARCH,
-                AnalyticRuleDoc.DOCUMENT_TYPE,
-                "Analytic Rule",
-                AnalyticRuleDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -312,6 +314,13 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
     @Override
     public List<DocContentMatch> findByContent(final StringMatch filter) {
         return store.findByContent(filter);
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final DocRef docRef,
+                                                final String extension,
+                                                final StringMatch filter) {
+        return store.fetchHighlights(docRef, extension, filter);
     }
 
     private void deleteProcessorFilter(final DocRef docRef) {

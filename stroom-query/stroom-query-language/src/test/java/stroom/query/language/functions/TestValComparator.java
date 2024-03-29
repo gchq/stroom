@@ -12,7 +12,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 class TestValComparator {
-    private final Comparator<Val> comparator = new ValComparator();
+    private final Comparator<Val> comparator = ValComparators.GENERIC_CASE_INSENSITIVE_COMPARATOR;
 
     @Test
     void testCompareAsDouble() {

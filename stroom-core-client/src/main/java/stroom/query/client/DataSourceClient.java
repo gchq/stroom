@@ -1,9 +1,8 @@
 package stroom.query.client;
 
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.datasource.shared.DataSourceResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
@@ -30,9 +29,10 @@ public class DataSourceClient {
     }
 
     public void findFields(final FindFieldInfoCriteria findFieldInfoCriteria,
-                           final Consumer<ResultPage<FieldInfo>> consumer) {
-        final Rest<ResultPage<FieldInfo>> rest = restFactory.create();
-        rest
+                           final Consumer<ResultPage<QueryField>> consumer) {
+        restFactory
+                .builder()
+                .forResultPageOf(QueryField.class)
                 .onSuccess(consumer)
                 .call(DATA_SOURCE_RESOURCE)
                 .findFields(findFieldInfoCriteria);
@@ -40,15 +40,16 @@ public class DataSourceClient {
 
     public void findFieldByName(final DocRef dataSourceRef,
                                 final String fieldName,
-                                final Consumer<FieldInfo> consumer) {
+                                final Consumer<QueryField> consumer) {
         if (dataSourceRef != null) {
             final FindFieldInfoCriteria findFieldInfoCriteria = new FindFieldInfoCriteria(
                     new PageRequest(0, 1),
                     null,
                     dataSourceRef,
-                    StringMatch.contains(fieldName));
-            final Rest<ResultPage<FieldInfo>> rest = restFactory.create();
-            rest
+                    StringMatch.equals(fieldName, true));
+            restFactory
+                    .builder()
+                    .forResultPageOf(QueryField.class)
                     .onSuccess(result -> {
                         if (result.getValues().size() > 0) {
                             consumer.accept(result.getFirst());
@@ -63,8 +64,9 @@ public class DataSourceClient {
                                            final Consumer<Optional<String>> descriptionConsumer) {
 
         if (dataSourceDocRef != null) {
-            final Rest<Documentation> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(Documentation.class)
                     .onSuccess(documentation -> {
                         final Optional<String> optMarkDown = GwtNullSafe.getAsOptional(documentation,
                                 Documentation::getMarkdown);
@@ -78,8 +80,9 @@ public class DataSourceClient {
     }
 
     public void fetchDefaultExtractionPipeline(DocRef dataSourceRef, Consumer<DocRef> consumer) {
-        final Rest<DocRef> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(DocRef.class)
                 .onSuccess(consumer)
                 .call(DATA_SOURCE_RESOURCE)
                 .fetchDefaultExtractionPipeline(dataSourceRef);

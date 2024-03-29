@@ -1,34 +1,38 @@
 package stroom.query.client.presenter;
 
-import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.QueryField;
 import stroom.item.client.AbstractSelectionListModel;
 
 import java.util.function.Consumer;
 
 public class SimpleFieldSelectionListModel
-        extends AbstractSelectionListModel<FieldInfo, FieldInfoSelectionItem>
+        extends AbstractSelectionListModel<QueryField, FieldInfoSelectionItem>
         implements FieldSelectionListModel {
 
     @Override
-    public void findFieldByName(final String fieldName, final Consumer<FieldInfo> consumer) {
+    public void findFieldByName(final String fieldName, final Consumer<QueryField> consumer) {
         if (fieldName != null) {
             items.stream()
                     .filter(fieldInfo -> fieldInfo.getLabel().equals(fieldName))
-                    .findAny()
-                    .ifPresent(item -> consumer.accept(item.getFieldInfo()));
+                    .findFirst()
+                    .ifPresent(item -> consumer.accept(item.getField()));
+        } else {
+            items.stream()
+                    .findFirst()
+                    .ifPresent(item -> consumer.accept(item.getField()));
         }
     }
 
     @Override
-    public FieldInfoSelectionItem wrap(final FieldInfo item) {
+    public FieldInfoSelectionItem wrap(final QueryField item) {
         return new FieldInfoSelectionItem(item);
     }
 
     @Override
-    public FieldInfo unwrap(final FieldInfoSelectionItem selectionItem) {
+    public QueryField unwrap(final FieldInfoSelectionItem selectionItem) {
         if (selectionItem == null) {
             return null;
         }
-        return selectionItem.getFieldInfo();
+        return selectionItem.getField();
     }
 }

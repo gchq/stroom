@@ -12,11 +12,11 @@ public class MockProcessorTaskService implements ProcessorTaskService {
 
     @Override
     public ResultPage<ProcessorTask> find(final ExpressionCriteria criteria) {
-        return ResultPage.createUnboundedList(Collections.emptyList());
+        return ResultPage.empty();
     }
 
     @Override
     public ResultPage<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria) {
-        return ResultPage.createUnboundedList(Collections.emptyList());
+        return ResultPage.empty();
     }
 }

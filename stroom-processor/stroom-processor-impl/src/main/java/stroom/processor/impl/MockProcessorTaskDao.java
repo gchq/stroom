@@ -120,13 +120,13 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     }
 
     @Override
-    public int countCreatedTasksForFilter(final int filterId) {
+    public int countTasksForFilter(final int filterId, final TaskStatus status) {
         return 0;
     }
 
     @Override
-    public List<ProcessorTask> queueExistingTasks(final Set<Long> idSet,
-                                                  final String thisNodeName) {
+    public List<ProcessorTask> queueTasks(final Set<Long> idSet,
+                                          final String thisNodeName) {
         return Collections.emptyList();
     }
 
@@ -168,14 +168,14 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
                 .stream()
                 .filter(task -> {
                     final List<String> pipelineUuids = ExpressionUtil.values(criteria.getExpression(),
-                            ProcessorTaskFields.PIPELINE.getName());
+                            ProcessorTaskFields.PIPELINE.getFldName());
                     if (pipelineUuids != null) {
                         if (!pipelineUuids.contains(task.getProcessorFilter().getProcessor().getPipelineUuid())) {
                             return false;
                         }
                     }
                     final List<String> taskStatus = ExpressionUtil.values(criteria.getExpression(),
-                            ProcessorTaskFields.STATUS.getName());
+                            ProcessorTaskFields.STATUS.getFldName());
                     if (taskStatus != null) {
                         return taskStatus.contains(task.getStatus().getDisplayValue());
                     }

@@ -73,6 +73,33 @@ public class StepControlPresenter
         StepControlEvent.fire(this, StepType.REFRESH);
     }
 
+    public void step(final StepType stepType) {
+        //noinspection EnhancedSwitchMigration // cos GWT
+        switch (stepType) {
+            case FIRST:
+                stepFirst();
+                break;
+            case BACKWARD:
+                stepBackward();
+                break;
+            case FORWARD:
+                stepForward();
+                break;
+            case LAST:
+                stepLast();
+                break;
+            case REFRESH:
+                stepRefresh();
+                break;
+            default:
+                throw new RuntimeException("Unknown type " + stepType);
+        }
+    }
+
+    public boolean isEnabled(final StepType stepType) {
+        return getView().isEnabled(stepType);
+    }
+
     public void setEnabledButtons(final boolean justStepped,
                                   final StepType stepType,
                                   final boolean showingData,
@@ -164,6 +191,10 @@ public class StepControlPresenter
         return addHandlerToSource(StepControlEvent.getType(), handler);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface StepControlView extends View, HasUiHandlers<StepControlUIHandlers> {
 
         void setStepFirstEnabled(boolean enabled);
@@ -175,5 +206,7 @@ public class StepControlPresenter
         void setStepLastEnabled(boolean enabled);
 
         void setStepRefreshEnabled(boolean enabled);
+
+        boolean isEnabled(final StepType stepType);
     }
 }

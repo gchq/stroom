@@ -21,7 +21,7 @@ package stroom.search;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
 import stroom.index.impl.IndexStore;
-import stroom.index.shared.IndexDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -93,7 +93,7 @@ class TestEventSearch extends AbstractSearchTest {
 //        "stroom.search.impl.extraction.concurrentTasks", "1", StroomProperties.Source.TEST);
 
         final DocRef indexRef = indexStore.list().get(0);
-        final IndexDoc index = indexStore.readDocument(indexRef);
+        final LuceneIndexDoc index = indexStore.readDocument(indexRef);
         assertThat(index).as("Index is null").isNotNull();
 
         final List<ResultRequest> resultRequests = new ArrayList<>(componentIds.size());
@@ -184,7 +184,7 @@ class TestEventSearch extends AbstractSearchTest {
         }
     }
 
-    private TableSettings createTableSettings(final IndexDoc index, final boolean extractValues) {
+    private TableSettings createTableSettings(final LuceneIndexDoc index, final boolean extractValues) {
         final Column idColumn = Column.builder()
                 .name("IdTreeNode")
                 .expression(ParamSubstituteUtil.makeParam("StreamId"))

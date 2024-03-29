@@ -90,6 +90,14 @@ public abstract class AbstractFunctionTest<T extends Function> {
                             double actual = returnVal.toDouble();
                             Assertions.assertThat(actual)
                                     .isCloseTo(expected, Offset.offset(0.0001));
+                        } else if (returnVal == ValErr.INSTANCE) {
+                            // No msg provided so just check it is a ValErr
+                            Assertions.assertThat(returnVal)
+                                    .isInstanceOf(ValErr.class);
+                        } else if (returnVal instanceof ValErr) {
+                            // Not ValErr.INSTANCE so check returned message contains expected msg
+                            Assertions.assertThat(returnVal.toString())
+                                    .containsIgnoringCase(testCase.getExpectedReturn().toString());
                         } else {
                             Assertions.assertThat(returnVal)
                                     .isEqualTo(testCase.getExpectedReturn());
@@ -169,6 +177,27 @@ public abstract class AbstractFunctionTest<T extends Function> {
                     testVariantName,
                     expectedReturn,
                     Arrays.asList(params),
+                    Collections.emptyList());
+        }
+
+        public static TestCase convert(final String testVariantName,
+                                       final Object expectedReturn,
+                                       final Object param1) {
+            return new TestCase(
+                    testVariantName,
+                    Val.create(expectedReturn),
+                    Collections.singletonList(Val.create(param1)),
+                    Collections.emptyList());
+        }
+
+        public static TestCase convert(final String testVariantName,
+                                       final Object expectedReturn,
+                                       final Object param1,
+                                       final Object param2) {
+            return new TestCase(
+                    testVariantName,
+                    Val.create(expectedReturn),
+                    Arrays.asList(Val.create(param1), Val.create(param2)),
                     Collections.emptyList());
         }
 

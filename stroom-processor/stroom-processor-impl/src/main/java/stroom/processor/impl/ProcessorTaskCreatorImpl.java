@@ -33,16 +33,17 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.QueryData;
+import stroom.processor.shared.TaskStatus;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
-import stroom.query.api.v2.ExpressionValidator;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.EventRef;
 import stroom.query.common.v2.EventRefs;
 import stroom.query.common.v2.EventSearch;
+import stroom.query.common.v2.ExpressionValidator;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.task.api.ExecutorProvider;
@@ -77,7 +78,7 @@ import java.util.function.Supplier;
  * Keep a pool of stream tasks ready to go.
  */
 @Singleton
-class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
+public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorTaskCreatorImpl.class);
 
@@ -185,18 +186,13 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                         final ProcessorFilter filter = filterQueue.poll();
                         if (remaining > 0 && filter != null && !Thread.currentThread().isInterrupted()) {
                             try {
-                                // Set the current user to be the one who created the filter so that only streams that
-                                // the user has access to are processed.
-                                final UserIdentity ownerIdentity = getFilterOwnerIdentity(filter);
-
                                 createTasksForFilter(parentTaskContext,
                                         totalTasksCreated,
                                         filters,
                                         progressMonitor,
                                         filterCount,
                                         remaining,
-                                        filter,
-                                        ownerIdentity);
+                                        filter);
                             } catch (final RuntimeException e) {
                                 LOGGER.error(e::getMessage, e);
                             }
@@ -225,8 +221,11 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                       final ProgressMonitor progressMonitor,
                                       final AtomicInteger filterCount,
                                       final int remaining,
-                                      final ProcessorFilter filter,
-                                      final UserIdentity ownerIdentity) {
+                                      final ProcessorFilter filter) {
+        // Set the current user to be the one who created the filter so that only streams that
+        // the user has access to are processed.
+        final UserIdentity ownerIdentity = getFilterOwnerIdentity(filter);
+
         securityContext.asUser(ownerIdentity, () ->
                 taskContextFactory.childContext(parentTaskContext,
                         "Create Tasks",
@@ -258,11 +257,11 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         }
     }
 
-    private void createTasksForFilter(final TaskContext taskContext,
-                                      final ProcessorFilter filter,
-                                      final ProgressMonitor progressMonitor,
-                                      final int tasksToCreatePerFilter,
-                                      final LongAdder totalTasksCreated) {
+    public void createTasksForFilter(final TaskContext taskContext,
+                                     final ProcessorFilter filter,
+                                     final ProgressMonitor progressMonitor,
+                                     final int tasksToCreatePerFilter,
+                                     final LongAdder totalTasksCreated) {
         try {
             // The filter might have been deleted since we found it.
             processorFilterService.fetch(filter.getId()).ifPresent(loadedFilter -> {
@@ -315,8 +314,14 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                         .ofEpochMilli(tracker.getLastPollMs())
                         .plus(processorConfigProvider.get().getSkipNonProducingFiltersDuration())
                         .isBefore(Instant.now())) {
-            final int currentCreatedTasks = processorTaskDao.countCreatedTasksForFilter(filter.getId());
-            final int maxTasks = tasksToCreatePerFilter - currentCreatedTasks;
+            final int currentCreatedTasks = processorTaskDao.countTasksForFilter(filter.getId(), TaskStatus.CREATED);
+            int maxTasks;
+            if (filter.isProcessingTaskCountBounded()) {
+                // The max concurrent tasks for this filter is bounded, so only create tasks up to that limit
+                maxTasks = Math.min(tasksToCreatePerFilter, filter.getMaxProcessingTasks()) - currentCreatedTasks;
+            } else {
+                maxTasks = tasksToCreatePerFilter - currentCreatedTasks;
+            }
 
             // Skip filters that already have enough tasks.
             if (maxTasks > 0) {
@@ -672,32 +677,32 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         if (reprocess) {
             // Don't select deleted streams.
             final ExpressionOperator statusExpression = ExpressionOperator.builder().op(Op.OR)
-                    .addTerm(MetaFields.PARENT_STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
-                    .addTerm(MetaFields.PARENT_STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
+                    .addDateTerm(MetaFields.PARENT_STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                    .addDateTerm(MetaFields.PARENT_STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
                     .build();
 
             ExpressionOperator.Builder builder = ExpressionOperator.builder()
                     .addOperator(expression)
-                    .addTerm(MetaFields.PARENT_ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
+                    .addIdTerm(MetaFields.PARENT_ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
 
             if (pipelineDocRef != null) {
-                builder.addTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef);
+                builder.addDocRefTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef);
             }
 
             if (minMetaCreateTimeMs != null) {
-                builder = builder.addTerm(MetaFields.PARENT_CREATE_TIME,
+                builder = builder.addDateTerm(MetaFields.PARENT_CREATE_TIME,
                         Condition.GREATER_THAN_OR_EQUAL_TO,
                         DateUtil.createNormalDateTimeString(minMetaCreateTimeMs));
             }
             if (maxMetaCreateTimeMs != null) {
-                builder = builder.addTerm(MetaFields.PARENT_CREATE_TIME,
+                builder = builder.addDateTerm(MetaFields.PARENT_CREATE_TIME,
                         Condition.LESS_THAN_OR_EQUAL_TO,
                         DateUtil.createNormalDateTimeString(maxMetaCreateTimeMs));
             }
             builder = builder.addOperator(statusExpression);
 
             final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(builder.build());
-            findMetaCriteria.setSort(MetaFields.PARENT_ID.getName(), false, false);
+            findMetaCriteria.setSort(MetaFields.PARENT_ID.getFldName(), false, false);
             findMetaCriteria.obtainPageRequest().setLength(length);
 
             return metaService.findReprocess(findMetaCriteria).getValues();
@@ -705,28 +710,28 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         } else {
             // Don't select deleted streams.
             final ExpressionOperator statusExpression = ExpressionOperator.builder().op(Op.OR)
-                    .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
-                    .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
+                    .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                    .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
                     .build();
 
             ExpressionOperator.Builder builder = ExpressionOperator.builder()
                     .addOperator(expression)
-                    .addTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
+                    .addIdTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
 
             if (minMetaCreateTimeMs != null) {
-                builder = builder.addTerm(MetaFields.CREATE_TIME,
+                builder = builder.addDateTerm(MetaFields.CREATE_TIME,
                         Condition.GREATER_THAN_OR_EQUAL_TO,
                         DateUtil.createNormalDateTimeString(minMetaCreateTimeMs));
             }
             if (maxMetaCreateTimeMs != null) {
-                builder = builder.addTerm(MetaFields.CREATE_TIME,
+                builder = builder.addDateTerm(MetaFields.CREATE_TIME,
                         Condition.LESS_THAN_OR_EQUAL_TO,
                         DateUtil.createNormalDateTimeString(maxMetaCreateTimeMs));
             }
             builder = builder.addOperator(statusExpression);
 
             final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(builder.build());
-            findMetaCriteria.setSort(MetaFields.ID.getName(), false, false);
+            findMetaCriteria.setSort(MetaFields.ID.getFldName(), false, false);
             findMetaCriteria.obtainPageRequest().setLength(length);
 
             return metaService.find(findMetaCriteria).getValues();

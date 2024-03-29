@@ -17,12 +17,12 @@
 
 package stroom.data.client.presenter;
 
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
+import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
@@ -56,21 +56,26 @@ public class ExpressionPresenter
         editExpressionPresenter.focus();
     }
 
-    public void read(final ExpressionOperator expression, final DocRef dataSource, final List<QueryField> fields) {
+    public void read(final ExpressionOperator expression,
+                     final DocRef dataSource,
+                     final List<QueryField> fields) {
+
         final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
-        fieldSelectionBoxModel.addItems(fields.stream().map(FieldInfo::create).collect(Collectors.toList()));
+        fieldSelectionBoxModel.addItems(fields);
         editExpressionPresenter.init(restFactory, dataSource, fieldSelectionBoxModel);
 
-        if (expression != null) {
-            editExpressionPresenter.read(expression);
-        } else {
-            editExpressionPresenter.read(ExpressionOperator.builder().build());
-        }
+        editExpressionPresenter.read(GwtNullSafe.requireNonNullElseGet(
+                expression,
+                () -> ExpressionOperator.builder().build()));
     }
 
     public ExpressionOperator write() {
         return editExpressionPresenter.write();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface ExpressionView extends View {
 

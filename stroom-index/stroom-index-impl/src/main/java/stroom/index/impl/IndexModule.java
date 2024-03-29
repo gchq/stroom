@@ -19,10 +19,10 @@ package stroom.index.impl;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
-import stroom.index.shared.IndexDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.lifecycle.api.LifecycleBinder;
-import stroom.search.extraction.IndexStructureCache;
+import stroom.query.common.v2.IndexFieldCache;
 import stroom.searchable.api.Searchable;
 import stroom.util.RunnableWrapper;
 import stroom.util.entityevent.EntityEvent;
@@ -44,16 +44,21 @@ public class IndexModule extends AbstractModule {
         install(new IndexElementModule());
 
         bind(IndexShardWriterCache.class).to(IndexShardWriterCacheImpl.class);
-        bind(IndexStructureCache.class).to(IndexStructureCacheImpl.class);
+        bind(LuceneIndexDocCache.class).to(LuceneIndexDocCacheImpl.class);
+        bind(IndexFieldCache.class).to(IndexFieldCacheImpl.class);
         bind(IndexStore.class).to(IndexStoreImpl.class);
         bind(IndexVolumeService.class).to(IndexVolumeServiceImpl.class);
         bind(IndexVolumeGroupService.class).to(IndexVolumeGroupServiceImpl.class);
         bind(IndexShardService.class).to(IndexShardServiceImpl.class);
+        bind(IndexFieldService.class).to(IndexFieldServiceImpl.class);
         bind(Indexer.class).to(IndexerImpl.class);
+        bind(ActiveShardsCache.class).to(ActiveShardsCacheImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-                .addBinding(IndexStructureCacheImpl.class)
-                .addBinding(IndexVolumeServiceImpl.class);
+                .addBinding(LuceneIndexDocCacheImpl.class)
+                .addBinding(IndexVolumeServiceImpl.class)
+                .addBinding(IndexVolumeGroupServiceImpl.class)
+                .addBinding(IndexFieldCacheImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(IndexConfigCacheEntityEventHandler.class);
@@ -73,7 +78,7 @@ public class IndexModule extends AbstractModule {
                 .bind(IndexVolumeResourceImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(IndexDoc.DOCUMENT_TYPE, IndexStoreImpl.class);
+                .bind(LuceneIndexDoc.DOCUMENT_TYPE, IndexStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(IndexVolumeServiceImpl.class);

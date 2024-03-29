@@ -241,6 +241,21 @@ public abstract class AbstractXsltFunctionTest<T extends StroomExtensionFunction
                 });
     }
 
+    protected static Optional<Boolean> getAsBooleanValue(final Sequence sequence) {
+        return Optional.ofNullable(sequence)
+                .map(sequence2 -> {
+                    if (sequence2 instanceof EmptyAtomicSequence) {
+                        return null;
+                    } else if (sequence2 instanceof BooleanValue) {
+                        final boolean val = ((BooleanValue) sequence2).getBooleanValue();
+                        LOGGER.debug("Got boolean value:\n{}", val);
+                        return val;
+                    } else {
+                        return Boolean.parseBoolean(sequence.toString());
+                    }
+                });
+    }
+
     protected static Optional<String> getAsSerialisedXmlString(final Sequence sequence) {
         return Optional.ofNullable(sequence)
                 .map(sequence2 -> {

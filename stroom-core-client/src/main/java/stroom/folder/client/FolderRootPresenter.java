@@ -148,4 +148,9 @@ public class FolderRootPresenter extends LinkTabPanelPresenter implements Docume
     public String getType() {
         return ExplorerConstants.SYSTEM;
     }
+
+    @Override
+    public DocRef getDocRef() {
+        return ExplorerConstants.SYSTEM_DOC_REF;
+    }
 }

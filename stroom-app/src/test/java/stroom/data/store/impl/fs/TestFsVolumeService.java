@@ -13,6 +13,7 @@ import stroom.util.shared.ResultPage;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +35,11 @@ public class TestFsVolumeService extends AbstractCoreIntegrationTest {
 
     @Inject
     private PathCreator pathCreator;
+
+    @AfterEach
+    void unsetProperties() {
+        clearConfigValueMapper();
+    }
 
     @Test
     void testDefaultVolumesPresence() {

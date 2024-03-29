@@ -12,7 +12,7 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.feed.shared.FeedDoc;
 import stroom.node.client.NodeManager;
 import stroom.preferences.client.DateTimeFormatter;
@@ -33,7 +33,6 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
-import java.util.Objects;
 
 public class TableBuilderProcessingPresenter
         extends MyPresenterWidget<TableBuilderProcessingPresenter.TableBuilderProcessingView>
@@ -42,18 +41,16 @@ public class TableBuilderProcessingPresenter
     private static final AnalyticProcessResource ANALYTIC_PROCESS_RESOURCE =
             GWT.create(AnalyticProcessResource.class);
 
-    private final EntityDropDownPresenter errorFeedPresenter;
+    private final DocSelectionBoxPresenter errorFeedPresenter;
     private final DateTimeFormatter dateTimeFormatter;
     private final RestFactory restFactory;
-    private DocRef currentErrorFeed;
-    private boolean isErrorFeedInitialised = false;
 
     private DocRef ruleDocRef;
 
     @Inject
     public TableBuilderProcessingPresenter(final EventBus eventBus,
                                            final TableBuilderProcessingView view,
-                                           final EntityDropDownPresenter errorFeedPresenter,
+                                           final DocSelectionBoxPresenter errorFeedPresenter,
                                            final DateTimeFormatter dateTimeFormatter,
                                            final RestFactory restFactory,
                                            final NodeManager nodeManager) {
@@ -83,26 +80,13 @@ public class TableBuilderProcessingPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(errorFeedPresenter.addDataSelectionHandler(e -> {
-            final DocRef selectedEntityReference = errorFeedPresenter.getSelectedEntityReference();
-            // Don't want to fire dirty event when the entity is first set
-            if (isErrorFeedInitialised) {
-                if (!Objects.equals(selectedEntityReference, currentErrorFeed)) {
-                    currentErrorFeed = selectedEntityReference;
-                    onDirty();
-                }
-            } else {
-                isErrorFeedInitialised = true;
-            }
-        }));
+        registerHandler(errorFeedPresenter.addDataSelectionHandler(e -> onDirty()));
     }
 
     public void read(final DocRef ruleDocRef,
                      final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
         this.ruleDocRef = ruleDocRef;
-        this.currentErrorFeed = tableBuilderAnalyticProcessConfig.getErrorFeed();
-        errorFeedPresenter.setSelectedEntityReference(currentErrorFeed);
-
+        errorFeedPresenter.setSelectedEntityReference(tableBuilderAnalyticProcessConfig.getErrorFeed());
         getView().setEnabled(tableBuilderAnalyticProcessConfig.isEnabled());
         getView().setNode(tableBuilderAnalyticProcessConfig.getNode());
         getView().setMinMetaCreateTimeMs(tableBuilderAnalyticProcessConfig.getMinMetaCreateTimeMs());
@@ -118,7 +102,7 @@ public class TableBuilderProcessingPresenter
                 .builder()
                 .enabled(getView().isEnabled())
                 .node(getView().getNode())
-                .errorFeed(currentErrorFeed)
+                .errorFeed(errorFeedPresenter.getSelectedEntityReference())
                 .minMetaCreateTimeMs(getView().getMinMetaCreateTimeMs())
                 .maxMetaCreateTimeMs(getView().getMaxMetaCreateTimeMs())
                 .timeToWaitForData(getView().getTimeToWaitForData())

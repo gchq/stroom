@@ -88,20 +88,18 @@ class SecurityFilter implements Filter {
     @Override
     public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain)
             throws IOException, ServletException {
-        if (!(response instanceof HttpServletResponse)) {
+        if (!(response instanceof final HttpServletResponse httpServletResponse)) {
             final String message = "Unexpected response type: " + response.getClass().getName();
             LOGGER.error(message);
             return;
         }
-        final HttpServletResponse httpServletResponse = (HttpServletResponse) response;
 
-        if (!(request instanceof HttpServletRequest)) {
+        if (!(request instanceof final HttpServletRequest httpServletRequest)) {
             final String message = "Unexpected request type: " + request.getClass().getName();
             LOGGER.error(message);
             httpServletResponse.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, message);
             return;
         }
-        final HttpServletRequest httpServletRequest = (HttpServletRequest) request;
 
         try {
             filter(httpServletRequest, httpServletResponse, chain);

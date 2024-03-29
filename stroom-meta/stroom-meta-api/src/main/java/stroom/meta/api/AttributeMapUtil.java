@@ -44,13 +44,16 @@ import java.time.format.SignStyle;
 import java.time.format.TextStyle;
 import java.time.temporal.ChronoField;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 // TODO: 08/12/2022 This should be an injectable class with instance methods to make test mocking possible
@@ -83,10 +86,10 @@ public class AttributeMapUtil {
 
     // Delimiter between key and value
     private static final String HEADER_DELIMITER = ":";
-    // Delimiter within a de-serialised value (i.e in an AttributeMap)
-    static final String DE_SERIALISED_VALUE_DELIMITER = "\n";
-    // Delimiter within a serialised value (i.e in a file)
-    private static final String SERIALISED_VALUE_DELIMITER = ",";
+    // Delimiter within a value
+    static final String VALUE_DELIMITER = ",";
+
+    static final Pattern VALUE_DELIMITER_PATTERN = Pattern.compile(Pattern.quote(VALUE_DELIMITER));
     // Delimiter between attributes
     private static final String ATTRIBUTE_DELIMITER = "\n";
     static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
@@ -138,9 +141,6 @@ public class AttributeMapUtil {
                     if (splitPos != -1) {
                         final String key = line.substring(0, splitPos);
                         String value = line.substring(splitPos + 1);
-                        // Some values (e.g. for 'Files') have multiple parts so, they are delimited in the
-                        // file with a ',' but delimited in the AttributeMap with '\n'
-                        value = value.replace(SERIALISED_VALUE_DELIMITER, DE_SERIALISED_VALUE_DELIMITER);
                         attributeMap.put(key.trim(), value.trim());
                     } else {
                         attributeMap.put(line, null);
@@ -176,6 +176,20 @@ public class AttributeMapUtil {
         }
     }
 
+    /**
+     * Splits the attributeValue using {@link AttributeMapUtil#VALUE_DELIMITER}.
+     *
+     * @return A non-null list
+     */
+    public static List<String> valueAsList(final String attributeValue) {
+        if (NullSafe.isEmptyString(attributeValue)) {
+            return Collections.emptyList();
+        } else {
+            return VALUE_DELIMITER_PATTERN.splitAsStream(attributeValue)
+                    .toList();
+        }
+    }
+
     private static String getAttributeStr(final AttributeMap attributeMap, final String attributeKey) {
         final String attributeValue = attributeMap.get(attributeKey);
         final String str;
@@ -197,8 +211,7 @@ public class AttributeMapUtil {
                             final String value = e.getValue();
                             if (value != null) {
                                 writer.write(HEADER_DELIMITER);
-                                // Some attributes (e.g. 'Files') have multi line values so change to comma delimited
-                                writer.write(value.replace(DE_SERIALISED_VALUE_DELIMITER, SERIALISED_VALUE_DELIMITER));
+                                writer.write(value);
                             }
                             writer.write(ATTRIBUTE_DELIMITER);
                         } catch (final IOException ioe) {

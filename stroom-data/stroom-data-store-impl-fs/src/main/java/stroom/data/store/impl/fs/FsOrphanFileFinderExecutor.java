@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -131,7 +132,8 @@ class FsOrphanFileFinderExecutor {
 
     public void scan(final Consumer<Path> orphanConsumer, final TaskContext parentContext) {
         parentContext.info(() -> "Starting orphan file finder task. oldAge = " + oldAge);
-        final long oldestDirTime = System.currentTimeMillis() - oldAge.toMillis();
+        Instant oldestDirTime = Instant.now();
+        oldestDirTime = oldestDirTime.minus(oldAge);
 
         final LogExecutionTime logExecutionTime = LogExecutionTime.start();
 
@@ -152,7 +154,7 @@ class FsOrphanFileFinderExecutor {
 
     private void scanVolume(final FsVolume volume,
                             final Consumer<Path> orphanConsumer,
-                            final long oldestDirTime,
+                            final Instant oldestDirTime,
                             final TaskContext taskContext) {
         final Path absDir = pathCreator.toAppPath(volume.getPath());
         if (!Files.isDirectory(absDir)) {

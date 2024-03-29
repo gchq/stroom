@@ -39,6 +39,10 @@ import org.xml.sax.SAXException;
 @ConfigurableElement(
         type = "RecordCountFilter",
         category = Category.FILTER,
+        description = """
+                Counts events/records in the stream.
+                An event/record is taken to be an XML element that is at the first level below the \
+                root element, i.e. for 'event-logging:3' XML this means the `<Event>` element.""",
         roles = {
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_HAS_TARGETS},

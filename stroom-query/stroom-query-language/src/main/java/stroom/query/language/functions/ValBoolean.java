@@ -16,9 +16,13 @@
 
 package stroom.query.language.functions;
 
+import java.util.Comparator;
 import java.util.Objects;
 
 public final class ValBoolean implements Val {
+
+    private static final Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
+            ValBoolean.class, ValComparators.AS_BOOLEAN_COMPARATOR);
 
     public static final Type TYPE = Type.BOOLEAN;
     static final ValBoolean TRUE = new ValBoolean(true);
@@ -87,6 +91,12 @@ public final class ValBoolean implements Val {
     }
 
     @Override
+    public boolean hasNumericValue() {
+        // Either 1 or 0
+        return true;
+    }
+
+    @Override
     public boolean equals(final Object o) {
         if (this == o) {
             return true;
@@ -101,5 +111,15 @@ public final class ValBoolean implements Val {
     @Override
     public int hashCode() {
         return Objects.hash(value);
+    }
+
+    @Override
+    public Comparator<Val> getDefaultComparator(final boolean isCaseSensitive) {
+        return COMPARATOR;
+    }
+
+    @Override
+    public Object unwrap() {
+        return value;
     }
 }

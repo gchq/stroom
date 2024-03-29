@@ -39,6 +39,12 @@ import java.util.List;
 @ConfigurableElement(
         type = "RecordOutputFilter",
         category = Category.FILTER,
+        description = """
+                Filters out records/events that have raised an Error or Fatal Error during processing.
+                If all records/events have raised at least an Error then no XML events will be output.
+                It assumes that an record/event is an XML element at the first level below the root element, i.e. \\
+                for 'event-logging:3' XML this means the `<Event>` element.""\",
+                """,
         roles = {
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_HAS_TARGETS},
@@ -153,9 +159,8 @@ public class RecordOutputFilter extends BufferFilter {
 
             // Check to see if the record is ok?
             boolean recordOk = true;
-            if (errorReceiverProxy.getErrorReceiver() != null
-                    && errorReceiverProxy.getErrorReceiver() instanceof ErrorStatistics) {
-                recordOk = ((ErrorStatistics) errorReceiverProxy.getErrorReceiver()).checkRecord(count) == 0;
+            if (errorReceiverProxy.getErrorReceiver() instanceof final ErrorStatistics errorStatistics) {
+                recordOk = errorStatistics.checkRecord(count) == 0;
             }
 
             // If the record is ok then fire the contents of the buffer at the

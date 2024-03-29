@@ -36,7 +36,7 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
     }
 
     public void map(final QueryField dataSourceField) {
-        Optional<Integer> idOptional = metaKeyDao.getIdForName(dataSourceField.getName());
+        Optional<Integer> idOptional = metaKeyDao.getIdForName(dataSourceField.getFldName());
 
         if (idOptional.isPresent()) {
             int id = idOptional.get();
@@ -55,7 +55,7 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
                             throw new NumberFormatException("Error parsing value \"" +
                                     values +
                                     "\" as number for field '" +
-                                    dataSourceField.getName() +
+                                    dataSourceField.getFldName() +
                                     "'");
                         }
                     });

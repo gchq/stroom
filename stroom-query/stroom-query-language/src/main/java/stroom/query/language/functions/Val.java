@@ -18,11 +18,19 @@ package stroom.query.language.functions;
 
 
 import stroom.query.language.token.Param;
+import stroom.util.time.StroomDuration;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Comparator;
 import java.util.Objects;
 
-public interface Val extends Param, Appendable {
+public sealed interface Val
+        extends Param, Appendable, Comparable<Val>
+        permits ValNumber, ValString, ValErr, ValNull, ValBoolean {
+
     Val[] EMPTY_VALUES = new Val[0];
+    double FLOATING_POINT_EQUALITY_TOLERANCE = 0.00001;
 
     Integer toInteger();
 
@@ -36,7 +44,56 @@ public interface Val extends Param, Appendable {
 
     String toString();
 
+    Object unwrap();
+
+    /**
+     * @return The {@link Val} as a number or null if it cannot be represented as a number.
+     * Returns an impl of {@link Number} that is appropriate for this value. The returned type may differ for
+     * different values of the same Val impl, e.g. "123" and "1.23"
+     */
+    default Number toNumber() {
+        if (hasNumericValue()) {
+            if (hasFractionalPart()) {
+                return toDouble();
+            } else {
+                return toLong();
+            }
+        } else {
+            return null;
+        }
+    }
+
     Type type();
+
+    /**
+     * @return True if the underlying value is non-null, numeric and has a
+     * fractional part, e.g. "1.2" or 1.2.
+     */
+    default boolean hasFractionalPart() {
+        // Most Vals don't have fractional parts
+        return false;
+    }
+
+    /**
+     * @return True if the underlying value is non-null, has a numeric value,
+     * e.g. "1", "1.2", 300, etc, or can be represented as a number, e.g. a date string
+     * represented as millis since epoch.
+     */
+    default boolean hasNumericValue() {
+        return false;
+    }
+
+    /**
+     * @param isCaseSensitive Set to false for a case-insensitive comparator.
+     *                        Some impls may ignore this parameter, e.g. numeric {@link Val}
+     *                        impls.
+     * @return A comparator that will compare {@link Val} instances using the
+     * comparison method of the subclass in question. Only intended for use on
+     * {@link Val} instances of the same class. To compare {@link Val} instances
+     * of potentially mixed types in a null-safe way, see
+     * {@link ValComparators#getComparator(boolean)}.
+     */
+    Comparator<Val> getDefaultComparator(final boolean isCaseSensitive);
 
     static Val[] of(final Val... values) {
         return values;
@@ -93,5 +150,41 @@ public interface Val extends Param, Appendable {
                 return Objects.requireNonNull(creator).apply(value2);
             }
         }
+    }
+
+    /**
+     * Create a {@link Val} of the appropriate subclass for the java
+     * type passed, e.g.
+     * <pre>
+     * {@link String} => {@link ValString},
+     * {@link Long} => {@link ValLong},
+     * {@link Instant} => {@link ValDate},
+     * {@link Duration} => {@link ValDuration},
+     * {@link Throwable} => {@link ValErr},
+     * null => {@link ValNull},
+     * etc
+     * </pre>
+     */
+    static Val create(final Object object) {
+        return switch (object) {
+            case null -> ValNull.INSTANCE;
+            case Boolean val -> ValBoolean.create(val);
+            case Double val -> ValDouble.create(val);
+            case Duration val -> ValDuration.create(val.toMillis());
+            case Float val -> ValFloat.create(val);
+            case Instant val -> ValDate.create(val.toEpochMilli());
+            case Integer val -> ValInteger.create(val);
+            case Long val -> ValLong.create(val);
+            case String val -> ValString.create(val);
+            case StroomDuration val -> ValDuration.create(val.toMillis());
+            case Throwable val -> ValErr.create(val.getMessage());
+            case Val val -> val;
+            default -> throw new UnsupportedOperationException("Unsupported type " + object.getClass());
+        };
+    }
+
+    @Override
+    default int compareTo(Val other) {
+        return ValComparators.GENERIC_CASE_INSENSITIVE_COMPARATOR.compare(this, other);
     }
 }

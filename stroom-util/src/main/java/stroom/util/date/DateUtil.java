@@ -19,7 +19,6 @@ package stroom.util.date;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.Period;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -47,6 +46,7 @@ public final class DateUtil {
 
     /**
      * Create a 'normal' type date.
+     *
      * @param ms The date to create the string for.
      */
     public static String createNormalDateTimeString(final Long ms) {
@@ -58,6 +58,7 @@ public final class DateUtil {
 
     /**
      * Create a 'normal' type date.
+     *
      * @param instant The date to create the string for.
      */
     public static String createNormalDateTimeString(final Instant instant) {
@@ -66,15 +67,6 @@ public final class DateUtil {
         } else {
             return NORMAL_STROOM_TIME_FORMATTER.format(instant.atZone(ZoneOffset.UTC));
         }
-    }
-
-    /**
-     * Create a 'file' format date string with the current system time.
-     *
-     * @return string The date as a 'file' format date string.
-     */
-    public static String createFileDateTimeString() {
-        return FILE_TIME_STROOM_TIME_FORMATTER.format(Instant.now().atZone(ZoneOffset.UTC));
     }
 
     /**
@@ -128,33 +120,17 @@ public final class DateUtil {
         return dateTime.toInstant(ZoneOffset.UTC);
     }
 
-    /**
-     * Parse a 'file' type date.
-     *
-     * @param date string date
-     * @return date as milliseconds since epoch
-     * @throws IllegalArgumentException if date does not parse
-     */
-    public static long parseFileDateTimeString(final String date) {
-        if (date == null) {
-            throw new IllegalArgumentException("Unable to parse null date");
-        }
-
-        if (!looksLikeDate(date)) {
-            throw new IllegalArgumentException("Unable to parse date: \"" + date + '"');
-        }
-
-        final LocalDateTime dateTime = LocalDateTime.parse(date, FILE_TIME_STROOM_TIME_FORMATTER);
-        return dateTime.toInstant(ZoneOffset.UTC).toEpochMilli();
-    }
-
     public static long parseUnknownString(final String date) {
         if (date == null) {
             throw new IllegalArgumentException("Unable to parse null date");
         }
 
         if (!looksLikeDate(date)) {
-            Long.parseLong(date);
+            try {
+                return Long.parseLong(date);
+            } catch (final RuntimeException e) {
+                // Ignore.
+            }
         }
 
         try {
@@ -169,7 +145,7 @@ public final class DateUtil {
         }
     }
 
-    public static boolean looksLikeDate(final String date) {
+    private static boolean looksLikeDate(final String date) {
         return date != null && date.length() == DATE_LENGTH && date.charAt(date.length() - 1) == 'Z';
     }
 
@@ -195,38 +171,5 @@ public final class DateUtil {
         }
 
         return result;
-    }
-
-    public static LocalDateTime roundDown(LocalDateTime dateTime, Period period) {
-        int year = dateTime.getYear();
-        int month = dateTime.getMonthValue();
-        int day = dateTime.getDayOfMonth();
-
-        if (period.getYears() != 0) {
-            if (period.getYears() > 1) {
-                final int multiple = (year - 1970) / period.getYears();
-                year = multiple * period.getYears();
-            }
-            month = 1;
-            day = 1;
-
-        } else if (period.getMonths() != 0) {
-            if (period.getMonths() >= 12) {
-                month = 1;
-            } else if (period.getMonths() > 1) {
-                final int multiple = 12 / period.getMonths();
-                month = multiple * period.getMonths();
-            }
-            day = 1;
-
-        } else if (period.getDays() != 0) {
-            if (period.getDays() >= 365) {
-                day = 1;
-            } else if (period.getDays() > 1) {
-                final int multiple = 365 / period.getDays();
-                day = multiple * period.getDays();
-            }
-        }
-        return LocalDateTime.of(year, month, day, 0, 0, 0);
     }
 }

@@ -27,6 +27,7 @@ import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.content.client.event.SelectContentTabEvent;
 import stroom.content.client.event.SelectContentTabEvent.SelectContentTabHandler;
 import stroom.data.table.client.Refreshable;
+import stroom.explorer.client.presenter.RecentItems;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.tab.client.presenter.CurveTabLayoutPresenter;
@@ -55,14 +56,18 @@ public class ContentTabPanePresenter
         CurveTabLayoutUiHandlers {
 
     private final List<TabData> historyList = new ArrayList<>();
+    private final RecentItems recentItems;
     private int currentHistoryId;
     private int currentIndex;
     private boolean ignoreHistory;
 
     @Inject
-    public ContentTabPanePresenter(final EventBus eventBus, final CurveTabLayoutView view,
-                                   final ContentTabPaneProxy proxy) {
+    public ContentTabPanePresenter(final EventBus eventBus,
+                                   final CurveTabLayoutView view,
+                                   final ContentTabPaneProxy proxy,
+                                   final RecentItems recentItems) {
         super(eventBus, view, proxy);
+        this.recentItems = recentItems;
         view.setUiHandlers(this);
 
         registerHandler(eventBus.addHandler(RefreshCurrentContentTabEvent.getType(),
@@ -184,6 +189,7 @@ public class ContentTabPanePresenter
 
                 historyList.add(tabData);
                 currentIndex = historyList.size() - 1;
+                recentItems.add(tabData);
 
                 currentHistoryId++;
                 final String key = String.valueOf(currentHistoryId);

@@ -17,6 +17,7 @@
 package stroom.statistics.impl.sql.shared;
 
 import stroom.docref.DocRef;
+import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.svg.shared.SvgImage;
 
@@ -33,6 +34,20 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+@Description(
+        "Defines a logical statistic store used to hold statistical data of a particular type and " +
+                "aggregation window.\n" +
+                "Statistics in Stroom is a way to capture counts or values from events and record how they change " +
+                "over time, with the counts/values aggregated (sum/mean) across time windows.\n" +
+                "\n" +
+                "The Statistic Store Document configures the type of the statistic (Count or Value), the tags " +
+                "that are used to qualify a statistic event and the size of the aggregation windows.\n" +
+                "It also supports the definition of roll-ups that allow for aggregation over all values of a tag.\n" +
+                "Tags can be things like `user`, `node`, `feed`, etc. and can be used to filter data when " +
+                "querying the statistic store in a Dashboard/Query.\n" +
+                "\n" +
+                "It is used by the {{< pipe-elm \"StatisticsFilter\" >}} pipeline element."
+)
 @JsonPropertyOrder({
         "type",
         "uuid",

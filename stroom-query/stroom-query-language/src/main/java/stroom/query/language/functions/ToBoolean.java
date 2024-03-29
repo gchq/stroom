@@ -46,11 +46,6 @@ class ToBoolean extends AbstractCast {
         return CAST;
     }
 
-    @Override
-    public Type getCommonReturnType() {
-        return Type.BOOLEAN;
-    }
-
     private static class Cast extends AbstractCaster {
 
         @Override

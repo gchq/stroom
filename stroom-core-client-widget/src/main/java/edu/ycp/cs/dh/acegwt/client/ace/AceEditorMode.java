@@ -33,11 +33,28 @@ import java.util.stream.Stream;
  */
 public enum AceEditorMode {
 
+    /**
+     * Used for a TextConverter that is being used for a DSParser or
+     * a CombinedParser (if it has {@code type = 'Data Splitter'})
+     */
+    STROOM_DATA_SPLITTER("stroom_data_splitter"),
 
     /**
      * Used for stroom-expression syntax editors
      */
     STROOM_EXPRESSION("stroom_expression"),
+
+    /**
+     * Used for a TextConverter that is being used for a XMLFragmentParser or
+     * a CombinedParser (if it has {@code type = 'XML Fragment'})
+     */
+    STROOM_FRAGMENT_PARSER("stroom_fragment_parser"),
+
+    /**
+     * Used for a TextConverter that has a type of {@code type = 'None'}) or
+     * where the type is unknown.
+     */
+    STROOM_COMBINED_PARSER("stroom_combined_parser"),
 
     /**
      * Used for stroom-query syntax editors

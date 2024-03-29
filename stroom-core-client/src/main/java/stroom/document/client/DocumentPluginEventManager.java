@@ -48,11 +48,14 @@ import stroom.document.client.event.WriteDocumentEvent;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
+import stroom.explorer.client.event.LocateDocEvent;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.explorer.client.event.ShowEditNodeTagsDialogEvent;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
 import stroom.explorer.client.event.ShowFindEvent;
+import stroom.explorer.client.event.ShowFindInContentEvent;
 import stroom.explorer.client.event.ShowNewMenuEvent;
+import stroom.explorer.client.event.ShowRecentItemsEvent;
 import stroom.explorer.client.event.ShowRemoveNodeTagsDialogEvent;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.BulkActionResult;
@@ -163,8 +166,15 @@ public class DocumentPluginEventManager extends Plugin {
             }
         });
         KeyBinding.addCommand(Action.ITEM_SAVE_ALL, hasSaveRegistry::save);
-
         KeyBinding.addCommand(Action.FIND, () -> ShowFindEvent.fire(this));
+        KeyBinding.addCommand(Action.FIND_IN_CONTENT, () -> ShowFindInContentEvent.fire(this));
+        KeyBinding.addCommand(Action.RECENT_ITEMS, () -> ShowRecentItemsEvent.fire(this));
+        KeyBinding.addCommand(Action.LOCATE, () -> {
+            final DocRef selectedDoc = getSelectedDoc(selectedTab);
+            if (selectedDoc != null) {
+                LocateDocEvent.fire(this, selectedDoc);
+            }
+        });
     }
 
     @Override
@@ -172,8 +182,16 @@ public class DocumentPluginEventManager extends Plugin {
         super.onBind();
 
         // track the currently selected content tab.
-        registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(),
-                e -> selectedTab = e.getTabData()));
+        registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e ->
+                selectedTab = e.getTabData()));
+
+        // Add support to locate items in the explorer tree.
+        registerHandler(getEventBus().addHandler(LocateDocEvent.getType(), e -> {
+            if (e.getDocRef() != null) {
+                highlight(e.getDocRef());
+            }
+        }));
+
 
         // // 2. Handle requests to close tabs.
         // registerHandler(getEventBus().addHandler(
@@ -262,8 +280,6 @@ public class DocumentPluginEventManager extends Plugin {
         // 6. Handle save as events.
         registerHandler(getEventBus().addHandler(SaveAsDocumentEvent.getType(), event -> {
             // First get the explorer node for the docref.
-//            final Rest<ExplorerNode> rest = restFactory.create();
-//            rest
             restFactory.builder()
                     .forType(ExplorerNode.class)
                     .onSuccess(explorerNode -> {
@@ -433,6 +449,8 @@ public class DocumentPluginEventManager extends Plugin {
             menuItems.add(new Separator(5));
             menuItems.add(createSaveMenuItem(6, event.getTabData()));
             menuItems.add(createSaveAllMenuItem(8));
+            menuItems.add(new Separator(9));
+            menuItems.add(createLocateMenuItem(10, event.getTabData()));
 
             ShowMenuEvent
                     .builder()
@@ -635,12 +653,12 @@ public class DocumentPluginEventManager extends Plugin {
                     .forType(DocRef.class)
                     .onSuccess(decoratedDocRef -> {
                         if (decoratedDocRef != null) {
-                            docRef.setName(decoratedDocRef.getName());
+                            documentPlugin.open(decoratedDocRef, forceOpen, fullScreen);
+                            highlight(decoratedDocRef);
                         }
                     })
                     .call(EXPLORER_RESOURCE)
                     .decorate(docRef);
-            documentPlugin.open(docRef, forceOpen, fullScreen);
         } else {
             throw new IllegalArgumentException("Document type '" + docRef.getType() + "' not registered");
         }
@@ -751,15 +769,6 @@ public class DocumentPluginEventManager extends Plugin {
                 .fetchExplorerPermissions(explorerNodes);
     }
 
-//    private DocRef getDocRef(final ExplorerNode explorerNode) {
-//        DocRef docRef = null;
-//        if (explorerNode != null && explorerNode instanceof EntityData) {
-//            final EntityData entityData = (EntityData) explorerNode;
-//            docRef = entityData.getDocRef();
-//        }
-//        return docRef;
-//    }
-
     private void addFavouritesMenuItem(final List<Item> menuItems, final boolean singleSelection, final int priority) {
         final ExplorerNode primarySelection = getPrimarySelection();
 
@@ -850,7 +859,7 @@ public class DocumentPluginEventManager extends Plugin {
 
                         // Add the group level item with its children
                         children.add(new IconParentMenuItem.Builder()
-                                .text(group.getName())
+                                .text(group.getDisplayName())
                                 .children(grandChildren)
                                 .build());
                     }
@@ -1032,6 +1041,30 @@ public class DocumentPluginEventManager extends Plugin {
                 .enabled(hasSaveRegistry.isDirty())
                 .command(hasSaveRegistry::save)
                 .build();
+    }
+
+    private MenuItem createLocateMenuItem(final int priority, final TabData selectedTab) {
+        final DocRef selectedDoc = getSelectedDoc(selectedTab);
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgImage.LOCATE)
+                .text("Locate In Explorer")
+                .action(Action.LOCATE)
+                .enabled(selectedDoc != null)
+                .command(() -> {
+                    if (selectedDoc != null) {
+                        LocateDocEvent.fire(DocumentPluginEventManager.this, selectedDoc);
+                    }
+                })
+                .build();
+    }
+
+    private DocRef getSelectedDoc(final TabData selectedTab) {
+        if (selectedTab instanceof DocumentTabData) {
+            final DocumentTabData documentTabData = (DocumentTabData) selectedTab;
+            return documentTabData.getDocRef();
+        }
+        return null;
     }
 
     private MenuItem createInfoMenuItem(final ExplorerNode explorerNode,
@@ -1254,10 +1287,6 @@ public class DocumentPluginEventManager extends Plugin {
 
     private boolean isTabItemSelected(final TabData tabData) {
         return tabData != null;
-    }
-
-    public boolean isTabSelected() {
-        return selectedTab != null;
     }
 
     private boolean isDirty(final TabData tabData) {

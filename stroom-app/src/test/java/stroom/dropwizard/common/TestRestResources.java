@@ -567,7 +567,10 @@ class TestRestResources {
                                 annotationType +
                                 " annotations")
                 .isFalse();
+
+        // 'default' methods effectively drag iface annos onto the impl, so ignore those methods
         Arrays.stream(resourceClass.getMethods())
+                .filter(method -> !method.isDefault())
                 .forEach(method -> {
                     final boolean hasMethodAnnotation = Arrays.stream(method.getAnnotations())
                             .anyMatch(annotation ->
@@ -584,6 +587,10 @@ class TestRestResources {
                             .isFalse();
                 });
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class MethodSignature {
 

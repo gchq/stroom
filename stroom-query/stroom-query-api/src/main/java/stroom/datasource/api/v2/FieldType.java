@@ -4,7 +4,10 @@ import stroom.docref.HasDisplayValue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public enum FieldType implements HasDisplayValue {
     ID(0,
@@ -48,6 +51,7 @@ public enum FieldType implements HasDisplayValue {
                     "\n" +
                     "Decimal value supporting equality and range queries.",
             true),
+    // Dates are held in string form, so need to be parsed
     DATE(6,
             "Date",
             "date",
@@ -60,7 +64,7 @@ public enum FieldType implements HasDisplayValue {
                     " * Current time plus 2 days: 'now() + 2d'\n" +
                     " * Current time minus 1 hour: 'now() - 1h'\n" +
                     " * Current time plus 2 weeks, minus 1 day 10 hours: 'now() + 2w - 1d10h'",
-            true),
+            false),
     TEXT(7,
             "Text",
             "text",
@@ -137,6 +141,18 @@ public enum FieldType implements HasDisplayValue {
 
     public static FieldType get(final int index) {
         return TYPE_ARRAY[index];
+    }
+
+    private static final Map<String, FieldType> TYPE_NAME_MAP = new HashMap<>();
+
+    static {
+        for (final FieldType fieldType : values()) {
+            TYPE_NAME_MAP.put(fieldType.getDisplayValue().toLowerCase(Locale.ROOT), fieldType);
+        }
+    }
+
+    public static FieldType fromDisplayValue(final String displayValue) {
+        return TYPE_NAME_MAP.get(displayValue.toLowerCase(Locale.ROOT));
     }
 
     private final int index;

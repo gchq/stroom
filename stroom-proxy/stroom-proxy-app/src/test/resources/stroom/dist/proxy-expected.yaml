@@ -44,6 +44,7 @@ proxyConfig:
       expireAfterAccess: null
       expireAfterWrite: null
       maximumSize: 1000
+      refreshAfterWrite: null
     url: null
   fileScanners:
   - path: null

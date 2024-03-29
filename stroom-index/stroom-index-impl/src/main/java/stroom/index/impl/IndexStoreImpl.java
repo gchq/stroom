@@ -17,6 +17,7 @@
 
 package stroom.index.impl;
 
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
@@ -29,10 +30,11 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
-import stroom.index.shared.IndexDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.util.shared.Message;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.List;
@@ -42,12 +44,20 @@ import java.util.Set;
 @Singleton
 public class IndexStoreImpl implements IndexStore {
 
-    private final Store<IndexDoc> store;
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            LuceneIndexDoc.DOCUMENT_TYPE,
+            "Lucene Index",
+            LuceneIndexDoc.ICON);
+    private final Store<LuceneIndexDoc> store;
+    private final Provider<IndexFieldService> indexFieldServiceProvider;
 
     @Inject
     IndexStoreImpl(final StoreFactory storeFactory,
-                   final IndexSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, IndexDoc.DOCUMENT_TYPE, IndexDoc.class);
+                   final IndexSerialiser serialiser,
+                   final Provider<IndexFieldService> indexFieldServiceProvider) {
+        this.store = storeFactory.createStore(serialiser, LuceneIndexDoc.DOCUMENT_TYPE, LuceneIndexDoc.class);
+        this.indexFieldServiceProvider = indexFieldServiceProvider;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -90,11 +100,7 @@ public class IndexStoreImpl implements IndexStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.INDEXING,
-                IndexDoc.DOCUMENT_TYPE,
-                "Lucene Index",
-                IndexDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -130,13 +136,17 @@ public class IndexStoreImpl implements IndexStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public IndexDoc readDocument(final DocRef docRef) {
+    public LuceneIndexDoc readDocument(final DocRef docRef) {
         return store.readDocument(docRef);
     }
 
     @Override
-    public IndexDoc writeDocument(final IndexDoc document) {
-        return store.writeDocument(document);
+    public LuceneIndexDoc writeDocument(final LuceneIndexDoc document) {
+        final LuceneIndexDoc luceneIndexDoc = store.writeDocument(document);
+        if (document != null) {
+            indexFieldServiceProvider.get().transferFieldsToDB(document.asDocRef());
+        }
+        return luceneIndexDoc;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -157,7 +167,9 @@ public class IndexStoreImpl implements IndexStore {
                                  final Map<String, byte[]> dataMap,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
-        return store.importDocument(docRef, dataMap, importState, importSettings);
+        final DocRef ref = store.importDocument(docRef, dataMap, importState, importSettings);
+        indexFieldServiceProvider.get().transferFieldsToDB(ref);
+        return ref;
     }
 
     @Override
@@ -172,7 +184,7 @@ public class IndexStoreImpl implements IndexStore {
 
     @Override
     public String getType() {
-        return IndexDoc.DOCUMENT_TYPE;
+        return LuceneIndexDoc.DOCUMENT_TYPE;
     }
 
     @Override
@@ -197,5 +209,12 @@ public class IndexStoreImpl implements IndexStore {
     @Override
     public List<DocContentMatch> findByContent(final StringMatch filter) {
         return store.findByContent(filter);
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final DocRef docRef,
+                                                final String extension,
+                                                final StringMatch filter) {
+        return store.fetchHighlights(docRef, extension, filter);
     }
 }

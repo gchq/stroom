@@ -104,6 +104,7 @@ public class ListInputPresenter
                         if (words != null) {
                             getView().setValues(words);
                             getView().setSelectedValue(settings.getValue());
+                            getView().setAllowTextEntry(settings.isAllowTextEntry());
                         }
                     })
                     .call(WORD_LIST_RESOURCE)
@@ -111,6 +112,7 @@ public class ListInputPresenter
         } else {
             getView().setValues(settings.getValues());
             getView().setSelectedValue(settings.getValue());
+            getView().setAllowTextEntry(settings.isAllowTextEntry());
         }
     }
 
@@ -145,5 +147,7 @@ public class ListInputPresenter
         void setSelectedValue(String selected);
 
         String getSelectedValue();
+
+        void setAllowTextEntry(boolean allowTextEntry);
     }
 }

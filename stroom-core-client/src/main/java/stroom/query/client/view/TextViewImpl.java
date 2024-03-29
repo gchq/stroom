@@ -21,6 +21,7 @@ import stroom.query.client.presenter.TextPresenter.TextView;
 import stroom.query.client.presenter.TextUiHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.FabButton;
+import stroom.widget.button.client.InlineSvgButton;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -35,6 +36,9 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements TextView {
 
     private final Widget widget;
+
+    @UiField(provided = true)
+    InlineSvgButton close;
     @UiField
     SimplePanel content;
     @UiField(provided = true)
@@ -45,6 +49,13 @@ public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements 
     @Inject
     public TextViewImpl(final Binder binder, final ClassificationLabel classification) {
         this.classification = classification;
+
+        close = new InlineSvgButton();
+        close.setSvg(SvgImage.CLOSE);
+//        close.getElement().addClassName("navigation-header-button add");
+        close.setTitle("Close");
+        close.setEnabled(true);
+
         widget = binder.createAndBindUi(this);
         steppingButton.setIcon(SvgImage.STEPPING);
     }
@@ -67,6 +78,13 @@ public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements 
     @Override
     public void setSteppingVisible(final boolean visible) {
         steppingButton.setVisible(visible);
+    }
+
+    @UiHandler("close")
+    public void onCloseClick(final ClickEvent e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().close();
+        }
     }
 
     @UiHandler("steppingButton")

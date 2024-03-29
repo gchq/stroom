@@ -58,6 +58,7 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.TableBuilder;
 import stroom.widget.util.client.TableCell;
 
@@ -222,13 +223,15 @@ public class TaskManagerListPresenter
         }));
 
         registerHandler(wrapToggleButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 if (wrapToggleButton.isOff()) {
                     wrapToggleButton.setTitle("Turn Cell Line Wrapping On");
+                    dataGrid.setMultiLine(false);
                 } else {
                     wrapToggleButton.setTitle("Turn Cell Line Wrapping Off");
+                    dataGrid.setMultiLine(true);
                 }
-                internalRefresh();
+//                internalRefresh();
             }
         }));
     }
@@ -269,7 +272,6 @@ public class TaskManagerListPresenter
             }
         };
 
-        checkBoxColumn.setCellStyleNames(MyDataGrid.RESOURCES.dataGridStyle().dataGridCellVerticalTop());
         dataGrid.addColumn(checkBoxColumn, "", ColumnSizeConstants.CHECKBOX_COL);
 
         // Expander column.
@@ -289,7 +291,6 @@ public class TaskManagerListPresenter
             updateButtonStates();
             internalRefresh();
         });
-        expanderColumn.setCellStyleNames(MyDataGrid.RESOURCES.dataGridStyle().dataGridCellVerticalTop());
 
         final InfoColumn<TaskProgress> furtherInfoColumn = new InfoColumn<TaskProgress>() {
             @Override
@@ -298,7 +299,6 @@ public class TaskManagerListPresenter
                 tooltipPresenter.show(tooltipHtml, popupPosition);
             }
         };
-        furtherInfoColumn.setCellStyleNames(MyDataGrid.RESOURCES.dataGridStyle().dataGridCellVerticalTop());
         dataGrid.addColumn(furtherInfoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
 
         // Add Handlers
@@ -319,7 +319,6 @@ public class TaskManagerListPresenter
                                         ? taskProgress.getNodeName()
                                         : "?"))
                         .withSorting(FindTaskProgressCriteria.FIELD_NODE)
-                        .withStyleName(MyDataGrid.RESOURCES.dataGridStyle().dataGridCellVerticalTop())
                         .build(),
                 FindTaskProgressCriteria.FIELD_NODE,
                 150);
@@ -328,7 +327,6 @@ public class TaskManagerListPresenter
         dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(getWrapableColouredCellFunc(TaskProgress::getTaskName))
                         .withSorting(FindTaskProgressCriteria.FIELD_NAME)
-                        .withStyleName(MyDataGrid.RESOURCES.dataGridStyle().dataGridCellVerticalTop())
                         .build(),
                 FindTaskProgressCriteria.FIELD_NAME,
                 250);
@@ -337,7 +335,6 @@ public class TaskManagerListPresenter
         dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(getColouredCellFunc(TaskProgress::getUserName))
                         .withSorting(FindTaskProgressCriteria.FIELD_USER)
-                        .withStyleName(MyDataGrid.RESOURCES.dataGridStyle().dataGridCellVerticalTop())
                         .build(),
                 FindTaskProgressCriteria.FIELD_USER,
                 80);
@@ -347,7 +344,6 @@ public class TaskManagerListPresenter
                 DataGridUtil.htmlColumnBuilder(getColouredCellFunc(taskProgress ->
                                 dateTimeFormatter.format(taskProgress.getSubmitTimeMs())))
                         .withSorting(FindTaskProgressCriteria.FIELD_SUBMIT_TIME)
-                        .withStyleName(MyDataGrid.RESOURCES.dataGridStyle().dataGridCellVerticalTop())
                         .build(),
                 FindTaskProgressCriteria.FIELD_SUBMIT_TIME,
                 ColumnSizeConstants.DATE_COL);
@@ -357,7 +353,6 @@ public class TaskManagerListPresenter
                 DataGridUtil.htmlColumnBuilder(getColouredCellFunc(taskProgress ->
                                 ModelStringUtil.formatDurationString(taskProgress.getAgeMs())))
                         .withSorting(FindTaskProgressCriteria.FIELD_AGE)
-                        .withStyleName(MyDataGrid.RESOURCES.dataGridStyle().dataGridCellVerticalTop())
                         .build(),
                 FindTaskProgressCriteria.FIELD_AGE,
                 ColumnSizeConstants.SMALL_COL);
@@ -366,7 +361,6 @@ public class TaskManagerListPresenter
         dataGrid.addAutoResizableColumn(
                 DataGridUtil.htmlColumnBuilder(getWrapableColouredCellFunc(TaskProgress::getTaskInfo))
                         .withSorting(FindTaskProgressCriteria.FIELD_INFO)
-                        .withStyleName(MyDataGrid.RESOURCES.dataGridStyle().dataGridCellVerticalTop())
                         .build(),
                 FindTaskProgressCriteria.FIELD_INFO,
                 200);
@@ -414,12 +408,10 @@ public class TaskManagerListPresenter
         final Function<TaskProgress, SafeHtml> colouredCellFunc = getColouredCellFunc(extractor);
 
         return (TaskProgress row) -> {
-            final Attribute wrapClassAttr = Attribute.className(
-                    MyDataGrid.RESOURCES.dataGridStyle().dataGridCellWrapText());
             final SafeHtml colouredText = colouredCellFunc.apply(row);
             if (wrapToggleButton.isOn()) {
                 return HtmlBuilder.builder()
-                        .div(htmlBuilder -> htmlBuilder.append(colouredText), wrapClassAttr)
+                        .div(htmlBuilder -> htmlBuilder.append(colouredText))
                         .toSafeHtml();
             } else {
                 return colouredText;
