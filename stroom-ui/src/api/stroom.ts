@@ -993,7 +993,15 @@ export interface DocumentPermissions {
 
 export interface DocumentType {
   displayType?: string;
-  group?: "STRUCTURE" | "DATA_PROCESSING" | "TRANSFORMATION" | "SEARCH" | "INDEXING" | "CONFIGURATION" | "SYSTEM";
+  group?:
+    | "STRUCTURE"
+    | "DATA_PROCESSING"
+    | "TRANSFORMATION"
+    | "SEARCH"
+    | "INDEXING"
+    | "CONFIGURATION"
+    | "SYSTEM"
+    | "INTERNAL";
   icon?:
     | "ADD"
     | "ADD_ABOVE"
@@ -2958,6 +2966,9 @@ export interface Meta {
   /** @format int64 */
   processorTaskId?: number;
   processorUuid?: string;
+
+  /** @format int64 */
+  reprocessedStreamId?: number;
   status?: "UNLOCKED" | "LOCKED" | "DELETED";
 
   /** @format int64 */
