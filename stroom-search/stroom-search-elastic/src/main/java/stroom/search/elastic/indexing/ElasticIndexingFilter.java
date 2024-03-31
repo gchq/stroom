@@ -45,7 +45,6 @@ import stroom.util.shared.Severity;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
-import co.elastic.clients.elasticsearch._types.ErrorCause;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.Refresh;
 import co.elastic.clients.elasticsearch._types.aggregations.AggregationBuilders;
@@ -68,6 +67,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.ws.rs.NotFoundException;
+import org.elasticsearch.client.ResponseException;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -107,7 +107,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private static final JsonFactory JSON_FACTORY = new JsonFactory();
     private static final int INITIAL_JSON_STREAM_SIZE_BYTES = 1024;
     private static final int ES_COMPOSITE_BATCH_SIZE = 100; // Number of index names to retrieve per request
-    private static final int ES_MAX_EXCEPTION_CHARS = 1024;
+    private static final int ES_MAX_EXCEPTION_CHARS = 4096;
     private static final int ES_TOO_MANY_REQUESTS_STATUS = 429;
     private static final Pattern INDEX_NAME_VALUE_PATTERN = Pattern.compile("(\\{[^}]+?})");
     private static final Pattern INDEX_BASE_NAME_PATTERN = Pattern.compile("^([^{]+)");
@@ -581,7 +581,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
                 final SearchResponse<Void> response = elasticClient.search(s -> s
                         .index(getIndexBaseName() + "*")
-                        .size(100)
+                        .size(ES_COMPOSITE_BATCH_SIZE)
                         .query(query._toQuery())
                         .aggregations(indicesAggregationKey, compositeAggBuilder.build()._toAggregation()),
                         Void.class
@@ -652,27 +652,36 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
                         final BulkResponse response = elasticClient.bulk(bulkRequestBuilder.build());
                         if (response.errors()) {
-                            for (final BulkResponseItem bulkResponse : response.items()) {
-                                final ErrorCause errorCause = bulkResponse.error();
-                                if (errorCause != null && bulkResponse.status() == ES_TOO_MANY_REQUESTS_STATUS) {
-                                    throw new ElasticsearchOverloadedException(response.toString());
-                                }
+                            boolean overloaded = response.items().stream()
+                                    .anyMatch(item -> item.status() == ES_TOO_MANY_REQUESTS_STATUS);
+                            if (overloaded) {
+                                // Failure was due to Elasticsearch being overloaded, so retry after a delay
+                                deleteBulkRequestDocuments(elasticClient, response);
+                                throw new ElasticsearchOverloadedException(response.toString());
+                            } else {
+                                // Request failed for some other reason, so abort without retry
+                                throw new IOException("Bulk indexing request failed: " + response);
                             }
-                            // Request failed for some other reason, so abort without retry
-                            throw new IOException("Bulk indexing request failed: " + response);
                         } else {
                             succeeded.set(true);
                             final String retryMessage = currentRetry > 0
                                     ? " (retries: " + currentRetry + ")"
                                     : "";
-                            LOGGER.info("Pipeline '{}' indexed {} documents to Elasticsearch cluster '{}' in " +
-                                            "{} seconds" + retryMessage, pipelineName, bulkOperations.size(),
-                                    elasticCluster.getName(), response.took() / 1000);
+                            LOGGER.info("Pipeline '{}' indexed {} documents from stream {} to Elasticsearch cluster " +
+                                            "'{}' in {} seconds{}", pipelineName, bulkOperations.size(),
+                                    metaHolder.getMeta().getId(), elasticCluster.getName(), response.took() / 1000,
+                                    retryMessage);
                         }
                     } catch (ElasticsearchOverloadedException e) {
                         handleElasticsearchOverloadedException(e);
                     } catch (ElasticsearchException e) {
                         if (e.status() == ES_TOO_MANY_REQUESTS_STATUS) {
+                            handleElasticsearchOverloadedException(e);
+                        } else {
+                            handleElasticsearchException(e);
+                        }
+                    } catch (ResponseException e) {
+                        if (e.getResponse().getStatusLine().getStatusCode() == ES_TOO_MANY_REQUESTS_STATUS) {
                             handleElasticsearchOverloadedException(e);
                         } else {
                             handleElasticsearchException(e);
@@ -694,11 +703,47 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     }
 
     /**
+     * Delete any documents that were successfully indexed during a failed bulk request.
+     * This removes duplicates in the destination index.
+     */
+    private void deleteBulkRequestDocuments(final ElasticsearchClient elasticClient,
+                                            final BulkResponse response) {
+        final List<BulkOperation> deleteOperations = new ArrayList<>();
+
+        for (final BulkResponseItem item : response.items()) {
+            if (item.error() == null) {
+                deleteOperations.add(BulkOperation.of(b -> b
+                        .delete(deleteOp -> deleteOp
+                                .index(item.index())
+                                .id(item.id())
+                        )
+                ));
+            }
+        }
+
+        if (!deleteOperations.isEmpty()) {
+            try {
+                final BulkRequest bulkRequest = new BulkRequest.Builder()
+                        .operations(deleteOperations)
+                        .build();
+
+                elasticClient.bulk(bulkRequest);
+
+                LOGGER.info("Deleted {} documents from failed bulk indexing request for stream {}, pipeline '{}'",
+                        deleteOperations.size(), metaHolder.getMeta().getId(), pipelineName);
+            } catch (IOException e) {
+                LOGGER.warn("Error occurred when deleting documents indexed during a failed bulk request. " +
+                        "Stream: {}, pipeline: '{}'", metaHolder.getMeta().getId(), pipelineName, e);
+            }
+        }
+    }
+
+    /**
      * Elasticsearch rejected the indexing request, because it is overloaded and
      * cannot queue the batched payload. Retry after a delay, if we haven't exceeded the retry
      * limit. Otherwise, terminate this thread and create an `Error` stream.
      */
-    private void handleElasticsearchOverloadedException(final RuntimeException e) {
+    private void handleElasticsearchOverloadedException(final Exception e) {
         final String errorDetailMsg = e.getMessage() != null
                 ? e.getMessage().substring(0,
                 Math.min(ES_MAX_EXCEPTION_CHARS, e.getMessage().length()))
@@ -708,9 +753,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         if (currentRetry < indexingConfig.getRetryCount()) {
             final long sleepDurationMs = indexingConfig.getInitialRetryBackoffPeriodMs() * ((long) currentRetry + 1);
             try {
-                LOGGER.warn("Indexing request by pipeline '" + pipelineName + "' was rejected by " +
-                        "Elasticsearch. Retrying in " + sleepDurationMs + " milliseconds " +
-                        "(retries: " + currentRetry + ")");
+                LOGGER.warn("Indexing request by pipeline '{}' for stream {} was rejected by Elasticsearch. " +
+                                "Retrying in {} milliseconds (retries: {})", pipelineName, metaHolder.getMeta().getId(),
+                        sleepDurationMs, currentRetry);
                 Thread.sleep(sleepDurationMs);
             } catch (InterruptedException ex) {
                 Thread.currentThread().interrupt();
@@ -724,7 +769,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     /**
      * A general Elasticsearch indexing error occurred. Terminate processing and create an `Error` stream.
      */
-    private void handleElasticsearchException(final ElasticsearchException e) {
+    private void handleElasticsearchException(final Exception e) {
         final String errorDetailMsg = e.getMessage() != null
                 ? e.getMessage().substring(0, Math.min(ES_MAX_EXCEPTION_CHARS, e.getMessage().length()))
                 : "";
