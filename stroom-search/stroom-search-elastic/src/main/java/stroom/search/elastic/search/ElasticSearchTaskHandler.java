@@ -237,11 +237,16 @@ public class ElasticSearchTaskHandler {
 
             // Retrieve the initial result batch
             List<Hit<ObjectNode>> searchHits = searchResponse.hits().hits();
-            processResultBatch(fieldIndex, resultStore, valuesConsumer, errorConsumer, hitCount, searchHits);
-            long totalHitCount = searchHits.size();
+            long totalHitCount = 0L;
 
             // Continue requesting results until we have all results
             while (!taskContext.isTerminated() && !searchHits.isEmpty()) {
+                totalHitCount += searchHits.size();
+                processResultBatch(fieldIndex, resultStore, valuesConsumer, errorConsumer, hitCount, searchHits);
+
+                final long totalHits = totalHitCount;
+                taskContext.info(() -> LogUtil.message("Processed {} hits", totalHits));
+
                 final ScrollResponse<ObjectNode> scrollResponse = elasticClient.scroll(s -> s
                         .scrollId(scrollId)
                         .scroll(scrollTime),
@@ -249,13 +254,9 @@ public class ElasticSearchTaskHandler {
                 );
 
                 searchHits = scrollResponse.hits().hits();
-
-                processResultBatch(fieldIndex, resultStore, valuesConsumer, errorConsumer, hitCount, searchHits);
-
-                totalHitCount += searchHits.size();
-                final long finalTotalHitCount = totalHitCount;
-                taskContext.info(() -> LogUtil.message("Processed {} hits", finalTotalHitCount));
             }
+
+            LOGGER.info("Search completed for index doc {}, {} hits returned", elasticIndex.getName(), totalHitCount);
 
             // Close the scroll context as we're done streaming results
             elasticClient.clearScroll(s -> s.scrollId(scrollId));
