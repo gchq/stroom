@@ -751,7 +751,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         final ElasticIndexingConfig indexingConfig = elasticConfigProvider.get().getIndexingConfig();
 
         if (currentRetry < indexingConfig.getRetryCount()) {
-            final long sleepDurationMs = indexingConfig.getInitialRetryBackoffPeriodMs() * ((long) currentRetry + 1);
+            // Backoff by the initial interval plus an exponential amount
+            final long sleepDurationMs = indexingConfig.getInitialRetryBackoffPeriodMs() +
+                    (long) currentRetry * currentRetry;
             try {
                 LOGGER.warn("Indexing request by pipeline '{}' for stream {} was rejected by Elasticsearch. " +
                                 "Retrying in {} milliseconds (retries: {})", pipelineName, metaHolder.getMeta().getId(),
