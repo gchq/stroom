@@ -17,138 +17,46 @@
 
 package stroom.bytebuffer;
 
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
-
 import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 /**
  * A lazy wrapper for a {@link ByteBuffer} obtained from a {@link ByteBufferPool} that can be used
  * with a try with resources block as it implements {@link AutoCloseable}. If not used
  * with a try with resources block then {@link PooledByteBuffer#close()} or
- * {@link PooledByteBuffer#release()} must be called when the underlying {@link ByteBuffer}
+ * {@link PooledByteBuffer#close()} must be called when the underlying {@link ByteBuffer}
  * is no longer needed.
  * <p>
  * The wrapper is empty on creation and when getByteBuffer is called, it will be populated
  * with a {@link ByteBuffer} from the pool. Depending on the implementation of the pool this may block.
  */
-public class PooledByteBuffer implements AutoCloseable {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PooledByteBuffer.class);
-
-    private ByteBuffer byteBuffer;
-    private Supplier<ByteBuffer> byteBufferSupplier;
-    private Consumer<ByteBuffer> releaseFunc;
-
-    PooledByteBuffer(final Supplier<ByteBuffer> byteBufferSupplier,
-                     final Consumer<ByteBuffer> byteBufferReleaseFunc) {
-        this.byteBufferSupplier = byteBufferSupplier;
-        this.releaseFunc = byteBufferReleaseFunc;
-    }
+public interface PooledByteBuffer extends AutoCloseable {
 
     /**
      * @return The underlying {@link ByteBuffer} that was obtained from the pool.
      * Depending on the implementation of the pool this method may block if the pool has no buffers when called.
      * The returned {@link ByteBuffer} must not be used once release/close are called.
      */
-    public ByteBuffer getByteBuffer() {
-        // lazily provide the ByteBuffer
-        if (byteBuffer != null) {
-            return byteBuffer;
-        } else if (byteBufferSupplier == null) {
-            throw new IllegalStateException(LogUtil.message("The byteBuffer has been returned to the pool"));
-        } else {
-            byteBuffer = byteBufferSupplier.get();
-            return byteBuffer;
-        }
-    }
+    ByteBuffer getByteBuffer();
 
     /**
      * A buffer will be obtained from the pool and passed to the byteBufferConsumer to use.
      * On completion of byteBufferConsumer the buffer will be released and will not be available
      * for any further use.
      */
-    public void doWithByteBuffer(final Consumer<ByteBuffer> byteBufferConsumer) {
-        try {
-            byteBufferConsumer.accept(getByteBuffer());
-        } finally {
-            this.release();
-        }
-    }
-
-    /**
-     * Release the underlying {@link ByteBuffer} back to the pool. Once released,
-     * the {@link ByteBuffer} cannot be used any more and you should not retain any
-     * references to it. Identical behaviour to calling {@link PooledByteBuffer#close()}.
-     */
-    public void release() {
-        if (releaseFunc == null) {
-            if (byteBuffer != null && byteBuffer.isDirect()) {
-                try {
-                    ByteBufferSupport.unmap((MappedByteBuffer) byteBuffer);
-                } catch (Exception e) {
-                    LOGGER.error("Error releasing direct byte buffer", e);
-                }
-            }
-            byteBuffer = null;
-            byteBufferSupplier = null;
-        } else if (byteBuffer != null) {
-            releaseFunc.accept(byteBuffer);
-            byteBuffer = null;
-            byteBufferSupplier = null;
-            releaseFunc = null;
-        }
-    }
+    void doWithByteBuffer(final Consumer<ByteBuffer> byteBufferConsumer);
 
     /**
      * Clears the underlying buffer if there is one.
      */
-    public void clear() {
-        if (byteBuffer != null) {
-            byteBuffer.clear();
-        }
-    }
+    void clear();
 
-    public Optional<Integer> getCapacity() {
-        return Optional.ofNullable(byteBuffer)
-                .map(ByteBuffer::capacity);
-    }
+    Integer getCapacity();
 
     /**
-     * Same as calling {@link PooledByteBuffer#release()}
+     * Release the underlying {@link ByteBuffer} back to the pool. Once released,
+     * the {@link ByteBuffer} cannot be used any more and you should not retain any
+     * references to it.
      */
-    @Override
-    public void close() {
-        release();
-    }
-
-    @Override
-    public String toString() {
-        return "PooledByteBuffer{" +
-                "byteBuffer=" + ByteBufferUtils.byteBufferInfo(byteBuffer) +
-                '}';
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        final PooledByteBuffer that = (PooledByteBuffer) o;
-        return Objects.equals(byteBuffer, that.byteBuffer);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(byteBuffer);
-    }
+    void close();
 }

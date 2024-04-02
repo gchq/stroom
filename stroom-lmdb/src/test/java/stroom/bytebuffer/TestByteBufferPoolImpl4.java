@@ -76,13 +76,13 @@ class TestByteBufferPoolImpl4 {
 
         int identityHashCode1 = System.identityHashCode(pooledByteBuffer.getByteBuffer());
 
-        pooledByteBuffer.release();
+        pooledByteBuffer.close();
 
         pooledByteBuffer = byteBufferPool.getPooledByteBuffer(10);
 
         int identityHashCode2 = System.identityHashCode(pooledByteBuffer.getByteBuffer());
 
-        pooledByteBuffer.release();
+        pooledByteBuffer.close();
 
         // Same byteBuffer instance from the pool
         Assertions.assertThat(identityHashCode2)
@@ -93,13 +93,13 @@ class TestByteBufferPoolImpl4 {
 
         identityHashCode1 = System.identityHashCode(pooledByteBuffer.getByteBuffer());
 
-        pooledByteBuffer.release();
+        pooledByteBuffer.close();
 
         pooledByteBuffer = byteBufferPool.getPooledByteBuffer(10);
 
         identityHashCode2 = System.identityHashCode(pooledByteBuffer.getByteBuffer());
 
-        pooledByteBuffer.release();
+        pooledByteBuffer.close();
 
         // Different buffer instance as unpooled
         Assertions.assertThat(identityHashCode2)
@@ -139,7 +139,7 @@ class TestByteBufferPoolImpl4 {
         Assertions.assertThat(byteBufferPool.getPooledBufferCount(capacity))
                 .isEqualTo(poolSize);
 
-        pooledByteBuffers.forEach(PooledByteBuffer::release);
+        pooledByteBuffers.forEach(PooledByteBuffer::close);
 
         LOGGER.info("System info: {}", byteBufferPool.getSystemInfo().getDetails());
 
@@ -194,7 +194,7 @@ class TestByteBufferPoolImpl4 {
         Assertions.assertThat(byteBufferPool.getPooledBufferCount(capacity * 10))
                 .isEqualTo(excessCount);
 
-        pooledByteBuffers.forEach(PooledByteBuffer::release);
+        pooledByteBuffers.forEach(PooledByteBuffer::close);
 
         LOGGER.info("System info: {}", byteBufferPool.getSystemInfo().getDetails());
 
@@ -250,7 +250,7 @@ class TestByteBufferPoolImpl4 {
 
         // Now release the first lot
         for (int i = 0; i < poolSize; i++) {
-            pooledByteBuffers.get(i).release();
+            pooledByteBuffers.get(i).close();
         }
 
         Thread.sleep(500);
@@ -299,7 +299,7 @@ class TestByteBufferPoolImpl4 {
                 final ByteBuffer byteBuffer = pooledByteBuffer2.getByteBuffer();
                 Assertions.assertThat(byteBuffer)
                         .isNotNull();
-                pooledByteBuffer2.release();
+                pooledByteBuffer2.close();
             }
 
             LOGGER.info("System info: {}", byteBufferPool.getSystemInfo().getDetails());

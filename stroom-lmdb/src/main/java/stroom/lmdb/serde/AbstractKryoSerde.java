@@ -64,8 +64,8 @@ public abstract class AbstractKryoSerde<T> implements Serde<T>, KryoSerializer<T
             write(output, object);
             output.flush();
             // must not call getByteBuffer until we have finished writing
-            pooledByteBufferOutputStream.getPooledByteBuffer().getByteBuffer().flip();
+            pooledByteBufferOutputStream.getByteBuffer().flip();
         }
-        return pooledByteBufferOutputStream.getPooledByteBuffer().getByteBuffer();
+        return pooledByteBufferOutputStream.getByteBuffer();
     }
 }

@@ -52,6 +52,6 @@ public class NullValueSerde implements RefDataValueSerde {
                                 final RefDataValue refDataValue) {
         // NullValue serialises to nothing. Getting the pooled buffer will flip it to
         // set its limit
-        return pooledByteBufferOutputStream.getPooledByteBuffer().getByteBuffer();
+        return pooledByteBufferOutputStream.getByteBuffer();
     }
 }

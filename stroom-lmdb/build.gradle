@@ -34,3 +34,7 @@ dependencies {
     testRuntimeOnly libs.logback_classic
     testRuntimeOnly libs.logback_core
 }
+
+checkstyle {
+    sourceSets = []
+}

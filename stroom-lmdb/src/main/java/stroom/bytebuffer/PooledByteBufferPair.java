@@ -17,83 +17,29 @@
 
 package stroom.bytebuffer;
 
-import stroom.util.logging.LogUtil;
-
 import java.nio.ByteBuffer;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 /**
  * Wrapper for a pair of {@link ByteBuffer}s obtained from a {@link ByteBufferPool} that can be used
  * with a try with resources block as it implements {@link AutoCloseable}.
  */
-public class PooledByteBufferPair implements AutoCloseable {
+public interface PooledByteBufferPair extends AutoCloseable {
 
-    private final Consumer<ByteBuffer> byteBufferReleaseFunc;
-    private ByteBuffer keyBuffer;
-    private ByteBuffer valueBuffer;
+    ByteBuffer getKeyBuffer();
 
-    PooledByteBufferPair(final Consumer<ByteBuffer> byteBufferReleaseFunc,
-                         final ByteBuffer keyBuffer,
-                         final ByteBuffer valueBuffer) {
-        this.byteBufferReleaseFunc = byteBufferReleaseFunc;
-        this.keyBuffer = keyBuffer;
-        this.valueBuffer = valueBuffer;
-    }
-
-    public ByteBuffer getKeyBuffer() {
-        if (keyBuffer == null) {
-            throw new RuntimeException(LogUtil.message("The keyBuffer has been returned to the pool"));
-        }
-        return keyBuffer;
-    }
-
-    public ByteBuffer getValueBuffer() {
-        if (valueBuffer == null) {
-            throw new RuntimeException(LogUtil.message("The valueBuffer has been returned to the pool"));
-        }
-        return valueBuffer;
-    }
+    ByteBuffer getValueBuffer();
 
     /**
      * The buffers will be obtained from the pool and passed to the byteBufferConsumer to use.
      * On completion of byteBufferPairConsumer the buffers will both be released and will not be available
      * for any further use.
      */
-    public void doWithByteBuffers(final BiConsumer<ByteBuffer, ByteBuffer> byteBufferPairConsumer) {
-        try {
-            byteBufferPairConsumer.accept(getKeyBuffer(), getValueBuffer());
-        } finally {
-            this.release();
-        }
-    }
+    void doWithByteBuffers(BiConsumer<ByteBuffer, ByteBuffer> byteBufferPairConsumer);
 
-    public void release() {
-        byteBufferReleaseFunc.accept(keyBuffer);
-        keyBuffer = null;
-        byteBufferReleaseFunc.accept(valueBuffer);
-        valueBuffer = null;
-    }
+    void release();
 
-    public void clear() {
-        if (keyBuffer != null) {
-            keyBuffer.clear();
-        }
-        if (valueBuffer != null) {
-            valueBuffer.clear();
-        }
-    }
+    void clear();
 
-    @Override
-    public void close() {
-        release();
-    }
-
-    @Override
-    public String toString() {
-        return "PooledByteBufferPair{" +
-                "keyBuffer=" + ByteBufferUtils.byteBufferInfo(keyBuffer) +
-                ", valueBuffer=" + ByteBufferUtils.byteBufferInfo(valueBuffer) +
-                '}';
-    }
+    void close();
 }

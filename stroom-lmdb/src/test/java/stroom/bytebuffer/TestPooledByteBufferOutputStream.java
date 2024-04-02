@@ -49,80 +49,79 @@ class TestPooledByteBufferOutputStream {
 
     @Test
     void testWrite_noWrites() {
-
         ByteBufferPool byteBufferPool = getByteBufferPool();
-        PooledByteBufferOutputStream pooledByteBufferOutputStream = new PooledByteBufferOutputStream(
+        try (PooledByteBufferOutputStream pooledByteBufferOutputStream = new PooledByteBufferOutputStream(
                 byteBufferPool,
-                2);
-        int initialCapacity = pooledByteBufferOutputStream.getPooledByteBuffer().getByteBuffer().capacity();
+                2)) {
+            int initialCapacity = pooledByteBufferOutputStream.getByteBuffer().capacity();
 
-        PooledByteBuffer pooledByteBuffer = pooledByteBufferOutputStream.getPooledByteBuffer();
+            ByteBuffer pooledByteBuffer = pooledByteBufferOutputStream.getByteBuffer();
 
-        assertThat(pooledByteBuffer.getByteBuffer().capacity())
-                .isEqualTo(initialCapacity);
+            assertThat(pooledByteBuffer.capacity())
+                    .isEqualTo(initialCapacity);
+        }
     }
 
     @Test
     void testWrite_expansion() throws IOException {
-
         ByteBufferPool byteBufferPool = getByteBufferPool();
 
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(0);
-        PooledByteBufferOutputStream pooledByteBufferOutputStream = new PooledByteBufferOutputStream(
+        try (PooledByteBufferOutputStream pooledByteBufferOutputStream = new PooledByteBufferOutputStream(
                 byteBufferPool,
-                10);
+                10)) {
 
-        // fill the existing buffer
-        writeBytes(pooledByteBufferOutputStream, 10);
+            // fill the existing buffer
+            writeBytes(pooledByteBufferOutputStream, 10);
 
-        assertThat(byteBufferPool.getCurrentPoolSize())
-                .isEqualTo(0);
+            assertThat(byteBufferPool.getCurrentPoolSize())
+                    .isEqualTo(0);
 
-        // buffer replaced with a spawned bigger one, old one back to pool
-        writeBytes(pooledByteBufferOutputStream, 90);
+            // buffer replaced with a spawned bigger one, old one back to pool
+            writeBytes(pooledByteBufferOutputStream, 90);
 
-        assertThat(byteBufferPool.getCurrentPoolSize())
-                .isEqualTo(1);
+            assertThat(byteBufferPool.getCurrentPoolSize())
+                    .isEqualTo(1);
 
-        // buffer replaced with a spawned bigger one, old one back to pool
-        writeBytes(pooledByteBufferOutputStream, 900);
+            // buffer replaced with a spawned bigger one, old one back to pool
+            writeBytes(pooledByteBufferOutputStream, 900);
 
-        assertThat(byteBufferPool.getCurrentPoolSize())
-                .isEqualTo(2);
+            assertThat(byteBufferPool.getCurrentPoolSize())
+                    .isEqualTo(2);
 
-        PooledByteBuffer pooledByteBuffer = pooledByteBufferOutputStream.getPooledByteBuffer();
+            ByteBuffer byteBuffer = pooledByteBufferOutputStream.getByteBuffer();
 
-        assertThat(pooledByteBuffer.getByteBuffer().capacity())
-                .isGreaterThanOrEqualTo(1000);
-
-        pooledByteBufferOutputStream.release();
+            assertThat(byteBuffer.capacity())
+                    .isGreaterThanOrEqualTo(1000);
+        }
 
         assertThat(byteBufferPool.getCurrentPoolSize())
                 .isEqualTo(3);
 
         //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+        try (PooledByteBufferOutputStream pooledByteBufferOutputStream = new PooledByteBufferOutputStream(
+                byteBufferPool,
+                10)) {
+            // grabs a buffer from pool
+            pooledByteBufferOutputStream.write(new byte[]{0, 0});
 
-        // grabs a buffer from pool
-        pooledByteBufferOutputStream.write(new byte[]{0, 0});
+            assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(2);
 
-        assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(2);
+            // swaps for a bigger buffer already in the pool
+            pooledByteBufferOutputStream.write(new byte[]{0, 0});
 
-        // swaps for a bigger buffer already in the pool
-        pooledByteBufferOutputStream.write(new byte[]{0, 0});
+            assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(2);
 
-        assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(2);
+            // swaps for a bigger buffer already in the pool
+            pooledByteBufferOutputStream.write(new byte[]{0, 0});
 
-        // swaps for a bigger buffer already in the pool
-        pooledByteBufferOutputStream.write(new byte[]{0, 0});
+            assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(2);
 
-        assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(2);
+            ByteBuffer byteBuffer = pooledByteBufferOutputStream.getByteBuffer();
 
-        pooledByteBuffer = pooledByteBufferOutputStream.getPooledByteBuffer();
-
-        assertThat(pooledByteBuffer.getByteBuffer().capacity()).isGreaterThanOrEqualTo(6);
-
-        pooledByteBufferOutputStream.release();
+            assertThat(byteBuffer.capacity()).isGreaterThanOrEqualTo(6);
+        }
 
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(3);
     }
@@ -142,7 +141,6 @@ class TestPooledByteBufferOutputStream {
     @TestFactory
     @Execution(ExecutionMode.SAME_THREAD)
     Stream<DynamicTest> testExpansionWithDifferentWriteMethods() {
-
         AtomicInteger iteration = new AtomicInteger(1);
 
         final Map<String, BiConsumer<Integer, PooledByteBufferOutputStream>> writeMethodMap = Map.of(
@@ -232,9 +230,7 @@ class TestPooledByteBufferOutputStream {
                                     .hasValue(1000);
                             iteration.incrementAndGet();
 
-                            PooledByteBuffer pooledByteBuffer = pooledStream.getPooledByteBuffer();
-
-                            ByteBuffer byteBuffer = pooledByteBuffer.getByteBuffer();
+                            ByteBuffer byteBuffer = pooledStream.getByteBuffer();
 
                             LOGGER.info(ByteBufferUtils.byteBufferInfo(byteBuffer));
 
@@ -258,48 +254,32 @@ class TestPooledByteBufferOutputStream {
 
     @Test
     void testRelease() throws IOException {
-
         ByteBufferPool byteBufferPool = getByteBufferPool();
 
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(0);
 
-        PooledByteBufferOutputStream pooledByteBufferOutputStream = new PooledByteBufferOutputStream(
+        try (PooledByteBufferOutputStream pooledByteBufferOutputStream = new PooledByteBufferOutputStream(
                 byteBufferPool,
-                2);
-
-        pooledByteBufferOutputStream.write(new byte[]{0, 0});
-
-        // release the PooledBuffer first
-        pooledByteBufferOutputStream.getPooledByteBuffer().release();
-
-        assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(1);
-
-        // now release the output stream
-        pooledByteBufferOutputStream.release();
+                2)) {
+            pooledByteBufferOutputStream.write(new byte[]{0, 0});
+            assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(0);
+        }
 
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(1);
     }
 
     @Test
     void testRelease2() throws IOException {
-
         ByteBufferPool byteBufferPool = getByteBufferPool();
-
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(0);
 
-        PooledByteBufferOutputStream pooledByteBufferOutputStream = new PooledByteBufferOutputStream(
+        try (PooledByteBufferOutputStream pooledByteBufferOutputStream = new PooledByteBufferOutputStream(
                 byteBufferPool,
-                2);
+                2)) {
 
-        pooledByteBufferOutputStream.write(new byte[]{0, 0});
-
-        // release the output stream first
-        pooledByteBufferOutputStream.release();
-
-        assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(1);
-
-        // now release the PooledBuffer
-        pooledByteBufferOutputStream.getPooledByteBuffer().release();
+            pooledByteBufferOutputStream.write(new byte[]{0, 0});
+            assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(0);
+        }
 
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(1);
     }
@@ -307,31 +287,32 @@ class TestPooledByteBufferOutputStream {
     @Test
     void testWrite_byteBuffer() throws IOException {
         final ByteBufferPool byteBufferPool = getByteBufferPool();
-        final PooledByteBufferOutputStream pooledByteBufferOutputStream = new PooledByteBufferOutputStream(
+        try (final PooledByteBufferOutputStream pooledByteBufferOutputStream = new PooledByteBufferOutputStream(
                 byteBufferPool,
-                2);
-        ByteBuffer byteBuffer = ByteBuffer.allocate(20);
-        byteBuffer.position(5);
-        byteBuffer.putLong(Long.MAX_VALUE);
-        byteBuffer.flip();
-        byteBuffer.position(5);
+                2)) {
+            ByteBuffer byteBuffer = ByteBuffer.allocate(20);
+            byteBuffer.position(5);
+            byteBuffer.putLong(Long.MAX_VALUE);
+            byteBuffer.flip();
+            byteBuffer.position(5);
 
-        pooledByteBufferOutputStream.write(byteBuffer);
+            pooledByteBufferOutputStream.write(byteBuffer);
 
-        final ByteBuffer pooledBuffer = pooledByteBufferOutputStream.getPooledByteBuffer().getByteBuffer();
+            final ByteBuffer pooledBuffer = pooledByteBufferOutputStream.getByteBuffer();
 
-        LOGGER.debug(ByteBufferUtils.byteBufferInfo(byteBuffer));
-        LOGGER.debug(ByteBufferUtils.byteBufferInfo(pooledBuffer));
+            LOGGER.debug(ByteBufferUtils.byteBufferInfo(byteBuffer));
+            LOGGER.debug(ByteBufferUtils.byteBufferInfo(pooledBuffer));
 
-        assertThat(pooledBuffer.position())
-                .isZero();
-        assertThat(pooledBuffer.capacity())
-                .isGreaterThan(BYTES);
-        assertThat(pooledBuffer.limit())
-                .isEqualTo(BYTES);
-        assertThat(compareTo(
-                byteBuffer, 5, BYTES,
-                pooledBuffer, 0, BYTES))
-                .isZero();
+            assertThat(pooledBuffer.position())
+                    .isZero();
+            assertThat(pooledBuffer.capacity())
+                    .isGreaterThan(BYTES);
+            assertThat(pooledBuffer.limit())
+                    .isEqualTo(BYTES);
+            assertThat(compareTo(
+                    byteBuffer, 5, BYTES,
+                    pooledBuffer, 0, BYTES))
+                    .isZero();
+        }
     }
 }

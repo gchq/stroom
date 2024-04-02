@@ -204,7 +204,7 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
 
     @Override
     public PooledByteBuffer getPooledByteBuffer(final int minCapacity) {
-        return new PooledByteBuffer(() -> getBufferByMinCapacity(minCapacity), this::release);
+        return new PooledByteBufferImpl(() -> getBufferByMinCapacity(minCapacity), this::release);
     }
 
     private ByteBuffer getUnPooledBuffer(final int minCapacity) {
@@ -280,8 +280,8 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
             buffer = createNewBufferIfAllowed(offset);
         } else {
             // buffer not final, so no lambda
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Got byteBuffer with capacity: {} from the pool with offset: {}, queue size: {}",
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("Got byteBuffer with capacity: {} from the pool with offset: {}, queue size: {}",
                         ModelStringUtil.formatCsv(buffer.capacity()),
                         offset,
                         byteBufferQueue.size());
@@ -296,7 +296,7 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
 
     void release(final ByteBuffer buffer) {
         if (buffer != null) {
-            LOGGER.debug(() -> LogUtil.message("Releasing buffer with capacity: {}",
+            LOGGER.trace(() -> LogUtil.message("Releasing buffer with capacity: {}",
                     ModelStringUtil.formatCsv(buffer.capacity())));
             final int offset = getOffset(buffer.capacity());
             if (isUnPooled(offset)) {
@@ -342,7 +342,7 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
     public PooledByteBufferPair getPooledBufferPair(final int minKeyCapacity, final int minValueCapacity) {
         final ByteBuffer keyBuffer = getBufferByMinCapacity(minKeyCapacity);
         final ByteBuffer valueBuffer = getBufferByMinCapacity(minValueCapacity);
-        return new PooledByteBufferPair(this::release, keyBuffer, valueBuffer);
+        return new PooledByteBufferPairImpl(this::release, keyBuffer, valueBuffer);
     }
 
     @Override

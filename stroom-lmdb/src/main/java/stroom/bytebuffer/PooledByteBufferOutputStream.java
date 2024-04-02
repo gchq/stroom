@@ -96,11 +96,12 @@ public class PooledByteBufferOutputStream extends OutputStream implements AutoCl
      * so that it is ready for reading. No writes should happen to this stream once getPooledByteBuffer
      * has been called.
      */
-    public PooledByteBuffer getPooledByteBuffer() {
-        final PooledByteBuffer pooledByteBuffer = getCurrentPooledBuffer();
-        pooledByteBuffer.getByteBuffer().flip();
+    public ByteBuffer getByteBuffer() {
         isAvailableForWriting = false;
-        return pooledByteBuffer;
+        final PooledByteBuffer pooledByteBuffer = getCurrentPooledBuffer();
+        final ByteBuffer byteBuffer = pooledByteBuffer.getByteBuffer();
+        byteBuffer.flip();
+        return byteBuffer;
     }
 
     @Override
@@ -188,7 +189,7 @@ public class PooledByteBufferOutputStream extends OutputStream implements AutoCl
                 // now swap the reference over and release the old buffer back to the pool
                 pooledByteBuffer = newPooledByteBuffer;
             } finally {
-                currPooledByteBuffer.release();
+                currPooledByteBuffer.close();
             }
         }
     }
@@ -198,11 +199,11 @@ public class PooledByteBufferOutputStream extends OutputStream implements AutoCl
      * the {@link ByteBuffer} cannot be used any more and you should not retain any
      * references to it. Identical behaviour to calling {@link PooledByteBufferOutputStream#close()}.
      */
-    public void release() {
+    private void release() {
         isAvailableForWriting = true;
         if (pooledByteBuffer != null) {
             LOGGER.trace("Releasing pooledBuffer {}", pooledByteBuffer);
-            pooledByteBuffer.release();
+            pooledByteBuffer.close();
             pooledByteBuffer = null;
         }
     }
@@ -219,7 +220,7 @@ public class PooledByteBufferOutputStream extends OutputStream implements AutoCl
 
     public Optional<Integer> getCurrentCapacity() {
         return Optional.ofNullable(pooledByteBuffer)
-                .flatMap(PooledByteBuffer::getCapacity);
+                .map(PooledByteBuffer::getCapacity);
     }
 
     @Override
@@ -233,10 +234,6 @@ public class PooledByteBufferOutputStream extends OutputStream implements AutoCl
                 "pooledByteBuffer=" + ByteBufferUtils.byteBufferInfo(pooledByteBuffer.getByteBuffer()) +
                 '}';
     }
-
-
-    // --------------------------------------------------------------------------------
-
 
     public interface Factory {
 
