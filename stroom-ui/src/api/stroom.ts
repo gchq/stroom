@@ -993,7 +993,15 @@ export interface DocumentPermissions {
 
 export interface DocumentType {
   displayType?: string;
-  group?: "STRUCTURE" | "DATA_PROCESSING" | "TRANSFORMATION" | "SEARCH" | "INDEXING" | "CONFIGURATION" | "SYSTEM";
+  group?:
+    | "STRUCTURE"
+    | "DATA_PROCESSING"
+    | "TRANSFORMATION"
+    | "SEARCH"
+    | "INDEXING"
+    | "CONFIGURATION"
+    | "SYSTEM"
+    | "INTERNAL";
   icon?:
     | "ADD"
     | "ADD_ABOVE"

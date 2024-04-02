@@ -81,12 +81,15 @@ class TestSearchResponseCreator {
                 TOLERANCE);
 
         assertThat(searchResponse.getErrors()).hasSize(1);
-        assertThat(searchResponse.getErrors().get(0)).containsIgnoringCase("timed out");
+        assertThat(searchResponse.getErrors().getFirst()).containsIgnoringCase("timed out");
     }
 
     private SearchResponseCreator createSearchResponseCreator(final SearchRequest searchRequest) {
-        return new SearchResponseCreator(sizesProvider, mockStore, new ExpressionContextFactory()
-                .createContext(searchRequest));
+        return new SearchResponseCreator(
+                sizesProvider,
+                mockStore,
+                new ExpressionContextFactory().createContext(searchRequest),
+                new MapDataStoreFactory(SearchResultStoreConfig::new));
     }
 
     @Test
@@ -338,11 +341,6 @@ class TestSearchResponseCreator {
             }
 
             @Override
-            public Serialisers getSerialisers() {
-                return new Serialisers(new SearchResultStoreConfig());
-            }
-
-            @Override
             public KeyFactory getKeyFactory() {
                 return KeyFactoryFactory.create(
                         new BasicKeyFactoryConfig(),
@@ -359,8 +357,8 @@ class TestSearchResponseCreator {
     private void assertResponseWithData(final SearchResponse searchResponse) {
         assertThat(searchResponse).isNotNull();
         assertThat(searchResponse.getResults()).hasSize(1);
-        assertThat(searchResponse.getResults().get(0)).isInstanceOf(TableResult.class);
-        TableResult tableResult = (TableResult) searchResponse.getResults().get(0);
+        assertThat(searchResponse.getResults().getFirst()).isInstanceOf(TableResult.class);
+        TableResult tableResult = (TableResult) searchResponse.getResults().getFirst();
         assertThat(tableResult.getTotalResults()).isEqualTo(1);
     }
 

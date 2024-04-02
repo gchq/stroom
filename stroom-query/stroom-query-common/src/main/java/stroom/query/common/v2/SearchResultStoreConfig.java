@@ -10,15 +10,18 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder(alphabetic = true)
 public class SearchResultStoreConfig extends AbstractResultStoreConfig implements IsStroomConfig {
 
+    private final ResultStoreMapConfig mapConfig;
+
     public SearchResultStoreConfig() {
-        super(10_000,
+        this(10_000,
                 true,
                 ByteSize.ofMebibytes(1),
                 ByteSize.ofGibibytes(1),
                 1000,
                 10_000,
                 500_000,
-                ResultStoreLmdbConfig.builder().localDir("search_results").build());
+                ResultStoreLmdbConfig.builder().localDir("search_results").build(),
+                new ResultStoreMapConfig());
     }
 
     @JsonCreator
@@ -29,7 +32,8 @@ public class SearchResultStoreConfig extends AbstractResultStoreConfig implement
                                    @JsonProperty("maxStringFieldLength") final int maxStringFieldLength,
                                    @JsonProperty("valueQueueSize") final int valueQueueSize,
                                    @JsonProperty("maxSortedItems") final int maxSortedItems,
-                                   @JsonProperty("lmdb") final ResultStoreLmdbConfig lmdbConfig) {
+                                   @JsonProperty("lmdb") final ResultStoreLmdbConfig lmdbConfig,
+                                   @JsonProperty("map") final ResultStoreMapConfig mapConfig) {
         super(maxPutsBeforeCommit,
                 offHeapResults,
                 minPayloadSize,
@@ -38,5 +42,11 @@ public class SearchResultStoreConfig extends AbstractResultStoreConfig implement
                 valueQueueSize,
                 maxSortedItems,
                 lmdbConfig);
+        this.mapConfig = mapConfig;
+    }
+
+    @JsonProperty("map")
+    public ResultStoreMapConfig getMapConfig() {
+        return mapConfig;
     }
 }

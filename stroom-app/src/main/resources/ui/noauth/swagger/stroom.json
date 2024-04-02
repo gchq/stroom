@@ -12624,7 +12624,7 @@
           },
           "group" : {
             "type" : "string",
-            "enum" : [ "STRUCTURE", "DATA_PROCESSING", "TRANSFORMATION", "SEARCH", "INDEXING", "CONFIGURATION", "SYSTEM" ]
+            "enum" : [ "STRUCTURE", "DATA_PROCESSING", "TRANSFORMATION", "SEARCH", "INDEXING", "CONFIGURATION", "SYSTEM", "INTERNAL" ]
           },
           "icon" : {
             "type" : "string",

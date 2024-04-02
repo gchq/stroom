@@ -33,21 +33,20 @@ class TestMapDataStore extends AbstractDataStoreTest {
                      final QueryKey queryKey,
                      final String componentId,
                      final TableSettings tableSettings,
-                     final AbstractResultStoreConfig resultStoreConfig,
+                     final SearchResultStoreConfig resultStoreConfig,
                      final DataStoreSettings dataStoreSettings) {
         final FieldIndex fieldIndex = new FieldIndex();
         final ErrorConsumerImpl errorConsumer = new ErrorConsumerImpl();
         final ExpressionContext expressionContext = new ExpressionContext();
-        final Serialisers serialisers = new Serialisers(new SearchResultStoreConfig());
         return new MapDataStore(
-                serialisers,
                 componentId,
                 tableSettings,
                 expressionContext,
                 fieldIndex,
                 Collections.emptyMap(),
                 dataStoreSettings,
-                errorConsumer);
+                errorConsumer,
+                resultStoreConfig.getMapConfig());
     }
 
     @Test

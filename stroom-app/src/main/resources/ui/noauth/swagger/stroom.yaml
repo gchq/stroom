@@ -8727,6 +8727,7 @@ components:
           - INDEXING
           - CONFIGURATION
           - SYSTEM
+          - INTERNAL
         icon:
           type: string
           enum:
