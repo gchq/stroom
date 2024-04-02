@@ -14,11 +14,11 @@ import java.util.Map;
 
 public class MapDataStoreFactory implements DataStoreFactory {
 
-    private final Provider<Serialisers> serialisersProvider;
+    private final Provider<SearchResultStoreConfig> resultStoreConfigProvider;
 
     @Inject
-    public MapDataStoreFactory(final Provider<Serialisers> serialisersProvider) {
-        this.serialisersProvider = serialisersProvider;
+    public MapDataStoreFactory(final Provider<SearchResultStoreConfig> resultStoreConfigProvider) {
+        this.resultStoreConfigProvider = resultStoreConfigProvider;
     }
 
     @Override
@@ -31,19 +31,16 @@ public class MapDataStoreFactory implements DataStoreFactory {
                             final Map<String, String> paramMap,
                             final DataStoreSettings dataStoreSettings,
                             final ErrorConsumer errorConsumer) {
-        if (dataStoreSettings.isProducePayloads()) {
-            throw new RuntimeException("MapDataStore cannot produce payloads");
-        }
-
+        final SearchResultStoreConfig resultStoreConfig = resultStoreConfigProvider.get();
         return new MapDataStore(
-                serialisersProvider.get(),
                 componentId,
                 tableSettings,
                 expressionContext,
                 fieldIndex,
                 paramMap,
                 dataStoreSettings,
-                errorConsumer);
+                errorConsumer,
+                resultStoreConfig.getMapConfig());
     }
 
     @Override
