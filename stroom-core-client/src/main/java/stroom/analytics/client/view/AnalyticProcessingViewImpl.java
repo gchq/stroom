@@ -38,6 +38,8 @@ public class AnalyticProcessingViewImpl
     private final Widget widget;
 
     @UiField
+    SimplePanel errorFeed;
+    @UiField
     SelectionBox<AnalyticProcessType> processingType;
     @UiField
     SimplePanel processSettings;
@@ -53,6 +55,11 @@ public class AnalyticProcessingViewImpl
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public void setErrorFeedView(final View view) {
+        this.errorFeed.setWidget(view.asWidget());
     }
 
     @Override

@@ -16,6 +16,7 @@
 
 package stroom.analytics.shared;
 
+import stroom.analytics.shared.StreamingAnalyticProcessConfig.Builder;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
@@ -29,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -61,7 +63,12 @@ public class AnalyticRuleDoc extends Doc {
     @JsonProperty
     private final AnalyticProcessConfig analyticProcessConfig;
     @JsonProperty
-    private final AnalyticNotificationConfig analyticNotificationConfig;
+    @Deprecated
+    private final NotificationConfig analyticNotificationConfig;
+    @JsonProperty
+    private final List<NotificationConfig> notifications;
+    @JsonProperty
+    private final DocRef errorFeed;
 
     public AnalyticRuleDoc() {
         description = null;
@@ -72,6 +79,8 @@ public class AnalyticRuleDoc extends Doc {
         analyticProcessType = null;
         analyticProcessConfig = null;
         analyticNotificationConfig = null;
+        notifications = new ArrayList<>();
+        errorFeed = null;
     }
 
     @SuppressWarnings("checkstyle:linelength")
@@ -91,7 +100,9 @@ public class AnalyticRuleDoc extends Doc {
                            @JsonProperty("query") final String query,
                            @JsonProperty("analyticProcessType") AnalyticProcessType analyticProcessType,
                            @JsonProperty("analyticProcessConfig") final AnalyticProcessConfig analyticProcessConfig,
-                           @JsonProperty("analyticNotificationConfig") final AnalyticNotificationConfig analyticNotificationConfig) {
+                           @Deprecated @JsonProperty("analyticNotificationConfig") final NotificationConfig analyticNotificationConfig,
+                           @JsonProperty("notifications") final List<NotificationConfig> notifications,
+                           @JsonProperty("errorFeed") final DocRef errorFeed) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.languageVersion = languageVersion;
@@ -100,7 +111,15 @@ public class AnalyticRuleDoc extends Doc {
         this.query = query;
         this.analyticProcessType = analyticProcessType;
         this.analyticProcessConfig = analyticProcessConfig;
-        this.analyticNotificationConfig = analyticNotificationConfig;
+        this.analyticNotificationConfig = null;
+        this.notifications = new ArrayList<>();
+        if (notifications != null) {
+            this.notifications.addAll(notifications);
+        }
+        if (analyticNotificationConfig != null) {
+            this.notifications.add(analyticNotificationConfig);
+        }
+        this.errorFeed = errorFeed;
     }
 
     /**
@@ -151,8 +170,18 @@ public class AnalyticRuleDoc extends Doc {
         return analyticProcessConfig;
     }
 
-    public AnalyticNotificationConfig getAnalyticNotificationConfig() {
-        return analyticNotificationConfig;
+//    @Deprecated
+//    public AnalyticNotificationConfig getAnalyticNotificationConfig() {
+//        return analyticNotificationConfig;
+//    }
+
+
+    public List<NotificationConfig> getNotifications() {
+        return notifications;
+    }
+
+    public DocRef getErrorFeed() {
+        return errorFeed;
     }
 
     @Override
@@ -166,13 +195,15 @@ public class AnalyticRuleDoc extends Doc {
         if (!super.equals(o)) {
             return false;
         }
-        final AnalyticRuleDoc that = (AnalyticRuleDoc) o;
-        return Objects.equals(description, that.description) &&
-                languageVersion == that.languageVersion &&
-                Objects.equals(query, that.query) &&
-                analyticProcessType == that.analyticProcessType &&
-                Objects.equals(analyticProcessConfig, that.analyticProcessConfig) &&
-                Objects.equals(analyticNotificationConfig, that.analyticNotificationConfig);
+        final AnalyticRuleDoc doc = (AnalyticRuleDoc) o;
+        return Objects.equals(description,
+                doc.description) && languageVersion == doc.languageVersion && Objects.equals(parameters,
+                doc.parameters) && Objects.equals(timeRange, doc.timeRange) && Objects.equals(query,
+                doc.query) && analyticProcessType == doc.analyticProcessType && Objects.equals(
+                analyticProcessConfig,
+                doc.analyticProcessConfig) && Objects.equals(analyticNotificationConfig,
+                doc.analyticNotificationConfig) && Objects.equals(notifications,
+                doc.notifications) && Objects.equals(errorFeed, doc.errorFeed);
     }
 
     @Override
@@ -180,10 +211,14 @@ public class AnalyticRuleDoc extends Doc {
         return Objects.hash(super.hashCode(),
                 description,
                 languageVersion,
+                parameters,
+                timeRange,
                 query,
                 analyticProcessType,
                 analyticProcessConfig,
-                analyticNotificationConfig);
+                analyticNotificationConfig,
+                notifications,
+                errorFeed);
     }
 
     @Override
@@ -191,10 +226,14 @@ public class AnalyticRuleDoc extends Doc {
         return "AnalyticRuleDoc{" +
                 "description='" + description + '\'' +
                 ", languageVersion=" + languageVersion +
+                ", parameters=" + parameters +
+                ", timeRange=" + timeRange +
                 ", query='" + query + '\'' +
-                ", analyticRuleType=" + analyticProcessType +
-                ", analyticConfig=" + analyticProcessConfig +
+                ", analyticProcessType=" + analyticProcessType +
+                ", analyticProcessConfig=" + analyticProcessConfig +
                 ", analyticNotificationConfig=" + analyticNotificationConfig +
+                ", notifications=" + notifications +
+                ", errorFeed=" + errorFeed +
                 '}';
     }
 
@@ -215,7 +254,8 @@ public class AnalyticRuleDoc extends Doc {
         private String query;
         private AnalyticProcessType analyticProcessType;
         private AnalyticProcessConfig analyticProcessConfig;
-        private AnalyticNotificationConfig analyticNotificationConfig;
+        private List<NotificationConfig> notifications = new ArrayList<>();
+        private DocRef errorFeed;
 
         public Builder() {
         }
@@ -229,7 +269,8 @@ public class AnalyticRuleDoc extends Doc {
             this.query = doc.query;
             this.analyticProcessType = doc.analyticProcessType;
             this.analyticProcessConfig = doc.analyticProcessConfig;
-            this.analyticNotificationConfig = doc.analyticNotificationConfig;
+            this.notifications = new ArrayList<>(doc.notifications);
+            this.errorFeed = doc.errorFeed;
         }
 
         public Builder description(final String description) {
@@ -267,9 +308,14 @@ public class AnalyticRuleDoc extends Doc {
             return self();
         }
 
-        public Builder analyticNotificationConfig(final AnalyticNotificationConfig analyticNotificationConfig) {
-            this.analyticNotificationConfig = analyticNotificationConfig;
+        public Builder notifications(final List<NotificationConfig> notifications) {
+            this.notifications = new ArrayList<>(notifications);
             return self();
+        }
+
+        public Builder errorFeed(final DocRef errorFeed) {
+            this.errorFeed = errorFeed;
+            return this;
         }
 
         @Override
@@ -295,7 +341,9 @@ public class AnalyticRuleDoc extends Doc {
                     query,
                     analyticProcessType,
                     analyticProcessConfig,
-                    analyticNotificationConfig);
+                    null,
+                    notifications,
+                    errorFeed);
         }
     }
 }

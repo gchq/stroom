@@ -82,7 +82,8 @@ class TestScheduledQueryAnalytics extends AbstractAnalyticsTest {
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
                 .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
-                .analyticNotificationConfig(createNotificationConfig())
+                .notifications(createNotificationConfig())
+                .errorFeed(analyticsDataSetup.getDetections())
                 .build();
         final DocRef docRef = writeRule(analyticRuleDoc);
         final long now = System.currentTimeMillis();

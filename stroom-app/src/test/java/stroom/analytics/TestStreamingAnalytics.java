@@ -113,7 +113,8 @@ class TestStreamingAnalytics extends AbstractAnalyticsTest {
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
                 .analyticProcessType(AnalyticProcessType.STREAMING)
-                .analyticNotificationConfig(createNotificationConfig())
+                .notifications(createNotificationConfig())
+                .errorFeed(analyticsDataSetup.getDetections())
                 .build();
         final DocRef analyticRuleDocRef = writeRule(analyticRuleDoc);
         final ExpressionOperator expressionOperator = analyticRuleProcessors

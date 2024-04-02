@@ -1,7 +1,7 @@
 package stroom.analytics.impl;
 
-import stroom.analytics.shared.AnalyticNotificationEmailDestination;
 import stroom.analytics.shared.EmailContent;
+import stroom.analytics.shared.NotificationEmailDestination;
 
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +13,7 @@ class TestRuleEmailTemplatingService {
     void renderAlertEmail() {
         final RuleEmailTemplatingService templatingService = new RuleEmailTemplatingService();
         final Detection detection = getExampleDetection();
-        AnalyticNotificationEmailDestination emailDestination = AnalyticNotificationEmailDestination.builder()
+        NotificationEmailDestination emailDestination = NotificationEmailDestination.builder()
                 .subjectTemplate("{{ headline }}")
                 .bodyTemplate("{{ detectorVersion }} - {{ detectionRevision }}")
                 .build();

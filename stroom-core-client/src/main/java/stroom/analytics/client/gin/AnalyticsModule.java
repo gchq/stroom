@@ -21,8 +21,8 @@ import stroom.analytics.client.presenter.AnalyticDataShardsPresenter;
 import stroom.analytics.client.presenter.AnalyticDataShardsPresenter.AnalyticDataShardsView;
 import stroom.analytics.client.presenter.AnalyticEmailDestinationPresenter;
 import stroom.analytics.client.presenter.AnalyticEmailDestinationPresenter.AnalyticEmailDestinationView;
-import stroom.analytics.client.presenter.AnalyticNotificationPresenter;
-import stroom.analytics.client.presenter.AnalyticNotificationPresenter.AnalyticNotificationView;
+import stroom.analytics.client.presenter.AnalyticNotificationEditPresenter;
+import stroom.analytics.client.presenter.AnalyticNotificationEditPresenter.AnalyticNotificationEditView;
 import stroom.analytics.client.presenter.AnalyticProcessingPresenter;
 import stroom.analytics.client.presenter.AnalyticProcessingPresenter.AnalyticProcessingView;
 import stroom.analytics.client.presenter.AnalyticRulePresenter;
@@ -38,7 +38,7 @@ import stroom.analytics.client.presenter.TableBuilderProcessingPresenter;
 import stroom.analytics.client.presenter.TableBuilderProcessingPresenter.TableBuilderProcessingView;
 import stroom.analytics.client.view.AnalyticDataShardsViewImpl;
 import stroom.analytics.client.view.AnalyticEmailDestinationViewImpl;
-import stroom.analytics.client.view.AnalyticNotificationViewImpl;
+import stroom.analytics.client.view.AnalyticNotificationEditViewImpl;
 import stroom.analytics.client.view.AnalyticProcessingViewImpl;
 import stroom.analytics.client.view.AnalyticStreamDestinationViewImpl;
 import stroom.analytics.client.view.ExecutionScheduleEditViewImpl;
@@ -58,9 +58,9 @@ public class AnalyticsModule extends PluginModule {
         bindPresenterWidget(AnalyticProcessingPresenter.class,
                 AnalyticProcessingView.class,
                 AnalyticProcessingViewImpl.class);
-        bindPresenterWidget(AnalyticNotificationPresenter.class,
-                AnalyticNotificationView.class,
-                AnalyticNotificationViewImpl.class);
+        bindPresenterWidget(AnalyticNotificationEditPresenter.class,
+                AnalyticNotificationEditView.class,
+                AnalyticNotificationEditViewImpl.class);
         bindPresenterWidget(AnalyticEmailDestinationPresenter.class,
                 AnalyticEmailDestinationView.class,
                 AnalyticEmailDestinationViewImpl.class);

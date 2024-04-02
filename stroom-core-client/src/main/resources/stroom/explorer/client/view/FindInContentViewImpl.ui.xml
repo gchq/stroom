@@ -13,10 +13,10 @@
         <g:MySplitLayoutPanel styleName="dock-max">
             <g:north size="200">
                 <g:SimplePanel ui:field="resultContainer"
-                               styleName="max stroom-control__no-padding overflow-hidden"/>
+                               styleName="max form-control-border"/>
             </g:north>
             <g:center>
-                <g:SimplePanel ui:field="textContainer" styleName="max stroom-control__no-padding overflow-hidden"/>
+                <g:SimplePanel ui:field="textContainer" styleName="max form-control-border"/>
             </g:center>
         </g:MySplitLayoutPanel>
     </g:FlowPanel>

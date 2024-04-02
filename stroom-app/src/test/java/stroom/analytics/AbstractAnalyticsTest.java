@@ -17,10 +17,10 @@
 package stroom.analytics;
 
 import stroom.analytics.rule.impl.AnalyticRuleStore;
-import stroom.analytics.shared.AnalyticNotificationConfig;
-import stroom.analytics.shared.AnalyticNotificationDestinationType;
-import stroom.analytics.shared.AnalyticNotificationStreamDestination;
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.NotificationConfig;
+import stroom.analytics.shared.NotificationDestinationType;
+import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
@@ -51,6 +51,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -122,7 +124,8 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
                 .query(sample.getQuery())
                 .analyticProcessType(sample.getAnalyticProcessType())
                 .analyticProcessConfig(sample.getAnalyticProcessConfig())
-                .analyticNotificationConfig(sample.getAnalyticNotificationConfig())
+                .notifications(new ArrayList<>(sample.getNotifications()))
+                .errorFeed(analyticsDataSetup.getDetections())
                 .build();
         analyticRuleStore.writeDocument(analyticRuleDoc);
         return alertRuleDocRef;
@@ -143,15 +146,15 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
         }
     }
 
-    protected AnalyticNotificationConfig createNotificationConfig() {
-        return AnalyticNotificationConfig
+    protected List<NotificationConfig> createNotificationConfig() {
+        final NotificationConfig notificationConfig = NotificationConfig
                 .builder()
-                .destinationType(AnalyticNotificationDestinationType.STREAM)
-                .destination(AnalyticNotificationStreamDestination.builder()
+                .destinationType(NotificationDestinationType.STREAM)
+                .destination(NotificationStreamDestination.builder()
                         .destinationFeed(analyticsDataSetup.getDetections())
                         .useSourceFeedIfPossible(false)
                         .build())
-                .errorFeed(analyticsDataSetup.getDetections())
                 .build();
+        return List.of(notificationConfig);
     }
 }

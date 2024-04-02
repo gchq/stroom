@@ -7,6 +7,11 @@
              xmlns:l="urn:import:stroom.item.client"
              xmlns:d="urn:import:stroom.widget.customdatebox.client">
     <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="analyticDestinationType"
+                        label="Destination Type">
+            <l:SelectionBox ui:field="destinationType"/>
+        </form:FormGroup>
+        <g:SimplePanel ui:field="destinationContainer" styleName="form-group"/>
         <form:FormGroup identity="analyticNotificationLimitNotifications"
                         label="Limit Notifications">
             <tickbox:CustomCheckBox ui:field="limitNotifications"/>
@@ -18,14 +23,6 @@
         <form:FormGroup identity="analyticNotificationResumeAfter"
                         label="Resume Notifications After">
             <d:DurationPicker ui:field="resumeAfter"/>
-        </form:FormGroup>
-        <form:FormGroup identity="analyticDestinationType"
-                        label="Destination Type">
-            <l:SelectionBox ui:field="destinationType"/>
-        </form:FormGroup>
-        <g:SimplePanel ui:field="destinationContainer" styleName="form-group"/>
-        <form:FormGroup identity="analyticProcessingErrorFeed" label="Feed For Errors">
-            <g:SimplePanel ui:field="errorFeed"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

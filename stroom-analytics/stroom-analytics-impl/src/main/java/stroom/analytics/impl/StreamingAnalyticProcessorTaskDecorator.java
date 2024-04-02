@@ -17,7 +17,6 @@
 
 package stroom.analytics.impl;
 
-import stroom.analytics.api.NotificationState;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.core.dataprocess.ProcessorTaskDecorator;
 import stroom.docref.DocRef;
@@ -57,7 +56,6 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
     private final StreamingAnalyticCache streamingAnalyticCache;
     private final ExpressionContextFactory expressionContextFactory;
     private final MemoryIndex memoryIndex;
-    private final NotificationStateService notificationStateService;
     private final DetectionConsumerFactory detectionConsumerFactory;
     private final DetectionConsumerProxy detectionConsumerProxy;
     private final FieldListConsumerHolder fieldListConsumerHolder;
@@ -72,7 +70,6 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
     public StreamingAnalyticProcessorTaskDecorator(final StreamingAnalyticCache streamingAnalyticCache,
                                                    final ExpressionContextFactory expressionContextFactory,
                                                    final MemoryIndex memoryIndex,
-                                                   final NotificationStateService notificationStateService,
                                                    final DetectionConsumerFactory detectionConsumerFactory,
                                                    final DetectionConsumerProxy detectionConsumerProxy,
                                                    final FieldListConsumerHolder fieldListConsumerHolder,
@@ -80,7 +77,6 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
         this.streamingAnalyticCache = streamingAnalyticCache;
         this.expressionContextFactory = expressionContextFactory;
         this.memoryIndex = memoryIndex;
-        this.notificationStateService = notificationStateService;
         this.detectionConsumerFactory = detectionConsumerFactory;
         this.detectionConsumerProxy = detectionConsumerProxy;
         this.fieldListConsumerHolder = fieldListConsumerHolder;
@@ -97,11 +93,8 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
         }
         analytic = optional.get();
         final AnalyticRuleDoc doc = analytic.analyticRuleDoc();
-        if (doc != null &&
-                doc.getAnalyticNotificationConfig() != null &&
-                doc.getAnalyticNotificationConfig().getErrorFeed() != null &&
-                doc.getAnalyticNotificationConfig().getErrorFeed().getName() != null) {
-            userDefinedErrorFeedName = doc.getAnalyticNotificationConfig().getErrorFeed().getName();
+        if (doc != null && doc.getErrorFeed() != null) {
+            userDefinedErrorFeedName = doc.getErrorFeed().getName();
         }
     }
 
@@ -142,40 +135,32 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
                 paramMap);
         final FieldIndex fieldIndex = compiledColumns.getFieldIndex();
 
-        // Determine if notifications have been disabled.
-        final NotificationState notificationState = notificationStateService.getState(analytic.analyticRuleDoc());
-        // Only execute if the state is enabled.
-        notificationState.enableIfPossible();
-        if (notificationState.isEnabled()) {
-            try {
-                final Provider<DetectionConsumer> detectionConsumerProvider =
-                        detectionConsumerFactory.create(analytic.analyticRuleDoc());
-                detectionConsumerProxy.setAnalyticRuleDoc(analytic.analyticRuleDoc());
-                detectionConsumerProxy.setCompiledColumns(compiledColumns);
-                detectionConsumerProxy.setDetectionsConsumerProvider(detectionConsumerProvider);
+        try {
+            final Provider<DetectionConsumer> detectionConsumerProvider =
+                    detectionConsumerFactory.create(analytic.analyticRuleDoc());
+            detectionConsumerProxy.setAnalyticRuleDoc(analytic.analyticRuleDoc());
+            detectionConsumerProxy.setCompiledColumns(compiledColumns);
+            detectionConsumerProxy.setDetectionsConsumerProvider(detectionConsumerProvider);
 
-                final FieldValueExtractor fieldValueExtractor = fieldValueExtractorFactory
-                        .create(searchRequest.getQuery().getDataSource(), fieldIndex);
+            final FieldValueExtractor fieldValueExtractor = fieldValueExtractorFactory
+                    .create(searchRequest.getQuery().getDataSource(), fieldIndex);
 
-                return Optional.of(new StreamingAnalyticFieldListConsumer(
-                        searchRequest,
-                        fieldIndex,
-                        fieldValueExtractor,
-                        notificationState,
-                        detectionConsumerProxy,
-                        memoryIndex,
-                        null,
-                        detectionConsumerProxy));
+            return Optional.of(new StreamingAnalyticFieldListConsumer(
+                    searchRequest,
+                    fieldIndex,
+                    fieldValueExtractor,
+                    detectionConsumerProxy,
+                    memoryIndex,
+                    null,
+                    detectionConsumerProxy));
 
-            } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
-                LOGGER.debug(e::getMessage, e);
-                throw e;
-            } catch (final RuntimeException e) {
-                LOGGER.error(e::getMessage, e);
-                throw e;
-            }
+        } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
+            LOGGER.debug(e::getMessage, e);
+            throw e;
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
+            throw e;
         }
-        return Optional.empty();
     }
 
     private static class NullFieldListConsumer implements AnalyticFieldListConsumer {

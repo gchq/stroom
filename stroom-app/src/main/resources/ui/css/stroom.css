@@ -591,13 +591,6 @@ input[type="file"] {
 	padding: var(--input__padding--vertical) var(--input__padding--horizontal) var(--input__padding--vertical) var(--input__padding--horizontal);
 }
 
-.stroom-control__no-padding {
-	border: solid 1px var(--control__border-color);
-	background-color: var(--control__background-color);
-	color: var(--control__text-color);
-	border-radius: .25rem;
-}
-
 /* Fix auto fill colours */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,

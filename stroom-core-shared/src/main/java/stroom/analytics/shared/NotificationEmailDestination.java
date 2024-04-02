@@ -10,7 +10,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class AnalyticNotificationEmailDestination extends AnalyticNotificationDestination {
+public class NotificationEmailDestination extends NotificationDestination {
 
     @JsonProperty
     private final String to;
@@ -24,7 +24,7 @@ public class AnalyticNotificationEmailDestination extends AnalyticNotificationDe
     private final String bodyTemplate;
 
     @JsonCreator
-    public AnalyticNotificationEmailDestination(
+    public NotificationEmailDestination(
             @JsonProperty("to") final String to,
             @JsonProperty("cc") final String cc,
             @JsonProperty("bcc") final String bcc,
@@ -77,7 +77,7 @@ public class AnalyticNotificationEmailDestination extends AnalyticNotificationDe
         if (object == null || getClass() != object.getClass()) {
             return false;
         }
-        final AnalyticNotificationEmailDestination that = (AnalyticNotificationEmailDestination) object;
+        final NotificationEmailDestination that = (NotificationEmailDestination) object;
         return Objects.equals(to, that.to) && Objects.equals(cc, that.cc) && Objects.equals(
                 bcc, that.bcc)
                && Objects.equals(subjectTemplate,
@@ -112,7 +112,7 @@ public class AnalyticNotificationEmailDestination extends AnalyticNotificationDe
         private Builder() {
         }
 
-        private Builder(final AnalyticNotificationEmailDestination config) {
+        private Builder(final NotificationEmailDestination config) {
             this.to = config.to;
             this.cc = config.cc;
             this.bcc = config.bcc;
@@ -145,8 +145,8 @@ public class AnalyticNotificationEmailDestination extends AnalyticNotificationDe
             return this;
         }
 
-        public AnalyticNotificationEmailDestination build() {
-            return new AnalyticNotificationEmailDestination(
+        public NotificationEmailDestination build() {
+            return new NotificationEmailDestination(
                     to,
                     cc,
                     bcc,

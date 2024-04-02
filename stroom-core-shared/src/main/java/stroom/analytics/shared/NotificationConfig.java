@@ -16,7 +16,6 @@
 
 package stroom.analytics.shared;
 
-import stroom.docref.DocRef;
 import stroom.util.shared.time.SimpleDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -29,8 +28,10 @@ import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class AnalyticNotificationConfig {
+public class NotificationConfig {
 
+    @JsonProperty
+    private final String uuid;
     @JsonProperty
     private final boolean limitNotifications;
     @JsonProperty
@@ -38,26 +39,28 @@ public class AnalyticNotificationConfig {
     @JsonProperty
     private final SimpleDuration resumeAfter;
     @JsonProperty
-    private final AnalyticNotificationDestinationType destinationType;
+    private final NotificationDestinationType destinationType;
     @JsonProperty
-    private final AnalyticNotificationDestination destination;
-    @JsonProperty
-    private final DocRef errorFeed;
+    private final NotificationDestination destination;
 
     @SuppressWarnings("checkstyle:lineLength")
     @JsonCreator
-    public AnalyticNotificationConfig(@JsonProperty("limitNotifications") final boolean limitNotifications,
-                                      @JsonProperty("maxNotifications") final int maxNotifications,
-                                      @JsonProperty("resumeAfter") final SimpleDuration resumeAfter,
-                                      @JsonProperty("destinationType") final AnalyticNotificationDestinationType destinationType,
-                                      @JsonProperty("destination") final AnalyticNotificationDestination destination,
-                                      @JsonProperty("errorFeed") final DocRef errorFeed) {
+    public NotificationConfig(@JsonProperty("uuid") final String uuid,
+                              @JsonProperty("limitNotifications") final boolean limitNotifications,
+                              @JsonProperty("maxNotifications") final int maxNotifications,
+                              @JsonProperty("resumeAfter") final SimpleDuration resumeAfter,
+                              @JsonProperty("destinationType") final NotificationDestinationType destinationType,
+                              @JsonProperty("destination") final NotificationDestination destination) {
+        this.uuid = uuid;
         this.limitNotifications = limitNotifications;
         this.maxNotifications = maxNotifications;
         this.resumeAfter = resumeAfter;
         this.destinationType = destinationType;
         this.destination = destination;
-        this.errorFeed = errorFeed;
+    }
+
+    public String getUuid() {
+        return uuid;
     }
 
     public boolean isLimitNotifications() {
@@ -72,16 +75,12 @@ public class AnalyticNotificationConfig {
         return resumeAfter;
     }
 
-    public AnalyticNotificationDestinationType getDestinationType() {
+    public NotificationDestinationType getDestinationType() {
         return destinationType;
     }
 
-    public AnalyticNotificationDestination getDestination() {
+    public NotificationDestination getDestination() {
         return destination;
-    }
-
-    public DocRef getErrorFeed() {
-        return errorFeed;
     }
 
     @Override
@@ -92,35 +91,24 @@ public class AnalyticNotificationConfig {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final AnalyticNotificationConfig config = (AnalyticNotificationConfig) o;
-        return limitNotifications == config.limitNotifications &&
-                maxNotifications == config.maxNotifications &&
-                Objects.equals(resumeAfter, config.resumeAfter) &&
-                Objects.equals(destinationType, config.destinationType) &&
-                Objects.equals(destination, config.destination) &&
-                Objects.equals(errorFeed, config.errorFeed);
+        final NotificationConfig that = (NotificationConfig) o;
+        return Objects.equals(uuid, that.uuid);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(
-                limitNotifications,
-                maxNotifications,
-                resumeAfter,
-                destinationType,
-                destination,
-                errorFeed);
+        return Objects.hash(uuid);
     }
 
     @Override
     public String toString() {
         return "AnalyticNotificationConfig{" +
-                "limitNotifications=" + limitNotifications +
+                "uuid='" + uuid + '\'' +
+                ", limitNotifications=" + limitNotifications +
                 ", maxNotifications=" + maxNotifications +
                 ", resumeAfter=" + resumeAfter +
                 ", destinationType=" + destinationType +
                 ", destination=" + destination +
-                ", errorFeed=" + errorFeed +
                 '}';
     }
 
@@ -138,23 +126,28 @@ public class AnalyticNotificationConfig {
 
     public static class Builder {
 
+        private String uuid;
         private boolean limitNotifications;
         private int maxNotifications = 1;
         private SimpleDuration resumeAfter;
-        private AnalyticNotificationDestinationType destinationType;
-        private AnalyticNotificationDestination destination;
-        private DocRef errorFeed;
+        private NotificationDestinationType destinationType;
+        private NotificationDestination destination;
 
         public Builder() {
         }
 
-        public Builder(final AnalyticNotificationConfig doc) {
+        public Builder(final NotificationConfig doc) {
+            this.uuid = doc.uuid;
             this.limitNotifications = doc.limitNotifications;
             this.maxNotifications = doc.maxNotifications;
             this.resumeAfter = doc.resumeAfter;
             this.destinationType = doc.destinationType;
             this.destination = doc.destination;
-            this.errorFeed = doc.errorFeed;
+        }
+
+        public Builder uuid(final String uuid) {
+            this.uuid = uuid;
+            return this;
         }
 
         public Builder limitNotifications(final boolean limitNotifications) {
@@ -172,29 +165,24 @@ public class AnalyticNotificationConfig {
             return this;
         }
 
-        public Builder destinationType(final AnalyticNotificationDestinationType destinationType) {
+        public Builder destinationType(final NotificationDestinationType destinationType) {
             this.destinationType = destinationType;
             return this;
         }
 
-        public Builder destination(final AnalyticNotificationDestination destination) {
+        public Builder destination(final NotificationDestination destination) {
             this.destination = destination;
             return this;
         }
 
-        public Builder errorFeed(final DocRef errorFeed) {
-            this.errorFeed = errorFeed;
-            return this;
-        }
-
-        public AnalyticNotificationConfig build() {
-            return new AnalyticNotificationConfig(
+        public NotificationConfig build() {
+            return new NotificationConfig(
+                    uuid,
                     limitNotifications,
                     maxNotifications,
                     resumeAfter,
                     destinationType,
-                    destination,
-                    errorFeed);
+                    destination);
         }
     }
 }

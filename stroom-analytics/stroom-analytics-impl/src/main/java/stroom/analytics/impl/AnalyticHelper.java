@@ -71,10 +71,13 @@ public class AnalyticHelper {
         final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
         if (analyticProcessConfig instanceof
                 final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
-            tableBuilderAnalyticProcessConfig.setEnabled(false);
+            TableBuilderAnalyticProcessConfig updatedProcessConfig = tableBuilderAnalyticProcessConfig
+                    .copy()
+                    .enabled(false)
+                    .build();
             final AnalyticRuleDoc modified = analyticRuleDoc
                     .copy()
-                    .analyticProcessConfig(tableBuilderAnalyticProcessConfig)
+                    .analyticProcessConfig(updatedProcessConfig)
                     .build();
             analyticRuleStore.writeDocument(modified);
         }
@@ -149,9 +152,8 @@ public class AnalyticHelper {
 
     public String getErrorFeedName(final AnalyticRuleDoc analyticRuleDoc) {
         String errorFeedName = null;
-        if (analyticRuleDoc.getAnalyticNotificationConfig() != null &&
-                analyticRuleDoc.getAnalyticNotificationConfig().getErrorFeed() != null) {
-            errorFeedName = analyticRuleDoc.getAnalyticNotificationConfig().getErrorFeed().getName();
+        if (analyticRuleDoc.getErrorFeed() != null) {
+            errorFeedName = analyticRuleDoc.getErrorFeed().getName();
         }
         if (errorFeedName == null) {
             LOGGER.debug(() -> "Error feed not defined: " +

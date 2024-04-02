@@ -1,7 +1,7 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.api.AnalyticsService;
-import stroom.analytics.shared.AnalyticNotificationEmailDestination;
+import stroom.analytics.shared.NotificationEmailDestination;
 
 import jakarta.inject.Inject;
 
@@ -23,7 +23,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     }
 
     @Override
-    public void sendTestEmail(final AnalyticNotificationEmailDestination emailDestination) {
+    public void sendTestEmail(final NotificationEmailDestination emailDestination) {
         emailSender.send(emailDestination, getExampleDetection());
     }
 

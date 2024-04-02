@@ -16,8 +16,8 @@
 
 package stroom.analytics.client.view;
 
-import stroom.analytics.client.presenter.AnalyticNotificationPresenter.AnalyticNotificationView;
-import stroom.analytics.shared.AnalyticNotificationDestinationType;
+import stroom.analytics.client.presenter.AnalyticNotificationEditPresenter.AnalyticNotificationEditView;
+import stroom.analytics.shared.NotificationDestinationType;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.time.SimpleDuration;
@@ -35,9 +35,9 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class AnalyticNotificationViewImpl
+public class AnalyticNotificationEditViewImpl
         extends ViewWithUiHandlers<DirtyUiHandlers>
-        implements AnalyticNotificationView {
+        implements AnalyticNotificationEditView {
 
     private final Widget widget;
 
@@ -48,20 +48,18 @@ public class AnalyticNotificationViewImpl
     @UiField
     DurationPicker resumeAfter;
     @UiField
-    SelectionBox<AnalyticNotificationDestinationType> destinationType;
+    SelectionBox<NotificationDestinationType> destinationType;
     @UiField
     SimplePanel destinationContainer;
-    @UiField
-    SimplePanel errorFeed;
 
     @Inject
-    public AnalyticNotificationViewImpl(final Binder binder) {
+    public AnalyticNotificationEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         maxNotifications.setMin(1);
         maxNotifications.setMax(1000);
         maxNotifications.setValue(1);
-        destinationType.addItem(AnalyticNotificationDestinationType.STREAM);
-        destinationType.addItem(AnalyticNotificationDestinationType.EMAIL);
+        destinationType.addItem(NotificationDestinationType.STREAM);
+        destinationType.addItem(NotificationDestinationType.EMAIL);
     }
 
     @Override
@@ -100,28 +98,18 @@ public class AnalyticNotificationViewImpl
     }
 
     @Override
-    public AnalyticNotificationDestinationType getDestinationType() {
+    public NotificationDestinationType getDestinationType() {
         return this.destinationType.getValue();
     }
 
     @Override
-    public void setDestinationType(final AnalyticNotificationDestinationType destinationType) {
+    public void setDestinationType(final NotificationDestinationType destinationType) {
         this.destinationType.setValue(destinationType);
     }
 
     @Override
     public void setDestinationView(final View view) {
         destinationContainer.setWidget(view.asWidget());
-    }
-
-    @Override
-    public Widget getDestinationWidget() {
-        return destinationContainer.getWidget();
-    }
-
-    @Override
-    public void setErrorFeedView(final View view) {
-        this.errorFeed.setWidget(view.asWidget());
     }
 
     @UiHandler("limitNotifications")
@@ -140,15 +128,11 @@ public class AnalyticNotificationViewImpl
     }
 
     @UiHandler("destinationType")
-    public void onDestinationType(final ValueChangeEvent<AnalyticNotificationDestinationType> event) {
+    public void onDestinationType(final ValueChangeEvent<NotificationDestinationType> event) {
         getUiHandlers().onDirty();
     }
 
-
-    // --------------------------------------------------------------------------------
-
-
-    public interface Binder extends UiBinder<Widget, AnalyticNotificationViewImpl> {
+    public interface Binder extends UiBinder<Widget, AnalyticNotificationEditViewImpl> {
 
     }
 }

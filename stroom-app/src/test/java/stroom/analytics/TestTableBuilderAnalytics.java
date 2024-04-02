@@ -108,7 +108,8 @@ class TestTableBuilderAnalytics extends AbstractAnalyticsTest {
                         .node(nodeInfo.getThisNodeName())
                         .timeToWaitForData(INSTANT)
                         .build())
-                .analyticNotificationConfig(createNotificationConfig())
+                .notifications(createNotificationConfig())
+                .errorFeed(analyticsDataSetup.getDetections())
                 .build();
         writeRule(analyticRuleDoc);
 

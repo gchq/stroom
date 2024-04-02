@@ -4,6 +4,6 @@
              xmlns:v="urn:import:stroom.widget.dropdowntree.client.view">
     <g:FlowPanel styleName="max dock-container-vertical quickFilter-container">
         <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-min"/>
-        <g:MaxScrollPanel ui:field="explorerTreeContainer" styleName="dock-max stroom-control__no-padding"/>
+        <g:MaxScrollPanel ui:field="explorerTreeContainer" styleName="dock-max form-control-border"/>
     </g:FlowPanel>
 </ui:UiBinder> 

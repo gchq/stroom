@@ -20,8 +20,8 @@ package stroom.analytics.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.analytics.client.presenter.AnalyticEmailDestinationPresenter.AnalyticEmailDestinationView;
-import stroom.analytics.shared.AnalyticNotificationEmailDestination;
 import stroom.analytics.shared.AnalyticRuleResource;
+import stroom.analytics.shared.NotificationEmailDestination;
 import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -78,10 +78,10 @@ public class AnalyticEmailDestinationPresenter
 
         getView().getSendTestEmailBtn().addClickHandler(this::onSendTestEmailClicked);
         getView().getTestSubjectTemplateBtn().addClickHandler(event -> {
-            testTemplate(AnalyticNotificationEmailDestination::getSubjectTemplate, ValidationMode.SUBJECT);
+            testTemplate(NotificationEmailDestination::getSubjectTemplate, ValidationMode.SUBJECT);
         });
         getView().getTestBodyTemplateBtn().addClickHandler(event -> {
-            testTemplate(AnalyticNotificationEmailDestination::getBodyTemplate, ValidationMode.BODY);
+            testTemplate(NotificationEmailDestination::getBodyTemplate, ValidationMode.BODY);
         });
     }
 
@@ -95,8 +95,8 @@ public class AnalyticEmailDestinationPresenter
 //        editorPresenter.getViewAsHexOption().setUnavailable();
 //    }
 
-    public AnalyticNotificationEmailDestination getCurrentEmailDestination() {
-        return new AnalyticNotificationEmailDestination(
+    public NotificationEmailDestination getCurrentEmailDestination() {
+        return new NotificationEmailDestination(
                 getView().getTo(),
                 getView().getCc(),
                 getView().getBcc(),
@@ -104,9 +104,9 @@ public class AnalyticEmailDestinationPresenter
                 bodyEditorPresenter.getText());
     }
 
-    private void testTemplate(final Function<AnalyticNotificationEmailDestination, String> templateGetter,
+    private void testTemplate(final Function<NotificationEmailDestination, String> templateGetter,
                               final ValidationMode validationMode) {
-        final AnalyticNotificationEmailDestination emailDestination = getCurrentEmailDestination();
+        final NotificationEmailDestination emailDestination = getCurrentEmailDestination();
         final String template = templateGetter.apply(emailDestination);
         if (validate(emailDestination, validationMode)) {
             restFactory
@@ -123,7 +123,7 @@ public class AnalyticEmailDestinationPresenter
     }
 
     private void onSendTestEmailClicked(final ClickEvent event) {
-        final AnalyticNotificationEmailDestination emailDestination = getCurrentEmailDestination();
+        final NotificationEmailDestination emailDestination = getCurrentEmailDestination();
 
         if (validate(emailDestination)) {
             final String msg = "This will send a single test email using the configured templates and " +
@@ -145,7 +145,7 @@ public class AnalyticEmailDestinationPresenter
         }
     }
 
-    private boolean validate(final AnalyticNotificationEmailDestination emailDestination,
+    private boolean validate(final NotificationEmailDestination emailDestination,
                              ValidationMode... validationModes) {
         final List<String> msgs = new ArrayList<>();
         final String subject = emailDestination.getSubjectTemplate();
@@ -205,7 +205,7 @@ public class AnalyticEmailDestinationPresenter
         editorPresenter.addValueChangeHandler(event -> onDirty());
     }
 
-    public void read(final AnalyticNotificationEmailDestination destination) {
+    public void read(final NotificationEmailDestination destination) {
 //        uiConfigCache.get()
 //                .onSuccess(extendedUiConfig -> {
         if (destination != null) {
@@ -221,8 +221,8 @@ public class AnalyticEmailDestinationPresenter
 //                });
     }
 
-    public AnalyticNotificationEmailDestination write() {
-        return AnalyticNotificationEmailDestination
+    public NotificationEmailDestination write() {
+        return NotificationEmailDestination
                 .builder()
                 .to(getView().getTo())
                 .cc(getView().getCc())

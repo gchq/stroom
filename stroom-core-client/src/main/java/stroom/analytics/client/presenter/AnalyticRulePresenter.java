@@ -37,7 +37,7 @@ public class AnalyticRulePresenter
         extends DocumentEditTabPresenter<LinkTabPanelView, AnalyticRuleDoc> {
 
     private static final TabData QUERY = new TabDataImpl("Query");
-    private static final TabData NOTIFICATION = new TabDataImpl("Notification");
+    private static final TabData NOTIFICATIONS = new TabDataImpl("Notifications");
     private static final TabData EXECUTION = new TabDataImpl("Execution");
     private static final TabData SHARDS = new TabDataImpl("Shards");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
@@ -46,7 +46,7 @@ public class AnalyticRulePresenter
     public AnalyticRulePresenter(final EventBus eventBus,
                                  final LinkTabPanelView view,
                                  final Provider<AnalyticQueryEditPresenter> analyticQueryEditPresenterProvider,
-                                 final Provider<AnalyticNotificationPresenter> notificationPresenterProvider,
+                                 final Provider<NotificationListPresenter> notificationPresenterProvider,
                                  final Provider<AnalyticProcessingPresenter> processPresenterProvider,
                                  final Provider<AnalyticDataShardsPresenter> analyticDataShardsPresenterProvider,
                                  final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
@@ -57,7 +57,7 @@ public class AnalyticRulePresenter
                 setRuleType(analyticProcessingPresenter.getView().getProcessingType()));
 
         addTab(QUERY, new DocumentEditTabProvider<>(analyticQueryEditPresenterProvider::get));
-        addTab(NOTIFICATION, new DocumentEditTabProvider<>(notificationPresenterProvider::get));
+        addTab(NOTIFICATIONS, new DocumentEditTabProvider<>(notificationPresenterProvider::get));
         addTab(EXECUTION, new DocumentEditTabProvider<>(() -> analyticProcessingPresenter));
         addTab(SHARDS, new DocumentEditTabProvider<>(analyticDataShardsPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<AnalyticRuleDoc>(eventBus, markdownEditPresenterProvider) {

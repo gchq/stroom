@@ -12,7 +12,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class AnalyticNotificationStreamDestination extends AnalyticNotificationDestination {
+public class NotificationStreamDestination extends NotificationDestination {
 
     @JsonProperty
     private final DocRef destinationFeed;
@@ -20,7 +20,7 @@ public class AnalyticNotificationStreamDestination extends AnalyticNotificationD
     private final boolean useSourceFeedIfPossible;
 
     @JsonCreator
-    public AnalyticNotificationStreamDestination(
+    public NotificationStreamDestination(
             @JsonProperty("destinationFeed") final DocRef destinationFeed,
             @JsonProperty("useSourceFeedIfPossible") final boolean useSourceFeedIfPossible) {
 
@@ -44,7 +44,7 @@ public class AnalyticNotificationStreamDestination extends AnalyticNotificationD
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final AnalyticNotificationStreamDestination that = (AnalyticNotificationStreamDestination) o;
+        final NotificationStreamDestination that = (NotificationStreamDestination) o;
         return Objects.equals(destinationFeed, that.destinationFeed) &&
                 useSourceFeedIfPossible == that.useSourceFeedIfPossible;
     }
@@ -82,7 +82,7 @@ public class AnalyticNotificationStreamDestination extends AnalyticNotificationD
         private Builder() {
         }
 
-        private Builder(final AnalyticNotificationStreamDestination config) {
+        private Builder(final NotificationStreamDestination config) {
             this.destinationFeed = config.destinationFeed;
             this.useSourceFeedIfPossible = config.useSourceFeedIfPossible;
         }
@@ -97,8 +97,8 @@ public class AnalyticNotificationStreamDestination extends AnalyticNotificationD
             return this;
         }
 
-        public AnalyticNotificationStreamDestination build() {
-            return new AnalyticNotificationStreamDestination(
+        public NotificationStreamDestination build() {
+            return new NotificationStreamDestination(
                     destinationFeed,
                     useSourceFeedIfPossible);
         }

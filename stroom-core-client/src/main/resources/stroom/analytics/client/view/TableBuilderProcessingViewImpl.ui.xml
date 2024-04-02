@@ -28,7 +28,7 @@
         </form:FormGroup>
         <form:FormGroup identity="analyticProcessingInfo" label="Processing Info">
             <g:FlowPanel styleName="form">
-                <g:SimplePanel ui:field="info" styleName="default-min-sizes stroom-control__no-padding overflow-auto"/>
+                <g:SimplePanel ui:field="info" styleName="default-min-sizes form-control-border overflow-auto"/>
                 <b:Button ui:field="refresh" text="Refresh"/>
             </g:FlowPanel>
         </form:FormGroup>

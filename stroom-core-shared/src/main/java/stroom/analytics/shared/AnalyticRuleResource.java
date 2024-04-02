@@ -69,7 +69,7 @@ public interface AnalyticRuleResource
             summary = "Tests the email subject/body templates using an example detection event.",
             operationId = "testEmailTemplates")
     void sendTestEmail(
-            @Parameter(description = "emailDestination", required = true) final AnalyticNotificationEmailDestination
+            @Parameter(description = "emailDestination", required = true) final NotificationEmailDestination
                     analyticNotificationEmailDestination);
 
 

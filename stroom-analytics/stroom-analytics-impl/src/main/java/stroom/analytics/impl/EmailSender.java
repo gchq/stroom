@@ -18,8 +18,8 @@
 
 package stroom.analytics.impl;
 
-import stroom.analytics.shared.AnalyticNotificationEmailDestination;
 import stroom.analytics.shared.EmailContent;
+import stroom.analytics.shared.NotificationEmailDestination;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -47,7 +47,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-class EmailSender {
+public class EmailSender {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EmailSender.class);
 
@@ -65,7 +65,7 @@ class EmailSender {
         this.ruleEmailTemplatingService = ruleEmailTemplatingService;
     }
 
-    public void send(final AnalyticNotificationEmailDestination emailDestination,
+    public void send(final NotificationEmailDestination emailDestination,
                      final Detection detection) {
         final AnalyticsConfig analyticsConfig = analyticsConfigProvider.get();
         final EmailConfig emailConfig = analyticsConfig.getEmailConfig();
@@ -112,7 +112,7 @@ class EmailSender {
                 .withTransportStrategy(smtpConfig.getTransportStrategy());
 
         if (!NullSafe.isEmptyString(smtpConfig.getUsername())
-            && !NullSafe.isEmptyString(smtpConfig.getPassword())) {
+                && !NullSafe.isEmptyString(smtpConfig.getPassword())) {
             mailerBuilder.withSMTPServer(
                     smtpConfig.getHost(),
                     smtpConfig.getPort(),
@@ -174,7 +174,7 @@ class EmailSender {
                 .collect(Collectors.joining(";"));
     }
 
-    private void validate(final AnalyticNotificationEmailDestination emailDestination) {
+    private void validate(final NotificationEmailDestination emailDestination) {
         final List<String> msgs = new ArrayList<>();
         final String subject = emailDestination.getSubjectTemplate();
         final String body = emailDestination.getBodyTemplate();

@@ -25,9 +25,12 @@ import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.HasChangeDataHandlers;
+import stroom.security.shared.DocumentPermissionNames;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -39,6 +42,7 @@ public class AnalyticProcessingPresenter
         extends DocumentEditPresenter<AnalyticProcessingView, AnalyticRuleDoc>
         implements AnalyticProcessingUiHandlers, HasChangeDataHandlers<AnalyticProcessType> {
 
+    private final DocSelectionBoxPresenter errorFeedPresenter;
     private final ExecutionPresenter executionSchedulePresenter;
     private final TableBuilderProcessingPresenter tableBuilderProcessingPresenter;
     private final StreamingProcessingPresenter streamingProcessingPresenter;
@@ -46,22 +50,28 @@ public class AnalyticProcessingPresenter
     @Inject
     public AnalyticProcessingPresenter(final EventBus eventBus,
                                        final AnalyticProcessingView view,
+                                       final DocSelectionBoxPresenter errorFeedPresenter,
                                        final ExecutionPresenter executionSchedulePresenter,
                                        final TableBuilderProcessingPresenter tableBuilderProcessingPresenter,
                                        final StreamingProcessingPresenter streamingProcessingPresenter) {
         super(eventBus, view);
+        this.errorFeedPresenter = errorFeedPresenter;
         this.executionSchedulePresenter = executionSchedulePresenter;
         this.tableBuilderProcessingPresenter = tableBuilderProcessingPresenter;
         this.streamingProcessingPresenter = streamingProcessingPresenter;
         view.setUiHandlers(this);
 
         executionSchedulePresenter.setDocumentEditPresenter(this);
+
+        errorFeedPresenter.setIncludedTypes(FeedDoc.DOCUMENT_TYPE);
+        errorFeedPresenter.setRequiredPermissions(DocumentPermissionNames.READ);
+        getView().setErrorFeedView(errorFeedPresenter.getView());
     }
 
     @Override
     protected void onBind() {
         super.onBind();
-//        registerHandler(executionSchedulePresenter.addDirtyHandler(event -> setDirty(true)));
+        registerHandler(errorFeedPresenter.addDataSelectionHandler(e -> onDirty()));
         registerHandler(tableBuilderProcessingPresenter.addDirtyHandler(event -> setDirty(true)));
         registerHandler(streamingProcessingPresenter.addDirtyHandler(event -> setDirty(true)));
     }
@@ -80,6 +90,7 @@ public class AnalyticProcessingPresenter
 
     @Override
     protected void onRead(final DocRef docRef, final AnalyticRuleDoc analyticRuleDoc, final boolean readOnly) {
+        errorFeedPresenter.setSelectedEntityReference(analyticRuleDoc.getErrorFeed());
         final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
         final AnalyticProcessType analyticProcessType = analyticRuleDoc.getAnalyticProcessType() == null
                 ? AnalyticProcessType.SCHEDULED_QUERY
@@ -135,6 +146,7 @@ public class AnalyticProcessingPresenter
         return analyticRuleDoc
                 .copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
+                .errorFeed(errorFeedPresenter.getSelectedEntityReference())
                 .analyticProcessType(getView().getProcessingType())
                 .analyticProcessConfig(analyticProcessConfig)
                 .build();
@@ -146,6 +158,8 @@ public class AnalyticProcessingPresenter
     }
 
     public interface AnalyticProcessingView extends View, HasUiHandlers<AnalyticProcessingUiHandlers> {
+
+        void setErrorFeedView(View view);
 
         AnalyticProcessType getProcessingType();
 

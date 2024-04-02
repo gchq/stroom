@@ -134,40 +134,12 @@ export interface AnalyticDataShard {
   size?: number;
 }
 
-export interface AnalyticNotificationConfig {
-  destination?: AnalyticNotificationDestination;
-  destinationType?: "STREAM" | "EMAIL";
-
-  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  errorFeed?: DocRef;
-  limitNotifications?: boolean;
-
-  /** @format int32 */
-  maxNotifications?: number;
-  resumeAfter?: SimpleDuration;
-}
-
-export interface AnalyticNotificationDestination {
-  type: string;
-}
-
-export type AnalyticNotificationEmailDestination = AnalyticNotificationDestination & {
-  bcc?: string;
-  cc?: string;
-  to?: string;
-};
-
-export type AnalyticNotificationStreamDestination = AnalyticNotificationDestination & {
-  destinationFeed?: DocRef;
-  useSourceFeedIfPossible?: boolean;
-};
-
 export interface AnalyticProcessConfig {
   type: string;
 }
 
 export interface AnalyticRuleDoc {
-  analyticNotificationConfig?: AnalyticNotificationConfig;
+  analyticNotificationConfig?: NotificationConfig;
   analyticProcessConfig?: AnalyticProcessConfig;
   analyticProcessType?: "STREAMING" | "TABLE_BUILDER" | "SCHEDULED_QUERY";
 
@@ -175,8 +147,12 @@ export interface AnalyticRuleDoc {
   createTimeMs?: number;
   createUser?: string;
   description?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  errorFeed?: DocRef;
   languageVersion?: "STROOM_QL_VERSION_0_1" | "SIGMA";
   name?: string;
+  notifications?: NotificationConfig[];
   parameters?: Param[];
   query?: string;
   timeRange?: TimeRange;
@@ -200,12 +176,15 @@ export interface AnalyticTrackerData {
 }
 
 export interface AnalyticUiDefaultConfig {
+  defaultBodyTemplate?: string;
+
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   defaultDestinationFeed?: DocRef;
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   defaultErrorFeed?: DocRef;
   defaultNode?: string;
+  defaultSubjectTemplate?: string;
 }
 
 export interface Annotation {
@@ -3117,6 +3096,34 @@ export interface NodeStatusResult {
   node?: Node;
 }
 
+export interface NotificationConfig {
+  destination?: NotificationDestination;
+  destinationType?: "STREAM" | "EMAIL";
+  limitNotifications?: boolean;
+
+  /** @format int32 */
+  maxNotifications?: number;
+  resumeAfter?: SimpleDuration;
+  uuid?: string;
+}
+
+export interface NotificationDestination {
+  type: string;
+}
+
+export type NotificationEmailDestination = NotificationDestination & {
+  bcc?: string;
+  bodyTemplate?: string;
+  cc?: string;
+  subjectTemplate?: string;
+  to?: string;
+};
+
+export type NotificationStreamDestination = NotificationDestination & {
+  destinationFeed?: DocRef;
+  useSourceFeedIfPossible?: boolean;
+};
+
 /**
  * The definition of a format to apply to numeric data
  */
@@ -5180,6 +5187,10 @@ export interface StringMatchLocation {
   offset?: number;
 }
 
+export interface StringWrapper {
+  string?: string;
+}
+
 export interface StroomStatsStoreDoc {
   config?: StroomStatsStoreEntityData;
 
@@ -5238,6 +5249,7 @@ export type TabLayoutConfig = LayoutConfig & { selected?: number; tabs?: TabConf
 export type TableBuilderAnalyticProcessConfig = AnalyticProcessConfig & {
   dataRetention?: SimpleDuration;
   enabled?: boolean;
+  errorFeed?: DocRef;
   maxMetaCreateTimeMs?: number;
   minMetaCreateTimeMs?: number;
   node?: string;
@@ -6320,6 +6332,44 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       }),
   };
   analyticRule = {
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name TestEmailTemplates
+     * @summary Tests the email subject/body templates using an example detection event.
+     * @request POST:/analyticRule/v1/sendTestEmail
+     * @secure
+     */
+    testEmailTemplates: (data: NotificationEmailDestination, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/analyticRule/v1/sendTestEmail`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name TestTemplate
+     * @summary Tests the email template using an example detection event.
+     * @request POST:/analyticRule/v1/testTemplate
+     * @secure
+     */
+    testTemplate: (data: StringWrapper, params: RequestParams = {}) =>
+      this.request<any, StringWrapper>({
+        path: `/analyticRule/v1/testTemplate`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
     /**
      * No description
      *

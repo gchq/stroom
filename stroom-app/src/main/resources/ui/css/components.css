@@ -1589,6 +1589,12 @@ button.main-menu svg {
     justify-content: flex-end;
 }
 
+.form-control-border {
+    border: solid 1px var(--control__border-color);
+    border-radius: .25rem;
+    overflow: hidden;
+}
+
 .form-control {
   background-color: var(--control__background-color);
   border-color: var(--control__border-color);
@@ -2167,7 +2173,7 @@ button.main-menu svg {
 
 .AnalyticEmailDestinationViewImpl #analyticEmailDestinationSubjectTemplate,
 .AnalyticEmailDestinationViewImpl #analyticEmailDestinationBodyTemplate {
-    width: 1000px;
+    /*width: 1000px;*/
 }
 
 .AnalyticEmailDestinationViewImpl #analyticEmailDestinationSubjectTemplate .EditorViewImpl {
@@ -2180,10 +2186,4 @@ button.main-menu svg {
 
 .AnalyticEmailDestinationViewImpl #analyticEmailDestinationBodyTemplate .EditorViewImpl {
     min-height: 300px;
-}
-
-.pipelineSource {
-    border: solid 1px var(--control__border-color);
-    border-radius: .25rem;
-    overflow: hidden;
 }

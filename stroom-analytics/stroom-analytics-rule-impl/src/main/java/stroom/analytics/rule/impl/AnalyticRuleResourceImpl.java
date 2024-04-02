@@ -17,9 +17,9 @@
 package stroom.analytics.rule.impl;
 
 import stroom.analytics.api.AnalyticsService;
-import stroom.analytics.shared.AnalyticNotificationEmailDestination;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleResource;
+import stroom.analytics.shared.NotificationEmailDestination;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
@@ -67,7 +67,7 @@ class AnalyticRuleResourceImpl implements AnalyticRuleResource {
 
     @AutoLogged(OperationType.UNLOGGED) // Just a dry run
     @Override
-    public void sendTestEmail(final AnalyticNotificationEmailDestination emailDestination) {
+    public void sendTestEmail(final NotificationEmailDestination emailDestination) {
         analyticsServiceProvider.get().sendTestEmail(emailDestination);
     }
 

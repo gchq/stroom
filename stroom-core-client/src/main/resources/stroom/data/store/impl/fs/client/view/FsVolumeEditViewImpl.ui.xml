@@ -20,7 +20,7 @@
                         label="S3 Configuration"
                         addStyleNames="default-min-sizes flex-grow-1">
             <g:ResizeLayoutPanel ui:field="configEditorContainer"
-                                 addStyleNames="dock-max stroom-control__no-padding"/>
+                                 addStyleNames="dock-max form-control-border"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

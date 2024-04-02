@@ -1,7 +1,7 @@
 package stroom.analytics.impl;
 
-import stroom.analytics.shared.AnalyticNotificationEmailDestination;
 import stroom.analytics.shared.EmailContent;
+import stroom.analytics.shared.NotificationEmailDestination;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -24,7 +24,7 @@ public class RuleEmailTemplatingService {
 
     EmailContent renderAlertEmail(
             final Detection detection,
-            final AnalyticNotificationEmailDestination emailDestination) {
+            final NotificationEmailDestination emailDestination) {
         Objects.requireNonNull(detection);
         Objects.requireNonNull(emailDestination);
 
@@ -95,10 +95,10 @@ public class RuleEmailTemplatingService {
             final String detail = errors.stream()
                     .map(error ->
                             error.getSeverity() + ": "
-                            + error.getMessage()
-                            + ", at " + error.getLineno() + ":" + error.getStartPosition()
-                            + ", reason: " + error.getReason()
-                            + ", fieldName: " + error.getFieldName())
+                                    + error.getMessage()
+                                    + ", at " + error.getLineno() + ":" + error.getStartPosition()
+                                    + ", reason: " + error.getReason()
+                                    + ", fieldName: " + error.getFieldName())
                     .collect(Collectors.joining("\n"));
             return prefix + "\n" + detail;
         }

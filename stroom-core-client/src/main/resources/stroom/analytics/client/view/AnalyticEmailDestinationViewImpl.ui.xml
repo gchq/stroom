@@ -24,7 +24,7 @@
                         label="Email Subject Template">
             <g:FlowPanel styleName="dock-min form">
                 <g:SimplePanel ui:field="subjectTemplatePanel"
-                               addStyleNames="dock-max stroom-control__no-padding"/>
+                               addStyleNames="dock-max form-control-border"/>
                 <b:Button addStyleNames="dock-min allow-focus"
                           ui:field="testSubjectTemplateBtn"
                           text="Test Template"/>
@@ -35,7 +35,7 @@
                         label="Email Body Template">
             <g:FlowPanel styleName="dock-min form">
                 <g:SimplePanel ui:field="bodyTemplatePanel"
-                               addStyleNames="dock-max stroom-control__no-padding"/>
+                               addStyleNames="dock-max form-control-border"/>
                 <b:Button addStyleNames="dock-min allow-focus"
                           ui:field="testBodyTemplateBtn"
                           text="Test Template"/>

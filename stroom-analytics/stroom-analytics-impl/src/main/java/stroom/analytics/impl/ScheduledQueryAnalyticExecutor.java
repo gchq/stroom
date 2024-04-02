@@ -1,6 +1,5 @@
 package stroom.analytics.impl;
 
-import stroom.analytics.api.NotificationState;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.ExecutionHistory;
@@ -81,7 +80,6 @@ public class ScheduledQueryAnalyticExecutor {
     private final Provider<AnalyticErrorWriter> analyticErrorWriterProvider;
     private final TaskContextFactory taskContextFactory;
     private final NodeInfo nodeInfo;
-    private final NotificationStateService notificationStateService;
     private final Provider<ErrorReceiverProxy> errorReceiverProxyProvider;
     private final DetectionConsumerFactory detectionConsumerFactory;
     private final SearchRequestFactory searchRequestFactory;
@@ -97,7 +95,6 @@ public class ScheduledQueryAnalyticExecutor {
                                    final Provider<AnalyticErrorWriter> analyticErrorWriterProvider,
                                    final TaskContextFactory taskContextFactory,
                                    final NodeInfo nodeInfo,
-                                   final NotificationStateService notificationStateService,
                                    final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
                                    final DetectionConsumerFactory detectionConsumerFactory,
                                    final SearchRequestFactory searchRequestFactory,
@@ -111,7 +108,6 @@ public class ScheduledQueryAnalyticExecutor {
         this.analyticErrorWriterProvider = analyticErrorWriterProvider;
         this.taskContextFactory = taskContextFactory;
         this.nodeInfo = nodeInfo;
-        this.notificationStateService = notificationStateService;
         this.errorReceiverProxyProvider = errorReceiverProxyProvider;
         this.detectionConsumerFactory = detectionConsumerFactory;
         this.searchRequestFactory = searchRequestFactory;
@@ -298,166 +294,155 @@ public class ScheduledQueryAnalyticExecutor {
         ExecutionResult executionResult = new ExecutionResult(null, null);
 
         try {
-            final NotificationState notificationState = notificationStateService.getState(analytic);
-            // Only execute if the state is enabled.
-            notificationState.enableIfPossible();
-            if (notificationState.isEnabled()) {
+            final SearchRequestSource searchRequestSource = SearchRequestSource
+                    .builder()
+                    .sourceType(SourceType.SCHEDULED_QUERY_ANALYTIC)
+                    .componentId(SearchRequestFactory.TABLE_COMPONENT_ID)
+                    .build();
 
-                final SearchRequestSource searchRequestSource = SearchRequestSource
-                        .builder()
-                        .sourceType(SourceType.SCHEDULED_QUERY_ANALYTIC)
-                        .componentId(SearchRequestFactory.TABLE_COMPONENT_ID)
+            final String query = analytic.getQuery();
+            final Query sampleQuery = Query
+                    .builder()
+                    .params(analytic.getParameters())
+                    .timeRange(analytic.getTimeRange())
+                    .build();
+            final SearchRequest sampleRequest = new SearchRequest(
+                    searchRequestSource,
+                    null,
+                    sampleQuery,
+                    null,
+                    DateTimeSettings.builder().referenceTime(effectiveExecutionTime.toEpochMilli()).build(),
+                    false);
+            final ExpressionContext expressionContext = expressionContextFactory.createContext(sampleRequest);
+            SearchRequest mappedRequest = searchRequestFactory.create(query, sampleRequest, expressionContext);
+
+            // Fix table result requests.
+            final List<ResultRequest> resultRequests = mappedRequest.getResultRequests();
+            if (resultRequests != null && resultRequests.size() == 1) {
+                final ResultRequest resultRequest = resultRequests.getFirst().copy()
+                        .openGroups(null)
+                        .requestedRange(OffsetRange.UNBOUNDED)
                         .build();
 
-                final String query = analytic.getQuery();
-                final Query sampleQuery = Query
-                        .builder()
-                        .params(analytic.getParameters())
-                        .timeRange(analytic.getTimeRange())
-                        .build();
-                final SearchRequest sampleRequest = new SearchRequest(
-                        searchRequestSource,
-                        null,
-                        sampleQuery,
-                        null,
-                        DateTimeSettings.builder().referenceTime(effectiveExecutionTime.toEpochMilli()).build(),
-                        false);
-                final ExpressionContext expressionContext = expressionContextFactory.createContext(sampleRequest);
-                SearchRequest mappedRequest = searchRequestFactory.create(query, sampleRequest, expressionContext);
+                final RequestAndStore requestAndStore = searchResponseCreatorManager
+                        .getResultStore(mappedRequest);
+                final SearchRequest modifiedRequest = requestAndStore.searchRequest();
+                try {
+                    final DataStore dataStore = requestAndStore
+                            .resultStore().getData(SearchRequestFactory.TABLE_COMPONENT_ID);
+                    dataStore.getCompletionState().awaitCompletion();
 
-                // Fix table result requests.
-                final List<ResultRequest> resultRequests = mappedRequest.getResultRequests();
-                if (resultRequests != null && resultRequests.size() == 1) {
-                    final ResultRequest resultRequest = resultRequests.getFirst().copy()
-                            .openGroups(null)
-                            .requestedRange(OffsetRange.UNBOUNDED)
-                            .build();
+                    final TableSettings tableSettings = resultRequest.getMappings().getFirst();
+                    final Map<String, String> paramMap = ParamUtil
+                            .createParamMap(mappedRequest.getQuery().getParams());
+                    final CompiledColumns compiledColumns = CompiledColumns.create(
+                            expressionContext,
+                            tableSettings.getColumns(),
+                            paramMap);
 
-                    final RequestAndStore requestAndStore = searchResponseCreatorManager
-                            .getResultStore(mappedRequest);
-                    final SearchRequest modifiedRequest = requestAndStore.searchRequest();
+                    final Provider<DetectionConsumer> detectionConsumerProvider =
+                            detectionConsumerFactory.create(analytic);
+                    final DetectionConsumerProxy detectionConsumerProxy = detectionConsumerProxyProvider.get();
+                    detectionConsumerProxy.setAnalyticRuleDoc(analytic);
+                    detectionConsumerProxy.setExecutionSchedule(executionSchedule);
+                    detectionConsumerProxy.setCompiledColumns(compiledColumns);
+                    detectionConsumerProxy.setDetectionsConsumerProvider(detectionConsumerProvider);
+
                     try {
-                        final DataStore dataStore = requestAndStore
-                                .resultStore().getData(SearchRequestFactory.TABLE_COMPONENT_ID);
-                        dataStore.getCompletionState().awaitCompletion();
-
-                        final TableSettings tableSettings = resultRequest.getMappings().getFirst();
-                        final Map<String, String> paramMap = ParamUtil
-                                .createParamMap(mappedRequest.getQuery().getParams());
-                        final CompiledColumns compiledColumns = CompiledColumns.create(
-                                expressionContext,
-                                tableSettings.getColumns(),
-                                paramMap);
-
-                        final Provider<DetectionConsumer> detectionConsumerProvider =
-                                detectionConsumerFactory.create(analytic);
-                        final DetectionConsumerProxy detectionConsumerProxy = detectionConsumerProxyProvider.get();
-                        detectionConsumerProxy.setAnalyticRuleDoc(analytic);
-                        detectionConsumerProxy.setExecutionSchedule(executionSchedule);
-                        detectionConsumerProxy.setCompiledColumns(compiledColumns);
-                        detectionConsumerProxy.setDetectionsConsumerProvider(detectionConsumerProvider);
-
-                        try {
-                            detectionConsumerProxy.start();
-                            final Consumer<Row> itemConsumer = row -> {
-                                // Only notify if the state is enabled.
-                                notificationState.enableIfPossible();
-                                if (notificationState.incrementAndCheckEnabled()) {
-
-                                    Long streamId = null;
-                                    Long eventId = null;
-                                    final List<DetectionValue> values = new ArrayList<>();
-                                    for (int i = 0; i < dataStore.getColumns().size(); i++) {
-                                        if (i < row.getValues().size()) {
-                                            final String columnName = dataStore.getColumns().get(i).getName();
-                                            final String value = row.getValues().get(i);
-                                            if (value != null) {
-                                                if (IndexConstants.STREAM_ID.equals(columnName)) {
-                                                    streamId = DetectionConsumerProxy.getSafeLong(value);
-                                                } else if (IndexConstants.EVENT_ID.equals(columnName)) {
-                                                    eventId = DetectionConsumerProxy.getSafeLong(value);
-                                                }
-                                                values.add(new DetectionValue(columnName, value));
-                                            }
+                        detectionConsumerProxy.start();
+                        final Consumer<Row> itemConsumer = row -> {
+                            Long streamId = null;
+                            Long eventId = null;
+                            final List<DetectionValue> values = new ArrayList<>();
+                            for (int i = 0; i < dataStore.getColumns().size(); i++) {
+                                if (i < row.getValues().size()) {
+                                    final String columnName = dataStore.getColumns().get(i).getName();
+                                    final String value = row.getValues().get(i);
+                                    if (value != null) {
+                                        if (IndexConstants.STREAM_ID.equals(columnName)) {
+                                            streamId = DetectionConsumerProxy.getSafeLong(value);
+                                        } else if (IndexConstants.EVENT_ID.equals(columnName)) {
+                                            eventId = DetectionConsumerProxy.getSafeLong(value);
                                         }
+                                        values.add(new DetectionValue(columnName, value));
                                     }
-
-                                    List<DetectionLinkedEvent> linkedEvents = null;
-                                    if (streamId != null || eventId != null) {
-                                        linkedEvents = List.of(new DetectionLinkedEvent(null, streamId, eventId));
-                                    }
-
-                                    final Detection detection = Detection
-                                            .builder()
-                                            .withDetectTime(DateUtil.createNormalDateTimeString())
-                                            .withDetectorName(analytic.getName())
-                                            .withDetectorUuid(analytic.getUuid())
-                                            .withDetectorVersion(analytic.getVersion())
-                                            .withDetailedDescription(analytic.getDescription())
-                                            .withRandomDetectionUniqueId()
-                                            .withDetectionRevision(0)
-                                            .withExecutionSchedule(NullSafe
-                                                    .get(executionSchedule, ExecutionSchedule::getName))
-                                            .withExecutionTime(executionTime)
-                                            .withEffectiveExecutionTime(effectiveExecutionTime)
-                                            .notDefunct()
-                                            .withValues(values)
-                                            .withLinkedEvents(linkedEvents)
-                                            .build();
-                                    detectionConsumerProxy.getDetectionConsumer().accept(detection);
-                                }
-                            };
-                            final Consumer<Long> countConsumer = count -> {
-
-                            };
-
-                            final KeyFactory keyFactory = dataStore.getKeyFactory();
-                            final ColumnFormatter fieldFormatter =
-                                    new ColumnFormatter(
-                                            new FormatterFactory(sampleRequest.getDateTimeSettings()));
-
-                            // Create the row creator.
-                            Optional<ItemMapper<Row>> optionalRowCreator = FilteredRowCreator.create(
-                                    fieldFormatter,
-                                    keyFactory,
-                                    tableSettings.getAggregateFilter(),
-                                    dataStore.getColumns(),
-                                    expressionContext.getDateTimeSettings(),
-                                    errorConsumer);
-
-                            if (optionalRowCreator.isEmpty()) {
-                                optionalRowCreator = SimpleRowCreator.create(fieldFormatter, keyFactory, errorConsumer);
-                            }
-
-                            final ItemMapper<Row> rowCreator = optionalRowCreator.orElse(null);
-
-                            dataStore.fetch(
-                                    OffsetRange.UNBOUNDED,
-                                    OpenGroups.NONE,
-                                    resultRequest.getTimeFilter(),
-                                    rowCreator,
-                                    itemConsumer,
-                                    countConsumer);
-
-                        } finally {
-                            final List<String> errors = errorConsumer.getErrors();
-                            if (errors != null) {
-                                for (final String error : errors) {
-                                    if (executionResult.status == null) {
-                                        executionResult = new ExecutionResult("Error", error);
-                                    }
-
-                                    errorReceiverProxyProvider.get()
-                                            .getErrorReceiver()
-                                            .log(Severity.ERROR, null, null, error, null);
                                 }
                             }
 
-                            detectionConsumerProxy.end();
+                            List<DetectionLinkedEvent> linkedEvents = null;
+                            if (streamId != null || eventId != null) {
+                                linkedEvents = List.of(new DetectionLinkedEvent(null, streamId, eventId));
+                            }
+
+                            final Detection detection = Detection
+                                    .builder()
+                                    .withDetectTime(DateUtil.createNormalDateTimeString())
+                                    .withDetectorName(analytic.getName())
+                                    .withDetectorUuid(analytic.getUuid())
+                                    .withDetectorVersion(analytic.getVersion())
+                                    .withDetailedDescription(analytic.getDescription())
+                                    .withRandomDetectionUniqueId()
+                                    .withDetectionRevision(0)
+                                    .withExecutionSchedule(NullSafe
+                                            .get(executionSchedule, ExecutionSchedule::getName))
+                                    .withExecutionTime(executionTime)
+                                    .withEffectiveExecutionTime(effectiveExecutionTime)
+                                    .notDefunct()
+                                    .withValues(values)
+                                    .withLinkedEvents(linkedEvents)
+                                    .build();
+                            detectionConsumerProxy.getDetectionConsumer().accept(detection);
+                        };
+                        final Consumer<Long> countConsumer = count -> {
+
+                        };
+
+                        final KeyFactory keyFactory = dataStore.getKeyFactory();
+                        final ColumnFormatter fieldFormatter =
+                                new ColumnFormatter(
+                                        new FormatterFactory(sampleRequest.getDateTimeSettings()));
+
+                        // Create the row creator.
+                        Optional<ItemMapper<Row>> optionalRowCreator = FilteredRowCreator.create(
+                                fieldFormatter,
+                                keyFactory,
+                                tableSettings.getAggregateFilter(),
+                                dataStore.getColumns(),
+                                expressionContext.getDateTimeSettings(),
+                                errorConsumer);
+
+                        if (optionalRowCreator.isEmpty()) {
+                            optionalRowCreator = SimpleRowCreator.create(fieldFormatter, keyFactory, errorConsumer);
                         }
+
+                        final ItemMapper<Row> rowCreator = optionalRowCreator.orElse(null);
+
+                        dataStore.fetch(
+                                OffsetRange.UNBOUNDED,
+                                OpenGroups.NONE,
+                                resultRequest.getTimeFilter(),
+                                rowCreator,
+                                itemConsumer,
+                                countConsumer);
+
                     } finally {
-                        searchResponseCreatorManager.destroy(modifiedRequest.getKey(), DestroyReason.NO_LONGER_NEEDED);
+                        final List<String> errors = errorConsumer.getErrors();
+                        if (errors != null) {
+                            for (final String error : errors) {
+                                if (executionResult.status == null) {
+                                    executionResult = new ExecutionResult("Error", error);
+                                }
+
+                                errorReceiverProxyProvider.get()
+                                        .getErrorReceiver()
+                                        .log(Severity.ERROR, null, null, error, null);
+                            }
+                        }
+
+                        detectionConsumerProxy.end();
                     }
+                } finally {
+                    searchResponseCreatorManager.destroy(modifiedRequest.getKey(), DestroyReason.NO_LONGER_NEEDED);
                 }
             }
 

@@ -8,6 +8,8 @@ import stroom.search.extraction.FieldValueExtractor;
 import stroom.search.extraction.MemoryIndex;
 import stroom.search.extraction.ProcessLifecycleAware;
 
+import java.util.List;
+
 public class StreamingAnalyticFieldListConsumer extends AbstractAnalyticFieldListConsumer {
 
     private final ProcessLifecycleAware detectionConsumerProxy;
@@ -15,7 +17,6 @@ public class StreamingAnalyticFieldListConsumer extends AbstractAnalyticFieldLis
     public StreamingAnalyticFieldListConsumer(final SearchRequest searchRequest,
                                               final FieldIndex fieldIndex,
                                               final FieldValueExtractor fieldValueExtractor,
-                                              final NotificationState notificationState,
                                               final ValuesConsumer valuesConsumer,
                                               final MemoryIndex memoryIndex,
                                               final Long minEventId,
@@ -24,7 +25,6 @@ public class StreamingAnalyticFieldListConsumer extends AbstractAnalyticFieldLis
                 searchRequest,
                 fieldIndex,
                 fieldValueExtractor,
-                notificationState,
                 valuesConsumer,
                 memoryIndex,
                 minEventId);

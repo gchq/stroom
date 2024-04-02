@@ -6,6 +6,6 @@
         <g:FlowPanel styleName="dock-container-horizontal dock-min find-topBar">
             <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-max"/>
         </g:FlowPanel>
-        <g:SimplePanel ui:field="resultContainer" styleName="max stroom-control__no-padding overflow-hidden"/>
+        <g:SimplePanel ui:field="resultContainer" styleName="max form-control-border"/>
     </g:FlowPanel>
 </ui:UiBinder> 

@@ -18,12 +18,12 @@
 package stroom.query.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.analytics.shared.AnalyticNotificationConfig;
-import stroom.analytics.shared.AnalyticNotificationDestinationType;
-import stroom.analytics.shared.AnalyticNotificationStreamDestination;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleResource;
+import stroom.analytics.shared.NotificationConfig;
+import stroom.analytics.shared.NotificationDestinationType;
+import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.dispatch.client.RestFactory;
@@ -198,7 +198,8 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
                 .analyticProcessType(AnalyticProcessType.STREAMING)
-                .analyticNotificationConfig(createDefaultNotificationConfig(analyticUiDefaultConfig))
+                .notifications(createDefaultNotificationConfig(analyticUiDefaultConfig))
+                .errorFeed(analyticUiDefaultConfig.getDefaultErrorFeed())
                 .build();
         updateRule(ruleDocRef, updated);
     }
@@ -222,7 +223,8 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                 .query(query)
                 .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
 //                .analyticProcessConfig(analyticProcessConfig)
-                .analyticNotificationConfig(createDefaultNotificationConfig(analyticUiDefaultConfig))
+                .notifications(createDefaultNotificationConfig(analyticUiDefaultConfig))
+                .errorFeed(analyticUiDefaultConfig.getDefaultErrorFeed())
                 .build();
         updateRule(ruleDocRef, updated);
     }
@@ -245,27 +247,30 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                 .query(query)
                 .analyticProcessType(AnalyticProcessType.TABLE_BUILDER)
                 .analyticProcessConfig(analyticProcessConfig)
-                .analyticNotificationConfig(createDefaultNotificationConfig(analyticUiDefaultConfig))
+                .notifications(createDefaultNotificationConfig(analyticUiDefaultConfig))
+                .errorFeed(analyticUiDefaultConfig.getDefaultErrorFeed())
                 .build();
         updateRule(ruleDocRef, updated);
     }
 
-    private AnalyticNotificationConfig createDefaultNotificationConfig(
+    private List<NotificationConfig> createDefaultNotificationConfig(
             final AnalyticUiDefaultConfig analyticUiDefaultConfig) {
-        final AnalyticNotificationStreamDestination destination =
-                AnalyticNotificationStreamDestination.builder()
+        final NotificationStreamDestination destination =
+                NotificationStreamDestination.builder()
                         .useSourceFeedIfPossible(false)
                         .destinationFeed(analyticUiDefaultConfig.getDefaultDestinationFeed())
                         .build();
-        return AnalyticNotificationConfig
+        final NotificationConfig notificationConfig = NotificationConfig
                 .builder()
                 .limitNotifications(false)
                 .maxNotifications(100)
                 .resumeAfter(SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build())
-                .destinationType(AnalyticNotificationDestinationType.STREAM)
+                .destinationType(NotificationDestinationType.STREAM)
                 .destination(destination)
-                .errorFeed(analyticUiDefaultConfig.getDefaultErrorFeed())
                 .build();
+        final List<NotificationConfig> list = new ArrayList<>();
+        list.add(notificationConfig);
+        return list;
     }
 
     private void updateRule(final DocRef ruleDocRef,
