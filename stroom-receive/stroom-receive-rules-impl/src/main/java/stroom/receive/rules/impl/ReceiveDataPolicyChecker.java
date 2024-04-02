@@ -93,7 +93,7 @@ class ReceiveDataPolicyChecker {
                 // Create a map of fields.
                 final Map<String, QueryField> fieldMap = dataReceiptPolicy.getFields()
                         .stream()
-                        .collect(Collectors.toMap(QueryField::getName, Function.identity()));
+                        .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
 
                 // Also make sure we create a list of rules that are enabled and have at least one enabled term.
                 final Set<String> fieldSet = new HashSet<>();
@@ -115,7 +115,7 @@ class ReceiveDataPolicyChecker {
                         .stream()
                         .map(fieldMap::get)
                         .filter(Objects::nonNull)
-                        .collect(Collectors.toMap(QueryField::getName, Function.identity()));
+                        .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
 
                 final ExpressionMatcher expressionMatcher = expressionMatcherFactory.create(usedFieldMap);
                 checker = new CheckerImpl(expressionMatcher, activeRules, fieldMap);
@@ -180,7 +180,7 @@ class ReceiveDataPolicyChecker {
             fieldMap.forEach((fieldName, field) -> {
                 try {
                     final String string = attributeMap.get(fieldName);
-                    switch (field.getFieldType()) {
+                    switch (field.getFldType()) {
                         case TEXT:
                             map.put(fieldName, string);
                             break;

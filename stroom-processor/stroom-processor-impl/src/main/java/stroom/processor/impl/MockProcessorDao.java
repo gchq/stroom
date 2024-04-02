@@ -25,7 +25,7 @@ public class MockProcessorDao implements ProcessorDao, Clearable {
     @Override
     public Processor create(final Processor processor) {
         final ExpressionOperator findProcessorExpression = ExpressionOperator.builder()
-                .addTerm(ProcessorFields.PIPELINE,
+                .addDocRefTerm(ProcessorFields.PIPELINE,
                         Condition.IS_DOC_REF,
                         new DocRef("Pipeline", processor.getPipelineUuid()))
                 .build();
@@ -86,7 +86,7 @@ public class MockProcessorDao implements ProcessorDao, Clearable {
                 .stream()
                 .filter(pf -> {
                     final List<String> pipelineUuids = ExpressionUtil.values(criteria.getExpression(),
-                            ProcessorFields.PIPELINE.getName());
+                            ProcessorFields.PIPELINE.getFldName());
                     return pipelineUuids == null || pipelineUuids.contains(pf.getPipelineUuid());
                 })
                 .collect(Collectors.toList());

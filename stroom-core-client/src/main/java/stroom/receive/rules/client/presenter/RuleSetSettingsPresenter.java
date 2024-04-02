@@ -18,7 +18,6 @@
 package stroom.receive.rules.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.query.api.v2.ExpressionOperator;
@@ -43,7 +42,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class RuleSetSettingsPresenter
         extends DocumentEditPresenter<RuleSetSettingsView, ReceiveDataRules> {
@@ -299,11 +297,7 @@ public class RuleSetSettingsPresenter
 
         if (document != null) {
             fieldSelectionBoxModel.clear();
-            fieldSelectionBoxModel.addItems(document
-                    .getFields()
-                    .stream()
-                    .map(FieldInfo::create)
-                    .collect(Collectors.toList()));
+            fieldSelectionBoxModel.addItems(document.getFields());
             this.rules = document.getRules();
             listPresenter.getSelectionModel().clear();
             setDirty(false);

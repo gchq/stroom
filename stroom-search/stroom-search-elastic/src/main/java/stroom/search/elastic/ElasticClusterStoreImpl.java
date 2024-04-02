@@ -17,6 +17,7 @@
 
 package stroom.search.elastic;
 
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
@@ -42,6 +43,11 @@ import java.util.Set;
 @Singleton
 public class ElasticClusterStoreImpl implements ElasticClusterStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            ElasticClusterDoc.DOCUMENT_TYPE,
+            "Elastic Cluster",
+            ElasticClusterDoc.ICON);
     private final Store<ElasticClusterDoc> store;
 
     @Inject
@@ -92,11 +98,7 @@ public class ElasticClusterStoreImpl implements ElasticClusterStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.CONFIGURATION,
-                ElasticClusterDoc.DOCUMENT_TYPE,
-                "Elastic Cluster",
-                ElasticClusterDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -199,5 +201,12 @@ public class ElasticClusterStoreImpl implements ElasticClusterStore {
     @Override
     public List<DocContentMatch> findByContent(final StringMatch filter) {
         return store.findByContent(filter);
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final DocRef docRef,
+                                                final String extension,
+                                                final StringMatch filter) {
+        return store.fetchHighlights(docRef, extension, filter);
     }
 }

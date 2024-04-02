@@ -16,6 +16,7 @@
 
 package stroom.query.common.v2;
 
+import stroom.expression.api.DateTimeSettings;
 import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.OffsetRange;
@@ -28,8 +29,8 @@ import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
-import stroom.query.util.LambdaLogger;
-import stroom.query.util.LambdaLoggerFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -75,6 +76,7 @@ public class MapDataStore implements DataStore {
     private final CompletionState completionState = new CompletionStateImpl();
     private final KeyFactory keyFactory;
     private final ErrorConsumer errorConsumer;
+    private final DateTimeSettings dateTimeSettings;
 
     private volatile boolean hasEnoughData;
 
@@ -89,6 +91,7 @@ public class MapDataStore implements DataStore {
         this.componentId = componentId;
         this.serialisers = serialisers;
         columns = tableSettings.getColumns();
+        this.dateTimeSettings = expressionContext == null ? null : expressionContext.getDateTimeSettings();
         this.compiledColumns = CompiledColumns.create(expressionContext, columns, fieldIndex, paramMap);
         valueReferenceIndex = compiledColumns.getValueReferenceIndex();
         this.compiledColumnsArray = compiledColumns.getCompiledColumns();
@@ -453,6 +456,11 @@ public class MapDataStore implements DataStore {
     @Override
     public KeyFactory getKeyFactory() {
         return keyFactory;
+    }
+
+    @Override
+    public DateTimeSettings getDateTimeSettings() {
+        return dateTimeSettings;
     }
 
     private static class ValCache {

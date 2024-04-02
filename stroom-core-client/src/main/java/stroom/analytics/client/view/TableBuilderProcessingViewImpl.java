@@ -54,8 +54,6 @@ public class TableBuilderProcessingViewImpl
     @UiField
     SelectionBox<String> node;
     @UiField
-    SimplePanel errorFeed;
-    @UiField
     MyDateBox minMetaCreateTimeMs;
     @UiField
     MyDateBox maxMetaCreateTimeMs;
@@ -118,11 +116,6 @@ public class TableBuilderProcessingViewImpl
             selectedNode = node;
             this.node.setValue(node);
         }
-    }
-
-    @Override
-    public void setErrorFeedView(final View view) {
-        this.errorFeed.setWidget(view.asWidget());
     }
 
     @Override

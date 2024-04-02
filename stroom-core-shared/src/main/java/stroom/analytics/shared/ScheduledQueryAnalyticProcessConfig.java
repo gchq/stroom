@@ -11,16 +11,17 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
+@Deprecated
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class ScheduledQueryAnalyticProcessConfig extends AnalyticProcessConfig {
 
     @JsonProperty
-    boolean enabled;
+    private final boolean enabled;
     @JsonProperty
-    final String node;
+    private final String node;
     @JsonProperty
-    final DocRef errorFeed;
+    private final DocRef errorFeed;
     @JsonProperty
     private final Long minEventTimeMs;
     @JsonProperty
@@ -52,14 +53,11 @@ public class ScheduledQueryAnalyticProcessConfig extends AnalyticProcessConfig {
         return enabled;
     }
 
-    public void setEnabled(final boolean enabled) {
-        this.enabled = enabled;
-    }
-
     public String getNode() {
         return node;
     }
 
+    @Deprecated
     public DocRef getErrorFeed() {
         return errorFeed;
     }

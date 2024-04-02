@@ -21,7 +21,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -81,14 +81,14 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<ProcessorTaskSummary>> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
+                                final Consumer<RestError> errorConsumer) {
                 CriteriaUtil.setRange(criteria, range);
-                final Rest<ResultPage<ProcessorTaskSummary>> rest = restFactory.create();
-                rest
+                restFactory
+                        .create(PROCESSOR_TASK_RESOURCE)
+                        .method(res -> res.findSummary(criteria))
                         .onSuccess(dataConsumer)
-                        .onFailure(throwableConsumer)
-                        .call(PROCESSOR_TASK_RESOURCE)
-                        .findSummary(criteria);
+                        .onFailure(errorConsumer)
+                        .exec();
             }
 
             @Override
@@ -129,18 +129,20 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
         };
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
 
-        dataGrid.addResizableColumn(new Column<ProcessorTaskSummary, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<ProcessorTaskSummary, DocRef>(
+                new DocRefCell(getEventBus(), false)) {
             @Override
-            public String getValue(final ProcessorTaskSummary row) {
-                return row.getPipeline().getName();
+            public DocRef getValue(final ProcessorTaskSummary row) {
+                return row.getPipeline();
             }
         }, "Pipeline", ColumnSizeConstants.BIG_COL);
 
         dataGrid.addResizableColumn(
-                new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(), ProcessorTaskFields.FIELD_FEED, true) {
+                new OrderByColumn<ProcessorTaskSummary, DocRef>(
+                        new DocRefCell(getEventBus(), true), ProcessorTaskFields.FIELD_FEED, true) {
                     @Override
-                    public String getValue(final ProcessorTaskSummary row) {
-                        return row.getFeed();
+                    public DocRef getValue(final ProcessorTaskSummary row) {
+                        return new DocRef(FeedDoc.DOCUMENT_TYPE, null, row.getFeed());
                     }
                 }, "Feed", ColumnSizeConstants.BIG_COL);
 

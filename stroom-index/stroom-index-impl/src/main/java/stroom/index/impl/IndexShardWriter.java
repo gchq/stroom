@@ -23,19 +23,13 @@ public interface IndexShardWriter {
 
     void addDocument(IndexDocument document) throws IndexException;
 
-    void updateIndexStructure(IndexStructure indexStructure);
+    void setMaxDocumentCount(int maxDocumentCount);
 
     void flush();
 
     void close();
 
-//     IndexWriter getWriter() {
-//        return indexWriter;
-//    }
-
     int getDocumentCount();
-
-    IndexShardKey getIndexShardKey();
 
     long getIndexShardId();
 

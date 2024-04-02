@@ -1,13 +1,27 @@
-.editor * {
+.editor,
+.editor.ace_editor * {
     font-family: "Roboto Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace, "Courier New";
-    font-size: var(--font-size-12);
-    line-height: 14px;
+}
+
+.stroom-font-size-small .editor,
+.stroom-font-size-small .editor * {
+    font-size: 12px !important;
+    line-height: 14px !important;
+}
+
+.stroom-font-size-medium .editor,
+.stroom-font-size-medium .editor * {
+    font-size: .875rem !important;
+    line-height: 16px !important;
+}
+
+.stroom-font-size-large .editor,
+.stroom-font-size-large .editor * {
+    font-size: 1rem !important;
+    line-height: 18px !important;
 }
 
 .editor.ace_editor {
-    font-family: "Roboto Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace, "Courier New";
-    font-size: var(--font-size-12);
-    line-height: 14px;
     width: 100%;
     height: 100%;
 }
@@ -15,12 +29,25 @@
 .editor .hl {
     position: absolute;
 	background-color: var(--code-editor__background-color--highlight);
+	z-index: 2;
 }
 
 .editor .err {
     position: absolute;
     border-bottom: 1px solid red;
     border-radius: 0;
+}
+
+.stroom-font-size-small .editor.single-line-editor {
+    height: 16px;
+}
+
+.stroom-font-size-medium .editor.single-line-editor {
+    height: 18px;
+}
+
+.stroom-font-size-large .editor.single-line-editor {
+    height: 20px;
 }
 
 .editor .ace_tooltip {

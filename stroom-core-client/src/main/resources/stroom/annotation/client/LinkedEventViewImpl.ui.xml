@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <g:SimplePanel styleName="max default-min-sizes">
         <g:MySplitLayoutPanel styleName="max">
-            <g:west size="250">
+            <g:west size="300">
                 <g:SimplePanel ui:field="eventList" styleName="max stroom-control"/>
             </g:west>
             <g:center>

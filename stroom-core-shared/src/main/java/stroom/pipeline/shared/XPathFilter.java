@@ -124,6 +124,7 @@ public class XPathFilter {
         EXISTS("exists", false),
         CONTAINS("contains", true),
         EQUALS("equals", true),
+        NOT_EQUALS("not equals", true),
         UNIQUE("unique values", false);
 
         private final String displayValue;

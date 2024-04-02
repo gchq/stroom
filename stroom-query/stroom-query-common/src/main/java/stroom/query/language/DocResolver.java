@@ -1,17 +1,21 @@
 package stroom.query.language;
 
+import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.query.common.v2.DataSourceProviderRegistry;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 
 public class DocResolver {
@@ -65,16 +69,22 @@ public class DocResolver {
     }
 
     private DocRef getDataSourceRefFromUuid(final String uuid) {
+        final DocRefInfoService docRefInfoService = docRefInfoServiceProvider.get();
         final DataSourceProviderRegistry dataSourceProviderRegistry = dataSourceProviderRegistryProvider.get();
-        final Optional<DocRef> optional = dataSourceProviderRegistry
-                .list()
-                .stream()
-                .filter(docRef -> docRef.getUuid().equals(uuid))
-                .findAny();
-        if (optional.isPresent()) {
-            return optional.get();
-        }
-        throw new RuntimeException("Data source not found with uuid \"" + uuid + "\"");
+        // Make sure that the uuid is both a valid docref and the type
+        // is considered a datasource, i.e. there is a provider for that type
+        final DocRef docRef = docRefInfoService.info(uuid)
+                .map(DocRefInfo::getDocRef)
+                .orElseThrow(() ->
+                        new RuntimeException("Data source not found with uuid \"" + uuid + "\""));
+
+        dataSourceProviderRegistry.getDataSourceProvider(
+                docRef.getType())
+                .orElseThrow(() -> new RuntimeException(
+                        "No datasource provider found for type '" + docRef.getType() + "'"));
+
+        // Type has a provider so all good
+        return docRef;
     }
 
     private DocRef getDataSourceRefFromName(final String name) {
@@ -84,7 +94,7 @@ public class DocResolver {
                 .stream()
                 .filter(docRef -> docRef.getName().equals(name))
                 .toList();
-        if (docRefs.size() == 0) {
+        if (docRefs.isEmpty()) {
             throw new RuntimeException("Data source \"" + name + "\" not found");
         } else if (docRefs.size() > 1) {
             throw new RuntimeException("Multiple data sources found for \"" + name + "\"");

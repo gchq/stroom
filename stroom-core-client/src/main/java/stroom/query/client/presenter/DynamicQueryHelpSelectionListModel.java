@@ -4,6 +4,7 @@ import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
+import stroom.item.client.SelectionList;
 import stroom.item.client.SelectionListModel;
 import stroom.query.shared.QueryHelpRequest;
 import stroom.query.shared.QueryHelpRow;
@@ -26,21 +27,29 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
+    private static final String NONE_TITLE = "[ none ]";
+
     private final RestFactory restFactory;
 
     private DocRef dataSourceRef;
     private String query;
     private boolean showAll = true;
     private QueryHelpRequest lastRequest;
+    private SelectionList<QueryHelpRow, QueryHelpSelectionItem> selectionList;
 
     @Inject
     public DynamicQueryHelpSelectionListModel(final RestFactory restFactory) {
         this.restFactory = restFactory;
     }
 
+    public void setSelectionList(final SelectionList<QueryHelpRow, QueryHelpSelectionItem> selectionList) {
+        this.selectionList = selectionList;
+    }
+
     @Override
     public void onRangeChange(final QueryHelpSelectionItem parent,
                               final String filter,
+                              final boolean filterChange,
                               final PageRequest pageRequest,
                               final Consumer<ResultPage<QueryHelpSelectionItem>> consumer) {
         final String parentId;
@@ -68,8 +77,9 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
         if (!request.equals(lastRequest)) {
             lastRequest = request;
 
-            restFactory.builder()
-                    .forResultPageOf(QueryHelpRow.class)
+            restFactory
+                    .create(QUERY_RESOURCE)
+                    .method(res -> res.fetchQueryHelpItems(request))
                     .onSuccess(response -> {
                         // Only update if the request is still current.
                         if (request == lastRequest) {
@@ -88,7 +98,7 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
                                                 .builder()
                                                 .type(QueryHelpType.TITLE)
                                                 .id(parentId + "none")
-                                                .title("[ none ]")
+                                                .title(NONE_TITLE)
                                                 .build()));
                                 resultPage = new ResultPage<>(rows, new PageResponse(0, 1, 1L, true));
                             }
@@ -96,8 +106,7 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
                             consumer.accept(resultPage);
                         }
                     })
-                    .call(QUERY_RESOURCE)
-                    .fetchQueryHelpItems(request);
+                    .exec();
         }
     }
 
@@ -136,6 +145,11 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
             return null;
         }
         return selectionItem.getQueryHelpRow();
+    }
+
+    @Override
+    public boolean isEmptyItem(final QueryHelpSelectionItem selectionItem) {
+        return NONE_TITLE.equals(selectionItem.getLabel());
     }
 
     public void setDataSourceRef(final DocRef dataSourceRef) {

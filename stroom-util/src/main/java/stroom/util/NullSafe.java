@@ -47,6 +47,30 @@ public class NullSafe {
     }
 
     /**
+     * Test if the properties (accessed using the same getter for both) of two
+     * objects of the same class are equal in a null safe way.
+     *
+     * @return True if val1 and val2 are both null or if the results of applying {@code getter}
+     * to va1 and val2 are equal.
+     */
+    public static <T, R> boolean equalProperties(final T val1,
+                                                 final T val2,
+                                                 final Function<T, R> getter) {
+        if (val1 == null && val2 == null) {
+            return true;
+        } else if (val1 != null && val2 == null) {
+            return false;
+        } else if (val1 == null) {
+            return false;
+        } else {
+            Objects.requireNonNull(getter);
+            final R result1 = getter.apply(val1);
+            final R result2 = getter.apply(val2);
+            return Objects.equals(result1, result2);
+        }
+    }
+
+    /**
      * @return True if all values in the array are null or the array itself is null
      */
     public static <T> boolean allNull(final T... vals) {
@@ -143,6 +167,24 @@ public class NullSafe {
     }
 
     /**
+     * @return str if it is non-null and non-blank, else return other
+     */
+    public static String nonBlankStringElse(final String str, final String other) {
+        return str != null && !str.isBlank()
+                ? str
+                : other;
+    }
+
+    /**
+     * @return str if it is non-null and non-blank, else return the value supplied by otherSupplier
+     */
+    public static String nonBlankStringElseGet(final String str, final Supplier<String> otherSupplier) {
+        return str != null && !str.isBlank()
+                ? str
+                : Objects.requireNonNull(otherSupplier).get();
+    }
+
+    /**
      * @return True if str is null or empty
      */
     public static boolean isEmptyString(final String str) {
@@ -156,6 +198,24 @@ public class NullSafe {
         return val != null && val;
     }
 
+    /**
+     * @return The un-boxed value if non-null, else zero.
+     */
+    public static int getInt(final Integer val) {
+        return val != null
+                ? val
+                : 0;
+    }
+
+    /**
+     * @return The un-boxed value if non-null, else zero.
+     */
+    public static long getLong(final Long val) {
+        return val != null
+                ? val
+                : 0;
+    }
+
     public static Optional<String> nonBlank(final String str) {
         if (isBlankString(str)) {
             return Optional.empty();
@@ -165,7 +225,8 @@ public class NullSafe {
     }
 
     /**
-     * @return True if both str and subStr are non-null and str contains subStr
+     * @return True if both str and subStr are non-null and str contains subStr.
+     * Case-sensitive.
      */
     public static boolean contains(final String str, final String subStr) {
         return str != null
@@ -174,10 +235,27 @@ public class NullSafe {
     }
 
     /**
+     * @return True if both str and subStr are non-null and str contains subStr
+     * Case-insensitive.
+     */
+    public static boolean containsIgnoringCase(final String str, final String subStr) {
+        return str != null
+                && subStr != null
+                && str.toLowerCase().contains(subStr.toLowerCase());
+    }
+
+    /**
      * @return True if the collection is null or empty
      */
     public static <T> boolean isEmptyCollection(final Collection<T> collection) {
         return collection == null || collection.isEmpty();
+    }
+
+    /**
+     * @return True if the array is null or empty
+     */
+    public static <T> boolean isEmptyArray(final T[] arr) {
+        return arr == null || arr.length == 0;
     }
 
     /**
@@ -239,6 +317,13 @@ public class NullSafe {
                     .apply(value);
             return map == null || map.isEmpty();
         }
+    }
+
+    /**
+     * @return True if the collection is non-null and not empty
+     */
+    public static <T> boolean hasItems(final T... items) {
+        return items != null && items.length > 0;
     }
 
     /**
@@ -322,6 +407,8 @@ public class NullSafe {
     public static <T> Stream<T> stream(final T... items) {
         if (items == null || items.length == 0) {
             return Stream.empty();
+        } else if (items.length == 1) {
+            return Stream.of(items[0]);
         } else {
             return Arrays.stream(items);
         }
@@ -567,7 +654,7 @@ public class NullSafe {
     }
 
     /**
-     * If value is non-null pass it to the consumer, else it is a no-op.
+     * If value and consumer are non-null pass it to the consumer, else it is a no-op.
      */
     public static <T> void consume(final T value,
                                    final Consumer<T> consumer) {

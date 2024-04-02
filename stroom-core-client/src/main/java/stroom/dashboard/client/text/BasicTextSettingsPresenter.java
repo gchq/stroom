@@ -23,7 +23,7 @@ import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TextComponentSettings;
 import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.Column;
 import stroom.security.shared.DocumentPermissionNames;
@@ -42,14 +42,14 @@ public class BasicTextSettingsPresenter
         extends BasicSettingsTabPresenter<BasicTextSettingsPresenter.BasicTextSettingsView>
         implements BasicTextSettingsUiHandlers, Focus {
 
-    private final EntityDropDownPresenter pipelinePresenter;
+    private final DocSelectionBoxPresenter pipelinePresenter;
     private List<Component> tableList;
     private boolean ignoreTableChange;
     private final List<Column> allColumns = new ArrayList<>();
 
     @Inject
     public BasicTextSettingsPresenter(final EventBus eventBus, final BasicTextSettingsView view,
-                                      final EntityDropDownPresenter pipelinePresenter) {
+                                      final DocSelectionBoxPresenter pipelinePresenter) {
         super(eventBus, view);
         this.pipelinePresenter = pipelinePresenter;
 

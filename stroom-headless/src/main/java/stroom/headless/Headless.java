@@ -172,13 +172,13 @@ public class Headless extends AbstractCommandLineTool {
             // Initialise some variables.
             init();
 
+            final Path tempDir = Paths.get(tmp);
+            final String path = FileUtil.getCanonicalPath(tempDir);
+            System.setProperty(TempDirProviderImpl.PROP_STROOM_TEMP, path);
+            System.setProperty(HomeDirProviderImpl.PROP_STROOM_HOME, path);
+
             // Create the Guice injector and inject members.
             createInjector();
-
-            // Setup temp dir.
-            final Path tempDir = Paths.get(tmp);
-            homeDirProvider.setHomeDir(tempDir);
-            tempDirProvider.setTempDir(tempDir);
 
             process();
         } finally {

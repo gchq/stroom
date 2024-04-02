@@ -4,13 +4,13 @@
 package stroom.security.identity.db.jooq.tables.records;
 
 
-import stroom.security.identity.db.jooq.tables.OauthClient;
-
 import org.jooq.Field;
 import org.jooq.Record1;
 import org.jooq.Record10;
 import org.jooq.Row10;
 import org.jooq.impl.UpdatableRecordImpl;
+
+import stroom.security.identity.db.jooq.tables.OauthClient;
 
 
 /**

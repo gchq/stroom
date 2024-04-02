@@ -17,13 +17,11 @@
 package stroom.query.client.presenter;
 
 import stroom.data.shared.DataResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.HtmlPresenter;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
-import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.SourceLocation;
@@ -72,6 +70,9 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
     private HtmlPresenter htmlPresenter;
 
     private boolean isHtml;
+
+    private Runnable showFunction;
+    private Runnable hideFunction;
 
     @Inject
     public TextPresenter(final EventBus eventBus,
@@ -270,7 +271,12 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
         return highlights;
     }
 
-    public void show(final SourceLocation sourceLocation) {
+    public void show(final SourceLocation sourceLocation,
+                     final Runnable showFunction,
+                     final Runnable hideFunction) {
+        this.showFunction = showFunction;
+        this.hideFunction = hideFunction;
+
         final FetchDataRequest request = new FetchDataRequest(sourceLocation);
 //        request.setPipeline(getTextSettings().getPipeline());
 //        request.setShowAsHtml(getTextSettings().isShowAsHtml());
@@ -279,6 +285,13 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
         fetchDataQueue.add(request);
         delayedFetchDataTimer.cancel();
         delayedFetchDataTimer.schedule(250);
+    }
+
+    @Override
+    public void close() {
+        if (hideFunction != null) {
+            hideFunction.run();
+        }
     }
 
 //
@@ -558,8 +571,9 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
                     final FetchDataRequest request = fetchDataQueue.get(fetchDataQueue.size() - 1);
                     fetchDataQueue.clear();
 
-                    final Rest<AbstractFetchDataResult> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .create(DATA_RESOURCE)
+                            .method(res -> res.fetch(request))
                             .onSuccess(result -> {
                                 // If we are queueing more actions then don't update
                                 // the text.
@@ -578,6 +592,12 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
                                                         currentHighlightStrings,
                                                         fetchDataResult.isHtml());
                                             }
+
+                                            // Ensure pane is showing.
+                                            if (showFunction != null) {
+                                                showFunction.run();
+                                            }
+
                                         } else {
                                             isHtml = false;
                                             showData("", null, currentHighlightStrings, false);
@@ -587,8 +607,7 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
                                     }
                                 }
                             })
-                            .call(DATA_RESOURCE)
-                            .fetch(request);
+                            .exec();
                 }
             };
         }

@@ -103,6 +103,10 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
                     newCacheConfig.getExpireAfterWrite(),
                     StroomDuration::getDuration,
                     newCacheBuilder::expireAfterWrite);
+            NullSafe.consume(
+                    newCacheConfig.getRefreshAfterWrite(),
+                    StroomDuration::getDuration,
+                    newCacheBuilder::refreshAfterWrite);
 
             if (removalNotificationConsumer != null) {
                 final RemovalListener<K, V> removalListener = createRemovalListener();

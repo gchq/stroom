@@ -17,7 +17,9 @@
 package stroom.query.shared;
 
 import stroom.docref.DocRef;
+import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
+import stroom.query.api.v2.TimeRange;
 import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -28,6 +30,13 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
+@Description(
+        "A Query Document defines a {{< glossary \"StroomQL\" >}} query and is used to execute that query " +
+                "and view its results.\n" +
+                "A Query can query main types of data source including " +
+                "[Views]({{< relref \"#view\" >}}), [Lucene Indexes]({{< relref \"#lucene-index\" >}}), and " +
+                "{{< glossary \"searchable\" \"Searchables\" >}}."
+)
 @JsonPropertyOrder({
         "type",
         "uuid",
@@ -38,6 +47,7 @@ import java.util.Objects;
         "createUser",
         "updateUser",
         "description",
+        "timeRange",
         "query"})
 @JsonInclude(Include.NON_NULL)
 public class QueryDoc extends Doc {
@@ -47,6 +57,8 @@ public class QueryDoc extends Doc {
 
     @JsonProperty
     private String description;
+    @JsonProperty
+    private TimeRange timeRange;
     @JsonProperty
     private String query;
 
@@ -63,9 +75,11 @@ public class QueryDoc extends Doc {
                     @JsonProperty("createUser") final String createUser,
                     @JsonProperty("updateUser") final String updateUser,
                     @JsonProperty("description") final String description,
+                    @JsonProperty("timeRange") TimeRange timeRange,
                     @JsonProperty("query") final String query) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
+        this.timeRange = timeRange;
         this.query = query;
     }
 
@@ -91,6 +105,14 @@ public class QueryDoc extends Doc {
 
     public void setDescription(final String description) {
         this.description = description;
+    }
+
+    public TimeRange getTimeRange() {
+        return timeRange;
+    }
+
+    public void setTimeRange(final TimeRange timeRange) {
+        this.timeRange = timeRange;
     }
 
     public String getQuery() {

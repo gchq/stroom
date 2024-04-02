@@ -42,7 +42,7 @@ public class HomeDirProviderImpl implements HomeDirProvider {
                     Paths::get);
             if (path != null) {
                 LOGGER.warn("Using system property {} for stroom home: {}. " +
-                        "This overrides the value in the config file and is only intended for testing.",
+                                "This overrides the value in the config file and is only intended for testing.",
                         HomeDirProvider.PROP_STROOM_HOME, path);
             }
 
@@ -112,9 +112,5 @@ public class HomeDirProviderImpl implements HomeDirProvider {
             LOGGER.warn("Unable to determine application jar directory due to: {}", e.getMessage());
             return Optional.empty();
         }
-    }
-
-    public void setHomeDir(final Path homeDir) {
-        this.homeDir = homeDir;
     }
 }

@@ -17,10 +17,11 @@
 package stroom.processor.impl;
 
 import stroom.processor.shared.ProcessorTaskList;
+import stroom.task.shared.TaskId;
 
 public interface ProcessorTaskQueueManager {
 
-    ProcessorTaskList assignTasks(String nodeName, int count);
+    ProcessorTaskList assignTasks(TaskId sourceTaskId, String nodeName, int count);
 
     Boolean abandonTasks(ProcessorTaskList processorTaskList);
 

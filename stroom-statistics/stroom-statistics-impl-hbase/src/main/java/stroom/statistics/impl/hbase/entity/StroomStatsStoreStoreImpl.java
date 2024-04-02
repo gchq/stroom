@@ -17,6 +17,7 @@
 
 package stroom.statistics.impl.hbase.entity;
 
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
@@ -42,6 +43,11 @@ import java.util.Set;
 @Singleton
 class StroomStatsStoreStoreImpl implements StroomStatsStoreStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            StroomStatsStoreDoc.DOCUMENT_TYPE,
+            "Stroom-Stats Store",
+            StroomStatsStoreDoc.ICON);
     private final Store<StroomStatsStoreDoc> store;
 
     @Inject
@@ -90,11 +96,7 @@ class StroomStatsStoreStoreImpl implements StroomStatsStoreStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.INDEXING,
-                StroomStatsStoreDoc.DOCUMENT_TYPE,
-                "Stroom-Stats Store",
-                StroomStatsStoreDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -197,5 +199,12 @@ class StroomStatsStoreStoreImpl implements StroomStatsStoreStore {
     @Override
     public List<DocContentMatch> findByContent(final StringMatch filter) {
         return store.findByContent(filter);
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final DocRef docRef,
+                                                final String extension,
+                                                final StringMatch filter) {
+        return store.fetchHighlights(docRef, extension, filter);
     }
 }

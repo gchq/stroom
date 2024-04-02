@@ -4,8 +4,11 @@ import stroom.analytics.api.NotificationState;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.search.extraction.FieldValueExtractor;
 import stroom.search.extraction.MemoryIndex;
 import stroom.search.extraction.ProcessLifecycleAware;
+
+import java.util.List;
 
 public class StreamingAnalyticFieldListConsumer extends AbstractAnalyticFieldListConsumer {
 
@@ -13,12 +16,18 @@ public class StreamingAnalyticFieldListConsumer extends AbstractAnalyticFieldLis
 
     public StreamingAnalyticFieldListConsumer(final SearchRequest searchRequest,
                                               final FieldIndex fieldIndex,
-                                              final NotificationState notificationState,
+                                              final FieldValueExtractor fieldValueExtractor,
                                               final ValuesConsumer valuesConsumer,
                                               final MemoryIndex memoryIndex,
                                               final Long minEventId,
-                                              final ProcessLifecycleAware detectionConsumerProxy) {
-        super(searchRequest, fieldIndex, notificationState, valuesConsumer, memoryIndex, minEventId);
+                                              final DetectionConsumerProxy detectionConsumerProxy) {
+        super(
+                searchRequest,
+                fieldIndex,
+                fieldValueExtractor,
+                valuesConsumer,
+                memoryIndex,
+                minEventId);
         this.detectionConsumerProxy = detectionConsumerProxy;
     }
 

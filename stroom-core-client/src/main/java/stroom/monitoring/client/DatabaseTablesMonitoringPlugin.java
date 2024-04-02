@@ -26,6 +26,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -45,7 +46,7 @@ public class DatabaseTablesMonitoringPlugin extends MonitoringPlugin<DatabaseTab
 
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
-        if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_DB_PERMISSION)) {
+        if (getSecurityContext().hasAppPermission(getRequiredAppPermission())) {
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
                     new IconMenuItem.Builder()
                             .priority(7)
@@ -55,5 +56,15 @@ public class DatabaseTablesMonitoringPlugin extends MonitoringPlugin<DatabaseTab
                             .command(this::open)
                             .build());
         }
+    }
+
+    @Override
+    protected String getRequiredAppPermission() {
+        return PermissionNames.MANAGE_DB_PERMISSION;
+    }
+
+    @Override
+    protected Action getOpenAction() {
+        return null;
     }
 }

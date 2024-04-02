@@ -1,6 +1,6 @@
 package stroom.query.common.v2;
 
-import stroom.datasource.api.v2.DateField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.DestroyReason;
@@ -270,7 +270,7 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
                 .build();
     }
 
-    private SearchRequest addTimeRangeExpression(final DateField partitionTimeField,
+    private SearchRequest addTimeRangeExpression(final QueryField partitionTimeField,
                                                  final SearchRequest searchRequest) {
         SearchRequest result = searchRequest;
 
@@ -280,13 +280,13 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
             if (timeRange != null && (timeRange.getFrom() != null || timeRange.getTo() != null)) {
                 ExpressionOperator.Builder and = ExpressionOperator.builder().op(Op.AND);
                 if (timeRange.getFrom() != null) {
-                    and.addTerm(
+                    and.addDateTerm(
                             partitionTimeField,
                             Condition.GREATER_THAN_OR_EQUAL_TO,
                             timeRange.getFrom());
                 }
                 if (timeRange.getTo() != null) {
-                    and.addTerm(
+                    and.addDateTerm(
                             partitionTimeField,
                             Condition.LESS_THAN,
                             timeRange.getTo());

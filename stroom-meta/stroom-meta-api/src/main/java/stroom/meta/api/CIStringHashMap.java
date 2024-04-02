@@ -127,6 +127,10 @@ class CIStringHashMap implements Map<String, String> {
         return Objects.hash(map);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     protected static class CIString implements Comparable<CIString>, Serializable {
 
         private final String key;
@@ -141,10 +145,6 @@ class CIStringHashMap implements Map<String, String> {
             return key;
         }
 
-        public String getLowerKey() {
-            return lowerKey;
-        }
-
         @Override
         public boolean equals(final Object o) {
             if (this == o) {
@@ -154,12 +154,12 @@ class CIStringHashMap implements Map<String, String> {
                 return false;
             }
             final CIString ciString = (CIString) o;
-            return Objects.equals(lowerKey, ciString.lowerKey);
+            return lowerKey.equals(ciString.lowerKey);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(lowerKey);
+            return lowerKey.hashCode();
         }
 
         @Override
@@ -172,6 +172,10 @@ class CIStringHashMap implements Map<String, String> {
             return key;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class CIEntryAdaptor implements Entry<String, String> {
 

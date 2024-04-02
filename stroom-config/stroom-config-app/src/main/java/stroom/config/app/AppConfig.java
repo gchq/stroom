@@ -17,6 +17,7 @@ import stroom.feed.impl.FeedConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.importexport.impl.ExportConfig;
 import stroom.index.impl.IndexConfig;
+import stroom.index.impl.IndexFieldDbConfig;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.job.impl.JobSystemConfig;
 import stroom.kafka.impl.KafkaConfig;
@@ -26,7 +27,6 @@ import stroom.lmdb.LmdbLibraryConfig;
 import stroom.node.impl.NodeConfig;
 import stroom.pipeline.PipelineConfig;
 import stroom.processor.impl.ProcessorConfig;
-import stroom.query.field.impl.QueryFieldConfig;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
@@ -130,7 +130,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final ProcessorConfig processorConfig;
     private final PropertyServiceConfig propertyServiceConfig;
     private final PublicUriConfig publicUri;
-    private final QueryFieldConfig queryDataSourceConfig;
+    private final IndexFieldDbConfig queryDataSourceConfig;
     private final ReceiveDataConfig receiveDataConfig;
     private final SearchConfig searchConfig;
     private final SecurityConfig securityConfig;
@@ -176,7 +176,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                 new ProcessorConfig(),
                 new PropertyServiceConfig(),
                 new PublicUriConfig(),
-                new QueryFieldConfig(),
+                new IndexFieldDbConfig(),
                 new ReceiveDataConfig(),
                 new SearchConfig(),
                 new SecurityConfig(),
@@ -221,7 +221,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_PROCESSOR) final ProcessorConfig processorConfig,
                      @JsonProperty(PROP_NAME_PROPERTIES) final PropertyServiceConfig propertyServiceConfig,
                      @JsonProperty(PROP_NAME_PUBLIC_URI) final PublicUriConfig publicUri,
-                     @JsonProperty(PROP_NAME_QUERY_DATASOURCE) final QueryFieldConfig queryDataSourceConfig,
+                     @JsonProperty(PROP_NAME_QUERY_DATASOURCE) final IndexFieldDbConfig queryDataSourceConfig,
                      @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
                      @JsonProperty(PROP_NAME_SEARCH) final SearchConfig searchConfig,
                      @JsonProperty(PROP_NAME_SECURITY) final SecurityConfig securityConfig,
@@ -438,7 +438,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
 
     @JsonProperty(PROP_NAME_QUERY_DATASOURCE)
     @JsonPropertyDescription("Configuration for the stroom query datasource service")
-    public QueryFieldConfig getQueryDataSourceConfig() {
+    public IndexFieldDbConfig getQueryDataSourceConfig() {
         return queryDataSourceConfig;
     }
 

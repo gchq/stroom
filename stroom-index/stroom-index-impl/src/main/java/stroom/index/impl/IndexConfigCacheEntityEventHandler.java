@@ -19,8 +19,8 @@ package stroom.index.impl;
 
 import stroom.docref.DocRef;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.node.api.NodeInfo;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
@@ -28,16 +28,16 @@ import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 
-@EntityEventHandler(type = IndexDoc.DOCUMENT_TYPE)
+@EntityEventHandler(type = LuceneIndexDoc.DOCUMENT_TYPE)
 class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
     private final NodeInfo nodeInfo;
-    private final IndexStructureCacheImpl indexStructureCache;
+    private final LuceneIndexDocCacheImpl indexStructureCache;
     private final IndexShardService indexShardService;
     private final IndexShardWriterCache indexShardWriterCache;
 
     @Inject
     IndexConfigCacheEntityEventHandler(final NodeInfo nodeInfo,
-                                       final IndexStructureCacheImpl indexStructureCache,
+                                       final LuceneIndexDocCacheImpl indexStructureCache,
                                        final IndexShardService indexShardService,
                                        final IndexShardWriterCache indexShardWriterCache) {
         this.nodeInfo = nodeInfo;
@@ -48,7 +48,7 @@ class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
 
     @Override
     public void onChange(final EntityEvent event) {
-        if (IndexDoc.DOCUMENT_TYPE.equals(event.getDocRef().getType())) {
+        if (LuceneIndexDoc.DOCUMENT_TYPE.equals(event.getDocRef().getType())) {
             indexStructureCache.remove(event.getDocRef());
             updateIndex(event.getDocRef());
         }
@@ -61,10 +61,10 @@ class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
 
         final ResultPage<IndexShard> shards = indexShardService.find(criteria);
         shards.getValues().forEach(shard -> {
-            final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardId(shard.getId());
+            final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriter(shard.getId());
             if (indexShardWriter != null) {
-                final IndexStructure indexStructure = indexStructureCache.get(indexRef);
-                indexShardWriter.updateIndexStructure(indexStructure);
+                final LuceneIndexDoc index = indexStructureCache.get(indexRef);
+                indexShardWriter.setMaxDocumentCount(index.getMaxDocsPerShard());
             }
         });
     }

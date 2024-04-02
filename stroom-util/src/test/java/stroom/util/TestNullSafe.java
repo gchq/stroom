@@ -1,10 +1,12 @@
 package stroom.util;
 
 import stroom.test.common.TestUtil;
+import stroom.test.common.TestUtil.TestSetup;
 import stroom.test.common.TestUtil.TimedCase;
 import stroom.util.io.ByteSize;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.util.time.StroomDuration;
@@ -31,12 +33,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 class TestNullSafe {
@@ -102,6 +107,38 @@ class TestNullSafe {
                         Level2::getNonNullLevel3,
                         nonNullLevel1.getNonNullLevel2().getNonNullLevel3()))
                 .isTrue();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testEqualProperties() {
+        final AtomicReference<String> val1 = new AtomicReference<>("foo");
+        final AtomicReference<String> val1b = new AtomicReference<>("foo");
+        final AtomicReference<String> val2 = new AtomicReference<>("bar");
+        final AtomicReference<String> valNull = new AtomicReference<>(null);
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(
+                        new TypeLiteral<Tuple2<
+                                AtomicReference<String>,
+                                AtomicReference<String>>>() {
+                        })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    final AtomicReference<String> v1 = testCase.getInput()._1;
+                    final AtomicReference<String> v2 = testCase.getInput()._2;
+                    return NullSafe.equalProperties(v1, v2, AtomicReference::get);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(null, null), true)
+                .addCase(Tuple.of(val1, null), false)
+                .addCase(Tuple.of(null, val1), false)
+                .addCase(Tuple.of(val1, val2), false)
+                .addCase(Tuple.of(val1, valNull), false)
+                .addCase(Tuple.of(valNull, val2), false)
+                .addCase(Tuple.of(valNull, valNull), true)
+                .addCase(Tuple.of(val1, val1), true)
+                .addCase(Tuple.of(val1, val1b), true)
+                .build();
     }
 
     @TestFactory
@@ -504,7 +541,25 @@ class TestNullSafe {
     }
 
     @TestFactory
-    Stream<DynamicTest> testHasItems() {
+    Stream<DynamicTest> testIsEmptyArray() {
+        final String[] emptyArr = new String[0];
+        final String[] nonEmptyArr = new String[]{"foo", "bar"};
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<String[]>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase ->
+                        NullSafe.isEmptyArray(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, true)
+                .addCase(emptyArr, true)
+                .addCase(nonEmptyArr, false)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testHasItems_collection() {
         final List<String> emptyList = Collections.emptyList();
         final List<String> nonEmptyList = List.of("foo", "bar");
 
@@ -518,6 +573,24 @@ class TestNullSafe {
                 .addCase(null, false)
                 .addCase(emptyList, false)
                 .addCase(nonEmptyList, true)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testHasItems_array() {
+        final String[] emptyArr = new String[0];
+        final String[] nonEmptyArr = new String[]{"foo", "bar"};
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<String[]>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase ->
+                        NullSafe.hasItems(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, false)
+                .addCase(emptyArr, false)
+                .addCase(nonEmptyArr, true)
                 .build();
     }
 
@@ -802,6 +875,41 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testNonBlankStringElse() {
+        final String other = "bar";
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(String.class)
+                .withTestFunction(testCase ->
+                        NullSafe.nonBlankStringElse(testCase.getInput(), other))
+                .withSimpleEqualityAssertion()
+                .addCase(null, other)
+                .addCase("", other)
+                .addCase(" ", other)
+                .addCase("\n", other)
+                .addCase("\t", other)
+                .addCase("foo", "foo")
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testNonBlankStringElseGet() {
+        final String string = "bar";
+        final Supplier<String> stringSupplier = () -> string;
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(String.class)
+                .withTestFunction(testCase ->
+                        NullSafe.nonBlankStringElseGet(testCase.getInput(), stringSupplier))
+                .withSimpleEqualityAssertion()
+                .addCase(null, string)
+                .addCase("", string)
+                .addCase(" ", string)
+                .addCase("\n", string)
+                .addCase("\t", string)
+                .addCase("foo", "foo")
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testContains() {
         return TestUtil.buildDynamicTestStream()
                 .withInputTypes(String.class, String.class)
@@ -818,6 +926,30 @@ class TestNullSafe {
                 .addCase(Tuple.of("foobar", "foo"), true)
                 .addCase(Tuple.of("foobar", "ob"), true)
                 .addCase(Tuple.of("foobar", "foobar"), true)
+                .addCase(Tuple.of("foobar", "fooBAR"), false)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testContainsIgnoringCase() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(String.class, String.class)
+                .withOutputType(Boolean.class)
+                .withTestFunction(testCase -> {
+                    var str = testCase.getInput()._1;
+                    var subStr = testCase.getInput()._2;
+                    return NullSafe.containsIgnoringCase(str, subStr);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(null, null), false)
+                .addCase(Tuple.of("foorbar", null), false)
+                .addCase(Tuple.of(null, "foobar"), false)
+                .addCase(Tuple.of("foobar", "foo"), true)
+                .addCase(Tuple.of("foobar", "ob"), true)
+                .addCase(Tuple.of("foobar", "foobar"), true)
+                .addCase(Tuple.of("foobar", "fooBAR"), true)
+                .addCase(Tuple.of("FOOBAR", "fooBAR"), true)
+                .addCase(Tuple.of("FOOBAR", "foobar"), true)
                 .build();
     }
 
@@ -908,8 +1040,10 @@ class TestNullSafe {
                     return Tuple.of(counter.get(), newList);
                 })
                 .withSimpleEqualityAssertion()
+                .withBeforeTestCaseAction(() -> counter.set(0))
                 .addCase(null, Tuple.of(0, Collections.emptyList()))
                 .addCase(new String[0], Tuple.of(0, Collections.emptyList()))
+                .addCase(new String[]{"foo"}, Tuple.of(1, List.of("foo")))
                 .addCase(new String[]{"foo", "bar"}, Tuple.of(2, List.of("foo", "bar")))
                 .build();
     }
@@ -1072,11 +1206,41 @@ class TestNullSafe {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(Boolean.class)
                 .withOutputType(boolean.class)
-                .withTestFunction(testCase -> NullSafe.isTrue(testCase.getInput()))
+                .withSingleArgTestFunction(NullSafe::isTrue)
                 .withSimpleEqualityAssertion()
                 .addCase(null, false)
                 .addCase(false, false)
                 .addCase(true, true)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testGetInt() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(Integer.class)
+                .withOutputType(int.class)
+                .withSingleArgTestFunction(NullSafe::getInt)
+                .withSimpleEqualityAssertion()
+                .addCase(null, 0)
+                .addCase(-1, -1)
+                .addCase(1, 1)
+                .addCase(Integer.MIN_VALUE, Integer.MIN_VALUE)
+                .addCase(Integer.MAX_VALUE, Integer.MAX_VALUE)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testGetLong() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(Long.class)
+                .withOutputType(long.class)
+                .withSingleArgTestFunction(NullSafe::getLong)
+                .withSimpleEqualityAssertion()
+                .addCase(null, 0L)
+                .addCase(-1L, -1L)
+                .addCase(1L, 1L)
+                .addCase(Long.MIN_VALUE, Long.MIN_VALUE)
+                .addCase(Long.MAX_VALUE, Long.MAX_VALUE)
                 .build();
     }
 
@@ -1571,7 +1735,73 @@ class TestNullSafe {
                 optCase);
     }
 
+    @Disabled // Long-running manual perf test
+    @Test
+    void testGetPerf() {
+        final int iters = 200_000_000;
+        final Integer[] vals = new Integer[iters];
+        final String[] outputs = new String[iters];
+        final Random random = new Random(123456);
+        final int bound = 1_000;
+        final int threshold = bound / 2;
+        int nullsCount = 0;
+        for (int i = 0; i < iters; i++) {
+            final int val = random.nextInt(bound);
+            if (val > threshold) {
+                vals[i] = val;
+            } else {
+                vals[i] = null;
+                nullsCount++;
+            }
+        }
+        LOGGER.info("null count: {}", LogUtil.withPercentage(nullsCount, iters));
+
+        final TestSetup testSetup = (rounds, iterations) -> {
+            for (int i = 0; i < iterations; i++) {
+                outputs[i] = null;
+            }
+        };
+
+        final TimedCase pureJavaIfCase = TimedCase.of("Pure java if", (round, iterations) -> {
+            for (int i = 0; i < iterations; i++) {
+                Integer val = vals[i];
+                if (val == null) {
+                    outputs[i] = null;
+                } else {
+                    outputs[i] = val.toString();
+                }
+            }
+        });
+
+        final TimedCase pureJavaTernaryCase = TimedCase.of("Pure java ternary", (round, iterations) -> {
+            for (int i = 0; i < iterations; i++) {
+                Integer val = vals[i];
+                outputs[i] = val != null
+                        ? val.toString()
+                        : null;
+            }
+        });
+
+        final TimedCase nullSafeCase = TimedCase.of("NullSafe", (round, iterations) -> {
+            for (int i = 0; i < iterations; i++) {
+                Integer val = vals[i];
+                outputs[i] = NullSafe.get(val, Objects::toString);
+            }
+        });
+
+        TestUtil.comparePerformance(
+                4,
+                iters,
+                testSetup,
+                LOGGER::info,
+                pureJavaIfCase,
+                pureJavaTernaryCase,
+                nullSafeCase);
+    }
+
+
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
     private static class Level1 {
 
@@ -1631,6 +1861,10 @@ class TestNullSafe {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class Level2 {
 
         private final long id;
@@ -1683,6 +1917,10 @@ class TestNullSafe {
             return Objects.hash(id, nullLevel3, nonNullLevel3, level);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class Level3 {
 
@@ -1737,6 +1975,10 @@ class TestNullSafe {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class Level4 {
 
         private final long id;
@@ -1790,6 +2032,10 @@ class TestNullSafe {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class Level5 {
 
         private final long id;
@@ -1830,6 +2076,10 @@ class TestNullSafe {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class ListWrapper {
 
         private final List<Integer> nullList = null;
@@ -1848,6 +2098,10 @@ class TestNullSafe {
             return nonNullNonEmptyList;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class MapWrapper {
 
@@ -1870,6 +2124,10 @@ class TestNullSafe {
             return nonNullNonEmptyMap;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class StringWrapper {
 

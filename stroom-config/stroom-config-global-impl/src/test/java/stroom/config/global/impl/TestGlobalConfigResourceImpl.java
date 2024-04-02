@@ -10,6 +10,7 @@ import stroom.event.logging.mock.MockStroomEventLoggingService;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
+import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.StroomOpenIdConfig;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
 import stroom.ui.config.shared.ExtendedUiConfig;
@@ -339,9 +340,9 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 
                         final ListConfigResponse response = new ListConfigResponse(
                                 QuickFilterPredicateFactory.filterStream(
-                                        criteria.getQuickFilterInput(),
-                                        fieldMappers,
-                                        FULL_PROP_LIST.stream())
+                                                criteria.getQuickFilterInput(),
+                                                fieldMappers,
+                                                FULL_PROP_LIST.stream())
                                         .peek(configProperty ->
                                                 configProperty.setYamlOverrideValue(node.getNodeName()))
                                         .collect(Collectors.toList()),
@@ -421,6 +422,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 null,
                 () -> nodeInfo,
                 StroomOpenIdConfig::new,
-                ExplorerConfig::new);
+                ExplorerConfig::new,
+                AuthenticationConfig::new);
     }
 }

@@ -63,11 +63,6 @@ public abstract class NumericFunction extends AbstractManyChildFunction {
         }
     }
 
-    @Override
-    public Type getCommonReturnType() {
-        return Type.DOUBLE;
-    }
-
     static final class Gen extends AbstractManyChildGenerator {
 
         private final Calculator calculator;

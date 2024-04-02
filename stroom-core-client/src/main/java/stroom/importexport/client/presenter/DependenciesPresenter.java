@@ -23,14 +23,13 @@ import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.event.DeleteDocumentEvent;
 import stroom.document.client.event.OpenDocumentEvent;
+import stroom.explorer.client.event.LocateDocEvent;
 import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.importexport.client.event.ShowDependenciesInfoDialogEvent;
 import stroom.importexport.client.event.ShowDocRefDependenciesEvent;
@@ -83,7 +82,6 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
     private final DependencyCriteria criteria;
     private final RestDataProvider<Dependency, ResultPage<Dependency>> dataProvider;
     private final MyDataGrid<Dependency> dataGrid;
-    private final DocumentPluginEventManager entityPluginEventManager;
     private final MenuPresenter menuPresenter;
 
     // Holds all the doc type icons
@@ -94,7 +92,6 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
     public DependenciesPresenter(final EventBus eventBus,
                                  final PagerView view,
                                  final RestFactory restFactory,
-                                 final DocumentPluginEventManager entityPluginEventManager,
                                  final MenuPresenter menuPresenter) {
         super(eventBus, view);
 
@@ -110,18 +107,17 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<Dependency>> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
+                                final Consumer<RestError> errorConsumer) {
                 CriteriaUtil.setRange(criteria, range);
-                final Rest<ResultPage<Dependency>> rest = restFactory.create();
-                rest
+                restFactory
+                        .create(CONTENT_RESOURCE)
+                        .method(res -> res.fetchDependencies(criteria))
                         .onSuccess(dataConsumer)
-                        .onFailure(throwableConsumer)
-                        .call(CONTENT_RESOURCE)
-                        .fetchDependencies(criteria);
+                        .onFailure(errorConsumer)
+                        .exec();
             }
         };
         dataProvider.addDataDisplay(dataGrid);
-        this.entityPluginEventManager = entityPluginEventManager;
         this.menuPresenter = menuPresenter;
         initColumns();
     }
@@ -230,9 +226,9 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                         .text("Delete")
                         .command(() -> onDeleteDoc(docRef)))
                 .withIconMenuItem(itemBuilder -> itemBuilder
-                        .icon(SvgImage.SHOW)
-                        .text("Reveal in Explorer")
-                        .command(() -> onRevealDoc(docRef)))
+                        .icon(SvgImage.LOCATE)
+                        .text("Locate in Explorer")
+                        .command(() -> onLocateDoc(docRef)))
                 .withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(SvgImage.DEPENDENCIES)
                         .text("Show dependencies")
@@ -254,8 +250,8 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
     /**
      * Reveal the doc in the Explorer tree
      */
-    private void onRevealDoc(final DocRef docRef) {
-        entityPluginEventManager.highlight(docRef);
+    private void onLocateDoc(final DocRef docRef) {
+        LocateDocEvent.fire(this, docRef);
     }
 
     private void onDocInfo(final DocRef docRef) {
@@ -277,8 +273,9 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
     private void refreshDocTypeIcons() {
 
         // Hold map of doc type icons keyed on type to save constructing for each row
-        final Rest<DocumentTypes> rest = restFactory.create();
-        rest
+        restFactory
+                .create(EXPLORER_RESOURCE)
+                .method(ExplorerResource::fetchDocumentTypes)
                 .onSuccess(documentTypes -> {
                     openableTypes = documentTypes
                             .getTypes()
@@ -306,8 +303,7 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                             "ProcessorFilter",
                             SvgImage.FILTER);
                 })
-                .call(EXPLORER_RESOURCE)
-                .fetchDocumentTypes();
+                .exec();
     }
 
     private CommandLink getName(final Dependency row,

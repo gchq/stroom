@@ -2,7 +2,6 @@ package stroom.analytics.impl;
 
 import stroom.analytics.rule.impl.AnalyticRuleStore;
 import stroom.analytics.shared.AnalyticRuleDoc;
-import stroom.analytics.shared.StreamingAnalyticProcessConfig;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
@@ -72,20 +71,12 @@ public class StreamingAnalyticCache {
                 viewDoc = analyticHelper.loadViewDoc(ruleIdentity, dataSource);
             }
 
-            if (!(analyticRuleDoc.getAnalyticProcessConfig()
-                    instanceof StreamingAnalyticProcessConfig)) {
-                LOGGER.debug("Error: Invalid process config {}", ruleIdentity);
-                throw new RuntimeException("Error: Invalid process config.");
-
-            } else {
-                LOGGER.info(() -> LogUtil.message("Finished loading rules in {}", logExecutionTime));
-                return Optional.of(new StreamingAnalytic(
-                        ruleIdentity,
-                        analyticRuleDoc,
-                        (StreamingAnalyticProcessConfig) analyticRuleDoc.getAnalyticProcessConfig(),
-                        searchRequest,
-                        viewDoc));
-            }
+            LOGGER.info(() -> LogUtil.message("Finished loading rules in {}", logExecutionTime));
+            return Optional.of(new StreamingAnalytic(
+                    ruleIdentity,
+                    analyticRuleDoc,
+                    searchRequest,
+                    viewDoc));
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         }

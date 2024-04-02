@@ -37,7 +37,10 @@ jooq {
                         // Add anything you want included in generation below, whitespace ignored
                         // and comments allowed. Each one is a java regex
                         includes = "" +
-                                "analytic_tracker"
+                                "analytic_tracker|" +
+                                "execution_schedule|" +
+                                "execution_history|" +
+                                "execution_tracker"
                         // We don't want to include flyway versioning
                         excludes = 'analytic_schema_history'
                         // Specify 'version' for use in optimistic concurrency control
@@ -45,16 +48,17 @@ jooq {
 
                         // analytics_task.status is non-boolean tinyint
 
-//                        // Treat some tinyint columns as booleans
-//                        forcedTypes {
-//                            forcedType {
-//                                name = 'BOOLEAN'
-//                                includeExpression = '' +
-//                                    '.*\\.analytic_process\\.enabled|'
-//                                // see https://github.com/jOOQ/jOOQ/issues/9405
-//                                includeTypes = '(?i:tinyint)(\\(1\\))?'
-//                            }
-//                        }
+                        // Treat some tinyint columns as booleans
+                        forcedTypes {
+                            forcedType {
+                                name = 'BOOLEAN'
+                                includeExpression = '' +
+                                        '.*\\.execution_schedule\\.enabled|' +
+                                        '.*\\.execution_schedule\\.contiguous'
+                                // see https://github.com/jOOQ/jOOQ/issues/9405
+                                includeTypes = '(?i:tinyint)(\\(1\\))?'
+                            }
+                        }
                     }
                     target {
                         packageName = 'stroom.analytics.impl.db.jooq'

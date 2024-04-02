@@ -51,29 +51,19 @@ class LessThanOrEqualTo extends AbstractEqualityFunction {
         return EVALUATOR;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class LessThanOrEqualToEvaluator extends Evaluator {
 
         @Override
         protected Val evaluate(final Val a, final Val b) {
-            if (a.getClass().equals(b.getClass())) {
-                if (a instanceof ValInteger) {
-                    return ValBoolean.create(a.toInteger() <= b.toInteger());
-                }
-                if (a instanceof ValLong) {
-                    return ValBoolean.create(a.toLong() <= b.toLong());
-                }
-                if (a instanceof ValBoolean) {
-                    return ValBoolean.create(a.toBoolean().compareTo(b.toBoolean()) <= 0);
-                }
-            } else {
-                final Double da = a.toDouble();
-                final Double db = b.toDouble();
-                if (da != null && db != null) {
-                    return ValBoolean.create(da <= db);
-                }
-            }
 
-            return ValBoolean.create(a.toString().compareTo(b.toString()) <= 0);
+            final int compareResult = ValComparators.GENERIC_CASE_SENSITIVE_COMPARATOR.compare(a, b);
+            return compareResult <= 0
+                    ? ValBoolean.TRUE
+                    : ValBoolean.FALSE;
         }
     }
 }

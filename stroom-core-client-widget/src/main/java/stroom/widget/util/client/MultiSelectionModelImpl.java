@@ -83,12 +83,12 @@ public final class MultiSelectionModelImpl<T>
 
     @Override
     public void setSelected(final T item, final boolean selected) {
-        setSelected(item, selected, new SelectionType(false, false));
+        setSelected(item, selected, new SelectionType());
     }
 
     @Override
     public void setSelected(final T item) {
-        setSelected(item, new SelectionType(false, false));
+        setSelected(item, new SelectionType());
     }
 
     /**
@@ -97,8 +97,13 @@ public final class MultiSelectionModelImpl<T>
      */
     @Override
     public void setSelected(final T item, final SelectionType selectionType) {
+        setSelected(item, selectionType, true);
+    }
+
+    @Override
+    public void setSelected(final T item, final SelectionType selectionType, final boolean fireEvents) {
         if (item == null) {
-            clear();
+            clear(fireEvents);
 
         } else {
             final boolean currentlySelected = isSelected(item);
@@ -116,7 +121,9 @@ public final class MultiSelectionModelImpl<T>
                 selection.setSelected(item);
 
                 fireSelectionChangeEvent();
-                fireChange(selectionType);
+                if (fireEvents) {
+                    fireChange(selectionType);
+                }
             }
         }
     }
@@ -126,13 +133,23 @@ public final class MultiSelectionModelImpl<T>
      */
     @Override
     public void setSelected(final T item, final boolean selected, final SelectionType selectionType) {
+        setSelected(item, selected, selectionType, true);
+    }
+
+    @Override
+    public void setSelected(final T item,
+                            final boolean selected,
+                            final SelectionType selectionType,
+                            final boolean fireEvents) {
         if (item != null) {
             final boolean currentlySelected = isSelected(item);
             selection.setSelected(item, selected);
             if (currentlySelected != selected) {
                 changes.add(item);
                 fireSelectionChangeEvent();
-                fireChange(selectionType);
+                if (fireEvents) {
+                    fireChange(selectionType);
+                }
             }
         }
     }
@@ -150,11 +167,18 @@ public final class MultiSelectionModelImpl<T>
      */
     @Override
     public void clear() {
+        clear(true);
+    }
+
+    @Override
+    public void clear(final boolean fireEvents) {
         if (selection.size() > 0) {
             changes.addAll(selection.getSelectedItems());
             selection.clear();
             fireSelectionChangeEvent();
-            fireChange(new SelectionType(false, false));
+            if (fireEvents) {
+                fireChange(new SelectionType());
+            }
         }
     }
 

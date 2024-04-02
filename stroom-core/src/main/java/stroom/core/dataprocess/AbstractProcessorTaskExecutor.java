@@ -536,14 +536,14 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
         final AtomicInteger count = new AtomicInteger();
         try {
             final ExpressionOperator findMetaExpression = ExpressionOperator.builder()
-                    .addTerm(MetaFields.PARENT_ID, Condition.EQUALS, meta.getId())
-                    .addTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, processor.getPipeline())
+                    .addIdTerm(MetaFields.PARENT_ID, Condition.EQUALS, meta.getId())
+                    .addDocRefTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, processor.getPipeline())
                     .addOperator(
                             ExpressionOperator
                                     .builder()
                                     .op(Op.OR)
-                                    .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.toString())
-                                    .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.toString())
+                                    .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.toString())
+                                    .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.toString())
                                     .build())
                     .build();
             final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(findMetaExpression);
@@ -559,8 +559,9 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                         } else if (oldMeta.getProcessorTaskId() != processorTask.getId()) {
                             if (taskMap == null) {
                                 final ExpressionOperator findTaskExpression = ExpressionOperator.builder()
-                                        .addTerm(ProcessorTaskFields.META_ID, Condition.EQUALS, meta.getId())
-                                        .addTerm(ProcessorTaskFields.PROCESSOR_ID, Condition.EQUALS, processor.getId())
+                                        .addIdTerm(ProcessorTaskFields.META_ID, Condition.EQUALS, meta.getId())
+                                        .addIdTerm(
+                                                ProcessorTaskFields.PROCESSOR_ID, Condition.EQUALS, processor.getId())
                                         .build();
                                 final ResultPage<ProcessorTask> tasks = processorTaskService.find(
                                         new ExpressionCriteria(findTaskExpression));

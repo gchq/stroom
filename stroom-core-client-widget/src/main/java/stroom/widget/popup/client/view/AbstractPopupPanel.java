@@ -53,8 +53,9 @@ public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
     protected void onPreviewNativeEvent(final NativePreviewEvent event) {
         super.onPreviewNativeEvent(event);
 
+        final NativeEvent nativeEvent = event.getNativeEvent();
+        final Action action = KeyBinding.test(nativeEvent);
         if (event.getTypeInt() == Event.ONKEYDOWN) {
-            final NativeEvent nativeEvent = event.getNativeEvent();
             final EventTarget eventTarget = nativeEvent.getEventTarget();
             final boolean isEditor;
             if (eventTarget != null) {
@@ -69,13 +70,16 @@ public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
             }
 
             if (!isEditor) {
-                final Action action = KeyBinding.getAction(nativeEvent);
                 if (action != null) {
                     switch (action) {
                         case CLOSE:
+                            // Cancel the event so ancestors don't also handle it
+                            event.cancel();
                             onCloseAction();
                             break;
                         case OK:
+                            // Cancel the event so ancestors don't also handle it
+                            event.cancel();
                             onOkAction();
                             break;
                     }
@@ -85,8 +89,10 @@ public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
     }
 
     protected void onCloseAction() {
+
     }
 
     protected void onOkAction() {
+
     }
 }

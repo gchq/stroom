@@ -664,7 +664,7 @@ oop.inherits(Mode, TextMode);
 
     this.$id = "ace/mode/xml";
     this.snippetFileId = "ace/snippets/xml";
-    console.log("snippetFileId: " + this.snippetFileId);
+//    console.log("snippetFileId: " + this.snippetFileId);
 }).call(Mode.prototype);
 
 exports.Mode = Mode;

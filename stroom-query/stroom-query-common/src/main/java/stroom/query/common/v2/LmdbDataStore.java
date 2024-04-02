@@ -17,6 +17,7 @@
 
 package stroom.query.common.v2;
 
+import stroom.expression.api.DateTimeSettings;
 import stroom.expression.api.ExpressionContext;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
@@ -126,6 +127,7 @@ public class LmdbDataStore implements DataStore {
 
     private final StoredValueKeyFactory storedValueKeyFactory;
     private final int maxSortedItems;
+    private final DateTimeSettings dateTimeSettings;
 
 
     public LmdbDataStore(final SearchRequestSource searchRequestSource,
@@ -163,7 +165,10 @@ public class LmdbDataStore implements DataStore {
         queue = new LmdbWriteQueue(resultStoreConfig.getValueQueueSize());
         maxSortedItems = resultStoreConfig.getMaxSortedItems();
         valueFilter = modifiedTableSettings.getValueFilter();
-        columnExpressionMatcher = new ColumnExpressionMatcher(columns);
+        this.dateTimeSettings = expressionContext == null
+                ? null
+                : expressionContext.getDateTimeSettings();
+        columnExpressionMatcher = new ColumnExpressionMatcher(columns, dateTimeSettings);
         this.compiledColumns = CompiledColumns.create(expressionContext, columns, fieldIndex, paramMap);
         this.compiledColumnArray = compiledColumns.getCompiledColumns();
         valueReferenceIndex = compiledColumns.getValueReferenceIndex();
@@ -794,6 +799,11 @@ public class LmdbDataStore implements DataStore {
     }
 
     @Override
+    public DateTimeSettings getDateTimeSettings() {
+        return dateTimeSettings;
+    }
+
+    @Override
     public synchronized <R> void fetch(final OffsetRange range,
                                        final OpenGroups openGroups,
                                        final TimeFilter timeFilter,
@@ -1190,6 +1200,10 @@ public class LmdbDataStore implements DataStore {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class LmdbReadContext {
 
         private final LmdbDataStore dataStore;
@@ -1243,6 +1257,10 @@ public class LmdbDataStore implements DataStore {
             return val;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class ChildDataImpl implements ChildData {
 
@@ -1334,6 +1352,7 @@ public class LmdbDataStore implements DataStore {
                 long count = 0;
                 while (iterator.hasNext()
                         && !Thread.currentThread().isInterrupted()) {
+                    iterator.next();
                     // FIXME : NOTE THIS COUNT IS NOT FILTERED BY THE MAPPER.
                     count++;
                 }
@@ -1343,7 +1362,8 @@ public class LmdbDataStore implements DataStore {
     }
 
 
-//    }
+    // --------------------------------------------------------------------------------
+
 
     private static class FetchState {
 
@@ -1377,6 +1397,10 @@ public class LmdbDataStore implements DataStore {
         boolean keepGoing;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class SortableItem implements Item {
 
         private final ItemImpl item;
@@ -1401,6 +1425,10 @@ public class LmdbDataStore implements DataStore {
             return values[index];
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class SortedItems {
 
@@ -1513,6 +1541,10 @@ public class LmdbDataStore implements DataStore {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class ItemImpl implements Item {
 
         private final LmdbReadContext readContext;
@@ -1537,6 +1569,10 @@ public class LmdbDataStore implements DataStore {
             return readContext.createValue(key, storedValues, index);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class CompletionStateImpl implements CompletionState {
 
@@ -1581,6 +1617,10 @@ public class LmdbDataStore implements DataStore {
             return complete.await(timeout, unit);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class TransferState {
 

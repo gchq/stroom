@@ -25,21 +25,17 @@ import stroom.job.shared.JobNodeListResponse;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
-import stroom.util.scheduler.Scheduler;
-import stroom.util.scheduler.SimpleCron;
-import stroom.util.shared.ModelStringUtil;
+import stroom.util.scheduler.CronTrigger;
+import stroom.util.scheduler.FrequencyTrigger;
+import stroom.util.scheduler.SimpleScheduleExec;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 
 @Singleton
 class JobNodeService {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeService.class);
 
     private final JobNodeDao jobNodeDao;
     private final JobNodeTrackerCache jobNodeTrackerCache;
@@ -65,8 +61,7 @@ class JobNodeService {
             before.ifPresent(j -> jobNode.setVersion(j.getVersion()));
 
             AuditUtil.stamp(securityContext, jobNode);
-            final JobNode after = jobNodeDao.update(jobNode);
-            return after;
+            return jobNodeDao.update(jobNode);
         });
     }
 
@@ -79,7 +74,7 @@ class JobNodeService {
     JobNodeInfo getInfo(final String jobName) {
         return securityContext.secureResult(() -> {
             JobNodeInfo result = null;
-            final JobNodeTrackerCache.Trackers trackers = jobNodeTrackerCache.getTrackers();
+            final JobNodeTrackers trackers = jobNodeTrackerCache.getTrackers();
             if (trackers != null) {
                 final JobNodeTracker tracker = trackers.getTrackerForJobName(jobName);
                 if (tracker != null) {
@@ -87,9 +82,9 @@ class JobNodeService {
                     final int currentTaskCount = tracker.getCurrentTaskCount();
 
                     Long scheduleReferenceTime = null;
-                    final Scheduler scheduler = trackers.getScheduler(jobNode);
-                    if (scheduler != null) {
-                        scheduleReferenceTime = scheduler.getScheduleReferenceTime();
+                    final SimpleScheduleExec scheduler = trackers.getScheduleExec(jobNode);
+                    if (scheduler != null && scheduler.getLastExecutionTime() != null) {
+                        scheduleReferenceTime = scheduler.getLastExecutionTime().toEpochMilli();
                     }
                     result = new JobNodeInfo(currentTaskCount, scheduleReferenceTime, tracker.getLastExecutedTime());
                 }
@@ -224,13 +219,13 @@ class JobNodeService {
         if (JobType.CRON.equals(jobNode.getJobType())) {
             if (jobNode.getSchedule() != null) {
                 // This will throw a runtime exception if the expression is invalid.
-                SimpleCron.compile(jobNode.getSchedule());
+                new CronTrigger(jobNode.getSchedule());
             }
         }
         if (JobType.FREQUENCY.equals(jobNode.getJobType())) {
             if (jobNode.getSchedule() != null) {
                 // This will throw a runtime exception if the expression is invalid.
-                ModelStringUtil.parseDurationString(jobNode.getSchedule());
+                new FrequencyTrigger(jobNode.getSchedule());
             }
         }
     }

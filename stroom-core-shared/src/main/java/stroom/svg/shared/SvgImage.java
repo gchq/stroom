@@ -281,6 +281,34 @@ public enum SvgImage {
             "8333,161.83333 279.5,279.5 68.6667,117.66667 103,246.16667 103,385.5 z\"/></svg> \n" +
             ""),
 
+    CALENDAR("calendar.svg", "svg-image__calendar", "" +
+            "<svg class=\"svg-icon\" style=\"width: 1em; height: 1em;vertical-align: middle;fill" +
+            ": currentColor;overflow: hidden;\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"h" +
+            "ttp://www.w3.org/2000/svg\"><path d=\"M296.28 318.93c25.61 0 45.31-19.7 45.31-45.3" +
+            "1v-132c0-23.64-19.7-45.31-45.31-45.31-25.61 0-45.31 19.7-45.31 45.31v132c0 25.61" +
+            " 19.7 45.31 45.31 45.31zM668.62 578.98h94.56c11.82 0 21.67-9.85 21.67-21.67v-61." +
+            "07c0-11.82-9.85-21.67-21.67-21.67h-94.56c-11.82 0-21.67 9.85-21.67 21.67v61.07c-" +
+            "1.97 11.82 7.88 21.67 21.67 21.67zM668.62 762.2h94.56c11.82 0 21.67-9.85 21.67-2" +
+            "1.68v-61.07c0-11.82-9.85-21.67-21.67-21.67h-94.56c-11.82 0-21.67 9.85-21.67 21.6" +
+            "7v61.07c-1.97 11.83 7.88 21.68 21.67 21.68zM773.03 273.62c0 3.94-1.97 5.91 0 7.8" +
+            "8v-7.88zM725.75 318.93c25.61 0 45.31-19.7 45.31-45.31v-132c0-23.64-19.7-45.31-45" +
+            ".31-45.31-25.61 0-45.31 19.7-45.31 45.31v132c1.97 25.61 21.67 45.31 45.31 45.31z" +
+            "M463.73 578.98h94.56c11.82 0 21.67-9.85 21.67-21.67v-61.07c0-11.82-9.85-21.67-21" +
+            ".67-21.67h-94.56c-11.82 0-21.67 9.85-21.67 21.67v61.07c0 11.82 9.85 21.67 21.67 " +
+            "21.67zM260.81 578.98h94.57c11.82 0 21.67-9.85 21.67-21.67v-61.07c0-11.82-9.85-21" +
+            ".67-21.67-21.67h-94.57c-11.82 0-21.67 9.85-21.67 21.67v61.07c-1.97 11.82 9.85 21" +
+            ".67 21.67 21.67zM260.81 762.2h94.57c11.82 0 21.67-9.85 21.67-21.68v-61.07c0-11.8" +
+            "2-9.85-21.67-21.67-21.67h-94.57c-11.82 0-21.67 9.85-21.67 21.67v61.07c-1.97 11.8" +
+            "3 9.85 21.68 21.67 21.68zM463.73 762.2h94.56c11.82 0 21.67-9.85 21.67-21.68v-61." +
+            "07c0-11.82-9.85-21.67-21.67-21.67h-94.56c-11.82 0-21.67 9.85-21.67 21.67v61.07c0" +
+            " 11.83 9.85 21.68 21.67 21.68z\" /><path d=\"M847.9 177.09h-47.28v96.54c0 39.4-33." +
+            "49 70.92-72.89 70.92s-72.89-31.52-72.89-70.92v-96.54H369.17v96.54c0 39.4-33.49 7" +
+            "0.92-72.89 70.92-39.41 0-72.89-31.52-72.89-70.92v-96.54H176.1c-43.34 0-76.83 35." +
+            "46-76.83 76.84v598.9c0 41.37 33.49 74.86 76.83 74.86h671.8c41.37 0 76.83-33.49 7" +
+            "6.83-74.86v-598.9c0-41.38-35.46-76.84-76.83-76.84z m9.85 675.73c0 5.91-3.94 9.85" +
+            "-9.85 9.85H176.1c-5.91 0-9.85-3.94-9.85-9.85V378.04h691.5v474.78z\" /></svg>\n" +
+            ""),
+
     CANCEL("cancel.svg", "svg-image__cancel", "" +
             "<svg aria-hidden=\"true\" focusable=\"false\" data-prefix=\"fas\" data-icon=\"times\" cl" +
             "ass=\"svg-inline--fa fa-times fa-w-11 fa-lg \" role=\"img\" xmlns=\"http://www.w3.org" +
@@ -397,6 +425,40 @@ public enum SvgImage {
             " 0-17.5L492.1 112.1c-4.8-4.5-12.4-4.3-17 .5L431.6 159c-4.6 4.9-4.3 12.7.8 17.2L5" +
             "23 256l-90.6 79.7c-5.1 4.5-5.5 12.3-.8 17.2l43.5 46.4c4.5 4.9 12.1 5.1 17 .6z\"/>" +
             "</svg>\n" +
+            ""),
+
+    COLLAPSE_ALL("collapse-all.svg", "svg-image__collapse-all", "" +
+            "<svg width=\"1427.7665\" height=\"2031.5197\" viewBox=\"-300 -330 2027.7665 2631.5197" +
+            "\" version=\"1.1\" id=\"svg1\" sodipodi:docname=\"collapse.svg\" inkscape:version=\"1.3." +
+            "2 (091e20ef0f, 2023-11-25, custom)\" xmlns:inkscape=\"http://www.inkscape.org/name" +
+            "spaces/inkscape\" xmlns:sodipodi=\"http://sodipodi.sourceforge.net/DTD/sodipodi-0." +
+            "dtd\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\"><" +
+            "defs id=\"defs1\" /><sodipodi:namedview id=\"namedview1\" pagecolor=\"var(--icon-colo" +
+            "ur__white)\" bordercolor=\"var(--icon-colour__black)\" borderopacity=\"0.25\" inkscap" +
+            "e:showpageshadow=\"2\" inkscape:pageopacity=\"0.0\" inkscape:pagecheckerboard=\"0\" in" +
+            "kscape:deskcolor=\"#d1d1d1\" inkscape:zoom=\"0.27501497\" inkscape:cx=\"-125.44772\" i" +
+            "nkscape:cy=\"1319.9282\" inkscape:window-width=\"2520\" inkscape:window-height=\"1404" +
+            "\" inkscape:window-x=\"0\" inkscape:window-y=\"0\" inkscape:window-maximized=\"1\" inks" +
+            "cape:current-layer=\"svg1\" /><g style=\"stroke:currentColor;stroke-width:167.567\" " +
+            "id=\"g1\" transform=\"translate(0.03304027,880.66019)\"><path d=\"m 83.75224,1012.636" +
+            "6 c 0.4303,39.9266 48.3887,75.4147 81.9121,40.0468 183.0776,-192.5449 365.53292," +
+            "-385.74845 548.20252,-578.72498 182.6695,192.97653 365.12474,386.18008 548.20224" +
+            ",578.72498 43.7856,46.1947 112.1966,-28.4881 67.1682,-76.05707 -185.823,-195.935" +
+            "58 -370.82484,-392.95261 -557.52754,-587.98689 -4.8034,-5.6117 -10.2473,-10.4633" +
+            " -16.1231,-14.4855 -12.4844,-9.643 -27.0796,-13.9638 -41.7198,-13.6909 -14.6402," +
+            "-0.2729 -29.2354,4.0479 -41.7198,13.6909 -5.8758,4.0222 -11.3198,8.8738 -16.1231" +
+            ",14.4855 -186.7028,195.03428 -371.70472,392.05131 -557.52782,587.98689 -10.5534," +
+            "11.14898 -14.8757,23.78787 -14.7439,36.01027 z\" id=\"path1\" /></g><g style=\"strok" +
+            "e:currentColor;stroke-width:167.567\" id=\"g2\" transform=\"rotate(180,713.86671,575" +
+            ".42972)\"><path d=\"m 83.75224,1012.6366 c 0.4303,39.9266 48.3887,75.4147 81.9121," +
+            "40.0468 183.0776,-192.5449 365.53292,-385.74845 548.20252,-578.72498 182.6695,19" +
+            "2.97653 365.12474,386.18008 548.20224,578.72498 43.7856,46.1947 112.1966,-28.488" +
+            "1 67.1682,-76.05707 -185.823,-195.93558 -370.82484,-392.95261 -557.52754,-587.98" +
+            "689 -4.8034,-5.6117 -10.2473,-10.4633 -16.1231,-14.4855 -12.4844,-9.643 -27.0796" +
+            ",-13.9638 -41.7198,-13.6909 -14.6402,-0.2729 -29.2354,4.0479 -41.7198,13.6909 -5" +
+            ".8758,4.0222 -11.3198,8.8738 -16.1231,14.4855 -186.7028,195.03428 -371.70472,392" +
+            ".05131 -557.52782,587.98689 -10.5534,11.14898 -14.8757,23.78787 -14.7439,36.0102" +
+            "7 z\" id=\"path1-5\" /></g></svg> \n" +
             ""),
 
     COLLAPSE_UP("collapse-up.svg", "svg-image__collapse-up", "" +
@@ -1229,6 +1291,40 @@ public enum SvgImage {
             "17.73122,0 108.86562,108.86562 0 1 1 -217.73122,0 z\" /></svg> \n" +
             ""),
 
+    EXPAND_ALL("expand-all.svg", "svg-image__expand-all", "" +
+            "<svg width=\"1427.7665\" height=\"2031.5197\" viewBox=\"-300 -330 2027.7665 2631.5197" +
+            "\" version=\"1.1\" id=\"svg1\" sodipodi:docname=\"expand.svg\" inkscape:version=\"1.3.2 " +
+            "(091e20ef0f, 2023-11-25, custom)\" xmlns:inkscape=\"http://www.inkscape.org/namesp" +
+            "aces/inkscape\" xmlns:sodipodi=\"http://sodipodi.sourceforge.net/DTD/sodipodi-0.dt" +
+            "d\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\"><de" +
+            "fs id=\"defs1\" /><sodipodi:namedview id=\"namedview1\" pagecolor=\"var(--icon-colour" +
+            "__white)\" bordercolor=\"var(--icon-colour__black)\" borderopacity=\"0.25\" inkscape:" +
+            "showpageshadow=\"2\" inkscape:pageopacity=\"0.0\" inkscape:pagecheckerboard=\"0\" inks" +
+            "cape:deskcolor=\"#d1d1d1\" inkscape:zoom=\"0.27501497\" inkscape:cx=\"-125.44772\" ink" +
+            "scape:cy=\"1319.9282\" inkscape:window-width=\"2520\" inkscape:window-height=\"1404\" " +
+            "inkscape:window-x=\"0\" inkscape:window-y=\"0\" inkscape:window-maximized=\"1\" inksca" +
+            "pe:current-layer=\"svg1\" /><g style=\"stroke:currentColor;stroke-width:167.567\" id" +
+            "=\"g1\" transform=\"translate(0.03304027,-272.00435)\"><path d=\"m 83.75224,1012.6366" +
+            " c 0.4303,39.9266 48.3887,75.4147 81.9121,40.0468 183.0776,-192.5449 365.53292,-" +
+            "385.74845 548.20252,-578.72498 182.6695,192.97653 365.12474,386.18008 548.20224," +
+            "578.72498 43.7856,46.1947 112.1966,-28.4881 67.1682,-76.05707 -185.823,-195.9355" +
+            "8 -370.82484,-392.95261 -557.52754,-587.98689 -4.8034,-5.6117 -10.2473,-10.4633 " +
+            "-16.1231,-14.4855 -12.4844,-9.643 -27.0796,-13.9638 -41.7198,-13.6909 -14.6402,-" +
+            "0.2729 -29.2354,4.0479 -41.7198,13.6909 -5.8758,4.0222 -11.3198,8.8738 -16.1231," +
+            "14.4855 -186.7028,195.03428 -371.70472,392.05131 -557.52782,587.98689 -10.5534,1" +
+            "1.14898 -14.8757,23.78787 -14.7439,36.01027 z\" id=\"path1\" /></g><g style=\"stroke" +
+            ":currentColor;stroke-width:167.567\" id=\"g2\" transform=\"rotate(180,713.86671,1153" +
+            ".5801)\"><path d=\"m 83.75224,1012.6366 c 0.4303,39.9266 48.3887,75.4147 81.9121,4" +
+            "0.0468 183.0776,-192.5449 365.53292,-385.74845 548.20252,-578.72498 182.6695,192" +
+            ".97653 365.12474,386.18008 548.20224,578.72498 43.7856,46.1947 112.1966,-28.4881" +
+            " 67.1682,-76.05707 -185.823,-195.93558 -370.82484,-392.95261 -557.52754,-587.986" +
+            "89 -4.8034,-5.6117 -10.2473,-10.4633 -16.1231,-14.4855 -12.4844,-9.643 -27.0796," +
+            "-13.9638 -41.7198,-13.6909 -14.6402,-0.2729 -29.2354,4.0479 -41.7198,13.6909 -5." +
+            "8758,4.0222 -11.3198,8.8738 -16.1231,14.4855 -186.7028,195.03428 -371.70472,392." +
+            "05131 -557.52782,587.98689 -10.5534,11.14898 -14.8757,23.78787 -14.7439,36.01027" +
+            " z\" id=\"path1-5\" /></g></svg> \n" +
+            ""),
+
     EXPAND_DOWN("expand-down.svg", "svg-image__expand-down", "" +
             "<svg xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns=\"http://www.w" +
             "3.org/2000/svg\" height=\"1792\" width=\"1792\" version=\"1.1\" xmlns:cc=\"http://creati" +
@@ -2048,6 +2144,34 @@ public enum SvgImage {
             "802-161.802C163.108 213.814 160 195.271 160 176 160 78.798 238.797.001 335.999 0" +
             " 433.488-.001 512 78.511 512 176.001zM336 128c0 26.51 21.49 48 48 48s48-21.49 48" +
             "-48-21.49-48-48-48-48 21.49-48 48z\"></path></svg>\n" +
+            ""),
+
+    LOCATE("locate.svg", "svg-image__locate", "" +
+            "<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->" +
+            "<svg width=\"800px\" height=\"800px\" viewBox=\"0 0 24 24\" style=\"fill:none;stroke:cu" +
+            "rrentColor\" version=\"1.1\" id=\"svg5\" sodipodi:docname=\"locate.svg\" inkscape:versi" +
+            "on=\"1.3.2 (091e20ef0f, 2023-11-25, custom)\" xmlns:inkscape=\"http://www.inkscape." +
+            "org/namespaces/inkscape\" xmlns:sodipodi=\"http://sodipodi.sourceforge.net/DTD/sod" +
+            "ipodi-0.dtd\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/200" +
+            "0/svg\"><defs id=\"defs5\" /><sodipodi:namedview id=\"namedview5\" pagecolor=\"var(--i" +
+            "con-colour__white)\" bordercolor=\"var(--icon-colour__black)\" borderopacity=\"0.25\"" +
+            " inkscape:showpageshadow=\"2\" inkscape:pageopacity=\"0.0\" inkscape:pagecheckerboar" +
+            "d=\"0\" inkscape:deskcolor=\"#d1d1d1\" inkscape:zoom=\"0.49469006\" inkscape:cx=\"292.1" +
+            "0209\" inkscape:cy=\"320.40264\" inkscape:window-width=\"1444\" inkscape:window-heigh" +
+            "t=\"1243\" inkscape:window-x=\"934\" inkscape:window-y=\"75\" inkscape:window-maximize" +
+            "d=\"0\" inkscape:current-layer=\"svg5\" /><g id=\"g6\"><path d=\"M22 12C22 17.5228 17.5" +
+            "228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.4" +
+            "7715 22 12Z\" stroke-width=\"3\" id=\"path1\" /><path d=\"M 4.0618971,12 H 5.9096605\" " +
+            "stroke-width=\"3\" stroke-linecap=\"round\" id=\"path2\" style=\"stroke-linecap:square\"" +
+            " sodipodi:nodetypes=\"cc\" /><path d=\"m 18.09034,12 h 1.544543\" stroke-width=\"3\" s" +
+            "troke-linecap=\"round\" id=\"path3\" style=\"stroke-linecap:square\" sodipodi:nodetype" +
+            "s=\"cc\" /><path d=\"M 12,19.877459 V 18.09034\" stroke-width=\"3\" stroke-linecap=\"ro" +
+            "und\" id=\"path4\" style=\"stroke-linecap:square\" sodipodi:nodetypes=\"cc\" /><path d=" +
+            "\"M 12,5.9096605 V 4.2438292\" stroke-width=\"3\" stroke-linecap=\"round\" id=\"path5\" " +
+            "style=\"stroke-linecap:square\" sodipodi:nodetypes=\"cc\" /></g><!--<path d=\"M10 12H" +
+            "12H14\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>--><!--<" +
+            "path d=\"M12 14L12 12L12 10\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linej" +
+            "oin=\"round\"/>--></svg> \n" +
             ""),
 
     LOCKED("locked.svg", "svg-image__locked", "" +

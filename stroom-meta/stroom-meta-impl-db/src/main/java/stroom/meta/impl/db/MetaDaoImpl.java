@@ -227,18 +227,18 @@ public class MetaDaoImpl implements MetaDao {
         expressionMapper.map(MetaFields.STATUS, meta.STATUS, value ->
                 MetaStatusId.getPrimitiveValue(value.toUpperCase()));
         expressionMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, value ->
-                DateExpressionParser.getMs(MetaFields.STATUS_TIME.getName(), value));
+                DateExpressionParser.getMs(MetaFields.STATUS_TIME.getFldName(), value));
         expressionMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, value ->
-                DateExpressionParser.getMs(MetaFields.CREATE_TIME.getName(), value));
+                DateExpressionParser.getMs(MetaFields.CREATE_TIME.getFldName(), value));
         expressionMapper.map(MetaFields.EFFECTIVE_TIME, meta.EFFECTIVE_TIME, value ->
-                DateExpressionParser.getMs(MetaFields.EFFECTIVE_TIME.getName(), value));
+                DateExpressionParser.getMs(MetaFields.EFFECTIVE_TIME.getFldName(), value));
 
         // Parent fields.
         expressionMapper.map(MetaFields.PARENT_ID, meta.PARENT_ID, Long::valueOf);
         expressionMapper.map(MetaFields.PARENT_STATUS, parent.STATUS, value ->
                 MetaStatusId.getPrimitiveValue(value.toUpperCase()));
         expressionMapper.map(MetaFields.PARENT_CREATE_TIME, parent.CREATE_TIME, value ->
-                DateExpressionParser.getMs(MetaFields.PARENT_CREATE_TIME.getName(), value));
+                DateExpressionParser.getMs(MetaFields.PARENT_CREATE_TIME.getFldName(), value));
         expressionMapper.multiMap(MetaFields.PARENT_FEED, parent.FEED_ID, this::getFeedIds);
 
         valueMapper = new ValueMapper();
@@ -615,7 +615,7 @@ public class MetaDaoImpl implements MetaDao {
         final boolean containsPipelineCondition = NullSafe.test(
                 expression,
                 expr ->
-                        expr.containsField(MetaFields.PIPELINE.getName(), MetaFields.PIPELINE_NAME.getName()));
+                        expr.containsField(MetaFields.PIPELINE.getFldName(), MetaFields.PIPELINE_NAME.getFldName()));
 
         if (containsPipelineCondition) {
             // Only add in the join to meta_processor if we need it
@@ -777,8 +777,8 @@ public class MetaDaoImpl implements MetaDao {
 
             final boolean requiresMetaProcessorTable = rulesContainField(
                     activeRules,
-                    MetaFields.PIPELINE.getName(),
-                    MetaFields.PIPELINE_NAME.getName());
+                    MetaFields.PIPELINE.getFldName(),
+                    MetaFields.PIPELINE_NAME.getFldName());
 
             return JooqUtil.contextResult(metaDbConnProvider,
                             context -> {
@@ -926,9 +926,9 @@ public class MetaDaoImpl implements MetaDao {
             final byte statusIdDeleted = MetaStatusId.getPrimitiveValue(Status.DELETED);
 
             final List<Condition> baseConditions = createRetentionDeleteConditions(ruleActions);
-            final boolean rulesUsePipelineField = ruleActionsContainField(MetaFields.PIPELINE.getName(),
+            final boolean rulesUsePipelineField = ruleActionsContainField(MetaFields.PIPELINE.getFldName(),
                     ruleActions)
-                    || ruleActionsContainField(MetaFields.PIPELINE_NAME.getName(), ruleActions);
+                    || ruleActionsContainField(MetaFields.PIPELINE_NAME.getFldName(), ruleActions);
 
             final List<Condition> conditions = new ArrayList<>(baseConditions);
 
@@ -1220,13 +1220,13 @@ public class MetaDaoImpl implements MetaDao {
                        final FieldIndex fieldIndex,
                        final ValuesConsumer consumer) {
         final String[] fieldNames = fieldIndex.getFields();
-        final boolean feedUsed = isUsed(Set.of(MetaFields.FEED.getName()), fieldNames, criteria);
-        final boolean typeUsed = isUsed(Set.of(MetaFields.TYPE.getName()), fieldNames, criteria);
-        final boolean pipelineUsed = isUsed(Set.of(MetaFields.PIPELINE.getName()), fieldNames, criteria);
+        final boolean feedUsed = isUsed(Set.of(MetaFields.FEED.getFldName()), fieldNames, criteria);
+        final boolean typeUsed = isUsed(Set.of(MetaFields.TYPE.getFldName()), fieldNames, criteria);
+        final boolean pipelineUsed = isUsed(Set.of(MetaFields.PIPELINE.getFldName()), fieldNames, criteria);
         final Set<String> extendedFieldNames = MetaFields
                 .getExtendedFields()
                 .stream()
-                .map(QueryField::getName)
+                .map(QueryField::getFldName)
                 .collect(Collectors.toSet());
         final boolean extendedValuesUsed = isUsed(extendedFieldNames, fieldNames, criteria);
 
@@ -1388,7 +1388,7 @@ public class MetaDaoImpl implements MetaDao {
     }
 
     private final Collection<String> extendedFieldNames =
-            MetaFields.getExtendedFields().stream().map(QueryField::getName).collect(Collectors.toList());
+            MetaFields.getExtendedFields().stream().map(QueryField::getFldName).collect(Collectors.toList());
 
     private Set<Integer> identifyExtendedAttributesFields(final ExpressionOperator expr,
                                                           final Set<Integer> identified) {
@@ -1669,17 +1669,17 @@ public class MetaDaoImpl implements MetaDao {
 
         return criteria.getSortList().stream().map(sort -> {
             Field<?> field;
-            if (MetaFields.ID.getName().equals(sort.getId())) {
+            if (MetaFields.ID.getFldName().equals(sort.getId())) {
                 field = meta.ID;
-            } else if (MetaFields.CREATE_TIME.getName().equals(sort.getId())) {
+            } else if (MetaFields.CREATE_TIME.getFldName().equals(sort.getId())) {
                 field = meta.CREATE_TIME;
-            } else if (MetaFields.FEED.getName().equals(sort.getId())) {
+            } else if (MetaFields.FEED.getFldName().equals(sort.getId())) {
                 field = metaFeed.NAME;
-            } else if (MetaFields.TYPE.getName().equals(sort.getId())) {
+            } else if (MetaFields.TYPE.getFldName().equals(sort.getId())) {
                 field = metaType.NAME;
-            } else if (MetaFields.PARENT_ID.getName().equals(sort.getId())) {
+            } else if (MetaFields.PARENT_ID.getFldName().equals(sort.getId())) {
                 field = meta.PARENT_ID;
-            } else if (MetaFields.PARENT_CREATE_TIME.getName().equals(sort.getId())) {
+            } else if (MetaFields.PARENT_CREATE_TIME.getFldName().equals(sort.getId())) {
                 field = parent.CREATE_TIME;
             } else {
                 field = meta.ID;
@@ -1894,7 +1894,7 @@ public class MetaDaoImpl implements MetaDao {
                                         "of type {}. Term: {}",
                                 term.getCondition(),
                                 term.getField(),
-                                field.getFieldType().getTypeName(), term));
+                                field.getFldType().getTypeName(), term));
                     } else {
                         return true;
                     }

@@ -1,0 +1,123 @@
+from 'Test Index'
+where UserId = user5 and Description = e0567
+and EventTime <= 2000-01-01T00:00:00.000Z
+and EventTime >= 2016-01-02T00:00:00.000Z
+select StreamId, EventId, EventTime, Status
+-----
+from 'Test Index'
+where UserId = user5 and Description = e0567
+and EventTime <= 2000-01-01T00:00:00.000Z
+and EventTime >= 2016-01-02T00:00:00.000Z
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status
+-----
+from 'Test Index'
+where UserId = user5 and Description = e0567
+and EventTime <= 2000-01-01T00:00:00.000Z
+and EventTime >= 2016-01-02T00:00:00.000Z
+eval UserId = upperCase(UserId)
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status, UserId as "User Id"
+-----
+from 'Test Index'
+where EventTime > 2023-05-05T00:00:00.000Z and  (Field = 'blah' or Field = 'blip')
+eval UserId = upperCase(UserId)
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status, UserId as "User Id"
+-----
+from 'Test Index'
+where EventTime > 2023-05-05T00:00:00.000Z and  (Field = 'blah' or Field = 'blip')
+eval UserId = upperCase(UserId)
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status, UserId as "User Id"
+-----
+from 'Test Index'
+where EventTime <= day()-1d-1h
+eval UserId = upperCase(UserId)
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status, UserId as "User Id"
+-----
+from "index_view"
+where EventTime between 2022-05-05T00:00:00.000Z and 2023-05-05T00:00:00.000Z
+select StreamId
+-----
+from 'Test Index'
+where "my.name" = "foo bar"
+eval UserId = upperCase(UserId)
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status, UserId as "User Id"
+-----
+from 'Test Index'
+where 'my.name' = 'foo bar'
+eval UserId = upperCase(UserId)
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status, UserId as "User Id"
+-----
+from 'Test Index'
+where 'my.name' = '"foo bar"'
+eval UserId = upperCase(UserId)
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status, UserId as "User Id"
+-----
+from 'Test Index'
+eval count = count()
+group by StreamId
+select StreamId as "Stream Id", count as Count
+-----
+from datasource
+where field = * ans field != 'fred'
+-----
+from datasource
+where field=* and field='fred''
+-----
+from 'Test Index'
+where 'my.name' = '"foo bar"'
+eval
+select UserId
+-----
+from 'Test Index'
+where 'my.name' = '"foo bar"'
+eval UserId
+select UserId
+-----
+from 'Test Index'
+where 'my.name' = '"foo bar"'
+eval UserId =
+select UserId
+-----
+from 'Test Index'
+where 'my.name' = '"foo bar"'
+eval UserId = uCase(UserId)
+select UserId
+-----
+from 'Test Index'
+eval comp = max(toFloat(day()-10d))
+select comp
+-----
+from 'Test Index'
+group by StreamId
+group by EventTime
+select StreamId, EventTime
+-----
+from 'Test Index'
+group by ${Stream Id}
+group by ${Event Time}
+select ${Stream Id}, ${Event Time}
+-----
+from 'Test Index'
+group by ${Stream Id}
+group by ${Event Time}
+having ${Stream Id} > -2
+select ${Stream Id}, ${Event Time}
+-----
+from 'Test Index'
+group by ${Stream Id}
+group by ${Event Time}
+having ${Stream Id} > -2
+select ${Event Time}
+-----
+from "index_view"
+where StreamId in dictionary "my_dictionary"
+select StreamId
+-----
+from "index_view"
+where StreamId in (123, 456)
+select StreamId
+-----
+// From example index
+from View
+// eval MaxD=max(parseDuration('PT10M'))
+where EventTime < now() - 2dx
+select StreamId, EventId, Feed

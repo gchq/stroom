@@ -24,12 +24,8 @@ public class SelectionType {
     private final boolean controlPressed;
     private final boolean shiftPressed;
 
-    public SelectionType(final boolean doubleSelect, final boolean rightClick) {
-        this.doubleSelect = doubleSelect;
-        this.rightClick = rightClick;
-        this.allowMultiSelect = false;
-        this.controlPressed = false;
-        this.shiftPressed = false;
+    public SelectionType() {
+        this(false, false, false, false, false);
     }
 
     public SelectionType(final boolean doubleSelect,

@@ -4,6 +4,7 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.lmdb.serde.UnsignedBytes;
 import stroom.lmdb.serde.UnsignedBytesInstances;
 import stroom.test.common.TestUtil;
+import stroom.util.shared.ModelStringUtil;
 
 import io.vavr.Tuple;
 import org.assertj.core.api.Assertions;
@@ -149,13 +150,16 @@ class TestUnsignedBytesInstancesThree {
                 LOGGER.debug("Done {}", i);
             }
             final long output = doIncrementTest(i, byteBuffer);
+            if (i == max - 1) {
+                LOGGER.debug("i: {}, output: {}", i, output);
+            }
             assertThat(output)
                     .isEqualTo(i + 1);
         }
     }
 
     @Test
-    void testIncrementAll() {
+    void testIncrementAll_max() {
         final ByteBuffer byteBuffer = ByteBuffer.allocate(10);
 
         for (final UnsignedBytesInstances unsignedBytes : UnsignedBytesInstances.values()) {
@@ -176,6 +180,39 @@ class TestUnsignedBytesInstancesThree {
 
             long val2 = unsignedBytes.get(byteBuffer);
 
+            LOGGER.info("unsignedBytes: {}, val: {}, val2: {}",
+                    unsignedBytes, ModelStringUtil.formatCsv(val), ModelStringUtil.formatCsv(val2));
+
+            assertThat(val2)
+                    .isEqualTo(val + 1);
+        }
+    }
+
+    @Test
+    void testIncrementAll_zero() {
+        final ByteBuffer byteBuffer = ByteBuffer.allocate(10);
+
+        for (final UnsignedBytesInstances unsignedBytes : UnsignedBytesInstances.values()) {
+            byteBuffer.clear();
+
+            unsignedBytes.put(byteBuffer, 0L);
+            byteBuffer.flip();
+
+            long val = unsignedBytes.get(byteBuffer);
+            byteBuffer.flip();
+
+            LOGGER.info("Buffer {}", ByteBufferUtils.byteBufferInfo(byteBuffer));
+
+            assertThat(val)
+                    .isEqualTo(0L);
+
+            unsignedBytes.increment(byteBuffer);
+
+            long val2 = unsignedBytes.get(byteBuffer);
+
+            LOGGER.info("unsignedBytes: {}, val: {}, val2: {}",
+                    unsignedBytes, ModelStringUtil.formatCsv(val), ModelStringUtil.formatCsv(val2));
+
             assertThat(val2)
                     .isEqualTo(val + 1);
         }
@@ -190,7 +227,8 @@ class TestUnsignedBytesInstancesThree {
                 .isThrownBy(() -> {
                     doIncrementTest(THREE_UNSIGNED_BYTES.getMaxVal(), byteBuffer);
                 })
-                .withMessageContaining("Can't increment without overflowing");
+                .withMessageContaining("Can't increment without overflowing")
+                .withMessageContaining(ModelStringUtil.formatCsv(THREE_UNSIGNED_BYTES.getMaxVal()));
     }
 
     private long doIncrementTest(final long val, final ByteBuffer byteBuffer) {

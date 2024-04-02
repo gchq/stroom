@@ -17,39 +17,38 @@
 package stroom.pipeline.stepping.client.presenter;
 
 import stroom.pipeline.shared.stepping.StepLocation;
-import stroom.pipeline.shared.stepping.StepType;
-import stroom.pipeline.stepping.client.presenter.StepControlEvent.StepControlHandler;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-public class StepLocationPresenter extends MyPresenterWidget<StepLocationPresenter.StepLocationView>
-        implements StepLocationUIHandlers {
+public class StepLocationPresenter
+        extends MyPresenterWidget<StepLocationPresenter.StepLocationView>
+        implements Focus {
 
     @Inject
     public StepLocationPresenter(final EventBus eventBus, final StepLocationView view) {
         super(eventBus, view);
-        view.setUiHandlers(this);
-    }
-
-    @Override
-    public void changeLocation(final StepLocation stepLocation) {
-        StepControlEvent.fire(this, StepType.REFRESH, stepLocation);
     }
 
     public void setStepLocation(final StepLocation stepLocation) {
         getView().setStepLocation(stepLocation);
     }
 
-    public HandlerRegistration addStepControlHandler(final StepControlHandler handler) {
-        return addHandlerToSource(StepControlEvent.getType(), handler);
+    public StepLocation getStepLocation() {
+        return getView().getStepLocation();
     }
 
-    public interface StepLocationView extends View, HasUiHandlers<StepLocationUIHandlers> {
+    @Override
+    public void focus() {
+        getView().focus();
+    }
+
+    public interface StepLocationView extends View, Focus {
+
+        StepLocation getStepLocation();
 
         void setStepLocation(StepLocation stepLocation);
     }

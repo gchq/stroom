@@ -153,19 +153,19 @@ public class StreamDumpTool extends AbstractCommandLineTool {
                 && !createPeriodFrom.isEmpty()
                 && createPeriodTo != null
                 && !createPeriodTo.isEmpty()) {
-            builder.addTerm(MetaFields.CREATE_TIME, Condition.BETWEEN, createPeriodFrom + "," + createPeriodTo);
+            builder.addDateTerm(MetaFields.CREATE_TIME, Condition.BETWEEN, createPeriodFrom + "," + createPeriodTo);
         } else if (createPeriodFrom != null && !createPeriodFrom.isEmpty()) {
-            builder.addTerm(MetaFields.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, createPeriodFrom);
+            builder.addDateTerm(MetaFields.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, createPeriodFrom);
         } else if (createPeriodTo != null && !createPeriodTo.isEmpty()) {
-            builder.addTerm(MetaFields.CREATE_TIME, Condition.LESS_THAN_OR_EQUAL_TO, createPeriodTo);
+            builder.addDateTerm(MetaFields.CREATE_TIME, Condition.LESS_THAN_OR_EQUAL_TO, createPeriodTo);
         }
 
         if (feedName != null) {
-            builder.addTerm(MetaFields.FEED, Condition.EQUALS, feedName);
+            builder.addDateTerm(MetaFields.FEED, Condition.EQUALS, feedName);
         }
 
         if (streamType != null) {
-            builder.addTerm(MetaFields.TYPE, Condition.EQUALS, streamType);
+            builder.addDateTerm(MetaFields.TYPE, Condition.EQUALS, streamType);
         }
 
         final FindMetaCriteria criteria = new FindMetaCriteria();

@@ -30,6 +30,12 @@ import java.util.List;
 @ConfigurableElement(
         type = "DynamicSearchResultOutputFilter",
         category = Category.FILTER,
+        description = """
+                Used in a search extraction pipeline for extracting field values that have \
+                not been stored in the index and where the fields are dynamic and derived from \
+                the data rather than being defined in the Index settings.
+                Consumes XML events in the `index-documents:1` namespace to convert them into a form so \
+                that they can be used in a Dashboard/Query/Analytic.""",
         roles = {
                 PipelineElementType.ROLE_TARGET},
         icon = SvgImage.PIPELINE_SEARCH_OUTPUT)
@@ -47,6 +53,6 @@ public class DynamicSearchResultOutputFilter extends AbstractFieldFilter {
 
     @Override
     protected void processFields(final List<FieldValue> fieldValues) {
-        fieldListConsumerHolder.accept(fieldValues);
+        fieldListConsumerHolder.acceptFieldValues(fieldValues);
     }
 }

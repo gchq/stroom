@@ -20,9 +20,8 @@ package stroom.analytics.rule.impl;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleDoc.Builder;
-import stroom.analytics.shared.ScheduledQueryAnalyticProcessConfig;
-import stroom.analytics.shared.StreamingAnalyticProcessConfig;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
@@ -37,10 +36,10 @@ import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.query.common.v2.DataSourceProviderRegistry;
-import stroom.query.language.SearchRequestBuilder;
-import stroom.query.util.LambdaLogger;
-import stroom.query.util.LambdaLoggerFactory;
+import stroom.query.language.SearchRequestFactory;
 import stroom.security.api.SecurityContext;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Message;
 
 import jakarta.inject.Inject;
@@ -58,11 +57,16 @@ import java.util.function.BiConsumer;
 class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnalyticRuleStoreImpl.class);
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            AnalyticRuleDoc.DOCUMENT_TYPE,
+            "Analytic Rule",
+            AnalyticRuleDoc.ICON);
 
     private final Store<AnalyticRuleDoc> store;
     private final SecurityContext securityContext;
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
-    private final SearchRequestBuilder searchRequestBuilder;
+    private final SearchRequestFactory searchRequestFactory;
     private final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider;
 
     @Inject
@@ -71,11 +75,11 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
                           final SecurityContext securityContext,
                           final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider,
                           final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
-                          final SearchRequestBuilder searchRequestBuilder) {
+                          final SearchRequestFactory searchRequestFactory) {
         this.store = storeFactory.createStore(serialiser, AnalyticRuleDoc.DOCUMENT_TYPE, AnalyticRuleDoc.class);
         this.securityContext = securityContext;
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
-        this.searchRequestBuilder = searchRequestBuilder;
+        this.searchRequestFactory = searchRequestFactory;
         this.analyticRuleProcessorsProvider = analyticRuleProcessorsProvider;
     }
 
@@ -118,19 +122,21 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
                     final AnalyticProcessConfig analyticProcessConfig = document.getAnalyticProcessConfig();
                     if (analyticProcessConfig != null) {
+//                        if (analyticProcessConfig instanceof
+//                                final ScheduledQueryAnalyticProcessConfig scheduledQueryAnalyticProcessConfig) {
+//                            builder.analyticProcessConfig(
+//                                    scheduledQueryAnalyticProcessConfig.copy().enabled(false).build());
+//                        } else
                         if (analyticProcessConfig instanceof
-                                final ScheduledQueryAnalyticProcessConfig scheduledQueryAnalyticProcessConfig) {
-                            builder.analyticProcessConfig(
-                                    scheduledQueryAnalyticProcessConfig.copy().enabled(false).build());
-                        } else if (analyticProcessConfig instanceof
                                 final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
                             builder.analyticProcessConfig(
                                     tableBuilderAnalyticProcessConfig.copy().enabled(false).build());
-                        } else if (analyticProcessConfig instanceof
-                                final StreamingAnalyticProcessConfig streamingAnalyticProcessConfig) {
-//                            builder.analyticProcessConfig(
-//                                    streamingAnalyticProcessConfig.copy().enabled(false).build());
                         }
+//                        } else if (analyticProcessConfig instanceof
+//                                final StreamingAnalyticProcessConfig streamingAnalyticProcessConfig) {
+////                            builder.analyticProcessConfig(
+////                                    streamingAnalyticProcessConfig.copy().enabled(false).build());
+//                        }
 
                         builder.analyticProcessConfig(analyticProcessConfig);
                     }
@@ -162,11 +168,7 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.SEARCH,
-                AnalyticRuleDoc.DOCUMENT_TYPE,
-                "Analytic Rule",
-                AnalyticRuleDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -197,7 +199,7 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
         return (doc, dependencyRemapper) -> {
             try {
                 if (doc.getQuery() != null) {
-                    searchRequestBuilder.extractDataSourceOnly(doc.getQuery(), docRef -> {
+                    searchRequestFactory.extractDataSourceOnly(doc.getQuery(), docRef -> {
                         try {
                             if (docRef != null) {
                                 final DataSourceProviderRegistry dataSourceProviderRegistry =
@@ -312,6 +314,13 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
     @Override
     public List<DocContentMatch> findByContent(final StringMatch filter) {
         return store.findByContent(filter);
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final DocRef docRef,
+                                                final String extension,
+                                                final StringMatch filter) {
+        return store.fetchHighlights(docRef, extension, filter);
     }
 
     private void deleteProcessorFilter(final DocRef docRef) {

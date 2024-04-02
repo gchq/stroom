@@ -16,7 +16,6 @@
 
 package stroom.query.client.presenter;
 
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.shared.QueryResource;
 
@@ -42,11 +41,11 @@ public class TimeZones {
             localTimeZoneId = "Z";
         }
 
-        final Rest<List<String>> rest = restFactory.create();
-        rest
+        restFactory
+                .create(QUERY_RESOURCE)
+                .method(QueryResource::fetchTimeZones)
                 .onSuccess(result -> ids = result)
-                .call(QUERY_RESOURCE)
-                .fetchTimeZones();
+                .exec();
     }
 
     public String getLocalTimeZoneId() {

@@ -22,9 +22,9 @@ import stroom.data.client.view.FileData.Status;
 import stroom.data.shared.DataResource;
 import stroom.data.shared.UploadDataRequest;
 import stroom.dispatch.client.AbstractSubmitCompleteHandler;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.importexport.client.presenter.ImportUtil;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.ResourceKey;
 import stroom.widget.popup.client.event.DisablePopupEvent;
@@ -57,7 +57,7 @@ public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.D
                                final RestFactory restFactory) {
         super(eventBus, view);
 
-        view.getForm().setAction(restFactory.getImportFileURL());
+        view.getForm().setAction(ImportUtil.getImportFileURL());
         view.getForm().setEncoding(FormPanel.ENCODING_MULTIPART);
         view.getForm().setMethod(FormPanel.METHOD_POST);
 
@@ -84,8 +84,9 @@ public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.D
                         getView().getMetaData(),
                         fileName);
 
-                final Rest<ResourceKey> rest = restFactory.create();
-                rest
+                restFactory
+                        .create(DATA_RESOURCE)
+                        .method(res -> res.upload(request))
                         .onSuccess(result -> {
                             hide();
                             AlertEvent.fireInfo(DataUploadPresenter.this.metaPresenter, "Uploaded file", null);
@@ -94,8 +95,7 @@ public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.D
                         .onFailure(throwable -> {
                             error("Error uploading file: " + throwable.getMessage());
                         })
-                        .call(DATA_RESOURCE)
-                        .upload(request);
+                        .exec();
             }
 
             @Override

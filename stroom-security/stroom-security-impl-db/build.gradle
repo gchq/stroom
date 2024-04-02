@@ -11,6 +11,7 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
+    implementation libs.commons_lang
     implementation libs.guice
     implementation libs.jackson_annotations
     implementation libs.jakarta_inject
@@ -30,6 +31,7 @@ dependencies {
     testImplementation libs.guice_extension
     testImplementation libs.junit_jupiter_api
     testImplementation libs.mockito_core
+    testImplementation libs.mockito_junit_jupiter
     testImplementation libs.slf4j_api
 
     // The following logging libs are needed when running junits outside dropwizard

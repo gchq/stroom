@@ -16,15 +16,7 @@
 
 package stroom.query.api.v2;
 
-import stroom.datasource.api.v2.BooleanField;
-import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.DocRefField;
-import stroom.datasource.api.v2.DoubleField;
-import stroom.datasource.api.v2.FloatField;
-import stroom.datasource.api.v2.IdField;
-import stroom.datasource.api.v2.IntegerField;
-import stroom.datasource.api.v2.LongField;
-import stroom.datasource.api.v2.TextField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -365,114 +357,114 @@ public final class ExpressionOperator extends ExpressionItem {
          * @param value     The value
          * @return this builder, with the completed term added.
          */
-        public Builder addTerm(final BooleanField field,
-                               final ExpressionTerm.Condition condition,
-                               final boolean value) {
+        public Builder addBooleanTerm(final QueryField field,
+                                      final ExpressionTerm.Condition condition,
+                                      final boolean value) {
             return addTerm(ExpressionTerm.builder()
-                    .field(field.getName())
+                    .field(field.getFldName())
                     .condition(condition)
                     .value(String.valueOf(value))
                     .build());
         }
 
-        public Builder addTerm(final DateField field,
-                               final ExpressionTerm.Condition condition,
-                               final String value) {
+        public Builder addDateTerm(final QueryField field,
+                                   final ExpressionTerm.Condition condition,
+                                   final String value) {
             return addTerm(ExpressionTerm.builder()
-                    .field(field.getName())
+                    .field(field.getFldName())
                     .condition(condition)
                     .value(value)
                     .build());
         }
 
-        public Builder addTerm(final DocRefField field,
-                               final ExpressionTerm.Condition condition,
-                               final String value) {
+        public Builder addDocRefTerm(final QueryField field,
+                                     final ExpressionTerm.Condition condition,
+                                     final String value) {
             return addTerm(ExpressionTerm.builder()
-                    .field(field.getName())
+                    .field(field.getFldName())
                     .condition(condition)
                     .value(value)
                     .build());
         }
 
-        public Builder addTerm(final DocRefField field,
-                               final ExpressionTerm.Condition condition,
-                               final DocRef docRef) {
+        public Builder addDocRefTerm(final QueryField field,
+                                     final ExpressionTerm.Condition condition,
+                                     final DocRef docRef) {
             if (!Condition.IS_DOC_REF.equals(condition) &&
                     !Condition.IN_FOLDER.equals(condition)) {
                 throw new RuntimeException("Unexpected condition used for doc ref :" + condition);
             }
 
             return addTerm(ExpressionTerm.builder()
-                    .field(field.getName())
+                    .field(field.getFldName())
                     .condition(condition)
                     .docRef(docRef)
                     .build());
         }
 
-        public Builder addTerm(final IdField field,
-                               final ExpressionTerm.Condition condition,
-                               final long value) {
+        public Builder addIdTerm(final QueryField field,
+                                 final ExpressionTerm.Condition condition,
+                                 final long value) {
             return addTerm(ExpressionTerm.builder()
-                    .field(field.getName())
+                    .field(field.getFldName())
                     .condition(condition)
                     .value(String.valueOf(value))
                     .build());
         }
 
-        public Builder addTerm(final IntegerField field,
-                               final ExpressionTerm.Condition condition,
-                               final int value) {
+        public Builder addIntegerTerm(final QueryField field,
+                                      final ExpressionTerm.Condition condition,
+                                      final int value) {
             return addTerm(ExpressionTerm.builder()
-                    .field(field.getName())
+                    .field(field.getFldName())
                     .condition(condition)
                     .value(String.valueOf(value))
                     .build());
         }
 
-        public Builder addTerm(final LongField field,
-                               final ExpressionTerm.Condition condition,
-                               final long value) {
+        public Builder addLongTerm(final QueryField field,
+                                   final ExpressionTerm.Condition condition,
+                                   final long value) {
             return addTerm(ExpressionTerm.builder()
-                    .field(field.getName())
+                    .field(field.getFldName())
                     .condition(condition)
                     .value(String.valueOf(value))
                     .build());
         }
 
-        public Builder addTerm(final FloatField field,
-                               final ExpressionTerm.Condition condition,
-                               final float value) {
+        public Builder addFloatTerm(final QueryField field,
+                                    final ExpressionTerm.Condition condition,
+                                    final float value) {
             return addTerm(ExpressionTerm.builder()
-                    .field(field.getName())
+                    .field(field.getFldName())
                     .condition(condition)
                     .value(String.valueOf(value))
                     .build());
         }
 
-        public Builder addTerm(final DoubleField field,
-                               final ExpressionTerm.Condition condition,
-                               final double value) {
+        public Builder addDoubleTerm(final QueryField field,
+                                     final ExpressionTerm.Condition condition,
+                                     final double value) {
             return addTerm(ExpressionTerm.builder()
-                    .field(field.getName())
+                    .field(field.getFldName())
                     .condition(condition)
                     .value(String.valueOf(value))
                     .build());
         }
 
-        public Builder addTerm(final TextField field,
-                               final ExpressionTerm.Condition condition,
-                               final String value) {
+        public Builder addTextTerm(final QueryField field,
+                                   final ExpressionTerm.Condition condition,
+                                   final String value) {
             return addTerm(ExpressionTerm.builder()
-                    .field(field.getName())
+                    .field(field.getFldName())
                     .condition(condition)
                     .value(value)
                     .build());
         }
 
-        public Builder addTerm(final String field,
-                               final ExpressionTerm.Condition condition,
-                               final DocRef docRef) {
+        public Builder addDocRefTerm(final String field,
+                                     final ExpressionTerm.Condition condition,
+                                     final DocRef docRef) {
             return addTerm(ExpressionTerm.builder()
                     .field(field)
                     .condition(condition)

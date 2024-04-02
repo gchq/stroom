@@ -23,7 +23,7 @@ import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
-import stroom.index.shared.IndexDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -32,7 +32,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Provider;
 
-public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, IndexDoc> {
+public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, LuceneIndexDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData FIELDS = new TabDataImpl("Fields");
@@ -48,22 +48,22 @@ public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, I
                           final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
         super(eventBus, view);
 
-        addTab(SHARDS, new DocumentEditTabProvider<IndexDoc>(indexShardPresenterProvider::get));
-        addTab(FIELDS, new DocumentEditTabProvider<IndexDoc>(indexFieldListPresenterProvider::get));
-        addTab(SETTINGS, new DocumentEditTabProvider<IndexDoc>(indexSettingsPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<IndexDoc>(eventBus, markdownEditPresenterProvider) {
+        addTab(SHARDS, new DocumentEditTabProvider<LuceneIndexDoc>(indexShardPresenterProvider::get));
+        addTab(FIELDS, new DocumentEditTabProvider<LuceneIndexDoc>(indexFieldListPresenterProvider::get));
+        addTab(SETTINGS, new DocumentEditTabProvider<LuceneIndexDoc>(indexSettingsPresenterProvider::get));
+        addTab(DOCUMENTATION, new MarkdownTabProvider<LuceneIndexDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final IndexDoc document,
+                               final LuceneIndexDoc document,
                                final boolean readOnly) {
                 presenter.setText(document.getDescription());
                 presenter.setReadOnly(readOnly);
             }
 
             @Override
-            public IndexDoc onWrite(final MarkdownEditPresenter presenter,
-                                    final IndexDoc document) {
+            public LuceneIndexDoc onWrite(final MarkdownEditPresenter presenter,
+                                          final LuceneIndexDoc document) {
                 document.setDescription(presenter.getText());
                 return document;
             }
@@ -73,6 +73,6 @@ public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, I
 
     @Override
     public String getType() {
-        return IndexDoc.DOCUMENT_TYPE;
+        return LuceneIndexDoc.DOCUMENT_TYPE;
     }
 }

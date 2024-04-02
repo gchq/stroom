@@ -17,7 +17,6 @@
 package stroom.security.client.presenter;
 
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.AppPermissionResource;
 import stroom.security.shared.ChangeSet;
@@ -83,13 +82,13 @@ public class UserEditAddRemoveUsersPresenter
                         changedLinkedUsers,
                         null);
 
-                final Rest<Boolean> rest = restFactory.create();
-                rest
+                restFactory
+                        .create(APP_PERMISSION_RESOURCE)
+                        .method(res -> res.changeUser(request))
                         .onSuccess(result -> {
                             refresh();
                         })
-                        .call(APP_PERMISSION_RESOURCE)
-                        .changeUser(request);
+                        .exec();
             };
 
             if (!relatedUser.isGroup()) {
@@ -107,11 +106,11 @@ public class UserEditAddRemoveUsersPresenter
                 final ChangeSet<User> changedLinkedUsers = new ChangeSet<>(null, removeSet);
                 final ChangeUserRequest request = new ChangeUserRequest(relatedUser, changedLinkedUsers, null);
 
-                final Rest<Boolean> rest = restFactory.create();
-                rest
+                restFactory
+                        .create(APP_PERMISSION_RESOURCE)
+                        .method(res -> res.changeUser(request))
                         .onSuccess(result -> refresh())
-                        .call(APP_PERMISSION_RESOURCE)
-                        .changeUser(request);
+                        .exec();
             }
         }));
         registerHandler(getSelectionModel().addSelectionHandler(event -> enableButtons()));

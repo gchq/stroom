@@ -19,25 +19,27 @@ package stroom.node.impl;
 import stroom.node.api.NodeInfo;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
+@Singleton
 class NodeInfoImpl implements NodeInfo {
 
-    private final NodeConfig nodeConfig;
+    private final String nodeName;
 
     @Inject
     NodeInfoImpl(final NodeConfig nodeConfig) {
-        this.nodeConfig = nodeConfig;
+        nodeName = nodeConfig.getNodeName();
     }
 
     @Override
     public String getThisNodeName() {
-        return nodeConfig.getNodeName();
+        return nodeName;
     }
 
     @Override
     public String toString() {
         return "NodeInfoImpl{" +
-                "nodeConfig=" + nodeConfig +
+                "nodeName=" + nodeName +
                 '}';
     }
 }

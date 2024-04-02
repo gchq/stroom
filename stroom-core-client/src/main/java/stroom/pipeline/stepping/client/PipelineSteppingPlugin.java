@@ -19,10 +19,9 @@ package stroom.pipeline.stepping.client;
 
 import stroom.core.client.ContentManager;
 import stroom.core.client.presenter.Plugin;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.EntityChooser;
+import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaResource;
@@ -35,7 +34,6 @@ import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.shared.ResultPage;
 
 import com.google.gwt.core.client.GWT;
 import com.google.web.bindery.event.shared.EventBus;
@@ -50,14 +48,16 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
 
-    private final Provider<EntityChooser> pipelineSelection;
+    private final Provider<DocSelectionPopup> pipelineSelection;
     private final Provider<SteppingContentTabPresenter> editorProvider;
     private final ContentManager contentManager;
     private final RestFactory restFactory;
 
     @Inject
-    public PipelineSteppingPlugin(final EventBus eventBus, final Provider<SteppingContentTabPresenter> editorProvider,
-                                  final Provider<EntityChooser> pipelineSelection, final ContentManager contentManager,
+    public PipelineSteppingPlugin(final EventBus eventBus,
+                                  final Provider<SteppingContentTabPresenter> editorProvider,
+                                  final Provider<DocSelectionPopup> pipelineSelection,
+                                  final ContentManager contentManager,
                                   final RestFactory restFactory) {
         super(eventBus);
         this.pipelineSelection = pipelineSelection;
@@ -78,18 +78,18 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
         } else {
             // If we don't have a pipeline id then try to guess one for the
             // supplied stream.
-            final Rest<DocRef> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(STEPPING_RESOURCE)
+                    .method(res -> res.getPipelineForStepping(new GetPipelineForMetaRequest(
+                            event.getStepLocation().getMetaId(),
+                            event.getChildStreamId())))
                     .onSuccess(result ->
                             choosePipeline(
                                     result,
                                     event.getStepType(),
                                     event.getStepLocation(),
                                     event.getChildStreamType()))
-                    .call(STEPPING_RESOURCE)
-                    .getPipelineForStepping(new GetPipelineForMetaRequest(
-                            event.getStepLocation().getMetaId(),
-                            event.getChildStreamId()));
+                    .exec();
         }
     }
 
@@ -97,31 +97,35 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
                                 final StepType stepType,
                                 final StepLocation stepLocation,
                                 final String childStreamType) {
-        final EntityChooser chooser = pipelineSelection.get();
+        final DocSelectionPopup chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Step With");
         chooser.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
         chooser.setRequiredPermissions(DocumentPermissionNames.READ);
-        chooser.addDataSelectionHandler(event -> {
-            final DocRef pipeline = chooser.getSelectedEntityReference();
-            if (pipeline != null) {
-                final FindMetaCriteria findMetaCriteria = FindMetaCriteria.createFromId(stepLocation.getMetaId());
-                final Rest<ResultPage<MetaRow>> rest = restFactory.create();
-                rest
-                        .onSuccess(result -> {
-                            if (result != null && result.size() == 1) {
-                                final MetaRow row = result.getFirst();
-                                openEditor(pipeline, stepType, stepLocation, row.getMeta(), childStreamType);
-                            }
-                        })
-                        .call(META_RESOURCE).findMetaRow(findMetaCriteria);
-            }
-        });
 
         if (initialPipelineRef != null) {
             chooser.setSelectedEntityReference(initialPipelineRef);
         }
 
-        chooser.show();
+        chooser.show(pipeline -> {
+            if (pipeline != null) {
+                final FindMetaCriteria findMetaCriteria = FindMetaCriteria.createFromId(
+                        stepLocation.getMetaId());
+                restFactory
+                        .create(META_RESOURCE)
+                        .method(res -> res.findMetaRow(findMetaCriteria))
+                        .onSuccess(result -> {
+                            if (result != null && result.size() == 1) {
+                                final MetaRow row = result.getFirst();
+                                openEditor(pipeline,
+                                        stepType,
+                                        stepLocation,
+                                        row.getMeta(),
+                                        childStreamType);
+                            }
+                        })
+                        .exec();
+            }
+        });
     }
 
     private void openEditor(final DocRef pipeline,

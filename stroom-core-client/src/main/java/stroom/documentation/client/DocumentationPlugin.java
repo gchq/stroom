@@ -18,7 +18,7 @@
 package stroom.documentation.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -66,26 +66,26 @@ public class DocumentationPlugin extends DocumentPlugin<DocumentationDoc> {
     @Override
     public void load(final DocRef docRef,
                      final Consumer<DocumentationDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<DocumentationDoc> rest = restFactory.create();
-        rest
+                     final Consumer<RestError> errorConsumer) {
+        restFactory
+                .create(DOCUMENTATION_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(DOCUMENTATION_RESOURCE)
-                .fetch(docRef.getUuid());
+                .exec();
     }
 
     @Override
     public void save(final DocRef docRef,
                      final DocumentationDoc document,
                      final Consumer<DocumentationDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<DocumentationDoc> rest = restFactory.create();
-        rest
+                     final Consumer<RestError> errorConsumer) {
+        restFactory
+                .create(DOCUMENTATION_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(DOCUMENTATION_RESOURCE)
-                .update(document.getUuid(), document);
+                .exec();
     }
 
     @Override

@@ -1,18 +1,19 @@
 package stroom.search.elastic.search;
 
 import stroom.dictionary.api.WordListProvider;
+import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.Coprocessors;
+import stroom.query.common.v2.IndexFieldCache;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.search.elastic.ElasticIndexCache;
 import stroom.search.elastic.ElasticIndexService;
 import stroom.search.elastic.shared.ElasticIndexDoc;
-import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.search.extraction.StoredDataQueue;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
@@ -28,7 +29,6 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder.BoundaryScannerType;
 
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
@@ -42,6 +42,7 @@ public class ElasticSearchFactory {
     private final ElasticSearchTaskHandler elasticSearchTaskHandler;
     private final ElasticIndexService elasticIndexService;
     private final ElasticIndexCache elasticIndexCache;
+    private final IndexFieldCache indexFieldCache;
     private final TaskContextFactory taskContextFactory;
     private final Executor executor;
 
@@ -50,12 +51,14 @@ public class ElasticSearchFactory {
                                 final ElasticSearchTaskHandler elasticSearchTaskHandler,
                                 final ElasticIndexService elasticIndexService,
                                 final ElasticIndexCache elasticIndexCache,
+                                final IndexFieldCache indexFieldCache,
                                 final TaskContextFactory taskContextFactory,
                                 final ExecutorProvider executorProvider) {
         this.wordListProvider = wordListProvider;
         this.elasticSearchTaskHandler = elasticSearchTaskHandler;
         this.elasticIndexService = elasticIndexService;
         this.elasticIndexCache = elasticIndexCache;
+        this.indexFieldCache = indexFieldCache;
         this.taskContextFactory = taskContextFactory;
         this.executor = executorProvider.get(THREAD_POOL);
     }
@@ -79,8 +82,6 @@ public class ElasticSearchFactory {
             throw new SearchException("Search index has not been set");
         }
 
-        // Create a map of index fields keyed by name.
-        final Map<String, ElasticIndexField> indexFieldsMap = elasticIndexService.getFieldsMap(index);
         final Runnable runnable = taskContextFactory.childContext(
                 parentContext,
                 "Search Elasticsearch Index",
@@ -88,7 +89,7 @@ public class ElasticSearchFactory {
                 taskContext -> elasticSearchTaskHandler.search(
                         taskContext,
                         index,
-                        getQuery(expression, indexFieldsMap, dateTimeSettings),
+                        getQuery(query.getDataSource(), indexFieldCache, expression, dateTimeSettings),
                         getHighlighter(),
                         coprocessors,
                         resultStore,
@@ -112,12 +113,14 @@ public class ElasticSearchFactory {
                         }).run(), executor);
     }
 
-    private QueryBuilder getQuery(final ExpressionOperator expression,
-                                  final Map<String, ElasticIndexField> indexFieldsMap,
+    private QueryBuilder getQuery(final DocRef indexDocRef,
+                                  final IndexFieldCache indexFieldCache,
+                                  final ExpressionOperator expression,
                                   final DateTimeSettings dateTimeSettings) {
         final SearchExpressionQueryBuilder builder = new SearchExpressionQueryBuilder(
+                indexDocRef,
+                indexFieldCache,
                 wordListProvider,
-                indexFieldsMap,
                 dateTimeSettings);
         final QueryBuilder query = builder.buildQuery(expression);
 

@@ -20,7 +20,7 @@ import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
-import stroom.explorer.client.presenter.EntityChooser;
+import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.meta.shared.DataRetentionFields;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
@@ -64,7 +64,8 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                                      final DateTimeFormatter dateTimeFormatter,
                                      final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider,
                                      final Provider<ProcessChoicePresenter> processChoicePresenterProvider,
-                                     final Provider<EntityChooser> pipelineSelection) {
+                                     final Provider<DocSelectionPopup> pipelineSelection,
+                                     final ExpressionValidator expressionValidator) {
         super(eventBus,
                 view,
                 restFactory,
@@ -73,25 +74,27 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                 selectionSummaryPresenterProvider,
                 processChoicePresenterProvider,
                 pipelineSelection,
-                false);
+                expressionValidator,
+                false
+        );
     }
 
     public void setSelectedStream(final MetaRow metaRow, final boolean fireEvents,
                                   final boolean showSystemFiles) {
         if (metaRow == null) {
             getCriteria().setExpression(null);
-            getCriteria().setSort(MetaFields.CREATE_TIME.getName(), false, false);
+            getCriteria().setSort(MetaFields.CREATE_TIME.getFldName(), false, false);
             refresh();
 
         } else {
             final ExpressionOperator.Builder builder = ExpressionOperator.builder();
             if (!showSystemFiles) {
-                builder.addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
+                builder.addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
             }
-            builder.addTerm(MetaFields.ID, Condition.EQUALS, metaRow.getMeta().getId());
+            builder.addIdTerm(MetaFields.ID, Condition.EQUALS, metaRow.getMeta().getId());
 
             getCriteria().setExpression(builder.build());
-            getCriteria().setSort(MetaFields.CREATE_TIME.getName(), false, false);
+            getCriteria().setSort(MetaFields.CREATE_TIME.getFldName(), false, false);
             getCriteria().setFetchRelationships(true);
             refresh();
         }

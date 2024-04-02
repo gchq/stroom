@@ -26,7 +26,7 @@ import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.node.client.NodeManager;
@@ -121,11 +121,11 @@ public class AnalyticDataShardListPresenter
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<AnalyticDataShard>> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
+                                final Consumer<RestError> errorConsumer) {
                 AnalyticDataShardListPresenter.this.range = range;
                 AnalyticDataShardListPresenter.this.dataConsumer = dataConsumer;
                 delayedUpdate.reset();
-                fetchNodes(range, dataConsumer, throwableConsumer);
+                fetchNodes(range, dataConsumer, errorConsumer);
             }
         };
     }
@@ -160,10 +160,10 @@ public class AnalyticDataShardListPresenter
 
     public void fetchNodes(final Range range,
                            final Consumer<ResultPage<AnalyticDataShard>> dataConsumer,
-                           final Consumer<Throwable> throwableConsumer) {
+                           final Consumer<RestError> errorConsumer) {
         nodeManager.listAllNodes(
                 nodeNames -> fetchTasksForNodes(range, dataConsumer, nodeNames),
-                throwableConsumer);
+                errorConsumer);
     }
 
     private void fetchTasksForNodes(final Range range,
@@ -173,8 +173,9 @@ public class AnalyticDataShardListPresenter
         for (final String nodeName : nodeNames) {
             if (criteria.getAnalyticDocUuid() != null) {
                 CriteriaUtil.setRange(criteria, range);
-                final Rest<ResultPage<AnalyticDataShard>> rest = restFactory.create();
-                rest
+                restFactory
+                        .create(ANALYTIC_DATA_SHARD_RESOURCE)
+                        .method(res -> res.find(nodeName, criteria))
                         .onSuccess(response -> {
                             responseMap.put(nodeName, response.getValues());
 //                            errorMap.put(nodeName, response.getErrors());
@@ -185,8 +186,7 @@ public class AnalyticDataShardListPresenter
                             errorMap.put(nodeName, Collections.singletonList(throwable.getMessage()));
                             delayedUpdate.update();
                         })
-                        .call(ANALYTIC_DATA_SHARD_RESOURCE)
-                        .find(nodeName, criteria);
+                        .exec();
             }
 
 

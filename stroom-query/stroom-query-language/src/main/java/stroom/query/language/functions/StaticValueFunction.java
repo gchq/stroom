@@ -82,9 +82,4 @@ public class StaticValueFunction implements Function, Appendable {
     public Val getValue() {
         return gen.getValue();
     }
-
-    @Override
-    public Type getCommonReturnType() {
-        return value.type();
-    }
 }

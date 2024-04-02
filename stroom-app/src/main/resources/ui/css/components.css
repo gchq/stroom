@@ -219,6 +219,7 @@
 .layerContainer-container {
 	width: 100%;
 	height: 100%;
+	overflow: hidden;
 }
 
 .layerContainer-layer {
@@ -381,7 +382,20 @@
 	border: 1px solid var(--control__border-color);
 	background: var(--control__background-color);
 	color: var(--control__text-color);
-	white-space: pre;
+	padding: 5px;
+  	-webkit-user-select: text;
+  	-moz-user-select: text;
+  	user-select: text;
+}
+
+.infoLine {
+    display: flex;
+    gap: 5px;
+}
+
+.docRefLinkCopy,
+.docRefLinkOpen {
+    cursor: pointer;
 }
 
 .userTaskView-layout {
@@ -584,9 +598,7 @@
 .sourceViewImpl-progressBarPanel {
     display: inline-block;
     width: 100%;
-    height: 6px;
-    padding-right: 0.25em;
-    padding-left: 0.25em;
+    height: 10px;
 }
 
 .editExpressionViewImpl-expressionTree {
@@ -676,9 +688,7 @@
 
 .dataViewImpl-progressBarPanel {
     width: 100%;
-    height: 6px;
-    padding-right: 0.25em;
-    padding-left: 0.25em;
+    height: 10px;
 }
 
 .dataViewImpl-layerContainer {
@@ -837,13 +847,12 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    background-color: var(--blue-500);
 }
 
 .aboutViewImpl-logo svg {
     width: 150px;
     height: 40px;
-    color: white;
+    color: var(--logo-color);
 }
 
 .aboutViewImpl-body {
@@ -1025,19 +1034,38 @@
     padding-left: 5px;
 }
 
+.columnFunctionEditorViewImpl {
+
+}
+
 .columnFunctionEditorViewImpl-resizePanel {
     display: block;
 }
 
 .columnFunctionEditorViewImpl-editorContainer {
     border: 1px solid var(--control__border-color);
-    background-color: var(--control__background-color);
+    background-color: var(--dashboard-panel__background-color);
 }
 
 .columnFunctionEditorViewImpl-labelPanel {
     display: flex;
     /* align-items: center; */
     justify-content: flex-end;
+    padding: 5px;
+}
+
+.columnFunctionEditorViewImpl-completionLabel {
+}
+
+.columnFunctionEditorViewImpl .quickFilter-textBox,
+.QueryHelpViewImpl .quickFilter-textBox {
+    border-color: transparent;
+    border-bottom-color: var(--control__border-color);
+    border-radius: 0;
+}
+
+.QueryEditViewImpl {
+    border-top: 1px solid var(--control__border-color);
 }
 
 .characterNavigator {
@@ -1049,7 +1077,7 @@
     display: flex;
     align-items: center;
     gap: 1rem;
-    padding: 0 1rem;
+    padding: 3px 1rem;
 }
 
 .characterNavigator-label {
@@ -1183,23 +1211,29 @@
 
 .progressViewImpl-progressBarContainer {
     position: relative;
+    height: 10px;
+    padding: 2px;
 }
 
 .progressViewImpl-progressBarOuter {
-    position: absolute;
+    position: relative;
     background-color: var(--control__background-color);
     width: 100%;
-    height: 6px;
+    height: 100%;
     border-style: solid;
     border-width: 1px;
     border-color: var(--control__border-color);
+    border-radius: .25rem;
+    overflow: hidden;
 }
 
 .progressViewImpl-progressBarInner {
     position: absolute;
     background-color: #1e88e5;
-    height: 4px;
+    height: 100%;
     min-width: 3px;
+    border: 1px solid var(--page__background-color);
+    border-radius: .25rem;
 }
 
 .solrIndexFieldListViewImpl-synchState {
@@ -1315,6 +1349,14 @@
     color: var(--text-color--disabled);
 }
 
+.stepLocationLink {
+    cursor: pointer;
+}
+
+.stepLocationLink:hover {
+   text-decoration: underline;
+}
+
 .stepLocationViewImpl-left {
 }
 
@@ -1327,24 +1369,6 @@
 
 .stepLocationViewImpl-layout {
     white-space: nowrap;
-}
-
-.stepLocationViewImpl-html {
-    display: inline-block;
-}
-
-.stepLocationViewImpl-label {
-    display: inline-block;
-    cursor: pointer;
-}
-
-.stepLocationViewImpl-textBox {
-    display: inline-block;
-    width: 30px;
-    height: 14px;
-    padding: 0px;
-    margin: 0px;
-    border: none;
 }
 
 .dictionarySettingsViewImpl-label {
@@ -1467,6 +1491,7 @@
 .navigation-logo-image svg {
     width: 146px;
     height: 35px;
+    color: var(--logo-color);
 }
 
 .navigation-arrow-image svg {
@@ -1477,7 +1502,9 @@
 
 button.main-menu {
     background-color: transparent;
-    color: white;
+    /*color: var(--navigation-icon-button__color);*/
+    color: var(--text-color);
+    opacity: 0.6;
 }
 
 button.main-menu svg {
@@ -1562,6 +1589,12 @@ button.main-menu svg {
     justify-content: flex-end;
 }
 
+.form-control-border {
+    border: solid 1px var(--control__border-color);
+    border-radius: .25rem;
+    overflow: hidden;
+}
+
 .form-control {
   background-color: var(--control__background-color);
   border-color: var(--control__border-color);
@@ -1613,6 +1646,10 @@ button.main-menu svg {
     flex-direction: column;
 }
 
+.form-group > div:has(> label) {
+    display: flex;
+}
+
 
 .form-group:not(:first-child) {
     margin-top: 0.3em;
@@ -1622,6 +1659,51 @@ button.main-menu svg {
    us doing something with client side validation */
 .form-group .invalid-feedback {
     margin-top: 0;
+}
+
+.form-group-label-container .form-label{
+    margin-bottom: 0;
+}
+
+.form-group-label-container {
+    display: flex;
+    flex-direction: row;
+    gap: var(--control__gap--horizontal);
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+
+.form-group .help-button {
+    margin-bottom: 0rem;
+}
+
+.help-button-tooltip {
+    /* width: 500px; */
+    max-width: 500px;
+    border-width: 2px;
+    border-color: var(--heading-color);
+    border-style: solid;
+    border-radius: 6px;
+}
+
+.help-button-tooltip .popupContent {
+    margin: 5px;
+    font-weight: 400;
+}
+
+.help-button-tooltip .popupContent div {
+    font-weight: 400;
+}
+
+.form-group .help-button .icon-button {
+    width: 18px;
+    height: 18px;
+}
+
+.form-group .help-button svg {
+    width: 16px;
+    height: 16px;
+    /* margin-bottom: 0.6em; */
 }
 
 .form-heading {
@@ -1656,18 +1738,18 @@ button.main-menu svg {
 }
 
 .timeRange-popup {
-    width: 33rem;
     z-index: 10;
     /*padding: 0.6rem 0.6rem 0.4rem 0.6rem;*/
 }
 
 .timeRange-quickSettings {
     display: flex;
+    min-width: 32rem;
 }
 
 .timeRange-quickSettingPanel {
     padding: 0.4rem;
-    width: 9rem;
+    min-width: 8rem;
 }
 
 .timeRange-quickSettingPanel-title {
@@ -1848,7 +1930,7 @@ button.main-menu svg {
     flex-grow: 0;
     align-items: end;
     white-space: nowrap;
-    opacity: .7;
+    color: var(--navigation__text-color);
 }
 
 .findCell-sub {
@@ -1872,16 +1954,13 @@ button.main-menu svg {
 }
 
 .pipelineElementChooser-iconCell {
-    padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
 }
 
 .pipelineElementChooser-textCell {
-    padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
     min-width: 200px;
 }
 
 .pipelineElementChooser-filterIconCell {
-    padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
 }
 
 .pipelineElementChooser-textCell.pipelineElementChooser-filterOn {
@@ -2077,4 +2156,34 @@ button.main-menu svg {
     margin-bottom: 0px;
 }
 
+.docRefLinkContainer {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
 
+.docRefLinkContainer .svg-image {
+    opacity: 0;
+}
+
+.dataGridCell:hover .docRefLinkContainer .svg-image,
+.docRefLinkContainer:hover .svg-image {
+    opacity: .8;
+}
+
+.AnalyticEmailDestinationViewImpl #analyticEmailDestinationSubjectTemplate,
+.AnalyticEmailDestinationViewImpl #analyticEmailDestinationBodyTemplate {
+    /*width: 1000px;*/
+}
+
+.AnalyticEmailDestinationViewImpl #analyticEmailDestinationSubjectTemplate .EditorViewImpl {
+    height: 60px;
+}
+
+.AnalyticEmailDestinationViewImpl .Button {
+    width: 200px;
+}
+
+.AnalyticEmailDestinationViewImpl #analyticEmailDestinationBodyTemplate .EditorViewImpl {
+    min-height: 300px;
+}

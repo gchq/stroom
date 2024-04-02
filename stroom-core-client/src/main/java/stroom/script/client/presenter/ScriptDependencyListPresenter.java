@@ -25,8 +25,7 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasDocumentWrite;
-import stroom.explorer.client.presenter.EntityChooser;
-import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.script.shared.ScriptDoc;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.SvgPresets;
@@ -45,7 +44,7 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
         implements HasDocumentRead<ScriptDoc>, HasDocumentWrite<ScriptDoc>, HasDirtyHandlers {
 
     private final ScriptListPresenter scriptListPresenter;
-    private final EntityChooser explorerDropDownTreePresenter;
+    private final DocSelectionPopup explorerDropDownTreePresenter;
     private final ButtonView addButton;
     private final ButtonView removeButton;
     private List<DocRef> scripts;
@@ -55,7 +54,7 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
     @Inject
     public ScriptDependencyListPresenter(final EventBus eventBus, final WrapperView view,
                                          final ScriptListPresenter scriptListPresenter,
-                                         final EntityChooser explorerDropDownTreePresenter) {
+                                         final DocSelectionPopup explorerDropDownTreePresenter) {
         super(eventBus, view);
         this.scriptListPresenter = scriptListPresenter;
         this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;
@@ -78,22 +77,17 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
         registerHandler(addButton.addClickHandler(this::onAdd));
         registerHandler(removeButton.addClickHandler(this::onRemove));
         registerHandler(scriptListPresenter.getSelectionModel().addSelectionHandler(event -> enableButtons()));
-        registerHandler(explorerDropDownTreePresenter.addDataSelectionHandler(event -> {
-            final ExplorerNode selectedItem = event.getSelectedItem();
-            if (selectedItem != null) {
-                final DocRef script = selectedItem.getDocRef();
-                if (script != null) {
-                    if (!scripts.contains(script) && scripts.add(script)) {
-                        DirtyEvent.fire(ScriptDependencyListPresenter.this, true);
-                        refresh();
-                    }
-                }
-            }
-        }));
     }
 
     private void onAdd(final ClickEvent event) {
-        explorerDropDownTreePresenter.show();
+        explorerDropDownTreePresenter.show(script -> {
+            if (script != null) {
+                if (!scripts.contains(script) && scripts.add(script)) {
+                    DirtyEvent.fire(ScriptDependencyListPresenter.this, true);
+                    refresh();
+                }
+            }
+        });
     }
 
     private void onRemove(final ClickEvent event) {

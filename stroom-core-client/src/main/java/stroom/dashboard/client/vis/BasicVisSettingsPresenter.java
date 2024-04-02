@@ -23,10 +23,9 @@ import stroom.dashboard.client.main.SettingsPresenter;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.VisComponentSettings;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.v2.Column;
 import stroom.security.shared.DocumentPermissionNames;
@@ -57,7 +56,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
 
     private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);
 
-    private final EntityDropDownPresenter visualisationPresenter;
+    private final DocSelectionBoxPresenter visualisationPresenter;
     private final RestFactory restFactory;
     private final UserPreferencesManager userPreferencesManager;
     private final Map<TabData, DynamicSettingsPane> dynamicSettingsMap = new HashMap<>();
@@ -69,7 +68,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
     @Inject
     public BasicVisSettingsPresenter(final EventBus eventBus,
                                      final BasicVisSettingsView view,
-                                     final EntityDropDownPresenter visualisationPresenter,
+                                     final DocSelectionBoxPresenter visualisationPresenter,
                                      final RestFactory restFactory,
                                      final UserPreferencesManager userPreferencesManager) {
         super(eventBus, view);
@@ -128,8 +127,9 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
     private void loadVisualisation(final DocRef docRef, final JSONObject dynamicSettings) {
         currentVisualisation = docRef;
         if (docRef != null) {
-            final Rest<VisualisationDoc> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(VISUALISATION_RESOURCE)
+                    .method(res -> res.fetch(docRef.getUuid()))
                     .onSuccess(result -> {
                         String jsonString = "";
                         if (result != null && result.getSettings() != null) {
@@ -138,8 +138,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
                         final JSONObject settings = JSONUtil.getObject(JSONUtil.parse(jsonString));
                         readSettings(settings, dynamicSettings);
                     })
-                    .call(VISUALISATION_RESOURCE)
-                    .fetch(docRef.getUuid());
+                    .exec();
         }
     }
 

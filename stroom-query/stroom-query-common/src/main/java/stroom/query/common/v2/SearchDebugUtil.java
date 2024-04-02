@@ -6,7 +6,6 @@ import stroom.query.api.v2.Row;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
-import stroom.query.language.functions.Val;
 import stroom.util.io.DiffUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.json.JsonUtil;
@@ -22,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Objects;
 
 public class SearchDebugUtil {
 
@@ -125,8 +125,7 @@ public class SearchDebugUtil {
                 }
 
                 for (final Result result : searchResponse.getResults()) {
-                    if (result instanceof TableResult) {
-                        final TableResult tableResult = (TableResult) result;
+                    if (result instanceof final TableResult tableResult) {
                         final Path path = dir.resolve(result.getComponentId() + suffix);
                         try (final Writer writer = new OutputStreamWriter(Files.newOutputStream(path))) {
                             for (int i = 0; i < tableResult.getRows().size(); i++) {
@@ -144,11 +143,7 @@ public class SearchDebugUtil {
 
                                 for (int j = 0; j < row.getValues().size(); j++) {
                                     final String value = row.getValues().get(j);
-                                    if (value == null) {
-                                        writer.write("null");
-                                    } else {
-                                        writer.write(value);
-                                    }
+                                    writer.write(Objects.requireNonNullElse(value, "null"));
                                     if (j < row.getValues().size() - 1) {
                                         writer.write(",");
                                     }
@@ -159,8 +154,7 @@ public class SearchDebugUtil {
                             }
                         }
 
-                    } else if (result instanceof FlatResult) {
-                        final FlatResult flatResult = (FlatResult) result;
+                    } else if (result instanceof final FlatResult flatResult) {
                         final Path path = dir.resolve(result.getComponentId() + suffix);
                         try (final Writer writer = new OutputStreamWriter(Files.newOutputStream(path))) {
                             for (int i = 0; i < flatResult.getValues().size(); i++) {
@@ -189,17 +183,17 @@ public class SearchDebugUtil {
         }
     }
 
-    public static synchronized void writeExtractionData(final Val[] values) {
+    public static synchronized void writeExtractionData(final List<StringFieldValue> values) {
         if (enabled && writeExpected) {
             try {
                 if (writer == null) {
                     writer = new OutputStreamWriter(Files.newOutputStream(dir.resolve("data.txt")));
                 }
 
-                for (int i = 0; i < values.length; i++) {
-                    Val value = values[i];
-                    writer.write(value.toString());
-                    if (i < values.length - 1) {
+                for (int i = 0; i < values.size(); i++) {
+                    final StringFieldValue value = values.get(i);
+                    writer.write(value.fieldValue());
+                    if (i < values.size() - 1) {
                         writer.write(",");
                     } else {
                         writer.write("\n");

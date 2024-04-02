@@ -151,34 +151,9 @@ public class FabButton extends ButtonBase {
 
         // Synthesize clicks based on keyboard events AFTER the normal key
         // handling.
-        if ((event.getTypeInt() & Event.KEYEVENTS) != 0) {
-            switch (type) {
-                case Event.ONKEYDOWN:
-                    final Action action = KeyBinding.getAction(event);
-                    if (action == Action.SELECT || action == Action.EXECUTE) {
-                        onClick();
-                    }
-                    break;
-
-//                case Event.ONKEYDOWN:
-//                    if (keyCode == ' ') {
-//                        isFocusing = true;
-//                        onClickStart();
-//                    }
-//                    break;
-//                case Event.ONKEYUP:
-//                    if (isFocusing && keyCode == ' ') {
-//                        isFocusing = false;
-//                        onClick();
-//                    }
-//                    break;
-//                case Event.ONKEYPRESS:
-//                    if (keyCode == '\n' || keyCode == '\r') {
-//                        onClickStart();
-//                        onClick();
-//                    }
-//                    break;
-            }
+        final Action action = KeyBinding.test(event);
+        if (action == Action.SELECT || action == Action.EXECUTE) {
+            onClick();
         }
     }
 

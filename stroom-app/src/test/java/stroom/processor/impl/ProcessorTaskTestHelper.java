@@ -2,6 +2,7 @@ package stroom.processor.impl;
 
 import stroom.node.api.NodeInfo;
 import stroom.processor.shared.ProcessorTaskList;
+import stroom.task.shared.TaskId;
 import stroom.util.time.StroomDuration;
 
 import jakarta.inject.Inject;
@@ -30,12 +31,12 @@ public class ProcessorTaskTestHelper {
 
     public void createAndQueueTasks() {
         processorConfigProvider.get().setSkipNonProducingFiltersDuration(StroomDuration.ZERO);
-        prioritisedFilters.reset();
+        prioritisedFilters.clear();
         processorTaskCreator.exec();
         processorTaskQueueManager.exec();
     }
 
     public ProcessorTaskList assignTasks(final int count) {
-        return processorTaskQueueManager.assignTasks(nodeInfo.getThisNodeName(), count);
+        return processorTaskQueueManager.assignTasks(new TaskId(), nodeInfo.getThisNodeName(), count);
     }
 }

@@ -17,6 +17,7 @@
 
 package stroom.feed.impl;
 
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
@@ -46,6 +47,11 @@ import java.util.stream.Collectors;
 @Singleton
 public class FeedStoreImpl implements FeedStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.DATA_PROCESSING,
+            FeedDoc.DOCUMENT_TYPE,
+            FeedDoc.DOCUMENT_TYPE,
+            FeedDoc.ICON);
     private final Store<FeedDoc> store;
     private final FeedNameValidator feedNameValidator;
     private final SecurityContext securityContext;
@@ -131,11 +137,7 @@ public class FeedStoreImpl implements FeedStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.DATA_PROCESSING,
-                FeedDoc.DOCUMENT_TYPE,
-                FeedDoc.DOCUMENT_TYPE,
-                FeedDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -240,6 +242,13 @@ public class FeedStoreImpl implements FeedStore {
     @Override
     public List<DocContentMatch> findByContent(final StringMatch filter) {
         return store.findByContent(filter);
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final DocRef docRef,
+                                                final String extension,
+                                                final StringMatch filter) {
+        return store.fetchHighlights(docRef, extension, filter);
     }
 
     @Override

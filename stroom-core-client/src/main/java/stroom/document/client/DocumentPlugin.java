@@ -26,6 +26,7 @@ import stroom.core.client.event.CloseContentEvent;
 import stroom.core.client.event.CloseContentEvent.Callback;
 import stroom.core.client.event.ShowFullScreenEvent;
 import stroom.core.client.presenter.Plugin;
+import stroom.dispatch.client.RestError;
 import stroom.docref.DocRef;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.entity.client.presenter.DocumentEditPresenter;
@@ -89,7 +90,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 //    }
 
     /**
-     * 4. This method will open an document and show it in the content pane.
+     * 4. This method will open a document and show it in the content pane.
      */
     @SuppressWarnings("unchecked")
     public MyPresenterWidget<?> open(final DocRef docRef, final boolean forceOpen, final boolean fullScreen) {
@@ -146,7 +147,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                                 final CloseContentEvent.Handler closeHandler,
                                 final DocumentTabData tabData,
                                 final boolean fullScreen) {
-        final Consumer<Throwable> errorConsumer = caught -> {
+        final Consumer<RestError> errorConsumer = caught -> {
             AlertEvent.fireError(DocumentPlugin.this, "Unable to load document " + docRef, caught.getMessage(), null);
             // Stop spinning.
             TaskEndEvent.fire(DocumentPlugin.this);
@@ -514,12 +515,12 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 
     public abstract void load(final DocRef docRef,
                               final Consumer<D> resultConsumer,
-                              final Consumer<Throwable> errorConsumer);
+                              final Consumer<RestError> errorConsumer);
 
     public abstract void save(final DocRef docRef,
                               final D document,
                               final Consumer<D> resultConsumer,
-                              final Consumer<Throwable> errorConsumer);
+                              final Consumer<RestError> errorConsumer);
 
     protected abstract DocRef getDocRef(D document);
 

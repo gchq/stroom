@@ -40,7 +40,7 @@ import java.util.Optional;
         EntityAction.UPDATE,
         EntityAction.DELETE,
         EntityAction.CLEAR_CACHE})
-class UserCache implements Clearable, EntityEvent.Handler {
+public class UserCache implements Clearable, EntityEvent.Handler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UserCache.class);
 
@@ -63,6 +63,8 @@ class UserCache implements Clearable, EntityEvent.Handler {
         // TODO: 20/07/2023 We could consider trying to re-use User objects between
         //  all three caches but it presents concurrency issues and the risk of deadlocks,
         //  maybe.
+        //  See https://github.com/ben-manes/caffeine/issues/279 for ideas.
+        //  It is complicated by displayName being mutable and optional.
         cacheByUuid = cacheManager.createLoadingCache(
                 CACHE_NAME_BY_UUID,
                 () -> authorisationConfigProvider.get().getUserByUuidCache(),

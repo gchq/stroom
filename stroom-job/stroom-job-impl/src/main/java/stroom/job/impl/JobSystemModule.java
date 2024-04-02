@@ -28,14 +28,14 @@ import stroom.util.guice.RestResourcesBinder;
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
 
-import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
-
 public class JobSystemModule extends AbstractModule {
 
     @Override
     protected void configure() {
 
         bind(JobManager.class).to(JobManagerImpl.class);
+        bind(JobNodeTrackerCache.class).to(JobNodeTrackerCacheImpl.class);
+        bind(DistributedTaskFactoryRegistry.class).to(DistributedTaskFactoryRegistryImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(JobResourceImpl.class)
@@ -55,7 +55,7 @@ public class JobSystemModule extends AbstractModule {
                         .description("Every 10 seconds the Stroom lifecycle service will try and " +
                                 "fetch new tasks for execution.")
                         .managed(false)
-                        .schedule(PERIODIC, "10s"));
+                        .frequencySchedule("10s"));
 
         // Make sure the last thing to start and the first thing to stop is the scheduled task executor.
         LifecycleBinder.create(binder())

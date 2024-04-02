@@ -17,7 +17,7 @@
 
 package stroom.security.client.presenter;
 
-import stroom.dispatch.client.Rest;
+import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.DocumentTypes;
@@ -25,11 +25,13 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.item.client.SelectionBox;
 import stroom.security.client.presenter.DocumentPermissionsPresenter.DocumentPermissionsView;
 import stroom.security.shared.ChangeDocumentPermissionsRequest;
+import stroom.security.shared.ChangeDocumentPermissionsRequest.Cascade;
 import stroom.security.shared.Changes;
 import stroom.security.shared.CopyPermissionsFromParentRequest;
 import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.FetchAllDocumentPermissionsRequest;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.Button;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -38,6 +40,7 @@ import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
 import stroom.widget.tab.client.presenter.LinkTabsPresenter;
 import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -97,14 +100,14 @@ public class DocumentPermissionsPresenter
         if (cached != null) {
             consumer.accept(cached);
         } else {
-            final Rest<List<String>> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(DOC_PERMISSION_RESOURCE)
+                    .method(res -> res.getPermissionForDocType(docType))
                     .onSuccess(permissions -> {
                         ALL_PERMISSIONS_CACHE.put(docType, permissions);
                         consumer.accept(permissions);
                     })
-                    .call(DOC_PERMISSION_RESOURCE)
-                    .getPermissionForDocType(docType);
+                    .exec();
         }
     }
 
@@ -130,8 +133,10 @@ public class DocumentPermissionsPresenter
             }
 
             final DocRef docRef = explorerNode.getDocRef();
-            final Rest<DocumentPermissions> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(DOC_PERMISSION_RESOURCE)
+                    .method(res -> res.fetchAllDocumentPermissions(
+                            new FetchAllDocumentPermissionsRequest(explorerNode.getDocRef())))
                     .onSuccess(documentPermissions -> {
                         this.documentPermissions = documentPermissions;
                         // Take a deep copy of documentPermissions before the user mutates it with client side
@@ -161,8 +166,7 @@ public class DocumentPermissionsPresenter
                                 .onHideRequest(e -> onHideRequest(e, docRef))
                                 .fire();
                     })
-                    .call(DOC_PERMISSION_RESOURCE)
-                    .fetchAllDocumentPermissions(new FetchAllDocumentPermissionsRequest(explorerNode.getDocRef()));
+                    .exec();
         });
     }
 
@@ -173,8 +177,10 @@ public class DocumentPermissionsPresenter
             final DocumentPermissionsTabPresenter groupsPresenter) {
 
         return event -> {
-            final Rest<DocumentPermissions> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(DOC_PERMISSION_RESOURCE)
+                    .method(res -> res.copyPermissionFromParent(
+                            new CopyPermissionsFromParentRequest(explorerNode.getDocRef())))
                     .onSuccess(parentDocPermissions -> {
                         // We want to wipe existing permissions on the server, which means creating REMOVES
                         // for all the perms that we started with except those that are also on the parent.
@@ -209,8 +215,7 @@ public class DocumentPermissionsPresenter
 //                                + "\nREMOVEs:\n"
 //                                + DocumentPermissions.permsMapToStr(permissionsToRemove));
                     })
-                    .call(DOC_PERMISSION_RESOURCE)
-                    .copyPermissionFromParent(new CopyPermissionsFromParentRequest(explorerNode.getDocRef()));
+                    .exec();
         };
     }
 
@@ -255,17 +260,49 @@ public class DocumentPermissionsPresenter
 
     private void onHideRequest(final HidePopupRequestEvent e, final DocRef docRef) {
         if (e.isOk()) {
-            final Rest<Boolean> rest = restFactory.create();
-            rest
-                    .onSuccess(result -> e.hide())
-                    .call(DOC_PERMISSION_RESOURCE)
-                    .changeDocumentPermissions(new ChangeDocumentPermissionsRequest(
-                            docRef,
-                            changes,
-                            getView().getCascade().getValue()));
+            final Cascade cascade = getView().getCascade().getValue();
+            // If user is cascading then we need to show them a confirm dialog first showing the impact
+            // of what they are about to do as it may impact 00s or 000s of documents.
+            if (Cascade.isCascading(cascade)) {
+                restFactory
+                        .create(DOC_PERMISSION_RESOURCE)
+                        .method(res -> res.fetchPermissionChangeImpact(new ChangeDocumentPermissionsRequest(
+                                docRef,
+                                changes,
+                                getView().getCascade().getValue())))
+                        .onSuccess(impactSummary -> {
+                            if (GwtNullSafe.isBlankString(impactSummary.getImpactSummary())) {
+                                doPermissionChange(e, docRef);
+                            } else {
+                                ConfirmEvent.fire(
+                                        this,
+                                        SafeHtmlUtil.toParagraphs(impactSummary.getImpactSummary()),
+                                        GwtNullSafe.get(impactSummary.getImpactDetail(), SafeHtmlUtil::toParagraphs),
+                                        ok -> {
+                                            if (ok) {
+                                                doPermissionChange(e, docRef);
+                                            }
+                                        });
+                            }
+                        })
+                        .exec();
+            } else {
+                doPermissionChange(e, docRef);
+            }
         } else {
             e.hide();
         }
+    }
+
+    private void doPermissionChange(final HidePopupRequestEvent e, final DocRef docRef) {
+        restFactory
+                .create(DOC_PERMISSION_RESOURCE)
+                .method(res -> res.changeDocumentPermissions(new ChangeDocumentPermissionsRequest(
+                        docRef,
+                        changes,
+                        getView().getCascade().getValue())))
+                .onSuccess(result -> e.hide())
+                .exec();
     }
 
     private DocumentPermissionsTabPresenter getTabPresenter(final ExplorerNode entity) {

@@ -17,7 +17,6 @@
 
 package stroom.explorer.client.presenter;
 
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerNode;
@@ -25,7 +24,7 @@ import stroom.explorer.shared.ExplorerNodeKey;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
-import stroom.explorer.shared.FindExplorerNodeCriteria;
+import stroom.explorer.shared.FetchExplorerNodesRequest;
 import stroom.explorer.shared.NodeFlag;
 import stroom.explorer.shared.NodeFlag.NodeFlagGroups;
 import stroom.util.shared.GwtNullSafe;
@@ -60,9 +59,10 @@ public class ExplorerTreeModel {
 
     private Integer minDepth = 1;
     private Set<ExplorerNodeKey> ensureVisible;
+    private ExplorerNode forceSelection;
     private boolean showAlerts = false;
 
-    private FindExplorerNodeCriteria currentCriteria;
+    private FetchExplorerNodesRequest currentCriteria;
     private boolean fetching;
 
     private boolean includeNullSelection;
@@ -117,9 +117,13 @@ public class ExplorerTreeModel {
         explorerTreeFilterBuilder.setRequiredPermissions(requiredPermissions);
     }
 
+    public void setForceSelection(final ExplorerNode forceSelection) {
+        this.forceSelection = forceSelection;
+    }
+
     public void setEnsureVisible(final Set<ExplorerNode> ensureVisible) {
         this.ensureVisible = null;
-        if (ensureVisible != null) {
+        if (ensureVisible != null && ensureVisible.size() > 0) {
             this.ensureVisible = new HashSet<>();
             for (ExplorerNode node : ensureVisible) {
                 if (node != null && node.getUniqueKey() != null) {
@@ -131,7 +135,7 @@ public class ExplorerTreeModel {
 
     public void setEnsureVisible(final ExplorerNode... ensureVisible) {
         this.ensureVisible = null;
-        if (ensureVisible != null) {
+        if (ensureVisible != null && ensureVisible.length > 0) {
             this.ensureVisible = new HashSet<>();
             for (ExplorerNode node : ensureVisible) {
                 if (node != null && node.getUniqueKey() != null) {
@@ -164,7 +168,7 @@ public class ExplorerTreeModel {
         final ExplorerTreeFilter explorerTreeFilter = explorerTreeFilterBuilder.build();
         if (explorerTreeFilter != null) {
             // Fetch a list of data items that belong to this parent.
-            currentCriteria = new FindExplorerNodeCriteria(
+            currentCriteria = new FetchExplorerNodesRequest(
                     openItems.getOpenItems(),
                     openItems.getTemporaryOpenItems(),
                     explorerTreeFilter,
@@ -176,24 +180,24 @@ public class ExplorerTreeModel {
                 fetching = true;
                 loading.setVisible(true);
                 Scheduler.get().scheduleDeferred(() -> {
-                    final FindExplorerNodeCriteria criteria = currentCriteria;
+                    final FetchExplorerNodesRequest criteria = currentCriteria;
 //                    GWT.log("fetchData - filter: " + explorerTreeFilter.getNameFilter()
 //                            + " openItems: " + openItems.getOpenItems().size()
 //                            + " minDepth: " + minDepth
 //                            + " ensureVisible: " + ensureVisible);
-                    final Rest<FetchExplorerNodeResult> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .create(EXPLORER_RESOURCE)
+                            .method(res -> res.fetchExplorerNodes(criteria))
                             .onSuccess(result -> {
                                 handleFetchResult(criteria, result);
                             })
-                            .call(EXPLORER_RESOURCE)
-                            .fetchExplorerNodes(criteria);
+                            .exec();
                 });
             }
         }
     }
 
-    private void handleFetchResult(final FindExplorerNodeCriteria criteria,
+    private void handleFetchResult(final FetchExplorerNodesRequest criteria,
                                    final FetchExplorerNodeResult result) {
 //        GWT.log("handleFetchResult - filter: " + result.getQualifiedFilterInput()
 //                + " openItems: " + GwtNullSafe.size(result.getOpenedItems())
@@ -230,9 +234,11 @@ public class ExplorerTreeModel {
             // Try and find the item we have asked to make visible first and if we can't find
             // that try and select one of the folders that has been forced open in an attempt to
             // make the requested item visible.
-            if (criteria.getEnsureVisible() != null && criteria.getEnsureVisible().size() > 0) {
+            ExplorerNode nextSelection = forceSelection;
+            if (nextSelection == null &&
+                    criteria.getEnsureVisible() != null &&
+                    criteria.getEnsureVisible().size() > 0) {
                 final ExplorerNodeKey uniqueKey = criteria.getEnsureVisible().iterator().next();
-                ExplorerNode nextSelection = null;
                 if (uniqueKey != null) {
                     nextSelection = ExplorerNode.builder()
                             .type(uniqueKey.getType())
@@ -269,10 +275,9 @@ public class ExplorerTreeModel {
                     // that we get the latest version with any new name it might have.
                     nextSelection = rows.get(index);
                 }
-
-                if (nextSelection != null) {
-                    explorerTree.setInitialSelectedItem(nextSelection);
-                }
+            }
+            if (nextSelection != null) {
+                explorerTree.setInitialSelectedItem(nextSelection);
             }
 
             // We do not want the root to always be forced open.
@@ -283,6 +288,7 @@ public class ExplorerTreeModel {
             // ensure visibility of. We can forget them now as we have a result that should have
             // opened required folders to make them visible.
             ensureVisible = null;
+            forceSelection = null;
 
             // We aren't loading any more.
             loading.setVisible(false);
@@ -303,7 +309,7 @@ public class ExplorerTreeModel {
                 // If there is any quick filter then NULL_SELECTION is a non-match
                 final boolean isFilterMatch = GwtNullSafe.isBlankString(GwtNullSafe.get(
                         currentCriteria,
-                        FindExplorerNodeCriteria::getFilter,
+                        FetchExplorerNodesRequest::getFilter,
                         ExplorerTreeFilter::getNameFilter));
 
                 rows.add(0, NULL_SELECTION.copy()
@@ -357,6 +363,22 @@ public class ExplorerTreeModel {
         openItems.clear();
         minDepth = 1;
         ensureVisible = null;
+    }
+
+    public void expandAll() {
+        explorerTreeFilterBuilder.setNameFilter(null);
+        openItems.clear();
+        minDepth = 1000;
+        ensureVisible = null;
+        refresh();
+    }
+
+    public void collapseAll() {
+        explorerTreeFilterBuilder.setNameFilter(null);
+        openItems.clear();
+        minDepth = 1;
+        ensureVisible = null;
+        refresh();
     }
 
     public boolean isIncludeNullSelection() {

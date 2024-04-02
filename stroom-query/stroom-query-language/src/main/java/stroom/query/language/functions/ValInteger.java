@@ -16,9 +16,13 @@
 
 package stroom.query.language.functions;
 
+import java.util.Comparator;
 import java.util.Objects;
 
 public final class ValInteger implements ValNumber {
+
+    private static final Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
+            ValInteger.class, ValComparators.AS_INTEGER_COMPARATOR);
 
     public static final Type TYPE = Type.INTEGER;
 
@@ -67,6 +71,11 @@ public final class ValInteger implements ValNumber {
     }
 
     @Override
+    public Number toNumber() {
+        return value;
+    }
+
+    @Override
     public void appendString(final StringBuilder sb) {
         sb.append(this);
     }
@@ -92,6 +101,20 @@ public final class ValInteger implements ValNumber {
     public int hashCode() {
         return Objects.hash(value);
     }
+
+    @Override
+    public Comparator<Val> getDefaultComparator(final boolean isCaseSensitive) {
+        return COMPARATOR;
+    }
+
+    @Override
+    public Object unwrap() {
+        return value;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class ValIntegerCache {
 

@@ -3,21 +3,18 @@ package stroom.app.commands;
 import stroom.config.app.Config;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
-import stroom.security.identity.account.Account;
-import stroom.security.identity.account.AccountService;
-import stroom.security.identity.token.ApiKey;
-import stroom.security.identity.token.ApiKeyDao;
-import stroom.security.identity.token.KeyType;
-import stroom.security.identity.token.TokenBuilder;
-import stroom.security.identity.token.TokenBuilderFactory;
-import stroom.security.openid.api.OpenIdClientFactory;
-import stroom.util.AuditUtil;
+import stroom.security.impl.UserService;
+import stroom.security.impl.apikey.ApiKeyService;
+import stroom.security.shared.CreateHashedApiKeyRequest;
+import stroom.security.shared.CreateHashedApiKeyResponse;
+import stroom.security.shared.User;
+import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.UserName;
 
 import com.google.inject.Injector;
 import event.logging.CreateEventAction;
 import event.logging.Outcome;
-import event.logging.User;
 import io.dropwizard.core.setup.Bootstrap;
 import jakarta.inject.Inject;
 import net.sourceforge.argparse4j.inf.Namespace;
@@ -30,10 +27,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.Date;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -47,22 +43,22 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
 
     private static final String USER_ID_ARG_NAME = "user";
     private static final String EXPIRY_DAYS_ARG_NAME = "expiresDays";
+    private static final String API_KEY_NAME_ARG_NAME = "keyName";
     private static final String OUTPUT_FILE_PATH_ARG_NAME = "outFile";
+    private static final String COMMENTS_ARG_NAME = "comments";
     private static final Set<String> ARGUMENT_NAMES = Set.of(
             USER_ID_ARG_NAME,
             EXPIRY_DAYS_ARG_NAME,
-            OUTPUT_FILE_PATH_ARG_NAME);
+            API_KEY_NAME_ARG_NAME,
+            OUTPUT_FILE_PATH_ARG_NAME,
+            COMMENTS_ARG_NAME);
 
     private final Path configFile;
 
     @Inject
-    private TokenBuilderFactory tokenBuilderFactory;
+    private ApiKeyService apiKeyService;
     @Inject
-    private OpenIdClientFactory openIdClientDetailsFactory;
-    @Inject
-    private ApiKeyDao apiKeyDao;
-    @Inject
-    private AccountService accountService;
+    private UserService userService;
     @Inject
     private SecurityContext securityContext;
     @Inject
@@ -89,11 +85,23 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
                 .required(false)
                 .help("Expiry (in days) from the creation time");
 
+        subparser.addArgument(asArg('n', API_KEY_NAME_ARG_NAME))
+                .dest(API_KEY_NAME_ARG_NAME)
+                .type(String.class)
+                .required(true)
+                .help("The name of the API key being created");
+
         subparser.addArgument(asArg('o', OUTPUT_FILE_PATH_ARG_NAME))
                 .dest(OUTPUT_FILE_PATH_ARG_NAME)
                 .type(String.class)
                 .required(false)
                 .help("Path to the file where the API key will be written");
+
+        subparser.addArgument(asArg('c', COMMENTS_ARG_NAME))
+                .dest(COMMENTS_ARG_NAME)
+                .type(String.class)
+                .required(false)
+                .help("Comments relating to this key");
     }
 
     @Override
@@ -112,11 +120,12 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
         final String userId = namespace.getString(USER_ID_ARG_NAME);
         final String outputPath = namespace.getString(OUTPUT_FILE_PATH_ARG_NAME);
 
-        accountService.read(userId)
+        userService.getUserBySubjectId(userId)
+                .map(User::asUserName)
                 .ifPresentOrElse(
-                        account -> {
-                            final ApiKey apiKey = createApiKey(namespace, account);
-                            if (outputApiKey(apiKey, outputPath)) {
+                        userName -> {
+                            final CreateHashedApiKeyResponse response = createApiKey(namespace, userName);
+                            if (outputApiKey(response, outputPath)) {
                                 final String msg = LogUtil.message("API key successfully created for user '{}'",
                                         userId);
                                 LOGGER.info(msg);
@@ -129,43 +138,43 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
                             }
                         },
                         () -> {
-                            final String msg = LogUtil.message("Cannot issue API key as user account '{}' " +
+                            final String msg = LogUtil.message("Cannot issue API key as Stroom user '{}' " +
                                     "does not exist", userId);
                             logEvent(userId, false, msg);
                             throw new RuntimeException(msg);
                         });
     }
 
-    private ApiKey createApiKey(final Namespace namespace, final Account account) {
-        final Integer lifetimeDays = namespace.getInt(EXPIRY_DAYS_ARG_NAME);
-        final LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
-
-        LOGGER.info("Creating API key for user '{}'", account.getUserId());
-
-        Instant expirationTime;
-        if (lifetimeDays != null) {
-            expirationTime = now.plusDays(lifetimeDays).toInstant(ZoneOffset.UTC);
-        } else {
-            expirationTime = new Date(Long.MAX_VALUE).toInstant();
+    private CreateHashedApiKeyResponse createApiKey(final Namespace namespace,
+                                                    final UserName userName) {
+        final String apiKeyName = namespace.getString(API_KEY_NAME_ARG_NAME);
+        if (NullSafe.isBlankString(apiKeyName)) {
+            throw new RuntimeException("A name must be provided for the API key");
         }
+        final Integer lifetimeDays = namespace.getInt(EXPIRY_DAYS_ARG_NAME);
+        if (lifetimeDays != null && lifetimeDays <= 0) {
+            throw new RuntimeException(EXPIRY_DAYS_ARG_NAME + " must be greater than zero.");
+        }
+        LOGGER.info("Creating API key for user '{}'", userName.getUserIdentityForAudit());
 
-        final TokenBuilder tokenBuilder = tokenBuilderFactory
-                .builder()
-                .expirationTime(expirationTime)
-                .clientId(openIdClientDetailsFactory.getClient().getClientId())
-                .subject(account.getUserId());
+        // Service will give us a default expire time if null
+        final Long expireTimeEpochMs = NullSafe.get(
+                lifetimeDays,
+                days -> Duration.ofDays(days),
+                duration -> Instant.now().plus(duration).toEpochMilli());
 
-        final ApiKey apiKey = new ApiKey();
-        apiKey.setUserId(account.getUserId());
-        apiKey.setUserEmail(account.getUserId());
-        apiKey.setType(KeyType.API.getText());
-        apiKey.setData(tokenBuilder.build());
-        apiKey.setExpiresOnMs(tokenBuilder.getExpirationTime().toEpochMilli());
-        apiKey.setEnabled(true);
-        AuditUtil.stamp(securityContext, apiKey);
+        final String comments = Objects.requireNonNullElse(
+                namespace.getString(COMMENTS_ARG_NAME),
+                "Created by 'create_api_key' command.");
 
-        // Register the API keu
-        return apiKeyDao.create(account.getId(), apiKey);
+        final CreateHashedApiKeyResponse response = apiKeyService.create(new CreateHashedApiKeyRequest(
+                userName,
+                expireTimeEpochMs,
+                apiKeyName,
+                comments,
+                true));
+
+        return response;
     }
 
     /**
@@ -174,28 +183,34 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
      *
      * @return Whether the token was successfully written
      */
-    private boolean outputApiKey(final ApiKey apiKey, final String path) {
+    private boolean outputApiKey(final CreateHashedApiKeyResponse createHashedApiKeyResponse,
+                                 final String path) {
         if (path != null) {
             // Output the API key to a file path specified by the CLI user
             try {
+                final String apiKey = createHashedApiKeyResponse.getApiKey();
                 BufferedWriter writer = new BufferedWriter(new FileWriter(path));
-                writer.write(apiKey.getData());
+                writer.write(apiKey);
                 writer.close();
 
                 final File fileInfo = new File(path);
-                LOGGER.info("Wrote API key for user '{}' to file '{}'", apiKey.getUserId(), fileInfo.getAbsolutePath());
+                LOGGER.info("Wrote API key for user '{}' to file '{}'",
+                        createHashedApiKeyResponse.getHashedApiKey().getOwner().getUserIdentityForAudit(),
+                        fileInfo.getAbsolutePath());
             } catch (IOException e) {
                 LOGGER.error("API key for user '{}' could not be written to file. {}",
-                        apiKey.getUserId(), e.getMessage());
+                        createHashedApiKeyResponse.getHashedApiKey().getOwner().getUserIdentityForAudit(),
+                        LogUtil.exceptionMessage(e));
 
                 // Destroy the created API key
-                apiKeyDao.deleteTokenById(apiKey.getId());
-
+                apiKeyService.delete(createHashedApiKeyResponse.getHashedApiKey().getId());
                 return false;
             }
         } else {
             // Output API key to standard out
-            LOGGER.info("Generated API key for user '{}': {}", apiKey.getUserId(), apiKey.getData());
+            LOGGER.info("Generated API key for user '{}': '{}'",
+                    createHashedApiKeyResponse.getHashedApiKey().getOwner().getUserIdentityForAudit(),
+                    createHashedApiKeyResponse.getApiKey());
         }
 
         return true;
@@ -209,7 +224,7 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
                 "CliCreateApiKey",
                 LogUtil.message("An API key for user '{}' was created", username),
                 CreateEventAction.builder()
-                        .addUser(User.builder()
+                        .addUser(event.logging.User.builder()
                                 .withName(username)
                                 .build())
                         .withOutcome(Outcome.builder()

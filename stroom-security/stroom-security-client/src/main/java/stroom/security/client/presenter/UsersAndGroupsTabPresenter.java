@@ -18,7 +18,6 @@ package stroom.security.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.FindUserCriteria;
@@ -36,7 +35,6 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
-import java.util.List;
 import javax.inject.Inject;
 
 /**
@@ -196,14 +194,14 @@ public class UsersAndGroupsTabPresenter
                     "Are you sure you want to delete the selected " + getTypeName() + "?",
                     ok -> {
                         if (ok) {
-                            final Rest<Boolean> rest = restFactory.create();
-                            rest
+                            restFactory
+                                    .create(USER_RESOURCE)
+                                    .method(res -> res.delete(userRef.getUuid()))
                                     .onSuccess(result -> {
                                         listPresenter.refresh();
                                         listPresenter.getSelectionModel().clear();
                                     })
-                                    .call(USER_RESOURCE)
-                                    .delete(userRef.getUuid());
+                                    .exec();
                         }
                     });
         }
@@ -242,14 +240,14 @@ public class UsersAndGroupsTabPresenter
     private void showNewGroupDialog() {
         newGroupPresenter.show(e -> {
             if (e.isOk()) {
-                final Rest<User> rest = restFactory.create();
-                rest
+                restFactory
+                        .create(USER_RESOURCE)
+                        .method(res -> res.createGroup(newGroupPresenter.getName()))
                         .onSuccess(result -> {
                             e.hide();
                             edit(result);
                         })
-                        .call(USER_RESOURCE)
-                        .createGroup(newGroupPresenter.getName());
+                        .exec();
             } else {
                 e.hide();
             }
@@ -259,15 +257,15 @@ public class UsersAndGroupsTabPresenter
     private void showNewUserDialog() {
         newUserPresenter.show(e -> {
             if (e.isOk()) {
-                final Rest<User> rest = restFactory.create();
-                rest
+                restFactory
+                        .create(USER_RESOURCE)
+                        .method(res -> res.createUser(newUserPresenter.getUserName()))
                         .onSuccess(result -> {
                             e.hide();
 //                            newUserPresenter.hide();
                             edit(result);
                         })
-                        .call(USER_RESOURCE)
-                        .createUser(newUserPresenter.getUserName());
+                        .exec();
             } else {
                 e.hide();
             }
@@ -279,8 +277,9 @@ public class UsersAndGroupsTabPresenter
             if (e.isOk()) {
                 final String usersCsvData = createMultipleUsersPresenter.getUsersCsvData();
                 if (usersCsvData != null && !usersCsvData.isEmpty()) {
-                    final Rest<List<User>> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .create(USER_RESOURCE)
+                            .method(res -> res.createUsersFromCsv(createMultipleUsersPresenter.getUsersCsvData()))
                             .onSuccess(result -> {
                                 e.hide();
 //                                createMultipleUsersPresenter.hide();
@@ -291,8 +290,7 @@ public class UsersAndGroupsTabPresenter
                                     UsersAndGroupsTabPresenter.this,
                                     caught.getMessage(),
                                     null))
-                            .call(USER_RESOURCE)
-                            .createUsersFromCsv(createMultipleUsersPresenter.getUsersCsvData());
+                            .exec();
                 } else {
                     e.hide();
 //                    createMultipleUsersPresenter.hide();

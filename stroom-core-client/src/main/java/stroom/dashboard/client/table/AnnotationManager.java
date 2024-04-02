@@ -23,13 +23,11 @@ import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.EventId;
 import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.TableComponentSettings;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.Column;
 import stroom.query.client.presenter.TableRow;
 import stroom.security.shared.UserNameResource;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.UserName;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -246,9 +244,9 @@ public class AnnotationManager {
 
         // assignedTo is a display name so have to convert it back to a unique username
         final UserNameResource userNameResource = GWT.create(UserNameResource.class);
-        final Rest<UserName> rest = restFactory.create();
-
-        rest
+        restFactory
+                .create(userNameResource)
+                .method(res -> res.getByDisplayName(assignedTo))
                 .onSuccess(optUserName -> {
                     final Annotation annotation = new Annotation();
                     annotation.setTitle(title);
@@ -259,8 +257,7 @@ public class AnnotationManager {
 
                     ShowAnnotationEvent.fire(changeStatusPresenter, annotation, eventIdList);
                 })
-                .call(userNameResource)
-                .getByDisplayName(assignedTo);
+                .exec();
     }
 
     private void changeStatus(final List<Long> annotationIdList) {

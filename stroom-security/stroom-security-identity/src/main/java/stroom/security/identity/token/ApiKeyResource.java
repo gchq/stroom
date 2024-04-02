@@ -43,6 +43,7 @@ import jakarta.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Api Keys")
+@Deprecated // Keeping it else it breaks the React code
 public interface ApiKeyResource extends RestResource, FetchWithIntegerId<ApiKey> {
 
     FilterFieldDefinition FIELD_DEF_USER_ID = FilterFieldDefinition.defaultField("User Id");

@@ -21,7 +21,7 @@ public class TempDirProviderImpl implements TempDirProvider {
     private final PathConfig pathConfig;
     private final HomeDirProvider homeDirProvider;
 
-    private volatile Path tempDir;
+    private Path tempDir;
 
     @Inject
     public TempDirProviderImpl(final PathConfig pathConfig,
@@ -110,9 +110,5 @@ public class TempDirProviderImpl implements TempDirProvider {
                 return Optional.empty();
             }
         }
-    }
-
-    public void setTempDir(final Path tempDir) {
-        this.tempDir = tempDir;
     }
 }

@@ -1,7 +1,9 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
-    <g:FlowPanel styleName="KeyValueInputView max dock-container-horizontal">
-        <g:TextBox ui:field="params" addStyleNames="dock-max allow-focus"/>
-    </g:FlowPanel>
+    <g:SimplePanel styleName="max dock-container-horizontal">
+        <g:SimplePanel styleName="KeyValueInputView dock-max">
+            <g:TextBox ui:field="params" addStyleNames="w-100 allow-focus"/>
+        </g:SimplePanel>
+    </g:SimplePanel>
 </ui:UiBinder>

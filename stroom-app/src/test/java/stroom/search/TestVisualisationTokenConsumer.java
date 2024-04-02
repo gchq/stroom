@@ -6,7 +6,7 @@ import stroom.expression.api.ExpressionContext;
 import stroom.index.impl.IndexStore;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.ExpressionContextFactory;
-import stroom.query.language.SearchRequestBuilder;
+import stroom.query.language.SearchRequestFactory;
 import stroom.search.impl.EventSearchTaskHandler;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.impl.ExecutorProviderImpl;
@@ -37,7 +37,7 @@ public class TestVisualisationTokenConsumer extends AbstractCoreIntegrationTest 
     @Inject
     private ExecutorProviderImpl executorProvider;
     @Inject
-    private SearchRequestBuilder searchRequestBuilder;
+    private SearchRequestFactory searchRequestFactory;
     @Inject
     private ExpressionContextFactory expressionContextFactory;
     @Inject
@@ -61,9 +61,8 @@ public class TestVisualisationTokenConsumer extends AbstractCoreIntegrationTest 
                 eval count = count()
                 group by EventTime
                 select EventTime, count
-                vis as LineChart (x = EventTime, y = count)
+                show LineChart (x = EventTime, y = count, interpolationMode = "basis-open", maxValues = 500)
                 """;
-
 
         SearchRequest searchRequest = new SearchRequest(
                 null,
@@ -73,12 +72,11 @@ public class TestVisualisationTokenConsumer extends AbstractCoreIntegrationTest 
                 DateTimeSettings.builder().build(),
                 false);
         final ExpressionContext expressionContext = expressionContextFactory.createContext(searchRequest);
-        searchRequest = searchRequestBuilder.create(queryString, searchRequest, expressionContext);
+        searchRequest = searchRequestFactory.create(queryString, searchRequest, expressionContext);
 //        searchRequest = dataSourceResolver.resolveDataSource(searchRequest);
 
 //        test(queryString, 5);
 
 
     }
-
 }

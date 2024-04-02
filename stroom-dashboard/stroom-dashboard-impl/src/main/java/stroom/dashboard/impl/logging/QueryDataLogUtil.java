@@ -60,6 +60,9 @@ public class QueryDataLogUtil {
                     case EQUALS:
                         appendTerm(items, field, TermCondition.EQUALS, value);
                         break;
+                    case NOT_EQUALS:
+                        appendTerm(items, field, TermCondition.NOT_EQUALS, value);
+                        break;
                     case CONTAINS:
                         appendTerm(items, field, TermCondition.EQUALS, value);
                         break;

@@ -82,6 +82,28 @@ class DynamicTestBuilder {
         }
 
         /**
+         * Define the item type for a {@link List} input type, e.g. for an input of a list of strings:
+         * <pre>{@code withListItemInputType(String.class)}</pre>
+         */
+        @SuppressWarnings("unused")
+        public <I> InputBuilder<List<I>> withListInputItemType(final Class<I> inputItemType) {
+            final TypeLiteral<List<I>> typeLiteral = new TypeLiteral<>() {
+            };
+            return new InputBuilder<>(typeLiteral);
+        }
+
+        /**
+         * Define the item type for a {@link Set} input type, e.g. for an input of a set of strings:
+         * <pre>{@code withSetItemInputType(String.class)}</pre>
+         */
+        @SuppressWarnings("unused")
+        public <I> InputBuilder<Set<I>> withSetInputItemType(final Class<I> inputItemType) {
+            final TypeLiteral<Set<I>> typeLiteral = new TypeLiteral<>() {
+            };
+            return new InputBuilder<>(typeLiteral);
+        }
+
+        /**
          * Define the type of both the input and output for the dynamic tests, where the type uses generics,
          * e.g. a {@link Collection <?>} or a {@link io.vavr.Tuple}. Specify the type using a
          * {@link TypeLiteral}, e.g.
@@ -166,6 +188,28 @@ class DynamicTestBuilder {
         @SuppressWarnings("unused")
         public <O> OutputBuilder<I, O> withWrappedOutputType(final TypeLiteral<O> outputType) {
             return new OutputBuilder<>(this, outputType);
+        }
+
+        /**
+         * Define the item type for a {@link List} output type, e.g. for an output of a list of strings:
+         * <pre>{@code withListItemOutputType(String.class)}</pre>
+         */
+        @SuppressWarnings("unused")
+        public <O> OutputBuilder<I, List<O>> withListOutputItemType(final Class<O> outputItemType) {
+            final TypeLiteral<List<O>> typeLiteral = new TypeLiteral<List<O>>() {
+            };
+            return new OutputBuilder<>(this, typeLiteral);
+        }
+
+        /**
+         * Define the item type for a {@link Set} output type, e.g. for an output of a set of strings:
+         * <pre>{@code withSetItemOutputType(String.class)}</pre>
+         */
+        @SuppressWarnings("unused")
+        public <O> OutputBuilder<I, Set<O>> withSetOutputItemType(final Class<O> outputItemType) {
+            final TypeLiteral<Set<O>> typeLiteral = new TypeLiteral<>() {
+            };
+            return new OutputBuilder<>(this, typeLiteral);
         }
 
         /**
@@ -384,7 +428,10 @@ class DynamicTestBuilder {
          * Add a test case to the {@link DynamicTest} {@link Stream} by specifying the input
          * and expected output of the test.
          *
-         * @param name           The name of the test case.
+         * @param name           The name of the test case. This name overrides any name provided by
+         *                       {@link CasesBuilder#withNameFunction(Function)}. The name is appended
+         *                       to the case number, e.g. if name is "{@code foo}" then the test name will be
+         *                       something like "{@code 03 foo}".
          * @param input          The input to the test case.
          * @param expectedOutput The expected output of the test case.
          */
@@ -437,6 +484,8 @@ class DynamicTestBuilder {
          * that generates a name from a {@link TestCase}. The default name function basically
          * does a toString() on {@link TestCase#getInput()}.
          * A name explicitly set on {@link TestCase} will override any name function.
+         * The name is appended to the case number, e.g. if name is 'foo' then the test name will be
+         * something like "{@code 03 foo}".
          */
         @SuppressWarnings("unused")
         public CasesBuilder<I, O> withNameFunction(final Function<TestCase<I, O>, String> nameFunction) {
@@ -522,15 +571,11 @@ class DynamicTestBuilder {
                                 .map(this::valueToStr)
                                 .collect(Collectors.joining(", ")))
                         .append("]");
-            } else if (value.toString().contains("$$Lambda")) {
+            } else if (NullSafe.test(value.toString(), str -> str.contains("$$Lambda"))) {
                 // Not sure if there is anything useful we can show for the lambda so just do this
                 stringBuilder.append("lambda");
             } else {
                 String valStr = value.toString();
-                // No point outputting the lambda reference as it doesn't help
-                if (valStr.contains("$$Lambda")) {
-                    valStr = "lambda";
-                }
 
                 stringBuilder.append("'")
                         .append(valStr)
@@ -598,19 +643,20 @@ class DynamicTestBuilder {
                                      final int caseNo,
                                      final int casesCount) {
 
+            // No name or namefunc provided so build a name from the case number and the input
+            // Case number may help in linking a failed test to the source
+            final int padLen = Integer.toString(casesCount).length();
+            final String paddedCaseNo = Strings.padStart(Integer.toString(caseNo), padLen, '0');
+
             final Function<TestCase<I, O>, String> nameFunc;
             if (!NullSafe.isBlankString(testCase.getName())) {
                 nameFunc = TestCase::getName;
-            } else if (nameFunction != null) {
-                nameFunc = nameFunction;
             } else {
-                // No name or namefunc provided so build a name from the case number and the input
-                // Case number may help in linking a failed test to the source
-                final int padLen = Integer.toString(casesCount).length();
-                final String paddedCaseNo = Strings.padStart(Integer.toString(caseNo), padLen, '0');
-                nameFunc = testCase2 -> paddedCaseNo + " " + buildTestNameFromInput(testCase2);
+                nameFunc = Objects.requireNonNullElseGet(
+                        nameFunction,
+                        () -> this::buildTestNameFromInput);
             }
-            return nameFunc.apply(testCase);
+            return paddedCaseNo + " " + nameFunc.apply(testCase);
         }
 
         private void logCaseToDebug(final TestCase<I, O> testCase) {

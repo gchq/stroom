@@ -28,7 +28,7 @@ public interface DataSourceProvider {
 
     String getType();
 
-    ResultPage<FieldInfo> getFieldInfo(FindFieldInfoCriteria criteria);
+    ResultPage<QueryField> getFieldInfo(FindFieldInfoCriteria criteria);
 
     Optional<String> fetchDocumentation(DocRef dataSourceRef);
 

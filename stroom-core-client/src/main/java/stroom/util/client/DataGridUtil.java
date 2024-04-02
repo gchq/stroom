@@ -1,18 +1,27 @@
 package stroom.util.client;
 
 import stroom.cell.expander.client.ExpanderCell;
+import stroom.cell.info.client.ColourSwatchCell;
 import stroom.cell.info.client.CommandLink;
 import stroom.cell.info.client.CommandLinkCell;
 import stroom.cell.info.client.SvgCell;
+import stroom.cell.tickbox.client.TickBoxCell;
+import stroom.cell.tickbox.client.TickBoxCell.DefaultAppearance;
+import stroom.cell.tickbox.client.TickBoxCell.NoBorderAppearance;
+import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.presenter.CopyTextCell;
+import stroom.data.client.presenter.DocRefCell;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
+import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.svg.client.Preset;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.Expander;
 import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.TreeAction;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -22,6 +31,7 @@ import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.Header;
@@ -30,11 +40,14 @@ import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalDouble;
+import java.util.OptionalLong;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -43,17 +56,17 @@ import java.util.stream.Collectors;
 
 public class DataGridUtil {
 
+    private static final String DISABLED_CELL_CLASS = "dataGridDisabledCell";
     private static final String LOW_LIGHT_COLOUR = "#666666";
 
     private DataGridUtil() {
     }
 
-
     public static Header<SafeHtml> createRightAlignedHeader(final String headerText) {
         final SafeHtml safeHtml = new SafeHtmlBuilder()
-                .appendHtmlConstant("<div style=\"text-align: right;\">")
+                .appendHtmlConstant("<span style=\"text-align: right;\">")
                 .appendEscaped(headerText)
-                .appendHtmlConstant("</div>")
+                .appendHtmlConstant("</span>")
                 .toSafeHtml();
 
         final Header<SafeHtml> header = new SafeHtmlHeader(safeHtml);
@@ -62,9 +75,9 @@ public class DataGridUtil {
 
     public static Header<SafeHtml> createCenterAlignedHeader(final String headerText) {
         final SafeHtml safeHtml = new SafeHtmlBuilder()
-                .appendHtmlConstant("<div style=\"text-align: center;\">")
+                .appendHtmlConstant("<span style=\"text-align: center;\">")
                 .appendEscaped(headerText)
-                .appendHtmlConstant("</div>")
+                .appendHtmlConstant("</span>")
                 .toSafeHtml();
 
         final Header<SafeHtml> header = new SafeHtmlHeader(safeHtml);
@@ -303,6 +316,33 @@ public class DataGridUtil {
         });
     }
 
+    /**
+     * @return "Yes" or "No"
+     */
+    public static String formatAsYesNo(final boolean val) {
+        return val
+                ? "Yes"
+                : "No";
+    }
+
+    /**
+     * @return A IEC byte string (e.g. '369G') or '?'
+     */
+    public static String formatAsIECByteString(final OptionalLong optSizeBytes) {
+        return optSizeBytes != null && optSizeBytes.isPresent()
+                ? ModelStringUtil.formatIECByteSizeString(optSizeBytes.getAsLong())
+                : "?";
+    }
+
+    /**
+     * @return An integer percentage suffixed with '%' or '?'
+     */
+    public static String formatPercentage(final OptionalDouble optPct) {
+        return optPct != null && optPct.isPresent()
+                ? ((long) optPct.getAsDouble()) + "%"
+                : "?";
+    }
+
     // There ought to be a better way of doing this so we don't have to have so many
     // methods to initiate the builder
 
@@ -332,8 +372,91 @@ public class DataGridUtil {
 
     public static <T_ROW> ColumnBuilder<T_ROW, String, String, Cell<String>> textColumnBuilder(
             final Function<T_ROW, String> cellExtractor) {
-
         return new ColumnBuilder<>(cellExtractor, Function.identity(), TextCell::new);
+    }
+
+    public static <T_ROW> ColumnBuilder<T_ROW, String, String, ColourSwatchCell> colourSwatchColumnBuilder(
+            final Function<T_ROW, String> cssColourExtractor) {
+        return new ColumnBuilder<>(cssColourExtractor, Function.identity(), ColourSwatchCell::new);
+    }
+
+    /**
+     * Builds a read only tick box that is either ticked or un-ticked.
+     *
+     * @param cellExtractor Function to extract a boolean from {@code T_ROW}.
+     * @param <T_ROW>       The row type
+     */
+    public static <T_ROW> ColumnBuilder<T_ROW, Boolean, TickBoxState, TickBoxCell> readOnlyTickBoxColumnBuilder(
+            final Function<T_ROW, Boolean> cellExtractor) {
+        return new ColumnBuilder<>(
+                cellExtractor,
+                bool -> GwtNullSafe.isTrue(bool)
+                        ? TickBoxState.TICK
+                        : TickBoxState.UNTICK,
+                () -> TickBoxCell.create(
+                        new NoBorderAppearance(),
+                        false,
+                        false,
+                        false));
+    }
+
+    /**
+     * Builds an updatable tick box that is either ticked or un-ticked.
+     *
+     * @param cellExtractor Function to extract a boolean from {@code T_ROW}.
+     * @param <T_ROW>       The row type
+     */
+    public static <T_ROW> ColumnBuilder<T_ROW, Boolean, TickBoxState, TickBoxCell> updatableTickBoxColumnBuilder(
+            final Function<T_ROW, Boolean> cellExtractor) {
+        return new ColumnBuilder<>(
+                cellExtractor,
+                bool -> GwtNullSafe.isTrue(bool)
+                        ? TickBoxState.TICK
+                        : TickBoxState.UNTICK,
+                () -> TickBoxCell.create(
+                        new DefaultAppearance(),
+                        false,
+                        false,
+                        true));
+    }
+
+    /**
+     * A builder for creating a text column with a hover icon to copy the text content of the cell
+     *
+     * @param cellExtractor Function to extract a String from the {@code T_ROW}.
+     * @param <T_ROW>       The row type
+     */
+    public static <T_ROW> ColumnBuilder<T_ROW, String, String, Cell<String>> copyTextColumnBuilder(
+            final Function<T_ROW, String> cellExtractor) {
+        return new ColumnBuilder<>(cellExtractor, Function.identity(), CopyTextCell::new);
+    }
+
+    /**
+     * A builder for creating a text column with a hover icon to copy the text content of the cell
+     *
+     * @param cellExtractor Function to extract a T_RAW_VAL from the {@code T_ROW}.
+     * @param formatter     Function to convert T_RAW_VAL into a {@link String}.
+     * @param <T_ROW>       The row type
+     * @param <T_RAW_VAL>>  The type of the extracted value from the row.
+     */
+    public static <T_ROW, T_RAW_VAL> ColumnBuilder<T_ROW, T_RAW_VAL, String, Cell<String>> copyTextColumnBuilder(
+            final Function<T_ROW, T_RAW_VAL> cellExtractor,
+            final Function<T_RAW_VAL, String> formatter) {
+        return new ColumnBuilder<>(cellExtractor, formatter, CopyTextCell::new);
+    }
+
+    /**
+     * A builder for creating a column for a {@link DocRef} with hover icons to copy the name of the doc
+     * and to open the doc.
+     *
+     * @param cellExtractor Function to extract a {@link DocRef} from the {@code T_ROW}.
+     * @param <T_ROW>       The row type
+     */
+    public static <T_ROW> ColumnBuilder<T_ROW, DocRef, DocRef, Cell<DocRef>> docRefColumnBuilder(
+            final Function<T_ROW, DocRef> cellExtractor,
+            final EventBus eventBus,
+            final boolean allowLinkByName) {
+        return new ColumnBuilder<>(cellExtractor, Function.identity(), () -> new DocRefCell(eventBus, allowLinkByName));
     }
 
     public static <T_ROW> ColumnBuilder<T_ROW, CommandLink, CommandLink, Cell<CommandLink>> commandLinkColumnBuilder(
@@ -378,6 +501,14 @@ public class DataGridUtil {
                 () -> new SvgCell(isButton));
     }
 
+    public static HeadingBuilder headingBuilder(final String headingText) {
+        return new HeadingBuilder(headingText);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
     public static class ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL extends Cell<T_CELL_VAL>> {
 
         private final Function<T_ROW, T_RAW_VAL> valueExtractor;
@@ -420,16 +551,6 @@ public class DataGridUtil {
 
         public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withSorting(
                 final String fieldName,
-                final BooleanSupplier isSortableSupplier) {
-
-            this.isSorted = true;
-            this.isSortableSupplier = isSortableSupplier;
-            this.fieldName = Objects.requireNonNull(fieldName);
-            return this;
-        }
-
-        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withSorting(
-                final String fieldName,
                 final boolean isIgnoreCase) {
             this.isSorted = true;
             this.isIgnoreCaseOrdering = isIgnoreCase;
@@ -448,26 +569,6 @@ public class DataGridUtil {
             return this;
         }
 
-        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withHorizontalAlignment(
-                final HorizontalAlignmentConstant alignment) {
-            horizontalAlignment = Objects.requireNonNull(alignment);
-            return this;
-        }
-
-        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withVerticalAlignment(
-                final VerticalAlignmentConstant alignment) {
-            verticalAlignment = Objects.requireNonNull(alignment);
-            return this;
-        }
-
-        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> topAligned() {
-            return withVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
-        }
-
-        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> bottomAligned() {
-            return withVerticalAlignment(HasVerticalAlignment.ALIGN_BOTTOM);
-        }
-
         /**
          * Add a style that will be applied to all rows in this column
          */
@@ -481,6 +582,7 @@ public class DataGridUtil {
 
         /**
          * Add a style (or space separated styles) to rows in this column conditionally based on the row value
+         *
          * @param styleFunction A function to return the style name, an empty string or null
          */
         public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withConditionalStyleName(
@@ -492,26 +594,51 @@ public class DataGridUtil {
             return this;
         }
 
+        /**
+         * Add a class to the cell if it is not enabled, so enabled and disabled rows appear
+         * differently.
+         *
+         * @param enabledFunction A function to return true if the row is enabled.
+         */
+        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> enabledWhen(
+                final Function<T_ROW, Boolean> enabledFunction) {
+            if (styleFunctions == null) {
+                styleFunctions = new ArrayList<>();
+            }
+            if (enabledFunction != null) {
+                final Function<T_ROW, String> sytleFunction = row ->
+                        enabledFunction.apply(row)
+                                ? ""
+                                : "dataGridDisabledCell";
+                styleFunctions.add(sytleFunction);
+            }
+            return this;
+        }
+
         private String buildCellStyles(final String baseStyleNames,
                                        final T_ROW object) {
+
+            final String styleNames = String.join(" ", GwtNullSafe.list(this.styleNames));
+            final String functionStyleNames = GwtNullSafe.stream(styleFunctions)
+                    .filter(Objects::nonNull)
+                    .map(func -> func.apply(object))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.joining(" "));
+
             return String.join(" ",
                     GwtNullSafe.string(baseStyleNames),
-                    GwtNullSafe.stream(styleNames)
-                            .collect(Collectors.joining(" ")),
-                    GwtNullSafe.stream(styleFunctions)
-                            .filter(Objects::nonNull)
-                            .map(func -> func.apply(object))
-                            .filter(Objects::nonNull)
-                            .collect(Collectors.joining(" ")));
+                    styleNames,
+                    functionStyleNames);
+        }
+
+        private T_CELL_VAL extractFormattedValue(final T_ROW row) {
+            return Optional.ofNullable(row)
+                    .map(valueExtractor)
+                    .map(formatter)
+                    .orElse(null);
         }
 
         public Column<T_ROW, T_CELL_VAL> build() {
-
-            final Function<T_ROW, T_CELL_VAL> nullSafeFormattedValExtractor = row ->
-                    Optional.ofNullable(row)
-                            .map(valueExtractor)
-                            .map(formatter)
-                            .orElse(null);
 
             final Column<T_ROW, T_CELL_VAL> column;
             if (isSorted) {
@@ -523,7 +650,7 @@ public class DataGridUtil {
 
                     @Override
                     public T_CELL_VAL getValue(final T_ROW row) {
-                        return nullSafeFormattedValExtractor.apply(row);
+                        return extractFormattedValue(row);
                     }
 
                     @Override
@@ -535,14 +662,13 @@ public class DataGridUtil {
                     public String getCellStyleNames(final Context context, final T_ROW object) {
                         return buildCellStyles(super.getCellStyleNames(context, object), object);
                     }
-
                 };
             } else {
                 // Explicit generics typing for GWT
                 column = new Column<T_ROW, T_CELL_VAL>(cellSupplier.get()) {
                     @Override
                     public T_CELL_VAL getValue(final T_ROW row) {
-                        return nullSafeFormattedValExtractor.apply(row);
+                        return extractFormattedValue(row);
                     }
 
                     @Override
@@ -561,5 +687,86 @@ public class DataGridUtil {
 
             return column;
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class HeadingBuilder {
+
+        private HeadingAlignment headingAlignment = null;
+        private String headingText;
+        private String toolTip;
+
+        public HeadingBuilder(final String headingText) {
+            this.headingText = headingText;
+        }
+
+        public HeadingBuilder leftAligned() {
+            this.headingAlignment = HeadingAlignment.LEFT;
+            return this;
+        }
+
+        public HeadingBuilder centerAligned() {
+            this.headingAlignment = HeadingAlignment.CENTER;
+            return this;
+        }
+
+        public HeadingBuilder rightAligned() {
+            this.headingAlignment = HeadingAlignment.RIGHT;
+            return this;
+        }
+
+        public HeadingBuilder withToolTip(final String toolTip) {
+            this.toolTip = toolTip;
+            return this;
+        }
+
+        public Header<SafeHtml> build() {
+
+            final boolean hasToolTip = !GwtNullSafe.isBlankString(toolTip);
+            final boolean hasAlignment = headingAlignment != null && headingAlignment != HeadingAlignment.LEFT;
+            if (headingText == null) {
+                headingText = "";
+            }
+
+            if (hasToolTip || hasAlignment) {
+
+                final SafeHtmlBuilder builder = new SafeHtmlBuilder()
+                        .appendHtmlConstant("<span");
+                if (hasToolTip) {
+                    builder.appendHtmlConstant(" title=\"")
+                            .appendEscaped(toolTip)
+                            .appendHtmlConstant("\"");
+                }
+                if (hasAlignment) {
+                    if (HeadingAlignment.CENTER == headingAlignment) {
+                        builder.appendHtmlConstant(" style=\"text-align: center;\"");
+                    } else if (HeadingAlignment.RIGHT == headingAlignment) {
+                        builder.appendHtmlConstant(" style=\"text-align: right;\"");
+                    }
+                }
+
+                final SafeHtml safeHtml = builder
+                        .appendHtmlConstant(">")
+                        .appendEscaped(headingText)
+                        .appendHtmlConstant("</span>")
+                        .toSafeHtml();
+                return new SafeHtmlHeader(safeHtml);
+            } else {
+                return new SafeHtmlHeader(SafeHtmlUtils.fromString(headingText));
+            }
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private enum HeadingAlignment {
+        LEFT,
+        CENTER,
+        RIGHT;
     }
 }

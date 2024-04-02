@@ -23,6 +23,7 @@ import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
+import stroom.dispatch.client.RestError;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ResultStoreInfo;
@@ -136,8 +137,8 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
                     @Override
                     protected void exec(final Range range,
                                         final Consumer<ResultPage<ResultStoreInfo>> dataConsumer,
-                                        final Consumer<Throwable> throwableConsumer) {
-                        resultStoreModel.fetch(range, dataConsumer, throwableConsumer);
+                                        final Consumer<RestError> errorConsumer) {
+                        resultStoreModel.fetch(range, dataConsumer, errorConsumer);
                     }
                 };
         dataProvider.addDataDisplay(dataGrid);

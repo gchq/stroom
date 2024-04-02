@@ -79,6 +79,15 @@ public class TaskManagerViewImpl extends ViewWithUiHandlers<TaskManagerUiHandler
         listContainer.setWidget(list);
     }
 
+    @Override
+    public void focusFilter() {
+        nameFilter.focus();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Binder extends UiBinder<Widget, TaskManagerViewImpl> {
 
     }

@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
@@ -24,25 +25,22 @@ class TestReaderRecorder {
      */
     @Test
     void test() throws IOException {
-
-
         LOGGER.info("Start");
-        Charset charset = StandardCharsets.UTF_8;
+        final Charset charset = StandardCharsets.UTF_8;
 
-        String input = "hello↵bye"; // ↵ is multi byte
-        MyByteBuffer myByteBuffer = new MyByteBuffer();
+        final String input = "hello↵bye"; // ↵ is multi byte
+        final MyByteBuffer myByteBuffer = new MyByteBuffer();
         myByteBuffer.write(input.getBytes(charset));
 
         final StringBuilder outputStringBuilder = new StringBuilder();
 
-        final CharsetDecoder charsetDecoder = Charset.forName(charset.name()).newDecoder();
+        final CharsetDecoder charsetDecoder = charset.newDecoder();
 
         final int byteBufferSize = 10; // Surely we can't have a char that takes more than 10 bytes
-        java.nio.ByteBuffer inputBuffer = java.nio.ByteBuffer.allocate(byteBufferSize);
+        final ByteBuffer inputBuffer = ByteBuffer.allocate(byteBufferSize);
         LOGGER.info("ByteBuffer size {}", byteBufferSize);
 
-//        java.nio.ByteBuffer in = java.nio.ByteBuffer.wrap(input.getBytes(charset.name()));
-        java.nio.CharBuffer outputBuffer = java.nio.CharBuffer.allocate(1);
+        final java.nio.CharBuffer outputBuffer = java.nio.CharBuffer.allocate(1);
 
         int byteOffset = 0;
 
@@ -110,10 +108,16 @@ class TestReaderRecorder {
                 .isEqualTo(input);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class MyByteBuffer extends ByteArrayOutputStream {
 
-        byte getByte(final int index) {
-            return buf[index];
+        Byte getByte(final int index) {
+            return index < super.count
+                    ? buf[index]
+                    : null;
         }
     }
 }

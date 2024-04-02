@@ -16,36 +16,24 @@
 
 package stroom.search.extraction;
 
-import stroom.index.shared.AnalyzerType;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFieldType;
+import stroom.datasource.api.v2.AnalyzerType;
+import stroom.datasource.api.v2.FieldType;
+import stroom.datasource.api.v2.IndexField;
+import stroom.index.shared.IndexFieldImpl;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.query.language.functions.Val;
-import stroom.query.language.functions.ValBoolean;
-import stroom.query.language.functions.ValDate;
-import stroom.query.language.functions.ValDouble;
-import stroom.query.language.functions.ValFloat;
-import stroom.query.language.functions.ValInteger;
-import stroom.query.language.functions.ValLong;
-import stroom.query.language.functions.ValString;
-import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 public abstract class AbstractFieldFilter extends AbstractXMLFilter {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractFieldFilter.class);
 
     private static final String DOCUMENT = "document";
     private static final String FIELD = "field";
@@ -64,7 +52,7 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
     private Locator locator;
 
 
-    private IndexField.Builder currentFieldBuilder;
+    private IndexFieldImpl.Builder currentFieldBuilder;
     private String currentElement;
     private String currentValue;
 
@@ -75,6 +63,7 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
         this.locationFactory = locationFactory;
         this.errorReceiverProxy = errorReceiverProxy;
     }
+
 
     /**
      * Sets the locator to use when reporting errors.
@@ -94,7 +83,7 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
         if (DOCUMENT.equals(localName)) {
             currentFieldValues = new ArrayList<>();
         } else if (FIELD.equals(localName)) {
-            currentFieldBuilder = IndexField.builder();
+            currentFieldBuilder = IndexFieldImpl.builder();
             currentValue = null;
         }
         super.startElement(uri, localName, qName, atts);
@@ -103,7 +92,7 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         if (DOCUMENT.equals(localName)) {
-            if (currentFieldValues.size() > 0) {
+            if (!currentFieldValues.isEmpty()) {
                 processFields(currentFieldValues);
             }
             currentFieldValues = null;
@@ -112,7 +101,7 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
 
         } else if (FIELD.equals(localName)) {
             if (currentFieldBuilder != null && currentValue != null) {
-                final IndexField indexField = currentFieldBuilder.build();
+                final IndexFieldImpl indexField = currentFieldBuilder.build();
                 final Val val = convertValue(indexField, currentValue);
                 if (val != null) {
                     final FieldValue fieldValue = new FieldValue(indexField, val);
@@ -131,12 +120,12 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
         final String string = new String(ch, start, length);
         if (NAME.equals(currentElement)) {
-            currentFieldBuilder.fieldName(string);
+            currentFieldBuilder.fldName(string);
         } else if (TYPE.equals(currentElement)) {
-            final IndexFieldType indexFieldType = IndexFieldType.TYPE_MAP.get(string.toLowerCase(Locale.ROOT));
-            currentFieldBuilder.fieldType(indexFieldType);
+            final FieldType type = FieldType.fromDisplayValue(string);
+            currentFieldBuilder.fldType(type);
         } else if (ANALYSER.equals(currentElement)) {
-            final AnalyzerType analyzerType = AnalyzerType.TYPE_MAP.get(string.toLowerCase(Locale.ROOT));
+            final AnalyzerType analyzerType = AnalyzerType.fromDisplayValue(string);
             currentFieldBuilder.analyzerType(analyzerType);
         } else if (INDEXED.equals(currentElement)) {
             currentFieldBuilder.indexed(Boolean.parseBoolean(string));
@@ -155,35 +144,7 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
 
     private Val convertValue(final IndexField indexField, final String value) {
         try {
-            switch (indexField.getFieldType()) {
-                case LONG_FIELD, NUMERIC_FIELD, ID -> {
-                    final long val = Long.parseLong(value);
-                    return ValLong.create(val);
-                }
-                case BOOLEAN_FIELD -> {
-                    final boolean val = Boolean.parseBoolean(value);
-                    return ValBoolean.create(val);
-                }
-                case INTEGER_FIELD -> {
-                    final int val = Integer.parseInt(value);
-                    return ValInteger.create(val);
-                }
-                case FLOAT_FIELD -> {
-                    final float val = Float.parseFloat(value);
-                    return ValFloat.create(val);
-                }
-                case DOUBLE_FIELD -> {
-                    final double val = Double.parseDouble(value);
-                    return ValDouble.create(val);
-                }
-                case DATE_FIELD -> {
-                    final long val = DateUtil.parseNormalDateTimeString(value);
-                    return ValDate.create(val);
-                }
-                case FIELD -> {
-                    return ValString.create(value);
-                }
-            }
+            return IndexFieldUtil.convertValue(indexField, value);
         } catch (final RuntimeException e) {
             log(Severity.ERROR, e.getMessage(), e);
         }

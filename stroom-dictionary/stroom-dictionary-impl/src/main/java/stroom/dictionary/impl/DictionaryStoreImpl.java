@@ -19,6 +19,7 @@ package stroom.dictionary.impl;
 
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
@@ -50,6 +51,11 @@ import java.util.stream.Collectors;
 @Singleton
 class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            DictionaryDoc.DOCUMENT_TYPE,
+            DictionaryDoc.DOCUMENT_TYPE,
+            DictionaryDoc.ICON);
     private final Store<DictionaryDoc> store;
     // Split on unix or windows line ends
     private static final Pattern WORD_SPLIT_PATTERN = Pattern.compile("(\r?\n)+");
@@ -103,11 +109,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.CONFIGURATION,
-                DictionaryDoc.DOCUMENT_TYPE,
-                DictionaryDoc.DOCUMENT_TYPE,
-                DictionaryDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -218,6 +220,13 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     @Override
     public List<DocContentMatch> findByContent(final StringMatch filter) {
         return store.findByContent(filter);
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final DocRef docRef,
+                                                final String extension,
+                                                final StringMatch filter) {
+        return store.fetchHighlights(docRef, extension, filter);
     }
 
     @Override

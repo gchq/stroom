@@ -16,18 +16,29 @@
 
 package stroom.query.language.functions;
 
+import stroom.util.concurrent.LazyBoolean;
+import stroom.util.concurrent.LazyValue;
+
+import com.google.common.math.DoubleMath;
+
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.Objects;
-import java.util.Optional;
 
 public final class ValFloat implements ValNumber {
 
+    private static final Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
+            ValFloat.class, ValComparators.AS_FLOAT_COMPARATOR);
+
     public static final Type TYPE = Type.FLOAT;
     private final float value;
-    private transient Optional<String> optionalString;
+    private final transient LazyValue<String> lazyStringValue;
+    private final transient LazyBoolean lazyHasFractionalPart;
 
     private ValFloat(final float value) {
         this.value = value;
+        this.lazyStringValue = LazyValue.initialisedBy(this::deriveStringValue);
+        this.lazyHasFractionalPart = LazyBoolean.initialisedBy(this::deriveHasFractionalPart);
     }
 
     public static ValFloat create(final float value) {
@@ -61,16 +72,25 @@ public final class ValFloat implements ValNumber {
 
     @Override
     public String toString() {
-        if (optionalString == null) {
-            try {
-                final BigDecimal bigDecimal = BigDecimal.valueOf(value);
-                optionalString = Optional.of(bigDecimal.stripTrailingZeros().toPlainString());
-            } catch (final RuntimeException e) {
-                optionalString = Optional.empty();
-            }
+        return lazyStringValue.getValueWithoutLocks();
+    }
 
+    @Override
+    public Number toNumber() {
+        return hasFractionalPart()
+                ? value
+                : toLong();
+    }
+
+    private String deriveStringValue() {
+        String stringValue = null;
+        try {
+            final BigDecimal bigDecimal = BigDecimal.valueOf(value);
+            stringValue = bigDecimal.stripTrailingZeros().toPlainString();
+        } catch (final RuntimeException e) {
+            // Can't be represented as a string
         }
-        return optionalString.orElse(null);
+        return stringValue;
     }
 
     @Override
@@ -81,6 +101,15 @@ public final class ValFloat implements ValNumber {
     @Override
     public Type type() {
         return TYPE;
+    }
+
+    @Override
+    public boolean hasFractionalPart() {
+        return lazyHasFractionalPart.getValueWithoutLocks();
+    }
+
+    private boolean deriveHasFractionalPart() {
+        return !DoubleMath.isMathematicalInteger(value);
     }
 
     @Override
@@ -98,5 +127,15 @@ public final class ValFloat implements ValNumber {
     @Override
     public int hashCode() {
         return Objects.hash(value);
+    }
+
+    @Override
+    public Comparator<Val> getDefaultComparator(final boolean isCaseSensitive) {
+        return COMPARATOR;
+    }
+
+    @Override
+    public Object unwrap() {
+        return value;
     }
 }

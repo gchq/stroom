@@ -41,6 +41,7 @@ public final class PermissionNames {
     public static final String MANAGE_PROCESSORS_PERMISSION = "Manage Processors";
     public static final String MANAGE_TASKS_PERMISSION = "Manage Tasks";
     public static final String DOWNLOAD_SEARCH_RESULTS_PERMISSION = "Download Search Results";
+    public static final String MANAGE_API_KEYS = "Manage API Keys";
     public static final String MANAGE_JOBS_PERMISSION = "Manage Jobs";
     public static final String MANAGE_PROPERTIES_PERMISSION = "Manage Properties";
     public static final String MANAGE_POLICIES_PERMISSION = "Manage Policies";
@@ -67,6 +68,7 @@ public final class PermissionNames {
             MANAGE_PROCESSORS_PERMISSION,
             MANAGE_TASKS_PERMISSION,
             DOWNLOAD_SEARCH_RESULTS_PERMISSION,
+            MANAGE_API_KEYS,
             MANAGE_JOBS_PERMISSION,
             MANAGE_PROPERTIES_PERMISSION,
             MANAGE_POLICIES_PERMISSION,
@@ -135,6 +137,11 @@ public final class PermissionNames {
         PERMISSION_TO_DESCRIPTION_MAP.put(
                 MANAGE_POLICIES_PERMISSION,
                 "Access the Data Retention screen to manage data retention rules.");
+        PERMISSION_TO_DESCRIPTION_MAP.put(
+                MANAGE_API_KEYS,
+                "Access the API Keys screen to view, create, edit, delete the user's own API keys. " +
+                        "'" + MANAGE_USERS_PERMISSION + "' permission is also required to managed other users' " +
+                        "API keys");
         PERMISSION_TO_DESCRIPTION_MAP.put(
                 MANAGE_NODES_PERMISSION,
                 "Access the Nodes screen to view the nodes the cluster and manage their priority and enabled states.");

@@ -99,6 +99,10 @@ public class SimplePopup extends AbstractPopupPanel {
         uiHandlers.hideRequest(new HideRequest(autoClosed, false));
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Binder extends UiBinder<Widget, SimplePopup> {
 
     }

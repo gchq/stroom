@@ -26,6 +26,7 @@ import stroom.meta.api.MetaProperties;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.test.common.util.test.FileSystemTestUtil;
+import stroom.util.io.CommonDirSetup;
 import stroom.util.io.FileUtil;
 import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.TempDirProviderImpl;
@@ -67,6 +68,10 @@ class TestStreamDumpTool {
     @TempDir
     static Path tempDir;
 
+    static {
+        CommonDirSetup.setup();
+    }
+
     @BeforeEach
     void setup() {
         final Injector injector = Guice.createInjector(
@@ -81,9 +86,6 @@ class TestStreamDumpTool {
                     }
                 });
         injector.injectMembers(this);
-
-        homeDirProvider.setHomeDir(tempDir);
-        tempDirProvider.setTempDir(tempDir);
 
         Mockito.when(toolInjector.getInjector())
                 .thenReturn(injector);

@@ -198,3 +198,9 @@ select StreamId
 from "index_view"
 where StreamId in dictionary "my_dictionary"
 select StreamId
+-----
+// From example index
+from View
+// eval MaxD=max(parseDuration('PT10M'))
+where EventTime < now() - 2dx
+select StreamId, EventId, Feed

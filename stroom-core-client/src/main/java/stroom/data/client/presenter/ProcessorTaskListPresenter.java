@@ -21,7 +21,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -94,15 +94,15 @@ public class ProcessorTaskListPresenter
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<ProcessorTask>> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
+                                final Consumer<RestError> errorConsumer) {
                 if (criteria.getExpression() != null) {
                     CriteriaUtil.setRange(criteria, range);
-                    final Rest<ResultPage<ProcessorTask>> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .create(PROCESSOR_TASK_RESOURCE)
+                            .method(res -> res.find(criteria))
                             .onSuccess(dataConsumer)
-                            .onFailure(throwableConsumer)
-                            .call(PROCESSOR_TASK_RESOURCE)
-                            .find(criteria);
+                            .onFailure(errorConsumer)
+                            .exec();
                 }
             }
         };
@@ -114,8 +114,9 @@ public class ProcessorTaskListPresenter
                 FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
                 findMetaCriteria.setExpression(MetaExpressionUtil.createDataIdExpression(row.getMetaId()));
 
-                final Rest<ResultPage<MetaRow>> rest = restFactory.create();
-                rest
+                restFactory
+                        .create(META_RESOURCE)
+                        .method(res -> res.findMetaRow(findMetaCriteria))
                         .onSuccess(metaRows -> {
                             // Should only get one back
                             final Meta meta = Optional.ofNullable(metaRows)
@@ -124,8 +125,7 @@ public class ProcessorTaskListPresenter
                                     .orElse(null);
                             showTooltip(popupPosition, row, meta);
                         })
-                        .call(META_RESOURCE)
-                        .findMetaRow(findMetaCriteria);
+                        .exec();
             }
         }, "<br/>", ColumnSizeConstants.ICON_COL);
 
@@ -164,14 +164,14 @@ public class ProcessorTaskListPresenter
                     }
                 }, "Node", ColumnSizeConstants.MEDIUM_COL);
         dataGrid
-                .addResizableColumn(new OrderByColumn<ProcessorTask, String>(
-                        new TextCell(), ProcessorTaskFields.FIELD_FEED, true) {
+                .addResizableColumn(new OrderByColumn<ProcessorTask, DocRef>(
+                        new DocRefCell(getEventBus(), true), ProcessorTaskFields.FIELD_FEED, true) {
                     @Override
-                    public String getValue(final ProcessorTask row) {
+                    public DocRef getValue(final ProcessorTask row) {
                         if (row.getFeedName() != null) {
-                            return row.getFeedName();
+                            return new DocRef(FeedDoc.DOCUMENT_TYPE, null, row.getFeedName());
                         } else {
-                            return "";
+                            return null;
                         }
                     }
                 }, "Feed", ColumnSizeConstants.BIG_COL);
@@ -187,16 +187,13 @@ public class ProcessorTaskListPresenter
             }
         }, "Priority", 60);
         dataGrid.addResizableColumn(
-                new Column<ProcessorTask, String>(new TextCell()) {
+                new Column<ProcessorTask, DocRef>(new DocRefCell(getEventBus(), false)) {
                     @Override
-                    public String getValue(final ProcessorTask row) {
+                    public DocRef getValue(final ProcessorTask row) {
                         if (row.getProcessorFilter() != null) {
-                            if (row.getProcessorFilter().getPipelineName() != null) {
-                                return row.getProcessorFilter().getPipelineName();
-                            }
+                            return row.getProcessorFilter().getPipeline();
                         }
-                        return "";
-
+                        return null;
                     }
                 }, "Pipeline", ColumnSizeConstants.BIG_COL);
         dataGrid.addResizableColumn(

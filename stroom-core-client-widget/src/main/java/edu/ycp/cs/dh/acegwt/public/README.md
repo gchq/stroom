@@ -7,7 +7,8 @@ Ideally we would use the minified version but as we have to modify it we can't.
 Currently using `1.5.0` of Ace.
 To check the version, look for `exports.version = ` in `ace.js`.
 
-For Stroom to be able to display four different annotation icons in the left hand gutter the source for `ace.js` has been altered. Any future update to `ace.js` will need to incorporate this change.
+For Stroom to be able to display four different annotation icons in the left hand gutter the source for `ace.js` has been altered.
+Any future update to `ace.js` will need to incorporate this change.
 
 The original `ace.js` lines 15705-15711:
 ```

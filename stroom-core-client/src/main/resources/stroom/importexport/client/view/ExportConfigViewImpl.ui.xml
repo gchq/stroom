@@ -10,7 +10,7 @@
                     <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-max"/>
                     <g:FlowPanel ui:field="buttonContainer" addStyleNames="dock-min button-container" />
                 </g:FlowPanel>
-                <g:MaxScrollPanel ui:field="tree" styleName="dock-max stroom-control__no-padding"/>
+                <g:MaxScrollPanel ui:field="tree" styleName="dock-max form-control-border"/>
             </g:FlowPanel>
         </form:FormGroup>
     </g:FlowPanel>

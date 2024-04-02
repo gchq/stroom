@@ -48,8 +48,10 @@ public class MyDateBox extends Composite implements DateBoxView {
     private final PopupPanel popup;
     private final DatePicker datePicker;
     private final TextBox textBox;
+    private boolean isEnabled;
 
     public MyDateBox() {
+        isEnabled = true;
         datePicker = new CustomDatePicker();
         textBox = new TextBox();
 
@@ -90,6 +92,17 @@ public class MyDateBox extends Composite implements DateBoxView {
     }
 
     @Override
+    public void setEnabled(final boolean isEnabled) {
+        this.isEnabled = isEnabled;
+        textBox.setEnabled(isEnabled);
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return isEnabled;
+    }
+
+    @Override
     public String getValue() {
         return textBox.getText();
     }
@@ -120,7 +133,7 @@ public class MyDateBox extends Composite implements DateBoxView {
     }
 
     public void showDatePicker() {
-        if (!popup.isShowing()) {
+        if (!popup.isShowing() && isEnabled) {
             Date current = parseDate();
             if (current == null) {
                 current = new Date();
@@ -155,6 +168,10 @@ public class MyDateBox extends Composite implements DateBoxView {
             popup.hide();
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private class DateBoxHandler implements ValueChangeHandler<Date>,
             FocusHandler, BlurHandler, ClickHandler, KeyDownHandler,

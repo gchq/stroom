@@ -21,6 +21,7 @@ import stroom.data.table.client.Refreshable;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.presenter.TaskManagerPresenter.TaskManagerView;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -28,9 +29,11 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
-public class TaskManagerPresenter extends ContentTabPresenter<TaskManagerView>
+public class TaskManagerPresenter
+        extends ContentTabPresenter<TaskManagerView>
         implements Refreshable, TaskManagerUiHandlers {
 
+    public static final String TAB_TYPE = "ServerTasks";
     private final TaskManagerListPresenter listPresenter;
 
     @Inject
@@ -68,8 +71,27 @@ public class TaskManagerPresenter extends ContentTabPresenter<TaskManagerView>
         listPresenter.setNameFilter(name);
     }
 
+    @Override
+    public String getType() {
+        return TAB_TYPE;
+    }
+
+    @Override
+    public boolean handleKeyAction(final Action action) {
+        if (Action.FOCUS_FILTER == action) {
+            getView().focusFilter();
+            return true;
+        }
+        return false;
+    }
+
+    // --------------------------------------------------------------------------------
+
+
     public interface TaskManagerView extends View, HasUiHandlers<TaskManagerUiHandlers> {
 
         void setList(Widget widget);
+
+        void focusFilter();
     }
 }

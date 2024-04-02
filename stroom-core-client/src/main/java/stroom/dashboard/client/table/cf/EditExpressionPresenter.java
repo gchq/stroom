@@ -29,6 +29,7 @@ import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -36,6 +37,7 @@ import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.MouseUtil;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -46,7 +48,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPresenter.EditExpressionView>
-        implements HasDirtyHandlers {
+        implements HasDirtyHandlers, Focus {
 
     private final ExpressionTreePresenter expressionPresenter;
 
@@ -90,7 +92,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         registerHandler(expressionPresenter.addDataSelectionHandler(event -> setButtonsEnabled()));
         registerHandler(expressionPresenter.addContextMenuHandler(event -> {
             final List<Item> menuItems = addExpressionActionsToMenu();
-            if (menuItems.size() > 0) {
+            if (GwtNullSafe.hasItems(menuItems)) {
                 showMenu(menuItems, event.getPopupPosition());
             }
         }));
@@ -236,6 +238,15 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
+
+    @Override
+    public void focus() {
+        addOperatorButton.focus();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface EditExpressionView extends View {
 

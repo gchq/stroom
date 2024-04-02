@@ -19,9 +19,9 @@ package stroom.index.impl;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -45,13 +45,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -82,8 +78,6 @@ public class IndexShardManager {
     private final StripedLock shardUpdateLocks = new StripedLock();
     private final AtomicBoolean deletingShards = new AtomicBoolean();
 
-    private final Map<IndexShardStatus, Set<IndexShardStatus>> allowedStateTransitions = new HashMap<>();
-
     @Inject
     IndexShardManager(final IndexStore indexStore,
                       final IndexShardService indexShardService,
@@ -101,29 +95,6 @@ public class IndexShardManager {
         this.taskContextFactory = taskContextFactory;
         this.securityContext = securityContext;
         this.pathCreator = pathCreator;
-
-        // Ensure all but deleted and corrupt states can be set to closed on clean.
-        allowedStateTransitions.put(IndexShardStatus.NEW,
-                Set.of(IndexShardStatus.OPENING,
-                        IndexShardStatus.CLOSED,
-                        IndexShardStatus.DELETED,
-                        IndexShardStatus.CORRUPT));
-        allowedStateTransitions.put(IndexShardStatus.OPENING,
-                Set.of(IndexShardStatus.OPEN,
-                        IndexShardStatus.CLOSED,
-                        IndexShardStatus.DELETED,
-                        IndexShardStatus.CORRUPT));
-        allowedStateTransitions.put(IndexShardStatus.OPEN,
-                Set.of(IndexShardStatus.CLOSING,
-                        IndexShardStatus.CLOSED,
-                        IndexShardStatus.DELETED,
-                        IndexShardStatus.CORRUPT));
-        allowedStateTransitions.put(IndexShardStatus.CLOSING,
-                Set.of(IndexShardStatus.CLOSED, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT));
-        allowedStateTransitions.put(IndexShardStatus.CLOSED,
-                Set.of(IndexShardStatus.OPENING, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT));
-        allowedStateTransitions.put(IndexShardStatus.DELETED, Collections.emptySet());
-        allowedStateTransitions.put(IndexShardStatus.CORRUPT, Collections.singleton(IndexShardStatus.DELETED));
     }
 
     /**
@@ -170,7 +141,7 @@ public class IndexShardManager {
                             while (!Thread.currentThread().isInterrupted() && iter.hasNext()) {
                                 final IndexShard shard = iter.next();
                                 final IndexShardWriter indexShardWriter =
-                                        indexShardWriterCache.getWriterByShardId(shard.getId());
+                                        indexShardWriterCache.getWriter(shard.getId());
                                 try {
                                     if (indexShardWriter != null) {
                                         LOGGER.debug(() ->
@@ -234,7 +205,7 @@ public class IndexShardManager {
 
     private long performAction(final List<IndexShard> ownedShards, final IndexShardAction action) {
         final AtomicLong shardCount = new AtomicLong();
-        if (ownedShards.size() > 0) {
+        if (!ownedShards.isEmpty()) {
             taskContextFactory.context(
                     "Index Shard Manager",
                     TerminateHandlerFactory.NOOP_FACTORY,
@@ -248,47 +219,48 @@ public class IndexShardManager {
                         final AtomicInteger remaining = new AtomicInteger(ownedShards.size());
 
                         // Create a scheduled executor for us to continually log index shard writer action progress.
-                        final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-                        // Start logging action progress.
-                        executor.scheduleAtFixedRate(
-                                () -> LOGGER.info(() ->
-                                        "Waiting for " + remaining.get() + " index shards to " + action.getName()),
-                                10,
-                                10,
-                                TimeUnit.SECONDS);
+                        try (final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor()) {
+                            // Start logging action progress.
+                            executor.scheduleAtFixedRate(
+                                    () -> LOGGER.info(() ->
+                                            "Waiting for " + remaining.get() + " index shards to " + action.getName()),
+                                    10,
+                                    10,
+                                    TimeUnit.SECONDS);
 
-                        // Perform action on all of the index shard writers in parallel.
-                        ownedShards.parallelStream().forEach(shard -> {
-                            try {
-                                // We use a child tak context here to create child messages in the UI but also to ensure
-                                // the task is performed in the context of the parent user.
-                                taskContextFactory.childContext(parentTaskContext,
-                                        "Index Shard Manager",
-                                        TerminateHandlerFactory.NOOP_FACTORY,
-                                        taskContext -> {
-                                            taskContext.info(() -> action.getActivity() +
-                                                    " index shard: " +
-                                                    shard.getId());
-                                            switch (action) {
-                                                case FLUSH:
-                                                    shardCount.incrementAndGet();
-                                                    indexShardWriterCache.flush(shard.getId());
-                                                    break;
-                                                case DELETE:
-                                                    shardCount.incrementAndGet();
-                                                    indexShardWriterCache.delete(shard.getId());
-                                                    break;
-                                            }
-                                        }).run();
-                            } catch (final RuntimeException e) {
-                                LOGGER.error(e::getMessage, e);
-                            }
+                            // Perform action on all of the index shard writers in parallel.
+                            ownedShards.parallelStream().forEach(shard -> {
+                                try {
+                                    // We use a child tak context here to create child messages in the UI but also to
+                                    // ensure the task is performed in the context of the parent user.
+                                    taskContextFactory.childContext(parentTaskContext,
+                                            "Index Shard Manager",
+                                            TerminateHandlerFactory.NOOP_FACTORY,
+                                            taskContext -> {
+                                                taskContext.info(() -> action.getActivity() +
+                                                        " index shard: " +
+                                                        shard.getId());
+                                                switch (action) {
+                                                    case FLUSH:
+                                                        shardCount.incrementAndGet();
+                                                        indexShardWriterCache.flush(shard.getId());
+                                                        break;
+                                                    case DELETE:
+                                                        shardCount.incrementAndGet();
+                                                        indexShardWriterCache.delete(shard.getId());
+                                                        break;
+                                                }
+                                            }).run();
+                                } catch (final RuntimeException e) {
+                                    LOGGER.error(e::getMessage, e);
+                                }
 
-                            remaining.getAndDecrement();
-                        });
+                                remaining.getAndDecrement();
+                            });
 
-                        // Shut down the progress logging executor.
-                        executor.shutdown();
+                            // Shut down the progress logging executor.
+                            executor.shutdown();
+                        }
 
                         LOGGER.info(() -> "Finished " +
                                 action.getActivity().toLowerCase(Locale.ROOT) +
@@ -314,7 +286,8 @@ public class IndexShardManager {
     private void checkRetention(final IndexShard shard) {
         try {
             // Delete this shard if it is older than the retention age.
-            final IndexDoc index = indexStore.readDocument(new DocRef(IndexDoc.DOCUMENT_TYPE, shard.getIndexUuid()));
+            final LuceneIndexDoc index = indexStore.readDocument(
+                    new DocRef(LuceneIndexDoc.DOCUMENT_TYPE, shard.getIndexUuid()));
             if (index == null) {
                 // If there is no associated index then delete the shard.
                 setStatus(shard.getId(), IndexShardStatus.DELETED);
@@ -371,21 +344,13 @@ public class IndexShardManager {
             try {
                 final IndexShard indexShard = indexShardService.loadById(indexShardId);
                 if (indexShard != null) {
-                    // Only allow certain state transitions.
-                    final Set<IndexShardStatus> allowed = allowedStateTransitions.get(indexShard.getStatus());
-                    if (allowed == null) {
-                        throw new RuntimeException("No state transitions are defined for " +
-                                indexShard.getStatus());
-                    } else {
-                        if (allowed.contains(status)) {
-                            indexShardService.setStatus(indexShard.getId(), status);
-                        } else {
-                            LOGGER.debug("State transition from " +
-                                    indexShard.getStatus() +
-                                    " to " +
-                                    status +
-                                    " was attempted but is not allowed");
-                        }
+                    final boolean success = indexShardService.setStatus(indexShard.getId(), status);
+                    if (!success) {
+                        LOGGER.debug("State transition from " +
+                                indexShard.getStatus() +
+                                " to " +
+                                status +
+                                " was attempted but is not allowed");
                     }
                 }
             } catch (final RuntimeException e) {

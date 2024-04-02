@@ -16,6 +16,7 @@
 
 package stroom.task.api;
 
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.shared.EntityServiceException;
 
 import java.nio.channels.ClosedByInterruptException;
@@ -34,20 +35,23 @@ public class TaskTerminatedException extends EntityServiceException {
     }
 
     public static Optional<TaskTerminatedException> unwrap(final Throwable e) {
-        if (e instanceof final TaskTerminatedException taskTerminatedException) {
-            return Optional.of(taskTerminatedException);
-        } else if (e instanceof InterruptedException || e instanceof ClosedByInterruptException) {
-            return Optional.of(new TaskTerminatedException());
-        } else if (e instanceof final TransformerException transformerException) {
-            if (transformerException.getException() instanceof final TaskTerminatedException taskTerminatedException) {
+        if (e != null) {
+            if (e instanceof final TaskTerminatedException taskTerminatedException) {
                 return Optional.of(taskTerminatedException);
+            } else if (e instanceof InterruptedException
+                    || e instanceof ClosedByInterruptException
+                    || e instanceof UncheckedInterruptedException) {
+                return Optional.of(new TaskTerminatedException());
+            } else if (e instanceof final TransformerException transformerEx) {
+                if (transformerEx.getException() instanceof final TaskTerminatedException taskTerminatedEx) {
+                    return Optional.of(taskTerminatedEx);
+                }
+            }
+
+            if (e.getCause() != null) {
+                return unwrap(e.getCause());
             }
         }
-
-        if (e.getCause() != null) {
-            return unwrap(e.getCause());
-        }
-
         return Optional.empty();
     }
 }

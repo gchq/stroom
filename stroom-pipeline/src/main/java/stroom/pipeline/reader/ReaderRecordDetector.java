@@ -18,23 +18,25 @@ package stroom.pipeline.reader;
 
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.stepping.SteppingController;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.task.api.TaskTerminatedException;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.io.FilterReader;
 import java.io.IOException;
 import java.io.Reader;
 
 public class ReaderRecordDetector extends FilterReader {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ReaderRecordDetector.class);
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReaderRecordDetector.class);
 
     private static final int MAX_COUNT = 10000;
-    private final char[] buffer = new char[1024];
+    private final char[] readBuffer = new char[1024];
     private final SteppingController controller;
     private long currentStepNo;
-    private int offset;
-    private int length;
+    private int readCount = 0;
+    private int readBufferOffset = 0;
     private boolean newStream = true;
     private boolean newRecord;
     private int count;
@@ -47,6 +49,11 @@ public class ReaderRecordDetector extends FilterReader {
 
     @Override
     public int read(final char[] buf, final int off, final int len) throws IOException {
+        if (Thread.currentThread().isInterrupted()) {
+            throw new TaskTerminatedException();
+        }
+
+        // No stepping controller so
         if (controller == null) {
             return super.read(buf, off, len);
         }
@@ -83,26 +90,34 @@ public class ReaderRecordDetector extends FilterReader {
             }
         }
 
-        if (length - offset == 0) {
+        // On the previous read, we may have dropped out before consuming all the chars, i.e.
+        // if we hit the end of a record, so only read if everything was consumed
+        if (readBufferOffset == readCount) {
             // Fill the buffer.
-            length = super.read(buffer, 0, Math.min(buffer.length, len));
+            readCount = super.read(readBuffer, 0, Math.min(readBuffer.length, len));
+            readBufferOffset = 0;
         }
 
-        if (length == -1) {
+        if (readCount == -1) {
             // The next time anybody tries to read from this reader it will be a
-            // new stream.
+            // new stream, which will trigger a new source location to read from.
             newStream = true;
             return -1;
         }
 
-        int i = 0;
-        while (i < length - offset) {
-            final char c = buffer[offset + i];
-            buf[off + i] = c;
-            i++;
-            count++;
+        // Start from where we got to last time, or 0 if this is the first time consuming
+        // chars after the read.
+        int outputOffset = off;
+        LOGGER.trace(() -> LogUtil.message("readCount: {}, consumedCount: {}, remainingCount: {}",
+                readCount, readBufferOffset, readCount - readBufferOffset));
 
-            if (c == '\n' || count >= MAX_COUNT) {
+        while (readBufferOffset < readCount) {
+            final char chr = readBuffer[readBufferOffset];
+            buf[outputOffset++] = chr;
+            count++;
+            readBufferOffset++;
+
+            if (chr == '\n' || count >= MAX_COUNT) {
                 // The next time anybody tries to read from this reader it will
                 // be a new record.
                 newRecord = true;
@@ -110,8 +125,7 @@ public class ReaderRecordDetector extends FilterReader {
             }
         }
 
-        offset += i;
-
-        return i;
+        // How many chars we actually added to buf
+        return outputOffset - off;
     }
 }

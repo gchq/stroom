@@ -17,6 +17,7 @@
 
 package stroom.query.impl;
 
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
@@ -31,11 +32,11 @@ import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.query.common.v2.DataSourceProviderRegistry;
-import stroom.query.language.SearchRequestBuilder;
+import stroom.query.language.SearchRequestFactory;
 import stroom.query.shared.QueryDoc;
-import stroom.query.util.LambdaLogger;
-import stroom.query.util.LambdaLoggerFactory;
 import stroom.security.api.SecurityContext;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Message;
 
 import jakarta.inject.Inject;
@@ -53,22 +54,27 @@ import java.util.function.BiConsumer;
 class QueryStoreImpl implements QueryStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(QueryStoreImpl.class);
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            QueryDoc.DOCUMENT_TYPE,
+            QueryDoc.DOCUMENT_TYPE,
+            QueryDoc.ICON);
 
     private final Store<QueryDoc> store;
     private final SecurityContext securityContext;
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
-    private final SearchRequestBuilder searchRequestBuilder;
+    private final SearchRequestFactory searchRequestFactory;
 
     @Inject
     QueryStoreImpl(final StoreFactory storeFactory,
                    final QuerySerialiser serialiser,
                    final SecurityContext securityContext,
                    final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
-                   final SearchRequestBuilder searchRequestBuilder) {
+                   final SearchRequestFactory searchRequestFactory) {
         this.store = storeFactory.createStore(serialiser, QueryDoc.DOCUMENT_TYPE, QueryDoc.class);
         this.securityContext = securityContext;
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
-        this.searchRequestBuilder = searchRequestBuilder;
+        this.searchRequestFactory = searchRequestFactory;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -121,11 +127,7 @@ class QueryStoreImpl implements QueryStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.SEARCH,
-                QueryDoc.DOCUMENT_TYPE,
-                QueryDoc.DOCUMENT_TYPE,
-                QueryDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -156,7 +158,7 @@ class QueryStoreImpl implements QueryStore {
         return (doc, dependencyRemapper) -> {
             try {
                 if (doc.getQuery() != null) {
-                    searchRequestBuilder.extractDataSourceOnly(doc.getQuery(), docRef -> {
+                    searchRequestFactory.extractDataSourceOnly(doc.getQuery(), docRef -> {
                         try {
                             if (docRef != null) {
                                 final DataSourceProviderRegistry dataSourceProviderRegistry =
@@ -271,5 +273,12 @@ class QueryStoreImpl implements QueryStore {
     @Override
     public List<DocContentMatch> findByContent(final StringMatch filter) {
         return store.findByContent(filter);
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final DocRef docRef,
+                                                final String extension,
+                                                final StringMatch filter) {
+        return store.fetchHighlights(docRef, extension, filter);
     }
 }

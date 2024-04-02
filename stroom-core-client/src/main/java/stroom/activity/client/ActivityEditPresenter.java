@@ -23,7 +23,6 @@ import stroom.activity.shared.Activity.Prop;
 import stroom.activity.shared.ActivityResource;
 import stroom.activity.shared.ActivityValidationResult;
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
@@ -214,11 +213,11 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
         activity.setDetails(details);
 
         // Validate the activity.
-        final Rest<ActivityValidationResult> rest = restFactory.create();
-        rest
+        restFactory
+                .create(ACTIVITY_RESOURCE)
+                .method(res -> res.validate(activity))
                 .onSuccess(result -> afterValidation(result, details, consumer))
-                .call(ACTIVITY_RESOURCE)
-                .validate(activity);
+                .exec();
     }
 
     private void afterValidation(final ActivityValidationResult validationResult,
@@ -234,16 +233,16 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
         } else {
             // Save the activity.
             if (activity.getId() == null) {
-                final Rest<Activity> rest = restFactory.create();
-                rest
+                restFactory
+                        .create(ACTIVITY_RESOURCE)
+                        .method(ActivityResource::create)
                         .onSuccess(result -> {
                             activity = result;
                             activity.setDetails(details);
 
                             update(activity, details, consumer);
                         })
-                        .call(ACTIVITY_RESOURCE)
-                        .create();
+                        .exec();
             } else {
                 update(activity, details, consumer);
             }
@@ -251,15 +250,15 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
     }
 
     private void update(final Activity activity, final ActivityDetails details, final Consumer<Activity> consumer) {
-        final Rest<Activity> rest = restFactory.create();
-        rest
+        restFactory
+                .create(ACTIVITY_RESOURCE)
+                .method(res -> res.update(activity.getId(), activity))
                 .onSuccess(result -> {
                     ActivityEditPresenter.this.activity = result;
                     consumer.accept(result);
                     hide();
                 })
-                .call(ACTIVITY_RESOURCE)
-                .update(activity.getId(), activity);
+                .exec();
     }
 
     private void findInputElements(final NodeList<Node> nodes, final List<Element> inputElements) {

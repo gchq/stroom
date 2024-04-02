@@ -58,6 +58,9 @@ import java.io.OutputStream;
 @ConfigurableElement(
         type = "StreamAppender",
         category = Category.DESTINATION,
+        description = """
+                A destination used to write the output stream to a new stream in the stream store.
+                The configuration allows for starting a new stream once a size threshold is reached.""",
         roles = {
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_DESTINATION,
@@ -219,7 +222,7 @@ public class StreamAppender extends AbstractAppender {
                 currentStatistics.write(streamTarget.getAttributes());
 
                 // Overwrite the actual output record count.
-                streamTarget.getAttributes().put(MetaFields.REC_WRITE.getName(), String.valueOf(count));
+                streamTarget.getAttributes().put(MetaFields.REC_WRITE.getFldName(), String.valueOf(count));
 
                 // Close the stream target.
                 try {

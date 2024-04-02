@@ -33,7 +33,6 @@ import stroom.proxy.app.handler.ProxyRequestHandler;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
 import stroom.proxy.app.jersey.ProxyJerseyModule;
 import stroom.proxy.app.security.ProxySecurityModule;
-import stroom.proxy.app.security.ProxyUserIdentityFactory;
 import stroom.proxy.app.servlet.ProxyQueueMonitoringServlet;
 import stroom.proxy.app.servlet.ProxySecurityFilter;
 import stroom.proxy.app.servlet.ProxyStatusServlet;
@@ -64,6 +63,7 @@ import stroom.receive.rules.impl.ReceiveDataRuleSetResourceImpl;
 import stroom.receive.rules.impl.ReceiveDataRuleSetService;
 import stroom.receive.rules.impl.ReceiveDataRuleSetServiceImpl;
 import stroom.security.api.SecurityContext;
+import stroom.security.common.impl.RefreshManager;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.impl.TaskContextModule;
 import stroom.util.BuildInfoProvider;
@@ -186,7 +186,7 @@ public class ProxyModule extends AbstractModule {
                 .addBinding(ContentSyncService.class)
                 .addBinding(ProxyLifecycle.class)
                 .addBinding(RemoteFeedStatusService.class)
-                .addBinding(ProxyUserIdentityFactory.class);
+                .addBinding(RefreshManager.class);
 
         GuiceUtil.buildMultiBinder(binder(), ExceptionMapper.class)
                 .addBinding(PermissionExceptionMapper.class)

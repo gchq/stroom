@@ -1,6 +1,6 @@
 package stroom.query.api.v2;
 
-import stroom.expression.api.TimeZone;
+import stroom.expression.api.UserTimeZone;
 import stroom.query.api.v2.Format.Type;
 
 import org.junit.jupiter.api.Test;
@@ -36,7 +36,7 @@ class FormatBuilderTest {
         final String pattern = "DAY MONTH YEAR";
 
         final String timeZoneId = "someId";
-        final TimeZone.Use use = TimeZone.Use.LOCAL;
+        final UserTimeZone.Use use = UserTimeZone.Use.LOCAL;
         final Integer offsetHours = 3;
         final Integer offsetMinutes = 5;
 
@@ -46,7 +46,7 @@ class FormatBuilderTest {
                 .settings(DateTimeFormatSettings
                         .builder()
                         .pattern(pattern)
-                        .timeZone(TimeZone
+                        .timeZone(UserTimeZone
                                 .builder()
                                 .id(timeZoneId)
                                 .use(use)
@@ -62,7 +62,7 @@ class FormatBuilderTest {
         assertThat(dateTimeFormatSettings).isNotNull();
         assertThat(dateTimeFormatSettings.getPattern()).isEqualTo(pattern);
 
-        final TimeZone timeZone = dateTimeFormatSettings.getTimeZone();
+        final UserTimeZone timeZone = dateTimeFormatSettings.getTimeZone();
         assertThat(timeZone.getId()).isEqualTo(timeZoneId);
         assertThat(timeZone.getUse()).isEqualTo(use);
         assertThat(timeZone.getOffsetHours()).isEqualTo(offsetHours);

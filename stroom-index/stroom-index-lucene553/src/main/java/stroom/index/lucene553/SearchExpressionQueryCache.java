@@ -2,9 +2,9 @@ package stroom.index.lucene553;
 
 import stroom.index.lucene553.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.index.lucene553.analyser.AnalyzerFactory;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFieldsMap;
+import stroom.index.shared.LuceneIndexField;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.common.v2.IndexFieldCache;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -19,13 +19,15 @@ class SearchExpressionQueryCache {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SearchExpressionQueryCache.class);
 
     private final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory;
-    private final IndexFieldsMap indexFieldsMap = new IndexFieldsMap();
+    private final IndexFieldCache indexFieldCache;
     private final Map<String, Analyzer> analyzerMap = new HashMap<>();
     private SearchExpressionQuery luceneQuery;
 
     @Inject
-    SearchExpressionQueryCache(final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory) {
+    SearchExpressionQueryCache(final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory,
+                               final IndexFieldCache indexFieldCache) {
         this.searchExpressionQueryBuilderFactory = searchExpressionQueryBuilderFactory;
+        this.indexFieldCache = indexFieldCache;
     }
 
     SearchExpressionQuery getQuery(final SearchRequest searchRequest, final boolean ignoreMissingFields) {
@@ -33,7 +35,8 @@ class SearchExpressionQueryCache {
             if (luceneQuery == null) {
                 final SearchExpressionQueryBuilder searchExpressionQueryBuilder =
                         searchExpressionQueryBuilderFactory.create(
-                                indexFieldsMap,
+                                searchRequest.getQuery().getDataSource(),
+                                indexFieldCache,
                                 searchRequest.getDateTimeSettings());
                 luceneQuery = searchExpressionQueryBuilder
                         .buildQuery(searchRequest.getQuery().getExpression());
@@ -45,26 +48,19 @@ class SearchExpressionQueryCache {
         }
     }
 
-    Analyzer getAnalyser(final IndexField indexField) {
+    Analyzer getAnalyser(final LuceneIndexField indexField) {
         try {
-            Analyzer fieldAnalyzer = analyzerMap.get(indexField.getFieldName());
+            Analyzer fieldAnalyzer = analyzerMap.get(indexField.getFldName());
             if (fieldAnalyzer == null) {
                 // Add the field analyser.
                 fieldAnalyzer = AnalyzerFactory.create(indexField.getAnalyzerType(),
                         indexField.isCaseSensitive());
-                analyzerMap.put(indexField.getFieldName(), fieldAnalyzer);
+                analyzerMap.put(indexField.getFldName(), fieldAnalyzer);
             }
             return fieldAnalyzer;
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
             throw e;
-        }
-    }
-
-    void addIndexField(final IndexField indexField) {
-        if (indexFieldsMap.putIfAbsent(indexField) == null) {
-            // We didn't already have this field so make sure the query is rebuilt.
-            luceneQuery = null;
         }
     }
 }

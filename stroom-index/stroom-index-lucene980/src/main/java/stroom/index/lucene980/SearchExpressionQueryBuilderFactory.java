@@ -1,8 +1,9 @@
 package stroom.index.lucene980;
 
 import stroom.dictionary.api.WordListProvider;
+import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
-import stroom.index.shared.IndexFieldsMap;
+import stroom.query.common.v2.IndexFieldCache;
 import stroom.search.impl.SearchConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -25,13 +26,15 @@ class SearchExpressionQueryBuilderFactory {
         this.searchConfigProvider = searchConfigProvider;
     }
 
-    public SearchExpressionQueryBuilder create(final IndexFieldsMap indexFieldsMap,
+    public SearchExpressionQueryBuilder create(final DocRef indexDocRef,
+                                               final IndexFieldCache indexFieldCache,
                                                final DateTimeSettings dateTimeSettings) {
         try {
             IndexSearcher.setMaxClauseCount(searchConfigProvider.get().getMaxBooleanClauseCount());
             return new SearchExpressionQueryBuilder(
+                    indexDocRef,
+                    indexFieldCache,
                     wordListProvider,
-                    indexFieldsMap,
                     dateTimeSettings);
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);

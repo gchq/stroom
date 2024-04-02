@@ -82,9 +82,4 @@ abstract class AbstractTimeFunction extends AbstractFunction {
     public boolean requiresChildData() {
         return false;
     }
-
-    @Override
-    public Type getCommonReturnType() {
-        return Type.DATE;
-    }
 }

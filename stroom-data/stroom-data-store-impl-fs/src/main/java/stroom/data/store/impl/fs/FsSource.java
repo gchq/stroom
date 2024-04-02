@@ -134,9 +134,9 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
 
             try {
                 final List<Path> files = fileSystemStreamPathHelper.getFiles(file);
-                attributeMap.put("Files", files.stream()
+                attributeMap.putCollection("Files", files.stream()
                         .map(FileUtil::getCanonicalPath)
-                        .collect(Collectors.joining("\n")));
+                        .toList());
             } catch (final IOException e) {
                 LOGGER.error(e::getMessage, e);
             }

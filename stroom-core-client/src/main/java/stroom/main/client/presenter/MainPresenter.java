@@ -17,6 +17,7 @@
 package stroom.main.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.CorePresenter;
@@ -31,14 +32,17 @@ import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tab.client.event.MaximiseEvent;
-import stroom.widget.util.client.DoubleSelectTester;
+import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.util.client.DoubleClickTester;
 import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.dom.client.HasDoubleClickHandlers;
 import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.http.client.UrlBuilder;
 import com.google.gwt.user.client.Timer;
@@ -68,6 +72,7 @@ public class MainPresenter
     private final Timer refreshTimer;
     private boolean click;
     private final MenuItems menuItems;
+    private TabData selectedTabData = null;
 
     @Inject
     public MainPresenter(final EventBus eventBus,
@@ -79,9 +84,37 @@ public class MainPresenter
         this.menuItems = menuItems;
         view.setUiHandlers(this);
 
-        // Handle key presses.
-        view.asWidget().addDomHandler(event ->
-                KeyBinding.getAction(event.getNativeEvent()), KeyDownEvent.getType());
+        // Handle key presses
+        view.asWidget().addDomHandler(event -> {
+            final NativeEvent nativeEvent = event.getNativeEvent();
+            // If there is a Command associated with this key bind then this will execute that
+            // else we pass the action down to the current tab to deal with
+            final Action action = KeyBinding.test(nativeEvent);
+            if (action != null && selectedTabData != null) {
+//                GWT.log("Passing " + action + " to " + selectedTabData.getClass().getName());
+                final boolean wasActionConsumed = selectedTabData.handleKeyAction(action);
+                if (wasActionConsumed) {
+                    // Stop anyone else dealing with this key bind
+                    nativeEvent.stopPropagation();
+                    nativeEvent.preventDefault();
+                }
+            }
+        }, KeyDownEvent.getType());
+
+        // Inspect the keyUp so we can catch stuff like 'shift,shift'
+        view.asWidget().addDomHandler(
+                event -> KeyBinding.test(event.getNativeEvent()),
+                KeyUpEvent.getType());
+
+        // track the currently selected tab
+        registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e -> {
+            selectedTabData = e.getTabData();
+//            if (selectedTabData != null) {
+//                GWT.log("Selected tab - label: '" + tabData.getLabel()
+//                        + "', type: " + tabData.getType()
+//                        + ", class: " + tabData.getClass().getName());
+//            }
+        }));
 
         addRegisteredHandler(TaskStartEvent.getType(), event -> {
             // DebugPane.debug("taskStart:" + event.getTaskCount());
@@ -145,7 +178,7 @@ public class MainPresenter
                     }
                 };
                 click = true;
-                clickTimer.schedule(DoubleSelectTester.DOUBLE_SELECT_DELAY);
+                clickTimer.schedule(DoubleClickTester.DOUBLE_CLICK_PERIOD);
             }
         }));
         addRegisteredHandler(MaximiseEvent.getType(), event -> view.maximise(event.getView()));

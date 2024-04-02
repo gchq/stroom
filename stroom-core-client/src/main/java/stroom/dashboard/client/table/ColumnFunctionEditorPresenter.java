@@ -22,8 +22,6 @@ import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.table.ColumnFunctionEditorPresenter.ColumnFunctionEditorView;
 import stroom.dashboard.shared.DashboardResource;
-import stroom.dashboard.shared.ValidateExpressionResult;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
@@ -147,8 +145,9 @@ public class ColumnFunctionEditorPresenter
                     e.hide();
                 } else {
                     // Check the validity of the expression.
-                    final Rest<ValidateExpressionResult> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .create(DASHBOARD_RESOURCE)
+                            .method(res -> res.validateExpression(expression))
                             .onSuccess(result -> {
                                 if (result.isOk()) {
                                     columnChangeConsumer.accept(column, column
@@ -160,8 +159,7 @@ public class ColumnFunctionEditorPresenter
                                     AlertEvent.fireError(tablePresenter, result.getString(), null);
                                 }
                             })
-                            .call(DASHBOARD_RESOURCE)
-                            .validateExpression(expression);
+                            .exec();
                 }
             }
         } else {

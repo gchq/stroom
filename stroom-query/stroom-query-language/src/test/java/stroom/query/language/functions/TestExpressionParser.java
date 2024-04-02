@@ -149,6 +149,42 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     }
 
     @Test
+    void testAnd1() {
+        compute("and(false(), false())",
+                out -> assertThat(out.toBoolean()).isFalse());
+    }
+
+    @Test
+    void testAnd2() {
+        compute("and(false(), true())",
+                out -> assertThat(out.toBoolean()).isFalse());
+    }
+
+    @Test
+    void testAnd3() {
+        compute("and(true(), true())",
+                out -> assertThat(out.toBoolean()).isTrue());
+    }
+
+    @Test
+    void testOr1() {
+        compute("or(false(), false())",
+                out -> assertThat(out.toBoolean()).isFalse());
+    }
+
+    @Test
+    void testOr2() {
+        compute("or(false(), true())",
+                out -> assertThat(out.toBoolean()).isTrue());
+    }
+
+    @Test
+    void testOr3() {
+        compute("or(true(), true())",
+                out -> assertThat(out.toBoolean()).isTrue());
+    }
+
+    @Test
     void testIf1() {
         compute("if(true(), 'this', 'that')",
                 out -> assertThat(out.toString()).isEqualTo("this"));
@@ -848,7 +884,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         testCases.add(vStrA, "=", vStrA, vTrue);
         testCases.add(vStrA, "=", vStrB, vFals);
         testCases.add(vStrA, "=", vTrue, vFals);
-        testCases.add(vStrA, "=", vFals, vFals);
+        testCases.add(vStrA, "=", vFals, vTrue);
         testCases.add(vStrA, "=", vStra, vFals);
 
         // mixed types, equals

@@ -126,6 +126,13 @@ class TestXPathFilter extends StroomUnitTest {
                         }
                     }
                     break;
+                case NOT_EQUALS:
+                    for (final NodeInfo node : nodes) {
+                        if (equals(node.getStringValue(), xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
+                            return false;
+                        }
+                    }
+                    return true;
                 case UNIQUE:
                     return true;
             }

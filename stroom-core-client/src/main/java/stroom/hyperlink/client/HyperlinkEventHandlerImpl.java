@@ -9,7 +9,6 @@ import stroom.core.client.event.CloseContentEvent;
 import stroom.data.client.presenter.DataViewType;
 import stroom.data.client.presenter.DisplayMode;
 import stroom.data.client.presenter.ShowDataEvent;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFramePresenter;
@@ -20,7 +19,6 @@ import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.security.shared.UserNameResource;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.TextRange;
-import stroom.util.shared.UserName;
 import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -160,9 +158,9 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
 
         // assignedTo is a display name so have to convert it back to a unique username
         final UserNameResource userNameResource = GWT.create(UserNameResource.class);
-        final Rest<UserName> rest = restFactory.create();
-
-        rest
+        restFactory
+                .create(userNameResource)
+                .method(res -> res.getByDisplayName(assignedTo))
                 .onSuccess(assignedToUserName -> {
                     final Annotation annotation = new Annotation();
                     annotation.setId(annotationId);
@@ -179,8 +177,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
 
                     ShowAnnotationEvent.fire(this, annotation, linkedEvents);
                 })
-                .call(userNameResource)
-                .getByDisplayName(assignedTo);
+                .exec();
     }
 
     private void openData(final String href) {

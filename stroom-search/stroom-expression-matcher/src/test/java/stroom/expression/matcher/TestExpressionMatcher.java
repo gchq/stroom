@@ -17,15 +17,13 @@
 package stroom.expression.matcher;
 
 import stroom.data.shared.StreamTypeNames;
-import stroom.datasource.api.v2.DocRefField;
 import stroom.datasource.api.v2.QueryField;
-import stroom.datasource.api.v2.TextField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
-import stroom.expression.api.TimeZone;
-import stroom.expression.api.TimeZone.Use;
+import stroom.expression.api.UserTimeZone;
+import stroom.expression.api.UserTimeZone.Use;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
@@ -56,13 +54,13 @@ class TestExpressionMatcher {
     @Mock
     private WordListProvider mockWordListProvider;
 
-    public static final DocRefField FEED = DocRefField.byUniqueName("Feed", "Feed");
-    private static final TextField TYPE = new TextField("Type");
-    private static final TextField FRUIT = new TextField("Fruit");
+    public static final QueryField FEED = QueryField.createDocRefByUniqueName("Feed", "Feed");
+    private static final QueryField TYPE = QueryField.createText("Type");
+    private static final QueryField FRUIT = QueryField.createText("Fruit");
     private static final Map<String, QueryField> FIELD_MAP = Map.of(
-            FEED.getName(),
+            FEED.getFldName(),
             FEED,
-            TYPE.getName(),
+            TYPE.getFldName(),
             TYPE);
 
     @Test
@@ -79,9 +77,9 @@ class TestExpressionMatcher {
     void testEnabledState() {
         // TEST_FEED term is disabled so there should be no match
         final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.OR);
-        builder.addTerm(FEED, Condition.EQUALS, "FOO");
+        builder.addDateTerm(FEED, Condition.EQUALS, "FOO");
         final ExpressionTerm disabledTerm = ExpressionTerm.builder()
-                .field(FEED.getName())
+                .field(FEED.getFldName())
                 .condition(Condition.EQUALS)
                 .value("TEST_FEED")
                 .enabled(false)
@@ -170,11 +168,11 @@ class TestExpressionMatcher {
                 .build();
 
         final ExpressionMatcher expressionMatcher = new ExpressionMatcher(
-                Map.of(FRUIT.getName(), FRUIT),
+                Map.of(FRUIT.getFldName(), FRUIT),
                 mockWordListProvider,
                 null,
                 DateTimeSettings.builder()
-                        .timeZone(TimeZone.builder()
+                        .timeZone(UserTimeZone.builder()
                                 .use(Use.UTC)
                                 .build())
                         .build());
@@ -188,14 +186,14 @@ class TestExpressionMatcher {
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(ExpressionTerm.builder()
-                        .field(FRUIT.getName())
+                        .field(FRUIT.getFldName())
                         .condition(Condition.IN_DICTIONARY)
                         .docRef(docRef)
                         .build())
                 .build();
 
         boolean match = expressionMatcher.match(
-                Map.of(FRUIT.getName(), "orange"),
+                Map.of(FRUIT.getFldName(), "orange"),
                 expression);
         assertThat(match)
                 .isTrue();
@@ -223,14 +221,14 @@ class TestExpressionMatcher {
 
     private ExpressionOperator createExpression(final Op op, final String feedName) {
         final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(op);
-        builder.addTerm(FEED, Condition.EQUALS, feedName);
+        builder.addDateTerm(FEED, Condition.EQUALS, feedName);
         return builder.build();
     }
 
     private Map<String, Object> createAttributeMap() {
         final Map<String, Object> attributeMap = new HashMap<>();
-        attributeMap.put(FEED.getName(), "TEST_FEED");
-        attributeMap.put(TYPE.getName(), StreamTypeNames.RAW_EVENTS);
+        attributeMap.put(FEED.getFldName(), "TEST_FEED");
+        attributeMap.put(TYPE.getFldName(), StreamTypeNames.RAW_EVENTS);
         return attributeMap;
     }
 }

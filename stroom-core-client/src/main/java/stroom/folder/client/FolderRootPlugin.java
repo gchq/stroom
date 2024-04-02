@@ -19,6 +19,7 @@ package stroom.folder.client;
 
 import stroom.core.client.ContentManager;
 import stroom.core.client.event.CloseContentEvent.Handler;
+import stroom.dispatch.client.RestError;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
@@ -107,7 +108,7 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
     @Override
     public void load(final DocRef docRef,
                      final Consumer<DocRef> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
+                     final Consumer<RestError> errorConsumer) {
         // Root folder is just a constant so no load needed
 //        resultConsumer.accept(ExplorerConstants.SYSTEM_DOC_REF);
     }
@@ -116,7 +117,7 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
     public void save(final DocRef docRef,
                      final DocRef document,
                      final Consumer<DocRef> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
+                     final Consumer<RestError> errorConsumer) {
         // Nothing to do here, root folder is special
     }
 

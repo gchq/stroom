@@ -17,7 +17,6 @@
 
 package stroom.analytics.impl;
 
-import stroom.analytics.api.NotificationState;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.core.dataprocess.ProcessorTaskDecorator;
 import stroom.docref.DocRef;
@@ -29,10 +28,13 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.ExpressionContextFactory;
+import stroom.query.common.v2.StringFieldValue;
 import stroom.query.language.functions.FieldIndex;
 import stroom.search.extraction.AnalyticFieldListConsumer;
 import stroom.search.extraction.FieldListConsumerHolder;
 import stroom.search.extraction.FieldValue;
+import stroom.search.extraction.FieldValueExtractor;
+import stroom.search.extraction.FieldValueExtractorFactory;
 import stroom.search.extraction.MemoryIndex;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.concurrent.UncheckedInterruptedException;
@@ -54,10 +56,10 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
     private final StreamingAnalyticCache streamingAnalyticCache;
     private final ExpressionContextFactory expressionContextFactory;
     private final MemoryIndex memoryIndex;
-    private final NotificationStateService notificationStateService;
     private final DetectionConsumerFactory detectionConsumerFactory;
     private final DetectionConsumerProxy detectionConsumerProxy;
     private final FieldListConsumerHolder fieldListConsumerHolder;
+    private final FieldValueExtractorFactory fieldValueExtractorFactory;
 
     private AnalyticFieldListConsumer fieldListConsumer;
 
@@ -68,17 +70,17 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
     public StreamingAnalyticProcessorTaskDecorator(final StreamingAnalyticCache streamingAnalyticCache,
                                                    final ExpressionContextFactory expressionContextFactory,
                                                    final MemoryIndex memoryIndex,
-                                                   final NotificationStateService notificationStateService,
                                                    final DetectionConsumerFactory detectionConsumerFactory,
                                                    final DetectionConsumerProxy detectionConsumerProxy,
-                                                   final FieldListConsumerHolder fieldListConsumerHolder) {
+                                                   final FieldListConsumerHolder fieldListConsumerHolder,
+                                                   final FieldValueExtractorFactory fieldValueExtractorFactory) {
         this.streamingAnalyticCache = streamingAnalyticCache;
         this.expressionContextFactory = expressionContextFactory;
         this.memoryIndex = memoryIndex;
-        this.notificationStateService = notificationStateService;
         this.detectionConsumerFactory = detectionConsumerFactory;
         this.detectionConsumerProxy = detectionConsumerProxy;
         this.fieldListConsumerHolder = fieldListConsumerHolder;
+        this.fieldValueExtractorFactory = fieldValueExtractorFactory;
     }
 
     @Override
@@ -90,10 +92,9 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
             throw new RuntimeException("Unable to get analytic from cache: " + analyticRuleRef);
         }
         analytic = optional.get();
-        if (analytic.streamingAnalyticProcessConfig() != null &&
-                analytic.streamingAnalyticProcessConfig().getErrorFeed() != null &&
-                analytic.streamingAnalyticProcessConfig().getErrorFeed().getName() != null) {
-            userDefinedErrorFeedName = analytic.streamingAnalyticProcessConfig().getErrorFeed().getName();
+        final AnalyticRuleDoc doc = analytic.analyticRuleDoc();
+        if (doc != null && doc.getErrorFeed() != null) {
+            userDefinedErrorFeedName = doc.getErrorFeed().getName();
         }
     }
 
@@ -127,44 +128,39 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
         final SearchRequest searchRequest = analytic.searchRequest();
         final ExpressionContext expressionContext = expressionContextFactory
                 .createContext(searchRequest);
-        final TableSettings tableSettings = searchRequest.getResultRequests().get(0).getMappings().get(0);
+        final TableSettings tableSettings = searchRequest.getResultRequests().getFirst().getMappings().getFirst();
         final Map<String, String> paramMap = ParamUtil.createParamMap(searchRequest.getQuery().getParams());
         final CompiledColumns compiledColumns = CompiledColumns.create(expressionContext,
                 tableSettings.getColumns(),
                 paramMap);
         final FieldIndex fieldIndex = compiledColumns.getFieldIndex();
 
-        // Determine if notifications have been disabled.
-        final NotificationState notificationState = notificationStateService.getState(analytic.analyticRuleDoc());
-        // Only execute if the state is enabled.
-        notificationState.enableIfPossible();
-        if (notificationState.isEnabled()) {
-            try {
-                final Provider<DetectionConsumer> detectionConsumerProvider =
-                        detectionConsumerFactory.create(analytic.analyticRuleDoc());
-                detectionConsumerProxy.setAnalyticRuleDoc(analytic.analyticRuleDoc());
-                detectionConsumerProxy.setCompiledColumns(compiledColumns);
-                detectionConsumerProxy.setFieldIndex(fieldIndex);
-                detectionConsumerProxy.setDetectionsConsumerProvider(detectionConsumerProvider);
+        try {
+            final Provider<DetectionConsumer> detectionConsumerProvider =
+                    detectionConsumerFactory.create(analytic.analyticRuleDoc());
+            detectionConsumerProxy.setAnalyticRuleDoc(analytic.analyticRuleDoc());
+            detectionConsumerProxy.setCompiledColumns(compiledColumns);
+            detectionConsumerProxy.setDetectionsConsumerProvider(detectionConsumerProvider);
 
-                return Optional.of(new StreamingAnalyticFieldListConsumer(
-                        searchRequest,
-                        fieldIndex,
-                        notificationState,
-                        detectionConsumerProxy,
-                        memoryIndex,
-                        null,
-                        detectionConsumerProxy));
+            final FieldValueExtractor fieldValueExtractor = fieldValueExtractorFactory
+                    .create(searchRequest.getQuery().getDataSource(), fieldIndex);
 
-            } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
-                LOGGER.debug(e::getMessage, e);
-                throw e;
-            } catch (final RuntimeException e) {
-                LOGGER.error(e::getMessage, e);
-                throw e;
-            }
+            return Optional.of(new StreamingAnalyticFieldListConsumer(
+                    searchRequest,
+                    fieldIndex,
+                    fieldValueExtractor,
+                    detectionConsumerProxy,
+                    memoryIndex,
+                    null,
+                    detectionConsumerProxy));
+
+        } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
+            LOGGER.debug(e::getMessage, e);
+            throw e;
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
+            throw e;
         }
-        return Optional.empty();
     }
 
     private static class NullFieldListConsumer implements AnalyticFieldListConsumer {
@@ -180,7 +176,12 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
         }
 
         @Override
-        public void accept(final List<FieldValue> fieldValues) {
+        public void acceptFieldValues(final List<FieldValue> fieldValues) {
+
+        }
+
+        @Override
+        public void acceptStringValues(final List<StringFieldValue> stringValues) {
 
         }
     }

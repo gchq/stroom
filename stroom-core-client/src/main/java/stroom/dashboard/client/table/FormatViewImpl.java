@@ -17,7 +17,7 @@
 package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.table.FormatPresenter.FormatView;
-import stroom.expression.api.TimeZone.Use;
+import stroom.expression.api.UserTimeZone.Use;
 import stroom.item.client.SelectionBox;
 import stroom.query.api.v2.Format.Type;
 import stroom.widget.form.client.FormGroup;
@@ -209,11 +209,12 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
             text = STANDARD_FORMATS.get(0);
         }
 
-        if (!text.equals(this.format.getValue())) {
+        final int formatIndex = STANDARD_FORMATS.indexOf(text);
+        if (formatIndex != -1) {
             this.format.setValue(text);
         }
 
-        final boolean custom = this.format.getValue() == null;
+        final boolean custom = formatIndex == -1;
         this.custom.setValue(custom);
         this.text.setEnabled(custom);
         this.text.setText(text);

@@ -17,6 +17,7 @@
 package stroom.pipeline.errorhandler;
 
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ErrorType;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
@@ -30,7 +31,17 @@ public interface ErrorReceiver {
             Location location,
             String elementId,
             String message,
+            ErrorType errorType,
             Throwable e);
+
+    default void log(
+            Severity severity,
+            Location location,
+            String elementId,
+            String message,
+            Throwable e) {
+        log(severity, location, elementId, message, null, e);
+    }
 
     // Different name to avoid confusion with varargs
     default void logTemplate(

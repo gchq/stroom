@@ -44,7 +44,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Singleton
-class JobBootstrap {
+public class JobBootstrap {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JobBootstrap.class);
     private static final String LOCK_NAME = "JobNodeService";
@@ -77,7 +77,7 @@ class JobBootstrap {
         this.distributedTaskFactoryRegistry = distributedTaskFactoryRegistry;
     }
 
-    void startup() {
+    public void startup() {
         LOGGER.info(() -> "startup()");
 
         // Lock the cluster so only 1 node at a time can call the following code.
@@ -113,17 +113,17 @@ class JobBootstrap {
                     newJobNode.setNodeName(nodeName);
                     newJobNode.setEnabled(scheduledJob.isEnabled());
 
-                    switch (scheduledJob.getSchedule().getScheduleType()) {
+                    switch (scheduledJob.getSchedule().getType()) {
                         case CRON:
                             newJobNode.setJobType(JobType.CRON);
                             break;
-                        case PERIODIC:
+                        case FREQUENCY:
                             newJobNode.setJobType(JobType.FREQUENCY);
                             break;
                         default:
                             throw new RuntimeException("Unknown ScheduleType!");
                     }
-                    newJobNode.setSchedule(scheduledJob.getSchedule().getSchedule());
+                    newJobNode.setSchedule(scheduledJob.getSchedule().getExpression());
 
                     // Add the job node to the DB if it isn't there already.
                     JobNode jobNode = localJobNodeMap.get(scheduledJob.getName());

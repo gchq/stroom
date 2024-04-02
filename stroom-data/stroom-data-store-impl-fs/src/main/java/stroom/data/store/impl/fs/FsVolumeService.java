@@ -248,7 +248,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
             ensureDefaultVolumes();
 
             final Set<FsVolume> set = getVolumeSet(volumeGroup, VolumeUseStatus.ACTIVE);
-            if (set.size() > 0) {
+            if (!set.isEmpty()) {
                 final FsVolume volume = set.iterator().next();
                 LOGGER.trace("Using volume {}", volume);
                 return volume;
@@ -268,7 +268,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         final Set<FsVolume> set;
 
         final List<FsVolume> filteredVolumeList = getFilteredVolumeList(freeVolumes, streamStatus);
-        if (filteredVolumeList.size() > 0) {
+        if (!filteredVolumeList.isEmpty()) {
             final FsVolume selectedVolume = volumeSelector.select(filteredVolumeList);
             LOGGER.debug(() -> LogUtil.message("Selected volume {} ({}) out of {} eligible volumes.",
                     selectedVolume.getPath(),
@@ -632,7 +632,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                         final FindFsVolumeCriteria findVolumeCriteria = FindFsVolumeCriteria.matchAll();
                         findVolumeCriteria.addSort(FindFsVolumeCriteria.FIELD_ID, false, false);
                         final List<FsVolume> existingVolumes = doFind(findVolumeCriteria).getValues();
-                        if (existingVolumes.size() == 0) {
+                        if (existingVolumes.isEmpty()) {
                             if (volumeConfig.getDefaultStreamVolumePaths() != null) {
                                 final List<String> paths = volumeConfig.getDefaultStreamVolumePaths();
                                 for (String path : paths) {

@@ -1,5 +1,6 @@
 package stroom.explorer.impl;
 
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
@@ -26,6 +27,11 @@ import java.util.stream.Collectors;
 class FolderExplorerActionHandler implements ExplorerActionHandler {
 
     private static final String FOLDER = ExplorerConstants.FOLDER;
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.STRUCTURE,
+            FolderExplorerActionHandler.FOLDER,
+            FolderExplorerActionHandler.FOLDER,
+            SvgImage.FOLDER);
     private static final String NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
     private final SecurityContext securityContext;
     private final ExplorerTreeDao explorerTreeDao;
@@ -133,11 +139,7 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.STRUCTURE,
-                FolderExplorerActionHandler.FOLDER,
-                FolderExplorerActionHandler.FOLDER,
-                SvgImage.FOLDER);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -174,6 +176,11 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
     @Override
     public List<DocContentMatch> findByContent(final StringMatch filter) {
         return Collections.emptyList();
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final DocRef docRef, final String extension, final StringMatch filter) {
+        return null;
     }
 
     @Override

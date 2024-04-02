@@ -1,25 +1,25 @@
 package stroom.index.impl;
 
+import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
-import stroom.index.shared.IndexFieldsMap;
 import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.LuceneVersion;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.QueryKey;
+import stroom.query.common.v2.IndexFieldCache;
 
 public interface LuceneProvider {
 
-    LuceneShardSearcher createLuceneShardSearcher(ExpressionOperator expression,
-                                                  IndexFieldsMap indexFieldsMap,
+    LuceneShardSearcher createLuceneShardSearcher(DocRef indexDocRef,
+                                                  IndexFieldCache indexFieldCache,
+                                                  ExpressionOperator expression,
                                                   DateTimeSettings dateTimeSettings,
                                                   QueryKey queryKey);
 
     HighlightProvider createHighlightProvider();
 
-    IndexShardWriter createIndexShardWriter(IndexStructure indexStructure,
-                                            IndexShardKey indexShardKey,
-                                            IndexShard indexShard);
+    IndexShardWriter createIndexShardWriter(IndexShard indexShard,
+                                            int maxDocumentCount);
 
     IndexSystemInfoProvider getIndexSystemInfoProvider();
 

@@ -74,6 +74,16 @@ ext.getPropertyOrDefault = { propName, defaultValue ->
     return val;
 }
 
+// Convert the abs root project dir into a string that can be used as a dir
+// to allow us to have a dir for multiple repo instances that don't conflict
+// e.g. 'home+dev+git_work+gchq+stroom'
+ext.rootProjectAbsPathStr = project.rootProject.rootDir
+        .toPath()
+        .toAbsolutePath()
+        .toString()
+        .replaceAll("^/", "")
+        .replaceAll("/", "+");
+
 ext.gwtCompilerProps = [
         mainClass: 'stroom.gwt.GwtCompilerWrapper',
         minHeap  : getPropertyOrDefault('gwtCompilerMinHeap', '50M'),
@@ -126,6 +136,7 @@ ext.versions = [
         kafka             : '3.6.0',
         okhttp            : '4.12.0',
         poi               : '5.2.4',
+        simple_java_mail  : '8.8.0',
         swagger           : '2.2.18',
         unirest           : '1.4.9',
         zookeeper         : '3.4.8', // Roughly pegged to the server version used by Cloudera, see links above. This version is forced below.
@@ -246,7 +257,7 @@ ext.libs = [
         jetty_servlet                       : "org.eclipse.jetty:jetty-servlet", // version controlled by dropwizard-dependencies
         jetty_servlets                      : "org.eclipse.jetty:jetty-servlets", // version controlled by dropwizard-dependencies
         jgit                                : "org.eclipse.jgit:org.eclipse.jgit:6.5.0.202303070854-r",
-        jinjava                             : "com.hubspot.jinjava:jinjava:2.7.1",
+        jinjava                             : "com.hubspot.jinjava:jinjava:2.7.2",
         jmh_core                            : "org.openjdk.jmh:jmh-core:$versions.jmh",
         jmh_generator_annprocess            : "org.openjdk.jmh:jmh-generator-annprocess:$versions.jmh",
         jooq                                : "org.jooq:jooq:$versions.jooq",
@@ -262,7 +273,11 @@ ext.libs = [
         junit_platform_launcher             : "org.junit.platform:junit-platform-launcher", // version controlled by junit-bom
         kafka_clients                       : "org.apache.kafka:kafka-clients:$versions.kafka", // version controlled by junit-bom
         kryo                                : "com.esotericsoftware:kryo:5.5.0",
-        lmdbjava                            : "org.lmdbjava:lmdbjava:0.8.3",
+        // lmdbjava 0.8.3 causes FFI errors on centos7 due to glibc version
+        // See https://github.com/gchq/stroom/issues/3485 & https://github.com/gchq/stroom/issues/4133
+        // Potentially caused by https://github.com/jnr/jffi/issues/138 and fixable with a jnr-ffi uplift in lmdbjava
+        // lmdbjava 0.9.0 has a cursor bug though, https://github.com/lmdbjava/lmdbjava/issues/228
+        lmdbjava                            : "org.lmdbjava:lmdbjava:0.8.2",
         log4j_over_slf4j                    : "org.slf4j:log4j-over-slf4j", // version controlled by dropwizard-dependencies
         logback_classic                     : "ch.qos.logback:logback-classic", // version controlled by dropwizard-dependencies
         logback_core                        : "ch.qos.logback:logback-core", // version controlled by dropwizard-dependencies
@@ -274,9 +289,11 @@ ext.libs = [
         okhttp_logging_interceptor          : "com.squareup.okhttp3:logging-interceptor:${versions.okhttp}",
         poi                                 : "org.apache.poi:poi:${versions.poi}",
         poi_ooxml                           : "org.apache.poi:poi-ooxml:${versions.poi}",
+        quartz                              : "org.quartz-scheduler:quartz:2.5.0-rc1",
         restygwt                            : "org.fusesource.restygwt:restygwt:2.2.7",
         saxon_he                            : "net.sf.saxon:Saxon-HE:9.9.1-8",
-        simple_java_mail                    : 'org.simplejavamail:simple-java-mail:8.3.1',
+        simple_java_mail                    : "org.simplejavamail:simple-java-mail:${versions.simple_java_mail}",
+        simple_java_mail_batch_module       : "org.simplejavamail:batch-module:${versions.simple_java_mail}",
         slf4j_api                           : "org.slf4j:slf4j-api", // version controlled by dropwizard-dependencies
         snake_yaml                          : "org.yaml:snakeyaml:2.2",
         solrj                               : "org.apache.solr:solr-solrj:8.2.0",
@@ -438,6 +455,10 @@ subprojects {
 
     test {
         useJUnitPlatform()
+
+        // set heap size for the test JVM(s)
+//        minHeapSize = "128m"
+//        maxHeapSize = "8G"
 
         // Run test classes in N different JVMs
         // The internet seems to suggest the divide by 2, not sure why, maybe

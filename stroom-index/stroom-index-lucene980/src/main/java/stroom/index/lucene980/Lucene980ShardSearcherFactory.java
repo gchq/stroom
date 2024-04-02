@@ -1,13 +1,14 @@
 package stroom.index.lucene980;
 
 import stroom.dictionary.api.WordListProvider;
+import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
 import stroom.index.impl.IndexShardSearchConfig;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.LuceneShardSearcher;
-import stroom.index.shared.IndexFieldsMap;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.QueryKey;
+import stroom.query.common.v2.IndexFieldCache;
 import stroom.search.impl.SearchConfig;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
@@ -44,8 +45,9 @@ class Lucene980ShardSearcherFactory {
         this.searchConfigProvider = searchConfigProvider;
     }
 
-    public LuceneShardSearcher create(final ExpressionOperator expression,
-                                      final IndexFieldsMap indexFieldsMap,
+    public LuceneShardSearcher create(final DocRef indexDocRef,
+                                      final IndexFieldCache indexFieldCache,
+                                      final ExpressionOperator expression,
                                       final DateTimeSettings dateTimeSettings,
                                       final QueryKey queryKey) {
         IndexSearcher.setMaxClauseCount(searchConfigProvider.get().getMaxBooleanClauseCount());
@@ -55,7 +57,8 @@ class Lucene980ShardSearcherFactory {
                 executorProvider,
                 taskContextFactory,
                 pathCreator,
-                indexFieldsMap,
+                indexDocRef,
+                indexFieldCache,
                 expression,
                 dictionaryStore,
                 dateTimeSettings,

@@ -20,7 +20,6 @@ import stroom.cell.info.client.SvgCell;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.FindUserNameCriteria;
 import stroom.security.shared.User;
@@ -237,11 +236,11 @@ public class SelectUserPresenter
                     if (e.isOk()) {
                         final UserName selected = getSelected();
                         if (selected != null) {
-                            final Rest<User> rest = restFactory.create();
-                            rest
+                            restFactory
+                                    .create(USER_RESOURCE)
+                                    .method(res -> res.createUser(selected))
                                     .onSuccess(userConsumer)
-                                    .call(USER_RESOURCE)
-                                    .createUser(selected);
+                                    .exec();
                         }
                     }
                 })

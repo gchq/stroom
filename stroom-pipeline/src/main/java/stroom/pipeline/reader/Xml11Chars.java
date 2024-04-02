@@ -129,4 +129,9 @@ public class Xml11Chars implements XmlChars {
                 && (XML11CHARS[c] & MASK_XML11_CONTROL) == 0))
                 || (0x10000 <= c && c <= 0x10FFFF));
     }
+
+    @Override
+    public String getXmlVersion() {
+        return "1.1";
+    }
 }

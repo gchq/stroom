@@ -24,12 +24,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * A map of indicators to show in the XML editor.
@@ -82,6 +85,18 @@ public class Indicators {
         return result;
     }
 
+    public static Indicators combine(final Collection<Indicators> indicatorsCollection) {
+        final Indicators result = new Indicators();
+        if (indicatorsCollection != null) {
+            for (final Indicators indicators : indicatorsCollection) {
+                if (indicators != null) {
+                    result.addAll(indicators);
+                }
+            }
+        }
+        return result;
+    }
+
     public Map<Severity, Integer> getErrorCount() {
         return errorCount != null
                 ? errorCount
@@ -112,17 +127,51 @@ public class Indicators {
         }
     }
 
+    public void addAll(final Collection<StoredError> storedErrors) {
+        if (!GwtNullSafe.isEmptyCollection(storedErrors)) {
+            storedErrors.forEach(this::add);
+        }
+    }
+
     public void add(final StoredError storedError) {
         // Check to make sure we haven't seen this error before. If we have then
         // ignore it as we only want to store unique errors.
         if (uniqueErrorSet.add(storedError)) {
             errorList.add(storedError);
+            errorCount.merge(storedError.getSeverity(), 1, Integer::sum);
+        }
+    }
 
-            final Integer count = errorCount.get(storedError.getSeverity());
-            if (count == null) {
-                errorCount.put(storedError.getSeverity(), 1);
+    /**
+     * @return A new {@link Indicators} instance containing only those {@link StoredError}s
+     * matching the supplied types
+     */
+    public Indicators filter(final boolean includeLocationAgnostic,
+                             final ErrorType... includedErrorTypes) {
+
+        if (includedErrorTypes == null || includedErrorTypes.length == 0) {
+            return new Indicators(this);
+        } else {
+            final Set<ErrorType> includedErrorTypesSet = ErrorType.asSet(includedErrorTypes);
+            final Predicate<StoredError> locationPredicate = includeLocationAgnostic
+                    ? err -> true
+                    : err -> err.getLocation() != null
+                            && err.getLocation().getLineNo() > 0
+                            && err.getLocation().getColNo() > 0;
+
+            final List<StoredError> filteredErrors = GwtNullSafe.list(errorList)
+                    .stream()
+                    .filter(storedError ->
+                            includedErrorTypesSet.contains(storedError.getErrorType()))
+                    .filter(locationPredicate)
+                    .collect(Collectors.toList());
+
+            if (errorList.size() == filteredErrors.size()) {
+                return new Indicators(this);
             } else {
-                errorCount.put(storedError.getSeverity(), count + 1);
+                final Indicators indicators = new Indicators();
+                indicators.addAll(filteredErrors);
+                return indicators;
             }
         }
     }
@@ -139,12 +188,20 @@ public class Indicators {
     @JsonIgnore
     public Severity getMaxSeverity() {
         for (final Severity sev : Severity.SEVERITIES) {
-            final Integer c = errorCount.get(sev);
-            if (c != null && c > 0) {
+            final Integer cnt = errorCount.get(sev);
+            if (cnt != null && cnt > 0) {
                 return sev;
             }
         }
         return null;
+    }
+
+    public int getCount(final Severity severity) {
+        if (severity == null) {
+            return 0;
+        } else {
+            return GwtNullSafe.requireNonNullElse(errorCount.get(severity), 0);
+        }
     }
 
     public void append(final StringBuilder sb) {

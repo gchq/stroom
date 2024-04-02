@@ -18,7 +18,7 @@
 package stroom.search.elastic.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -68,26 +68,26 @@ public class ElasticClusterPlugin extends DocumentPlugin<ElasticClusterDoc> {
     @Override
     public void load(final DocRef docRef,
                      final Consumer<ElasticClusterDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<ElasticClusterDoc> rest = restFactory.create();
-        rest
+                     final Consumer<RestError> errorConsumer) {
+        restFactory
+                .create(ELASTIC_CLUSTER_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(ELASTIC_CLUSTER_RESOURCE)
-                .fetch(docRef.getUuid());
+                .exec();
     }
 
     @Override
     public void save(final DocRef docRef,
                      final ElasticClusterDoc document,
                      final Consumer<ElasticClusterDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<ElasticClusterDoc> rest = restFactory.create();
-        rest
+                     final Consumer<RestError> errorConsumer) {
+        restFactory
+                .create(ELASTIC_CLUSTER_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(ELASTIC_CLUSTER_RESOURCE)
-                .update(document.getUuid(), document);
+                .exec();
     }
 
     @Override

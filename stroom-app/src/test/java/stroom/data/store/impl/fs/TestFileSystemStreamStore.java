@@ -128,7 +128,6 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     @AfterEach
     void unsetProperties() {
         clearConfigValueMapper();
-//        metaValueConfig.setAddAsync(true);
     }
 
     /**
@@ -145,13 +144,13 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     @Test
     void testBasic() throws IOException {
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.CREATE_TIME, Condition.BETWEEN, createYearPeriod(2014))
-                .addTerm(MetaFields.EFFECTIVE_TIME, Condition.BETWEEN, createYearPeriod(2014))
-                .addTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
-                .addTerm(MetaFields.PARENT_ID, Condition.EQUALS, 1)
-                .addTerm(MetaFields.ID, Condition.EQUALS, 1)
-                .addTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addDateTerm(MetaFields.CREATE_TIME, Condition.BETWEEN, createYearPeriod(2014))
+                .addDateTerm(MetaFields.EFFECTIVE_TIME, Condition.BETWEEN, createYearPeriod(2014))
+                .addDateTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
+                .addIdTerm(MetaFields.PARENT_ID, Condition.EQUALS, 1)
+                .addIdTerm(MetaFields.ID, Condition.EQUALS, 1)
+                .addDateTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         testCriteria(new FindMetaCriteria(expression), 0);
     }
@@ -170,10 +169,10 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     void testFeedFindAll() throws IOException {
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addOperator(ExpressionOperator.builder().op(Op.OR)
-                        .addTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
-                        .addTerm(MetaFields.FEED, Condition.EQUALS, FEED2)
+                        .addDateTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
+                        .addDateTerm(MetaFields.FEED, Condition.EQUALS, FEED2)
                         .build())
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         testCriteria(new FindMetaCriteria(expression), 2);
     }
@@ -182,10 +181,10 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     void testFeedFindSome() throws IOException {
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addOperator(ExpressionOperator.builder().op(Op.OR)
-                        .addTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
-                        .addTerm(MetaFields.FEED, Condition.EQUALS, FEED2)
+                        .addDateTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
+                        .addDateTerm(MetaFields.FEED, Condition.EQUALS, FEED2)
                         .build())
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(expression);
         findMetaCriteria.setPageRequest(new PageRequest(0, 1));
@@ -195,11 +194,11 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     @Test
     void testFeedFindNone() throws IOException {
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
+                .addDateTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
                 .addOperator(ExpressionOperator.builder().op(Op.NOT)
-                        .addTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
+                        .addDateTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
                         .build())
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         testCriteria(new FindMetaCriteria(expression), 0);
     }
@@ -207,8 +206,8 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     @Test
     void testFeedFindOne() throws IOException {
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.FEED, Condition.EQUALS, FEED2)
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addDateTerm(MetaFields.FEED, Condition.EQUALS, FEED2)
+                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         testCriteria(new FindMetaCriteria(expression), 1);
     }
@@ -216,7 +215,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     @Test
     void testFolder() throws Exception {
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.FEED, Condition.IN_FOLDER, folder2)
+                .addDocRefTerm(MetaFields.FEED, Condition.IN_FOLDER, folder2)
                 .build();
         testCriteria(new FindMetaCriteria(expression), 2);
     }
@@ -333,26 +332,26 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     @Test
     void testFindWithAllCriteria() {
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.CREATE_TIME,
+                .addDateTerm(MetaFields.CREATE_TIME,
                         Condition.BETWEEN,
                         createToDateWithOffset(System.currentTimeMillis(), 1))
-                .addTerm(MetaFields.EFFECTIVE_TIME,
+                .addDateTerm(MetaFields.EFFECTIVE_TIME,
                         Condition.BETWEEN,
                         createToDateWithOffset(System.currentTimeMillis(), 1))
-                .addTerm(MetaFields.STATUS_TIME,
+                .addDateTerm(MetaFields.STATUS_TIME,
                         Condition.BETWEEN,
                         createToDateWithOffset(System.currentTimeMillis(), 1))
-                .addTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
-                .addTerm(MetaFields.PARENT_ID, Condition.EQUALS, 1)
-                .addTerm(MetaFields.ID, Condition.EQUALS, 1)
+                .addDateTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
+                .addIdTerm(MetaFields.PARENT_ID, Condition.EQUALS, 1)
+                .addIdTerm(MetaFields.ID, Condition.EQUALS, 1)
 //                .addTerm(StreamDataSource.PIPELINE, Condition.EQUALS, "1")
 //                .addTerm(StreamDataSource.STREAM_PROCESSOR_ID, Condition.EQUALS, "1")
-                .addTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addDateTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(expression);
         findMetaCriteria.setPageRequest(new PageRequest(0, 100));
-        findMetaCriteria.setSort(MetaFields.CREATE_TIME.getName());
+        findMetaCriteria.setSort(MetaFields.CREATE_TIME.getFldName());
 //        findStreamCriteria.setStreamIdRange(new IdRange(0L, 1L));
 
         assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(0L);
@@ -408,7 +407,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 "Expecting to find at least 1 with no criteria").isTrue();
 
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         assertThat(metaService.find(new FindMetaCriteria(expression)).size() >= 1).as(
                 "Expecting to find at least 1 with UNLOCKED criteria").isTrue();
@@ -547,8 +546,8 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
             exactMetaData = streamTarget.getMeta();
             TargetUtil.write(streamTarget, testString);
-            streamTarget.getAttributes().put(MetaFields.REC_READ.getName(), "10");
-            streamTarget.getAttributes().put(MetaFields.REC_WRITE.getName(), "20");
+            streamTarget.getAttributes().put(MetaFields.REC_READ.getFldName(), "10");
+            streamTarget.getAttributes().put(MetaFields.REC_WRITE.getFldName(), "20");
         }
 
         final Meta reloadMetaData = metaService.find(FindMetaCriteria.createFromMeta(exactMetaData)).getFirst();
@@ -566,8 +565,8 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 //        streamAttributeValueFlush.flush();
         final MetaRow metaRow = metaService.findRows(criteria).getFirst();
 
-        assertThat(metaRow.getAttributeValue(MetaFields.REC_READ.getName())).isEqualTo("10");
-        assertThat(metaRow.getAttributeValue(MetaFields.REC_WRITE.getName())).isEqualTo("20");
+        assertThat(metaRow.getAttributeValue(MetaFields.REC_READ.getFldName())).isEqualTo("10");
+        assertThat(metaRow.getAttributeValue(MetaFields.REC_WRITE.getFldName())).isEqualTo("20");
     }
 
     @Test

@@ -33,7 +33,8 @@ import java.io.Reader;
         type = "InvalidXMLCharFilterReader",
         category = Category.READER,
         description = """
-                Strips out any characters that are not within the standard XML character set.
+                Replaces any characters that are not in the standard XML character set with a '�'.
+                The version of XML (e.g. 1.0 or 1.1) can be set using the 'xmlVersion' property.
                 """,
         roles = {
                 PipelineElementType.ROLE_HAS_TARGETS,
@@ -43,7 +44,7 @@ import java.io.Reader;
         icon = SvgImage.PIPELINE_STREAM)
 public class InvalidXMLCharFilterReaderElement extends AbstractReaderElement {
 
-    private static final char REPLACEMENT_CHAR = 0xfffd; // The � symbol (3 bytes)
+    static final char REPLACEMENT_CHAR = 0xfffd; // The � symbol (3 bytes)
     private static final Xml10Chars XML_10_CHARS = new Xml10Chars();
     private static final Xml11Chars XML_11_CHARS = new Xml11Chars();
 
@@ -51,6 +52,7 @@ public class InvalidXMLCharFilterReaderElement extends AbstractReaderElement {
 
     private InvalidXmlCharFilter invalidXmlCharFilter;
     private XmlChars validChars = XML_11_CHARS;
+    private boolean warnOnReplacement = true;
 
     @Inject
     public InvalidXMLCharFilterReaderElement(final ErrorReceiverProxy errorReceiver) {
@@ -59,25 +61,42 @@ public class InvalidXMLCharFilterReaderElement extends AbstractReaderElement {
 
     @Override
     protected Reader insertFilter(final Reader reader) {
-        invalidXmlCharFilter = new InvalidXmlCharFilter(reader, validChars, true, REPLACEMENT_CHAR);
+        invalidXmlCharFilter = InvalidXmlCharFilter.createReplaceCharsFilter(
+                reader, validChars, true, REPLACEMENT_CHAR);
         return invalidXmlCharFilter;
     }
 
     @Override
     public void endStream() {
-        if (invalidXmlCharFilter.hasModifiedContent()) {
-            errorReceiver.log(Severity.WARNING, null, getElementId(), "The content was modified", null);
+        if (warnOnReplacement && invalidXmlCharFilter.hasModifiedContent()) {
+            errorReceiver.log(
+                    Severity.WARNING,
+                    null,
+                    getElementId(),
+                    "Some characters that are not valid in XML v" + validChars.getXmlVersion()
+                            + " were replaced with '"
+                            + REPLACEMENT_CHAR
+                            + "' in the input stream",
+                    null);
         }
         super.endStream();
     }
 
     @PipelineProperty(
-            description = "XML version, e.g. 1.0 or 1.1",
+            description = "XML version, e.g. '1.0' or '1.1'",
             defaultValue = "1.1",
             displayPriority = 1)
     public void setXmlVersion(final String xmlMode) {
         if ("1.0".equals(xmlMode)) {
             validChars = XML_10_CHARS;
         }
+    }
+
+    @PipelineProperty(
+            description = "Log a warning if any characters have been replaced in the input stream.",
+            defaultValue = "true",
+            displayPriority = 2)
+    public void setWarnOnReplacement(final boolean warnOnReplacement) {
+        this.warnOnReplacement = warnOnReplacement;
     }
 }

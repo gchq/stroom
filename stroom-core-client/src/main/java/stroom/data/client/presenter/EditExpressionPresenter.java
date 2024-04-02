@@ -53,6 +53,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
 
     private final ButtonView addOperatorButton;
     private final ButtonView addTermButton;
+    private final ButtonView copyButton;
     private final ButtonView disableItemButton;
     private final ButtonView deleteItemButton;
 
@@ -80,6 +81,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         addTermButton = view.addButton(SvgPresets.ADD);
         addTermButton.setTitle("Add Term");
         addOperatorButton = view.addButton(SvgPresets.OPERATOR);
+        copyButton = view.addButton(SvgPresets.COPY.enabled(false));
         disableItemButton = view.addButton(SvgPresets.DISABLE);
         deleteItemButton = view.addButton(SvgPresets.DELETE);
     }
@@ -100,6 +102,11 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
                 addOperator();
             }
         }));
+        registerHandler(copyButton.addClickHandler(event -> {
+            if (MouseUtil.isPrimary(event)) {
+                copy();
+            }
+        }));
         registerHandler(addTermButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
                 addTerm();
@@ -117,6 +124,10 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         }));
     }
 
+    private void copy() {
+        expressionPresenter.copy();
+    }
+
     @Override
     public void focus() {
         addTermButton.focus();
@@ -132,17 +143,15 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         final stroom.query.client.Item selectedItem = getSelectedItem();
 
         if (selectedItem == null) {
+            copyButton.setEnabled(false);
             disableItemButton.setEnabled(false);
             disableItemButton.setTitle("");
-        } else {
-            disableItemButton.setEnabled(true);
-            disableItemButton.setTitle(getEnableDisableText());
-        }
-
-        if (selectedItem == null) {
             deleteItemButton.setEnabled(false);
             deleteItemButton.setTitle("");
         } else {
+            copyButton.setEnabled(true);
+            disableItemButton.setEnabled(true);
+            disableItemButton.setTitle(getEnableDisableText());
             deleteItemButton.setEnabled(true);
             deleteItemButton.setTitle("Delete");
         }

@@ -52,10 +52,12 @@ import org.xml.sax.XMLReader;
 import java.util.function.Consumer;
 
 @ConfigurableElement(
-        type = "DSParser",
+        type = PipelineElementType.TYPE_DS_PARSER,
         category = Category.PARSER,
         description = """
-                A parser for data that uses Data Splitter code.
+                A parser for handling structured plain text data (e.g. CSV or fixed width fields) using the \
+                Data Splitter domain specific language.
+                For more details see [Data Splitter]({{< relref "docs/user-guide/data-splitter" >}}).
                 """,
         roles = {
                 PipelineElementType.ROLE_PARSER,

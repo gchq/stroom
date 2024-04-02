@@ -40,6 +40,10 @@
     -webkit-transition: none;
 }
 
+.DashboardViewImpl .explorerTreeViewImpl-nameFilter {
+    margin: 0 0 var(--control__padding--vertical) 0;
+}
+
 /*
 .DashboardViewImpl .linkTab {
     cursor: default;
@@ -110,6 +114,10 @@
 	-moz-user-select: none;
 }
 
+.QueryEditViewImpl.dashboard-scrollPanel {
+    background-color: var(--dashboard-panel__background-color);
+}
+
 .dashboard-scrollPanel {
     display: flex;
     flex-grow: 1;
@@ -117,6 +125,7 @@
 	user-select: none;
 	-webkit-user-select: none;
 	-moz-user-select: none;
+	background-color: var(--dashboard-panel__grid-background-color);
 }
 
 .dashboard-scrollPanel--horizontal-scroll {
@@ -144,22 +153,14 @@
     overflow: hidden;
     min-width: 100%;
     min-height: 100%;
+    background: var(--dashboard-panel__grid-background-color);
 }
 
 .dashboard__designMode .dashboard-designSurface {
-	background-image:
-	repeating-linear-gradient(
-        to bottom,
-        var(--dashboard-panel__grid-background-color),
-        var(--dashboard-panel__grid-background-color) 29px,
-        var(--dashboard-panel__grid-color) 1px,
-        var(--dashboard-panel__grid-color) 30px),
-	repeating-linear-gradient(
-        to right,
-        var(--dashboard-panel__grid-background-color),
-        var(--dashboard-panel__grid-background-color) 29px,
-        var(--dashboard-panel__grid-color) 30px,
-        var(--dashboard-panel__grid-color) 1px);
+    background-image:
+        linear-gradient(var(--dashboard-panel__grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--dashboard-panel__grid-color) 1px, transparent 1px);
+    background-size: 2rem 2rem;
 }
 
 .dashboard-panel {
@@ -641,16 +642,10 @@
 	background-color: #1f77b4;
 }
 
-.KeyValueInputView {
-    padding-left: 0.4rem;
-    padding-right: 0.4rem;
-    height: auto;
-}
-
-.ListInputView {
-    padding-left: 0.4rem;
-    padding-right: 0.4rem;
-    height: auto;
+.KeyValueInputView,
+.ListInputView,
+.TextInputView {
+    padding: 0 0.4rem 0.4rem 0.4rem;
 }
 
 .VisFrame-container {

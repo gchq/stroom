@@ -22,7 +22,6 @@ import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.Search;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.DestroyReason;
@@ -234,8 +233,9 @@ public class SearchModel {
                             .dateTimeSettings(dateTimeSettingsFactory.getDateTimeSettings())
                             .build();
 
-                    final Rest<DashboardSearchResponse> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .create(DASHBOARD_RESOURCE)
+                            .method(res -> res.search(currentNode, request))
                             .onSuccess(response -> {
                                 Result result = null;
                                 try {
@@ -262,8 +262,7 @@ public class SearchModel {
                                 }
                                 resultConsumer.accept(null);
                             })
-                            .call(DASHBOARD_RESOURCE)
-                            .search(currentNode, request);
+                            .exec();
                 }
             }
         }
@@ -280,8 +279,9 @@ public class SearchModel {
 ////                .dashboardUuid(dashboardUuid)
 ////                .componentId(componentId)
 ////                .build();
-////        final Rest<Boolean> rest = restFactory.create();
-////        rest
+//        restFactory
+//                .builder()
+//                .forBoolean()
 ////                .onSuccess(response -> {
 ////                    if (!response) {
 ////                        Console.log("Unable to destroy search: " + request);
@@ -303,8 +303,9 @@ public class SearchModel {
 ////                .dashboardUuid(dashboardUuid)
 ////                .componentId(componentId)
 ////                .build();
-////        final Rest<Boolean> rest = restFactory.create();
-////        rest
+//        restFactory
+//                .builder()
+//                .forBoolean()
 ////                .onSuccess(response -> {
 ////                    if (!response) {
 ////                        Console.log("Unable to destroy search: " + request);
@@ -354,8 +355,9 @@ public class SearchModel {
                     .storeHistory(storeHistory)
                     .build();
 
-            final Rest<DashboardSearchResponse> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(DASHBOARD_RESOURCE)
+                    .method(res -> res.search(currentNode, request))
                     .onSuccess(response -> {
                         if (search == currentSearch) {
                             currentQueryKey = response.getQueryKey();
@@ -388,8 +390,7 @@ public class SearchModel {
                             poll(Fetch.CHANGES, false);
                         }
                     })
-                    .call(DASHBOARD_RESOURCE)
-                    .search(currentNode, request);
+                    .exec();
         }
     }
 

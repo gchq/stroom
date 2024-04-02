@@ -1,19 +1,19 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.api.NotificationState;
-import stroom.analytics.shared.AnalyticNotificationConfig;
+import stroom.analytics.shared.NotificationConfig;
 import stroom.util.time.SimpleDurationUtil;
 
 import java.time.Instant;
 
 public class NotificationStateImpl implements NotificationState {
 
-    private AnalyticNotificationConfig analyticNotificationConfig;
+    private NotificationConfig analyticNotificationConfig;
     private long count;
     private boolean enabled;
     private Instant lastNotificationTimeMs;
 
-    public synchronized void update(final AnalyticNotificationConfig analyticNotificationConfig) {
+    public synchronized void update(final NotificationConfig analyticNotificationConfig) {
         this.analyticNotificationConfig = analyticNotificationConfig;
     }
 

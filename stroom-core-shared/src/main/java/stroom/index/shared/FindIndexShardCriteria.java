@@ -58,7 +58,7 @@ public class FindIndexShardCriteria extends BaseCriteria {
     @JsonProperty
     private final StringCriteria partition;
     @JsonProperty
-    private Range<Long> partitionTimeRange;
+    private final Range<Long> partitionTimeRange;
 
     public static FindIndexShardCriteria matchAll() {
         return new FindIndexShardCriteria(
@@ -148,10 +148,6 @@ public class FindIndexShardCriteria extends BaseCriteria {
         return partitionTimeRange;
     }
 
-    public void setPartitionTimeRange(final Range<Long> partitionTimeRange) {
-        this.partitionTimeRange = partitionTimeRange;
-    }
-
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
@@ -193,5 +189,108 @@ public class FindIndexShardCriteria extends BaseCriteria {
                 indexShardStatusSet,
                 partition,
                 partitionTimeRange);
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private PageRequest pageRequest;
+        private List<CriteriaFieldSort> sortList;
+        private Range<Integer> documentCountRange = new Range<>();
+        private Selection<String> nodeNameSet = Selection.selectAll();
+        private Selection<Integer> volumeIdSet = Selection.selectAll();
+        private Selection<String> indexUuidSet = Selection.selectAll();
+        private Selection<Long> indexShardIdSet = Selection.selectAll();
+        private Selection<IndexShardStatus> indexShardStatusSet = Selection.selectAll();
+        private StringCriteria partition = new StringCriteria();
+        private Range<Long> partitionTimeRange = new Range<>();
+
+        private Builder() {
+
+        }
+
+        private Builder(final FindIndexShardCriteria criteria) {
+            this.pageRequest = criteria.getPageRequest();
+            this.sortList = criteria.getSortList();
+            this.documentCountRange = criteria.documentCountRange;
+            this.nodeNameSet = criteria.nodeNameSet;
+            this.volumeIdSet = criteria.volumeIdSet;
+            this.indexUuidSet = criteria.indexUuidSet;
+            this.indexShardIdSet = criteria.indexShardIdSet;
+            this.indexShardStatusSet = criteria.indexShardStatusSet;
+            this.partition = criteria.partition;
+            this.partitionTimeRange = criteria.partitionTimeRange;
+        }
+
+        public Builder pageRequest(final PageRequest pageRequest) {
+            this.pageRequest = pageRequest;
+            return this;
+        }
+
+        public Builder sortList(final List<CriteriaFieldSort> sortList) {
+            this.sortList = sortList;
+            return this;
+        }
+
+        public Builder documentCountRange(final Range<Integer> documentCountRange) {
+            this.documentCountRange = documentCountRange;
+            return this;
+        }
+
+        public Builder nodeNameSet(final Selection<String> nodeNameSet) {
+            this.nodeNameSet = nodeNameSet;
+            return this;
+        }
+
+        public Builder volumeIdSet(final Selection<Integer> volumeIdSet) {
+            this.volumeIdSet = volumeIdSet;
+            return this;
+        }
+
+        public Builder indexUuidSet(final Selection<String> indexUuidSet) {
+            this.indexUuidSet = indexUuidSet;
+            return this;
+        }
+
+        public Builder indexShardIdSet(final Selection<Long> indexShardIdSet) {
+            this.indexShardIdSet = indexShardIdSet;
+            return this;
+        }
+
+        public Builder indexShardStatusSet(final Selection<IndexShardStatus> indexShardStatusSet) {
+            this.indexShardStatusSet = indexShardStatusSet;
+            return this;
+        }
+
+        public Builder partition(final StringCriteria partition) {
+            this.partition = partition;
+            return this;
+        }
+
+        public Builder partitionTimeRange(final Range<Long> partitionTimeRange) {
+            this.partitionTimeRange = partitionTimeRange;
+            return this;
+        }
+
+        public FindIndexShardCriteria build() {
+            return new FindIndexShardCriteria(
+                    pageRequest,
+                    sortList,
+                    documentCountRange,
+                    nodeNameSet,
+                    volumeIdSet,
+                    indexUuidSet,
+                    indexShardIdSet,
+                    indexShardStatusSet,
+                    partition,
+                    partitionTimeRange);
+        }
     }
 }

@@ -32,6 +32,8 @@ public class ColumnFormatter {
     }
 
     public String format(final Column column, final Val value) {
-        return formatterCache.computeIfAbsent(column, k -> formatterFactory.create(column)).format(value);
+        return formatterCache.computeIfAbsent(column, k ->
+                        formatterFactory.create(column))
+                .format(value);
     }
 }

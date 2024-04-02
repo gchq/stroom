@@ -170,14 +170,14 @@ public class Functions {
             if (row.isHasChildren()) {
                 if (!hasChildren(row, stringMatcher)) {
                     if (MatchType.ANY.equals(stringMatcher.getMatchType()) ||
-                            stringMatcher.match(row.getTitle()).isPresent()) {
+                            match(row, stringMatcher)) {
                         builder.add(row.copy().hasChildren(false).build());
                     }
                 } else {
                     builder.add(row);
                 }
             } else if (MatchType.ANY.equals(stringMatcher.getMatchType()) ||
-                    stringMatcher.match(row.getTitle()).isPresent()) {
+                    match(row, stringMatcher)) {
                 builder.add(row);
             }
         }
@@ -191,7 +191,7 @@ public class Functions {
     private boolean hasChildren(final QueryHelpRow parent, final StringMatcher stringMatcher) {
         final List<QueryHelpRow> rows = map.getOrDefault(parent.getId() + ".", Collections.emptyList());
         for (final QueryHelpRow row : rows) {
-            if (stringMatcher.match(row.getTitle()).isPresent()) {
+            if (match(row, stringMatcher)) {
                 return true;
             } else if (row.isHasChildren()) {
                 if (hasChildren(row, stringMatcher)) {
@@ -200,6 +200,14 @@ public class Functions {
             }
         }
         return false;
+    }
+
+    private boolean match(final QueryHelpRow row, final StringMatcher stringMatcher) {
+        String name = row.getTitle();
+        if (row.getData() instanceof final QueryHelpFunctionSignature queryHelpFunctionSignature) {
+            name = queryHelpFunctionSignature.getName();
+        }
+        return stringMatcher.match(name).isPresent();
     }
 
     private static QueryHelpFunctionSignature convertSignature(

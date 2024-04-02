@@ -5,6 +5,7 @@ import stroom.security.api.UserIdentity;
 import stroom.security.identity.token.TokenBuilder;
 import stroom.security.identity.token.TokenBuilderFactory;
 import stroom.security.openid.api.OpenIdClientFactory;
+import stroom.util.authentication.PerishableItem;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -22,7 +23,9 @@ public class InternalServiceUserFactory implements ServiceUserFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(InternalServiceUserFactory.class);
 
-    private static final Duration MAX_AGE_BEFORE_REFRESH = Duration.ofDays(1);
+    private static final Duration EXPIRY_DURATION = Duration.ofMinutes(10);
+    // This gives us a bit of head-room to refresh it before it is too old to stop internode comms failing
+    private static final Duration REFRESH_BUFFER = Duration.ofMillis((long) (EXPIRY_DURATION.toMillis() * 0.15));
 
     private final TokenBuilderFactory tokenBuilderFactory;
     private final OpenIdClientFactory openIdClientDetailsFactory;
@@ -37,8 +40,10 @@ public class InternalServiceUserFactory implements ServiceUserFactory {
     @Override
     public UserIdentity createServiceUserIdentity() {
         final UserIdentity userIdentity = new InternalIdpProcessingUserIdentity(
-                MAX_AGE_BEFORE_REFRESH, this::createToken);
-        LOGGER.info("Created internal processing user identity {}", userIdentity);
+                REFRESH_BUFFER, this::createServiceUserToken);
+        LOGGER.info("Created internal processing user identity '{}' " +
+                "(token expiry duration: {}, refresh buffer: {})",
+                userIdentity, EXPIRY_DURATION, REFRESH_BUFFER);
         return userIdentity;
     }
 
@@ -53,15 +58,20 @@ public class InternalServiceUserFactory implements ServiceUserFactory {
         }
     }
 
-    private String createToken() {
-        final Instant timeToExpiryInSeconds = LocalDateTime.now()
-                .plusYears(1)
+    private PerishableItem<String> createServiceUserToken() {
+        final Instant expiryTime = LocalDateTime.now()
+                .plus(EXPIRY_DURATION)
                 .toInstant(ZoneOffset.UTC);
+
+        LOGGER.debug("Creating service user token with expiryTime: {} ({}), refresh buffer: {}",
+                expiryTime, EXPIRY_DURATION, REFRESH_BUFFER);
+
         final TokenBuilder tokenBuilder = tokenBuilderFactory
                 .builder()
-                .expirationTime(timeToExpiryInSeconds)
+                .expirationTime(expiryTime)
                 .clientId(openIdClientDetailsFactory.getClient().getClientId())
                 .subject(InternalIdpProcessingUserIdentity.INTERNAL_PROCESSING_USER);
-        return tokenBuilder.build();
+        final String token = tokenBuilder.build();
+        return new PerishableItem<>(expiryTime, token);
     }
 }

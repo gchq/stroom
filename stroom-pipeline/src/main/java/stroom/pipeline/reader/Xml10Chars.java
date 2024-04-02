@@ -329,4 +329,9 @@ public class Xml10Chars implements XmlChars {
         //  isValid for now.
         return isValid(c);
     }
+
+    @Override
+    public String getXmlVersion() {
+        return "1.0";
+    }
 }

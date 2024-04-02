@@ -24,7 +24,7 @@ import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeManager;
 import stroom.svg.client.Preset;
@@ -86,15 +86,15 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
                 dataGrid,
                 SvgPresets.of(SvgPresets.DELETE, "Clear and rebuild cache", true),
                 (row, nativeEvent) -> {
-                    final Rest<Long> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .create(CACHE_RESOURCE)
+                            .method(res -> res.clear(row, null))
                             .onSuccess(result -> {
                                 if (cacheUpdateHandler != null) {
                                     cacheUpdateHandler.accept(row);
                                 }
                             })
-                            .call(CACHE_RESOURCE)
-                            .clear(row, null);
+                            .exec();
                 });
 
         // Name
@@ -120,10 +120,10 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
                     @Override
                     protected void exec(final Range range,
                                         final Consumer<CacheNamesResponse> dataConsumer,
-                                        final Consumer<Throwable> throwableConsumer) {
+                                        final Consumer<RestError> errorConsumer) {
                         CacheListPresenter.this.range = range;
                         CacheListPresenter.this.dataConsumer = dataConsumer;
-                        nodeManager.listAllNodes(nodeNames -> fetchNamesForNodes(nodeNames), throwableConsumer);
+                        nodeManager.listAllNodes(nodeNames -> fetchNamesForNodes(nodeNames), errorConsumer);
                     }
                 };
         dataProvider.addDataDisplay(dataGrid);
@@ -156,8 +156,9 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
 
     private void fetchNamesForNodes(final List<String> nodeNames) {
         for (final String nodeName : nodeNames) {
-            final Rest<CacheNamesResponse> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(CACHE_RESOURCE)
+                    .method(res -> res.list(nodeName))
                     .onSuccess(response -> {
                         allCacheIdentities.addAll(response.getValues());
                         delayedUpdate.update();
@@ -165,8 +166,7 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
                     .onFailure(throwable -> {
                         delayedUpdate.update();
                     })
-                    .call(CACHE_RESOURCE)
-                    .list(nodeName);
+                    .exec();
         }
     }
 

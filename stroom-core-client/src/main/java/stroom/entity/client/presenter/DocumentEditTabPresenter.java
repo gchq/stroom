@@ -43,7 +43,8 @@ import com.gwtplatform.mvp.client.Layer;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
 public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
-        extends DocumentEditPresenter<V, D> implements DocumentTabData, Refreshable, HasType, HasSave {
+        extends DocumentEditPresenter<V, D>
+        implements DocumentTabData, Refreshable, HasType, HasSave {
 
     private final ButtonView saveButton;
     private final ButtonView saveAsButton;
@@ -223,5 +224,10 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
             RefreshContentTabEvent.fire(this, this);
         }
         saveButton.setEnabled(isDirty());
+    }
+
+    @Override
+    public DocRef getDocRef() {
+        return docRef;
     }
 }

@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonPropertyOrder({"stroom", "streamId", "eventId"})
 @JsonInclude(Include.NON_NULL)
 public class DetectionLinkedEvent {
@@ -36,5 +38,32 @@ public class DetectionLinkedEvent {
 
     public Long getEventId() {
         return eventId;
+    }
+
+    @Override
+    public String toString() {
+        return "DetectionLinkedEvent{" +
+                "stroom='" + stroom + '\'' +
+                ", streamId=" + streamId +
+                ", eventId=" + eventId +
+                '}';
+    }
+
+    @Override
+    public boolean equals(final Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (object == null || getClass() != object.getClass()) {
+            return false;
+        }
+        final DetectionLinkedEvent that = (DetectionLinkedEvent) object;
+        return Objects.equals(stroom, that.stroom) && Objects.equals(streamId,
+                that.streamId) && Objects.equals(eventId, that.eventId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(stroom, streamId, eventId);
     }
 }

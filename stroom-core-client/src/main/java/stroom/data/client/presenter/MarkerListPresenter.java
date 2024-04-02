@@ -120,8 +120,6 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
                             return null;
                     }
                 })
-                .topAligned()
-                .withStyleName("dataGridCellVerticalTop")
                 .build(), "", ColumnSizeConstants.ICON_COL);
     }
 
@@ -175,8 +173,6 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
 
                                     return null;
                                 })
-                        .topAligned()
-                        .withStyleName("dataGridCellVerticalTop")
                         .build(),
                 "Element",
                 150);
@@ -201,8 +197,6 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
                                         return null;
                                     }
                                 })
-                        .topAligned()
-                        .withStyleName("dataGridCellVerticalTop")
                         .build(),
                 "Stream",
                 50);
@@ -220,8 +214,6 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
                                         return null;
                                     }
                                 })
-                        .topAligned()
-                        .withStyleName("dataGridCellVerticalTop")
                         .build(),
                 "Line",
                 50);
@@ -239,8 +231,6 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
                                         return null;
                                     }
                                 })
-                        .topAligned()
-                        .withStyleName("dataGridCellVerticalTop")
                         .build(),
                 "Col",
                 50);
@@ -276,9 +266,6 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
                             }
                             return htmlBuilder.toSafeHtml();
                         })
-                        .topAligned()
-                        .withStyleName("dataGridCellVerticalTop")
-                        .withStyleName("dataGridCellWrapText")
                         .build(),
                 "Message",
                 800);

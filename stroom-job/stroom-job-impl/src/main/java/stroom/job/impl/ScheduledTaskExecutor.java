@@ -23,9 +23,8 @@ import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.scheduler.FrequencyScheduler;
-import stroom.util.scheduler.Scheduler;
-import stroom.util.scheduler.SimpleCron;
+import stroom.util.scheduler.SimpleScheduleExec;
+import stroom.util.scheduler.TriggerFactory;
 import stroom.util.thread.CustomThreadFactory;
 import stroom.util.thread.StroomThreadGroup;
 
@@ -54,8 +53,10 @@ class ScheduledTaskExecutor {
 
     private static final String STROOM_JOB_THREAD_POOL = "Stroom Job#";
 
-    private final ConcurrentHashMap<ScheduledJob, AtomicBoolean> runningMapOfScheduledJobs = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<ScheduledJob, Scheduler> schedulerMapOfScheduledJobs = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<ScheduledJob, AtomicBoolean> runningMapOfScheduledJobs =
+            new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<ScheduledJob, SimpleScheduleExec> schedulerMapOfScheduledJobs =
+            new ConcurrentHashMap<>();
 
     private final Map<ScheduledJob, Provider<Runnable>> scheduledJobsMap;
     private final JobNodeTrackerCache jobNodeTrackerCache;
@@ -173,10 +174,10 @@ class ScheduledTaskExecutor {
         if (running.compareAndSet(false, true)) {
             try {
                 boolean enabled = true;
-                Scheduler scheduler = null;
+                SimpleScheduleExec scheduler = null;
                 JobNodeTracker jobNodeTracker;
 
-                final JobNodeTrackerCache.Trackers trackers = jobNodeTrackerCache.getTrackers();
+                final JobNodeTrackers trackers = jobNodeTrackerCache.getTrackers();
                 jobNodeTracker = trackers.getTrackerForJobName(scheduledJob.getName());
 
                 if (scheduledJob.isManaged()) {
@@ -189,7 +190,7 @@ class ScheduledTaskExecutor {
                             LOGGER.error("Job node tracker has null job node for: " + scheduledJob.getName());
                         } else {
                             enabled = jobNode.isEnabled() && jobNode.getJob().isEnabled();
-                            scheduler = trackers.getScheduler(jobNode);
+                            scheduler = trackers.getScheduleExec(jobNode);
                         }
                     }
                 } else {
@@ -223,21 +224,10 @@ class ScheduledTaskExecutor {
         return function;
     }
 
-    private Scheduler getOrCreateScheduler(final ScheduledJob scheduledJob) {
-        Scheduler scheduler = schedulerMapOfScheduledJobs.get(scheduledJob);
+    private SimpleScheduleExec getOrCreateScheduler(final ScheduledJob scheduledJob) {
+        SimpleScheduleExec scheduler = schedulerMapOfScheduledJobs.get(scheduledJob);
         if (scheduler == null) {
-            switch (scheduledJob.getSchedule().getScheduleType()) {
-                case CRON:
-                    final SimpleCron simpleCron = SimpleCron.compile(scheduledJob.getSchedule().getSchedule());
-                    scheduler = simpleCron.createScheduler();
-                    break;
-
-                case PERIODIC:
-                    scheduler = new FrequencyScheduler(scheduledJob.getSchedule().getSchedule());
-                    break;
-                default:
-                    throw new RuntimeException("Unsupported ScheduleType!");
-            }
+            scheduler = new SimpleScheduleExec(TriggerFactory.create(scheduledJob.getSchedule()));
             schedulerMapOfScheduledJobs.put(scheduledJob, scheduler);
         }
 

@@ -3,7 +3,6 @@ package stroom.index.lucene980;
 import stroom.index.impl.IndexConfig;
 import stroom.index.impl.IndexShardManager;
 import stroom.index.impl.IndexShardWriter;
-import stroom.index.impl.IndexStructure;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.util.io.PathCreator;
@@ -25,15 +24,13 @@ class Lucene980IndexShardWriterFactory {
         this.pathCreator = pathCreator;
     }
 
-    IndexShardWriter create(final IndexStructure indexStructure,
-                            final IndexShardKey indexShardKey,
-                            final IndexShard indexShard) {
+    IndexShardWriter create(final IndexShard indexShard,
+                            final int maxDocumentCount) {
         return new Lucene980IndexShardWriter(
                 indexShardManager,
                 indexConfigProvider.get(),
-                indexStructure,
-                indexShardKey,
                 indexShard,
-                pathCreator);
+                pathCreator,
+                maxDocumentCount);
     }
 }

@@ -58,16 +58,26 @@ final class FormatterCache {
     }
 
     static long parse(final String value, final String pattern, final String timeZone) {
-        return DateUtil.parse(value, getFormatter(pattern), getZoneId(timeZone));
+        return DateUtil.parse(value, getFormatter(pattern, Mode.PARSE), getZoneId(timeZone));
     }
 
     static String format(final Long value, final String pattern, final String timeZone) {
-        return DateUtil.format(value, getFormatter(pattern), getZoneId(timeZone));
+        return DateUtil.format(value, getFormatter(pattern, Mode.FORMAT), getZoneId(timeZone));
     }
 
-    static DateTimeFormatter getFormatter(final String pattern) {
-        if (pattern == null || pattern.equals(DateUtil.DEFAULT_PATTERN)) {
-            return DateUtil.DEFAULT_FORMATTER;
+    static DateTimeFormatter getFormatter(final String pattern, final Mode mode) {
+        // DEFAULT_ISO_PARSER copes with different ISO 8601 forms so can't be used for formatting
+        switch (mode) {
+            case FORMAT -> {
+                if (pattern == null || pattern.equals(DateUtil.DEFAULT_PATTERN)) {
+                    return DateUtil.DEFAULT_FORMATTER;
+                }
+            }
+            case PARSE -> {
+                if (pattern == null) {
+                    return DateUtil.DEFAULT_ISO_PARSER;
+                }
+            }
         }
 
         // Get cached formatter.
@@ -111,6 +121,10 @@ final class FormatterCache {
         return cachedZoneId.zoneId;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class CachedFormatter {
 
         private final DateTimeFormatter formatter;
@@ -127,6 +141,10 @@ final class FormatterCache {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class CachedZoneId {
 
         private final ZoneId zoneId;
@@ -141,5 +159,20 @@ final class FormatterCache {
             this.zoneId = null;
             this.exception = exception;
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    enum Mode {
+        /**
+         * Formatting a date to a string
+         */
+        FORMAT,
+        /**
+         * Parsing a string to a date
+         */
+        PARSE
     }
 }

@@ -45,11 +45,6 @@ class ToString extends AbstractCast {
         return CAST;
     }
 
-    @Override
-    public Type getCommonReturnType() {
-        return Type.STRING;
-    }
-
     private static class Cast extends AbstractCaster {
 
         @Override

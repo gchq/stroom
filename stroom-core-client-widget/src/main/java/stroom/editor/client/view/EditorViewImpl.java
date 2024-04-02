@@ -29,32 +29,23 @@ import stroom.util.shared.StoredError;
 import stroom.util.shared.TextRange;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
-import com.google.gwt.event.dom.client.MouseDownHandler;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.ViewImpl;
 import edu.ycp.cs.dh.acegwt.client.ace.AceAnnotationType;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorCursorPosition;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 import edu.ycp.cs.dh.acegwt.client.ace.AceMarkerType;
 import edu.ycp.cs.dh.acegwt.client.ace.AceRange;
 
@@ -71,24 +62,12 @@ import javax.inject.Inject;
  * functionality such as formatting, styling, line numbers and warning/error
  * markers.
  */
-public class EditorViewImpl extends ViewImpl implements EditorView {
+public class EditorViewImpl
+        extends AbstractEditorViewImpl
+        implements EditorView {
 
     private static final IndicatorPopup indicatorPopup = new IndicatorPopup();
-    private static final boolean SHOW_INDICATORS_DEFAULT = false;
     private final Action formatAction;
-    private final Option stylesOption;
-    private final Option lineNumbersOption;
-    private final Option indicatorsOption;
-    private final Option lineWrapOption;
-    private final Option showIndentGuides;
-    private final Option showInvisiblesOption;
-    private final Option basicAutoCompletionOption;
-    private final Option snippetsOption;
-    private final Option highlightActiveLineOption;
-    private final Option viewAsHexOption;
-    private Option useVimBindingsOption;
-    private Option liveAutoCompletionOption;
-
     private final Widget widget;
 
     @UiField(provided = true)
@@ -96,78 +75,23 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
     @UiField
     RightBar rightBar;
 
-    private final Editor editor;
     private IndicatorLines indicators;
-    private AceEditorMode mode = AceEditorMode.XML;
     private int firstLineNumber = 1;
     private Function<String, List<TextRange>> formattedHighlightsFunc;
-    private boolean isVimPreferredKeyBinding = false;
-    private boolean liveAutoCompletePreference = false;
 
     @Inject
     public EditorViewImpl(final Binder binder) {
-        content = new SimplePanel() {
-            @Override
-            protected void onAttach() {
-                super.onAttach();
-                GlobalResizeObserver.addListener(getElement(), element -> onResize());
-            }
-
-            @Override
-            public void onBrowserEvent(final Event event) {
-                super.onBrowserEvent(event);
-            }
-
-            @Override
-            protected void onDetach() {
-                GlobalResizeObserver.removeListener(getElement());
-                super.onDetach();
-            }
-        };
-
+        super();
+        content = createResizablePanel();
         widget = binder.createAndBindUi(this);
-
-        editor = new Editor();
+        initOptions();
+        final Editor editor = getEditor();
         content.setWidget(editor.asWidget());
 
         formatAction = new Action("Format", false, this::format);
 
-        // Don't forget to add any new options into EditorPresenter
-        stylesOption = new Option(
-                "Styles", true, true, (on) -> setMode(mode, on));
-        lineNumbersOption = new Option(
-                "Line Numbers", true, true, (on) -> editor.setShowGutter(on));
-        indicatorsOption = new Option(
-                "Indicators", SHOW_INDICATORS_DEFAULT, false, this::doLayout);
-        lineWrapOption = new Option(
-                "Wrap Lines", false, true, (on) -> editor.setUseWrapMode(on));
-        showIndentGuides = new Option(
-                "Show Indent Guides", true, true, (on) -> editor.setShowIndentGuides(on));
-        showInvisiblesOption = new Option(
-                "Show Hidden Characters", false, true, (on) -> editor.setShowInvisibles(on));
-        useVimBindingsOption = buildVimBindingsOption(false);
-        basicAutoCompletionOption = new Option(
-                "Auto Completion", true, true, (on) -> editor.setUseBasicAutoCompletion(on));
-        liveAutoCompletionOption = buildLiveAutoCompleteOption(false);
-        snippetsOption = new Option(
-                "Snippets", true, true, (on) -> editor.setUseSnippets(on));
-        highlightActiveLineOption = new Option(
-                "Highlight Active Line", true, true, (on) -> editor.setHighlightActiveLine(on));
-        viewAsHexOption = new Option("View as Hex", false, false, null);
-
-        editor.getElement().setClassName("editor");
         editor.addDomHandler(this::handleMouseDown, MouseDownEvent.getType());
         rightBar.setEditor(editor);
-    }
-
-    private void handleMouseDown(final MouseDownEvent event) {
-        if (MouseUtil.isSecondary(event)) {
-            final PopupPosition popupPosition = new PopupPosition(event.getClientX(), event.getClientY());
-            ContextMenuEvent.fire(this, popupPosition);
-        } else {
-            indicatorPopup.hide();
-            MouseDownEvent.fireNativeEvent(event.getNativeEvent(), this);
-        }
     }
 
     @Override
@@ -175,36 +99,34 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
         return widget;
     }
 
-    private void doLayout() {
-        doLayout(indicatorsOption.isOn());
+    @Override
+    SimplePanel getContentPanel() {
+        return content;
     }
 
-    private void doLayout(final boolean showIndicators) {
+    protected void handleMouseDown(final MouseDownEvent event) {
+        if (MouseUtil.isSecondary(event)) {
+            final PopupPosition popupPosition = new PopupPosition(event.getClientX(), event.getClientY());
+            ContextMenuEvent.fire(this, popupPosition);
+        } else {
+            EditorViewImpl.indicatorPopup.hide();
+            MouseDownEvent.fireNativeEvent(event.getNativeEvent(), this);
+        }
+    }
+
+
+    @Override
+    protected void doLayout(final boolean showIndicators) {
+        super.doLayout(showIndicators);
         rightBar.render(indicators, showIndicators);
-        editor.onResize();
-    }
-
-    @Override
-    public String getEditorId() {
-        return editor.getId();
-    }
-
-    @Override
-    public void focus() {
-        editor.focus();
-    }
-
-    @Override
-    public String getText() {
-        return editor.getText();
     }
 
     @Override
     public void setText(final String text) {
-        setText(text, false);
+        content.setWidget(editor.asWidget());
+        super.setText(text);
     }
 
-    @Override
     public void setText(final String text, final boolean format) {
         content.setWidget(editor.asWidget());
         if (text == null) {
@@ -218,31 +140,6 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
                 editor.setText(text);
             }
         }
-    }
-
-    @Override
-    public boolean isClean() {
-        return editor.isClean();
-    }
-
-    @Override
-    public void markClean() {
-        editor.markClean();
-    }
-
-    @Override
-    public void insertTextAtCursor(final String text) {
-        editor.insertTextAtCursor(text);
-    }
-
-    @Override
-    public void replaceSelectedText(final String text) {
-        editor.replaceSelectedText(text);
-    }
-
-    @Override
-    public void insertSnippet(final String snippet) {
-        editor.insertSnippet(snippet);
     }
 
     @Override
@@ -270,6 +167,11 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
                             row = Math.max(location.getLineNo() - 1, 0);
                             col = location.getColNo();
                         }
+
+//                            GWT.log("row: " + row
+//                                    + " col: " + col
+//                                    + " severity: " + error.getSeverity()
+//                                    + " msg: " + error.getMessage());
 
                         final Severity severity = error.getSeverity();
                         AceAnnotationType annotationType;
@@ -304,7 +206,7 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
         }
 
         // Ensure line numbers are visible if there are annotations.
-        if (annotations.size() > 0) {
+        if (!annotations.isEmpty()) {
             getLineNumbersOption().setOn(true);
         }
 
@@ -319,7 +221,6 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
 
     @Override
     public void setHighlights(final List<TextRange> highlights) {
-
         Scheduler.get().scheduleDeferred(() -> {
             if (highlights != null && highlights.size() > 0) {
                 // Find our first from location
@@ -385,69 +286,6 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
         scrollPanel.getElement().addClassName("max");
         scrollPanel.setWidget(new HTMLPanel(safeHtmlBuilder.toSafeHtml()).asWidget());
         content.setWidget(scrollPanel.asWidget());
-    }
-
-    @Override
-    public void setReadOnly(final boolean readOnly) {
-        editor.setReadOnly(readOnly);
-    }
-
-    @Override
-    public void setMode(final AceEditorMode mode) {
-        this.mode = mode;
-        if (stylesOption.isOn()) {
-            editor.setMode(mode);
-        } else {
-            editor.setMode(AceEditorMode.TEXT);
-        }
-    }
-
-    public void setMode(final AceEditorMode mode, final boolean areStylesEnabled) {
-        this.mode = mode;
-        if (areStylesEnabled) {
-            editor.setMode(mode);
-        } else {
-            editor.setMode(AceEditorMode.TEXT);
-        }
-    }
-
-    @Override
-    public void setTheme(final AceEditorTheme theme) {
-        editor.setTheme(theme);
-    }
-
-    @Override
-    public void setUserKeyBindingsPreference(final boolean useVimBindings) {
-        this.isVimPreferredKeyBinding = useVimBindings;
-        this.useVimBindingsOption = buildVimBindingsOption(useVimBindings);
-        // Option overrides user preference so even if the user prefers vim (why wouldn't he/she?)
-        // they can temporarily disable it
-        editor.setUseVimBindings(getUseVimBindingsOption().isOn());
-    }
-
-    @Override
-    public void setUserLiveAutoCompletePreference(final boolean isOn) {
-        this.liveAutoCompletePreference = isOn;
-        this.liveAutoCompletionOption = buildLiveAutoCompleteOption(isOn);
-        // Option overrides user preference so even if the user prefers vim (why wouldn't he/she?)
-        // they can temporarily disable it
-        editor.setUseLiveAutoCompletion(getLiveAutoCompletionOption().isOn());
-    }
-
-    private Option buildVimBindingsOption(final boolean useVimBindings) {
-        return new Option(
-                "Vim Key Bindings",
-                useVimBindings,
-                true,
-                (on) -> editor.setUseVimBindings(on));
-    }
-
-    private Option buildLiveAutoCompleteOption(final boolean isOn) {
-        return new Option(
-                "Live Auto Completion",
-                isOn,
-                true,
-                (on) -> editor.setUseLiveAutoCompletion(on));
     }
 
     private String formatAsIfXml(final String text) {
@@ -529,11 +367,6 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
     }
 
     @Override
-    public Option getUseVimBindingsOption() {
-        return useVimBindingsOption;
-    }
-
-    @Override
     public Option getBasicAutoCompletionOption() {
         return basicAutoCompletionOption;
     }
@@ -541,11 +374,6 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
     @Override
     public Option getSnippetsOption() {
         return snippetsOption;
-    }
-
-    @Override
-    public Option getLiveAutoCompletionOption() {
-        return liveAutoCompletionOption;
     }
 
     @Override
@@ -586,38 +414,13 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
 
 
     @Override
-    public HandlerRegistration addKeyDownHandler(final KeyDownHandler handler) {
-        return content.addDomHandler(handler, KeyDownEvent.getType());
-    }
-
-    @Override
-    public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<String> handler) {
-        return editor.addValueChangeHandler(handler);
-    }
-
-    @Override
     public HandlerRegistration addFormatHandler(final FormatHandler handler) {
         return content.addHandler(handler, FormatEvent.TYPE);
     }
 
     @Override
-    public HandlerRegistration addMouseDownHandler(final MouseDownHandler handler) {
-        return content.addHandler(handler, MouseDownEvent.getType());
-    }
-
-    @Override
     public HandlerRegistration addContextMenuHandler(final ContextMenuEvent.Handler handler) {
         return content.addHandler(handler, ContextMenuEvent.getType());
-    }
-
-    @Override
-    public void fireEvent(final GwtEvent<?> event) {
-        content.fireEvent(event);
-    }
-
-    @Override
-    public void onResize() {
-        doLayout();
     }
 
 

@@ -1,17 +1,14 @@
 package stroom.processor.client.presenter;
 
-import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorFilterTracker;
-import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorRow;
 import stroom.processor.shared.ProcessorType;
-import stroom.processor.shared.QueryData;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -89,24 +86,30 @@ public class ProcessorInfoBuilder {
                         DocRefUtil.createSimpleDocRefString(filter.getPipeline()));
             }
 
+            tb.row("Reprocess", filter.isReprocess() ? "True" : "False");
+            tb.row("Max Concurrent Tasks",
+                    filter.getMaxProcessingTasks() == 0
+                            ? "Unlimited"
+                            : String.valueOf(filter.getMaxProcessingTasks()));
+
             final ProcessorFilterTracker tracker = filter.getProcessorFilterTracker();
             if (tracker != null) {
                 addRowDateString(tb, "Min Stream Create Time", tracker.getMinMetaCreateMs());
                 addRowDateString(tb, "Max Stream Create Time", tracker.getMaxMetaCreateMs());
                 addRowDateString(tb, "Stream Create Time", tracker.getMetaCreateMs());
-                tb.row(SafeHtmlUtil.from("Stream Create %"),
-                        SafeHtmlUtil.from(tracker.getTrackerStreamCreatePercentage()));
                 addRowDateString(tb, "Last Poll", tracker.getLastPollMs());
                 tb.row("Last Poll Age", tracker.getLastPollAge());
                 tb.row(SafeHtmlUtil.from("Last Poll Task Count"),
                         SafeHtmlUtil.from(tracker.getLastPollTaskCount()));
                 tb.row("Min Stream Id", String.valueOf(tracker.getMinMetaId()));
                 tb.row("Min Event Id", String.valueOf(tracker.getMinEventId()));
-                tb.row(SafeHtmlUtil.from("Streams"),
+                tb.row(SafeHtmlUtil.from("Total Tasks Created"),
                         SafeHtmlUtil.from(tracker.getMetaCount()));
-                tb.row(SafeHtmlUtil.from("Events"),
-                        SafeHtmlUtil.from(tracker.getEventCount()));
-                tb.row("Status", getStatusMessage(tracker));
+                if (tracker.getEventCount() != null) {
+                    tb.row(SafeHtmlUtil.from("Total Events"),
+                            SafeHtmlUtil.from(tracker.getEventCount()));
+                }
+                tb.row("Status", ProcessorStatusUtil.getValue(row));
             }
         }
 
@@ -119,15 +122,5 @@ public class ProcessorInfoBuilder {
         if (ms != null) {
             tb.row(label, dateTimeFormatter.formatWithDuration(ms));
         }
-    }
-
-    public static String getStatusMessage(final ProcessorFilterTracker tracker) {
-        String status = null;
-        if (tracker.getMessage() != null && tracker.getMessage().length() > 0) {
-            status = tracker.getStatus().getDisplayValue() + ": " + tracker.getMessage();
-        } else if (!ProcessorFilterTrackerStatus.CREATED.equals(tracker.getStatus())) {
-            status = tracker.getStatus().getDisplayValue();
-        }
-        return status;
     }
 }

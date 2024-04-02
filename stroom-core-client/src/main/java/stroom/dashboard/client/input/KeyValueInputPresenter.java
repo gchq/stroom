@@ -40,6 +40,7 @@ public class KeyValueInputPresenter
         extends AbstractComponentPresenter<KeyValueInputView>
         implements KeyValueInputUiHandlers, HasParams {
 
+    public static final String TAB_TYPE = "key-value-input-component";
     public static final ComponentType TYPE = new ComponentType(1,
             "key-value-input",
             "Key/Value Input",
@@ -92,13 +93,22 @@ public class KeyValueInputPresenter
     }
 
     @Override
-    public ComponentType getType() {
+    public ComponentType getComponentType() {
         return TYPE;
     }
 
     public void setValue(final String value) {
         getView().setValue(value);
     }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface KeyValueInputView extends View, HasUiHandlers<KeyValueInputUiHandlers> {
 
