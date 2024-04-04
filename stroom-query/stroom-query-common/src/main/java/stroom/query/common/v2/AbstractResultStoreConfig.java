@@ -13,7 +13,6 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
 
     private final int maxPutsBeforeCommit;
     private final boolean offHeapResults;
-
     private final int valueQueueSize;
     private final ByteSize minPayloadSize;
     private final ByteSize maxPayloadSize;
@@ -103,7 +102,7 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
 
     @Override
     public String toString() {
-        return "ResultStoreConfig{" +
+        return "AbstractResultStoreConfig{" +
                 "maxPutsBeforeCommit=" + maxPutsBeforeCommit +
                 ", offHeapResults=" + offHeapResults +
                 ", valueQueueSize=" + valueQueueSize +

@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class AnalyticResultStoreConfig extends AbstractResultStoreConfig implements IsStroomConfig {
 
     public AnalyticResultStoreConfig() {
-        super(10_000,
+        this(10_000,
                 true,
                 ByteSize.ofMebibytes(1),
                 ByteSize.ofGibibytes(1),

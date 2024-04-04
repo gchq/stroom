@@ -117,8 +117,6 @@ public class LmdbDataStore implements DataStore {
     private final LmdbPayloadCreator payloadCreator;
     private final TransferState transferState = new TransferState();
 
-    private final Serialisers serialisers;
-
     private final WindowSupport windowSupport;
 
 
@@ -143,7 +141,6 @@ public class LmdbDataStore implements DataStore {
                          final DataStoreSettings dataStoreSettings,
                          final Provider<Executor> executorProvider,
                          final ErrorConsumer errorConsumer) {
-        this.serialisers = serialisers;
         this.queryKey = queryKey;
         this.componentId = componentId;
         this.fieldIndex = fieldIndex;
@@ -699,11 +696,6 @@ public class LmdbDataStore implements DataStore {
     @Override
     public long getByteSize() {
         return FileUtil.getByteSize(lmdbEnv.getLocalDir());
-    }
-
-    @Override
-    public Serialisers getSerialisers() {
-        return serialisers;
     }
 
     @Override

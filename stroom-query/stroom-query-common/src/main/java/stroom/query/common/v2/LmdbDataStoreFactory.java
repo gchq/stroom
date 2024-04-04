@@ -42,15 +42,18 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
     private final Provider<SearchResultStoreConfig> resultStoreConfigProvider;
     private final Provider<Executor> executorProvider;
     private final Path searchResultStoreDir;
+    private final MapDataStoreFactory mapDataStoreFactory;
 
     @Inject
     public LmdbDataStoreFactory(final LmdbEnvFactory lmdbEnvFactory,
                                 final Provider<SearchResultStoreConfig> resultStoreConfigProvider,
                                 final PathCreator pathCreator,
-                                final Provider<Executor> executorProvider) {
+                                final Provider<Executor> executorProvider,
+                                final MapDataStoreFactory mapDataStoreFactory) {
         this.lmdbEnvFactory = lmdbEnvFactory;
         this.resultStoreConfigProvider = resultStoreConfigProvider;
         this.executorProvider = executorProvider;
+        this.mapDataStoreFactory = mapDataStoreFactory;
 
         // This config prop requires restart, so we can hold on to it
         this.searchResultStoreDir = getLocalDir(resultStoreConfigProvider.get(), pathCreator);
@@ -77,15 +80,16 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                 throw new RuntimeException("MapDataStore cannot produce payloads");
             }
 
-            return new MapDataStore(
-                    new Serialisers(resultStoreConfig),
-                    componentId,
-                    tableSettings,
+            return mapDataStoreFactory.create(
                     expressionContext,
+                    searchRequestSource,
+                    queryKey, componentId,
+                    tableSettings,
                     fieldIndex,
                     paramMap,
                     dataStoreSettings,
                     errorConsumer);
+
         } else {
             final String subDirectory = queryKey + "_" + componentId + "_" + UUID.randomUUID();
             final SimpleEnvBuilder lmdbEnvBuilder = lmdbEnvFactory

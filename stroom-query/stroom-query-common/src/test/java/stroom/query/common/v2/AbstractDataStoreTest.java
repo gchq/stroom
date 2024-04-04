@@ -689,6 +689,6 @@ abstract class AbstractDataStoreTest {
                               QueryKey queryKey,
                               String componentId,
                               TableSettings tableSettings,
-                              AbstractResultStoreConfig resultStoreConfig,
+                              SearchResultStoreConfig resultStoreConfig,
                               DataStoreSettings dataStoreSettings);
 }
