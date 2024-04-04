@@ -30,6 +30,7 @@ import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.IdentityItemMapper;
 import stroom.query.common.v2.LmdbDataStoreFactory;
+import stroom.query.common.v2.MapDataStoreFactory;
 import stroom.query.common.v2.OpenGroupsImpl;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreSettingsFactory;
@@ -101,7 +102,8 @@ class TestSearchResultCreation {
                 lmdbEnvFactory,
                 SearchResultStoreConfig::new,
                 pathCreator,
-                () -> executorService);
+                () -> executorService,
+                new MapDataStoreFactory(SearchResultStoreConfig::new));
     }
 
     @AfterEach
@@ -153,7 +155,8 @@ class TestSearchResultCreation {
                 null,
                 coprocessors,
                 "node",
-                new ResultStoreSettingsFactory().get());
+                new ResultStoreSettingsFactory().get(),
+                new MapDataStoreFactory(SearchResultStoreConfig::new));
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
@@ -287,7 +290,8 @@ class TestSearchResultCreation {
                 "test_user_id",
                 coprocessors2,
                 "node",
-                new ResultStoreSettingsFactory().get());
+                new ResultStoreSettingsFactory().get(),
+                new MapDataStoreFactory(SearchResultStoreConfig::new));
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
@@ -367,7 +371,8 @@ class TestSearchResultCreation {
                 "test_user_id",
                 coprocessors2,
                 "node",
-                new ResultStoreSettingsFactory().get());
+                new ResultStoreSettingsFactory().get(),
+                new MapDataStoreFactory(SearchResultStoreConfig::new));
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
@@ -478,7 +483,8 @@ class TestSearchResultCreation {
                 null,
                 coprocessors2,
                 "node",
-                new ResultStoreSettingsFactory().get());
+                new ResultStoreSettingsFactory().get(),
+                new MapDataStoreFactory(SearchResultStoreConfig::new));
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
