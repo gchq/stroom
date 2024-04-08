@@ -42,6 +42,7 @@ import stroom.util.shared.ResultPage;
 import event.logging.BaseObject;
 import event.logging.Criteria;
 import event.logging.Data;
+import event.logging.Data.Builder;
 import event.logging.DeleteEventAction;
 import event.logging.EventAction;
 import event.logging.MultiObject;
@@ -55,6 +56,7 @@ import jakarta.inject.Provider;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -207,6 +209,21 @@ class MetaResourceImpl implements MetaResource {
                 addData(dataItems, "ProcessorCount", selectionSummary.getProcessorCount());
                 addData(dataItems, "PipelineCount", selectionSummary.getProcessorCount());
                 addData(dataItems, "StatusCount", selectionSummary.getStatusCount());
+                addDataValues(dataItems,
+                        "Feeds",
+                        "Feed",
+                        selectionSummary.getFeedCount(),
+                        selectionSummary.getDistinctFeeds());
+                addDataValues(dataItems,
+                        "Types",
+                        "Type",
+                        selectionSummary.getTypeCount(),
+                        selectionSummary.getDistinctTypes());
+                addDataValues(dataItems,
+                        "Statuses",
+                        "Status",
+                        selectionSummary.getStatusCount(),
+                        selectionSummary.getDistinctStatuses());
 
                 final String minCreateTime = NullSafe.get(
                         selectionSummary.getAgeRange(),
@@ -223,6 +240,31 @@ class MetaResourceImpl implements MetaResource {
         } catch (Exception e) {
             LOGGER.error(LogUtil.message("Error building selection summary for criteria {}: {}",
                     criteria, LogUtil.exceptionMessage(e), e));
+        }
+    }
+
+    private void addDataValues(final List<Data> list,
+                               final String parentName,
+                               final String itemName,
+                               final long count,
+                               final Set<String> values) {
+        if (NullSafe.hasItems(values)) {
+            final Builder<Void> builder = Data.builder()
+                    .withName(parentName);
+            values.stream()
+                    .sorted()
+                    .forEach(val ->
+                            builder.addData(Data.builder()
+                                    .withName(itemName)
+                                    .withValue(val)
+                                    .build()));
+            if (values.size() < count) {
+                builder.addData(Data.builder()
+                        .withName("IsListTruncated")
+                        .withValue("true")
+                        .build());
+            }
+            list.add(builder.build());
         }
     }
 

@@ -98,6 +98,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -112,6 +113,8 @@ import static stroom.meta.impl.db.jooq.tables.MetaVal.META_VAL;
 public class MetaDaoImpl implements MetaDao {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MetaDaoImpl.class);
+    private static final String GROUP_CONCAT_DELIMITER = "¬";
+    private static final Pattern GROUP_CONCAT_DELIMITER_PATTERN = Pattern.compile(GROUP_CONCAT_DELIMITER);
 
     // This is currently only used for testing so no need to put it in config,
     // unless it gets used in real code.
@@ -1547,10 +1550,16 @@ public class MetaDaoImpl implements MetaDao {
                                                 .select(
                                                         DSL.countDistinct(meta.ID),
                                                         DSL.countDistinct(metaFeed.NAME),
+                                                        DSL.groupConcatDistinct(metaFeed.NAME)
+                                                                .separator(GROUP_CONCAT_DELIMITER),
                                                         DSL.countDistinct(metaType.NAME),
+                                                        DSL.groupConcatDistinct(metaType.NAME)
+                                                                .separator(GROUP_CONCAT_DELIMITER),
                                                         DSL.countDistinct(metaProcessor.PROCESSOR_UUID),
                                                         DSL.countDistinct(metaProcessor.PIPELINE_UUID),
                                                         DSL.countDistinct(meta.STATUS),
+                                                        DSL.groupConcatDistinct(meta.STATUS)
+                                                                .separator(GROUP_CONCAT_DELIMITER),
                                                         DSL.min(meta.CREATE_TIME),
                                                         DSL.max(meta.CREATE_TIME)
                                                 )
@@ -1564,15 +1573,47 @@ public class MetaDaoImpl implements MetaDao {
                                 .where(conditions)
                                 .limit(offset, numberOfRows)
                                 .fetchOptional())
-                .map(record -> new SelectionSummary(
-                        (Integer) record.get(0),
-                        (Integer) record.get(1),
-                        (Integer) record.get(2),
-                        (Integer) record.get(3),
-                        (Integer) record.get(4),
-                        (Integer) record.get(5),
-                        new Range<>((Long) record.get(6), (Long) record.get(7))))
+                .map(record -> {
+                    final Set<String> distinctFeeds = splitGroupConcat(record.get(2, String.class));
+                    final Set<String> distinctTypes = splitGroupConcat(record.get(4, String.class));
+                    final Set<String> distinctStatuses = getDistinctStatuses(record.get(8, String.class));
+
+                    return new SelectionSummary(
+                            NullSafe.getInt(record.get(0, Integer.class)),
+                            NullSafe.getInt(record.get(1, Integer.class)),
+                            distinctFeeds,
+                            NullSafe.getInt(record.get(3, Integer.class)),
+                            distinctTypes,
+                            NullSafe.getInt(record.get(5, Integer.class)),
+                            NullSafe.getInt(record.get(6, Integer.class)),
+                            NullSafe.getInt(record.get(7, Integer.class)),
+                            distinctStatuses,
+                            new Range<>((Long) record.get(9), (Long) record.get(10)));
+                })
                 .orElse(null);
+    }
+
+    private Set<String> getDistinctStatuses(final String str) {
+        return splitGroupConcat(str)
+                .stream()
+                .map(Byte::parseByte)
+                .map(MetaStatusId::getStatus)
+                .map(Status::getDisplayValue)
+                .collect(Collectors.toSet());
+    }
+
+    private Set<String> splitGroupConcat(final String str) {
+        if (NullSafe.isEmptyString(str)) {
+            return Collections.emptySet();
+        } else {
+            // Could potentially be loads of parts so truncate to a sensible number.
+            // MySQL will also truncate the length of the returned string to
+            // 1024 (or the value of param 'group_concat_max_len')
+            final String[] parts = GROUP_CONCAT_DELIMITER_PATTERN.split(str);
+            return NullSafe.stream(parts)
+                    .limit(SelectionSummary.MAX_GROUP_CONCAT_PARTS)
+                    .collect(Collectors.toSet());
+        }
     }
 
     @Override
@@ -1598,10 +1639,16 @@ public class MetaDaoImpl implements MetaDao {
                                                 .select(
                                                         DSL.countDistinct(parent.ID),
                                                         DSL.countDistinct(parent.FEED_ID),
+                                                        DSL.groupConcatDistinct(parentFeed.NAME)
+                                                                .separator(GROUP_CONCAT_DELIMITER),
                                                         DSL.countDistinct(parent.TYPE_ID),
+                                                        DSL.groupConcatDistinct(parentType.NAME)
+                                                                .separator(GROUP_CONCAT_DELIMITER),
                                                         DSL.countDistinct(meta.PROCESSOR_ID),
                                                         DSL.countDistinct(metaProcessor.PIPELINE_UUID),
                                                         DSL.countDistinct(parent.STATUS),
+                                                        DSL.groupConcatDistinct(parent.STATUS)
+                                                                .separator(GROUP_CONCAT_DELIMITER),
                                                         DSL.min(parent.CREATE_TIME),
                                                         DSL.max(parent.CREATE_TIME)
                                                 )
@@ -1609,7 +1656,9 @@ public class MetaDaoImpl implements MetaDao {
                                                 .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
                                                 .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
                                                 .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
-                                                .leftOuterJoin(parent).on(meta.PARENT_ID.eq(parent.ID)),
+                                                .leftOuterJoin(parent).on(meta.PARENT_ID.eq(parent.ID))
+                                                .straightJoin(parentFeed).on(parent.FEED_ID.eq(parentFeed.ID))
+                                                .straightJoin(parentType).on(parent.TYPE_ID.eq(parentType.ID)),
                                         meta.ID,
                                         usedValKeys)
                                 .where(conditions)
@@ -1617,17 +1666,24 @@ public class MetaDaoImpl implements MetaDao {
                                 .and(parent.STATUS.eq(MetaStatusId.getPrimitiveValue(Status.UNLOCKED)))
                                 .limit(offset, numberOfRows)
                                 .fetchOptional())
-                .map(record -> new SelectionSummary(
-                        (Integer) record.get(0),
-                        (Integer) record.get(1),
-                        (Integer) record.get(2),
-                        (Integer) record.get(3),
-                        (Integer) record.get(4),
-                        (Integer) record.get(5),
-                        new Range<>((Long) record.get(6), (Long) record.get(7))))
+                .map(record -> {
+                    final Set<String> distinctFeeds = splitGroupConcat(record.get(2, String.class));
+                    final Set<String> distinctTypes = splitGroupConcat(record.get(4, String.class));
+                    final Set<String> distinctStatuses = getDistinctStatuses(record.get(8, String.class));
+                    return new SelectionSummary(
+                            NullSafe.getInt(record.get(0, Integer.class)),
+                            NullSafe.getInt(record.get(1, Integer.class)),
+                            distinctFeeds,
+                            NullSafe.getInt(record.get(3, Integer.class)),
+                            distinctTypes,
+                            NullSafe.getInt(record.get(5, Integer.class)),
+                            NullSafe.getInt(record.get(6, Integer.class)),
+                            NullSafe.getInt(record.get(7, Integer.class)),
+                            distinctStatuses,
+                            new Range<>((Long) record.get(9), (Long) record.get(10)));
+                })
                 .orElse(null);
     }
-
 
     @Override
     public int delete(final Collection<Long> metaIds) {
