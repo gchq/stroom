@@ -13,6 +13,10 @@ import stroom.util.shared.Document;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,6 +26,7 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@ExtendWith(MockitoExtension.class)
 class TestDocRefInfoCache {
 
     public static final String TYPE_FOO = "foo";
@@ -43,9 +48,18 @@ class TestDocRefInfoCache {
             .type(TYPE_BAR)
             .build();
 
+    public static final DocRef DOC_REF_FOLDER = DocRef.builder()
+            .randomUuid()
+            .type(FolderExplorerActionHandler.DOCUMENT_TYPE.getType())
+            .name("bongo")
+            .build();
+
     final CacheManagerImpl cacheManager = new CacheManagerImpl();
     final SecurityContext securityContext = new MockSecurityContext();
     DocRefInfoCache docRefInfoCache;
+
+    @Mock
+    private FolderExplorerActionHandler mockFolderExplorerActionHandler;
 
     @BeforeEach
     void setUp() {
@@ -58,12 +72,28 @@ class TestDocRefInfoCache {
                 cacheManager,
                 ExplorerConfig::new,
                 securityContext,
-                () -> documentActionHandlers);
+                () -> documentActionHandlers,
+                mockFolderExplorerActionHandler);
     }
 
     @Test
     void testGet() {
         final DocRef docRef = DOC_REF_1;
+        final Optional<DocRefInfo> docRefInfo = docRefInfoCache.get(docRef);
+
+        assertThat(docRefInfo)
+                .isNotEmpty();
+        assertThat(docRefInfo.get().getDocRef())
+                .isEqualTo(docRef);
+        assertThat(docRefInfoCache.get(docRef.getUuid()))
+                .isEqualTo(docRefInfoCache.get(docRef));
+    }
+
+    @Test
+    void testGet_folder() {
+        final DocRef docRef = DOC_REF_FOLDER;
+        Mockito.when(mockFolderExplorerActionHandler.info(Mockito.eq(docRef.getUuid())))
+                .thenReturn(buildInfo(docRef));
         final Optional<DocRefInfo> docRefInfo = docRefInfoCache.get(docRef);
 
         assertThat(docRefInfo)
@@ -98,6 +128,22 @@ class TestDocRefInfoCache {
     }
 
     @Test
+    void testGet_noType_folder() {
+        final DocRef docRef = DOC_REF_FOLDER;
+        Mockito.when(mockFolderExplorerActionHandler.info(Mockito.eq(docRef.getUuid())))
+                .thenReturn(buildInfo(docRef));
+
+        Optional<DocRefInfo> docRefInfo = docRefInfoCache.get(stripType(docRef));
+
+        assertThat(docRefInfo)
+                .isNotEmpty();
+        assertThat(docRefInfo.get().getDocRef())
+                .isEqualTo(docRef);
+        assertThat(docRefInfoCache.get(docRef.getUuid()))
+                .isEqualTo(docRefInfoCache.get(docRef));
+    }
+
+    @Test
     void testGet_noName() {
         DocRef docRef = DOC_REF_1;
         final Optional<DocRefInfo> docRefInfo = docRefInfoCache.get(docRef.withoutName());
@@ -112,6 +158,18 @@ class TestDocRefInfoCache {
         return docRef.copy()
                 .type(null)
                 .build();
+    }
+
+    private static DocRefInfo buildInfo(final DocRef docRef) {
+        return NullSafe.get(
+                docRef,
+                docRef2 -> new DocRefInfo(
+                        docRef2,
+                        System.currentTimeMillis(),
+                        System.currentTimeMillis(),
+                        "user1",
+                        "user1",
+                        null));
     }
 
 
@@ -151,15 +209,7 @@ class TestDocRefInfoCache {
 
         @Override
         public DocRefInfo info(final String uuid) {
-            return NullSafe.get(
-                    docRefs.get(uuid),
-                    docRef -> new DocRefInfo(
-                            docRef,
-                            System.currentTimeMillis(),
-                            System.currentTimeMillis(),
-                            "user1",
-                            "user1",
-                            null));
+            return NullSafe.get(docRefs.get(uuid), TestDocRefInfoCache::buildInfo);
         }
     }
 }

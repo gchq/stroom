@@ -53,15 +53,18 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
     private final SecurityContext securityContext;
     // Provider to avoid circular guice dependency issue
     private final Provider<DocumentActionHandlers> documentActionHandlersProvider;
+    private final FolderExplorerActionHandler folderExplorerActionHandler;
 
 
     @Inject
     DocRefInfoCache(final CacheManager cacheManager,
                     final Provider<ExplorerConfig> explorerConfigProvider,
                     final SecurityContext securityContext,
-                    final Provider<DocumentActionHandlers> documentActionHandlersProvider) {
+                    final Provider<DocumentActionHandlers> documentActionHandlersProvider,
+                    final FolderExplorerActionHandler folderExplorerActionHandler) {
         this.securityContext = securityContext;
         this.documentActionHandlersProvider = documentActionHandlersProvider;
+        this.folderExplorerActionHandler = folderExplorerActionHandler;
 
         cache = cacheManager.createLoadingCache(
                 CACHE_NAME,
@@ -76,34 +79,51 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
             docRefInfo = securityContext.asProcessingUserResult(() -> {
                 final DocRef docRef = docRefCacheKey.getDocRef();
                 if (docRef.getType() != null) {
-                    final DocumentActionHandler<?> handler = documentActionHandlersProvider.get()
-                            .getHandler(docRef.getType());
-                    if (handler == null) {
-                        return null;
-                    }
-                    return handler.info(docRef.getUuid());
+                    return getDocRefInfoWithType(docRef);
                 } else {
-                    final String uuid = docRef.getUuid();
-                    // No type so need to check all handlers and return the one that has it.
-                    // Hopefully next time it will still be in the cache so this won't be needed
-                    final Optional<DocRefInfo> optInfo = documentActionHandlersProvider.get()
-                            .stream()
-                            .map(handler -> {
-                                try {
-                                    return handler.info(uuid);
-                                } catch (DocumentNotFoundException e) {
-                                    return null;
-                                }
-                            })
-                            .filter(Objects::nonNull)
-                            .findAny();
-                    return optInfo.orElse(null);
+                    return getDocRefInfoWithoutType(docRef);
                 }
             });
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
         }
         return Optional.ofNullable(docRefInfo);
+    }
+
+    private DocRefInfo getDocRefInfoWithoutType(final DocRef docRef) {
+        final String uuid = docRef.getUuid();
+        // No type so need to check all handlers and return the one that has it.
+        // Hopefully next time it will still be in the cache so this won't be needed
+        final Optional<DocRefInfo> optInfo = documentActionHandlersProvider.get()
+                .stream()
+                .map(handler -> {
+                    try {
+                        return handler.info(uuid);
+                    } catch (DocumentNotFoundException e) {
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .findAny();
+
+        return optInfo
+                .or(() ->
+                        Optional.ofNullable(folderExplorerActionHandler.info(uuid)))
+                .orElse(null);
+    }
+
+    private DocRefInfo getDocRefInfoWithType(final DocRef docRef) {
+        if (docRef.getType().equals(FolderExplorerActionHandler.DOCUMENT_TYPE.getType())) {
+            // Special case for folders as they are not Documents.
+            return folderExplorerActionHandler.info(docRef.getUuid());
+        } else {
+            final DocumentActionHandler<?> handler = documentActionHandlersProvider.get()
+                    .getHandler(docRef.getType());
+            if (handler == null) {
+                return null;
+            }
+            return handler.info(docRef.getUuid());
+        }
     }
 
     Optional<DocRefInfo> get(final DocRef docRef) {
