@@ -13,6 +13,39 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.3-beta.15] - 2024-04-10
+
+* Issue **#4172** : Fix NPE when running an empty sQL query.
+
+* Issue **#4168** : Increase width of Id column on Annotations Linked Events dialog. Also increase size of dialog and the width of the left hand split pane.
+
+* Issue **#3998** : Clear visualisations when no data is returned rather than showing `no data`.
+
+* Issue **#4179** : Add text input control to dashboards.
+
+* Issue **#4151** : Prevent runaway creation of index shards when there are file system problems.
+
+* Issue **#4035** : Fix nasty error when changing permissions of a pipeline filter.
+
+* Issue **#4142** : Index shards now cope with field changes.
+
+* Issue **#4183** : Fix processor filter edit.
+
+* Issue **#4190** : Make MapDataStore sort and trim settings configurable.
+
+* Issue **#4192** : Fix NPE when selecting Info context menu item for any folder.
+
+* Issue **#4178** : Change the Info popup so that you can click Info for another entity and it will just update the popup content without hiding it.
+
+* Issue **#4196** : Fix warning message when the byte buffer pool hits its threshold.
+
+* Issue **#4175** : Fix `Batch module not found` error when sending emails.
+
+* Issue **#4199** : Fix internal statistics error when a pipeline is owned by a user with limited privileges.
+
+* Issue **#4195** : Fix SQL deadlock with dynamic index fields.
+
+
 ## [v7.3-beta.14] - 2024-03-20
 
 * Issue **#4169** : Fix index field `Positions` setting not being passed through to Lucene resulting in corrupt shards.
@@ -386,7 +419,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.14...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.15...HEAD
+[v7.3-beta.15]: https://github.com/gchq/stroom/compare/v7.3-beta.14...v7.3-beta.15
 [v7.3-beta.14]: https://github.com/gchq/stroom/compare/v7.3-beta.13...v7.3-beta.14
 [v7.3-beta.13]: https://github.com/gchq/stroom/compare/v7.3-beta.12...v7.3-beta.13
 [v7.3-beta.12]: https://github.com/gchq/stroom/compare/v7.3-beta.11...v7.3-beta.12
