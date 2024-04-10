@@ -82,6 +82,20 @@ class Structures {
                         ```
                         """,
                 "where ${1:field} ${2:=} ${3:value}\n$0");
+        add(list, "window",
+                """
+                        Create windowed data, e.g.
+                        ```stroomql
+                        window EventTime by 1y
+                        ```
+                        This will create counts for grouped rows per year plus the previous year.
+                                          
+                        ```stroomql
+                        window EventTime by 1y advance 1m
+                        ```
+                        This will create counts for grouped rows for each year long period every month and will include the previous 12 months.
+                        """,
+                "window ${1:field} by ${2:period} advance ${3:adv_value}\n$0");
         add(list, "filter",
                 """
                         Use filter to filter values that have not been indexed during search retrieval.
@@ -184,6 +198,22 @@ class Structures {
                         ```
                         """,
                 "sort by ${1:field(s)}$0");
+        add(list, "having",
+                """
+                        Apply a post aggregate filter to data, e.g.
+                        ```stroomql
+                        having count > 3
+                        ```
+                        """,
+                "having ${1:field} ${2:=} ${3:value}\n$0");
+        add(list, "limit",
+                """
+                        Limit the number of results, e.g.
+                        ```stroomql
+                        limit 10
+                        ```
+                        """,
+                "limit ${1:count}\n$0");
         add(list, "select",
                 """
                         Select the columns to display in the table output, e.g.
@@ -198,36 +228,15 @@ class Structures {
                         ```
                         """,
                 "select ${1:field(s)}$0");
-        add(list, "limit",
+        add(list, "vis as",
                 """
-                        Limit the number of results, e.g.
+                        Visualise the selected data using a Stroom visualisation, e.g.
                         ```stroomql
-                        limit 10
+                        vis as LineChart (x = EventTime, y = count)
+                        vis as Doughnut (names = Feed, values = count)
                         ```
                         """,
-                "limit ${1:count}\n$0");
-        add(list, "window",
-                """
-                        Create windowed data, e.g.
-                        ```stroomql
-                        window EventTime by 1y
-                        ```
-                        This will create counts for grouped rows per year plus the previous year.
-                                          
-                        ```stroomql
-                        window EventTime by 1y advance 1m
-                        ```
-                        This will create counts for grouped rows for each year long period every month and will include the previous 12 months.
-                        """,
-                "window ${1:field} by ${2:period} advance ${3:adv_value}\n$0");
-        add(list, "having",
-                """
-                        Apply a post aggregate filter to data, e.g.
-                        ```stroomql
-                        having count > 3
-                        ```
-                        """,
-                "having ${1:field} ${2:=} ${3:value}\n$0");
+                "vis as ${1:vis_name} (${2:vis_control_id} = ${3:column}, ${2:vis_control_id} = ${3:column})\n$0");
     }
 
     private void add(final List<QueryHelpRow> list, final String title, final String detail, final String... snippets) {

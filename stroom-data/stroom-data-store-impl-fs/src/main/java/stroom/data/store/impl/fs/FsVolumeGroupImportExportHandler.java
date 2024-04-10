@@ -2,12 +2,14 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.docref.DocRef;
+import stroom.docref.DocRefInfo;
 import stroom.docref.HasDocRef;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.api.NonExplorerDocRefProvider;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.util.NullSafe;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Message;
 
 import jakarta.inject.Inject;
@@ -15,6 +17,7 @@ import jakarta.inject.Inject;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -72,22 +75,37 @@ public class FsVolumeGroupImportExportHandler
     }
 
     @Override
-    public String findNameOfDocRef(final DocRef docRef) {
-        return NullSafe.get(docRef, DocRef::getName);
+    public DocRefInfo info(final String uuid) {
+        final DocRef docRef = FsVolumeGroup.buildDocRef()
+                .uuid(uuid)
+                .build();
+        return Optional.ofNullable(fsVolumeGroupService.get(docRef))
+                .map(fsVolumeGroup ->
+                        DocRefInfo.builder()
+                                .docRef(fsVolumeGroup.asDocRef())
+                                .createTime(fsVolumeGroup.getCreateTimeMs())
+                                .createUser(fsVolumeGroup.getCreateUser())
+                                .updateTime(fsVolumeGroup.getUpdateTimeMs())
+                                .updateUser(fsVolumeGroup.getUpdateUser())
+                                .build())
+                .orElseThrow(() -> new IllegalArgumentException(LogUtil.message(
+                        "FS Volume Group with UUID {} not found", uuid)));
     }
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
+        // No deps
         return Collections.emptyMap();
     }
 
     @Override
     public Set<DocRef> getDependencies(final DocRef docRef) {
+        // No deps
         return Collections.emptySet();
     }
 
     @Override
     public void remapDependencies(final DocRef docRef, final Map<DocRef, DocRef> remappings) {
-        // Nothing to remap
+        // No deps
     }
 }

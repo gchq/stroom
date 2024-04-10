@@ -21,13 +21,15 @@ import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.meta.shared.MetaFields;
 import stroom.util.io.ByteCountOutputStream;
-import stroom.util.scheduler.SimpleCron;
+import stroom.util.scheduler.Trigger;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 public class RollingStreamDestination extends RollingDestination {
+
     private final Store streamStore;
     private final Target streamTarget;
     private final String nodeName;
@@ -36,14 +38,14 @@ public class RollingStreamDestination extends RollingDestination {
     private final boolean segmentOutput;
 
     public RollingStreamDestination(final StreamKey key,
-                                    final Long frequency,
-                                    final SimpleCron schedule,
+                                    final Trigger frequencyTrigger,
+                                    final Trigger cronTrigger,
                                     final long rollSize,
-                                    final long creationTime,
+                                    final Instant creationTime,
                                     final Store streamStore,
                                     final Target streamTarget,
                                     final String nodeName) {
-        super(key, frequency, schedule, rollSize, creationTime);
+        super(key, frequencyTrigger, cronTrigger, rollSize, creationTime);
 
         this.streamStore = streamStore;
         this.streamTarget = streamTarget;
@@ -79,7 +81,7 @@ public class RollingStreamDestination extends RollingDestination {
     @Override
     protected void afterRoll(final Consumer<Throwable> exceptionConsumer) {
         try {
-            streamTarget.getAttributes().put(MetaFields.REC_WRITE.getName(), recordCount.toString());
+            streamTarget.getAttributes().put(MetaFields.REC_WRITE.getFldName(), recordCount.toString());
             streamTarget.close();
         } catch (final IOException e) {
             throw new RuntimeException(e.getMessage(), e);

@@ -5,6 +5,8 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.popup.client.presenter.Position;
+import stroom.widget.popup.client.presenter.PositionUtil;
 import stroom.widget.popup.client.presenter.Size;
 import stroom.widget.util.client.Rect;
 
@@ -108,13 +110,32 @@ public class PopupUtil {
                         popupPanel.setHeight(newHeight + "px");
                     }
 
+//                    if (popupPosition == null) {
+//                        // Center the popup in the client window.
+//                        centerPopup(popup, newWidth, newHeight);
+//                    } else {
+//                        // Position the popup so it is as close as possible to
+//                        // the required location but is all on screen.
+//                        positionPopup(popup, popupType, popupPosition, newWidth, newHeight);
+//                    }
                     if (popupPosition == null) {
                         // Center the popup in the client window.
-                        centerPopup(popup, newWidth, newHeight);
+                        final Position position = PositionUtil.center(newWidth, newHeight);
+                        popup.setPopupPosition((int) position.getLeft(), (int) position.getTop());
+
                     } else {
                         // Position the popup so it is as close as possible to
                         // the required location but is all on screen.
-                        positionPopup(popup, popupType, popupPosition, newWidth, newHeight);
+                        int shadowWidth = 0;
+                        if (popupType != PopupType.POPUP) {
+                            shadowWidth = POPUP_SHADOW_WIDTH;
+                        }
+
+                        final Position position = PositionUtil.getPosition(shadowWidth,
+                                popupPosition,
+                                newWidth,
+                                newHeight);
+                        popup.setPopupPosition((int) position.getLeft(), (int) position.getTop());
                     }
 
                     // Make the popup visible.

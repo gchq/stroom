@@ -41,6 +41,7 @@ public class ExtendedUiConfig {
     @JsonPropertyDescription("The maximum expiry age for new API keys in millis. Defaults to 365 days.")
     private final long maxApiKeyExpiryAgeMs;
 
+
     public ExtendedUiConfig() {
         this.externalIdentityProvider = false;
         this.uiConfig = new UiConfig();

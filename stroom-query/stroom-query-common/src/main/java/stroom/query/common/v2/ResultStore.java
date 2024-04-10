@@ -66,7 +66,8 @@ public class ResultStore {
                        final String createUser,
                        final CoprocessorsImpl coprocessors,
                        final String nodeName,
-                       final ResultStoreSettings resultStoreSettings) {
+                       final ResultStoreSettings resultStoreSettings,
+                       final MapDataStoreFactory mapDataStoreFactory) {
         this.searchRequestSource = searchRequestSource;
         this.coprocessors = coprocessors;
         this.userUuid = userUuid;
@@ -75,7 +76,11 @@ public class ResultStore {
         lastAccessTime = creationTime;
         this.nodeName = nodeName;
         this.resultStoreSettings = resultStoreSettings;
-        searchResponseCreator = new SearchResponseCreator(sizesProvider, this, coprocessors.getExpressionContext());
+        searchResponseCreator = new SearchResponseCreator(
+                sizesProvider,
+                this,
+                coprocessors.getExpressionContext(),
+                mapDataStoreFactory);
     }
 
     public Map<String, ResultCreator> makeDefaultResultCreators(final SearchRequest searchRequest) {

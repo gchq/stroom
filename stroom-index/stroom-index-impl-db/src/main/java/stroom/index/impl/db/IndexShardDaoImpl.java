@@ -1,9 +1,6 @@
 package stroom.index.impl.db;
 
-import stroom.datasource.api.v2.QueryField;
 import stroom.db.util.ExpressionMapper;
-import stroom.db.util.ExpressionMapper.Converter;
-import stroom.db.util.ExpressionMapper.MultiConverter;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
@@ -16,12 +13,12 @@ import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.db.jooq.tables.records.IndexShardRecord;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardFields;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.Partition;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionUtil;
@@ -33,8 +30,6 @@ import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
 import stroom.util.shared.ResultPage;
@@ -48,6 +43,7 @@ import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Result;
+import org.jooq.impl.DSL;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -56,7 +52,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -67,8 +62,6 @@ import static stroom.index.impl.db.jooq.tables.IndexVolume.INDEX_VOLUME;
 
 @Singleton // holding all the volume selectors
 class IndexShardDaoImpl implements IndexShardDao {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardDaoImpl.class);
 
     private static final Function<Record, IndexShard> RECORD_TO_INDEX_SHARD_MAPPER = record -> {
         final IndexShard indexShard = new IndexShard();
@@ -209,11 +202,12 @@ class IndexShardDaoImpl implements IndexShardDao {
         final Condition condition = indexShardExpressionMapper.apply(criteria.getExpression());
 
         final boolean volumeUsed = isUsed(
-                Set.of(IndexShardFields.FIELD_VOLUME_PATH.getName(), IndexShardFields.FIELD_VOLUME_GROUP.getName()),
+                Set.of(IndexShardFields.FIELD_VOLUME_PATH.getFldName(),
+                        IndexShardFields.FIELD_VOLUME_GROUP.getFldName()),
                 fieldNames,
                 criteria);
         final boolean volumeGroupUsed = isUsed(
-                Set.of(IndexShardFields.FIELD_VOLUME_GROUP.getName()),
+                Set.of(IndexShardFields.FIELD_VOLUME_GROUP.getFldName()),
                 fieldNames,
                 criteria);
 
@@ -288,18 +282,30 @@ class IndexShardDaoImpl implements IndexShardDao {
     }
 
     @Override
-    public void delete(final Long id) {
-        genericDao.delete(id);
+    public boolean delete(final Long id) {
+        return genericDao.delete(id);
     }
 
     @Override
-    public void setStatus(final Long id,
-                          final IndexShard.IndexShardStatus status) {
-        JooqUtil.context(indexDbConnProvider, context -> context
+    public boolean setStatus(final Long id,
+                             final IndexShardStatus status) {
+        final Condition currentStateCondition = switch (status) {
+            case NEW -> DSL.falseCondition();
+            case OPENING -> INDEX_SHARD.STATUS.eq(IndexShardStatus.CLOSED.getPrimitiveValue())
+                    .or(INDEX_SHARD.STATUS.eq(IndexShardStatus.NEW.getPrimitiveValue()));
+            case OPEN -> INDEX_SHARD.STATUS.eq(IndexShardStatus.OPENING.getPrimitiveValue());
+            case CLOSING -> INDEX_SHARD.STATUS.eq(IndexShardStatus.OPEN.getPrimitiveValue());
+            case CLOSED -> INDEX_SHARD.STATUS.eq(IndexShardStatus.CLOSING.getPrimitiveValue());
+            case DELETED -> DSL.trueCondition();
+            case CORRUPT -> INDEX_SHARD.STATUS.ne(IndexShardStatus.DELETED.getPrimitiveValue());
+        };
+
+        return JooqUtil.contextResult(indexDbConnProvider, context -> context
                 .update(INDEX_SHARD)
                 .set(INDEX_SHARD.STATUS, status.getPrimitiveValue())
                 .where(INDEX_SHARD.ID.eq(id))
-                .execute());
+                .and(currentStateCondition)
+                .execute()) > 0;
     }
 
     @Override
@@ -360,7 +366,7 @@ class IndexShardDaoImpl implements IndexShardDao {
         private Val getDocRefName(final String uuid) {
             String val = uuid;
             if (docRefInfoService != null) {
-                val = docRefInfoService.name(new DocRef(IndexDoc.DOCUMENT_TYPE, uuid))
+                val = docRefInfoService.name(new DocRef(LuceneIndexDoc.DOCUMENT_TYPE, uuid))
                         .orElse(uuid);
             }
             return ValString.create(val);
@@ -391,8 +397,6 @@ class IndexShardDaoImpl implements IndexShardDao {
         private final ExpressionMapper expressionMapper;
         private final IndexStore indexStore;
 
-        private final Map<String, List<String>> indexNameToUuidsMap = new ConcurrentHashMap<>();
-
         @Inject
         private IndexShardExpressionMapper(final ExpressionMapperFactory expressionMapperFactory,
                                            final IndexStore indexStore) {
@@ -410,7 +414,7 @@ class IndexShardDaoImpl implements IndexShardDao {
             expressionMapper.map(IndexShardFields.FIELD_STATUS, INDEX_SHARD.STATUS, value ->
                     IndexShardStatus.fromDisplayValue(value).getPrimitiveValue());
             expressionMapper.map(IndexShardFields.FIELD_LAST_COMMIT, INDEX_SHARD.COMMIT_MS, value ->
-                    DateExpressionParser.getMs(IndexShardFields.FIELD_LAST_COMMIT.getName(), value));
+                    DateExpressionParser.getMs(IndexShardFields.FIELD_LAST_COMMIT.getFldName(), value));
             expressionMapper.map(IndexShardFields.FIELD_VOLUME_PATH, INDEX_VOLUME.PATH, value -> value);
             expressionMapper.map(IndexShardFields.FIELD_VOLUME_GROUP, INDEX_VOLUME_GROUP.NAME, value -> value);
         }
@@ -420,34 +424,6 @@ class IndexShardDaoImpl implements IndexShardDao {
                     .stream()
                     .map(DocRef::getUuid)
                     .collect(Collectors.toList());
-        }
-
-        public <T> void map(final QueryField dataSourceField,
-                            final Field<T> field,
-                            final Converter<T> converter) {
-            expressionMapper.map(dataSourceField, field, converter);
-        }
-
-        public <T> void map(final QueryField dataSourceField,
-                            final Field<T> field,
-                            final Converter<T> converter, final boolean useName) {
-            expressionMapper.map(dataSourceField, field, converter, useName);
-        }
-
-        public <T> void multiMap(final QueryField dataSourceField,
-                                 final Field<T> field,
-                                 final MultiConverter<T> converter) {
-            expressionMapper.multiMap(dataSourceField, field, converter);
-        }
-
-        public <T> void multiMap(final QueryField dataSourceField,
-                                 final Field<T> field,
-                                 final MultiConverter<T> converter, final boolean useName) {
-            expressionMapper.multiMap(dataSourceField, field, converter, useName);
-        }
-
-        public void ignoreField(final QueryField dataSourceField) {
-            expressionMapper.ignoreField(dataSourceField);
         }
 
         public Condition apply(final ExpressionItem expressionItem) {

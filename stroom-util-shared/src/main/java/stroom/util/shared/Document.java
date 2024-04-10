@@ -16,9 +16,8 @@
 
 package stroom.util.shared;
 
-import stroom.docref.HasType;
-import stroom.docref.HasUuid;
+import stroom.docref.HasDocRef;
 
-public interface Document extends HasType, HasUuid {
+public interface Document extends HasDocRef, HasAuditInfo {
 
 }

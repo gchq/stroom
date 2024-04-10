@@ -1,7 +1,7 @@
 package stroom.search.elastic.suggest;
 
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FieldType;
+import stroom.datasource.api.v2.QueryField;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.Suggestions;
 import stroom.search.elastic.ElasticClientCache;
@@ -86,27 +86,27 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
     private Suggestions querySuggestions(final FetchSuggestionsRequest request,
                                           final ElasticIndexDoc elasticIndex,
                                           final RestHighLevelClient elasticClient) {
-        final FieldInfo field = request.getField();
+        final QueryField field = request.getField();
         final String query = request.getText();
 
         try {
             if (!elasticSuggestConfigProvider.get().getEnabled() || query == null || query.length() == 0) {
                 return Suggestions.EMPTY;
             }
-            if (!(FieldType.TEXT.equals(field.getFieldType()) || FieldType.KEYWORD.equals(field.getFieldType()))) {
+            if (!(FieldType.TEXT.equals(field.getFldType()) || FieldType.KEYWORD.equals(field.getFldType()))) {
                 // Only generate suggestions for text and keyword fields
                 return Suggestions.EMPTY;
             }
 
             final SuggestionBuilder<TermSuggestionBuilder> termSuggestionBuilder = SuggestBuilders
-                    .termSuggestion(field.getFieldName())
+                    .termSuggestion(field.getFldName())
                     .suggestMode(SuggestMode.ALWAYS)
                     .minWordLength(3)
                     .text(query);
             final SuggestBuilder suggestBuilder = new SuggestBuilder()
                     .addSuggestion("suggest", termSuggestionBuilder);
             final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder()
-                    .fetchField(field.getFieldName())
+                    .fetchField(field.getFldName())
                     .suggest(suggestBuilder);
             final SearchRequest searchRequest = new SearchRequest(elasticIndex.getIndexName())
                     .source(searchSourceBuilder);
@@ -121,7 +121,7 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
                     .map(option -> option.getText().string())
                     .collect(Collectors.toList()));
         } catch (IOException | RuntimeException e) {
-            LOGGER.error(() -> "Failed to retrieve search suggestions for field: " + field.getFieldName() +
+            LOGGER.error(() -> "Failed to retrieve search suggestions for field: " + field.getFldName() +
                     ". " + e.getMessage(), e);
             return Suggestions.EMPTY;
         }

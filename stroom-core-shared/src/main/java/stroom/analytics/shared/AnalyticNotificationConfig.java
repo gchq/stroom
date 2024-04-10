@@ -16,6 +16,7 @@
 
 package stroom.analytics.shared;
 
+import stroom.docref.DocRef;
 import stroom.util.shared.time.SimpleDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -40,19 +41,23 @@ public class AnalyticNotificationConfig {
     private final AnalyticNotificationDestinationType destinationType;
     @JsonProperty
     private final AnalyticNotificationDestination destination;
+    @JsonProperty
+    private final DocRef errorFeed;
 
+    @SuppressWarnings("checkstyle:lineLength")
     @JsonCreator
     public AnalyticNotificationConfig(@JsonProperty("limitNotifications") final boolean limitNotifications,
                                       @JsonProperty("maxNotifications") final int maxNotifications,
                                       @JsonProperty("resumeAfter") final SimpleDuration resumeAfter,
-                                      @JsonProperty("destinationType")
-                                          final AnalyticNotificationDestinationType destinationType,
-                                      @JsonProperty("destination") final AnalyticNotificationDestination destination) {
+                                      @JsonProperty("destinationType") final AnalyticNotificationDestinationType destinationType,
+                                      @JsonProperty("destination") final AnalyticNotificationDestination destination,
+                                      @JsonProperty("errorFeed") final DocRef errorFeed) {
         this.limitNotifications = limitNotifications;
         this.maxNotifications = maxNotifications;
         this.resumeAfter = resumeAfter;
         this.destinationType = destinationType;
         this.destination = destination;
+        this.errorFeed = errorFeed;
     }
 
     public boolean isLimitNotifications() {
@@ -75,6 +80,10 @@ public class AnalyticNotificationConfig {
         return destination;
     }
 
+    public DocRef getErrorFeed() {
+        return errorFeed;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -88,12 +97,19 @@ public class AnalyticNotificationConfig {
                 maxNotifications == config.maxNotifications &&
                 Objects.equals(resumeAfter, config.resumeAfter) &&
                 Objects.equals(destinationType, config.destinationType) &&
-                Objects.equals(destination, config.destination);
+                Objects.equals(destination, config.destination) &&
+                Objects.equals(errorFeed, config.errorFeed);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(limitNotifications, maxNotifications, resumeAfter, destinationType, destination);
+        return Objects.hash(
+                limitNotifications,
+                maxNotifications,
+                resumeAfter,
+                destinationType,
+                destination,
+                errorFeed);
     }
 
     @Override
@@ -104,6 +120,7 @@ public class AnalyticNotificationConfig {
                 ", resumeAfter=" + resumeAfter +
                 ", destinationType=" + destinationType +
                 ", destination=" + destination +
+                ", errorFeed=" + errorFeed +
                 '}';
     }
 
@@ -115,6 +132,10 @@ public class AnalyticNotificationConfig {
         return new Builder(this);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Builder {
 
         private boolean limitNotifications;
@@ -122,6 +143,7 @@ public class AnalyticNotificationConfig {
         private SimpleDuration resumeAfter;
         private AnalyticNotificationDestinationType destinationType;
         private AnalyticNotificationDestination destination;
+        private DocRef errorFeed;
 
         public Builder() {
         }
@@ -132,6 +154,7 @@ public class AnalyticNotificationConfig {
             this.resumeAfter = doc.resumeAfter;
             this.destinationType = doc.destinationType;
             this.destination = doc.destination;
+            this.errorFeed = doc.errorFeed;
         }
 
         public Builder limitNotifications(final boolean limitNotifications) {
@@ -159,13 +182,19 @@ public class AnalyticNotificationConfig {
             return this;
         }
 
+        public Builder errorFeed(final DocRef errorFeed) {
+            this.errorFeed = errorFeed;
+            return this;
+        }
+
         public AnalyticNotificationConfig build() {
             return new AnalyticNotificationConfig(
                     limitNotifications,
                     maxNotifications,
                     resumeAfter,
                     destinationType,
-                    destination);
+                    destination,
+                    errorFeed);
         }
     }
 }

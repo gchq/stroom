@@ -23,7 +23,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
@@ -190,14 +189,14 @@ public class StatisticsCustomMaskListPresenter extends DocumentEditPresenter<Pag
                         "permutations for the field list?",
                 result -> {
                     if (result) {
-                        final Rest<List<CustomRollUpMask>> rest = restFactory.create();
-                        rest
+                        restFactory
+                                .create(STATISTIC_ROLLUP_RESOURCE)
+                                .method(res -> res.bitMaskPermGeneration(statisticsDataSource.getStatisticFieldCount()))
                                 .onSuccess(res -> {
                                     updateState(new HashSet<>(res));
                                     DirtyEvent.fire(thisInstance, true);
                                 })
-                                .call(STATISTIC_ROLLUP_RESOURCE)
-                                .bitMaskPermGeneration(statisticsDataSource.getStatisticFieldCount());
+                                .exec();
                     }
                 });
     }
@@ -282,17 +281,16 @@ public class StatisticsCustomMaskListPresenter extends DocumentEditPresenter<Pag
                                        final StatisticsDataSourceData newStatisticsDataSourceData) {
         // grab the mask list from this presenter
         oldStatisticsDataSourceData.setCustomRollUpMasks(new HashSet<>(maskList.getMasks()));
-
-        final Rest<StatisticsDataSourceData> rest = restFactory.create();
-        rest
+        restFactory
+                .create(STATISTIC_ROLLUP_RESOURCE)
+                .method(res -> res.fieldChange(new StatisticsDataSourceFieldChangeRequest(oldStatisticsDataSourceData,
+                        newStatisticsDataSourceData)))
                 .onSuccess(result -> {
                     newStatisticsDataSourceData.setCustomRollUpMasks(result.getCustomRollUpMasks());
 
                     updateState(result.getCustomRollUpMasks());
                 })
-                .call(STATISTIC_ROLLUP_RESOURCE)
-                .fieldChange(new StatisticsDataSourceFieldChangeRequest(oldStatisticsDataSourceData,
-                        newStatisticsDataSourceData));
+                .exec();
     }
 
     /**

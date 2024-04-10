@@ -200,6 +200,12 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     }
 
     @Override
+    public Optional<ProcessorFilter> fetchByUuid(final String uuid) {
+        return securityContext.secureResult(PERMISSION, () ->
+                processorFilterDao.fetchByUuid(uuid));
+    }
+
+    @Override
     public ProcessorFilter update(final ProcessorFilter processorFilter) {
         // Check the user has update permissions on the pipeline.
         if (!securityContext.hasDocumentPermission(
@@ -285,7 +291,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
             if (!processorIds.isBlank()) {
                 final ExpressionOperator processorExpression = ExpressionOperator.builder()
-                        .addTerm(ProcessorFields.ID.getName(), Condition.IN, processorIds)
+                        .addTerm(ProcessorFields.ID.getFldName(), Condition.IN, processorIds)
                         .build();
                 final ResultPage<Processor> streamProcessors = processorService.find(new ExpressionCriteria(
                         processorExpression));
@@ -440,7 +446,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
         // First try to find the associated processors
         final ExpressionOperator processorExpression = ExpressionOperator.builder()
-                .addTerm(ProcessorFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef).build();
+                .addDocRefTerm(ProcessorFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef).build();
         ResultPage<Processor> processorResultPage = processorService.find(new ExpressionCriteria(processorExpression));
         if (processorResultPage.size() == 0) {
             return new ResultPage<>(new ArrayList<>());
@@ -450,7 +456,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         // Now find all the processor filters
         for (Processor processor : processorResultPage.getValues()) {
             final ExpressionOperator filterExpression = ExpressionOperator.builder()
-                    .addTerm(ProcessorFilterFields.PROCESSOR_ID,
+                    .addIdTerm(ProcessorFilterFields.PROCESSOR_ID,
                             ExpressionTerm.Condition.EQUALS,
                             processor.getId()).build();
             ResultPage<ProcessorFilter> filterResultPage = find(new ExpressionCriteria(filterExpression));
@@ -542,8 +548,8 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         int priority = defaultPriority;
 
         final ExpressionOperator filterExpression = ExpressionOperator.builder()
-                .addTerm(ProcessorFilterFields.PROCESSOR_ID, ExpressionTerm.Condition.EQUALS, processor.getId())
-                .addTerm(ProcessorFilterFields.DELETED, ExpressionTerm.Condition.EQUALS, false)
+                .addIdTerm(ProcessorFilterFields.PROCESSOR_ID, ExpressionTerm.Condition.EQUALS, processor.getId())
+                .addBooleanTerm(ProcessorFilterFields.DELETED, ExpressionTerm.Condition.EQUALS, false)
                 .build();
         final List<ProcessorFilter> list = processorFilterDao.find(
                 new ExpressionCriteria(filterExpression)).getValues();

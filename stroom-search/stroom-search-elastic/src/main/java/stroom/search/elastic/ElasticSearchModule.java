@@ -21,6 +21,7 @@ import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.SearchProvider;
 import stroom.search.elastic.indexing.ElasticIndexingElementModule;
 import stroom.search.elastic.search.ElasticIndexQueryResourceImpl;
@@ -38,8 +39,6 @@ import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
-
-import static stroom.job.api.Schedule.ScheduleType.CRON;
 
 public class ElasticSearchModule extends AbstractModule {
 
@@ -102,6 +101,8 @@ public class ElasticSearchModule extends AbstractModule {
                 .addBinding(ElasticSearchProvider.class);
         GuiceUtil.buildMultiBinder(binder(), SearchProvider.class)
                 .addBinding(ElasticSearchProvider.class);
+        GuiceUtil.buildMultiBinder(binder(), IndexFieldProvider.class)
+                .addBinding(ElasticSearchProvider.class);
 
         // Server tasks
 
@@ -110,7 +111,7 @@ public class ElasticSearchModule extends AbstractModule {
                         .name("Elastic Index Retention")
                         .description("Logically delete indexed documents in Elasticsearch indexes based on the " +
                                 "specified deletion query")
-                        .schedule(CRON, "0 2 *"));
+                        .cronSchedule("0 0 2 * * ?"));
     }
 
     private static class DataRetention extends RunnableWrapper {

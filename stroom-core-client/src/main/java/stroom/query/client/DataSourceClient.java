@@ -1,7 +1,7 @@
 package stroom.query.client;
 
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.datasource.shared.DataSourceResource;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -29,18 +29,17 @@ public class DataSourceClient {
     }
 
     public void findFields(final FindFieldInfoCriteria findFieldInfoCriteria,
-                           final Consumer<ResultPage<FieldInfo>> consumer) {
+                           final Consumer<ResultPage<QueryField>> consumer) {
         restFactory
-                .builder()
-                .forResultPageOf(FieldInfo.class)
+                .create(DATA_SOURCE_RESOURCE)
+                .method(res -> res.findFields(findFieldInfoCriteria))
                 .onSuccess(consumer)
-                .call(DATA_SOURCE_RESOURCE)
-                .findFields(findFieldInfoCriteria);
+                .exec();
     }
 
     public void findFieldByName(final DocRef dataSourceRef,
                                 final String fieldName,
-                                final Consumer<FieldInfo> consumer) {
+                                final Consumer<QueryField> consumer) {
         if (dataSourceRef != null) {
             final FindFieldInfoCriteria findFieldInfoCriteria = new FindFieldInfoCriteria(
                     new PageRequest(0, 1),
@@ -48,15 +47,14 @@ public class DataSourceClient {
                     dataSourceRef,
                     StringMatch.equals(fieldName, true));
             restFactory
-                    .builder()
-                    .forResultPageOf(FieldInfo.class)
+                    .create(DATA_SOURCE_RESOURCE)
+                    .method(res -> res.findFields(findFieldInfoCriteria))
                     .onSuccess(result -> {
                         if (result.getValues().size() > 0) {
                             consumer.accept(result.getFirst());
                         }
                     })
-                    .call(DATA_SOURCE_RESOURCE)
-                    .findFields(findFieldInfoCriteria);
+                    .exec();
         }
     }
 
@@ -65,8 +63,8 @@ public class DataSourceClient {
 
         if (dataSourceDocRef != null) {
             restFactory
-                    .builder()
-                    .forType(Documentation.class)
+                    .create(DATA_SOURCE_RESOURCE)
+                    .method(res -> res.fetchDocumentation(dataSourceDocRef))
                     .onSuccess(documentation -> {
                         final Optional<String> optMarkDown = GwtNullSafe.getAsOptional(documentation,
                                 Documentation::getMarkdown);
@@ -74,17 +72,15 @@ public class DataSourceClient {
                             descriptionConsumer.accept(optMarkDown);
                         }
                     })
-                    .call(DATA_SOURCE_RESOURCE)
-                    .fetchDocumentation(dataSourceDocRef);
+                    .exec();
         }
     }
 
     public void fetchDefaultExtractionPipeline(DocRef dataSourceRef, Consumer<DocRef> consumer) {
         restFactory
-                .builder()
-                .forType(DocRef.class)
+                .create(DATA_SOURCE_RESOURCE)
+                .method(res -> res.fetchDefaultExtractionPipeline(dataSourceRef))
                 .onSuccess(consumer)
-                .call(DATA_SOURCE_RESOURCE)
-                .fetchDefaultExtractionPipeline(dataSourceRef);
+                .exec();
     }
 }

@@ -19,7 +19,6 @@ package stroom.index.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolume;
@@ -108,16 +107,16 @@ public class IndexVolumeGroupEditPresenter
         registerHandler(openButton.addClickHandler(event -> edit()));
         registerHandler(deleteButton.addClickHandler(event -> delete()));
         registerHandler(rescanButton.addClickHandler(event -> {
-            final Rest<Boolean> rest = restFactory.create();
             delayedUpdate.reset();
             nodeManager.listAllNodes(nodeNames ->
                             nodeNames.forEach(nodeName ->
-                                    rest
+                                    restFactory
+                                            .create(INDEX_VOLUME_RESOURCE)
+                                            .method(res -> res.rescan(nodeName))
                                             .onSuccess(response -> delayedUpdate.update())
                                             .onFailure(throwable -> {
                                             })
-                                            .call(INDEX_VOLUME_RESOURCE)
-                                            .rescan(nodeName)
+                                            .exec()
                             ),
                     throwable -> {
                     });
@@ -133,11 +132,11 @@ public class IndexVolumeGroupEditPresenter
     private void edit() {
         final IndexVolume volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
-            final Rest<IndexVolume> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(INDEX_VOLUME_RESOURCE)
+                    .method(res -> res.fetch(volume.getId()))
                     .onSuccess(result -> editVolume(result, "Edit Volume"))
-                    .call(INDEX_VOLUME_RESOURCE)
-                    .fetch(volume.getId());
+                    .exec();
         }
     }
 
@@ -163,9 +162,11 @@ public class IndexVolumeGroupEditPresenter
                         if (result) {
                             volumeStatusListPresenter.getSelectionModel().clear();
                             for (final IndexVolume volume : list) {
-                                final Rest<Boolean> rest = restFactory.create();
-                                rest.onSuccess(response -> volumeStatusListPresenter.refresh()).call(
-                                        INDEX_VOLUME_RESOURCE).delete(volume.getId());
+                                restFactory
+                                        .create(INDEX_VOLUME_RESOURCE)
+                                        .method(res -> res.delete(volume.getId()))
+                                        .onSuccess(response -> volumeStatusListPresenter.refresh())
+                                        .exec();
                             }
                         }
                     });
@@ -181,12 +182,12 @@ public class IndexVolumeGroupEditPresenter
     void show(final IndexVolumeGroup volumeGroup, final String title, final Consumer<IndexVolumeGroup> consumer) {
         if (!opening) {
             opening = true;
-            final ExpressionOperator expression = ExpressionUtil.equals(IndexVolumeFields.GROUP_ID,
+            final ExpressionOperator expression = ExpressionUtil.equalsId(IndexVolumeFields.GROUP_ID,
                     volumeGroup.getId());
             final ExpressionCriteria expressionCriteria = new ExpressionCriteria(expression);
             // TODO: 09/09/2022 Need to implement user defined sorting
-            expressionCriteria.setSort(IndexVolumeFields.NODE_NAME.getName());
-            expressionCriteria.addSort(IndexVolumeFields.PATH.getName());
+            expressionCriteria.setSort(IndexVolumeFields.NODE_NAME.getFldName());
+            expressionCriteria.addSort(IndexVolumeFields.PATH.getFldName());
 
             volumeStatusListPresenter.init(expressionCriteria, volumes ->
                     open(volumeGroup, title, consumer));
@@ -237,8 +238,9 @@ public class IndexVolumeGroupEditPresenter
                     "You must provide a name for the index volume group.",
                     null);
         } else {
-            final Rest<IndexVolumeGroup> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(INDEX_VOLUME_GROUP_RESOURCE)
+                    .method(res -> res.fetchByName(getView().getName()))
                     .onSuccess(grp -> {
                         if (grp != null && !Objects.equals(groupId, grp.getId())) {
                             AlertEvent.fireError(
@@ -251,18 +253,17 @@ public class IndexVolumeGroupEditPresenter
                             work.run();
                         }
                     })
-                    .call(INDEX_VOLUME_GROUP_RESOURCE)
-                    .fetchByName(getView().getName());
+                    .exec();
         }
     }
 
     private void createVolumeGroup(final Consumer<IndexVolumeGroup> consumer,
                                    final IndexVolumeGroup volumeGroup) {
-        final Rest<IndexVolumeGroup> rest = restFactory.create();
-        rest
+        restFactory
+                .create(INDEX_VOLUME_GROUP_RESOURCE)
+                .method(res -> res.update(volumeGroup.getId(), volumeGroup))
                 .onSuccess(consumer)
-                .call(INDEX_VOLUME_GROUP_RESOURCE)
-                .update(volumeGroup.getId(), volumeGroup);
+                .exec();
     }
 
     void hide() {

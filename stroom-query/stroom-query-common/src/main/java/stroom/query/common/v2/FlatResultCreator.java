@@ -20,6 +20,7 @@ import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.FlatResultBuilder;
+import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.QueryKey;
@@ -34,6 +35,7 @@ import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ref.ErrorConsumer;
+import stroom.util.NullSafe;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -118,7 +120,7 @@ public class FlatResultCreator implements ResultCreator {
             mappers = Collections.emptyList();
         }
 
-        final TableSettings child = tableSettings.get(tableSettings.size() - 1);
+        final TableSettings child = tableSettings.getLast();
 
         columns = child != null
                 ? child.getColumns()
@@ -126,7 +128,7 @@ public class FlatResultCreator implements ResultCreator {
     }
 
     private List<Object> toNodeKey(final Map<Integer, List<Column>> groupColumns, final Key key) {
-        if (key == null || key.getKeyParts().size() == 0) {
+        if (key == null || key.getKeyParts().isEmpty()) {
             return null;
         }
 
@@ -223,10 +225,26 @@ public class FlatResultCreator implements ResultCreator {
                             // Convert all list into fully resolved objects evaluating
                             // functions where necessary.
                             int i = 0;
-                            for (final Column column : columns) {
+                            for (final Column col : columns) {
                                 final Val val = item.getValue(i);
                                 Object result = null;
                                 if (val != null) {
+                                    Column column = col;
+
+                                    // Ensure a column has a format if none explicitly set.
+                                    if (val.type().isValue() && (column.getFormat() == null ||
+                                            column.getFormat().getType() == Type.GENERAL)) {
+                                        if (stroom.query.language.functions.Type.DATE.equals(val.type())) {
+                                            column = column.copy().format(Format.DATE_TIME).build();
+                                        } else if (val.type().isNumber()) {
+                                            column = column.copy().format(Format.NUMBER).build();
+                                        } else {
+                                            column = column.copy().format(Format.TEXT).build();
+                                        }
+
+                                        columns.set(i, column);
+                                    }
+
                                     // Convert all list into fully resolved
                                     // objects evaluating functions where necessary.
                                     if (columnFormatter != null) {
@@ -289,16 +307,16 @@ public class FlatResultCreator implements ResultCreator {
         return result;
     }
 
-    // TODO : Replace this with conversion at the item level.
     private Object convert(final Column column, final Val val) {
-        if (column != null && column.getFormat() != null && column.getFormat().getType() != null) {
-            final Type type = column.getFormat().getType();
-            if (Type.NUMBER.equals(type) || Type.DATE_TIME.equals(type)) {
-                return val.toDouble();
-            }
+        final Format format = NullSafe.getOrElse(column, Column::getFormat, Format.GENERAL);
+        final Type type = NullSafe.getOrElse(format, Format::getType, Type.GENERAL);
+        if (Type.NUMBER.equals(type) || Type.DATE_TIME.equals(type)) {
+            return val.toDouble();
+        } else if (Type.TEXT.equals(type)) {
+            return val.toString();
         }
 
-        return val.toString();
+        return val.unwrap();
     }
 
     private static class Mapper {

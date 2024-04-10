@@ -25,8 +25,8 @@ import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexField;
+import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.LuceneIndexField;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MouseUtil;
@@ -42,18 +42,18 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, IndexDoc> {
+public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, LuceneIndexDoc> {
 
-    private final MyDataGrid<IndexField> dataGrid;
-    private final MultiSelectionModelImpl<IndexField> selectionModel;
+    private final MyDataGrid<LuceneIndexField> dataGrid;
+    private final MultiSelectionModelImpl<LuceneIndexField> selectionModel;
     private final IndexFieldEditPresenter indexFieldEditPresenter;
     private final ButtonView newButton;
     private final ButtonView editButton;
     private final ButtonView removeButton;
     private final ButtonView upButton;
     private final ButtonView downButton;
-    private List<IndexField> indexFields;
-    private IndexFieldDataProvider<IndexField> dataProvider;
+    private List<LuceneIndexField> indexFields;
+    private IndexFieldDataProvider<LuceneIndexField> dataProvider;
 
     private boolean readOnly = true;
 
@@ -131,8 +131,8 @@ public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, In
     private void enableButtons() {
         newButton.setEnabled(!readOnly);
         if (!readOnly && indexFields != null) {
-            final List<IndexField> fieldList = indexFields;
-            final IndexField selectedElement = selectionModel.getSelected();
+            final List<LuceneIndexField> fieldList = indexFields;
+            final LuceneIndexField selectedElement = selectionModel.getSelected();
             final boolean enabled = selectedElement != null;
             editButton.setEnabled(enabled);
             removeButton.setEnabled(enabled);
@@ -178,63 +178,63 @@ public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, In
     }
 
     private void addNameColumn() {
-        dataGrid.addResizableColumn(new Column<IndexField, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<LuceneIndexField, String>(new TextCell()) {
             @Override
-            public String getValue(final IndexField row) {
-                return row.getFieldName();
+            public String getValue(final LuceneIndexField row) {
+                return row.getFldName();
             }
         }, "Name", 150);
     }
 
     private void addTypeColumn() {
-        dataGrid.addResizableColumn(new Column<IndexField, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<LuceneIndexField, String>(new TextCell()) {
             @Override
-            public String getValue(final IndexField row) {
-                return row.getFieldType().getDisplayValue();
+            public String getValue(final LuceneIndexField row) {
+                return row.getFldType().getDisplayValue();
             }
         }, "Type", 100);
     }
 
     private void addStoreColumn() {
-        dataGrid.addResizableColumn(new Column<IndexField, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<LuceneIndexField, String>(new TextCell()) {
             @Override
-            public String getValue(final IndexField row) {
+            public String getValue(final LuceneIndexField row) {
                 return getYesNoString(row.isStored());
             }
         }, "Store", 100);
     }
 
     private void addIndexColumn() {
-        dataGrid.addResizableColumn(new Column<IndexField, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<LuceneIndexField, String>(new TextCell()) {
             @Override
-            public String getValue(final IndexField row) {
+            public String getValue(final LuceneIndexField row) {
                 return getYesNoString(row.isIndexed());
             }
         }, "Index", 100);
     }
 
     private void addTermVectorColumn() {
-        dataGrid.addResizableColumn(new Column<IndexField, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<LuceneIndexField, String>(new TextCell()) {
             @Override
-            public String getValue(final IndexField row) {
+            public String getValue(final LuceneIndexField row) {
                 return getYesNoString(row.isTermPositions());
             }
         }, "Positions", 100);
     }
 
     private void addAnalyzerColumn() {
-        dataGrid.addResizableColumn(new Column<IndexField, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<LuceneIndexField, String>(new TextCell()) {
             @Override
-            public String getValue(final IndexField row) {
+            public String getValue(final LuceneIndexField row) {
                 return row.getAnalyzerType().getDisplayValue();
             }
         }, "Analyser", 100);
     }
 
     private void addCaseSensitiveColumn() {
-        dataGrid.addResizableColumn(new Column<IndexField, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<LuceneIndexField, String>(new TextCell()) {
             @Override
-            public String getValue(final IndexField row) {
+            public String getValue(final LuceneIndexField row) {
                 return String.valueOf(row.isCaseSensitive());
             }
         }, "Case Sensitive", 100);
@@ -248,17 +248,17 @@ public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, In
     }
 
     private Set<String> getFieldNames() {
-        return indexFields.stream().map(IndexField::getFieldName).collect(Collectors.toSet());
+        return indexFields.stream().map(LuceneIndexField::getFldName).collect(Collectors.toSet());
     }
 
     private void onAdd() {
         final Set<String> otherNames = getFieldNames();
 
-        indexFieldEditPresenter.read(IndexField.builder().build(), otherNames);
+        indexFieldEditPresenter.read(LuceneIndexField.builder().build(), otherNames);
         indexFieldEditPresenter.show("New Field", event -> {
             if (event.isOk()) {
                 try {
-                    final IndexField indexField = indexFieldEditPresenter.write();
+                    final LuceneIndexField indexField = indexFieldEditPresenter.write();
                     indexFields.add(indexField);
                     selectionModel.setSelected(indexField);
                     refresh();
@@ -276,18 +276,18 @@ public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, In
     }
 
     private void onEdit() {
-        final IndexField existingField = selectionModel.getSelected();
+        final LuceneIndexField existingField = selectionModel.getSelected();
         if (existingField != null) {
             final Set<String> otherNames = getFieldNames();
-            otherNames.remove(existingField.getFieldName());
+            otherNames.remove(existingField.getFldName());
 
             indexFieldEditPresenter.read(existingField, otherNames);
             indexFieldEditPresenter.show("Edit Field", event -> {
                 if (event.isOk()) {
                     try {
-                        final IndexField indexField = indexFieldEditPresenter.write();
+                        final LuceneIndexField indexField = indexFieldEditPresenter.write();
                         if (!indexField.equals(existingField)) {
-                            final List<IndexField> fieldList = indexFields;
+                            final List<LuceneIndexField> fieldList = indexFields;
                             final int index = fieldList.indexOf(existingField);
                             fieldList.remove(index);
                             fieldList.add(index, indexField);
@@ -311,7 +311,7 @@ public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, In
     }
 
     private void onRemove() {
-        final List<IndexField> list = selectionModel.getSelectedItems();
+        final List<LuceneIndexField> list = selectionModel.getSelectedItems();
         if (list != null && list.size() > 0) {
             String message = "Are you sure you want to delete the selected field?";
             if (list.size() > 1) {
@@ -330,8 +330,8 @@ public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, In
     }
 
     private void moveSelectedFieldUp() {
-        final IndexField selected = selectionModel.getSelected();
-        final List<IndexField> fieldList = indexFields;
+        final LuceneIndexField selected = selectionModel.getSelected();
+        final List<LuceneIndexField> fieldList = indexFields;
         if (selected != null) {
             final int index = fieldList.indexOf(selected);
             if (index > 0) {
@@ -346,8 +346,8 @@ public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, In
     }
 
     private void moveSelectedFieldDown() {
-        final IndexField selected = selectionModel.getSelected();
-        final List<IndexField> fieldList = indexFields;
+        final LuceneIndexField selected = selectionModel.getSelected();
+        final List<LuceneIndexField> fieldList = indexFields;
         if (selected != null) {
             final int index = fieldList.indexOf(selected);
             if (index >= 0 && index < fieldList.size() - 1) {
@@ -374,7 +374,7 @@ public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, In
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final IndexDoc document, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final LuceneIndexDoc document, final boolean readOnly) {
         this.readOnly = readOnly;
         enableButtons();
 
@@ -385,7 +385,7 @@ public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, In
     }
 
     @Override
-    protected IndexDoc onWrite(final IndexDoc document) {
+    protected LuceneIndexDoc onWrite(final LuceneIndexDoc document) {
         document.setFields(indexFields);
         return document;
     }

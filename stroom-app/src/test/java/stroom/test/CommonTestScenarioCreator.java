@@ -24,10 +24,10 @@ import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
 import stroom.docref.DocRef;
 import stroom.index.VolumeCreator;
+import stroom.index.impl.IndexFields;
 import stroom.index.impl.IndexStore;
-import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFields;
+import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.LuceneIndexField;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.meta.shared.Meta;
@@ -74,8 +74,8 @@ public class CommonTestScenarioCreator {
         final QueryData findStreamQueryData = QueryData.builder()
                 .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                 .expression(ExpressionOperator.builder()
-                        .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feed)
-                        .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .addDateTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feed)
+                        .addDateTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
                 .build();
 
@@ -96,17 +96,17 @@ public class CommonTestScenarioCreator {
     }
 
     public DocRef createIndex(final String name) {
-        return createIndex(name, createIndexFields(), IndexDoc.DEFAULT_MAX_DOCS_PER_SHARD);
+        return createIndex(name, createIndexFields(), LuceneIndexDoc.DEFAULT_MAX_DOCS_PER_SHARD);
     }
 
-    public DocRef createIndex(final String name, final List<IndexField> indexFields) {
-        return createIndex(name, indexFields, IndexDoc.DEFAULT_MAX_DOCS_PER_SHARD);
+    public DocRef createIndex(final String name, final List<LuceneIndexField> indexFields) {
+        return createIndex(name, indexFields, LuceneIndexDoc.DEFAULT_MAX_DOCS_PER_SHARD);
     }
 
-    public DocRef createIndex(final String name, final List<IndexField> indexFields, final int maxDocsPerShard) {
+    public DocRef createIndex(final String name, final List<LuceneIndexField> indexFields, final int maxDocsPerShard) {
         // Create a test index.
         final DocRef indexRef = indexStore.createDocument(name);
-        final IndexDoc index = indexStore.readDocument(indexRef);
+        final LuceneIndexDoc index = indexStore.readDocument(indexRef);
 
         // Update the index
         index.setMaxDocsPerShard(maxDocsPerShard);
@@ -117,9 +117,9 @@ public class CommonTestScenarioCreator {
         return indexRef;
     }
 
-    public List<IndexField> createIndexFields() {
-        final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
-        indexFields.add(IndexField.createField("test"));
+    public List<LuceneIndexField> createIndexFields() {
+        final List<LuceneIndexField> indexFields = IndexFields.createStreamIndexFields();
+        indexFields.add(LuceneIndexField.createField("test"));
         return indexFields;
     }
 

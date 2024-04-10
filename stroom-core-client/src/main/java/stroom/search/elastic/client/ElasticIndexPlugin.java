@@ -18,7 +18,7 @@
 package stroom.search.elastic.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -68,26 +68,26 @@ public class ElasticIndexPlugin extends DocumentPlugin<ElasticIndexDoc> {
     @Override
     public void load(final DocRef docRef,
                      final Consumer<ElasticIndexDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<ElasticIndexDoc> rest = restFactory.create();
-        rest
+                     final Consumer<RestError> errorConsumer) {
+        restFactory
+                .create(ELASTIC_INDEX_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(ELASTIC_INDEX_RESOURCE)
-                .fetch(docRef.getUuid());
+                .exec();
     }
 
     @Override
     public void save(final DocRef docRef,
                      final ElasticIndexDoc document,
                      final Consumer<ElasticIndexDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<ElasticIndexDoc> rest = restFactory.create();
-        rest
+                     final Consumer<RestError> errorConsumer) {
+        restFactory
+                .create(ELASTIC_INDEX_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(ELASTIC_INDEX_RESOURCE)
-                .update(document.getUuid(), document);
+                .exec();
     }
 
     @Override

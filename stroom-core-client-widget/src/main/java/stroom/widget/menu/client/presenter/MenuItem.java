@@ -55,6 +55,10 @@ public abstract class MenuItem extends Item {
         return command;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     protected abstract static class AbstractBuilder<T extends MenuItem, B extends MenuItem.AbstractBuilder<T, ?>>
             extends Item.AbstractBuilder<T, B> {
 

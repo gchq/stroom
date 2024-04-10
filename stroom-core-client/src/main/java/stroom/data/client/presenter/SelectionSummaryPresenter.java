@@ -1,7 +1,6 @@
 package stroom.data.client.presenter;
 
 import stroom.alert.client.presenter.CommonAlertPresenter.CommonAlertView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaResource;
@@ -43,17 +42,18 @@ public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView
                      final Runnable runnable) {
         getView().setInfo(SafeHtmlUtil.getSafeHtml("Fetching selection summary. Please wait..."));
 
-        final Rest<SelectionSummary> rest = restFactory.create();
         if (reprocess) {
-            rest
+            restFactory
+                    .create(META_RESOURCE)
+                    .method(res -> res.getReprocessSelectionSummary(criteria))
                     .onSuccess(result -> update(postAction, action, result))
-                    .call(META_RESOURCE)
-                    .getReprocessSelectionSummary(criteria);
+                    .exec();
         } else {
-            rest
+            restFactory
+                    .create(META_RESOURCE)
+                    .method(res -> res.getSelectionSummary(criteria))
                     .onSuccess(result -> update(postAction, action, result))
-                    .call(META_RESOURCE)
-                    .getSelectionSummary(criteria);
+                    .exec();
         }
 
         final PopupType popupType = postAction != null

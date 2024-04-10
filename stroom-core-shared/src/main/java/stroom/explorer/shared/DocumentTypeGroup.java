@@ -40,6 +40,9 @@ public enum DocumentTypeGroup {
             "Documents that are used as configuration for other documents."),
     SYSTEM(100,
             "System",
+            ""),
+    INTERNAL(999,
+            "Internal",
             "");
 
     private final int priority;

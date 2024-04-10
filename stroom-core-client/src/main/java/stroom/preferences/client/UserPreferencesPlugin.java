@@ -21,6 +21,8 @@ import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -38,6 +40,16 @@ public class UserPreferencesPlugin extends Plugin {
                                  final Provider<UserPreferencesPresenter> preferencesPresenterProvider) {
         super(eventBus);
         this.preferencesPresenterProvider = preferencesPresenterProvider;
+
+        KeyBinding.addCommand(getOpenAction(), this::open);
+    }
+
+    private Action getOpenAction() {
+        return Action.GOTO_USER_PREFERENCES;
+    }
+
+    private void open() {
+        preferencesPresenterProvider.get().show();
     }
 
     @Override
@@ -50,7 +62,8 @@ public class UserPreferencesPlugin extends Plugin {
                         .priority(1)
                         .icon(SvgImage.SETTINGS)
                         .text("Preferences")
-                        .command(() -> preferencesPresenterProvider.get().show())
+                        .action(getOpenAction())
+                        .command(this::open)
                         .build());
     }
 }

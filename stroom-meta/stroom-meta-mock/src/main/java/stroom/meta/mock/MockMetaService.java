@@ -223,23 +223,23 @@ public class MockMetaService implements MetaService, Clearable {
         final Map<String, Object> attributeMap = new HashMap<>();
 
         if (meta != null) {
-            attributeMap.put(MetaFields.ID.getName(), meta.getId());
-            attributeMap.put(MetaFields.CREATE_TIME.getName(), meta.getCreateMs());
-            attributeMap.put(MetaFields.EFFECTIVE_TIME.getName(), meta.getEffectiveMs());
-            attributeMap.put(MetaFields.STATUS_TIME.getName(), meta.getStatusMs());
-            attributeMap.put(MetaFields.STATUS.getName(), meta.getStatus().getDisplayValue());
+            attributeMap.put(MetaFields.ID.getFldName(), meta.getId());
+            attributeMap.put(MetaFields.CREATE_TIME.getFldName(), meta.getCreateMs());
+            attributeMap.put(MetaFields.EFFECTIVE_TIME.getFldName(), meta.getEffectiveMs());
+            attributeMap.put(MetaFields.STATUS_TIME.getFldName(), meta.getStatusMs());
+            attributeMap.put(MetaFields.STATUS.getFldName(), meta.getStatus().getDisplayValue());
             if (meta.getParentMetaId() != null) {
-                attributeMap.put(MetaFields.PARENT_ID.getName(), meta.getParentMetaId());
+                attributeMap.put(MetaFields.PARENT_ID.getFldName(), meta.getParentMetaId());
             }
             if (meta.getTypeName() != null) {
-                attributeMap.put(MetaFields.TYPE.getName(), meta.getTypeName());
+                attributeMap.put(MetaFields.TYPE.getFldName(), meta.getTypeName());
             }
             final String feedName = meta.getFeedName();
             if (feedName != null) {
-                attributeMap.put(MetaFields.FEED.getName(), feedName);
+                attributeMap.put(MetaFields.FEED.getFldName(), feedName);
             }
             final String pipelineUuid = meta.getPipelineUuid();
-            attributeMap.put(MetaFields.PIPELINE.getName(), pipelineUuid);
+            attributeMap.put(MetaFields.PIPELINE.getFldName(), pipelineUuid);
 //            if (processor != null) {
 //                final String pipelineUuid = processor.getPipelineUuid();
 //                if (pipelineUuid != null) {

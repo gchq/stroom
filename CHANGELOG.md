@@ -13,6 +13,30 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#4169** : Fix index field `Positions` setting not being passed through to Lucene resulting in corrupt shards.
+
+* Issue **#4051** : Fix search extraction for Elastic indexes.
+
+* Issue **#4159** : Fix StroomQL vis params.
+
+* Issue **#4149** : Format results based on real result value types rather than expected expression return type.
+
+* Issue **#4093** : Fix value type for stored values.
+
+* Issue **#4152** : Fix date time formatter always showing `Z` when it should show actual timezone.
+
+* Issue **#4150** : StroomQL `vis as` keyword replaced with `show` plus added validation to parameters.
+
+
+## [v7.4-beta.1] - 2024-03-12
+
+* Issue **#3749** : Replace Stroom simple cron scheduler with standard compliant Quartz cron scheduler.
+
+* Issue **#4041** : Improve date picker.
+
+* Issue **#4131** : Make Stroom's standard date parsing more lenient to accept various forms of ISO 8601 zoned date times, e.g. with varying number of fractional second digits, no fractional seconds, no seconds, different offset forms ('+02', '+0200', '+02:00', etc.). Normalise `EffectiveTime` and `ReceivedTime` header values so the dates are in Stroom's standard format.
+
+
 ## [v7.3-beta.11] - 2024-03-01
 
 * Issue **#4132** : Add tooltips to the copy/open hover buttons on table cell values.
@@ -363,15 +387,6 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.11...HEAD
-[v7.3-beta.11]: https://github.com/gchq/stroom/compare/v7.3-beta.10...v7.3-beta.11
-[v7.3-beta.10]: https://github.com/gchq/stroom/compare/v7.3-beta.9...v7.3-beta.10
-[v7.3-beta.9]: https://github.com/gchq/stroom/compare/v7.3-beta.8...v7.3-beta.9
-[v7.3-beta.8]: https://github.com/gchq/stroom/compare/v7.3-beta.7...v7.3-beta.8
-[v7.3-beta.7]: https://github.com/gchq/stroom/compare/v7.3-beta.6...v7.3-beta.7
-[v7.3-beta.6]: https://github.com/gchq/stroom/compare/v7.3-beta.5...v7.3-beta.6
-[v7.3-beta.5]: https://github.com/gchq/stroom/compare/v7.3-beta.4...v7.3-beta.5
-[v7.3-beta.4]: https://github.com/gchq/stroom/compare/v7.2.8...v7.3-beta.4
-[v7.3-beta.3]: https://github.com/gchq/stroom/compare/v7.3-beta.2...v7.3-beta.3
-[v7.3-beta.2]: https://github.com/gchq/stroom/compare/v7.3-beta.1...v7.3-beta.2
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.1...HEAD
+[v7.4-beta.1]: https://github.com/gchq/stroom/compare/v7.3-beta.11...v7.4-beta.1
 [v7.2.2]: https://github.com/gchq/stroom/compare/v7.2.1...v7.2.2

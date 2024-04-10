@@ -3,8 +3,8 @@ package stroom.explorer.client.presenter;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.MyCellTable;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
-import stroom.docref.DocContentHighlights;
 import stroom.docref.StringMatch;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.editor.client.presenter.EditorPresenter;
@@ -118,7 +118,7 @@ public class FindInContentPresenter
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<FindInContentResult>> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
+                                final Consumer<RestError> errorConsumer) {
                 final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
                 currentQuery = new FindInContentRequest(pageRequest,
                         currentQuery.getSortList(),
@@ -137,8 +137,9 @@ public class FindInContentPresenter
                     resetFocus();
 
                 } else {
-                    restFactory.builder()
-                            .forResultPageOf(FindInContentResult.class)
+                    restFactory
+                            .create(EXPLORER_RESOURCE)
+                            .method(res -> res.findInContent(currentQuery))
                             .onSuccess(resultPage -> {
                                 if (resultPage.getPageStart() != cellTable.getPageStart()) {
                                     cellTable.setPageStart(resultPage.getPageStart());
@@ -155,9 +156,8 @@ public class FindInContentPresenter
 
                                 resetFocus();
                             })
-                            .onFailure(throwableConsumer)
-                            .call(EXPLORER_RESOURCE)
-                            .findInContent(currentQuery);
+                            .onFailure(errorConsumer)
+                            .exec();
                 }
             }
         };
@@ -194,8 +194,9 @@ public class FindInContentPresenter
                     selection.getDocContentMatch().getDocRef(),
                     selection.getDocContentMatch().getExtension(),
                     currentQuery.getFilter());
-            restFactory.builder()
-                    .forType(DocContentHighlights.class)
+            restFactory
+                    .create(EXPLORER_RESOURCE)
+                    .method(res -> res.fetchHighlights(fetchHighlightsRequest))
                     .onSuccess(response -> {
                         if (response != null && response.getText() != null) {
                             editorPresenter.setText(response.getText());
@@ -207,8 +208,7 @@ public class FindInContentPresenter
                         }
                     })
                     .onFailure(throwable -> editorPresenter.setText(throwable.getMessage()))
-                    .call(EXPLORER_RESOURCE)
-                    .fetchHighlights(fetchHighlightsRequest);
+                    .exec();
         }
     }
 

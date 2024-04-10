@@ -18,6 +18,8 @@
 package stroom.importexport.api;
 
 import stroom.docref.DocRef;
+import stroom.docref.DocRefInfo;
+import stroom.util.shared.GwtNullSafe;
 
 import java.util.Map;
 
@@ -43,5 +45,15 @@ public interface NonExplorerDocRefProvider {
      * @param docRef the non-explorer based docref known to this instance
      * @return A string that represents a suitable name for this docref.
      */
-    String findNameOfDocRef(final DocRef docRef);
+    default String findNameOfDocRef(final DocRef docRef) {
+        return GwtNullSafe.get(docRef, DocRef::getName);
+    }
+
+    /**
+     * Retrieve the audit information for a particular doc ref
+     *
+     * @param uuid The UUID to return the information for
+     * @return The Audit information about the given DocRef.
+     */
+    DocRefInfo info(String uuid);
 }

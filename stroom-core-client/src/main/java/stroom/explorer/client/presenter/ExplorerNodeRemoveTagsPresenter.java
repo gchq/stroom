@@ -18,7 +18,7 @@
 package stroom.explorer.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.RefreshDocumentEvent;
@@ -91,15 +91,15 @@ public class ExplorerNodeRemoveTagsPresenter
                     .map(ExplorerNode::getDocRef)
                     .collect(Collectors.toList());
 
-            final Rest<Set<String>> expNodeRest = restFactory.create();
-            expNodeRest
+            restFactory
+                    .create(EXPLORER_RESOURCE)
+                    .method(res -> res.fetchExplorerNodeTags(docRefs))
                     .onSuccess(nodetags -> {
                         getView().setData(docRefs, nodetags);
                         forceReveal();
                     })
                     .onFailure(this::handleFailure)
-                    .call(EXPLORER_RESOURCE)
-                    .fetchExplorerNodeTags(docRefs);
+                    .exec();
         }
     }
 
@@ -139,8 +139,9 @@ public class ExplorerNodeRemoveTagsPresenter
     private void removeTagsFromNodes(final HidePopupRequestEvent event,
                                      final Set<String> editedTags) {
         final List<DocRef> nodeDocRefs = getNodeDocRefs();
-        final Rest<Void> rest = restFactory.create();
-        rest
+        restFactory
+                .create(EXPLORER_RESOURCE)
+                .call(res -> res.removeTags(new AddRemoveTagsRequest(nodeDocRefs, editedTags)))
                 .onSuccess(voidResult -> {
                     // Update the node in the tree with the new tags
                     nodeDocRefs.forEach(docRef ->
@@ -149,8 +150,7 @@ public class ExplorerNodeRemoveTagsPresenter
                     event.hide();
                 })
                 .onFailure(this::handleFailure)
-                .call(EXPLORER_RESOURCE)
-                .removeTags(new AddRemoveTagsRequest(nodeDocRefs, editedTags));
+                .exec();
     }
 
     @Override
@@ -158,7 +158,7 @@ public class ExplorerNodeRemoveTagsPresenter
 
     }
 
-    private void handleFailure(final Throwable t) {
+    private void handleFailure(final RestError t) {
         AlertEvent.fireError(
                 ExplorerNodeRemoveTagsPresenter.this,
                 t.getMessage(),

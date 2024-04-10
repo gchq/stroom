@@ -29,8 +29,6 @@ import stroom.xmlschema.shared.XmlSchemaDoc;
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
 
-import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
-
 public class XmlSchemaModule extends AbstractModule {
 
     @Override
@@ -57,7 +55,7 @@ public class XmlSchemaModule extends AbstractModule {
                         .name("Clear Old Schemas")
                         .description("Every 10 minutes try to clear old cached schemas.")
                         .managed(false)
-                        .schedule(PERIODIC, "10m"));
+                        .frequencySchedule("10m"));
     }
 
     private static class ClearOldSchemas extends RunnableWrapper {

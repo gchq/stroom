@@ -1,12 +1,9 @@
 package stroom.statistics.impl.sql.search;
 
 import stroom.datasource.api.v2.ConditionSet;
-import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
-import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.QueryField;
-import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.SearchRequest;
@@ -85,7 +82,7 @@ public class SqlStatisticSearchProvider implements SearchProvider {
     }
 
     @Override
-    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+    public ResultPage<QueryField> getFieldInfo(final FindFieldInfoCriteria criteria) {
         final FieldInfoResultPageBuilder builder = FieldInfoResultPageBuilder.builder(criteria);
         final StatisticStoreDoc entity = statisticStoreCache.getStatisticsDataSource(criteria.getDataSourceRef());
         if (entity != null) {
@@ -106,12 +103,12 @@ public class SqlStatisticSearchProvider implements SearchProvider {
     }
 
     @Override
-    public DateField getTimeField(final DocRef docRef) {
-        return new DateField(StatisticStoreDoc.FIELD_NAME_DATE_TIME);
+    public QueryField getTimeField(final DocRef docRef) {
+        return QueryField.createDate(StatisticStoreDoc.FIELD_NAME_DATE_TIME);
     }
 
     /**
-     * Turn the {@link StatisticStoreDoc} into an {@link List< QueryField >} object
+     * Turn the {@link StatisticStoreDoc} into an {@link List<  QueryField  >} object
      * <p>
      * This builds the standard set of fields for a statistics store, which can
      * be filtered by the relevant statistics store instance
@@ -121,27 +118,36 @@ public class SqlStatisticSearchProvider implements SearchProvider {
 
         // TODO currently only BETWEEN is supported, but need to add support for
         // more conditions like >, >=, <, <=, =
-        fields.add(new DateField(StatisticStoreDoc.FIELD_NAME_DATE_TIME,
-                ConditionSet.STAT_DATE,
-                null,
-                true));
+        fields.add(QueryField
+                .builder()
+                .fldName(StatisticStoreDoc.FIELD_NAME_DATE_TIME)
+                .fldType(FieldType.DATE)
+                .conditionSet(ConditionSet.STAT_DATE)
+                .queryable(true)
+                .build());
 
         // one field per tag
         if (entity.getConfig() != null) {
             for (final StatisticField statisticField : entity.getStatisticFields()) {
                 // TODO currently only EQUALS is supported, but need to add
                 // support for more conditions like CONTAINS
-                fields.add(new TextField(statisticField.getFieldName(), ConditionSet.STAT_TEXT, null, true));
+                fields.add(QueryField
+                        .builder()
+                        .fldName(statisticField.getFieldName())
+                        .fldType(FieldType.TEXT)
+                        .conditionSet(ConditionSet.STAT_TEXT)
+                        .queryable(true)
+                        .build());
             }
         }
 
-        fields.add(new LongField(StatisticStoreDoc.FIELD_NAME_COUNT, false));
+        fields.add(QueryField.createLong(StatisticStoreDoc.FIELD_NAME_COUNT, false));
 
         if (entity.getStatisticType().equals(StatisticType.VALUE)) {
-            fields.add(new LongField(StatisticStoreDoc.FIELD_NAME_VALUE, false));
+            fields.add(QueryField.createLong(StatisticStoreDoc.FIELD_NAME_VALUE, false));
         }
 
-        fields.add(new LongField(StatisticStoreDoc.FIELD_NAME_PRECISION_MS, false));
+        fields.add(QueryField.createLong(StatisticStoreDoc.FIELD_NAME_PRECISION_MS, false));
 
         // Filter fields.
         if (entity.getConfig() != null) {

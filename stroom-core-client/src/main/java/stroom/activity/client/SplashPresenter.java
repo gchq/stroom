@@ -20,7 +20,6 @@ import stroom.activity.shared.AcknowledgeSplashRequest;
 import stroom.activity.shared.ActivityResource;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.UrlParameters;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.event.LogoutEvent;
 import stroom.ui.config.client.UiConfigCache;
@@ -75,11 +74,12 @@ public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashVie
                         .caption(title)
                         .onHideRequest(e -> {
                             if (e.isOk()) {
-                                final Rest<Boolean> rest = restFactory.create();
-                                rest
+                                restFactory
+                                        .create(ACTIVITY_RESOURCE)
+                                        .method(res -> res.acknowledgeSplash(new AcknowledgeSplashRequest(body,
+                                                version)))
                                         .onSuccess(result -> e.hide())
-                                        .call(ACTIVITY_RESOURCE)
-                                        .acknowledgeSplash(new AcknowledgeSplashRequest(body, version));
+                                        .exec();
                             } else {
                                 AlertEvent.fireWarn(SplashPresenter.this,
                                         "You must accept the terms to use this system",

@@ -27,8 +27,15 @@ import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.feed.shared.FeedDoc;
+import stroom.security.shared.DocumentPermissionNames;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.AnalyticUiDefaultConfig;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.time.SimpleDuration;
 
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -40,54 +47,106 @@ public class AnalyticNotificationPresenter
 
     private final AnalyticStreamDestinationPresenter analyticStreamDestinationPresenter;
     private final AnalyticEmailDestinationPresenter analyticEmailDestinationPresenter;
+    private final DocSelectionBoxPresenter errorFeedPresenter;
+    private final UiConfigCache uiConfigCache;
 
     @Inject
     public AnalyticNotificationPresenter(final EventBus eventBus,
                                          final AnalyticNotificationView view,
                                          final AnalyticStreamDestinationPresenter analyticStreamDestinationPresenter,
-                                         final AnalyticEmailDestinationPresenter analyticEmailDestinationPresenter) {
+                                         final AnalyticEmailDestinationPresenter analyticEmailDestinationPresenter,
+                                         final DocSelectionBoxPresenter errorFeedPresenter,
+                                         final UiConfigCache uiConfigCache) {
         super(eventBus, view);
+        this.uiConfigCache = uiConfigCache;
         view.setUiHandlers(this);
         this.analyticStreamDestinationPresenter = analyticStreamDestinationPresenter;
         this.analyticEmailDestinationPresenter = analyticEmailDestinationPresenter;
+        this.errorFeedPresenter = errorFeedPresenter;
+
+        errorFeedPresenter.setIncludedTypes(FeedDoc.DOCUMENT_TYPE);
+        errorFeedPresenter.setRequiredPermissions(DocumentPermissionNames.READ);
+        getView().setErrorFeedView(errorFeedPresenter.getView());
     }
 
     @Override
     protected void onBind() {
         registerHandler(analyticStreamDestinationPresenter.addDirtyHandler(e -> setDirty(true)));
         registerHandler(analyticEmailDestinationPresenter.addDirtyHandler(e -> setDirty(true)));
+        registerHandler(errorFeedPresenter.addDataSelectionHandler(e -> onDirty()));
     }
 
     @Override
     protected void onRead(final DocRef docRef, final AnalyticRuleDoc document, final boolean readOnly) {
-        final AnalyticNotificationConfig config = document.getAnalyticNotificationConfig();
-        if (config != null) {
-            getView().setLimitNotifications(config.isLimitNotifications());
-            getView().setMaxNotifications(config.getMaxNotifications());
-            getView().setResumeAfter(config.getResumeAfter());
-            getView().setDestinationType(config.getDestinationType());
+        uiConfigCache.get().onSuccess(extendedUiConfig -> {
+            final AnalyticNotificationConfig config = document.getAnalyticNotificationConfig();
+            if (config != null) {
+                getView().setLimitNotifications(config.isLimitNotifications());
+                getView().setMaxNotifications(config.getMaxNotifications());
+                getView().setResumeAfter(config.getResumeAfter());
+                getView().setDestinationType(config.getDestinationType());
+                errorFeedPresenter.setSelectedEntityReference(config.getErrorFeed());
 
-            if (config.getDestinationType() != null) {
-                switch (config.getDestinationType()) {
-                    case EMAIL: {
-                        if (config.getDestination() instanceof AnalyticNotificationEmailDestination) {
-                            analyticEmailDestinationPresenter.read(
-                                    (AnalyticNotificationEmailDestination) config.getDestination());
-                        }
-                        getView().setDestinationView(analyticEmailDestinationPresenter.getView());
-                        break;
-                    }
-                    case STREAM: {
-                        if (config.getDestination() instanceof AnalyticNotificationStreamDestination) {
-                            analyticStreamDestinationPresenter.read(
-                                    (AnalyticNotificationStreamDestination) config.getDestination());
-                        }
-                        getView().setDestinationView(analyticStreamDestinationPresenter.getView());
-                        break;
-                    }
-                }
+                setDestinationPresenter(config.getDestinationType());
+//                if (config.getDestinationType() != null) {
+//                    switch (config.getDestinationType()) {
+//                        case EMAIL: {
+//                            getView().setDestinationView(analyticEmailDestinationPresenter.getView());
+//                            break;
+//                        }
+//                        case STREAM: {
+//                            getView().setDestinationView(analyticStreamDestinationPresenter.getView());
+//                            break;
+//                        }
+//                    }
+//                }
             }
+
+            // Initialise the sub presenters whether we have config or not, so they get the right defaults
+            final AnalyticUiDefaultConfig defaultConfig = extendedUiConfig.getAnalyticUiDefaultConfig();
+            final AnalyticNotificationDestination destination = GwtNullSafe.get(
+                    config,
+                    AnalyticNotificationConfig::getDestination);
+
+            AnalyticNotificationEmailDestination emailDestination = getOrDefaultEmailDestination(
+                    destination, defaultConfig);
+            GwtNullSafe.consume(emailDestination, analyticEmailDestinationPresenter::read);
+
+            AnalyticNotificationStreamDestination streamDestination = getOrDefaultStreamDestination(
+                    destination, defaultConfig);
+            GwtNullSafe.consume(streamDestination, analyticStreamDestinationPresenter::read);
+        });
+    }
+
+    private AnalyticNotificationEmailDestination getOrDefaultEmailDestination(
+            final AnalyticNotificationDestination destination,
+            final AnalyticUiDefaultConfig analyticUiDefaultConfig) {
+
+        final AnalyticNotificationEmailDestination emailDestination;
+        if (destination instanceof AnalyticNotificationEmailDestination) {
+            emailDestination = (AnalyticNotificationEmailDestination) destination;
+        } else {
+            emailDestination = AnalyticNotificationEmailDestination.builder()
+                    .subjectTemplate(analyticUiDefaultConfig.getDefaultSubjectTemplate())
+                    .bodyTemplate(analyticUiDefaultConfig.getDefaultBodyTemplate())
+                    .build();
         }
+        return emailDestination;
+    }
+
+    private AnalyticNotificationStreamDestination getOrDefaultStreamDestination(
+            final AnalyticNotificationDestination destination,
+            final AnalyticUiDefaultConfig analyticUiDefaultConfig) {
+
+        final AnalyticNotificationStreamDestination streamDestination;
+        if (destination instanceof AnalyticNotificationStreamDestination) {
+            streamDestination = (AnalyticNotificationStreamDestination) destination;
+        } else {
+            streamDestination = AnalyticNotificationStreamDestination.builder()
+                    .destinationFeed(analyticUiDefaultConfig.getDefaultDestinationFeed())
+                    .build();
+        }
+        return streamDestination;
     }
 
     @Override
@@ -112,14 +171,14 @@ public class AnalyticNotificationPresenter
                 .resumeAfter(getView().getResumeAfter())
                 .destinationType(getView().getDestinationType())
                 .destination(destination)
+                .errorFeed(errorFeedPresenter.getSelectedEntityReference())
                 .build();
         return document.copy().analyticNotificationConfig(analyticNotificationConfig).build();
     }
 
-    @Override
-    public void onDirty() {
-        if (getView().getDestinationType() != null) {
-            switch (getView().getDestinationType()) {
+    private void setDestinationPresenter(final AnalyticNotificationDestinationType destinationType) {
+        if (destinationType != null) {
+            switch (destinationType) {
                 case EMAIL: {
                     getView().setDestinationView(analyticEmailDestinationPresenter.getView());
                     break;
@@ -130,8 +189,29 @@ public class AnalyticNotificationPresenter
                 }
             }
         }
+    }
+
+    @Override
+    public void onDirty() {
+        setDestinationPresenter(getView().getDestinationType());
+//        if (getView().getDestinationType() != null) {
+//            switch (getView().getDestinationType()) {
+//                case EMAIL: {
+//                    getView().setDestinationView(analyticEmailDestinationPresenter.getView());
+//                    break;
+//                }
+//                case STREAM: {
+//                    getView().setDestinationView(analyticStreamDestinationPresenter.getView());
+//                    break;
+//                }
+//            }
+//        }
         setDirty(true);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface AnalyticNotificationView extends View, HasUiHandlers<DirtyUiHandlers> {
 
@@ -152,5 +232,9 @@ public class AnalyticNotificationPresenter
         void setDestinationType(AnalyticNotificationDestinationType destinationType);
 
         void setDestinationView(View view);
+
+        Widget getDestinationWidget();
+
+        void setErrorFeedView(View view);
     }
 }

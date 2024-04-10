@@ -1,6 +1,5 @@
 package stroom.query.client.presenter;
 
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.shared.QueryHelpDetail;
 import stroom.query.shared.QueryHelpRow;
@@ -24,10 +23,10 @@ public class QueryHelpDetailProvider {
 
     public void getDetail(QueryHelpRow row,
                           Consumer<QueryHelpDetail> consumer) {
-        final Rest<QueryHelpDetail> rest = restFactory.create();
-        rest
+        restFactory
+                .create(QUERY_RESOURCE)
+                .method(res -> res.fetchDetail(row))
                 .onSuccess(consumer)
-                .call(QUERY_RESOURCE)
-                .fetchDetail(row);
+                .exec();
     }
 }

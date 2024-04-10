@@ -79,9 +79,4 @@ abstract class AbstractRoundingFunction extends AbstractFunction {
         }
         return super.requiresChildData();
     }
-
-    @Override
-    public Type getCommonReturnType() {
-        return Type.DOUBLE;
-    }
 }

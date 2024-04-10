@@ -17,6 +17,7 @@
 package stroom.data.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.dispatch.client.RestError;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.util.shared.ResultPage;
 
@@ -72,17 +73,17 @@ public abstract class RestDataProvider<R, T extends ResultPage<R>> extends Async
                         refetch = false;
                         doFetch(requestedRange);
                     }
-                }, caught -> {
+                }, error -> {
                     fetching = false;
                     refetch = false;
 
-                    AlertEvent.fireErrorFromException(this, caught, null);
+                    AlertEvent.fireErrorFromException(this, error.getException(), null);
                 });
     }
 
     protected abstract void exec(final Range range,
                                  final Consumer<T> dataConsumer,
-                                 final Consumer<Throwable> throwableConsumer);
+                                 final Consumer<RestError> errorConsumer);
 
     @Override
     public void fireEvent(final GwtEvent<?> event) {

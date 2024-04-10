@@ -66,7 +66,10 @@ import stroom.data.client.view.TextViewImpl;
 import stroom.editor.client.presenter.DelegatingAceCompleter;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
+import stroom.editor.client.presenter.SingleLineEditorPresenter;
+import stroom.editor.client.presenter.SingleLineEditorView;
 import stroom.editor.client.view.EditorViewImpl;
+import stroom.editor.client.view.SingleLineEditorViewImpl;
 import stroom.widget.dropdowntree.client.view.DropDownView;
 import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupView;
@@ -94,6 +97,10 @@ public class StreamStoreModule extends PluginModule {
                 EditorPresenter.class,
                 EditorView.class,
                 EditorViewImpl.class);
+        bindPresenterWidget(
+                SingleLineEditorPresenter.class,
+                SingleLineEditorView.class,
+                SingleLineEditorViewImpl.class);
         bindPresenterWidget(
                 DataPreviewTabPresenter.class,
                 DataPreviewTabView.class,

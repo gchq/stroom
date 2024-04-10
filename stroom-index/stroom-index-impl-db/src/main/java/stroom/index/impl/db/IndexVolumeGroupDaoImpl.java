@@ -7,6 +7,7 @@ import stroom.index.impl.IndexStore;
 import stroom.index.impl.IndexVolumeGroupDao;
 import stroom.index.impl.db.jooq.tables.records.IndexVolumeGroupRecord;
 import stroom.index.shared.IndexVolumeGroup;
+import stroom.index.shared.LuceneIndexDoc;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -132,6 +133,28 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
                 }
                 throw e;
             }
+
+        // If the group name has changed then update indexes to point to the new group name.
+//        if (currentGroupName != null && !currentGroupName.equals(saved.getName())) {
+//            final IndexStore indexStore = indexStoreProvider.get();
+//            if (indexStore != null) {
+//                final List<DocRef> indexes = indexStore.list();
+//                for (final DocRef docRef : indexes) {
+//                    final IndexDoc indexDoc = indexStore.readDocument(docRef);
+//                    if (indexDoc.getVolumeGroupName() != null &&
+//                            indexDoc.getVolumeGroupName().equals(currentGroupName)) {
+//                        indexDoc.setVolumeGroupName(saved.getName());
+//                        LOGGER.info("Updating index {} ({}) to change volume group name from {} to {}",
+//                                indexDoc.getName(),
+//                                indexDoc.getUuid(),
+//                                currentGroupName,
+//                                saved.getName());
+//                        indexStore.writeDocument(indexDoc);
+//                    }
+//                }
+//            }
+//        }
+
             return saved;
         });
     }

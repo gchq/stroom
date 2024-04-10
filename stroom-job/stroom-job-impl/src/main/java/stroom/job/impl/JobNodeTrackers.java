@@ -1,7 +1,7 @@
 package stroom.job.impl;
 
 import stroom.job.shared.JobNode;
-import stroom.util.scheduler.Scheduler;
+import stroom.util.scheduler.SimpleScheduleExec;
 
 import java.util.List;
 
@@ -11,5 +11,5 @@ public interface JobNodeTrackers {
 
     List<JobNodeTracker> getDistributedJobNodeTrackers();
 
-    Scheduler getScheduler(JobNode jobNode);
+    SimpleScheduleExec getScheduleExec(JobNode jobNode);
 }

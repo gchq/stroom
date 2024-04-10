@@ -24,7 +24,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
@@ -33,7 +32,6 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.client.event.ImportConfigConfirmEvent;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.ImportConfigRequest;
-import stroom.importexport.shared.ImportConfigResponse;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
@@ -176,8 +174,11 @@ public class ImportConfigConfirmPresenter extends
 
     public void refresh() {
         importSettingsBuilder.importMode(ImportMode.CREATE_CONFIRMATION);
-        final Rest<ImportConfigResponse> rest = restFactory.create();
-        rest
+        restFactory
+                .create(CONTENT_RESOURCE)
+                .method(res -> res.importContent(new ImportConfigRequest(resourceKey,
+                        importSettingsBuilder.build(),
+                        confirmList)))
                 .onSuccess(result -> {
                     confirmList = result.getConfirmList();
                     if (confirmList.isEmpty()) {
@@ -187,8 +188,7 @@ public class ImportConfigConfirmPresenter extends
                     updateList();
                 })
                 .onFailure(caught -> error(caught.getMessage()))
-                .call(CONTENT_RESOURCE)
-                .importContent(new ImportConfigRequest(resourceKey, importSettingsBuilder.build(), confirmList));
+                .exec();
     }
 
     private void updateList() {
@@ -451,22 +451,27 @@ public class ImportConfigConfirmPresenter extends
         importSettingsBuilder.useImportFolders(false);
         importSettingsBuilder.enableFilters(false);
 
-        final Rest<ImportConfigResponse> rest = restFactory.create();
-        rest
+        restFactory
+                .create(CONTENT_RESOURCE)
+                .method(res -> res.importContent(new ImportConfigRequest(resourceKey,
+                        importSettingsBuilder.build(),
+                        new ArrayList<>())))
                 .onSuccess(result2 -> AlertEvent.fireWarn(ImportConfigConfirmPresenter.this,
                         "Import Aborted",
                         () -> HidePopupEvent.builder(ImportConfigConfirmPresenter.this).ok(false).fire()))
                 .onFailure(caught -> AlertEvent.fireError(ImportConfigConfirmPresenter.this,
                         caught.getMessage(),
                         () -> HidePopupEvent.builder(ImportConfigConfirmPresenter.this).ok(false).fire()))
-                .call(CONTENT_RESOURCE)
-                .importContent(new ImportConfigRequest(resourceKey, importSettingsBuilder.build(), new ArrayList<>()));
+                .exec();
     }
 
     public void importData() {
         importSettingsBuilder.importMode(ImportMode.ACTION_CONFIRMATION);
-        final Rest<ImportConfigResponse> rest = restFactory.create();
-        rest
+        restFactory
+                .create(CONTENT_RESOURCE)
+                .method(res -> res.importContent(new ImportConfigRequest(resourceKey,
+                        importSettingsBuilder.build(),
+                        confirmList)))
                 .onSuccess(result2 ->
                         AlertEvent.fireInfo(
                                 ImportConfigConfirmPresenter.this,
@@ -488,8 +493,7 @@ public class ImportConfigConfirmPresenter extends
                     // existing one.
                     clearCaches();
                 })
-                .call(CONTENT_RESOURCE)
-                .importContent(new ImportConfigRequest(resourceKey, importSettingsBuilder.build(), confirmList));
+                .exec();
     }
 
     private void clearCaches() {

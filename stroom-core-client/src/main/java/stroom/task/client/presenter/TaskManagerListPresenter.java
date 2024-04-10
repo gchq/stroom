@@ -31,7 +31,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.node.client.NodeManager;
@@ -165,11 +165,11 @@ public class TaskManagerListPresenter
             @Override
             protected void exec(final Range range,
                                 final Consumer<TaskProgressResponse> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
+                                final Consumer<RestError> errorConsumer) {
                 TaskManagerListPresenter.this.range = range;
                 TaskManagerListPresenter.this.dataConsumer = dataConsumer;
                 delayedUpdate.reset();
-                fetchNodes(range, dataConsumer, throwableConsumer);
+                fetchNodes(range, dataConsumer, errorConsumer);
             }
         };
         dataProvider.addDataDisplay(dataGrid);
@@ -437,10 +437,10 @@ public class TaskManagerListPresenter
 
     public void fetchNodes(final Range range,
                            final Consumer<TaskProgressResponse> dataConsumer,
-                           final Consumer<Throwable> throwableConsumer) {
+                           final Consumer<RestError> errorConsumer) {
         nodeManager.listAllNodes(
                 nodeNames -> fetchTasksForNodes(range, dataConsumer, nodeNames),
-                throwableConsumer);
+                errorConsumer);
     }
 
     private void fetchTasksForNodes(final Range range,
@@ -448,8 +448,9 @@ public class TaskManagerListPresenter
                                     final List<String> nodeNames) {
         responseMap.clear();
         for (final String nodeName : nodeNames) {
-            final Rest<TaskProgressResponse> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(TASK_RESOURCE)
+                    .method(res -> res.find(nodeName, request))
                     .onSuccess(response -> {
                         responseMap.put(nodeName, response.getValues());
                         errorMap.put(nodeName, response.getErrors());
@@ -460,8 +461,7 @@ public class TaskManagerListPresenter
                         errorMap.put(nodeName, Collections.singletonList(throwable.getMessage()));
                         delayedUpdate.update();
                     })
-                    .call(TASK_RESOURCE)
-                    .find(nodeName, request);
+                    .exec();
         }
     }
 
@@ -516,9 +516,10 @@ public class TaskManagerListPresenter
         final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
         findTaskCriteria.addId(taskProgress.getId());
         final TerminateTaskProgressRequest request = new TerminateTaskProgressRequest(findTaskCriteria);
-        restFactory.create()
-                .call(TASK_RESOURCE)
-                .terminate(taskProgress.getNodeName(), request);
+        restFactory
+                .create(TASK_RESOURCE)
+                .method(res -> res.terminate(taskProgress.getNodeName(), request))
+                .exec();
     }
 
     @Override

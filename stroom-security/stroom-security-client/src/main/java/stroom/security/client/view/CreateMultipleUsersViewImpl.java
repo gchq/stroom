@@ -63,17 +63,6 @@ public class CreateMultipleUsersViewImpl
         return userBatch.getText();
     }
 
-//    @UiHandler("userBatch")
-//    void onUserBatchKeyDown(final KeyDownEvent event) {
-//        handleKeyDown(event);
-//    }
-//
-//    private void handleKeyDown(final KeyDownEvent event) {
-//        if (event.getNativeKeyCode() == '\r') {
-//            getUiHandlers().onHideRequest(false, true);
-//        }
-//    }
-
     public interface Binder extends UiBinder<Widget, CreateMultipleUsersViewImpl> {
 
     }

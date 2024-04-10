@@ -73,7 +73,7 @@ jobs:
         run: |
           "${ACTIONS_SCRIPTS_DIR}/echo_variables.sh" \
             "docker version" "$(docker --version)" \
-            "docker-compose version" "$(docker-compose --version)" \
+            "docker compose version" "$(docker compose version)" \
             "git version" "$(git --version)" \
             "GITHUB_WORKSPACE" "$GITHUB_WORKSPACE" \
             "GITHUB_REF" "$GITHUB_REF" \

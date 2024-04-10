@@ -86,8 +86,8 @@ public class NewFsVolumeGroupPresenter
                         .withDefaultVolume(isDefault)
                         .build();
 
-                restFactory.builder()
-                        .forType(FsVolumeGroup.class)
+                restFactory.create(FS_VOLUME_GROUP_RESOURCE)
+                        .method(res -> res.fetchByName(name))
                         .onSuccess(result -> {
                             if (result != null) {
                                 AlertEvent.fireError(
@@ -100,8 +100,7 @@ public class NewFsVolumeGroupPresenter
                                 consumer.accept(volumeGroup);
                             }
                         })
-                        .call(FS_VOLUME_GROUP_RESOURCE)
-                        .fetchByName(name);
+                        .exec();
             };
 
             if (GwtNullSafe.isBlankString(name)) {

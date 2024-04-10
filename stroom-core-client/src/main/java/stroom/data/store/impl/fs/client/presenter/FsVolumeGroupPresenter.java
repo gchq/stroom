@@ -38,6 +38,7 @@ import java.util.List;
 
 public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
 
+    public static final String TAB_TYPE = "DataVolumes";
     private static final FsVolumeGroupResource FS_VOLUME_GROUP_RESOURCE =
             GWT.create(FsVolumeGroupResource.class);
 
@@ -89,15 +90,15 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
         final NewFsVolumeGroupPresenter presenter = newFsVolumeGroupPresenterProvider.get();
         presenter.show(name -> {
             if (name != null) {
-                restFactory.builder()
-                        .forType(FsVolumeGroup.class)
+                restFactory
+                        .create(FS_VOLUME_GROUP_RESOURCE)
+                        .method(res -> res.create(name))
                         .onSuccess(volumeGroup -> {
                             edit(volumeGroup);
                             presenter.hide();
                             refresh();
                         })
-                        .call(FS_VOLUME_GROUP_RESOURCE)
-                        .create(name);
+                        .exec();
             } else {
                 presenter.hide();
             }
@@ -107,11 +108,11 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
     private void edit() {
         final FsVolumeGroup volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
-            restFactory.builder()
-                    .forType(FsVolumeGroup.class)
+            restFactory
+                    .create(FS_VOLUME_GROUP_RESOURCE)
+                    .method(res -> res.fetch(volume.getId()))
                     .onSuccess(this::edit)
-                    .call(FS_VOLUME_GROUP_RESOURCE)
-                    .fetch(volume.getId());
+                    .exec();
         }
     }
 
@@ -140,11 +141,11 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
                         if (result) {
                             volumeStatusListPresenter.getSelectionModel().clear();
                             for (final FsVolumeGroup volume : list) {
-                                restFactory.builder()
-                                        .forBoolean()
-                                        .onSuccess(response ->
-                                                refresh())
-                                        .call(FS_VOLUME_GROUP_RESOURCE).delete(volume.getId());
+                                restFactory
+                                        .create(FS_VOLUME_GROUP_RESOURCE)
+                                        .method(res -> res.delete(volume.getId()))
+                                        .onSuccess(response -> refresh())
+                                        .exec();
                             }
                         }
                     });
@@ -174,5 +175,10 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
     @Override
     public String getLabel() {
         return "Data Volumes";
+    }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
     }
 }

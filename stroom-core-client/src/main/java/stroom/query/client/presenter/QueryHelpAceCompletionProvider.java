@@ -1,20 +1,16 @@
 package stroom.query.client.presenter;
 
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
 import stroom.docref.StringMatch.MatchType;
 import stroom.entity.client.presenter.MarkdownConverter;
-import stroom.query.shared.CompletionValue;
 import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.QueryResource;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.ResultPage;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletion;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionCallback;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
@@ -59,8 +55,9 @@ public class QueryHelpAceCompletionProvider implements AceCompletionProvider {
                         pos.getColumn(),
                         new StringMatch(MatchType.STARTS_WITH, false, prefix),
                         showAll);
-        final Rest<ResultPage<CompletionValue>> rest = restFactory.create();
-        rest
+        restFactory
+                .create(QUERY_RESOURCE)
+                .method(res -> res.fetchCompletions(completionsRequest))
                 .onSuccess(result -> {
                     final List<AceCompletion> aceCompletions = result
                             .getValues()
@@ -78,8 +75,7 @@ public class QueryHelpAceCompletionProvider implements AceCompletionProvider {
                             .collect(Collectors.toList());
                     callback.invokeWithCompletions(aceCompletions.toArray(new AceCompletion[0]));
                 })
-                .call(QUERY_RESOURCE)
-                .fetchCompletions(completionsRequest);
+                .exec();
     }
 
     public void setDataSourceRef(final DocRef dataSourceRef) {

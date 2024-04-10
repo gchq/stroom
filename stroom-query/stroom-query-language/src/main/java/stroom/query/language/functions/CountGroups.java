@@ -59,11 +59,6 @@ class CountGroups extends AbstractFunction implements AggregateFunction {
         return true;
     }
 
-    @Override
-    public Type getCommonReturnType() {
-        return Type.LONG;
-    }
-
 
     // --------------------------------------------------------------------------------
 

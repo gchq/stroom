@@ -1,9 +1,6 @@
 package stroom.query.client.presenter;
 
-import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.IdField;
 import stroom.datasource.api.v2.QueryField;
-import stroom.datasource.api.v2.TextField;
 
 import java.util.Arrays;
 import java.util.List;
@@ -29,19 +26,19 @@ public interface AnnotationFields {
     String COMMENT = ANNOTATION_FIELD_PREFIX + "Comment";
     String HISTORY = ANNOTATION_FIELD_PREFIX + "History";
 
-    IdField ID_FIELD = new IdField(ID);
-    //    AbstractField STREAM_ID_FIELD = new IdField(IndexConstants.STREAM_ID);
-//    AbstractField EVENT_ID_FIELD = new IdField(IndexConstants.EVENT_ID);
-    DateField CREATED_ON_FIELD = new DateField(CREATED_ON);
-    TextField CREATED_BY_FIELD = new TextField(CREATED_BY);
-    DateField UPDATED_ON_FIELD = new DateField(UPDATED_ON);
-    TextField UPDATED_BY_FIELD = new TextField(UPDATED_BY);
-    TextField TITLE_FIELD = new TextField(TITLE);
-    TextField SUBJECT_FIELD = new TextField(SUBJECT);
-    TextField STATUS_FIELD = new TextField(STATUS);
-    TextField ASSIGNED_TO_FIELD = new TextField(ASSIGNED_TO);
-    TextField COMMENT_FIELD = new TextField(COMMENT);
-    TextField HISTORY_FIELD = new TextField(HISTORY);
+    QueryField ID_FIELD = QueryField.createId(ID);
+    //    AbstractField STREAM_ID_FIELD = QueryField.createId(IndexConstants.STREAM_ID);
+//    AbstractField EVENT_ID_FIELD = QueryField.createId(IndexConstants.EVENT_ID);
+    QueryField CREATED_ON_FIELD = QueryField.createDate(CREATED_ON);
+    QueryField CREATED_BY_FIELD = QueryField.createText(CREATED_BY);
+    QueryField UPDATED_ON_FIELD = QueryField.createDate(UPDATED_ON);
+    QueryField UPDATED_BY_FIELD = QueryField.createText(UPDATED_BY);
+    QueryField TITLE_FIELD = QueryField.createText(TITLE);
+    QueryField SUBJECT_FIELD = QueryField.createText(SUBJECT);
+    QueryField STATUS_FIELD = QueryField.createText(STATUS);
+    QueryField ASSIGNED_TO_FIELD = QueryField.createText(ASSIGNED_TO);
+    QueryField COMMENT_FIELD = QueryField.createText(COMMENT);
+    QueryField HISTORY_FIELD = QueryField.createText(HISTORY);
 
     List<QueryField> FIELDS = Arrays.asList(
             ID_FIELD,
@@ -58,5 +55,5 @@ public interface AnnotationFields {
             COMMENT_FIELD,
             HISTORY_FIELD);
     Map<String, QueryField> FIELD_MAP = FIELDS.stream()
-            .collect(Collectors.toMap(QueryField::getName, Function.identity()));
+            .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
 }

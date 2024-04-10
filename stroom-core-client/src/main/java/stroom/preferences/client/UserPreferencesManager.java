@@ -1,16 +1,19 @@
 package stroom.preferences.client;
 
 import stroom.config.global.shared.UserPreferencesResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.CurrentPreferences;
-import stroom.expression.api.TimeZone.Use;
+import stroom.expression.api.UserTimeZone;
+import stroom.expression.api.UserTimeZone.Use;
 import stroom.ui.config.shared.Themes;
 import stroom.ui.config.shared.Themes.ThemeType;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.GwtNullSafe;
+import stroom.widget.datepicker.client.ClientTimeZone;
+import stroom.widget.util.client.ClientStringUtil;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.RootPanel;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
@@ -58,46 +61,108 @@ public class UserPreferencesManager {
     }
 
     public void fetch(final Consumer<UserPreferences> consumer) {
-        final Rest<UserPreferences> rest = restFactory.create();
-        rest
+        restFactory
+                .create(PREFERENCES_RESOURCE)
+                .method(UserPreferencesResource::fetch)
                 .onSuccess(consumer)
-                .call(PREFERENCES_RESOURCE)
-                .fetch();
+                .exec();
     }
 
     public void update(final UserPreferences userPreferences,
                        final Consumer<Boolean> consumer) {
-        final Rest<Boolean> rest = restFactory.create();
-        rest
+        restFactory
+                .create(PREFERENCES_RESOURCE)
+                .method(res -> res.update(userPreferences))
                 .onSuccess(consumer)
-                .call(PREFERENCES_RESOURCE)
-                .update(userPreferences);
+                .exec();
     }
 
     public void setDefaultUserPreferences(final UserPreferences userPreferences,
                                           final Consumer<UserPreferences> consumer) {
-        final Rest<UserPreferences> rest = restFactory.create();
-        rest
+        restFactory
+                .create(PREFERENCES_RESOURCE)
+                .method(res -> res.setDefaultUserPreferences(userPreferences))
                 .onSuccess(consumer)
-                .call(PREFERENCES_RESOURCE)
-                .setDefaultUserPreferences(userPreferences);
+                .exec();
     }
 
     public void resetToDefaultUserPreferences(final Consumer<UserPreferences> consumer) {
-        final Rest<UserPreferences> rest = restFactory.create();
-        rest
+        restFactory
+                .create(PREFERENCES_RESOURCE)
+                .method(UserPreferencesResource::resetToDefaultUserPreferences)
                 .onSuccess(consumer)
-                .call(PREFERENCES_RESOURCE)
-                .resetToDefaultUserPreferences();
+                .exec();
     }
 
     public void setCurrentPreferences(final UserPreferences userPreferences) {
         this.currentUserPreferences = userPreferences;
         applyUserPreferences(this.currentPreferences, userPreferences);
 
-        final com.google.gwt.dom.client.Element element = RootPanel.getBodyElement().getParentElement();
+        final Element element = RootPanel.getBodyElement().getParentElement();
         String className = getCurrentPreferenceClasses();
         element.setClassName(className);
+
+        ClientTimeZone.setTimeZone(getTimeZone(currentUserPreferences));
+    }
+
+    private String getTimeZone(final UserPreferences userPreferences) {
+        final UserTimeZone userTimeZone = userPreferences.getTimeZone();
+        String timeZone = null;
+        switch (userTimeZone.getUse()) {
+            case UTC: {
+                timeZone = "UTC";
+                break;
+            }
+            case ID: {
+                timeZone = userTimeZone.getId();
+                break;
+            }
+            case OFFSET: {
+                timeZone = getPosixOffset(userTimeZone);
+                break;
+            }
+        }
+        return timeZone;
+    }
+
+    /**
+     * An offset specifies the hours, and optionally minutes and seconds, difference from UTC.
+     * It has the format hh[:mm[:ss]] optionally with a leading sign (+ or -).
+     * The positive sign is used for zones west of Greenwich.
+     * (Note that this is the opposite of the ISO-8601 sign convention which is output on format.)
+     * hh can have one or two digits; mm and ss (if used) must have two.
+     *
+     * @param userTimeZone The user time zone to get the POSIX compliant offset string for.
+     * @return The POSIX compliant timezone offset string.
+     */
+    private String getPosixOffset(final UserTimeZone userTimeZone) {
+
+        final int hours = GwtNullSafe.requireNonNullElse(userTimeZone.getOffsetHours(), 0);
+        int minutes = GwtNullSafe.requireNonNullElse(userTimeZone.getOffsetMinutes(), 0);
+
+        // FIXME:  Browsers don't support minute offsets so disable this for now.
+        minutes = 0;
+
+        String offset = "";
+        if (hours != 0 && minutes != 0) {
+            final String hoursString = "" + hours;
+            final String minutesString = ClientStringUtil.zeroPad(2, minutes);
+            offset = hoursString + ":" + minutesString;
+            if (hours >= 0 && minutes >= 0) {
+                offset = "-" + offset;
+            } else {
+                offset = "+" + offset;
+            }
+        } else if (hours != 0) {
+            offset = "" + hours;
+            if (hours >= 0) {
+                offset = "-" + offset;
+            } else {
+                offset = "+" + offset;
+            }
+        }
+
+        return "Etc/GMT" + offset;
     }
 
     public UserPreferences getCurrentUserPreferences() {

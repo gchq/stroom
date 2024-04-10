@@ -1,7 +1,7 @@
 package stroom.index.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -9,8 +9,8 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.index.client.presenter.IndexPresenter;
-import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexResource;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.security.client.api.ClientSecurityContext;
 
 import com.google.gwt.core.client.GWT;
@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 import javax.inject.Singleton;
 
 @Singleton
-public class IndexPlugin extends DocumentPlugin<IndexDoc> {
+public class IndexPlugin extends DocumentPlugin<LuceneIndexDoc> {
 
     private static final IndexResource INDEX_RESOURCE = GWT.create(IndexResource.class);
 
@@ -48,36 +48,36 @@ public class IndexPlugin extends DocumentPlugin<IndexDoc> {
 
     @Override
     public void load(final DocRef docRef,
-                     final Consumer<IndexDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<IndexDoc> rest = restFactory.create();
-        rest
+                     final Consumer<LuceneIndexDoc> resultConsumer,
+                     final Consumer<RestError> errorConsumer) {
+        restFactory
+                .create(INDEX_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(INDEX_RESOURCE)
-                .fetch(docRef.getUuid());
+                .exec();
     }
 
     @Override
     public void save(final DocRef docRef,
-                     final IndexDoc document,
-                     final Consumer<IndexDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<IndexDoc> rest = restFactory.create();
-        rest
+                     final LuceneIndexDoc document,
+                     final Consumer<LuceneIndexDoc> resultConsumer,
+                     final Consumer<RestError> errorConsumer) {
+        restFactory
+                .create(INDEX_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(INDEX_RESOURCE)
-                .update(document.getUuid(), document);
+                .exec();
     }
 
     @Override
     public String getType() {
-        return IndexDoc.DOCUMENT_TYPE;
+        return LuceneIndexDoc.DOCUMENT_TYPE;
     }
 
     @Override
-    protected DocRef getDocRef(final IndexDoc document) {
+    protected DocRef getDocRef(final LuceneIndexDoc document) {
         return DocRefUtil.create(document);
     }
 }

@@ -188,6 +188,22 @@ public class GwtNullSafe {
     }
 
     /**
+     * @return True if str is non-null and has at least one character that is not
+     * whitespace
+     */
+    public static boolean isNonBlankString(final String str) {
+        // GWT doesn't emulate String::isBlank
+        if (str != null && !str.isEmpty()) {
+            for (final char chr : str.toCharArray()) {
+                if (!Character.isWhitespace(chr)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * @return str if it is not null/empty/blank, else other.
      */
     public static String nonBlankStringElse(final String str, final String other) {
@@ -216,10 +232,33 @@ public class GwtNullSafe {
     }
 
     /**
+     * If str is not null/empty/blank then pass it to consumer (if that is not null).
+     */
+    public static void consumeNonBlankString(final String str,
+                                             final boolean trimString,
+                                             final Consumer<String> consumer) {
+        // GWT doesn't emulate String::isBlank
+        if (!isBlankString(str) && consumer != null) {
+            if (trimString) {
+                consumer.accept(str.trim());
+            } else {
+                consumer.accept(str);
+            }
+        }
+    }
+
+    /**
      * @return True if str is null or empty
      */
     public static boolean isEmptyString(final String str) {
         return str == null || str.isEmpty();
+    }
+
+    /**
+     * @return True if str is non-null and not empty
+     */
+    public static boolean isNonEmptyString(final String str) {
+        return str != null && !str.isEmpty();
     }
 
     public static Optional<String> nonBlank(final String str) {

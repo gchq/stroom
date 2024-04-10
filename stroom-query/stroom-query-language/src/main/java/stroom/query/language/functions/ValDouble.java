@@ -134,4 +134,9 @@ public final class ValDouble implements ValNumber {
     public Comparator<Val> getDefaultComparator(final boolean isCaseSensitive) {
         return COMPARATOR;
     }
+
+    @Override
+    public Object unwrap() {
+        return value;
+    }
 }

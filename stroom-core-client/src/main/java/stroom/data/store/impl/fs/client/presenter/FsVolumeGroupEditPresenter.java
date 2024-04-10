@@ -101,14 +101,13 @@ public class FsVolumeGroupEditPresenter
         registerHandler(deleteButton.addClickHandler(event -> delete()));
         registerHandler(rescanButton.addClickHandler(event -> {
             delayedUpdate.reset();
-            restFactory.builder()
-                    .forBoolean()
+            restFactory
+                    .create(FS_VOLUME_RESOURCE)
+                    .method(FsVolumeResource::rescan)
                     .onSuccess(response -> delayedUpdate.update())
                     .onFailure(throwable -> {
                     })
-                    .call(FS_VOLUME_RESOURCE)
-                    .rescan();
-
+                    .exec();
         }));
     }
 
@@ -121,12 +120,11 @@ public class FsVolumeGroupEditPresenter
     private void edit() {
         final FsVolume volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
-            restFactory.builder()
-                    .forType(FsVolume.class)
-                    .onSuccess(result ->
-                            editVolume(result, "Edit Volume"))
-                    .call(FS_VOLUME_RESOURCE)
-                    .fetch(volume.getId());
+            restFactory
+                    .create(FS_VOLUME_RESOURCE)
+                    .method(res -> res.fetch(volume.getId()))
+                    .onSuccess(result -> editVolume(result, "Edit Volume"))
+                    .exec();
         }
     }
 
@@ -152,10 +150,11 @@ public class FsVolumeGroupEditPresenter
                         if (result) {
                             volumeStatusListPresenter.getSelectionModel().clear();
                             for (final FsVolume volume : list) {
-                                restFactory.builder()
-                                        .forBoolean()
+                                restFactory
+                                        .create(FS_VOLUME_RESOURCE)
+                                        .method(res -> res.delete(volume.getId()))
                                         .onSuccess(response -> volumeStatusListPresenter.refresh())
-                                        .call(FS_VOLUME_RESOURCE).delete(volume.getId());
+                                        .exec();
                             }
                         }
                     });
@@ -245,8 +244,9 @@ public class FsVolumeGroupEditPresenter
                     "You must provide a name for the index volume group.",
                     null);
         } else {
-            restFactory.builder()
-                    .forType(FsVolumeGroup.class)
+            restFactory
+                    .create(FS_VOLUME_GROUP_RESOURCE)
+                    .method(res -> res.fetchByName(getView().getName()))
                     .onSuccess(grp -> {
                         if (grp != null && !Objects.equals(groupId, grp.getId())) {
                             AlertEvent.fireError(
@@ -259,18 +259,17 @@ public class FsVolumeGroupEditPresenter
                             work.run();
                         }
                     })
-                    .call(FS_VOLUME_GROUP_RESOURCE)
-                    .fetchByName(groupName);
+                    .exec();
         }
     }
 
     private void editVolumeGroup(final Consumer<FsVolumeGroup> consumer,
                                  final FsVolumeGroup volumeGroup) {
-        restFactory.builder()
-                .forType(FsVolumeGroup.class)
+        restFactory
+                .create(FS_VOLUME_GROUP_RESOURCE)
+                .method(res -> res.update(volumeGroup.getId(), volumeGroup))
                 .onSuccess(consumer)
-                .call(FS_VOLUME_GROUP_RESOURCE)
-                .update(volumeGroup.getId(), volumeGroup);
+                .exec();
     }
 
     void hide() {

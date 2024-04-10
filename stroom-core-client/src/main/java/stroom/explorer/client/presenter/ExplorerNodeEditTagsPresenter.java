@@ -18,7 +18,7 @@
 package stroom.explorer.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.RefreshDocumentEvent;
@@ -92,19 +92,20 @@ public class ExplorerNodeEditTagsPresenter
                     .map(ExplorerNode::getDocRef)
                     .collect(Collectors.toList());
 
-            final Rest<Set<String>> allNodeTagsRest = restFactory.create();
-            allNodeTagsRest
+            restFactory
+                    .create(EXPLORER_RESOURCE)
+                    .method(ExplorerResource::fetchExplorerNodeTags)
                     .onSuccess(allTags -> {
                         if (isSingleDocRef()) {
-                            final Rest<Set<String>> expNodeRest = restFactory.create();
-                            expNodeRest
-                                    .onSuccess(nodetags -> {
-                                        getView().setData(docRefs, nodetags, allTags);
+                            restFactory
+                                    .create(EXPLORER_RESOURCE)
+                                    .method(res -> res.fetchExplorerNodeTags(docRefs))
+                                    .onSuccess(nodeTags -> {
+                                        getView().setData(docRefs, nodeTags, allTags);
                                         forceReveal();
                                     })
                                     .onFailure(this::handleFailure)
-                                    .call(EXPLORER_RESOURCE)
-                                    .fetchExplorerNodeTags(docRefs);
+                                    .exec();
                         } else {
                             // Adding to multiple so don't need to know what tags the nodes have
                             getView().setData(docRefs, Collections.emptySet(), allTags);
@@ -112,8 +113,7 @@ public class ExplorerNodeEditTagsPresenter
                         }
                     })
                     .onFailure(this::handleFailure)
-                    .call(EXPLORER_RESOURCE)
-                    .fetchExplorerNodeTags();
+                    .exec();
 
         }
 
@@ -172,8 +172,9 @@ public class ExplorerNodeEditTagsPresenter
 
     private void addTagsToNodes(final HidePopupRequestEvent event, final Set<String> editedTags) {
         final List<DocRef> nodeDocRefs = getNodeDocRefs();
-        final Rest<Void> rest = restFactory.create();
-        rest
+        restFactory
+                .create(EXPLORER_RESOURCE)
+                .call(res -> res.addTags(new AddRemoveTagsRequest(nodeDocRefs, editedTags)))
                 .onSuccess(voidResult -> {
                     // Update the node in the tree with the new tags
                     nodeDocRefs.forEach(docRef ->
@@ -182,17 +183,16 @@ public class ExplorerNodeEditTagsPresenter
                     event.hide();
                 })
                 .onFailure(this::handleFailure)
-                .call(EXPLORER_RESOURCE)
-                .addTags(new AddRemoveTagsRequest(nodeDocRefs, editedTags));
+                .exec();
     }
 
     private void updateTagsOnNode(final HidePopupRequestEvent event, final Set<String> editedTags) {
         final ExplorerNode updatedNode = getSingleNode().copy()
                 .tags(editedTags)
                 .build();
-
-        final Rest<ExplorerNode> rest = restFactory.create();
-        rest
+        restFactory
+                .create(EXPLORER_RESOURCE)
+                .method(res -> res.updateNodeTags(updatedNode))
                 .onSuccess(explorerNode -> {
                     // Update the node in the tree with the new tags
                     RefreshDocumentEvent.fire(
@@ -201,8 +201,7 @@ public class ExplorerNodeEditTagsPresenter
                     event.hide();
                 })
                 .onFailure(this::handleFailure)
-                .call(EXPLORER_RESOURCE)
-                .updateNodeTags(updatedNode);
+                .exec();
     }
 
     @Override
@@ -210,7 +209,7 @@ public class ExplorerNodeEditTagsPresenter
 
     }
 
-    private void handleFailure(final Throwable t) {
+    private void handleFailure(final RestError t) {
         AlertEvent.fireError(
                 ExplorerNodeEditTagsPresenter.this,
                 t.getMessage(),

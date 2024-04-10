@@ -17,8 +17,8 @@
 package stroom.index.impl;
 
 
-import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexDoc.PartitionBy;
+import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.LuceneIndexDoc.PartitionBy;
 import stroom.util.date.DateUtil;
 
 import org.junit.jupiter.api.Test;
@@ -70,7 +70,7 @@ class TestTimePartition {
     }
 
     private String getPartition(final PartitionBy partitionBy, final int partitionSize, final long millis) {
-        final IndexDoc index = new IndexDoc();
+        final LuceneIndexDoc index = new LuceneIndexDoc();
         index.setUuid(UUID.randomUUID().toString());
         index.setShardsPerPartition(5);
         index.setPartitionBy(partitionBy);

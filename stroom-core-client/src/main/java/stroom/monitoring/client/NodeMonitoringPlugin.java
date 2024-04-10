@@ -26,6 +26,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -46,15 +47,26 @@ public class NodeMonitoringPlugin extends MonitoringPlugin<NodeMonitoringPresent
 
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
-        if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_NODES_PERMISSION)) {
+        if (getSecurityContext().hasAppPermission(getRequiredAppPermission())) {
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
                     new IconMenuItem.Builder()
                             .priority(10)
                             .icon(SvgImage.NODES)
                             .iconColour(IconColour.GREY)
                             .text("Nodes")
+                            .action(getOpenAction())
                             .command(this::open)
                             .build());
         }
+    }
+
+    @Override
+    protected String getRequiredAppPermission() {
+        return PermissionNames.MANAGE_NODES_PERMISSION;
+    }
+
+    @Override
+    protected Action getOpenAction() {
+        return Action.GOTO_NODES;
     }
 }

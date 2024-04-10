@@ -19,8 +19,8 @@ package stroom.legacy.db.migration;
 import stroom.db.util.DbUtil;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.index.impl.IndexSerialiser;
-import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexDoc.PartitionBy;
+import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.LuceneIndexDoc.PartitionBy;
 import stroom.legacy.impex_6_1.LegacyXmlSerialiser;
 import stroom.legacy.impex_6_1.MappingUtil;
 import stroom.legacy.model_6_1.Index;
@@ -404,11 +404,11 @@ public class V07_00_00_1502__Index extends BaseJavaMigration {
                                 : Optional.ofNullable(
                                         Index.PartitionBy.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(partBy))
                                         .map(legacyPartitionBy ->
-                                                IndexDoc.PartitionBy.valueOf(legacyPartitionBy.name()))
+                                                LuceneIndexDoc.PartitionBy.valueOf(legacyPartitionBy.name()))
                                         .orElse(null);
 
-                        final IndexDoc document = new IndexDoc();
-                        document.setType(IndexDoc.DOCUMENT_TYPE);
+                        final LuceneIndexDoc document = new LuceneIndexDoc();
+                        document.setType(LuceneIndexDoc.DOCUMENT_TYPE);
                         document.setUuid(uuid);
                         document.setName(name);
                         document.setVersion(UUID.randomUUID().toString());
@@ -438,7 +438,7 @@ public class V07_00_00_1502__Index extends BaseJavaMigration {
                         // Add the records.
                         dataMap.forEach((k, v) -> {
                             try {
-                                insert.setString(1, IndexDoc.DOCUMENT_TYPE);
+                                insert.setString(1, LuceneIndexDoc.DOCUMENT_TYPE);
                                 insert.setString(2, uuid);
                                 insert.setString(3, name);
                                 insert.setString(4, k);

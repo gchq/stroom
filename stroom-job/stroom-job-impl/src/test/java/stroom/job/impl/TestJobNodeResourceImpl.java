@@ -11,6 +11,8 @@ import stroom.node.api.NodeService;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.scheduler.Schedule;
+import stroom.util.shared.scheduler.ScheduleType;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -234,19 +236,16 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
 
         final String subPath = ResourcePaths.buildPath("1", JobNodeResource.SCHEDULE_PATH_PART);
 
-        final String newSchedule = "1 1 1";
+        final Schedule newSchedule = new Schedule(ScheduleType.CRON, "0 1 1 1 * ?");
 
-        doPutTest(
-                subPath,
-                newSchedule);
+        doPutTest(subPath, newSchedule);
 
         final ArgumentCaptor<JobNode> jobNodeCaptor = ArgumentCaptor.forClass(JobNode.class);
 
         verify(jobNodeServiceMap.get("node1"), times(1))
                 .update(jobNodeCaptor.capture());
 
-        assertThat(jobNodeCaptor.getValue().getSchedule())
-                .isEqualTo(newSchedule);
+        assertThat(jobNodeCaptor.getValue().getSchedule()).isEqualTo(newSchedule.getExpression());
 
         final ArgumentCaptor<JobNode> beforeCaptor = ArgumentCaptor.forClass(JobNode.class);
         final ArgumentCaptor<JobNode> afterCaptor = ArgumentCaptor.forClass(JobNode.class);
@@ -261,8 +260,7 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
         assertThat(beforeCaptor.getValue().getVersion())
                 .isNotEqualTo(afterCaptor.getValue().getVersion());
 
-        assertThat(afterCaptor.getValue().getSchedule())
-                .isEqualTo(newSchedule);
+        assertThat(afterCaptor.getValue().getSchedule()).isEqualTo(newSchedule.getExpression());
 
         assertThat(afterCaptor.getValue().getSchedule())
                 .isNotEqualTo(JOB_NODE_1.getSchedule());

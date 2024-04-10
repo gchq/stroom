@@ -19,6 +19,7 @@ import stroom.index.impl.db.jooq.tables.IndexVolumeGroup;
 @SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
 public class IndexVolumeGroupRecord extends UpdatableRecordImpl<IndexVolumeGroupRecord> implements Record9<Integer, Integer, Long, String, Long, String, String, Boolean, String> {
 
+
     private static final long serialVersionUID = 1L;
 
     /**

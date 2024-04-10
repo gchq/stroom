@@ -112,7 +112,7 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
                 .isEqualTo(2);
 
         final ExpressionOperator expression1 = ExpressionOperator.builder()
-                .addTerm(ProcessorFilterFields.PRIORITY, Condition.GREATER_THAN_OR_EQUAL_TO, 10)
+                .addIntegerTerm(ProcessorFilterFields.PRIORITY, Condition.GREATER_THAN_OR_EQUAL_TO, 10)
                 .build();
         findProcessorFilterCriteria.setExpression(expression1);
         //PriorityRange(new Range<>(10, null));
@@ -120,7 +120,7 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
                 .isEqualTo(1);
 
         final ExpressionOperator expression2 = ExpressionOperator.builder()
-                .addTerm(ProcessorFilterFields.PRIORITY, Condition.GREATER_THAN_OR_EQUAL_TO, 1)
+                .addIntegerTerm(ProcessorFilterFields.PRIORITY, Condition.GREATER_THAN_OR_EQUAL_TO, 1)
                 .build();
         findProcessorFilterCriteria.setExpression(expression2);
 //        findProcessorFilterCriteria.setPriorityRange(new Range<>(1, null));
@@ -140,14 +140,14 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
                 .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                 .expression(ExpressionOperator.builder()
                         .addOperator(ExpressionOperator.builder().op(Op.OR)
-                                .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName1)
-                                .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName2)
+                                .addDateTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName1)
+                                .addDateTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName2)
                                 .build())
                         .addOperator(ExpressionOperator.builder().op(Op.OR)
-                                .addTerm(MetaFields.TYPE,
+                                .addDateTerm(MetaFields.TYPE,
                                         ExpressionTerm.Condition.EQUALS,
                                         StreamTypeNames.RAW_EVENTS)
-                                .addTerm(MetaFields.TYPE,
+                                .addDateTerm(MetaFields.TYPE,
                                         ExpressionTerm.Condition.EQUALS,
                                         StreamTypeNames.RAW_REFERENCE)
                                 .build())
@@ -255,9 +255,9 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
     @Test
     void testApplyAllCriteria() {
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(ProcessorFilterFields.LAST_POLL_MS, Condition.GREATER_THAN_OR_EQUAL_TO, 1)
-                .addTerm(ProcessorFilterFields.LAST_POLL_MS, Condition.LESS_THAN, 1)
-                .addTerm(ProcessorFilterFields.ENABLED, Condition.EQUALS, true)
+                .addIdTerm(ProcessorFilterFields.LAST_POLL_MS, Condition.GREATER_THAN_OR_EQUAL_TO, 1)
+                .addIdTerm(ProcessorFilterFields.LAST_POLL_MS, Condition.LESS_THAN, 1)
+                .addBooleanTerm(ProcessorFilterFields.ENABLED, Condition.EQUALS, true)
                 .build();
         final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria(expression);
 //        findProcessorFilterCriteria.setLastPollPeriod(new Period(1L, 1L));

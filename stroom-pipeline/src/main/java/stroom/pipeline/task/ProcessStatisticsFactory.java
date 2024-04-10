@@ -72,7 +72,7 @@ public class ProcessStatisticsFactory {
         private final Map<QueryField, Long> map = new HashMap<>();
 
         public void write(final AttributeMap attributeMap) {
-            map.forEach((k, v) -> attributeMap.put(k.getName(), String.valueOf(v)));
+            map.forEach((k, v) -> attributeMap.put(k.getFldName(), String.valueOf(v)));
         }
 
         public ProcessStatistics add(final ProcessStatistics stats) {

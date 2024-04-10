@@ -17,10 +17,15 @@
             <g:TextArea ui:field="values" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup>
-            <v:CustomCheckBox ui:field="useDictionary" identity="basicListInputSettingsExtractValues" label="Use Dictionary"/>
+            <v:CustomCheckBox ui:field="useDictionary" identity="basicListInputSettingsExtractValues"
+                              label="Use Dictionary"/>
         </form:FormGroup>
         <form:FormGroup identity="basicListInputSettingsDictionary" label="Dictionary">
             <g:SimplePanel ui:field="dictionary" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup>
+            <v:CustomCheckBox ui:field="allowTextEntry" identity="basicListInputSettingsAllowTextEntry"
+                              label="Allow Text Entry"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

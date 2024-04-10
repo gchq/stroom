@@ -22,7 +22,7 @@ class TestValidSimpleSimpleCronValidatorImpl extends AbstractValidatorTest {
 
     @Test
     void test_good() {
-        doValidationTest("* * *", true);
+        doValidationTest("* * * * * ?", true);
     }
 
     @Test

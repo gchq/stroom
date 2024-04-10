@@ -23,7 +23,7 @@ import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.docref.DocRef;
-import stroom.expression.api.TimeZone;
+import stroom.expression.api.UserTimeZone;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.DateTimeFormatSettings;
 import stroom.query.api.v2.ExpressionOperator;
@@ -144,7 +144,7 @@ public class SearchRequestTestData {
     }
 
     private static DateTimeFormatSettings createDateTimeFormat() {
-        final TimeZone timeZone = TimeZone.fromOffset(2, 30);
+        final UserTimeZone timeZone = UserTimeZone.fromOffset(2, 30);
         return new DateTimeFormatSettings(true, "yyyy-MM-dd'T'HH:mm:ss", timeZone);
     }
 }

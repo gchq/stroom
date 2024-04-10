@@ -1,7 +1,7 @@
 package stroom.legacy.impex_6_1;
 
 import stroom.index.impl.selection.VolumeConfig;
-import stroom.index.shared.IndexDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.legacy.model_6_1.DocRef;
 import stroom.legacy.model_6_1.Index;
 
@@ -10,7 +10,7 @@ import java.util.UUID;
 
 @Deprecated
 public class LegacyIndexDeserialiser {
-    public IndexDoc getIndexDocFromLegacyImport(
+    public LuceneIndexDoc getIndexDocFromLegacyImport(
             final DocRef docRef,
             final Map<String, byte[]> dataMap,
             final VolumeConfig volumeConfig) {
@@ -18,7 +18,7 @@ public class LegacyIndexDeserialiser {
         final Index oldIndex = new Index();
         LegacyXmlSerialiser.performImport(oldIndex, dataMap);
 
-        final IndexDoc document = new IndexDoc();
+        final LuceneIndexDoc document = new LuceneIndexDoc();
         document.setType(docRef.getType());
         document.setUuid(docRef.getUuid());
         document.setName(docRef.getName());
@@ -31,7 +31,7 @@ public class LegacyIndexDeserialiser {
         document.setDescription(oldIndex.getDescription());
         document.setMaxDocsPerShard(oldIndex.getMaxDocsPerShard());
         if (oldIndex.getPartitionBy() != null) {
-            document.setPartitionBy(IndexDoc.PartitionBy.valueOf(oldIndex.getPartitionBy().name()));
+            document.setPartitionBy(LuceneIndexDoc.PartitionBy.valueOf(oldIndex.getPartitionBy().name()));
         }
         document.setPartitionSize(oldIndex.getPartitionSize());
         document.setShardsPerPartition(oldIndex.getShardsPerPartition());

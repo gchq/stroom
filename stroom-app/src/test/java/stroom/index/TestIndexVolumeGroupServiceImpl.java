@@ -9,6 +9,7 @@ import stroom.util.io.capacity.RoundRobinCapacitySelector;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -20,6 +21,11 @@ public class TestIndexVolumeGroupServiceImpl extends AbstractCoreIntegrationTest
     private IndexVolumeGroupService indexVolumeGroupService;
     @Inject
     private Provider<VolumeConfig> volumeConfigProvider;
+
+    @AfterEach
+    void unsetProperties() {
+        clearConfigValueMapper();
+    }
 
     @Test
     void testDefaultGroups() {

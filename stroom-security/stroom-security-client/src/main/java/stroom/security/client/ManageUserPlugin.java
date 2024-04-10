@@ -30,6 +30,8 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.inject.client.AsyncProvider;
 import com.google.gwt.user.client.Command;
@@ -63,37 +65,64 @@ public class ManageUserPlugin extends NodeToolsPlugin {
                     public void onFailure(final Throwable caught) {
                     }
                 }));
+
+        final Action openAction = getOpenAction();
+        if (openAction != null) {
+            final String requiredAppPermission = getRequiredAppPermission();
+            final Command command;
+            if (requiredAppPermission != null) {
+                command = () -> {
+                    if (getSecurityContext().hasAppPermission(requiredAppPermission)) {
+                        open();
+                    }
+                };
+            } else {
+                command = this::open;
+            }
+            KeyBinding.addCommand(openAction, command);
+        }
+    }
+
+    private String getRequiredAppPermission() {
+        return PermissionNames.MANAGE_USERS_PERMISSION;
+    }
+
+    private Action getOpenAction() {
+        return Action.GOTO_APP_PERMS;
     }
 
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
-        if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
+        if (getSecurityContext().hasAppPermission(getRequiredAppPermission())) {
             // Menu item for the user/group permissions dialog
             MenuKeys.addSecurityMenu(event.getMenuItems());
-            final Command command = () ->
-                    usersAndGroupsPresenterProvider.get(new AsyncCallback<UsersAndGroupsPresenter>() {
-                        @Override
-                        public void onSuccess(final UsersAndGroupsPresenter presenter) {
-                            final PopupSize popupSize = PopupSize.resizable(1_100, 800);
-                            ShowPopupEvent.builder(presenter)
-                                    .popupType(PopupType.CLOSE_DIALOG)
-                                    .popupSize(popupSize)
-                                    .caption("Application Permissions")
-                                    .onShow(e -> presenter.focus())
-                                    .fire();
-                        }
-
-                        @Override
-                        public void onFailure(final Throwable caught) {
-                        }
-                    });
             event.getMenuItems().addMenuItem(MenuKeys.SECURITY_MENU,
                     new IconMenuItem.Builder()
                             .priority(1)
                             .icon(SvgImage.USER)
                             .text("Application Permissions")
-                            .command(command)
+                            .action(getOpenAction())
+                            .command(this::open)
                             .build());
         }
+    }
+
+    private void open() {
+        usersAndGroupsPresenterProvider.get(new AsyncCallback<UsersAndGroupsPresenter>() {
+            @Override
+            public void onSuccess(final UsersAndGroupsPresenter presenter) {
+                final PopupSize popupSize = PopupSize.resizable(1_100, 800);
+                ShowPopupEvent.builder(presenter)
+                        .popupType(PopupType.CLOSE_DIALOG)
+                        .popupSize(popupSize)
+                        .caption("Application Permissions")
+                        .onShow(e -> presenter.focus())
+                        .fire();
+            }
+
+            @Override
+            public void onFailure(final Throwable caught) {
+            }
+        });
     }
 }

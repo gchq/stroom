@@ -9,6 +9,7 @@ import stroom.pipeline.errorhandler.ErrorStatistics;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.errorhandler.RecordErrorReceiver;
 import stroom.pipeline.state.RecordCount;
+import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.pipeline.scope.PipelineScoped;
@@ -18,6 +19,7 @@ import jakarta.inject.Inject;
 import org.slf4j.MarkerFactory;
 
 import java.io.IOException;
+import java.util.function.Function;
 
 @PipelineScoped
 public class AnalyticErrorWriter {
@@ -46,9 +48,10 @@ public class AnalyticErrorWriter {
         this.volumeGroupNameProvider = volumeGroupNameProvider;
     }
 
-    void exec(final String errorFeedName,
-              final String pipelineUuid,
-              final Runnable runnable) {
+    <R> R exec(final String errorFeedName,
+               final String pipelineUuid,
+               final TaskContext taskContext,
+               final Function<TaskContext, R> function) {
         // Setup the error handler and receiver.
         errorReceiverProxy.setErrorReceiver(recordErrorReceiver);
 
@@ -66,7 +69,7 @@ public class AnalyticErrorWriter {
                 errorWriter.addOutputStreamProvider(processInfoOutputStreamProvider);
                 errorWriterProxy.setErrorWriter(errorWriter);
 
-                runnable.run();
+                return function.apply(taskContext);
 
             } catch (final Exception e) {
                 outputError(e);
@@ -79,6 +82,8 @@ public class AnalyticErrorWriter {
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
         }
+
+        return null;
     }
 
     private void outputError(final Exception e) {

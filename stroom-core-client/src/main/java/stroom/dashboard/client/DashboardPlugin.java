@@ -24,7 +24,7 @@ import stroom.dashboard.client.event.ReopenResultStoreEvent;
 import stroom.dashboard.client.main.DashboardSuperPresenter;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardResource;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -188,26 +188,26 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
     @Override
     public void load(final DocRef docRef,
                      final Consumer<DashboardDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<DashboardDoc> rest = restFactory.create();
-        rest
+                     final Consumer<RestError> errorConsumer) {
+        restFactory
+                .create(DASHBOARD_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(DASHBOARD_RESOURCE)
-                .fetch(docRef.getUuid());
+                .exec();
     }
 
     @Override
     public void save(final DocRef docRef,
                      final DashboardDoc document,
                      final Consumer<DashboardDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<DashboardDoc> rest = restFactory.create();
-        rest
+                     final Consumer<RestError> errorConsumer) {
+        restFactory
+                .create(DASHBOARD_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(DASHBOARD_RESOURCE)
-                .update(document.getUuid(), document);
+                .exec();
     }
 
     @Override

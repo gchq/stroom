@@ -6,6 +6,7 @@ import stroom.dashboard.impl.VisNest;
 import stroom.dashboard.impl.VisValues;
 import stroom.dashboard.impl.vis.VisSettings;
 import stroom.dashboard.impl.vis.VisSettings.Control;
+import stroom.dashboard.impl.vis.VisSettings.Data;
 import stroom.dashboard.impl.vis.VisSettings.Nest;
 import stroom.dashboard.impl.vis.VisSettings.Structure;
 import stroom.dashboard.impl.vis.VisSettings.Tab;
@@ -19,20 +20,25 @@ import stroom.query.api.v2.TableSettings;
 import stroom.query.language.DocResolver;
 import stroom.query.language.VisualisationTokenConsumer;
 import stroom.query.language.token.AbstractToken;
+import stroom.query.language.token.FunctionGroup;
 import stroom.query.language.token.KeywordGroup;
 import stroom.query.language.token.TokenException;
 import stroom.query.language.token.TokenGroup;
 import stroom.query.language.token.TokenType;
+import stroom.util.NullSafe;
 import stroom.util.json.JsonUtil;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import jakarta.inject.Inject;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class VisualisationTokenConsumerImpl implements VisualisationTokenConsumer {
 
@@ -49,26 +55,80 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
     @Override
     public TableSettings processVis(final KeywordGroup keywordGroup,
                                     final TableSettings parentTableSettings) {
-        final VisualisationDoc visualisationDoc;
-        Map<String, String> params = Collections.emptyMap();
+        Objects.requireNonNull(parentTableSettings, "Null parent table settings");
 
+        final VisualisationDoc visualisationDoc;
+        final VisSettings visSettings;
+        final Controls controls;
+        final Map<String, String> visParameters;
         final List<AbstractToken> children = keywordGroup.getChildren();
 
-        // Get AS.
-        if (children.size() > 0) {
-            if (!TokenType.AS.equals(children.get(0).getTokenType())) {
-                throw new TokenException(children.get(0), "Expected AS");
+        int childIndex = 0;
+
+        // Ignore AS due to deprecation.
+        if (!children.isEmpty()) {
+            if (TokenType.AS.equals(children.get(childIndex).getTokenType())) {
+                childIndex++;
             }
-        } else {
-            throw new TokenException(keywordGroup, "Expected AS");
         }
 
         // Get visualisation by name.
-        if (children.size() > 1) {
-            final AbstractToken token = children.get(1);
+        final String visName;
+        if (children.size() > childIndex) {
+            final AbstractToken token = children.get(childIndex);
             if (TokenType.isString(token)) {
-                final String visName = token.getUnescapedText();
+                visName = token.getUnescapedText();
                 visualisationDoc = loadVisualisation(token, visName);
+                childIndex++;
+
+                // Get the vis structure.
+                if (!NullSafe.isBlankString(visualisationDoc.getSettings())) {
+                    visSettings = JsonUtil.readValue(visualisationDoc.getSettings(), VisSettings.class);
+                } else {
+                    visSettings = new VisSettings();
+                }
+                controls = new Controls(visSettings);
+
+                // Get visualisation parameters.
+                if (children.size() > childIndex) {
+                    final AbstractToken paramsToken = children.get(childIndex);
+                    if (TokenType.TOKEN_GROUP.equals(paramsToken.getTokenType())) {
+                        final TokenGroup tokenGroup = (TokenGroup) paramsToken;
+                        visParameters = getVisParameters(
+                                tokenGroup.getChildren(),
+                                visName,
+                                controls,
+                                parentTableSettings);
+                        childIndex++;
+                    } else {
+                        throw new TokenException(paramsToken, "Expected visualisation parameters in brackets");
+                    }
+                } else {
+                    throw new TokenException(keywordGroup, "Expected visualisation parameters in brackets");
+                }
+
+            } else if (TokenType.FUNCTION_GROUP.equals(token.getTokenType())) {
+                final FunctionGroup functionGroup = (FunctionGroup) token;
+                // Be forgiving of missing space and treat resulting function as vis spec.
+                visName = functionGroup.getName();
+                visualisationDoc = loadVisualisation(token, visName);
+                childIndex++;
+
+                // Get the vis structure.
+                if (!NullSafe.isBlankString(visualisationDoc.getSettings())) {
+                    visSettings = JsonUtil.readValue(visualisationDoc.getSettings(), VisSettings.class);
+                } else {
+                    visSettings = new VisSettings();
+                }
+                controls = new Controls(visSettings);
+
+                // Get visualisation parameters.
+                visParameters = getVisParameters(
+                        functionGroup.getChildren(),
+                        visName,
+                        controls,
+                        parentTableSettings);
+
             } else {
                 throw new TokenException(token, "Expected visualisation name");
             }
@@ -76,24 +136,20 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
             throw new TokenException(keywordGroup, "Expected visualisation name");
         }
 
-        // Get visualisation parameters.
-        if (children.size() > 2) {
-            final AbstractToken token = children.get(2);
-            if (TokenType.TOKEN_GROUP.equals(token.getTokenType())) {
-                final TokenGroup tokenGroup = (TokenGroup) token;
-                params = getParams(tokenGroup.getChildren());
-            } else {
-                throw new TokenException(token, "Expected visualisation parameters in brackets");
-            }
-        }
+        // TODO : Add 'AS' naming behaviour, see gh-4150
 
-        // Check we don't have more than 3 tokens.
-        if (children.size() > 3) {
-            throw new TokenException(children.get(3), "Unexpected token");
+        // Check we don't have any more tokens.
+        if (children.size() > childIndex) {
+            throw new TokenException(children.get(childIndex), "Unexpected token");
         }
 
         // Add final field if we have one.
-        return mapVisSettingsToTableSettings(visualisationDoc, params, parentTableSettings);
+        return mapVisSettingsToTableSettings(
+                visualisationDoc,
+                visSettings,
+                controls,
+                visParameters,
+                parentTableSettings);
     }
 
     private VisualisationDoc loadVisualisation(final AbstractToken token, final String visName) {
@@ -114,20 +170,40 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
         return visualisationDoc;
     }
 
-    private Map<String, String> getParams(final List<AbstractToken> children) {
+    private Map<String, String> getVisParameters(final List<AbstractToken> children,
+                                                 final String visName,
+                                                 final Controls controls,
+                                                 final TableSettings parentTableSettings) {
+        final Map<String, Column> columnMap = NullSafe
+                .list(parentTableSettings
+                        .getColumns())
+                .stream()
+                .collect(Collectors.toMap(Column::getName, Function.identity()));
+
         final Map<String, String> params = new HashMap<>();
         for (int i = 0; i < children.size(); i++) {
             AbstractToken t = children.get(i);
-            String paramName = null;
-            String fieldName = null;
+            String controlId;
+            String controlValue;
 
             // Get param name.
             if (!TokenType.isString(t)) {
                 throw new TokenException(t, "Expected string token");
             }
-            paramName = t.getUnescapedText();
-            if (params.containsKey(paramName)) {
+            controlId = t.getUnescapedText();
+            if (params.containsKey(controlId)) {
                 throw new TokenException(t, "Duplicate parameter found");
+            }
+
+            // Validate that the vis parameter is expected.
+            final Control control = controls.getControl(controlId);
+            if (control == null) {
+                throw new TokenException(t,
+                        "Unknown visualisation control id '" +
+                                controlId +
+                                "' found for '" +
+                                visName +
+                                "'");
             }
 
             // Get equals.
@@ -137,16 +213,33 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
                 if (!TokenType.EQUALS.equals(t.getTokenType())) {
                     throw new TokenException(t, "Expected equals");
                 }
+            } else {
+                throw new TokenException(t, "Expected equals");
             }
 
-            // Get field.
+            // Get column.
             i++;
             if (i < children.size()) {
                 t = children.get(i);
-                if (!TokenType.isString(t)) {
-                    throw new TokenException(t, "Expected string token");
+                if (TokenType.STRING.equals(t.getTokenType()) || TokenType.PARAM.equals(t.getTokenType())) {
+                    final String columnName = t.getUnescapedText();
+
+                    // Validate the column name.
+                    final Column column = columnMap.get(columnName);
+                    if (column == null) {
+                        throw new TokenException(t, "Unable to find selected column: " + columnName);
+                    }
+
+                    controlValue = columnName;
+
+                } else if (TokenType.isString(t) || TokenType.NUMBER.equals(t.getTokenType())) {
+                    controlValue = t.getUnescapedText();
+
+                } else {
+                    throw new TokenException(t, "Expected column name or value");
                 }
-                fieldName = t.getUnescapedText();
+            } else {
+                throw new TokenException(t, "Expected column name or value");
             }
 
             // Strip comma if there is one.
@@ -158,8 +251,8 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
                 }
             }
 
-            if (paramName != null && fieldName != null) {
-                params.put(paramName, fieldName);
+            if (controlId != null && controlValue != null) {
+                params.put(controlId, controlValue);
             }
         }
         return params;
@@ -167,82 +260,71 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
 
     private stroom.query.api.v2.TableSettings mapVisSettingsToTableSettings(
             final VisualisationDoc visualisation,
+            final VisSettings visSettings,
+            final Controls controls,
             final Map<String, String> params,
             final TableSettings parentTableSettings) {
 
-        TableSettings tableSettings = null;
+        final Structure structure = Optional
+                .ofNullable(visSettings.getData())
+                .map(Data::getStructure)
+                .orElseGet(Structure::new);
 
-        if (visualisation == null
-                || visualisation.getSettings() == null
-                || visualisation.getSettings().length() == 0) {
-            return null;
-        }
-
-        final VisSettings visSettings = JsonUtil.readValue(visualisation.getSettings(), VisSettings.class);
-        if (visSettings != null && visSettings.getData() != null) {
-            final SettingResolver settingResolver = new SettingResolver(visSettings, params);
-            final Structure structure = visSettings.getData().getStructure();
-            if (structure != null) {
-
-                final Map<String, Format> formatMap = new HashMap<>();
-                if (parentTableSettings.getColumns() != null) {
-                    for (final Column column : parentTableSettings.getColumns()) {
-                        if (column != null) {
-                            formatMap.put(column.getName(), column.getFormat());
-                        }
-                    }
+        final SettingResolver settingResolver = new SettingResolver(controls, params);
+        final Map<String, Format> formatMap = new HashMap<>();
+        if (parentTableSettings.getColumns() != null) {
+            for (final Column column : parentTableSettings.getColumns()) {
+                if (column != null) {
+                    formatMap.put(column.getName(), column.getFormat());
                 }
-
-                List<Column> columns = new ArrayList<>();
-                List<Long> limits = new ArrayList<>();
-
-                VisNest nest = mapNest(structure.getNest(), settingResolver);
-                VisValues values = mapVisValues(structure.getValues(), settingResolver);
-
-                int group = 0;
-                while (nest != null) {
-                    final Column.Builder builder = convertField(nest.getKey(), formatMap);
-                    builder.group(group++);
-
-                    columns.add(builder.build());
-
-                    // Get limit from nest.
-                    Long limit = null;
-                    if (nest.getLimit() != null) {
-                        limit = nest.getLimit().getSize();
-                    }
-                    limits.add(limit);
-
-                    values = nest.getValues();
-                    nest = nest.getNest();
-                }
-
-                if (values != null) {
-                    // Get limit from values.
-                    Long limit = Long.MAX_VALUE;
-                    if (values.getLimit() != null) {
-                        limit = values.getLimit().getSize();
-                    }
-                    limits.add(limit);
-
-                    if (values.getFields() != null) {
-                        for (final VisField visField : values.getFields()) {
-                            columns.add(convertField(visField, formatMap).build());
-                        }
-                    }
-                }
-
-                tableSettings = TableSettings.builder()
-                        .addColumns(columns)
-                        .addMaxResults(limits)
-                        .showDetail(true)
-                        .visSettings(createVisSettings(visualisation, params))
-                        .build();
             }
         }
 
+        List<Column> columns = new ArrayList<>();
+        List<Long> limits = new ArrayList<>();
 
-        return tableSettings;
+        VisNest nest = mapNest(structure.getNest(), settingResolver);
+        VisValues values = mapVisValues(structure.getValues(), settingResolver);
+
+        int group = 0;
+        while (nest != null) {
+            final Column.Builder builder = convertField(nest.getKey(), formatMap);
+            builder.group(group++);
+
+            columns.add(builder.build());
+
+            // Get limit from nest.
+            Long limit = null;
+            if (nest.getLimit() != null) {
+                limit = nest.getLimit().getSize();
+            }
+            limits.add(limit);
+
+            values = nest.getValues();
+            nest = nest.getNest();
+        }
+
+        if (values != null) {
+            // Get limit from values.
+            Long limit = Long.MAX_VALUE;
+            if (values.getLimit() != null) {
+                limit = values.getLimit().getSize();
+            }
+            limits.add(limit);
+
+            if (values.getFields() != null) {
+                for (final VisField visField : values.getFields()) {
+                    columns.add(convertField(visField, formatMap).build());
+                }
+            }
+        }
+
+        return TableSettings.builder()
+                .addColumns(columns)
+                .addMaxResults(limits)
+                .showDetail(true)
+                .visSettings(createVisSettings(visualisation, params))
+                .build();
     }
 
     private QLVisSettings createVisSettings(final VisualisationDoc visualisation,
@@ -354,15 +436,11 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
         return null;
     }
 
-    private static class SettingResolver {
+    private static class Controls {
 
         private final Map<String, Control> controls = new HashMap<>();
-        private final Map<String, String> dashboardSettings;
 
-        public SettingResolver(final VisSettings visSettings,
-                               final Map<String, String> dashboardSettings) {
-            this.dashboardSettings = dashboardSettings;
-
+        public Controls(final VisSettings visSettings) {
             // Create a map of controls.
             if (visSettings.getTabs() != null) {
                 for (final Tab tab : visSettings.getTabs()) {
@@ -375,6 +453,22 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
                     }
                 }
             }
+        }
+
+        public Control getControl(final String controlId) {
+            return controls.get(controlId);
+        }
+    }
+
+    private static class SettingResolver {
+
+        private final Controls controls;
+        private final Map<String, String> dashboardSettings;
+
+        public SettingResolver(final Controls controls,
+                               final Map<String, String> dashboardSettings) {
+            this.controls = controls;
+            this.dashboardSettings = dashboardSettings;
         }
 
         public String resolveField(final String value) {
@@ -393,11 +487,9 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
                     val = dashboardSettings.get(controlId);
 
                     if (val == null) {
-                        final Control control = controls.get(controlId);
+                        final Control control = controls.getControl(controlId);
                         if (control != null) {
                             val = control.getDefaultValue();
-                        } else {
-//                            throw new RuntimeException("No control found with id = '" + controlId + "'");
                         }
                     }
                 }
@@ -444,33 +536,5 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
             ref = ref.substring(0, ref.length() - 1);
             return ref;
         }
-
-//        private Map<String, String> getDashboardSettingsMap(final String json) {
-//            Map<String, String> map = new HashMap<>();
-//
-//            try {
-//                if (json != null && !json.isEmpty()) {
-//                    ObjectMapper objectMapper = JsonUtil.getNoIndentMapper();
-//                    final JsonNode node = objectMapper.readTree(json);
-//
-//                    Iterator<Entry<String, JsonNode>> iterator = node.fields();
-//                    while (iterator.hasNext()) {
-//                        Entry<String, JsonNode> entry = iterator.next();
-//                        JsonNode val = entry.getValue();
-//                        if (val != null) {
-//                            final String str = val.textValue();
-//                            if (str != null) {
-//                                map.put(entry.getKey(), str);
-//                            }
-//                        }
-//                    }
-//                }
-//            } catch (final IOException e) {
-//                throw new UncheckedIOException(e);
-//            }
-//
-//            return map;
-//        }
     }
-
 }

@@ -1,31 +1,21 @@
 package stroom.processor.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.Rest;
-
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Supplier;
+import java.util.function.Consumer;
 
-public abstract class RestSaveQueue<K, V, T> implements HasHandlers {
+public abstract class RestSaveQueue<K, V> implements HasHandlers {
 
     private final EventBus eventBus;
-    private final Supplier<Rest<T>> restSupplier;
     private final Map<K, Boolean> setting = new HashMap<>();
     private final Map<K, V> nextValue = new HashMap<>();
 
-    /**
-     * @param eventBus
-     * @param restSupplier E.g. '{@code () -> restFactory.builder().forBoolean()}'
-     */
-    public RestSaveQueue(final EventBus eventBus,
-                         final Supplier<Rest<T>> restSupplier) {
+    public RestSaveQueue(final EventBus eventBus) {
         this.eventBus = eventBus;
-        this.restSupplier = restSupplier;
     }
 
     public void setValue(final K key, final V value) {
@@ -39,22 +29,14 @@ public abstract class RestSaveQueue<K, V, T> implements HasHandlers {
     private void tryAndSetValue(final K key) {
         V value = nextValue.remove(key);
         if (value != null) {
-            Rest<T> rest = restSupplier.get();
-            rest = rest
-                    .onSuccess(res -> tryAndSetValue(key))
-                    .onFailure(res -> {
-                        AlertEvent.fireError(this, res.getMessage(), null);
-                        tryAndSetValue(key);
-                    });
-            doAction(rest, key, value);
+            doAction(key, value, this::tryAndSetValue);
+
         } else {
             setting.remove(key);
         }
     }
 
-    protected abstract void doAction(final Rest<T> rest,
-                                     final K key,
-                                     final V value);
+    protected abstract void doAction(final K key, final V value, final Consumer<K> consumer);
 
     @Override
     public void fireEvent(final GwtEvent<?> event) {

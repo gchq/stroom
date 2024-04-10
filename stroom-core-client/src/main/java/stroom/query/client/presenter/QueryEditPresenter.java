@@ -34,6 +34,7 @@ import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.QLVisResult;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
+import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.client.view.QueryResultTabsView;
 import stroom.util.shared.DefaultLocation;
@@ -278,7 +279,10 @@ public class QueryEditPresenter
         }, KeyDownEvent.getType()));
         registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));
         registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> startStop()));
-        registerHandler(queryToolbarPresenter.addTimeRangeChangeHandler(e -> run(true, true)));
+        registerHandler(queryToolbarPresenter.addTimeRangeChangeHandler(e -> {
+            run(true, true);
+            setDirty(true);
+        }));
         queryHelpPresenter.linkToEditor(editorPresenter);
 
         registerHandler(getEventBus().addHandler(WindowCloseEvent.getType(), event -> {
@@ -321,7 +325,7 @@ public class QueryEditPresenter
         destroyCurrentVis();
     }
 
-    private void startStop() {
+    void startStop() {
         if (queryModel.isSearching()) {
             queryModel.stop();
         } else {
@@ -358,6 +362,14 @@ public class QueryEditPresenter
                 storeHistory,
                 queryInfo.getMessage());
 //        }
+    }
+
+    public TimeRange getTimeRange() {
+        return queryToolbarPresenter.getTimeRange();
+    }
+
+    public void setTimeRange(final TimeRange timeRange) {
+        queryToolbarPresenter.setTimeRange(timeRange);
     }
 
     public void setQuery(final DocRef docRef, final String query, final boolean readOnly) {

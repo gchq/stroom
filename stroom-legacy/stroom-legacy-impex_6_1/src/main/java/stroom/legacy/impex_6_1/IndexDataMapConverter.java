@@ -5,7 +5,7 @@ import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.index.impl.IndexSerialiser;
 import stroom.index.impl.selection.VolumeConfig;
-import stroom.index.shared.IndexDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -38,7 +38,7 @@ class IndexDataMapConverter implements DataMapConverter {
         Map<String, byte[]> result = dataMap;
         if (dataMap.size() > 0 && !dataMap.containsKey("meta")) {
             try {
-                IndexDoc document = new LegacyIndexDeserialiser()
+                LuceneIndexDoc document = new LegacyIndexDeserialiser()
                         .getIndexDocFromLegacyImport(
                                 new stroom.legacy.model_6_1.DocRef(
                                         docRef.getType(),

@@ -31,6 +31,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
+import stroom.dispatch.client.RestError;
 import stroom.node.client.NodeManager;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.FetchNodeStatusResponse;
@@ -70,6 +71,8 @@ import java.util.function.Consumer;
 
 public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
         implements Refreshable {
+
+    public static final String TAB_TYPE = "Nodes";
 
     private static final NumberFormat THOUSANDS_FORMATTER = NumberFormat.getFormat("#,###");
     private static final String CLASS_BASE = "nodePingBar";
@@ -112,8 +115,8 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
             @Override
             protected void exec(final Range range,
                                 final Consumer<FetchNodeStatusResponse> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
-                nodeManager.fetchNodeStatus(dataConsumer, throwableConsumer, findNodeStatusCriteria);
+                                final Consumer<RestError> errorConsumer) {
+                nodeManager.fetchNodeStatus(dataConsumer, errorConsumer, findNodeStatusCriteria);
             }
 
             @Override
@@ -160,7 +163,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
                 nodeManager.info(
                         row.getNode().getName(),
                         result -> showNodeInfoResult(row.getNode(), result, popupPosition),
-                        caught -> showNodeInfoError(caught, popupPosition));
+                        error -> showNodeInfoError(error.getException(), popupPosition));
             }
         };
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
@@ -388,6 +391,11 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
     @Override
     public String getLabel() {
         return "Nodes";
+    }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
     }
 
 

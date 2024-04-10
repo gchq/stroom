@@ -137,6 +137,9 @@ export interface AnalyticDataShard {
 export interface AnalyticNotificationConfig {
   destination?: AnalyticNotificationDestination;
   destinationType?: "STREAM" | "EMAIL";
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  errorFeed?: DocRef;
   limitNotifications?: boolean;
 
   /** @format int32 */
@@ -174,7 +177,9 @@ export interface AnalyticRuleDoc {
   description?: string;
   languageVersion?: "STROOM_QL_VERSION_0_1" | "SIGMA";
   name?: string;
+  parameters?: Param[];
   query?: string;
+  timeRange?: TimeRange;
   type?: string;
 
   /** @format int64 */
@@ -360,8 +365,6 @@ export interface Base64EncodedDocumentData {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   docRef?: DocRef;
 }
-
-export type BooleanField = QueryField;
 
 export interface BuildInfo {
   /** @format int64 */
@@ -853,14 +856,12 @@ export interface DataRetentionRules {
   version?: string;
 }
 
-export type DateField = QueryField;
-
 /**
  * The string formatting to apply to a date value
  */
 export type DateTimeFormatSettings = FormatSettings & {
   pattern?: string;
-  timeZone?: TimeZone;
+  timeZone?: UserTimeZone;
   usePreferences?: boolean;
 };
 
@@ -881,7 +882,7 @@ export interface DateTimeSettings {
   referenceTime: number;
 
   /** The timezone to apply to a date time value */
-  timeZone?: TimeZone;
+  timeZone?: UserTimeZone;
 }
 
 export interface DefaultLocation {
@@ -970,8 +971,6 @@ export interface DocRef {
   uuid: string;
 }
 
-export type DocRefField = QueryField;
-
 export interface DocRefInfo {
   /** @format int64 */
   createTime?: number;
@@ -999,7 +998,15 @@ export interface DocumentPermissions {
 
 export interface DocumentType {
   displayType?: string;
-  group?: "STRUCTURE" | "DATA_PROCESSING" | "TRANSFORMATION" | "SEARCH" | "INDEXING" | "CONFIGURATION" | "SYSTEM";
+  group?:
+    | "STRUCTURE"
+    | "DATA_PROCESSING"
+    | "TRANSFORMATION"
+    | "SEARCH"
+    | "INDEXING"
+    | "CONFIGURATION"
+    | "SYSTEM"
+    | "INTERNAL";
   icon?:
     | "ADD"
     | "ADD_ABOVE"
@@ -1014,6 +1021,7 @@ export interface DocumentType {
     | "AUTO_REFRESH"
     | "BACKWARD"
     | "BORDERED_CIRCLE"
+    | "CALENDAR"
     | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
@@ -1208,8 +1216,6 @@ export interface DocumentationDoc {
   version?: string;
 }
 
-export type DoubleField = QueryField;
-
 export interface DownloadQueryResultsRequest {
   componentId?: string;
   fileType?: "EXCEL" | "CSV" | "TSV";
@@ -1300,8 +1306,33 @@ export interface ElasticIndexDoc {
 export interface ElasticIndexField {
   fieldName?: string;
   fieldType?: string;
-  fieldUse?: "ID" | "BOOLEAN" | "INTEGER" | "LONG" | "FLOAT" | "DOUBLE" | "DATE" | "TEXT" | "KEYWORD" | "IPV4_ADDRESS";
+  fieldUse?:
+    | "ID"
+    | "BOOLEAN"
+    | "INTEGER"
+    | "LONG"
+    | "FLOAT"
+    | "DOUBLE"
+    | "DATE"
+    | "TEXT"
+    | "KEYWORD"
+    | "IPV4_ADDRESS"
+    | "DOC_REF";
+  fldName?: string;
+  fldType?:
+    | "ID"
+    | "BOOLEAN"
+    | "INTEGER"
+    | "LONG"
+    | "FLOAT"
+    | "DOUBLE"
+    | "DATE"
+    | "TEXT"
+    | "KEYWORD"
+    | "IPV4_ADDRESS"
+    | "DOC_REF";
   indexed?: boolean;
+  nativeType?: string;
 }
 
 export interface ElasticIndexTestResponse {
@@ -1373,6 +1404,64 @@ export interface EventRef {
   streamId?: number;
 }
 
+export interface ExecutionHistory {
+  /** @format int64 */
+  effectiveExecutionTimeMs?: number;
+  executionSchedule?: ExecutionSchedule;
+
+  /** @format int64 */
+  executionTimeMs?: number;
+
+  /** @format int64 */
+  id?: number;
+  message?: string;
+  status?: string;
+}
+
+export interface ExecutionHistoryRequest {
+  executionSchedule?: ExecutionSchedule;
+  pageRequest?: PageRequest;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+}
+
+export interface ExecutionSchedule {
+  contiguous?: boolean;
+  enabled?: boolean;
+
+  /** @format int32 */
+  id?: number;
+  name?: string;
+  nodeName?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  owningDoc?: DocRef;
+  schedule?: Schedule;
+  scheduleBounds?: ScheduleBounds;
+}
+
+export interface ExecutionScheduleRequest {
+  enabled?: boolean;
+  nodeName?: StringMatch;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  ownerDocRef?: DocRef;
+  pageRequest?: PageRequest;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+}
+
+export interface ExecutionTracker {
+  /** @format int64 */
+  actualExecutionTimeMs?: number;
+
+  /** @format int64 */
+  lastEffectiveExecutionTimeMs?: number;
+
+  /** @format int64 */
+  nextEffectiveExecutionTimeMs?: number;
+}
+
 export interface Expander {
   /** @format int32 */
   depth?: number;
@@ -1399,6 +1488,7 @@ export interface ExplorerNode {
     | "AUTO_REFRESH"
     | "BACKWARD"
     | "BORDERED_CIRCLE"
+    | "CALENDAR"
     | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
@@ -1729,9 +1819,6 @@ export interface FeedDoc {
   uuid?: string;
   version?: string;
   volumeGroup?: string;
-
-  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  volumeGroupDocRef?: DocRef;
 }
 
 export interface FetchAllDocumentPermissionsRequest {
@@ -1820,39 +1907,8 @@ export interface FetchPropertyTypesResult {
 export interface FetchSuggestionsRequest {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSource: DocRef;
-  field: FieldInfo;
+  field: QueryField;
   text?: string;
-}
-
-export interface FieldInfo {
-  conditions?:
-    | "'=', '!=', 'between', '>', '>=', '<', '<='"
-    | "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='"
-    | "'=', '!='"
-    | "'=', '!=', 'in', 'in dictionary'"
-    | "'is', 'in folder'"
-    | "'is', 'in folder', '=', '!=', 'in', 'in dictionary'"
-    | "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
-    | "'=', '!=', 'in', 'in dictionary', 'matches regex'"
-    | "'is', '=', '!='"
-    | "'between'"
-    | "'=', '!=', 'in'"
-    | "'=', '!=', 'in', 'in dictionary', 'is'";
-  docRefType?: string;
-  fieldName?: string;
-  fieldType?:
-    | "ID"
-    | "BOOLEAN"
-    | "INTEGER"
-    | "LONG"
-    | "FLOAT"
-    | "DOUBLE"
-    | "DATE"
-    | "TEXT"
-    | "KEYWORD"
-    | "IPV4_ADDRESS"
-    | "DOC_REF";
-  queryable?: boolean;
 }
 
 /**
@@ -1960,6 +2016,7 @@ export interface FindInContentResult {
     | "AUTO_REFRESH"
     | "BACKWARD"
     | "BORDERED_CIRCLE"
+    | "CALENDAR"
     | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
@@ -2191,6 +2248,7 @@ export interface FindResult {
     | "AUTO_REFRESH"
     | "BACKWARD"
     | "BORDERED_CIRCLE"
+    | "CALENDAR"
     | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
@@ -2419,8 +2477,6 @@ export interface FindUserNameCriteria {
  */
 export type FlatResult = Result & { size?: number; structure?: Column[]; values?: object[][] };
 
-export type FloatField = QueryField;
-
 /**
  * Describes the formatting that will be applied to values in a field
  */
@@ -2472,17 +2528,14 @@ export interface FsVolumeGroup {
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
-  defaultVolume?: boolean;
 
   /** @format int32 */
   id?: number;
   name?: string;
-  type?: string;
 
   /** @format int64 */
   updateTimeMs?: number;
   updateUser?: string;
-  uuid?: string;
 
   /** @format int32 */
   version?: number;
@@ -2555,14 +2608,11 @@ export interface GetPipelineForMetaRequest {
 }
 
 export interface GetScheduledTimesRequest {
-  jobType?: "UNKNOWN" | "CRON" | "FREQUENCY" | "DISTRIBUTED";
-
-  /** @format int64 */
-  lastExecutedTime?: number;
-  schedule?: string;
+  schedule?: Schedule;
 
   /** @format int64 */
   scheduleReferenceTime?: number;
+  scheduleRestriction?: ScheduleRestriction;
 }
 
 export interface GlobalConfigCriteria {
@@ -2600,8 +2650,6 @@ export interface HashedApiKey {
 
 export type HoppingWindow = Window & { advanceSize?: string; timeField?: string; windowSize?: string };
 
-export type IdField = QueryField;
-
 export interface ImportConfigRequest {
   confirmList?: ImportState[];
   importSettings?: ImportSettings;
@@ -2636,62 +2684,6 @@ export interface ImportState {
   sourcePath?: string;
   state?: "NEW" | "UPDATE" | "EQUAL" | "IGNORE";
   updatedFieldList?: string[];
-}
-
-export interface IndexDoc {
-  /** @format int64 */
-  createTimeMs?: number;
-  createUser?: string;
-
-  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  defaultExtractionPipeline?: DocRef;
-  description?: string;
-  fields?: IndexField[];
-
-  /** @format int32 */
-  maxDocsPerShard?: number;
-  name?: string;
-  partitionBy?: "DAY" | "WEEK" | "MONTH" | "YEAR";
-
-  /** @format int32 */
-  partitionSize?: number;
-
-  /** @format int32 */
-  retentionDayAge?: number;
-
-  /** @format int32 */
-  shardsPerPartition?: number;
-  timeField?: string;
-  type?: string;
-
-  /** @format int64 */
-  updateTimeMs?: number;
-  updateUser?: string;
-  uuid?: string;
-  version?: string;
-
-  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  volumeGroupDocRef?: DocRef;
-  volumeGroupName?: string;
-}
-
-export interface IndexField {
-  analyzerType?: "KEYWORD" | "ALPHA" | "NUMERIC" | "ALPHA_NUMERIC" | "WHITESPACE" | "STOP" | "STANDARD";
-  caseSensitive?: boolean;
-  fieldName?: string;
-  fieldType?:
-    | "ID"
-    | "BOOLEAN_FIELD"
-    | "INTEGER_FIELD"
-    | "LONG_FIELD"
-    | "FLOAT_FIELD"
-    | "DOUBLE_FIELD"
-    | "DATE_FIELD"
-    | "FIELD"
-    | "NUMERIC_FIELD";
-  indexed?: boolean;
-  stored?: boolean;
-  termPositions?: boolean;
 }
 
 export interface IndexShard {
@@ -2767,17 +2759,14 @@ export interface IndexVolumeGroup {
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
-  defaultVolume?: boolean;
 
   /** @format int32 */
   id?: number;
   name?: string;
-  type?: string;
 
   /** @format int64 */
   updateTimeMs?: number;
   updateUser?: string;
-  uuid?: string;
 
   /** @format int32 */
   version?: number;
@@ -2794,10 +2783,6 @@ export interface InfoPopupConfig {
   title?: string;
   validationRegex?: string;
 }
-
-export type IntegerField = QueryField;
-
-export type IpV4AddressField = QueryField;
 
 export interface Job {
   advanced?: boolean;
@@ -2873,8 +2858,6 @@ export interface KafkaConfigDoc {
 
 export type KeyValueInputComponentSettings = ComponentSettings & { text?: string };
 
-export type KeywordField = QueryField;
-
 export interface LayoutConfig {
   preferredSize?: Size;
   type: string;
@@ -2916,6 +2899,7 @@ export interface ListConfigResponse {
 }
 
 export type ListInputComponentSettings = ComponentSettings & {
+  allowTextEntry?: boolean;
   dictionary?: DocRef;
   key?: string;
   useDictionary?: boolean;
@@ -2944,7 +2928,71 @@ export interface LoginResponse {
   requirePasswordChange?: boolean;
 }
 
-export type LongField = QueryField;
+export interface LuceneIndexDoc {
+  /** @format int64 */
+  createTimeMs?: number;
+  createUser?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  defaultExtractionPipeline?: DocRef;
+  description?: string;
+  fields?: LuceneIndexField[];
+
+  /** @format int32 */
+  maxDocsPerShard?: number;
+  name?: string;
+  partitionBy?: "DAY" | "WEEK" | "MONTH" | "YEAR";
+
+  /** @format int32 */
+  partitionSize?: number;
+
+  /** @format int32 */
+  retentionDayAge?: number;
+
+  /** @format int32 */
+  shardsPerPartition?: number;
+  timeField?: string;
+  type?: string;
+
+  /** @format int64 */
+  updateTimeMs?: number;
+  updateUser?: string;
+  uuid?: string;
+  version?: string;
+  volumeGroupName?: string;
+}
+
+export interface LuceneIndexField {
+  analyzerType?: "KEYWORD" | "ALPHA" | "NUMERIC" | "ALPHA_NUMERIC" | "WHITESPACE" | "STOP" | "STANDARD";
+  caseSensitive?: boolean;
+  fieldName?: string;
+  fieldType?:
+    | "ID"
+    | "BOOLEAN_FIELD"
+    | "INTEGER_FIELD"
+    | "LONG_FIELD"
+    | "FLOAT_FIELD"
+    | "DOUBLE_FIELD"
+    | "DATE_FIELD"
+    | "FIELD"
+    | "NUMERIC_FIELD";
+  fldName?: string;
+  fldType?:
+    | "ID"
+    | "BOOLEAN"
+    | "INTEGER"
+    | "LONG"
+    | "FLOAT"
+    | "DOUBLE"
+    | "DATE"
+    | "TEXT"
+    | "KEYWORD"
+    | "IPV4_ADDRESS"
+    | "DOC_REF";
+  indexed?: boolean;
+  stored?: boolean;
+  termPositions?: boolean;
+}
 
 export interface MapDefinition {
   mapName?: string;
@@ -3224,6 +3272,7 @@ export interface PipelineElementType {
     | "AUTO_REFRESH"
     | "BACKWARD"
     | "BORDERED_CIRCLE"
+    | "CALENDAR"
     | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
@@ -3555,7 +3604,6 @@ export interface ProcessorFilter {
 
   /** @format int64 */
   minMetaCreateTimeMs?: number;
-  name?: string;
   pipelineName?: string;
   pipelineUuid?: string;
 
@@ -3567,7 +3615,6 @@ export interface ProcessorFilter {
   processorUuid?: string;
   queryData?: QueryData;
   reprocess?: boolean;
-  type?: string;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -3754,6 +3801,7 @@ export interface QueryDoc {
   description?: string;
   name?: string;
   query?: string;
+  timeRange?: TimeRange;
   type?: string;
 
   /** @format int64 */
@@ -3778,7 +3826,8 @@ export interface QueryField {
     | "'=', '!=', 'in'"
     | "'=', '!=', 'in', 'in dictionary', 'is'";
   docRefType?: string;
-  fieldType?:
+  fldName?: string;
+  fldType?:
     | "ID"
     | "BOOLEAN"
     | "INTEGER"
@@ -3792,7 +3841,7 @@ export interface QueryField {
     | "DOC_REF";
   name?: string;
   queryable?: boolean;
-  type: string;
+  type?: string;
 }
 
 export interface QueryHelpData {
@@ -3807,7 +3856,7 @@ export interface QueryHelpDetail {
   insertType?: "PLAIN_TEXT" | "SNIPPET" | "BLANK" | "NOT_INSERTABLE";
 }
 
-export type QueryHelpField = QueryHelpData & { fieldInfo?: FieldInfo };
+export type QueryHelpField = QueryHelpData & { field?: QueryField };
 
 export type QueryHelpFunctionSignature = QueryHelpData & {
   aliases?: string[];
@@ -3850,6 +3899,7 @@ export interface QueryHelpRow {
     | "AUTO_REFRESH"
     | "BACKWARD"
     | "BORDERED_CIRCLE"
+    | "CALENDAR"
     | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
@@ -4272,10 +4322,19 @@ export interface ResultPageDependency {
 /**
  * A page of results.
  */
-export interface ResultPageFieldInfo {
+export interface ResultPageExecutionHistory {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
-  values?: FieldInfo[];
+  values?: ExecutionHistory[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageExecutionSchedule {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: ExecutionSchedule[];
 }
 
 /**
@@ -4384,6 +4443,15 @@ export interface ResultPageProcessorTaskSummary {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: ProcessorTaskSummary[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageQueryField {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: QueryField[];
 }
 
 /**
@@ -4540,6 +4608,25 @@ export interface SavePipelineXmlRequest {
   xml?: string;
 }
 
+export interface Schedule {
+  expression?: string;
+  type?: "INSTANT" | "CRON" | "FREQUENCY";
+}
+
+export interface ScheduleBounds {
+  /** @format int64 */
+  endTimeMs?: number;
+
+  /** @format int64 */
+  startTimeMs?: number;
+}
+
+export interface ScheduleRestriction {
+  allowHour?: boolean;
+  allowMinute?: boolean;
+  allowSecond?: boolean;
+}
+
 export type ScheduledQueryAnalyticProcessConfig = AnalyticProcessConfig & {
   enabled?: boolean;
   errorFeed?: DocRef;
@@ -4551,14 +4638,17 @@ export type ScheduledQueryAnalyticProcessConfig = AnalyticProcessConfig & {
 };
 
 export type ScheduledQueryAnalyticTrackerData = AnalyticTrackerData & {
-  lastExecutionTimeMs?: number;
-  lastWindowEndTimeMs?: number;
-  lastWindowStartTimeMs?: number;
+  actualExecutionTimeMs?: number;
+  lastEffectiveExecutionTimeMs?: number;
+  nextEffectiveExecutionTimeMs?: number;
 };
 
 export interface ScheduledTimes {
-  lastExecutedTime?: string;
-  nextScheduledTime?: string;
+  error?: string;
+
+  /** @format int64 */
+  nextScheduledTimeMs?: number;
+  schedule?: Schedule;
 }
 
 export interface ScriptDoc {
@@ -4837,8 +4927,22 @@ export interface SolrIndexField {
     | "DATE_FIELD"
     | "FIELD"
     | "NUMERIC_FIELD";
+  fldName?: string;
+  fldType?:
+    | "ID"
+    | "BOOLEAN"
+    | "INTEGER"
+    | "LONG"
+    | "FLOAT"
+    | "DOUBLE"
+    | "DATE"
+    | "TEXT"
+    | "KEYWORD"
+    | "IPV4_ADDRESS"
+    | "DOC_REF";
   indexed?: boolean;
   multiValued?: boolean;
+  nativeType?: string;
   omitNorms?: boolean;
   omitPositions?: boolean;
   omitTermFreqAndPositions?: boolean;
@@ -5134,7 +5238,6 @@ export type TabLayoutConfig = LayoutConfig & { selected?: number; tabs?: TabConf
 export type TableBuilderAnalyticProcessConfig = AnalyticProcessConfig & {
   dataRetention?: SimpleDuration;
   enabled?: boolean;
-  errorFeed?: DocRef;
   maxMetaCreateTimeMs?: number;
   minMetaCreateTimeMs?: number;
   node?: string;
@@ -5299,7 +5402,7 @@ export interface TextConverterDoc {
   version?: string;
 }
 
-export type TextField = QueryField;
+export type TextInputComponentSettings = ComponentSettings & { key?: string; value?: string };
 
 export interface ThemeConfig {
   backgroundColour?: string;
@@ -5338,34 +5441,6 @@ export interface TimeRange {
   from?: string;
   name?: string;
   to?: string;
-}
-
-/**
- * The timezone to apply to a date time value
- */
-export interface TimeZone {
-  /**
-   * The id of the time zone, conforming to java.time.ZoneId
-   * @example GMT
-   */
-  id?: string;
-
-  /**
-   * The number of hours this timezone is offset from UTC
-   * @format int32
-   * @example -1
-   */
-  offsetHours?: number;
-
-  /**
-   * The number of minutes this timezone is offset from UTC
-   * @format int32
-   * @example -30
-   */
-  offsetMinutes?: number;
-
-  /** How the time zone will be specified, e.g. from provided client 'Local' time, 'UTC', a recognised timezone 'Id' or an 'Offset' from UTC in hours and minutes. */
-  use: "Local" | "UTC" | "Id" | "Offset";
 }
 
 export interface TokenError {
@@ -5503,7 +5578,35 @@ export interface UserPreferences {
   theme?: string;
 
   /** The timezone to apply to a date time value */
-  timeZone?: TimeZone;
+  timeZone?: UserTimeZone;
+}
+
+/**
+ * The timezone to apply to a date time value
+ */
+export interface UserTimeZone {
+  /**
+   * The id of the time zone, conforming to java.time.ZoneId
+   * @example GMT
+   */
+  id?: string;
+
+  /**
+   * The number of hours this timezone is offset from UTC
+   * @format int32
+   * @example -1
+   */
+  offsetHours?: number;
+
+  /**
+   * The number of minutes this timezone is offset from UTC
+   * @format int32
+   * @example -30
+   */
+  offsetMinutes?: number;
+
+  /** How the time zone will be specified, e.g. from provided client 'Local' time, 'UTC', a recognised timezone 'Id' or an 'Offset' from UTC in hours and minutes. */
+  use: "Local" | "UTC" | "Id" | "Offset";
 }
 
 export interface ValidateExpressionRequest {
@@ -7579,7 +7682,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     findDataSourceFields: (data: FindFieldInfoCriteria, params: RequestParams = {}) =>
-      this.request<any, ResultPageFieldInfo>({
+      this.request<any, ResultPageQueryField>({
         path: `/dataSource/v1/findFields`,
         method: "POST",
         body: data,
@@ -7863,6 +7966,121 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       this.request<any, boolean>({
         path: `/entityEvent/v1/${nodeName}`,
         method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
+  executionSchedule = {
+    /**
+     * No description
+     *
+     * @tags ExecutionSchedule
+     * @name CreateExecutionSchedule
+     * @summary Create Execution Schedule
+     * @request POST:/executionSchedule/v1/createExecutionSchedule
+     * @secure
+     */
+    createExecutionSchedule: (data: ExecutionSchedule, params: RequestParams = {}) =>
+      this.request<any, ExecutionSchedule>({
+        path: `/executionSchedule/v1/createExecutionSchedule`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags ExecutionSchedule
+     * @name DeleteExecutionSchedule
+     * @summary Delete Execution Schedule
+     * @request POST:/executionSchedule/v1/deleteExecutionSchedule
+     * @secure
+     */
+    deleteExecutionSchedule: (data: ExecutionSchedule, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/executionSchedule/v1/deleteExecutionSchedule`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags ExecutionSchedule
+     * @name FetchExecutionHistory
+     * @summary Fetch execution history
+     * @request POST:/executionSchedule/v1/fetchExecutionHistory
+     * @secure
+     */
+    fetchExecutionHistory: (data: ExecutionHistoryRequest, params: RequestParams = {}) =>
+      this.request<any, ResultPageExecutionHistory>({
+        path: `/executionSchedule/v1/fetchExecutionHistory`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags ExecutionSchedule
+     * @name FetchExecutionSchedule
+     * @summary Fetch execution schedule
+     * @request POST:/executionSchedule/v1/fetchExecutionSchedule
+     * @secure
+     */
+    fetchExecutionSchedule: (data: ExecutionScheduleRequest, params: RequestParams = {}) =>
+      this.request<any, ResultPageExecutionSchedule>({
+        path: `/executionSchedule/v1/fetchExecutionSchedule`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags ExecutionSchedule
+     * @name FetchTracker
+     * @summary Fetch execution tracker
+     * @request POST:/executionSchedule/v1/fetchTracker
+     * @secure
+     */
+    fetchTracker: (data: ExecutionSchedule, params: RequestParams = {}) =>
+      this.request<any, ExecutionTracker>({
+        path: `/executionSchedule/v1/fetchTracker`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags ExecutionSchedule
+     * @name UpdateExecutionSchedule
+     * @summary Update Execution Schedule
+     * @request POST:/executionSchedule/v1/updateExecutionSchedule
+     * @secure
+     */
+    updateExecutionSchedule: (data: ExecutionSchedule, params: RequestParams = {}) =>
+      this.request<any, ExecutionSchedule>({
+        path: `/executionSchedule/v1/updateExecutionSchedule`,
+        method: "POST",
         body: data,
         secure: true,
         type: ContentType.Json,
@@ -8551,7 +8769,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/fsVolume/volumeGroup/v2
      * @secure
      */
-    createFsVolumeGroup: (data: FsVolumeGroup, params: RequestParams = {}) =>
+    createFsVolumeGroup: (data: string, params: RequestParams = {}) =>
       this.request<any, FsVolumeGroup>({
         path: `/fsVolume/volumeGroup/v2`,
         method: "POST",
@@ -8720,7 +8938,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     fetchIndex: (uuid: string, params: RequestParams = {}) =>
-      this.request<any, IndexDoc>({
+      this.request<any, LuceneIndexDoc>({
         path: `/index/v2/${uuid}`,
         method: "GET",
         secure: true,
@@ -8736,8 +8954,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request PUT:/index/v2/{uuid}
      * @secure
      */
-    updateIndex: (uuid: string, data: IndexDoc, params: RequestParams = {}) =>
-      this.request<any, IndexDoc>({
+    updateIndex: (uuid: string, data: LuceneIndexDoc, params: RequestParams = {}) =>
+      this.request<any, LuceneIndexDoc>({
         path: `/index/v2/${uuid}`,
         method: "PUT",
         body: data,
@@ -9122,7 +9340,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request PUT:/jobNode/v1/{id}/schedule
      * @secure
      */
-    setJobNodeSchedule: (id: number, data: string, params: RequestParams = {}) =>
+    setJobNodeSchedule: (id: number, data: Schedule, params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/jobNode/v1/${id}/schedule`,
         method: "PUT",

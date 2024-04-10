@@ -16,6 +16,8 @@
 
 package stroom.index.lucene553;
 
+import stroom.datasource.api.v2.AnalyzerType;
+import stroom.datasource.api.v2.IndexField;
 import stroom.index.impl.IndexConfig;
 import stroom.index.impl.IndexDocument;
 import stroom.index.impl.IndexShardManager;
@@ -24,13 +26,9 @@ import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.ShardFullException;
 import stroom.index.impl.UncheckedLockObtainException;
 import stroom.index.lucene553.analyser.AnalyzerFactory;
-import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexException;
-import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShardKey;
 import stroom.search.extraction.FieldValue;
-import stroom.search.extraction.IndexStructure;
 import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
@@ -104,7 +102,6 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
      */
     private final AtomicInteger documentCount;
 
-    private final IndexShardKey indexShardKey;
     private final long creationTime;
     private volatile int maxDocumentCount;
 
@@ -116,27 +113,24 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
      * Convenience constructor used in tests.
      */
     Lucene553IndexShardWriter(final IndexShardManager indexShardManager,
-                                     final IndexConfig indexConfig,
-                                     final IndexStructure indexStructure,
-                                     final IndexShardKey indexShardKey,
-                                     final IndexShard indexShard,
-                                     final PathCreator pathCreator) {
+                              final IndexConfig indexConfig,
+                              final IndexShard indexShard,
+                              final PathCreator pathCreator,
+                              final int maxDocumentCount) {
         this(indexShardManager,
                 indexConfig,
-                indexStructure,
-                indexShardKey,
                 indexShard,
                 DEFAULT_RAM_BUFFER_MB_SIZE,
-                pathCreator);
+                pathCreator,
+                maxDocumentCount);
     }
 
     Lucene553IndexShardWriter(final IndexShardManager indexShardManager,
                               final IndexConfig indexConfig,
-                              final IndexStructure indexStructure,
-                              final IndexShardKey indexShardKey,
                               final IndexShard indexShard,
                               final int ramBufferSizeMB,
-                              final PathCreator pathCreator) {
+                              final PathCreator pathCreator,
+                              final int maxDocumentCount) {
         try {
             this.indexShardManager = indexShardManager;
             this.slowIndexWriteWarningThreshold = NullSafe.getOrElse(
@@ -144,20 +138,14 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
                     IndexConfig::getIndexWriterConfig,
                     stroom.index.impl.IndexWriterConfig::getSlowIndexWriteWarningThreshold,
                     StroomDuration.ZERO);
-            this.indexShardKey = indexShardKey;
             this.indexShardId = indexShard.getId();
             this.creationTime = System.currentTimeMillis();
             this.lastUsedTime = Instant.ofEpochMilli(creationTime);
+            this.maxDocumentCount = maxDocumentCount;
 
             // Find the index shard dir.
             dir = IndexShardUtil.getIndexPath(indexShard, pathCreator);
             LOGGER.debug(() -> LogUtil.message("Creating index shard writer for dir {} {}", dir, this));
-
-            // Make sure the index writer is primed with the necessary analysers.
-            LOGGER.debug(() -> "Updating field analysers");
-
-            // Update the settings for this shard from the index.
-            updateIndexStructure(indexStructure);
 
             Directory directory;
 
@@ -251,6 +239,19 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
     public void addDocument(final IndexDocument indexDocument) throws IndexException {
         final Document document = new Document();
         for (final FieldValue fieldValue : indexDocument.getValues()) {
+            final IndexField indexField = fieldValue.field();
+
+            // Ensure analyzer is present.
+            Analyzer analyzer = fieldAnalyzers.get(indexField.getFldName());
+            if (analyzer == null) {
+                // Add the field analyser.
+                analyzer = AnalyzerFactory.create(indexField.getAnalyzerType(),
+                        indexField.isCaseSensitive());
+                LOGGER.debug(() ->
+                        "Adding field analyser for: " + indexField.getFldName() + " " + this);
+                fieldAnalyzers.put(indexField.getFldName(), analyzer);
+            }
+
             org.apache.lucene553.document.Field field = FieldFactory.create(fieldValue);
 
             // Add the current field to the document if it is not null.
@@ -307,18 +308,8 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
     }
 
     @Override
-    public void updateIndexStructure(final IndexStructure indexStructure) {
-        this.maxDocumentCount = indexStructure.getIndex().getMaxDocsPerShard();
-        if (indexStructure.getIndexFields() != null) {
-            for (final IndexField indexField : indexStructure.getIndexFields()) {
-                // Add the field analyser.
-                final Analyzer analyzer = AnalyzerFactory.create(indexField.getAnalyzerType(),
-                        indexField.isCaseSensitive());
-                LOGGER.debug(() ->
-                        "Adding field analyser for: " + indexField.getFieldName() + " " + this);
-                fieldAnalyzers.put(indexField.getFieldName(), analyzer);
-            }
-        }
+    public void setMaxDocumentCount(final int maxDocumentCount) {
+        this.maxDocumentCount = maxDocumentCount;
     }
 
     @Override
@@ -461,11 +452,6 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
         if (indexShardManager != null) {
             indexShardManager.update(indexShardId, documentCount, commitDurationMs, commitMs, fileSize);
         }
-    }
-
-    @Override
-    public IndexShardKey getIndexShardKey() {
-        return indexShardKey;
     }
 
     @Override

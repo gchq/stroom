@@ -1,6 +1,6 @@
 package stroom.query.client.presenter;
 
-import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.QueryField;
 import stroom.item.client.SelectionItem;
 import stroom.svg.shared.SvgImage;
 
@@ -8,18 +8,18 @@ import java.util.Objects;
 
 public class FieldInfoSelectionItem implements SelectionItem {
 
-    private final FieldInfo fieldInfo;
+    private final QueryField field;
 
-    public FieldInfoSelectionItem(final FieldInfo fieldInfo) {
-        this.fieldInfo = fieldInfo;
+    public FieldInfoSelectionItem(final QueryField field) {
+        this.field = field;
     }
 
     @Override
     public String getLabel() {
-        if (fieldInfo == null) {
+        if (field == null) {
             return "[ none ]";
         }
-        return fieldInfo.getFieldName();
+        return field.getFldName();
     }
 
     @Override
@@ -32,8 +32,8 @@ public class FieldInfoSelectionItem implements SelectionItem {
         return false;
     }
 
-    public FieldInfo getFieldInfo() {
-        return fieldInfo;
+    public QueryField getField() {
+        return field;
     }
 
     @Override
@@ -45,18 +45,18 @@ public class FieldInfoSelectionItem implements SelectionItem {
             return false;
         }
         final FieldInfoSelectionItem that = (FieldInfoSelectionItem) o;
-        return Objects.equals(fieldInfo, that.fieldInfo);
+        return Objects.equals(field, that.field);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(fieldInfo);
+        return Objects.hash(field);
     }
 
     @Override
     public String toString() {
         return "FieldInfoSelectionItem{" +
-                "fieldInfo=" + fieldInfo +
+                "field=" + field +
                 '}';
     }
 }

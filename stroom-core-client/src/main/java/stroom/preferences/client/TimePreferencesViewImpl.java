@@ -17,9 +17,10 @@
 package stroom.preferences.client;
 
 import stroom.document.client.event.DirtyUiHandlers;
-import stroom.expression.api.TimeZone.Use;
+import stroom.expression.api.UserTimeZone.Use;
 import stroom.item.client.SelectionBox;
 import stroom.preferences.client.TimePreferencesPresenter.TimePreferencesView;
+import stroom.widget.customdatebox.client.MomentJs;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
@@ -87,7 +88,7 @@ public final class TimePreferencesViewImpl
         timeZoneUse.addItem(Use.ID);
         timeZoneUse.addItem(Use.OFFSET);
 
-        for (final String tz : getTimeZoneIds()) {
+        for (final String tz : MomentJs.getTimeZoneIds()) {
             timeZoneId.addItem(tz);
         }
 
@@ -102,6 +103,10 @@ public final class TimePreferencesViewImpl
         timeZoneOffsetMinutes.setValue(0);
         timeZoneOffsetMinutes.setMinStep(15);
         timeZoneOffsetMinutes.setMaxStep(15);
+        timeZoneOffsetMinutes.setDelta(15);
+
+        // FIXME:  Browsers don't support minute offsets so disable this for now.
+        timeZoneOffsetMinutes.setVisible(false);
     }
 
     @Override
@@ -223,8 +228,4 @@ public final class TimePreferencesViewImpl
     public interface Binder extends UiBinder<Widget, TimePreferencesViewImpl> {
 
     }
-
-    private static native String[] getTimeZoneIds()/*-{
-        return $wnd.moment.tz.names();
-    }-*/;
 }

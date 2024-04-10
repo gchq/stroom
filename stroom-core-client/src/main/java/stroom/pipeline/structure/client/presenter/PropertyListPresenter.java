@@ -20,7 +20,6 @@ package stroom.pipeline.structure.client.presenter;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
@@ -407,8 +406,9 @@ public class PropertyListPresenter
 
         if (docRefs.size() > 0) {
             // Load entities.
-            final Rest<Set<DocRef>> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(EXPLORER_RESOURCE)
+                    .method(res -> res.fetchDocRefs(docRefs))
                     .onSuccess(result -> {
                         final Map<DocRef, DocRef> fetchedDocRefs = result
                                 .stream()
@@ -426,8 +426,7 @@ public class PropertyListPresenter
 
                         setData(propertyList);
                     })
-                    .call(EXPLORER_RESOURCE)
-                    .fetchDocRefs(docRefs);
+                    .exec();
         } else {
             setData(propertyList);
         }

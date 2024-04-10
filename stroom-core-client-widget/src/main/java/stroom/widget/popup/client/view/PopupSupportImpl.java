@@ -24,7 +24,9 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupSupport;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.popup.client.presenter.Size;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.gwtplatform.mvp.client.View;
@@ -85,9 +87,9 @@ public class PopupSupportImpl implements PopupSupport {
             final HideRequestUiHandlers uiHandlers = new DefaultHideRequestUiHandlers(event.getPresenterWidget());
             popup = createPopup(popupType, popupSize, uiHandlers);
         }
+        final PopupPanel popupPanel = (PopupPanel) popup;
 
         // Add auto hide partners.
-        final PopupPanel popupPanel = (PopupPanel) popup;
         for (final Element element : GwtNullSafe.list(autoHidePartners)) {
             popupPanel.addAutoHidePartner(element);
         }
@@ -102,14 +104,54 @@ public class PopupSupportImpl implements PopupSupport {
                 popupSize,
                 popupType,
                 () -> {
+                    // Tell the handler that the popup is visible.
                     if (event.getShowHandler() != null) {
-                        event.getShowHandler().onShow(event);
+                        Scheduler.get().scheduleDeferred(() ->
+                                event.getShowHandler().onShow(event));
                     } else if (dialogButtons != null) {
                         // If no custom handler is specified then focus the buttons
-                        dialogButtons.focus();
+                        Scheduler.get().scheduleDeferred(() -> dialogButtons.focus());
                     }
                 });
     }
+
+//    @Override
+//    public void show(final ShowPopupEvent event) {
+//        final PopupType popupType = event.getPopupType();
+//        final PopupPosition popupPosition = event.getPopupPosition();
+//        final PopupSize popupSize = event.getPopupSize();
+//        hideRequestHandler = event.getHideRequestHandler();
+//        hideHandler = event.getHideHandler();
+//
+//        if (popup == null) {
+//            final HideRequestUiHandlers uiHandlers = new DefaultHideRequestUiHandlers(event.getPresenterWidget());
+//            popup = createPopup(popupType, popupSize, uiHandlers);
+//        }
+//
+//        // Add auto hide partners.
+//        final PopupPanel popupPanel = (PopupPanel) popup;
+//        for (final Element element : GwtNullSafe.list(autoHidePartners)) {
+//            popupPanel.addAutoHidePartner(element);
+//        }
+//
+//        final String uniqueId = createUniqueId(event);
+//
+//        PopupUtil.showPopup(
+//                uniqueId,
+//                popup,
+//                GwtNullSafe.isTrue(modal),
+//                popupPosition,
+//                popupSize,
+//                popupType,
+//                () -> {
+//                    if (event.getShowHandler() != null) {
+//                        event.getShowHandler().onShow(event);
+//                    } else if (dialogButtons != null) {
+//                        // If no custom handler is specified then focus the buttons
+//                        dialogButtons.focus();
+//                    }
+//                });
+//    }
 
     private String createUniqueId(final ShowPopupEvent event) {
 //        GWT.log("popupPosition: " + event.getPopupPosition());
@@ -134,6 +176,22 @@ public class PopupSupportImpl implements PopupSupport {
         final String id = className + "__" + position;
 //        GWT.log("id: " + id);
         return id;
+    }
+
+    private int getSize(final int current, Size size) {
+        int newSize = current;
+        if (size != null) {
+            if (size.getInitial() == null) {
+                size.setInitial(current);
+            }
+
+            if (size.getMin() == null) {
+                size.setMin(Math.min(current, size.getInitial()));
+            }
+
+            newSize = Math.max(size.getMin(), size.getInitial());
+        }
+        return newSize;
     }
 
     @Override

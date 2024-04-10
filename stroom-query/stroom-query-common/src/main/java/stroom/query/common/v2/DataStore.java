@@ -64,8 +64,6 @@ public interface DataStore extends ValuesConsumer {
 
     long getByteSize();
 
-    Serialisers getSerialisers();
-
     KeyFactory getKeyFactory();
 
     DateTimeSettings getDateTimeSettings();

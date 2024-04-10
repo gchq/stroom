@@ -22,7 +22,6 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.shared.StreamTypeNames;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -407,8 +406,9 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
         references.forEach(ref -> addPipelineReference(docRefs, ref));
         if (docRefs.size() > 0) {
             // Load entities.
-            final Rest<Set<DocRef>> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(EXPLORER_RESOURCE)
+                    .method(res -> res.fetchDocRefs(docRefs))
                     .onSuccess(result -> {
                         final Map<DocRef, DocRef> fetchedDocRefs = result
                                 .stream()
@@ -421,8 +421,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
 
                         setData(references);
                     })
-                    .call(EXPLORER_RESOURCE)
-                    .fetchDocRefs(docRefs);
+                    .exec();
         } else {
             setData(references);
         }

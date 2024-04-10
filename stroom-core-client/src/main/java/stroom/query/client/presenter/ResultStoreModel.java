@@ -1,7 +1,7 @@
 package stroom.query.client.presenter;
 
 import stroom.data.client.presenter.CriteriaUtil;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeManager;
 import stroom.query.api.v2.DestroyReason;
@@ -46,19 +46,19 @@ public class ResultStoreModel {
 
     public void fetch(final Range range,
                       final Consumer<ResultPage<ResultStoreInfo>> dataConsumer,
-                      final Consumer<Throwable> throwableConsumer) {
+                      final Consumer<RestError> errorConsumer) {
         this.range = range;
         this.dataConsumer = dataConsumer;
         delayedUpdate.reset();
-        fetchNodes(range, dataConsumer, throwableConsumer);
+        fetchNodes(range, dataConsumer, errorConsumer);
     }
 
     private void fetchNodes(final Range range,
                             final Consumer<ResultPage<ResultStoreInfo>> dataConsumer,
-                            final Consumer<Throwable> throwableConsumer) {
+                            final Consumer<RestError> errorConsumer) {
         nodeManager.listAllNodes(
                 nodeNames -> fetchTasksForNodes(range, dataConsumer, nodeNames),
-                throwableConsumer);
+                errorConsumer);
     }
 
     private void fetchTasksForNodes(final Range range,
@@ -67,8 +67,9 @@ public class ResultStoreModel {
         responseMap.clear();
         CriteriaUtil.setRange(criteria, range);
         for (final String nodeName : nodeNames) {
-            final Rest<ResultPage<ResultStoreInfo>> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(RESULT_STORE_RESOURCE)
+                    .method(res -> res.find(nodeName, criteria))
                     .onSuccess(response -> {
                         responseMap.put(nodeName, response.getValues());
                         delayedUpdate.update();
@@ -77,8 +78,7 @@ public class ResultStoreModel {
                         responseMap.remove(nodeName);
                         delayedUpdate.update();
                     })
-                    .call(RESULT_STORE_RESOURCE)
-                    .find(nodeName, criteria);
+                    .exec();
         }
     }
 
@@ -93,33 +93,33 @@ public class ResultStoreModel {
     public void terminate(final String nodeName,
                           final QueryKey queryKey,
                           final Consumer<Boolean> consumer) {
-        final Rest<Boolean> rest = restFactory.create();
-        rest
+        restFactory
+                .create(RESULT_STORE_RESOURCE)
+                .method(res -> res.terminate(nodeName, queryKey))
                 .onSuccess(consumer)
                 .onFailure(t -> consumer.accept(false))
-                .call(RESULT_STORE_RESOURCE)
-                .terminate(nodeName, queryKey);
+                .exec();
     }
 
     public void destroy(final String nodeName,
                         final QueryKey queryKey,
                         final DestroyReason destroyReason,
                         final Consumer<Boolean> consumer) {
-        final Rest<Boolean> rest = restFactory.create();
-        rest
+        restFactory
+                .create(RESULT_STORE_RESOURCE)
+                .method(res -> res.destroy(nodeName, new DestroyStoreRequest(queryKey, destroyReason)))
                 .onSuccess(consumer)
                 .onFailure(t -> consumer.accept(false))
-                .call(RESULT_STORE_RESOURCE)
-                .destroy(nodeName, new DestroyStoreRequest(queryKey, destroyReason));
+                .exec();
     }
 
     public void updateSettings(final String nodeName,
                                final UpdateStoreRequest updateStoreRequest,
                                final Consumer<Boolean> consumer) {
-        final Rest<Boolean> rest = restFactory.create();
-        rest
+        restFactory
+                .create(RESULT_STORE_RESOURCE)
+                .method(res -> res.update(nodeName, updateStoreRequest))
                 .onSuccess(consumer)
-                .call(RESULT_STORE_RESOURCE)
-                .update(nodeName, updateStoreRequest);
+                .exec();
     }
 }

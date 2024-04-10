@@ -19,7 +19,6 @@ package stroom.pipeline.structure.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
@@ -32,8 +31,6 @@ import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.structure.client.presenter.PropertyListPresenter.Source;
 import stroom.pipeline.structure.client.view.NewPropertyUiHandlers;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.shared.EqualsUtil;
-import stroom.util.shared.ResultPage;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
@@ -47,7 +44,6 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.List;
 import java.util.stream.Collectors;
 
 public class NewPropertyPresenter
@@ -66,15 +62,12 @@ public class NewPropertyPresenter
     private PipelineProperty localProperty;
     private Source source;
 
-    private Boolean currentBoolean;
     private boolean booleanListInitialised;
     private SelectionBox<String> listBox;
 
-    private Long currentNumber;
     private boolean spinnerInitialised;
     private ValueSpinner valueSpinner;
 
-    private String currentText;
     private boolean textBoxInitialised;
     private TextBox textBox;
 
@@ -83,7 +76,6 @@ public class NewPropertyPresenter
     private boolean dataTypePresenterInitialised;
     private SelectionBox<String> dataTypeWidget;
     private boolean entityPresenterInitialised;
-    private DocRef currentEntity;
 
     @Inject
     public NewPropertyPresenter(final EventBus eventBus,
@@ -204,10 +196,8 @@ public class NewPropertyPresenter
             listBox.addItem("false");
 
             listBox.addValueChangeHandler(event -> {
-                final Boolean selected = Boolean.valueOf(listBox.getValue());
-                if (!EqualsUtil.isEquals(selected, currentBoolean)) {
-                    setDirty(true);
-                }
+                setDirty(true);
+                getView().setSource(Source.LOCAL);
             });
 
             listBox.getElement().getStyle().setWidth(100, Unit.PCT);
@@ -217,13 +207,12 @@ public class NewPropertyPresenter
             booleanListInitialised = true;
         }
 
-        currentBoolean = Boolean.FALSE;
+        Boolean value = Boolean.FALSE;
         if (property.getValue() != null && property.getValue().getBoolean() != null) {
-            currentBoolean = property.getValue().getBoolean();
+            value = property.getValue().getBoolean();
         }
 
-        listBox.setEnabled(Source.LOCAL.equals(source));
-        listBox.setValue(currentBoolean.toString().toLowerCase());
+        listBox.setValue(value.toString().toLowerCase());
     }
 
     private void enterIntegerMode(final PipelineProperty property) {
@@ -232,7 +221,7 @@ public class NewPropertyPresenter
             number = Long.valueOf(property.getValue().getInteger());
         }
 
-        enterNumberMode(property, number);
+        enterNumberMode(number);
     }
 
     private void enterLongMode(final PipelineProperty property) {
@@ -241,16 +230,19 @@ public class NewPropertyPresenter
             number = property.getValue().getLong();
         }
 
-        enterNumberMode(property, number);
+        enterNumberMode(number);
     }
 
-    private void enterNumberMode(final PipelineProperty property, final Long number) {
+    private void enterNumberMode(final Long number) {
         if (!spinnerInitialised) {
             valueSpinner = new ValueSpinner();
             valueSpinner.setMin(0);
             valueSpinner.setMax(10000000);
 
-            registerHandler(valueSpinner.addValueChangeHandler(event -> setDirty(true)));
+            registerHandler(valueSpinner.addValueChangeHandler(event -> {
+                setDirty(true);
+                getView().setSource(Source.LOCAL);
+            }));
 
             valueSpinner.getElement().getStyle().setWidth(100, Unit.PCT);
             valueSpinner.getElement().getStyle().setMarginBottom(0, Unit.PX);
@@ -259,19 +251,16 @@ public class NewPropertyPresenter
             spinnerInitialised = true;
         }
 
-        currentNumber = number;
-        valueSpinner.setEnabled(Source.LOCAL.equals(source));
-        valueSpinner.setValue(currentNumber);
+        valueSpinner.setValue(number);
     }
 
     private void enterStringMode(final PipelineProperty property) {
         if (!textBoxInitialised) {
             textBox = new TextBox();
 
-            textBox.addKeyUpHandler(event -> {
-                if (!EqualsUtil.isEquals(textBox.getText(), currentText)) {
-                    setDirty(true);
-                }
+            textBox.addValueChangeHandler(event -> {
+                setDirty(true);
+                getView().setSource(Source.LOCAL);
             });
 
             textBox.getElement().getStyle().setWidth(100, Unit.PCT);
@@ -281,13 +270,12 @@ public class NewPropertyPresenter
             textBoxInitialised = true;
         }
 
-        currentText = "";
+        String value = "";
         if (property.getValue() != null && property.getValue().getString() != null) {
-            currentText = property.getValue().getString();
+            value = property.getValue().getString();
         }
 
-        textBox.setEnabled(Source.LOCAL.equals(source));
-        textBox.setText(currentText);
+        textBox.setText(value);
     }
 
     private void enterDataTypeMode(final PipelineProperty property) {
@@ -295,8 +283,9 @@ public class NewPropertyPresenter
             dataTypeWidget = new SelectionBox<>();
 
             // Load data types.
-            final Rest<List<String>> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(META_RESOURCE)
+                    .method(MetaResource::getTypes)
                     .onSuccess(result -> {
                         if (result != null) {
                             dataTypeWidget.addItems(result);
@@ -308,14 +297,11 @@ public class NewPropertyPresenter
 
                         dataTypePresenterInitialised = true;
                     })
-                    .call(META_RESOURCE)
-                    .getTypes();
+                    .exec();
 
             dataTypeWidget.addValueChangeHandler(event -> {
-                final String streamType = dataTypeWidget.getValue();
-                if (!EqualsUtil.isEquals(currentDataType, streamType)) {
-                    setDirty(true);
-                }
+                setDirty(true);
+                getView().setSource(Source.LOCAL);
             });
 
             final Widget widget = dataTypeWidget;
@@ -331,7 +317,6 @@ public class NewPropertyPresenter
             currentDataType = property.getValue().toString();
         }
 
-        dataTypeWidget.setEnabled(Source.LOCAL.equals(source));
         dataTypeWidget.setValue(currentDataType);
     }
 
@@ -340,8 +325,9 @@ public class NewPropertyPresenter
             dataTypeWidget = new SelectionBox<>();
 
             // Load data types.
-            final Rest<ResultPage<FsVolumeGroup>> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(VOLUME_GROUP_RESOURCE)
+                    .method(res -> res.find(new ExpressionCriteria()))
                     .onSuccess(result -> {
                         dataTypeWidget.clear();
                         dataTypeWidget.setNonSelectString("");
@@ -360,14 +346,11 @@ public class NewPropertyPresenter
 
                         dataTypePresenterInitialised = true;
                     })
-                    .call(VOLUME_GROUP_RESOURCE)
-                    .find(new ExpressionCriteria());
+                    .exec();
 
             dataTypeWidget.addValueChangeHandler(event -> {
-                final String volumeGroup = dataTypeWidget.getValue();
-                if (!EqualsUtil.isEquals(currentVolumeGroup, volumeGroup)) {
-                    setDirty(true);
-                }
+                setDirty(true);
+                getView().setSource(Source.LOCAL);
             });
 
             final Widget widget = dataTypeWidget;
@@ -383,17 +366,14 @@ public class NewPropertyPresenter
             currentVolumeGroup = property.getValue().toString();
         }
 
-        dataTypeWidget.setEnabled(Source.LOCAL.equals(source));
         dataTypeWidget.setValue(currentVolumeGroup);
     }
 
     private void enterEntityMode(final PipelineProperty property) {
         if (!entityPresenterInitialised) {
             entityDropDownPresenter.addDataSelectionHandler(event -> {
-                final DocRef selection = entityDropDownPresenter.getSelectedEntityReference();
-                if (!EqualsUtil.isEquals(currentEntity, selection)) {
-                    setDirty(true);
-                }
+                setDirty(true);
+                getView().setSource(Source.LOCAL);
             });
 
             final Widget widget = entityDropDownPresenter.getView().asWidget();
@@ -404,16 +384,15 @@ public class NewPropertyPresenter
             entityPresenterInitialised = true;
         }
 
-        currentEntity = null;
+        DocRef value = null;
         if (property.getValue() != null && property.getValue().getEntity() != null) {
-            currentEntity = property.getValue().getEntity();
+            value = property.getValue().getEntity();
         }
 
-        entityDropDownPresenter.setEnabled(Source.LOCAL.equals(source));
         entityDropDownPresenter.setIncludedTypes(property.getPropertyType().getDocRefTypes());
         entityDropDownPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
         try {
-            entityDropDownPresenter.setSelectedEntityReference(currentEntity);
+            entityDropDownPresenter.setSelectedEntityReference(value);
         } catch (final RuntimeException e) {
             AlertEvent.fireError(this, e.getMessage(), null);
         }

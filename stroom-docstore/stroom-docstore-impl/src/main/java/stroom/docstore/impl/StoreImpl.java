@@ -309,6 +309,11 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         return update(document);
     }
 
+    @Override
+    public String getType() {
+        return type;
+    }
+
     ////////////////////////////////////////////////////////////////////////
     // END OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////

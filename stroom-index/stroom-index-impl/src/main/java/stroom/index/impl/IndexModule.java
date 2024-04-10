@@ -19,10 +19,10 @@ package stroom.index.impl;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
-import stroom.index.shared.IndexDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.lifecycle.api.LifecycleBinder;
-import stroom.search.extraction.IndexStructureCache;
+import stroom.query.common.v2.IndexFieldCache;
 import stroom.searchable.api.Searchable;
 import stroom.util.RunnableWrapper;
 import stroom.util.entityevent.EntityEvent;
@@ -34,9 +34,6 @@ import stroom.util.shared.Clearable;
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
 
-import static stroom.job.api.Schedule.ScheduleType.CRON;
-import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
-
 public class IndexModule extends AbstractModule {
 
     @Override
@@ -44,17 +41,21 @@ public class IndexModule extends AbstractModule {
         install(new IndexElementModule());
 
         bind(IndexShardWriterCache.class).to(IndexShardWriterCacheImpl.class);
-        bind(IndexStructureCache.class).to(IndexStructureCacheImpl.class);
+        bind(LuceneIndexDocCache.class).to(LuceneIndexDocCacheImpl.class);
+        bind(IndexFieldCache.class).to(IndexFieldCacheImpl.class);
         bind(IndexStore.class).to(IndexStoreImpl.class);
         bind(IndexVolumeService.class).to(IndexVolumeServiceImpl.class);
         bind(IndexVolumeGroupService.class).to(IndexVolumeGroupServiceImpl.class);
         bind(IndexShardService.class).to(IndexShardServiceImpl.class);
+        bind(IndexFieldService.class).to(IndexFieldServiceImpl.class);
         bind(Indexer.class).to(IndexerImpl.class);
+        bind(ActiveShardsCache.class).to(ActiveShardsCacheImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-                .addBinding(IndexStructureCacheImpl.class)
+                .addBinding(LuceneIndexDocCacheImpl.class)
                 .addBinding(IndexVolumeServiceImpl.class)
-                .addBinding(IndexVolumeGroupServiceImpl.class);
+                .addBinding(IndexVolumeGroupServiceImpl.class)
+                .addBinding(IndexFieldCacheImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(IndexConfigCacheEntityEventHandler.class);
@@ -75,7 +76,7 @@ public class IndexModule extends AbstractModule {
                 .bind(IndexVolumeResourceImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(IndexDoc.DOCUMENT_TYPE, IndexStoreImpl.class);
+                .bind(LuceneIndexDoc.DOCUMENT_TYPE, IndexStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(IndexVolumeServiceImpl.class);
@@ -84,24 +85,24 @@ public class IndexModule extends AbstractModule {
                 .bindJobTo(IndexShardDelete.class, builder -> builder
                         .name("Index Shard Delete")
                         .description("Job to delete index shards from disk that have been marked as deleted")
-                        .schedule(CRON, "0 0 *"))
+                        .cronSchedule("0 0 0 * * ?"))
                 .bindJobTo(IndexShardRetention.class, builder -> builder
                         .name("Index Shard Retention")
                         .description("Job to set index shards to have a status of deleted that have past their " +
                                 "retention period")
-                        .schedule(PERIODIC, "10m"))
+                        .frequencySchedule("10m"))
                 .bindJobTo(IndexWriterCacheSweep.class, builder -> builder
                         .name("Index Writer Cache Sweep")
                         .description("Job to remove old index shard writers from the cache")
-                        .schedule(PERIODIC, "10m"))
+                        .frequencySchedule("10m"))
                 .bindJobTo(IndexWriterFlush.class, builder -> builder
                         .name("Index Writer Flush")
                         .description("Job to flush index shard data to disk")
-                        .schedule(PERIODIC, "10m"))
+                        .frequencySchedule("10m"))
                 .bindJobTo(VolumeStatus.class, builder -> builder
                         .name("Index Volume Status")
                         .description("Update the usage status of volumes owned by the node")
-                        .schedule(PERIODIC, "5m"));
+                        .frequencySchedule("5m"));
 
         LifecycleBinder.create(binder())
                 .bindStartupTaskTo(IndexShardWriterCacheStartup.class)

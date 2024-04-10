@@ -32,6 +32,8 @@ import stroom.pipeline.stepping.client.presenter.ElementPresenter;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 import stroom.pipeline.stepping.client.presenter.StepControlPresenter;
 import stroom.pipeline.stepping.client.presenter.StepControlPresenter.StepControlView;
+import stroom.pipeline.stepping.client.presenter.StepLocationLinkPresenter;
+import stroom.pipeline.stepping.client.presenter.StepLocationLinkPresenter.StepLocationLinkView;
 import stroom.pipeline.stepping.client.presenter.StepLocationPresenter;
 import stroom.pipeline.stepping.client.presenter.StepLocationPresenter.StepLocationView;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter;
@@ -42,6 +44,7 @@ import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter;
 import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter.XPathFilterView;
 import stroom.pipeline.stepping.client.view.ElementViewImpl;
 import stroom.pipeline.stepping.client.view.StepControlViewImpl;
+import stroom.pipeline.stepping.client.view.StepLocationLinkViewImpl;
 import stroom.pipeline.stepping.client.view.StepLocationViewImpl;
 import stroom.pipeline.stepping.client.view.SteppingFilterViewImpl;
 import stroom.pipeline.stepping.client.view.SteppingViewImpl;
@@ -85,6 +88,10 @@ public class PipelineModule extends PluginModule {
         bindPlugin(PipelinePlugin.class);
         bindPlugin(PipelineSteppingPlugin.class);
         bind(PipelinePresenter.class);
+        bindPresenterWidget(
+                StepLocationLinkPresenter.class,
+                StepLocationLinkView.class,
+                StepLocationLinkViewImpl.class);
         bindPresenterWidget(StepLocationPresenter.class, StepLocationView.class, StepLocationViewImpl.class);
         bindPresenterWidget(StepControlPresenter.class, StepControlView.class, StepControlViewImpl.class);
 

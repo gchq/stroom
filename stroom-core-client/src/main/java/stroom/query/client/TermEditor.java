@@ -17,8 +17,8 @@
 package stroom.query.client;
 
 import stroom.datasource.api.v2.ConditionSet;
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FieldType;
+import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
@@ -33,7 +33,6 @@ import stroom.widget.customdatebox.client.MyDateBox;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.InputEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.ui.Composite;
@@ -54,7 +53,7 @@ public class TermEditor extends Composite {
     private static final String NARROW_CLASS_NAME = "narrow";
 
     private final FlowPanel layout;
-    private final BaseSelectionBox<FieldInfo, FieldInfoSelectionItem> fieldListBox;
+    private final BaseSelectionBox<QueryField, FieldInfoSelectionItem> fieldListBox;
     private final SelectionBox<Condition> conditionListBox;
     private final Label andLabel;
     private final SuggestBox value;
@@ -188,11 +187,11 @@ public class TermEditor extends Composite {
     }
 
     private void write(final Term term) {
-        final FieldInfo selectedField = fieldListBox.getValue();
+        final QueryField selectedField = fieldListBox.getValue();
         if (selectedField != null && conditionListBox.getValue() != null) {
             DocRef docRef = null;
 
-            term.setField(selectedField.getFieldName());
+            term.setField(selectedField.getFldName());
             term.setCondition(conditionListBox.getValue());
 
             final StringBuilder sb = new StringBuilder();
@@ -223,7 +222,7 @@ public class TermEditor extends Composite {
         }
     }
 
-    private void changeField(final FieldInfo field, final Condition condition, final boolean useDefaultCondition) {
+    private void changeField(final QueryField field, final Condition condition, final boolean useDefaultCondition) {
         suggestOracle.setField(field);
         final List<Condition> conditions = getConditions(field);
 
@@ -246,24 +245,24 @@ public class TermEditor extends Composite {
         conditionListBox.setValue(selected);
         changeCondition(field, selected);
 
-        if (field != null && field.getFieldType() != null) {
-            fieldTypeLabel.setText(field.getFieldType().getShortTypeName());
-            fieldTypeLabel.setTitle(field.getFieldType().getDescription());
+        if (field != null && field.getFldType() != null) {
+            fieldTypeLabel.setText(field.getFldType().getShortTypeName());
+            fieldTypeLabel.setTitle(field.getFldType().getDescription());
             fieldTypeLabel.setVisible(true);
         } else {
             fieldTypeLabel.setVisible(false);
         }
     }
 
-    private List<Condition> getConditions(final FieldInfo field) {
+    private List<Condition> getConditions(final QueryField field) {
         ConditionSet conditions;
-        if (field != null && field.getConditions() != null) {
-            conditions = field.getConditions();
+        if (field != null && field.getConditionSet() != null) {
+            conditions = field.getConditionSet();
 
         } else {
             FieldType fieldType = null;
             if (field != null) {
-                fieldType = field.getFieldType();
+                fieldType = field.getFldType();
             }
             conditions = ConditionSet.getUiDefaultConditions(fieldType);
         }
@@ -271,12 +270,12 @@ public class TermEditor extends Composite {
         return conditions.getConditionList();
     }
 
-    private void changeCondition(final FieldInfo field,
+    private void changeCondition(final QueryField field,
                                  final Condition condition) {
-        final FieldInfo selectedField = fieldListBox.getValue();
+        final QueryField selectedField = fieldListBox.getValue();
         FieldType indexFieldType = null;
-        if (selectedField != null && selectedField.getFieldType() != null) {
-            indexFieldType = selectedField.getFieldType();
+        if (selectedField != null && selectedField.getFldType() != null) {
+            indexFieldType = selectedField.getFldType();
         }
 
         if (indexFieldType == null) {
@@ -341,7 +340,7 @@ public class TermEditor extends Composite {
         updateDateBoxes();
     }
 
-    private void enterDocRefMode(final FieldInfo field, final Condition condition) {
+    private void enterDocRefMode(final QueryField field, final Condition condition) {
         setActiveWidgets(docRefWidget);
 
         if (docSelectionBoxPresenter != null) {
@@ -351,7 +350,7 @@ public class TermEditor extends Composite {
             } else if (Condition.IN_FOLDER.equals(condition)) {
                 docSelectionBoxPresenter.setIncludedTypes("Folder");
                 docSelectionBoxPresenter.setAllowFolderSelection(true);
-            } else if (FieldType.DOC_REF.equals(field.getFieldType())) {
+            } else if (FieldType.DOC_REF.equals(field.getFldType())) {
                 docSelectionBoxPresenter.setIncludedTypes(field.getDocRefType());
             }
             docSelectionBoxPresenter.setSelectedEntityReference(term.getDocRef());
@@ -426,12 +425,12 @@ public class TermEditor extends Composite {
         registerHandler(dateFrom.addKeyDownHandler(keyDownHandler));
         registerHandler(dateTo.addKeyDownHandler(keyDownHandler));
 
-        registerHandler(value.addDomHandler(e -> fireDirty(), InputEvent.getType()));
-        registerHandler(valueFrom.addDomHandler(e -> fireDirty(), InputEvent.getType()));
-        registerHandler(valueTo.addDomHandler(e -> fireDirty(), InputEvent.getType()));
-        registerHandler(date.addDomHandler(e -> fireDirty(), InputEvent.getType()));
-        registerHandler(dateFrom.addDomHandler(e -> fireDirty(), InputEvent.getType()));
-        registerHandler(dateTo.addDomHandler(e -> fireDirty(), InputEvent.getType()));
+        registerHandler(value.addValueChangeHandler(e -> fireDirty()));
+        registerHandler(valueFrom.addValueChangeHandler(e -> fireDirty()));
+        registerHandler(valueTo.addValueChangeHandler(e -> fireDirty()));
+        registerHandler(date.addValueChangeHandler(e -> fireDirty()));
+        registerHandler(dateFrom.addValueChangeHandler(e -> fireDirty()));
+        registerHandler(dateTo.addValueChangeHandler(e -> fireDirty()));
 
         registerHandler(date.addValueChangeHandler(event -> fireDirty()));
         registerHandler(dateFrom.addValueChangeHandler(event -> fireDirty()));
@@ -475,9 +474,9 @@ public class TermEditor extends Composite {
         registrations.add(handlerRegistration);
     }
 
-    private BaseSelectionBox<FieldInfo, FieldInfoSelectionItem> createFieldBox() {
-        final BaseSelectionBox<FieldInfo, FieldInfoSelectionItem> fieldListBox =
-                new BaseSelectionBox<FieldInfo, FieldInfoSelectionItem>();
+    private BaseSelectionBox<QueryField, FieldInfoSelectionItem> createFieldBox() {
+        final BaseSelectionBox<QueryField, FieldInfoSelectionItem> fieldListBox =
+                new BaseSelectionBox<QueryField, FieldInfoSelectionItem>();
         fieldListBox.addStyleName(ITEM_CLASS_NAME);
         fieldListBox.addStyleName(DROPDOWN_CLASS_NAME);
         fieldListBox.addStyleName("field");

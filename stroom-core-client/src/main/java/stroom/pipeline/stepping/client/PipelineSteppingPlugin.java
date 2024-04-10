@@ -19,7 +19,6 @@ package stroom.pipeline.stepping.client;
 
 import stroom.core.client.ContentManager;
 import stroom.core.client.presenter.Plugin;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionPopup;
@@ -35,7 +34,6 @@ import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.shared.ResultPage;
 
 import com.google.gwt.core.client.GWT;
 import com.google.web.bindery.event.shared.EventBus;
@@ -80,18 +78,18 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
         } else {
             // If we don't have a pipeline id then try to guess one for the
             // supplied stream.
-            final Rest<DocRef> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(STEPPING_RESOURCE)
+                    .method(res -> res.getPipelineForStepping(new GetPipelineForMetaRequest(
+                            event.getStepLocation().getMetaId(),
+                            event.getChildStreamId())))
                     .onSuccess(result ->
                             choosePipeline(
                                     result,
                                     event.getStepType(),
                                     event.getStepLocation(),
                                     event.getChildStreamType()))
-                    .call(STEPPING_RESOURCE)
-                    .getPipelineForStepping(new GetPipelineForMetaRequest(
-                            event.getStepLocation().getMetaId(),
-                            event.getChildStreamId()));
+                    .exec();
         }
     }
 
@@ -112,8 +110,9 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
             if (pipeline != null) {
                 final FindMetaCriteria findMetaCriteria = FindMetaCriteria.createFromId(
                         stepLocation.getMetaId());
-                final Rest<ResultPage<MetaRow>> rest = restFactory.create();
-                rest
+                restFactory
+                        .create(META_RESOURCE)
+                        .method(res -> res.findMetaRow(findMetaCriteria))
                         .onSuccess(result -> {
                             if (result != null && result.size() == 1) {
                                 final MetaRow row = result.getFirst();
@@ -124,7 +123,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
                                         childStreamType);
                             }
                         })
-                        .call(META_RESOURCE).findMetaRow(findMetaCriteria);
+                        .exec();
             }
         });
     }

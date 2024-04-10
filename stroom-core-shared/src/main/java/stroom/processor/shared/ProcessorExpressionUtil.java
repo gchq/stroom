@@ -43,8 +43,8 @@ public final class ProcessorExpressionUtil {
 
     public static ExpressionOperator createPipelineExpression(final DocRef pipelineRef) {
         return ExpressionOperator.builder()
-                .addTerm(ProcessorFields.PIPELINE, Condition.IS_DOC_REF, pipelineRef)
-                .addTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
+                .addDocRefTerm(ProcessorFields.PIPELINE, Condition.IS_DOC_REF, pipelineRef)
+                .addBooleanTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
                 .build();
     }
 

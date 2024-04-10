@@ -16,6 +16,7 @@
 
 package stroom.processor.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.InfoColumn;
@@ -34,7 +35,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.HasDocumentRead;
@@ -74,7 +75,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         implements Refreshable, HasDocumentRead<Object> {
@@ -93,10 +93,10 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
     private final MyDataGrid<ProcessorListRow> dataGrid;
     private final MultiSelectionModelImpl<ProcessorListRow> selectionModel;
 
-    private final RestSaveQueue<Integer, Boolean, Boolean> processorEnabledSaveQueue;
-    private final RestSaveQueue<Integer, Boolean, Boolean> processorFilterEnabledSaveQueue;
-    private final RestSaveQueue<Integer, Integer, Boolean> processorFilterPrioritySaveQueue;
-    private final RestSaveQueue<Integer, Integer, Boolean> processorFilterMaxProcessingTasksSaveQueue;
+    private final RestSaveQueue<Integer, Boolean> processorEnabledSaveQueue;
+    private final RestSaveQueue<Integer, Boolean> processorFilterEnabledSaveQueue;
+    private final RestSaveQueue<Integer, Integer> processorFilterPrioritySaveQueue;
+    private final RestSaveQueue<Integer, Integer> processorFilterMaxProcessingTasksSaveQueue;
 
     private boolean allowUpdate;
 
@@ -122,14 +122,13 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             @Override
             protected void exec(final Range range,
                                 final Consumer<ProcessorListRowResultPage> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
+                                final Consumer<RestError> errorConsumer) {
                 restFactory
-                        .builder()
-                        .forType(ProcessorListRowResultPage.class)
+                        .create(PROCESSOR_FILTER_RESOURCE)
+                        .method(res -> res.find(request))
                         .onSuccess(dataConsumer)
-                        .onFailure(throwableConsumer)
-                        .call(PROCESSOR_FILTER_RESOURCE)
-                        .find(request);
+                        .onFailure(errorConsumer)
+                        .exec();
             }
 
             @Override
@@ -138,50 +137,60 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                 onChangeData(data);
             }
         };
-
-        final Supplier<Rest<Boolean>> restSupplier = () ->
-                restFactory.builder()
-                        .forBoolean();
-
-        processorEnabledSaveQueue = new RestSaveQueue<Integer, Boolean, Boolean>(eventBus, restSupplier) {
+        processorEnabledSaveQueue = new RestSaveQueue<Integer, Boolean>(eventBus) {
             @Override
-            protected void doAction(final Rest<Boolean> rest,
-                                    final Integer key,
-                                    final Boolean value) {
-                rest
-                        .call(PROCESSOR_RESOURCE)
-                        .setEnabled(key, value);
+            protected void doAction(final Integer key, final Boolean value, final Consumer<Integer> consumer) {
+                restFactory
+                        .create(PROCESSOR_RESOURCE)
+                        .method(res -> res.setEnabled(key, value))
+                        .onSuccess(res -> consumer.accept(key))
+                        .onFailure(res -> {
+                            AlertEvent.fireError(this, res.getMessage(), null);
+                            consumer.accept(key);
+                        })
+                        .exec();
             }
         };
-        processorFilterEnabledSaveQueue = new RestSaveQueue<Integer, Boolean, Boolean>(eventBus, restSupplier) {
+        processorFilterEnabledSaveQueue = new RestSaveQueue<Integer, Boolean>(eventBus) {
             @Override
-            protected void doAction(final Rest<Boolean> rest,
-                                    final Integer key,
-                                    final Boolean value) {
-                rest
-                        .call(PROCESSOR_FILTER_RESOURCE)
-                        .setEnabled(key, value);
+            protected void doAction(final Integer key, final Boolean value, final Consumer<Integer> consumer) {
+                restFactory
+                        .create(PROCESSOR_FILTER_RESOURCE)
+                        .method(res -> res.setEnabled(key, value))
+                        .onSuccess(res -> consumer.accept(key))
+                        .onFailure(res -> {
+                            AlertEvent.fireError(this, res.getMessage(), null);
+                            consumer.accept(key);
+                        })
+                        .exec();
             }
         };
-        processorFilterPrioritySaveQueue = new RestSaveQueue<Integer, Integer, Boolean>(eventBus, restSupplier) {
+        processorFilterPrioritySaveQueue = new RestSaveQueue<Integer, Integer>(eventBus) {
             @Override
-            protected void doAction(final Rest<Boolean> rest,
-                                    final Integer key,
-                                    final Integer value) {
-                rest
-                        .call(PROCESSOR_FILTER_RESOURCE)
-                        .setPriority(key, value);
+            protected void doAction(final Integer key, final Integer value, final Consumer<Integer> consumer) {
+                restFactory
+                        .create(PROCESSOR_FILTER_RESOURCE)
+                        .method(res -> res.setPriority(key, value))
+                        .onSuccess(res -> consumer.accept(key))
+                        .onFailure(res -> {
+                            AlertEvent.fireError(this, res.getMessage(), null);
+                            consumer.accept(key);
+                        })
+                        .exec();
             }
         };
-        processorFilterMaxProcessingTasksSaveQueue = new RestSaveQueue<Integer, Integer, Boolean>(
-                eventBus, restSupplier) {
+        processorFilterMaxProcessingTasksSaveQueue = new RestSaveQueue<Integer, Integer>(eventBus) {
             @Override
-            protected void doAction(final Rest<Boolean> rest,
-                                    final Integer key,
-                                    final Integer value) {
-                rest
-                        .call(PROCESSOR_FILTER_RESOURCE)
-                        .setMaxProcessingTasks(key, value);
+            protected void doAction(final Integer key, final Integer value, final Consumer<Integer> consumer) {
+                restFactory
+                        .create(PROCESSOR_FILTER_RESOURCE)
+                        .method(res -> res.setMaxProcessingTasks(key, value))
+                        .onSuccess(res -> consumer.accept(key))
+                        .onFailure(res -> {
+                            AlertEvent.fireError(this, res.getMessage(), null);
+                            consumer.accept(key);
+                        })
+                        .exec();
             }
         };
     }
