@@ -247,7 +247,6 @@ public class LuceneIndexField implements IndexField {
         return termPositions;
     }
 
-
     @Override
     @JsonIgnore
     public String getDisplayValue() {
@@ -294,6 +293,10 @@ public class LuceneIndexField implements IndexField {
     public Builder copy() {
         return new Builder(this);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static final class Builder {
 
