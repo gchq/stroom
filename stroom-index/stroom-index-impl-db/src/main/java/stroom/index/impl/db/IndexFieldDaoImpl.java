@@ -29,6 +29,7 @@ import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import org.jooq.Condition;
+import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
 
@@ -49,40 +50,64 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
         this.queryDatasourceDbConnProvider = queryDatasourceDbConnProvider;
     }
 
-    private int getOrCreateFieldSource(final DocRef docRef) {
-        Optional<Integer> optional = getFieldSource(docRef);
-        if (optional.isEmpty()) {
-            createFieldSource(docRef);
-            optional = getFieldSource(docRef);
+    private void ensureFieldSource(final DocRef docRef) {
+        JooqUtil.context(queryDatasourceDbConnProvider, context -> {
+            Optional<Integer> optional = getFieldSource(context, docRef, false);
+            if (optional.isEmpty()) {
+                createFieldSource(context, docRef);
+            }
+        });
+    }
+
+    private Optional<Integer> getFieldSource(final DocRef docRef,
+                                             final boolean lockFieldSource) {
+
+        return JooqUtil.contextResult(queryDatasourceDbConnProvider, context ->
+                getFieldSource(context, docRef, lockFieldSource));
+    }
+
+    private Optional<Integer> getFieldSource(final DSLContext context,
+                                             final DocRef docRef,
+                                             final boolean lockFieldSource) {
+        var c = context
+                .select(INDEX_FIELD_SOURCE.ID)
+                .from(INDEX_FIELD_SOURCE)
+                .where(INDEX_FIELD_SOURCE.TYPE.eq(docRef.getType()))
+                .and(INDEX_FIELD_SOURCE.UUID.eq(docRef.getUuid()));
+
+        if (lockFieldSource) {
+            return c.forUpdate()
+                    .fetchOptional(INDEX_FIELD_SOURCE.ID);
+        } else {
+            return c.fetchOptional(INDEX_FIELD_SOURCE.ID);
         }
-        return optional.orElseThrow();
     }
 
-    private Optional<Integer> getFieldSource(final DocRef docRef) {
-        return JooqUtil
-                .contextResult(queryDatasourceDbConnProvider, context -> context
-                        .select(INDEX_FIELD_SOURCE.ID)
-                        .from(INDEX_FIELD_SOURCE)
-                        .where(INDEX_FIELD_SOURCE.TYPE.eq(docRef.getType()))
-                        .and(INDEX_FIELD_SOURCE.UUID.eq(docRef.getUuid()))
-                        .fetchOptional(INDEX_FIELD_SOURCE.ID));
-    }
-
-    private void createFieldSource(final DocRef docRef) {
-        JooqUtil.context(queryDatasourceDbConnProvider, context -> context
+    private void createFieldSource(final DSLContext context, final DocRef docRef) {
+        // TODO Consider using JooqUtil.tryCreate() as onDuplicateKeyIgnore will
+        //  ignore any error, not just dup keys
+        context
                 .insertInto(INDEX_FIELD_SOURCE)
                 .set(INDEX_FIELD_SOURCE.TYPE, docRef.getType())
                 .set(INDEX_FIELD_SOURCE.UUID, docRef.getUuid())
                 .set(INDEX_FIELD_SOURCE.NAME, docRef.getName())
                 .onDuplicateKeyIgnore()
-                .execute());
+                .execute();
     }
 
     @Override
     public void addFields(final DocRef docRef, final Collection<IndexField> fields) {
-        final int fieldSourceId = getOrCreateFieldSource(docRef);
-        JooqUtil.context(queryDatasourceDbConnProvider, context -> {
-            var c = context.insertInto(INDEX_FIELD,
+        // Do this outside the txn so other threads can see it asap
+        ensureFieldSource(docRef);
+
+        JooqUtil.transaction(queryDatasourceDbConnProvider, txnContext -> {
+            // Get a record lock on the field source, so we are the only thread
+            // that can mutate the index fields for that source, else we can get a deadlock.
+            final int fieldSourceId = getFieldSource(txnContext, docRef, true)
+                    .orElseThrow(() -> new RuntimeException("No field source found for " + docRef));
+
+            // Insert any new fields under lock
+            var c = txnContext.insertInto(INDEX_FIELD,
                     INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID,
                     INDEX_FIELD.TYPE,
                     INDEX_FIELD.NAME,
@@ -91,6 +116,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                     INDEX_FIELD.STORED,
                     INDEX_FIELD.TERM_POSITIONS,
                     INDEX_FIELD.CASE_SENSITIVE);
+
             for (final IndexField field : fields) {
                 c = c.values(fieldSourceId,
                         (byte) field.getFldType().getIndex(),
@@ -101,6 +127,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                         field.isTermPositions(),
                         field.isCaseSensitive());
             }
+            // Effectively ignore existing fields
             c.onDuplicateKeyUpdate()
                     .set(INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID, fieldSourceId)
                     .execute();
@@ -109,7 +136,8 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
 
     @Override
     public ResultPage<IndexField> findFields(final FindIndexFieldCriteria criteria) {
-        final Optional<Integer> optional = getFieldSource(criteria.getDataSourceRef());
+        final Optional<Integer> optional = getFieldSource(criteria.getDataSourceRef(), false);
+
         if (optional.isEmpty()) {
             return ResultPage.createCriterialBasedList(Collections.emptyList(), criteria);
         }

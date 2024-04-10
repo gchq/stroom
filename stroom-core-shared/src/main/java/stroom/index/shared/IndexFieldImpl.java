@@ -133,6 +133,10 @@ public class IndexFieldImpl implements IndexField {
         return new Builder(this);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static final class Builder {
 
         private String fldName;
