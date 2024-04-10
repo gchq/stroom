@@ -9,13 +9,13 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.UUID;
-
 @ExtendWith(MockitoExtension.class)
 class TestEmailSender {
 
     @Mock
     private AnalyticsConfig mockAnalyticsConfig;
+
+    private RuleEmailTemplatingService ruleEmailTemplatingService = new RuleEmailTemplatingService();
 
     @Disabled // manual only due to reliance on smtp.freesmtpservers.com
     @Test
@@ -27,26 +27,21 @@ class TestEmailSender {
                         "foo@foo.com",
                         "Mr Foo"));
 
-        final EmailSender emailSender = new EmailSender(() -> mockAnalyticsConfig);
+        final EmailSender emailSender = new EmailSender(() ->
+                mockAnalyticsConfig, ruleEmailTemplatingService);
 
         final AnalyticNotificationEmailDestination destination = AnalyticNotificationEmailDestination.builder()
                 .to("bar@bar.com")
+                .subjectTemplate("{{ headline }}")
+                .bodyTemplate("Detector {{ detectorName }} spotted something")
                 .build();
 
-        final Detection detection = new Detection(
-                null,
-                "DetectorName",
-                UUID.randomUUID().toString(),
-                null,
-                null,
-                "Headline",
-                null,
-                null,
-                UUID.randomUUID().toString(),
-                null,
-                null,
-                null,
-                null);
+        final Detection detection = Detection.builder()
+                .withRandomDetectionUniqueId()
+                .withRandomDetectorUuid()
+                .withHeadline("Headline")
+                .withDetectorName("DetectorName")
+                .build();
 
         emailSender.send(destination, detection);
     }
