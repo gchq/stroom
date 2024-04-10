@@ -13,6 +13,36 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.4-beta.2] - 2024-04-10
+
+* Issue **#4161** : Fix cron schedule time UI.
+
+* Issue **#4160** : Fix date time picker.
+
+* Add the `ctrl+enter` key bind to dashboards to start/stop the query. Make the `ctrl+enter` key bind work on any part of the screen for Queries.
+
+* Add various 'Goto' type sequential key binds, e.g. `gt` for 'Goto Server Tasks'.
+
+* Change the Documentation tab to default to edit mode if the user has write permission and there is currently no documentation.
+
+* Add `ctrl+/` and `/` key binds for focusing on the explorer tree and current tab quick filters respectively.
+
+* Create a 'Copy As' explorer tree context menu sub-menu containing 'Copy (Name|UUID|Link) to Clipboard'.
+
+* Issue **#4184** : Add API specification link to help menu.
+
+* Issue **#4167** : Add templating of email subject and body in scheduled query rules. Template language is a sub-set of Jinja templating.
+
+* Issue **#4039** : Make tick boxes in conditional formatting table clickable.
+
+* Add help buttons to edit conditional rule dialog and add F1 keybind for opening help.
+
+* Issue **#4119** : Set stepping location from a popup and not inline editor.
+
+* Issue **#4187** : Fix scheduled executor stop behaviour.
+
+* Rename DB migration script from `V07_03_00_001__job_node.sql` to `V07_04_00_005__job_node.sql`. If you are deploying this version onto an existing 7.4 version then you will need to run the following sql `delete from job_schema_history where version = '07.03.00.001';`.
+
 * Issue **#4172** : Fix NPE when running an empty sQL query.
 
 * Issue **#4168** : Increase width of Id column on Annotations Linked Events dialog. Also increase size of dialog and the width of the left hand split pane.
@@ -417,6 +447,7 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.2...HEAD
+[v7.4-beta.2]: https://github.com/gchq/stroom/compare/v7.4-beta.1...v7.4-beta.2
 [v7.4-beta.1]: https://github.com/gchq/stroom/compare/v7.3-beta.11...v7.4-beta.1
 [v7.2.2]: https://github.com/gchq/stroom/compare/v7.2.1...v7.2.2
