@@ -38,6 +38,8 @@ import org.simplejavamail.api.mailer.config.TransportStrategy;
 @JsonPropertyOrder(alphabetic = true)
 public class SmtpConfig extends AbstractConfig implements IsStroomConfig {
 
+    public static final String DEFAULT_TRANSPORT = "plain";
+
     @NotNull
     @JsonProperty("host")
     @JsonPropertyDescription("The fully qualified hostname of the SMTP server.")
@@ -66,7 +68,7 @@ public class SmtpConfig extends AbstractConfig implements IsStroomConfig {
     public SmtpConfig() {
         host = "localhost";
         port = 2525;
-        transport = "plain";
+        transport = DEFAULT_TRANSPORT;
         password = null;
         username = null;
     }
@@ -83,6 +85,11 @@ public class SmtpConfig extends AbstractConfig implements IsStroomConfig {
         this.transport = transport;
         this.username = username;
         this.password = password;
+    }
+
+    public static SmtpConfig unauthenticated(final String host,
+                                             final int port) {
+        return new SmtpConfig(host, port, DEFAULT_TRANSPORT, null, null);
     }
 
     public String getHost() {
@@ -110,7 +117,7 @@ public class SmtpConfig extends AbstractConfig implements IsStroomConfig {
         switch (transport) {
             case "TLS", "SSL":
                 return TransportStrategy.SMTP_TLS;
-            case "plain":
+            case DEFAULT_TRANSPORT:
             default:
                 return TransportStrategy.SMTP;
         }
