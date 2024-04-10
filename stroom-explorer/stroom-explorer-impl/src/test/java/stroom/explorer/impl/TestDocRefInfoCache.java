@@ -1,11 +1,15 @@
 package stroom.explorer.impl;
 
 import stroom.cache.impl.CacheManagerImpl;
+import stroom.docref.DocContentHighlights;
+import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docref.StringMatch;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.api.DocumentActionHandlers;
 import stroom.docstore.api.DocumentType;
+import stroom.explorer.api.ExplorerActionHandler;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.util.NullSafe;
@@ -19,10 +23,12 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -59,7 +65,7 @@ class TestDocRefInfoCache {
     DocRefInfoCache docRefInfoCache;
 
     @Mock
-    private FolderExplorerActionHandler mockFolderExplorerActionHandler;
+    private ExplorerActionHandlers mockExplorerActionHandlers;
 
     @BeforeEach
     void setUp() {
@@ -73,7 +79,7 @@ class TestDocRefInfoCache {
                 ExplorerConfig::new,
                 securityContext,
                 () -> documentActionHandlers,
-                mockFolderExplorerActionHandler);
+                mockExplorerActionHandlers);
     }
 
     @Test
@@ -92,8 +98,8 @@ class TestDocRefInfoCache {
     @Test
     void testGet_folder() {
         final DocRef docRef = DOC_REF_FOLDER;
-        Mockito.when(mockFolderExplorerActionHandler.info(Mockito.eq(docRef.getUuid())))
-                .thenReturn(buildInfo(docRef));
+        Mockito.when(mockExplorerActionHandlers.getHandler(Mockito.anyString()))
+                .thenReturn(new MyFolderExplorerActionHandler());
         final Optional<DocRefInfo> docRefInfo = docRefInfoCache.get(docRef);
 
         assertThat(docRefInfo)
@@ -130,8 +136,8 @@ class TestDocRefInfoCache {
     @Test
     void testGet_noType_folder() {
         final DocRef docRef = DOC_REF_FOLDER;
-        Mockito.when(mockFolderExplorerActionHandler.info(Mockito.eq(docRef.getUuid())))
-                .thenReturn(buildInfo(docRef));
+        Mockito.when(mockExplorerActionHandlers.stream())
+                .thenReturn(Stream.of(new MyFolderExplorerActionHandler()));
 
         Optional<DocRefInfo> docRefInfo = docRefInfoCache.get(stripType(docRef));
 
@@ -210,6 +216,91 @@ class TestDocRefInfoCache {
         @Override
         public DocRefInfo info(final String uuid) {
             return NullSafe.get(docRefs.get(uuid), TestDocRefInfoCache::buildInfo);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class MyFolderExplorerActionHandler implements ExplorerActionHandler {
+
+        @Override
+        public List<DocContentMatch> findByContent(final StringMatch filter) {
+            return null;
+        }
+
+        @Override
+        public DocContentHighlights fetchHighlights(final DocRef docRef,
+                                                    final String extension,
+                                                    final StringMatch filter) {
+            return null;
+        }
+
+        @Override
+        public Set<DocRef> listDocuments() {
+            return null;
+        }
+
+        @Override
+        public List<DocRef> findByNames(final List<String> names, final boolean allowWildCards) {
+            return null;
+        }
+
+        @Override
+        public DocRef createDocument(final String name) {
+            return null;
+        }
+
+        @Override
+        public DocRef copyDocument(final DocRef docRef,
+                                   final String name,
+                                   final boolean makeNameUnique,
+                                   final Set<String> existingNames) {
+            return null;
+        }
+
+        @Override
+        public DocRef moveDocument(final String uuid) {
+            return null;
+        }
+
+        @Override
+        public DocRef renameDocument(final String uuid, final String name) {
+            return null;
+        }
+
+        @Override
+        public void deleteDocument(final String uuid) {
+
+        }
+
+        @Override
+        public DocRefInfo info(final String uuid) {
+            return buildInfo(DocRef.builder()
+                    .type(FolderExplorerActionHandler.DOCUMENT_TYPE.getType())
+                    .uuid(uuid)
+                    .build());
+        }
+
+        @Override
+        public stroom.explorer.shared.DocumentType getDocumentType() {
+            return FolderExplorerActionHandler.DOCUMENT_TYPE;
+        }
+
+        @Override
+        public Map<DocRef, Set<DocRef>> getDependencies() {
+            return null;
+        }
+
+        @Override
+        public Set<DocRef> getDependencies(final DocRef docRef) {
+            return null;
+        }
+
+        @Override
+        public void remapDependencies(final DocRef docRef, final Map<DocRef, DocRef> remappings) {
+
         }
     }
 }

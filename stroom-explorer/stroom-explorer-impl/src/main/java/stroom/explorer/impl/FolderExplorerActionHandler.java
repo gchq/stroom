@@ -5,6 +5,7 @@ import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docref.StringMatch;
+import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.shared.DocumentType;
@@ -118,7 +119,9 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
     public DocRefInfo info(final String uuid) {
         final ExplorerTreeNode explorerTreeNode = explorerTreeDao.findByUUID(uuid);
         if (explorerTreeNode == null) {
-            throw new RuntimeException("Unable to find tree node to get info");
+            throw new DocumentNotFoundException(DocRef.builder()
+                    .uuid(uuid)
+                    .build());
         }
 
         if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.READ)) {

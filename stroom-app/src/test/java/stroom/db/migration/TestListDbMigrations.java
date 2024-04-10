@@ -8,6 +8,7 @@ import stroom.util.shared.Version;
 import com.google.common.base.Strings;
 import jakarta.validation.constraints.NotNull;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +32,8 @@ import static stroom.util.ConsoleColour.BLUE;
 import static stroom.util.ConsoleColour.RED;
 import static stroom.util.ConsoleColour.YELLOW;
 
+@Isolated // This is walking the file tree so doesn't like it if another test is mutating
+// the file tree at the same time.
 public class TestListDbMigrations {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestListDbMigrations.class);
