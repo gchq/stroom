@@ -1,6 +1,7 @@
 package stroom.statistics.impl.sql.internal;
 
 import stroom.docref.DocRef;
+import stroom.security.api.SecurityContext;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.impl.InternalStatisticsService;
 import stroom.statistics.impl.sql.SQLStatisticsConfig;
@@ -23,27 +24,32 @@ class SQLInternalStatisticsService implements InternalStatisticsService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SQLInternalStatisticsService.class);
 
+    private final SecurityContext securityContext;
     private final Statistics statisticsService;
     private final String docRefType;
 
     @Inject
-    SQLInternalStatisticsService(final SQLStatisticsConfig config,
+    SQLInternalStatisticsService(final SecurityContext securityContext,
+                                 final SQLStatisticsConfig config,
                                  final Statistics statisticsService) {
+        this.securityContext = securityContext;
         this.statisticsService = statisticsService;
         this.docRefType = config.getDocRefType();
     }
 
     @Override
     public void putEvents(final Map<DocRef, List<InternalStatisticEvent>> eventsMap) {
-
-        List<StatisticEvent> statisticEvents = Preconditions.checkNotNull(eventsMap).entrySet().stream()
-                .flatMap(entry ->
-                        entry.getValue().stream()
-                                .map(event -> new Tuple2<>(entry.getKey(), event)))
-                .map(tuple2 -> internalEventMapper(tuple2._1(), tuple2._2()))
-                .collect(Collectors.toList());
-
-        statisticsService.putEvents(statisticEvents);
+        // This may be called by pipe processing which runs as a lowly user so record
+        // the stat as the proc user.
+        securityContext.asProcessingUser(() -> {
+            List<StatisticEvent> statisticEvents = Preconditions.checkNotNull(eventsMap).entrySet().stream()
+                    .flatMap(entry ->
+                            entry.getValue().stream()
+                                    .map(event -> new Tuple2<>(entry.getKey(), event)))
+                    .map(tuple2 -> internalEventMapper(tuple2._1(), tuple2._2()))
+                    .collect(Collectors.toList());
+            statisticsService.putEvents(statisticEvents);
+        });
     }
 
     private StatisticEvent internalEventMapper(final DocRef docRef,
