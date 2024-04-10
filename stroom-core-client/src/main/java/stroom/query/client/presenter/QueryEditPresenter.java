@@ -38,6 +38,7 @@ import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.client.view.QueryResultTabsView;
 import stroom.util.shared.DefaultLocation;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
@@ -60,6 +61,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceRange;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import javax.inject.Provider;
@@ -154,7 +156,7 @@ public class QueryEditPresenter
                     }
 
                     final QLVisResult visResult = (QLVisResult) componentResult;
-                    if (visResult.getJsonData() != null && visResult.getJsonData().length() > 0) {
+                    if (!GwtNullSafe.isBlankString(visResult.getJsonData())) {
                         hasData = true;
                         setVisHidden(false);
                     }
@@ -339,7 +341,10 @@ public class QueryEditPresenter
 
     private void run(final boolean incremental,
                      final boolean storeHistory) {
-        queryInfo.prompt(() -> run(incremental, storeHistory, Function.identity()));
+        // No point running the search if there is no query
+        if (!GwtNullSafe.isBlankString(editorPresenter.getText())) {
+            queryInfo.prompt(() -> run(incremental, storeHistory, Function.identity()));
+        }
     }
 
     private void run(final boolean incremental,
@@ -361,7 +366,6 @@ public class QueryEditPresenter
                 incremental,
                 storeHistory,
                 queryInfo.getMessage());
-//        }
     }
 
     public TimeRange getTimeRange() {
@@ -378,7 +382,8 @@ public class QueryEditPresenter
         queryModel.init(docRef.getUuid());
         if (query != null) {
             reading = true;
-            if (editorPresenter.getText().length() == 0 || !editorPresenter.getText().equals(query)) {
+            if (GwtNullSafe.isBlankString(editorPresenter.getText())
+                    || !Objects.equals(editorPresenter.getText(), query)) {
                 editorPresenter.setText(query);
                 queryHelpPresenter.setQuery(query);
             }
