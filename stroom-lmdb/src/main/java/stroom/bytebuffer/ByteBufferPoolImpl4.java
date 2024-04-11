@@ -516,7 +516,7 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
                         LOGGER.warn("Hit {}% ({}) of the limit of {} for pooled buffers of size {}.",
                                 byteBufferPoolConfigProvider.get().getWarningThresholdPercentage(),
                                 warningThreshold,
-                                newBufferCount,
+                                maxBufferCount,
                                 ModelStringUtil.formatCsv(bufferSizes[offset]));
                     } else if (newBufferCount == maxBufferCount) {
                         LOGGER.warn("Hit limit of {} for pooled buffers of size {}. " +

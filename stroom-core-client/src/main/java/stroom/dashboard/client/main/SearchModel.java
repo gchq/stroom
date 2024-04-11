@@ -49,6 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class SearchModel {
 
@@ -400,15 +401,12 @@ public class SearchModel {
      * @return A result component map.
      */
     private Map<String, ComponentSettings> createComponentSettingsMap() {
-        if (componentMap.size() > 0) {
-            final Map<String, ComponentSettings> resultComponentMap = new HashMap<>();
-            for (final Entry<String, ResultComponent> entry : componentMap.entrySet()) {
-                final String componentId = entry.getKey();
-                final ResultComponent resultComponent = entry.getValue();
-                final ComponentSettings componentSettings = resultComponent.getSettings();
-                resultComponentMap.put(componentId, componentSettings);
-            }
-            return resultComponentMap;
+        if (!componentMap.isEmpty()) {
+            return componentMap.entrySet()
+                    .stream()
+                    .collect(Collectors.toMap(
+                            Entry::getKey,
+                            entry -> entry.getValue().getSettings()));
         }
         return null;
     }
