@@ -1467,8 +1467,9 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                                                  final String id) {
         final LmdbEnv lmdbEnv = new LmdbEnvFactory(
                 temporaryPathCreator,
-                temporaryPathCreator.getTempDirProvider(),
-                LmdbLibraryConfig::new)
+                new LmdbLibrary(temporaryPathCreator,
+                        temporaryPathCreator.getTempDirProvider(),
+                        LmdbLibraryConfig::new))
                 .builder(temporaryPathCreator.getBaseTempDir())
                 .withSubDirectory("env" + id)
                 .withMapSize(getMaxSizeBytes())

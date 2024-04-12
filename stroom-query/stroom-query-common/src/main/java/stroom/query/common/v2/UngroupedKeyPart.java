@@ -1,8 +1,7 @@
 package stroom.query.common.v2;
 
 import stroom.query.language.functions.Val;
-
-import com.esotericsoftware.kryo.io.Output;
+import stroom.query.language.functions.ref.DataWriter;
 
 import java.util.Objects;
 
@@ -15,8 +14,8 @@ class UngroupedKeyPart implements KeyPart {
     }
 
     @Override
-    public void write(final Output output) {
-        output.writeLong(sequenceNumber);
+    public void write(final DataWriter writer) {
+        writer.writeLong(sequenceNumber);
     }
 
     @Override

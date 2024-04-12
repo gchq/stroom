@@ -1,9 +1,8 @@
 package stroom.query.common.v2;
 
+import stroom.query.language.functions.ref.DataReader;
+import stroom.query.language.functions.ref.DataWriter;
 import stroom.query.language.functions.ref.ErrorConsumer;
-
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 import java.util.Set;
 
@@ -14,7 +13,7 @@ public interface KeyFactory extends UniqueIdProvider {
      *
      * @param key The key to serialise.
      */
-    void write(Key key, Output output);
+    void write(Key key, DataWriter writer);
 
     /**
      * Read a key from an input.
@@ -22,7 +21,7 @@ public interface KeyFactory extends UniqueIdProvider {
      * @param input The input to read the key from.
      * @return The key read from the input.
      */
-    Key read(Input input);
+    Key read(DataReader reader);
 
     /**
      * Decode a set of string encoded key bytes into a set of keys.

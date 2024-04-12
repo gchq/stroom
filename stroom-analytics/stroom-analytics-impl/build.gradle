@@ -4,6 +4,7 @@ dependencies {
     implementation project(':stroom-analytics:stroom-analytics-api')
     implementation project(':stroom-analytics:stroom-analytics-rule-impl')
     implementation project(':stroom-annotation:stroom-annotation-api')
+    implementation project(':stroom-bytebuffer')
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core')

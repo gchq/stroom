@@ -44,6 +44,9 @@ include 'stroom-app'
 include 'stroom-app-gwt'
 include 'stroom-gwt'
 
+// Bytebuffer
+include 'stroom-bytebuffer'
+
 // Cache
 include 'stroom-cache:stroom-cache-api'
 include 'stroom-cache:stroom-cache-impl'

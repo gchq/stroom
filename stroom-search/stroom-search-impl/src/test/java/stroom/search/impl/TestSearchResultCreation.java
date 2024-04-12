@@ -1,9 +1,11 @@
 package stroom.search.impl;
 
+import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
-import stroom.lmdb.LmdbEnvFactory;
+import stroom.lmdb.LmdbLibrary;
 import stroom.lmdb.LmdbLibraryConfig;
+import stroom.lmdb2.LmdbEnvFactory2;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -94,16 +96,16 @@ class TestSearchResultCreation {
         final LmdbLibraryConfig lmdbLibraryConfig = new LmdbLibraryConfig();
         final TempDirProvider tempDirProvider = () -> tempDir;
         final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
-        final LmdbEnvFactory lmdbEnvFactory = new LmdbEnvFactory(
-                pathCreator,
-                tempDirProvider,
-                () -> lmdbLibraryConfig);
+        final LmdbEnvFactory2 lmdbEnvFactory = new LmdbEnvFactory2(
+                new LmdbLibrary(pathCreator, tempDirProvider, () -> lmdbLibraryConfig),
+                pathCreator);
         dataStoreFactory = new LmdbDataStoreFactory(
                 lmdbEnvFactory,
                 SearchResultStoreConfig::new,
                 pathCreator,
                 () -> executorService,
-                new MapDataStoreFactory(SearchResultStoreConfig::new));
+                new MapDataStoreFactory(SearchResultStoreConfig::new),
+                new ByteBufferFactoryImpl());
     }
 
     @AfterEach

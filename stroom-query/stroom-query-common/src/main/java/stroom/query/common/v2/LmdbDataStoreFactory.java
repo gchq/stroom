@@ -1,10 +1,10 @@
 package stroom.query.common.v2;
 
+import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.expression.api.ExpressionContext;
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb.LmdbEnv;
-import stroom.lmdb.LmdbEnvFactory;
-import stroom.lmdb.LmdbEnvFactory.SimpleEnvBuilder;
+import stroom.lmdb2.LmdbEnvFactory2;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
@@ -38,22 +38,25 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbDataStoreFactory.class);
 
-    private final LmdbEnvFactory lmdbEnvFactory;
+    private final LmdbEnvFactory2 lmdbEnvFactory;
     private final Provider<SearchResultStoreConfig> resultStoreConfigProvider;
     private final Provider<Executor> executorProvider;
     private final Path searchResultStoreDir;
     private final MapDataStoreFactory mapDataStoreFactory;
+    private final ByteBufferFactory bufferFactory;
 
     @Inject
-    public LmdbDataStoreFactory(final LmdbEnvFactory lmdbEnvFactory,
+    public LmdbDataStoreFactory(final LmdbEnvFactory2 lmdbEnvFactory,
                                 final Provider<SearchResultStoreConfig> resultStoreConfigProvider,
                                 final PathCreator pathCreator,
                                 final Provider<Executor> executorProvider,
-                                final MapDataStoreFactory mapDataStoreFactory) {
+                                final MapDataStoreFactory mapDataStoreFactory,
+                                final ByteBufferFactory bufferFactory) {
         this.lmdbEnvFactory = lmdbEnvFactory;
         this.resultStoreConfigProvider = resultStoreConfigProvider;
         this.executorProvider = executorProvider;
         this.mapDataStoreFactory = mapDataStoreFactory;
+        this.bufferFactory = bufferFactory;
 
         // This config prop requires restart, so we can hold on to it
         this.searchResultStoreDir = getLocalDir(resultStoreConfigProvider.get(), pathCreator);
@@ -92,13 +95,13 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
 
         } else {
             final String subDirectory = queryKey + "_" + componentId + "_" + UUID.randomUUID();
-            final SimpleEnvBuilder lmdbEnvBuilder = lmdbEnvFactory
-                    .builder(resultStoreConfig.getLmdbConfig())
-                    .withSubDirectory(subDirectory);
+            final LmdbEnvFactory2.Builder lmdbEnvBuilder = lmdbEnvFactory
+                    .builder()
+                    .config(resultStoreConfig.getLmdbConfig())
+                    .subDir(subDirectory);
 
             return new LmdbDataStore(
                     searchRequestSource,
-                    new Serialisers(resultStoreConfig),
                     lmdbEnvBuilder,
                     resultStoreConfig,
                     queryKey,
@@ -109,7 +112,8 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                     paramMap,
                     dataStoreSettings,
                     executorProvider,
-                    errorConsumer);
+                    errorConsumer,
+                    bufferFactory);
         }
     }
 

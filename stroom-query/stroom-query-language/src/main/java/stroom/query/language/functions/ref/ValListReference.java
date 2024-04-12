@@ -3,9 +3,6 @@ package stroom.query.language.functions.ref;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValSerialiser;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,21 +31,21 @@ public class ValListReference implements ValueReference<List<Val>> {
     }
 
     @Override
-    public void read(final StoredValues storedValues, final Input input) {
-        final int length = input.readInt();
+    public void read(final StoredValues storedValues, final DataReader reader) {
+        final int length = reader.readInt();
         final List<Val> list = new ArrayList<>(length);
         for (int i = 0; i < length; i++) {
-            list.add(ValSerialiser.read(input));
+            list.add(ValSerialiser.read(reader));
         }
         set(storedValues, list);
     }
 
     @Override
-    public void write(final StoredValues storedValues, final Output output) {
+    public void write(final StoredValues storedValues, final DataWriter writer) {
         final List<Val> list = get(storedValues);
-        output.writeInt(list.size());
+        writer.writeInt(list.size());
         for (final Val val : list) {
-            ValSerialiser.write(output, val);
+            ValSerialiser.write(writer, val);
         }
     }
 

@@ -19,6 +19,7 @@ package stroom.pipeline.refdata.store.offheapstore.databases;
 
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnvFactory;
+import stroom.lmdb.LmdbLibrary;
 import stroom.lmdb.LmdbLibraryConfig;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.offheapstore.RefDataLmdbEnv;
@@ -66,8 +67,9 @@ public abstract class AbstractStoreDbTest extends StroomUnitTest {
 
         final LmdbEnvFactory lmdbEnvFactory = new LmdbEnvFactory(
                 pathCreator,
-                tempDirProvider,
-                LmdbLibraryConfig::new);
+                new LmdbLibrary(pathCreator,
+                        tempDirProvider,
+                        LmdbLibraryConfig::new));
         refDataLmdbEnv = new RefDataLmdbEnv(
                 lmdbEnvFactory, ReferenceDataConfig::new, null, null);
         lmdbEnv = refDataLmdbEnv.getEnvironment();

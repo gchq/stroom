@@ -1,6 +1,7 @@
 ext.moduleName = 'stroom.lmdb'
 
 dependencies {
+    implementation project(':stroom-bytebuffer')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 

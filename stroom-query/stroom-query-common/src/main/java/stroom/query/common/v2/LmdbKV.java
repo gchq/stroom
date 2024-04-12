@@ -4,7 +4,7 @@ import stroom.bytebuffer.ByteBufferUtils;
 
 import java.nio.ByteBuffer;
 
-class LmdbKV implements LmdbQueueItem {
+public class LmdbKV implements LmdbQueueItem {
 
     private final CurrentDbState currentDbState;
     private final ByteBuffer rowKey;

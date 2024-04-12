@@ -5,11 +5,11 @@ import stroom.analytics.shared.AnalyticDataShard;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.FindAnalyticDataShardCriteria;
 import stroom.analytics.shared.GetAnalyticShardDataRequest;
+import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.docref.DocRef;
 import stroom.expression.api.ExpressionContext;
 import stroom.lmdb.LmdbConfig;
-import stroom.lmdb.LmdbEnvFactory;
-import stroom.lmdb.LmdbEnvFactory.SimpleEnvBuilder;
+import stroom.lmdb2.LmdbEnvFactory2;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.FindResultStoreCriteria;
 import stroom.query.api.v2.OffsetRange;
@@ -32,7 +32,6 @@ import stroom.query.common.v2.ErrorConsumerImpl;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.HasResultStoreInfo;
 import stroom.query.common.v2.LmdbDataStore;
-import stroom.query.common.v2.Serialisers;
 import stroom.query.common.v2.TableResultCreator;
 import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
@@ -74,7 +73,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnalyticDataStores.class);
 
-    private final LmdbEnvFactory lmdbEnvFactory;
+    private final LmdbEnvFactory2 lmdbEnvFactory;
     private final Provider<AnalyticResultStoreConfig> analyticStoreConfigProvider;
     private final AnalyticRuleStore analyticRuleStore;
     private final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper;
@@ -84,9 +83,10 @@ public class AnalyticDataStores implements HasResultStoreInfo {
     private final Map<AnalyticRuleDoc, AnalyticDataStore> dataStoreCache;
     private final NodeInfo nodeInfo;
     private final SecurityContext securityContext;
+    private final ByteBufferFactory bufferFactory;
 
     @Inject
-    public AnalyticDataStores(final LmdbEnvFactory lmdbEnvFactory,
+    public AnalyticDataStores(final LmdbEnvFactory2 lmdbEnvFactory,
                               final PathCreator pathCreator,
                               final AnalyticRuleStore analyticRuleStore,
                               final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper,
@@ -94,7 +94,8 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                               final Provider<Executor> executorProvider,
                               final ExpressionContextFactory expressionContextFactory,
                               final NodeInfo nodeInfo,
-                              final SecurityContext securityContext) {
+                              final SecurityContext securityContext,
+                              final ByteBufferFactory bufferFactory) {
         this.lmdbEnvFactory = lmdbEnvFactory;
         this.analyticRuleStore = analyticRuleStore;
         this.analyticStoreConfigProvider = analyticStoreConfigProvider;
@@ -103,6 +104,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         this.expressionContextFactory = expressionContextFactory;
         this.nodeInfo = nodeInfo;
         this.securityContext = securityContext;
+        this.bufferFactory = bufferFactory;
 
         this.analyticResultStoreDir = getLocalDir(analyticStoreConfigProvider.get(), pathCreator);
 
@@ -276,9 +278,10 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         final AnalyticResultStoreConfig storeConfig = analyticStoreConfigProvider.get();
 
         final String subDirectory = getAnalyticStoreDir(queryKey, componentId);
-        final SimpleEnvBuilder lmdbEnvBuilder = lmdbEnvFactory
-                .builder(storeConfig.getLmdbConfig())
-                .withSubDirectory(subDirectory);
+        final LmdbEnvFactory2.Builder lmdbEnvBuilder = lmdbEnvFactory
+                .builder()
+                .config(storeConfig.getLmdbConfig())
+                .subDir(subDirectory);
         final SearchRequestSource searchRequestSource = SearchRequestSource
                 .builder()
                 .sourceType(SourceType.TABLE_BUILDER_ANALYTIC)
@@ -286,7 +289,6 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 .build();
         return new LmdbDataStore(
                 searchRequestSource,
-                new Serialisers(storeConfig),
                 lmdbEnvBuilder,
                 storeConfig,
                 queryKey,
@@ -297,7 +299,8 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 paramMap,
                 dataStoreSettings,
                 executorProvider,
-                errorConsumer);
+                errorConsumer,
+                bufferFactory);
     }
 
     @Override
@@ -340,7 +343,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
 
     private String getComponentId(final SearchRequest searchRequest) {
         for (final ResultRequest resultRequest : searchRequest.getResultRequests()) {
-            if (resultRequest.getMappings() != null && resultRequest.getMappings().size() > 0) {
+            if (resultRequest.getMappings() != null && !resultRequest.getMappings().isEmpty()) {
                 return resultRequest.getComponentId();
             }
         }
@@ -349,8 +352,8 @@ public class AnalyticDataStores implements HasResultStoreInfo {
 
     private TableSettings getTableSettings(final SearchRequest searchRequest) {
         for (final ResultRequest resultRequest : searchRequest.getResultRequests()) {
-            if (resultRequest.getMappings() != null && resultRequest.getMappings().size() > 0) {
-                return resultRequest.getMappings().get(0);
+            if (resultRequest.getMappings() != null && !resultRequest.getMappings().isEmpty()) {
+                return resultRequest.getMappings().getFirst();
             }
         }
         return null;
@@ -413,8 +416,8 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                         new ColumnFormatter(
                                 new FormatterFactory(searchRequest.getDateTimeSettings()));
                 final TableResultCreator resultCreator = new TableResultCreator(fieldFormatter);
-                ResultRequest resultRequest = searchRequest.getResultRequests().get(0);
-                TableSettings tableSettings = resultRequest.getMappings().get(0);
+                ResultRequest resultRequest = searchRequest.getResultRequests().getFirst();
+                TableSettings tableSettings = resultRequest.getMappings().getFirst();
                 tableSettings = tableSettings
                         .copy()
                         .aggregateFilter(null)
@@ -438,7 +441,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 // If we get no results and the offset > 0 then reset range and query again.
                 if (result instanceof final TableResult tableResult) {
                     if (resultRequest.getRequestedRange().getOffset() > 0 &&
-                            tableResult.getRows().size() == 0) {
+                            tableResult.getRows().isEmpty()) {
                         resultRequest = resultRequest
                                 .copy()
                                 .requestedRange(new OffsetRange(0L, request.getRequestedRange().getLength()))

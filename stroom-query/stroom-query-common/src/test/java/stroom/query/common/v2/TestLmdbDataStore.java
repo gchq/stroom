@@ -16,10 +16,11 @@
 
 package stroom.query.common.v2;
 
+import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.expression.api.ExpressionContext;
-import stroom.lmdb.LmdbEnvFactory;
-import stroom.lmdb.LmdbEnvFactory.SimpleEnvBuilder;
+import stroom.lmdb.LmdbLibrary;
 import stroom.lmdb.LmdbLibraryConfig;
+import stroom.lmdb2.LmdbEnvFactory2;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
@@ -82,17 +83,16 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         final TempDirProvider tempDirProvider = () -> tempDir;
         final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
         final LmdbLibraryConfig lmdbLibraryConfig = new LmdbLibraryConfig();
-        final LmdbEnvFactory lmdbEnvFactory = new LmdbEnvFactory(
-                pathCreator,
-                tempDirProvider,
-                () -> lmdbLibraryConfig);
-        final SimpleEnvBuilder lmdbEnvBuilder = lmdbEnvFactory.builder(resultStoreConfig.getLmdbConfig());
+        final LmdbEnvFactory2 lmdbEnvFactory = new LmdbEnvFactory2(
+                new LmdbLibrary(pathCreator, tempDirProvider, () -> lmdbLibraryConfig),
+                pathCreator);
+        final LmdbEnvFactory2.Builder lmdbEnvBuilder = lmdbEnvFactory.builder()
+                .config(resultStoreConfig.getLmdbConfig());
 
         final ErrorConsumerImpl errorConsumer = new ErrorConsumerImpl();
-        final Serialisers serialisers = new Serialisers(resultStoreConfig);
+
         return new LmdbDataStore(
                 searchRequestSource,
-                serialisers,
                 lmdbEnvBuilder,
                 resultStoreConfig,
                 queryKey,
@@ -103,7 +103,8 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 Collections.emptyMap(),
                 dataStoreSettings,
                 () -> executorService,
-                errorConsumer);
+                errorConsumer,
+                new ByteBufferFactoryImpl());
     }
 
     @Test

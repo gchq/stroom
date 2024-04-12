@@ -1,21 +1,20 @@
 package stroom.query.language.functions;
 
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.query.language.functions.ValSerialiser.Serialiser;
+import stroom.query.language.functions.ref.KryoDataReader;
+import stroom.query.language.functions.ref.KryoDataWriter;
 import stroom.test.common.TestUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import com.esotericsoftware.kryo.io.ByteBufferInputStream;
-import com.esotericsoftware.kryo.io.ByteBufferOutputStream;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-import jakarta.xml.bind.DatatypeConverter;
+import com.esotericsoftware.kryo.io.ByteBufferInput;
+import com.esotericsoftware.kryo.unsafe.UnsafeByteBufferOutput;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.stream.Stream;
@@ -36,22 +35,22 @@ class TestValSerialiser {
                 .withTestFunction(testCase -> {
                     final Val inputVal = testCase.getInput();
                     // Serialise then de-serialise so we can compare input to output
-                    try (final ByteBufferOutputStream byteBufferOutputStream = new ByteBufferOutputStream(20)) {
-                        try (Output output = new Output(byteBufferOutputStream)) {
-                            ValSerialiser.write(output, inputVal);
-                            final ByteBuffer byteBuffer = byteBufferOutputStream.getByteBuffer();
-                            output.flush();
-                            byteBuffer.flip();
-                            LOGGER.debug("byteBuffer: {}", byteArrayToHex(byteBuffer.array()));
 
-                            try (Input input = new Input(new ByteBufferInputStream(byteBuffer))) {
-                                final Val outputVal = ValSerialiser.read(input);
-                                return outputVal;
-                            }
+                    final ByteBuffer byteBuffer;
+                    try (final UnsafeByteBufferOutput output = new UnsafeByteBufferOutput(200)) {
+                        try (final KryoDataWriter writer = new KryoDataWriter(output)) {
+                            ValSerialiser.write(writer, inputVal);
                         }
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
+                        byteBuffer = output.getByteBuffer();
                     }
+
+                    byteBuffer.flip();
+                    LOGGER.debug("byteBuffer: {}", ByteBufferUtils.byteBufferToHex(byteBuffer));
+
+                    try (KryoDataReader input = new KryoDataReader(new ByteBufferInput(byteBuffer))) {
+                        return ValSerialiser.read(input);
+                    }
+
                 })
                 .withSimpleEqualityAssertion()
                 .addCase(ValNull.INSTANCE, ValNull.INSTANCE)
@@ -106,23 +105,22 @@ class TestValSerialiser {
         final Val[] valArr = vals.toArray(Val.EMPTY_VALUES);
 
         // Serialise then de-serialise so we can compare input to output
-        try (final ByteBufferOutputStream byteBufferOutputStream = new ByteBufferOutputStream(200)) {
-            try (Output output = new Output(byteBufferOutputStream)) {
-                ValSerialiser.writeArray(output, valArr);
-                final ByteBuffer byteBuffer = byteBufferOutputStream.getByteBuffer();
-                output.flush();
-                byteBuffer.flip();
-                LOGGER.info("byteBuffer: {}", byteArrayToHex(byteBuffer.array()));
-
-                try (Input input = new Input(new ByteBufferInputStream(byteBuffer))) {
-                    final Val[] outputVals = ValSerialiser.readArray(input);
-
-                    assertThat(outputVals)
-                            .containsExactly(valArr);
-                }
+        final ByteBuffer byteBuffer;
+        try (final UnsafeByteBufferOutput output = new UnsafeByteBufferOutput(200)) {
+            try (final KryoDataWriter writer = new KryoDataWriter(output)) {
+                ValSerialiser.writeArray(writer, valArr);
+                byteBuffer = output.getByteBuffer();
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        }
+
+        byteBuffer.flip();
+        LOGGER.info("byteBuffer: {}", ByteBufferUtils.byteBufferToHex(byteBuffer));
+
+        try (final KryoDataReader reader = new KryoDataReader(new ByteBufferInput(byteBuffer))) {
+            final Val[] outputVals = ValSerialiser.readArray(reader);
+
+            assertThat(outputVals)
+                    .containsExactly(valArr);
         }
     }
 
@@ -135,18 +133,5 @@ class TestValSerialiser {
                     .isNotNull();
         }
 
-    }
-
-    public static String byteArrayToHex(final byte[] arr) {
-        final StringBuilder sb = new StringBuilder();
-        if (arr != null) {
-            for (final byte b : arr) {
-                final byte[] oneByteArr = new byte[1];
-                oneByteArr[0] = b;
-                sb.append(DatatypeConverter.printHexBinary(oneByteArr));
-                sb.append(" ");
-            }
-        }
-        return sb.toString().replaceAll(" $", "");
     }
 }
