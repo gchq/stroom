@@ -23,19 +23,21 @@ import stroom.svg.client.SvgPresets;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.form.client.FormGroup;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.regexp.shared.SplitResult;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -77,15 +79,15 @@ public class ExplorerNodeEditTagsViewImpl
     @UiField
     ButtonPanel inputButtonPanel;
     @UiField
+    FormGroup allTagsFormGroup;
+    @UiField
     ListBox allTagsListBox;
     @UiField
     ButtonPanel nodeTagsButtonPanel;
     @UiField
-    Label editNodeTagsAllTagsLabel;
+    FormGroup nodeTagsFormGroup;
     @UiField
     ListBox nodeTagsListBox;
-    @UiField
-    Label nodeTagsLabel;
     private List<DocRef> docRefs;
 
     @Inject
@@ -121,7 +123,7 @@ public class ExplorerNodeEditTagsViewImpl
         allTagsListBox.setTitle("All tags currently in use across all documents");
 
         textBox.addKeyPressHandler(tagsKeyPressHandler);
-        textBox.addKeyDownHandler(this::handleTextBoxKeyDownEvent);
+        textBox.addKeyUpHandler(this::handleTextBoxKeyUpEvent);
         textBox.setTitle("Enter tags manually or filter 'All Known Tags'");
 
         allTagsListBox.setMultipleSelect(true);
@@ -249,7 +251,7 @@ public class ExplorerNodeEditTagsViewImpl
         }
     }
 
-    private void handleTextBoxKeyDownEvent(final KeyDownEvent event) {
+    private void handleTextBoxKeyUpEvent(final KeyUpEvent event) {
 //            GWT.log("textBox eventTarget: " + event.getNativeEvent().getEventTarget());
         //noinspection EnhancedSwitchMigration
         switch (event.getNativeKeyCode()) {
@@ -393,7 +395,7 @@ public class ExplorerNodeEditTagsViewImpl
                 .sorted()
                 .collect(Collectors.toList());
         final int documentCount = GwtNullSafe.size(docRefs);
-        nodeTagsLabel.setText(documentCount > 1
+        nodeTagsFormGroup.setLabel(documentCount > 1
                 ? "Tags to add to " + documentCount + " Documents"
                 : "Document Tags");
 
@@ -420,13 +422,14 @@ public class ExplorerNodeEditTagsViewImpl
             predicate = ALWAYS_TRUE_PREDICATE;
         } else {
             final String lowerCaseFilter = cleanTag(filter);
+            GWT.log("lowerCaseFilter: '" + lowerCaseFilter + "'");
             predicate = tag -> tag.contains(lowerCaseFilter);
         }
 
         // Include any newly added node tags in the list of all tags
         allTags.stream()
-                .filter(predicate)
                 .filter(tag -> !nodeTags.contains(tag)) // No point including ones we already have on the node
+                .filter(predicate)
                 .distinct()
                 .sorted()
                 .forEach(allTagsListBox::addItem);
@@ -472,9 +475,7 @@ public class ExplorerNodeEditTagsViewImpl
                 + (isInputEmpty
                 ? ""
                 : " (filtered)");
-        if (!Objects.equals(editNodeTagsAllTagsLabel.getText(), text)) {
-            editNodeTagsAllTagsLabel.setText(text);
-        }
+        allTagsFormGroup.setLabel(text);
     }
 
     private void updateAddFromInputEnabledState() {

@@ -1655,7 +1655,7 @@ button.main-menu svg {
     margin-top: 0;
 }
 
-.form-group-label-container .form-label{
+.form-group-label-container .form-label {
     margin-bottom: 0;
 }
 
@@ -1665,6 +1665,19 @@ button.main-menu svg {
     gap: var(--control__gap--horizontal);
     align-items: center;
     margin-bottom: 0.25rem;
+}
+
+.form-group-description-container {
+    display: flex;
+    flex-direction: row;
+    gap: var(--control__gap--horizontal);
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+
+.form-group-description {
+    font-size: 92%;
+    opacity: 80%;
 }
 
 .form-group .help-button {
