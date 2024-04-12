@@ -16,6 +16,7 @@
 
 package stroom.analytics;
 
+import stroom.analytics.impl.AnalyticHelper;
 import stroom.analytics.rule.impl.AnalyticRuleStore;
 import stroom.analytics.shared.AnalyticNotificationConfig;
 import stroom.analytics.shared.AnalyticNotificationDestinationType;
@@ -82,6 +83,8 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
     private AnalyticRuleStore analyticRuleStore;
     @Inject
     private AnalyticsDataSetup analyticsDataSetup;
+    @Inject
+    private AnalyticHelper analyticHelper;
 
     @BeforeEach
     final void setup() {
@@ -107,6 +110,8 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
         if (analyticsDataSetup.getDetections() == null) {
             throw new NullPointerException("Detections missing");
         }
+
+        assertThat(analyticHelper.getRules().size()).isZero();
     }
 
     @Override
@@ -125,6 +130,10 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
                 .analyticNotificationConfig(sample.getAnalyticNotificationConfig())
                 .build();
         analyticRuleStore.writeDocument(analyticRuleDoc);
+
+        assertThat(analyticHelper.getRules().size()).isOne();
+        assertThat(analyticHelper.getRules().getFirst().getUuid()).isEqualTo(alertRuleDocRef.getUuid());
+
         return alertRuleDocRef;
     }
 

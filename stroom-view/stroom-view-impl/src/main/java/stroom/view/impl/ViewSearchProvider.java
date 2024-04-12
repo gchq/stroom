@@ -11,8 +11,8 @@ import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.DataSourceProviderRegistry;
-import stroom.query.common.v2.IndexFieldCache;
 import stroom.query.common.v2.IndexFieldProvider;
+import stroom.query.common.v2.IndexFieldProviders;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.SearchProvider;
 import stroom.query.common.v2.StoreFactoryRegistry;
@@ -40,19 +40,19 @@ public class ViewSearchProvider implements SearchProvider, IndexFieldProvider {
     private final Provider<StoreFactoryRegistry> storeFactoryRegistryProvider;
     private final SecurityContext securityContext;
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistry;
-    private final IndexFieldCache indexFieldCache;
+    private final IndexFieldProviders indexFieldProviders;
 
     @Inject
     public ViewSearchProvider(final ViewStore viewStore,
                               final Provider<StoreFactoryRegistry> storeFactoryRegistryProvider,
                               final SecurityContext securityContext,
                               final Provider<DataSourceProviderRegistry> dataSourceProviderRegistry,
-                              final IndexFieldCache indexFieldCache) {
+                              final IndexFieldProviders indexFieldProviders) {
         this.viewStore = viewStore;
         this.storeFactoryRegistryProvider = storeFactoryRegistryProvider;
         this.securityContext = securityContext;
         this.dataSourceProviderRegistry = dataSourceProviderRegistry;
-        this.indexFieldCache = indexFieldCache;
+        this.indexFieldProviders = indexFieldProviders;
     }
 
     private DocRef getReferencedDataSource(final DocRef viewDocRef) {
@@ -91,7 +91,7 @@ public class ViewSearchProvider implements SearchProvider, IndexFieldProvider {
     public IndexField getIndexField(final DocRef viewDocRef, final String fieldName) {
         final DocRef docRef = getReferencedDataSource(viewDocRef);
         if (docRef != null) {
-            return indexFieldCache.get(docRef, fieldName);
+            return indexFieldProviders.getIndexField(docRef, fieldName);
         }
         return null;
     }
