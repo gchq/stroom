@@ -132,10 +132,10 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
     private void delete() {
         final List<FsVolumeGroup> list = volumeStatusListPresenter.getSelectionModel().getSelectedItems();
         if (GwtNullSafe.hasItems(list)) {
-            String message = "Are you sure you want to delete the selected volume group?";
-            if (list.size() > 1) {
-                message = "Are you sure you want to delete the selected volume groups?";
-            }
+            final String message = list.size() > 1
+                    ? "Are you sure you want to delete the selected volume group?"
+                    : "Are you sure you want to delete the selected volume groups?";
+
             ConfirmEvent.fire(FsVolumeGroupPresenter.this, message,
                     result -> {
                         if (result) {

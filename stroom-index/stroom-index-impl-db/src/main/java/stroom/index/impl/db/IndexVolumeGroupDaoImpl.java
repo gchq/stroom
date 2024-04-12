@@ -7,7 +7,7 @@ import stroom.index.impl.IndexStore;
 import stroom.index.impl.IndexVolumeGroupDao;
 import stroom.index.impl.db.jooq.tables.records.IndexVolumeGroupRecord;
 import stroom.index.shared.IndexVolumeGroup;
-import stroom.index.shared.LuceneIndexDoc;
+import stroom.util.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -40,7 +40,7 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
         indexVolumeGroup.setUpdateUser(record.get(INDEX_VOLUME_GROUP.UPDATE_USER));
         indexVolumeGroup.setName(record.get(INDEX_VOLUME_GROUP.NAME));
         indexVolumeGroup.setUuid(record.get(INDEX_VOLUME_GROUP.UUID));
-        indexVolumeGroup.setDefaultVolume(record.get(INDEX_VOLUME_GROUP.IS_DEFAULT));
+        indexVolumeGroup.setDefaultVolume(fromDbIsDefaultValue(record.get(INDEX_VOLUME_GROUP.IS_DEFAULT)));
         return indexVolumeGroup;
     };
 
@@ -56,7 +56,7 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
                 record.set(INDEX_VOLUME_GROUP.UPDATE_USER, indexVolumeGroup.getUpdateUser());
                 record.set(INDEX_VOLUME_GROUP.NAME, indexVolumeGroup.getName());
                 record.set(INDEX_VOLUME_GROUP.UUID, indexVolumeGroup.getUuid());
-                record.set(INDEX_VOLUME_GROUP.IS_DEFAULT, getDbIsDefaultValue(indexVolumeGroup));
+                record.set(INDEX_VOLUME_GROUP.IS_DEFAULT, toDbIsDefaultValue(indexVolumeGroup));
                 return record;
             };
 
@@ -75,6 +75,25 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
                 INDEX_VOLUME_GROUP.ID,
                 INDEX_VOLUME_GROUP_TO_RECORD_MAPPER,
                 RECORD_TO_INDEX_VOLUME_GROUP_MAPPER);
+    }
+
+    private void removeCurrentDefault(final DSLContext context) {
+        context.update(INDEX_VOLUME_GROUP)
+                .set(INDEX_VOLUME_GROUP.IS_DEFAULT, (Boolean) null)
+                .where(INDEX_VOLUME_GROUP.IS_DEFAULT.eq(true))
+                .execute();
+    }
+
+    @Override
+    public IndexVolumeGroup create(final IndexVolumeGroup indexVolumeGroup) {
+        Objects.requireNonNull(indexVolumeGroup);
+        return JooqUtil.transactionResultWithOptimisticLocking(indexDbConnProvider, context -> {
+            if (indexVolumeGroup.isDefaultVolume()) {
+                // Can only have one that is default
+                removeCurrentDefault(context);
+            }
+            return genericDao.create(context, indexVolumeGroup);
+        });
     }
 
     @Override
@@ -111,14 +130,14 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
 
     @Override
     public IndexVolumeGroup update(IndexVolumeGroup indexVolumeGroup) {
-        return JooqUtil.transactionResultWithOptimisticLocking(indexDbConnProvider, context -> {
+        return JooqUtil.transactionResult(indexDbConnProvider, context -> {
             final IndexVolumeGroup saved;
             try {
                 if (indexVolumeGroup.isDefaultVolume()) {
                     // Can only have one that is default
-                    setAllOthersNonDefault(indexVolumeGroup, context);
+                    removeCurrentDefault(context);
                 }
-                saved = genericDao.update(indexVolumeGroup);
+                saved = genericDao.update(context, indexVolumeGroup);
             } catch (DataAccessException e) {
                 if (e.getCause() != null
                         && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
@@ -134,7 +153,7 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
                 throw e;
             }
 
-        // If the group name has changed then update indexes to point to the new group name.
+            // If the group name has changed then update indexes to point to the new group name.
 //        if (currentGroupName != null && !currentGroupName.equals(saved.getName())) {
 //            final IndexStore indexStore = indexStoreProvider.get();
 //            if (indexStore != null) {
@@ -239,15 +258,20 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
     }
 
 
-    private static Boolean getDbIsDefaultValue(final IndexVolumeGroup indexVolumeGroup) {
+    private static Boolean toDbIsDefaultValue(final IndexVolumeGroup indexVolumeGroup) {
         return indexVolumeGroup.isDefaultVolume()
                 ? Boolean.TRUE
                 : null;
     }
 
-    private void setAllOthersNonDefault(final IndexVolumeGroup indexVolumeGroup, final DSLContext context) {
+    private static boolean fromDbIsDefaultValue(final Boolean isDefault) {
+        return NullSafe.isTrue(isDefault);
+    }
+
+    private void setAllOthersNonDefault(final IndexVolumeGroup indexVolumeGroup,
+                                        final DSLContext context) {
         context.update(INDEX_VOLUME_GROUP)
-                .set(INDEX_VOLUME_GROUP.IS_DEFAULT, getDbIsDefaultValue(indexVolumeGroup))
+                .set(INDEX_VOLUME_GROUP.IS_DEFAULT, toDbIsDefaultValue(indexVolumeGroup))
                 .where(INDEX_VOLUME_GROUP.ID.notEqual(indexVolumeGroup.getId()))
                 .execute();
     }

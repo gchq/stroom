@@ -25,8 +25,8 @@ class IndexVolumeGroupResourceImpl implements IndexVolumeGroupResource {
     }
 
     @Override
-    public IndexVolumeGroup create(final String name) {
-        return indexVolumeGroupServiceProvider.get().getOrCreate(name);
+    public IndexVolumeGroup create(final IndexVolumeGroup indexVolumeGroup) {
+        return indexVolumeGroupServiceProvider.get().create(indexVolumeGroup);
     }
 
     @Override

@@ -3,6 +3,7 @@ package stroom.index.mock;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.shared.IndexVolumeGroup;
+import stroom.index.shared.IndexVolumeGroup.Builder;
 import stroom.util.AuditUtil;
 
 import java.util.ArrayList;
@@ -31,6 +32,18 @@ public class MockIndexVolumeGroupService implements IndexVolumeGroupService {
     public IndexVolumeGroup create() {
         final IndexVolumeGroup group = new IndexVolumeGroup();
         group.setName("New name");
+        AuditUtil.stamp(() -> TEST_USER, group);
+        groups.add(group);
+        return group;
+    }
+
+    @Override
+    public IndexVolumeGroup create(final IndexVolumeGroup indexVolumeGroup) {
+        final Builder builder = indexVolumeGroup.copy();
+        if (indexVolumeGroup.getUuid() == null) {
+            builder.withRandomUuid();
+        }
+        final IndexVolumeGroup group = builder.build();
         AuditUtil.stamp(() -> TEST_USER, group);
         groups.add(group);
         return group;

@@ -4,6 +4,7 @@ import stroom.docref.DocRef;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeGroup;
+import stroom.index.shared.IndexVolumeGroup.Builder;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
@@ -31,6 +32,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import java.util.OptionalLong;
 
 @Singleton
@@ -109,6 +111,21 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
                 () -> indexVolumeGroupDao.getOrCreate(indexVolumeGroup));
         fireChange(EntityAction.CREATE);
         return result;
+    }
+
+    @Override
+    public IndexVolumeGroup create(final IndexVolumeGroup indexVolumeGroup) {
+        ensureDefaultVolumes();
+        Objects.requireNonNull(indexVolumeGroup);
+        final Builder builder = indexVolumeGroup.copy();
+        if (indexVolumeGroup.getUuid() == null) {
+            builder.withRandomUuid();
+        }
+        final IndexVolumeGroup copy = builder.build();
+        AuditUtil.stamp(securityContext, copy);
+
+        return securityContext.secureResult(() ->
+                indexVolumeGroupDao.create(copy));
     }
 
     @Override

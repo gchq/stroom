@@ -16,6 +16,7 @@
 
 package stroom.data.store.impl.fs.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
@@ -46,6 +47,7 @@ public class FsVolumeGroupListPresenter extends MyPresenterWidget<PagerView> {
     private static final FsVolumeGroupResource FS_VOLUME_GROUP_RESOURCE =
             GWT.create(FsVolumeGroupResource.class);
 
+    private final RestFactory restFactory;
     private final MyDataGrid<FsVolumeGroup> dataGrid;
     private final MultiSelectionModelImpl<FsVolumeGroup> selectionModel;
     private final RestDataProvider<FsVolumeGroup, ResultPage<FsVolumeGroup>> dataProvider;
@@ -55,9 +57,9 @@ public class FsVolumeGroupListPresenter extends MyPresenterWidget<PagerView> {
                                       final PagerView view,
                                       final RestFactory restFactory) {
         super(eventBus, view);
-
-        dataGrid = new MyDataGrid<>();
-        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        this.restFactory = restFactory;
+        this.dataGrid = new MyDataGrid<>();
+        this.selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
         getWidget().getElement().addClassName("default-min-sizes");
 
@@ -107,9 +109,21 @@ public class FsVolumeGroupListPresenter extends MyPresenterWidget<PagerView> {
                         FsVolumeGroup::isDefaultVolume)
                 .centerAligned()
                 .build();
-        defaultColumn.setFieldUpdater((index, object, value) -> {
 
+        defaultColumn.setFieldUpdater((idx, row, tickBoxState) -> {
+            row.setDefaultVolume(tickBoxState.toBoolean());
+            restFactory
+                    .create(FS_VOLUME_GROUP_RESOURCE)
+                    .method(res -> res.update(row.getId(), row))
+                    .onSuccess(fsVolumeGroup -> {
+                        refresh();
+                    })
+                    .onFailure(restError -> {
+                        AlertEvent.fireError(this, restError.getMessage(), null);
+                    })
+                    .exec();
         });
+
         dataGrid.addColumn(
                 defaultColumn,
                 DataGridUtil.headingBuilder("Default Group")

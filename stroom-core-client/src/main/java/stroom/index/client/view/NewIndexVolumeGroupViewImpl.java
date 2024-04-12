@@ -16,20 +16,21 @@
 
 package stroom.index.client.view;
 
-import stroom.index.client.presenter.IndexVolumeGroupEditPresenter.IndexVolumeGroupEditView;
+import stroom.index.client.presenter.NewIndexVolumeGroupPresenter.NewIndexVolumeGroupView;
 import stroom.util.shared.GwtNullSafe;
+import stroom.widget.popup.client.view.HideRequestUiHandlers;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
+import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class IndexVolumeGroupEditViewImpl extends ViewImpl implements IndexVolumeGroupEditView {
+public class NewIndexVolumeGroupViewImpl
+        extends ViewWithUiHandlers<HideRequestUiHandlers>
+        implements NewIndexVolumeGroupView {
 
     private final Widget widget;
 
@@ -37,11 +38,9 @@ public class IndexVolumeGroupEditViewImpl extends ViewImpl implements IndexVolum
     TextBox name;
     @UiField
     CustomCheckBox isDefaultCheckBox;
-    @UiField
-    SimplePanel list;
 
     @Inject
-    public IndexVolumeGroupEditViewImpl(final Binder binder) {
+    public NewIndexVolumeGroupViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -76,15 +75,15 @@ public class IndexVolumeGroupEditViewImpl extends ViewImpl implements IndexVolum
     }
 
     @Override
-    public void setListView(final View listView) {
-        list.setWidget(listView.asWidget());
+    public void setUiHandlers(final HideRequestUiHandlers hideRequestUiHandlers) {
+
     }
 
 
     // --------------------------------------------------------------------------------
 
 
-    public interface Binder extends UiBinder<Widget, IndexVolumeGroupEditViewImpl> {
+    public interface Binder extends UiBinder<Widget, NewIndexVolumeGroupViewImpl> {
 
     }
 }

@@ -287,6 +287,15 @@ public final class JooqUtil {
         context(dataSource, context -> context.transaction(nested -> consumer.accept(DSL.using(nested))));
     }
 
+    public static void transactionWithOptimisticLocking(final DataSource dataSource,
+                                                        final Consumer<DSLContext> consumer) {
+        contextResultWithOptimisticLocking(dataSource, context ->
+                context.transactionResult(nested -> {
+                    consumer.accept(DSL.using(nested));
+                    return null;
+                }));
+    }
+
     public static <R> R transactionResult(final DataSource dataSource, final Function<DSLContext, R> function) {
         return contextResult(dataSource,
                 context -> context.transactionResult(nested -> function.apply(DSL.using(nested))));

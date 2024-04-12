@@ -45,13 +45,13 @@ public class NewFsVolumeGroupPresenter
         extends MyPresenterWidget<NewFsVolumeGroupView>
         implements HidePopupRequestEvent.Handler {
 
-    private Consumer<FsVolumeGroup> consumer;
 
     private static final FsVolumeGroupResource FS_VOLUME_GROUP_RESOURCE =
             GWT.create(FsVolumeGroupResource.class);
 
     private final RestFactory restFactory;
 
+    private Consumer<FsVolumeGroup> consumer;
 
     @Inject
     public NewFsVolumeGroupPresenter(final EventBus eventBus,

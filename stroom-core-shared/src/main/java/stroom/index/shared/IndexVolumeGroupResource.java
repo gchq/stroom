@@ -39,7 +39,7 @@ public interface IndexVolumeGroupResource extends RestResource, DirectRestServic
     @Operation(
             summary = "Creates an index volume group",
             operationId = "createIndexVolumeGroup")
-    IndexVolumeGroup create(@Parameter(description = "name", required = true) String name);
+    IndexVolumeGroup create(@Parameter(description = "indexVolumeGroup", required = true) IndexVolumeGroup indexVolumeGroup);
 
     @GET
     @Path("/{id}")

@@ -16,6 +16,8 @@ public interface IndexVolumeGroupService {
 
     IndexVolumeGroup create();
 
+    IndexVolumeGroup create(IndexVolumeGroup indexVolumeGroup);
+
     IndexVolumeGroup getOrCreate(String name);
 
     IndexVolumeGroup update(IndexVolumeGroup indexVolumeGroup);

@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
+import java.util.UUID;
 
 @JsonInclude(Include.NON_NULL)
 public class IndexVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMutable, HasDocRef {
@@ -285,6 +286,11 @@ public class IndexVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMuta
 
         public Builder withUuid(final String val) {
             uuid = val;
+            return this;
+        }
+
+        public Builder withRandomUuid() {
+            uuid = UUID.randomUUID().toString();
             return this;
         }
 

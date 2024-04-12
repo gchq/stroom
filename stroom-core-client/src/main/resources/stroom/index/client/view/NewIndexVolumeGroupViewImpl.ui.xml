@@ -10,6 +10,5 @@
         <form:FormGroup identity="indexVolumeGroupEditVolumeIsDefault" label="Is Default Volume Group?">
             <tickbox:CustomCheckBox ui:field="isDefaultCheckBox" />
         </form:FormGroup>
-        <g:SimplePanel ui:field="list" styleName="dock-max stroom-control"/>
     </g:FlowPanel>
 </ui:UiBinder>

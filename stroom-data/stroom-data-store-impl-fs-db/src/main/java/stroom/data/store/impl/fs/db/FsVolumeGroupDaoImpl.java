@@ -6,6 +6,7 @@ import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
+import stroom.util.NullSafe;
 
 import jakarta.inject.Inject;
 import org.jooq.DSLContext;
@@ -32,7 +33,7 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
         fsVolumeGroup.setUpdateUser(record.get(FS_VOLUME_GROUP.UPDATE_USER));
         fsVolumeGroup.setName(record.get(FS_VOLUME_GROUP.NAME));
         fsVolumeGroup.setUuid(record.get(FS_VOLUME_GROUP.UUID));
-        fsVolumeGroup.setDefaultVolume(record.get(FS_VOLUME_GROUP.IS_DEFAULT));
+        fsVolumeGroup.setDefaultVolume(fromDbIsDefaultValue(record.get(FS_VOLUME_GROUP.IS_DEFAULT)));
         return fsVolumeGroup;
     };
 
@@ -48,7 +49,7 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
                 record.set(FS_VOLUME_GROUP.UPDATE_USER, fsVolumeGroup.getUpdateUser());
                 record.set(FS_VOLUME_GROUP.NAME, fsVolumeGroup.getName());
                 record.set(FS_VOLUME_GROUP.UUID, fsVolumeGroup.getUuid());
-                record.set(FS_VOLUME_GROUP.IS_DEFAULT, getDbIsDefaultValue(fsVolumeGroup));
+                record.set(FS_VOLUME_GROUP.IS_DEFAULT, toDbIsDefaultValue(fsVolumeGroup));
                 return record;
             };
 
@@ -97,7 +98,7 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
 
     @Override
     public FsVolumeGroup update(FsVolumeGroup fsVolumeGroup) {
-        return JooqUtil.transactionResultWithOptimisticLocking(fsDataStoreDbConnProvider, context -> {
+        return JooqUtil.transactionResult(fsDataStoreDbConnProvider, context -> {
             final FsVolumeGroup saved;
             try {
                 if (fsVolumeGroup.isDefaultVolume()) {
@@ -123,10 +124,14 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
         });
     }
 
-    private static Boolean getDbIsDefaultValue(final FsVolumeGroup fsVolumeGroup) {
+    private static Boolean toDbIsDefaultValue(final FsVolumeGroup fsVolumeGroup) {
         return fsVolumeGroup.isDefaultVolume()
                 ? Boolean.TRUE
                 : null;
+    }
+
+    private static boolean fromDbIsDefaultValue(final Boolean isDefault) {
+        return NullSafe.isTrue(isDefault);
     }
 
     private void removeCurrentDefault(final DSLContext context) {

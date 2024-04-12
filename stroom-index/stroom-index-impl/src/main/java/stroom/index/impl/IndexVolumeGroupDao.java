@@ -7,6 +7,8 @@ import java.util.List;
 
 public interface IndexVolumeGroupDao {
 
+    IndexVolumeGroup create(IndexVolumeGroup indexVolumeGroup);
+
     IndexVolumeGroup getOrCreate(IndexVolumeGroup indexVolumeGroup);
 
     IndexVolumeGroup update(IndexVolumeGroup indexVolumeGroup);
@@ -30,4 +32,5 @@ public interface IndexVolumeGroupDao {
     void delete(int id);
 
     IndexVolumeGroup get(DocRef docRef);
+
 }

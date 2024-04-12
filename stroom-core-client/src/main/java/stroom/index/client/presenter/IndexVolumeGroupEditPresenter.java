@@ -31,6 +31,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DelayedUpdate;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -179,7 +180,9 @@ public class IndexVolumeGroupEditPresenter
         deleteButton.setEnabled(enabled);
     }
 
-    void show(final IndexVolumeGroup volumeGroup, final String title, final Consumer<IndexVolumeGroup> consumer) {
+    void show(final IndexVolumeGroup volumeGroup,
+              final String title,
+              final Consumer<IndexVolumeGroup> consumer) {
         if (!opening) {
             opening = true;
             final ExpressionOperator expression = ExpressionUtil.equalsId(IndexVolumeFields.GROUP_ID,
@@ -200,8 +203,10 @@ public class IndexVolumeGroupEditPresenter
         if (!open) {
             open = true;
 
-            this.volumeGroup = volumeGroup;
+            this.volumeGroup = volumeGroup.copy()
+                    .build();
             getView().setName(volumeGroup.getName());
+            getView().setDefault(volumeGroup.isDefaultVolume());
 
             final PopupSize popupSize = PopupSize.resizable(1000, 600);
             ShowPopupEvent.builder(this)
@@ -212,14 +217,24 @@ public class IndexVolumeGroupEditPresenter
                     .onHideRequest(event -> {
                         if (event.isOk()) {
                             volumeGroup.setName(getView().getName());
-                            try {
-                                doWithGroupNameValidation(getView().getName(), volumeGroup.getId(), () ->
-                                        createVolumeGroup(consumer, volumeGroup));
-                            } catch (final RuntimeException e) {
-                                AlertEvent.fireError(
-                                        IndexVolumeGroupEditPresenter.this,
-                                        e.getMessage(),
-                                        null);
+                            volumeGroup.setDefaultVolume(getView().isDefault());
+                            final boolean hasChanged = !GwtNullSafe.equalProperties(
+                                    this.volumeGroup, volumeGroup, IndexVolumeGroup::getName)
+                                    || !GwtNullSafe.equalProperties(
+                                    this.volumeGroup, volumeGroup, IndexVolumeGroup::isDefaultVolume);
+
+                            if (hasChanged) {
+                                try {
+                                    doWithGroupNameValidation(getView().getName(), volumeGroup.getId(), () ->
+                                            updateVolumeGroup(consumer, volumeGroup));
+                                } catch (final RuntimeException e) {
+                                    AlertEvent.fireError(
+                                            IndexVolumeGroupEditPresenter.this,
+                                            e.getMessage(),
+                                            null);
+                                }
+                            } else {
+                                consumer.accept(null);
                             }
                         } else {
                             consumer.accept(null);
@@ -257,7 +272,7 @@ public class IndexVolumeGroupEditPresenter
         }
     }
 
-    private void createVolumeGroup(final Consumer<IndexVolumeGroup> consumer,
+    private void updateVolumeGroup(final Consumer<IndexVolumeGroup> consumer,
                                    final IndexVolumeGroup volumeGroup) {
         restFactory
                 .create(INDEX_VOLUME_GROUP_RESOURCE)
@@ -272,11 +287,19 @@ public class IndexVolumeGroupEditPresenter
         opening = false;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface IndexVolumeGroupEditView extends View, Focus {
 
         String getName();
 
         void setName(String name);
+
+        boolean isDefault();
+
+        void setDefault(boolean isDefault);
 
         void setListView(View listView);
     }

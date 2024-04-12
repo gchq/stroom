@@ -26,6 +26,7 @@ import stroom.index.shared.IndexVolumeGroupResource;
 import stroom.svg.client.IconColour;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.ButtonView;
 
 import com.google.gwt.core.client.GWT;
@@ -110,13 +111,13 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
 
     private void add() {
         final NewIndexVolumeGroupPresenter presenter = newIndexVolumeGroupPresenterProvider.get();
-        presenter.show("", name -> {
-            if (name != null) {
+        presenter.show(indexVolumeGroup -> {
+            if (indexVolumeGroup != null) {
                 restFactory
                         .create(INDEX_VOLUME_GROUP_RESOURCE)
-                        .method(res -> res.create(name))
-                        .onSuccess(indexVolumeGroup -> {
-                            edit(indexVolumeGroup);
+                        .method(res -> res.create(indexVolumeGroup))
+                        .onSuccess(indexVolumeGroup2 -> {
+                            edit(indexVolumeGroup2);
                             presenter.hide();
                             refresh();
                         })
@@ -150,11 +151,11 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
 
     private void delete() {
         final List<IndexVolumeGroup> list = volumeStatusListPresenter.getSelectionModel().getSelectedItems();
-        if (list != null && list.size() > 0) {
-            String message = "Are you sure you want to delete the selected volume group?";
-            if (list.size() > 1) {
-                message = "Are you sure you want to delete the selected volume groups?";
-            }
+        if (GwtNullSafe.hasItems(list)) {
+            final String message = list.size() > 1
+                    ? "Are you sure you want to delete the selected volume group?"
+                    : "Are you sure you want to delete the selected volume groups?";
+
             ConfirmEvent.fire(IndexVolumeGroupPresenter.this, message,
                     result -> {
                         if (result) {
