@@ -20,6 +20,7 @@ import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.index.impl.IndexElementModule;
 import stroom.index.impl.IndexFieldCacheImpl;
+import stroom.index.impl.IndexFieldProvidersImpl;
 import stroom.index.impl.IndexFieldService;
 import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexShardWriterCache;
@@ -33,6 +34,7 @@ import stroom.index.impl.LuceneIndexDocCacheImpl;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.query.common.v2.IndexFieldCache;
 import stroom.query.common.v2.IndexFieldProvider;
+import stroom.query.common.v2.IndexFieldProviders;
 import stroom.util.guice.GuiceUtil;
 
 import com.google.inject.AbstractModule;
@@ -45,6 +47,7 @@ public class MockIndexModule extends AbstractModule {
 
         bind(IndexShardWriterCache.class).to(MockIndexShardWriterCache.class);
         bind(LuceneIndexDocCache.class).to(LuceneIndexDocCacheImpl.class);
+        bind(IndexFieldProviders.class).to(IndexFieldProvidersImpl.class);
         bind(IndexFieldCache.class).to(IndexFieldCacheImpl.class);
         bind(IndexStore.class).to(IndexStoreImpl.class);
         bind(IndexVolumeService.class).to(MockIndexVolumeService.class);
