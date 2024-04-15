@@ -89,7 +89,7 @@ public class Tokeniser {
     }
 
     private void tagKeyword(final String pattern, final TokenType tokenType) {
-        split("(^|\\s|\\))(" + pattern + ")(\\s|\\(|$)", 2, tokenType);
+        split("(^\\s*|[^=]\\s+|\\))(" + pattern + ")(\\s|\\(|$)", 2, tokenType);
     }
 
     public static List<Token> parse(final String string) {
