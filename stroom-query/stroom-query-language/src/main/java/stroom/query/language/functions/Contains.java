@@ -21,32 +21,32 @@ import stroom.query.language.token.Param;
 
 import java.text.ParseException;
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
-        name = Match.NAME,
+        name = Contains.NAME,
         commonCategory = FunctionCategory.STRING,
         commonReturnType = ValBoolean.class,
-        commonReturnDescription = "True if pattern matches input",
+        commonReturnDescription = "True if string contains substring",
         signatures = @FunctionSignature(
-                description = "Tests an input string using a regular expression pattern.",
+                description = "Tests if inputString contains subString.",
                 args = {
                         @FunctionArg(
-                                name = "input",
-                                description = "The string to test using the regex pattern.",
+                                name = "inputString",
+                                description = "The string to find subString in.",
                                 argType = ValString.class),
                         @FunctionArg(
-                                name = "pattern",
-                                description = "The regex pattern to test with.",
-                                argType = ValString.class)}))
-class Match extends AbstractManyChildFunction {
+                                name = "subString",
+                                description = "The string to find in inputString.",
+                                argType = ValString.class)
+                }))
+class Contains extends AbstractManyChildFunction {
 
-    static final String NAME = "match";
+    static final String NAME = "contains";
     private Generator gen;
     private boolean simple;
 
-    public Match(final String name) {
+    public Contains(final String name) {
         super(name, 2, 2);
     }
 
@@ -65,28 +65,10 @@ class Match extends AbstractManyChildFunction {
 
         if (simple) {
             // Static computation.
-            final String value = params[0].toString();
-            final String regex = params[1].toString();
-
-            if (regex.isEmpty()) {
-                throw new ParseException(
-                        "An empty regex has been defined for second argument of '" + name + "' function", 0);
-            }
-
-            final Pattern pattern = PatternCache.get(regex);
-            final boolean matches = pattern.matcher(value).matches();
-            gen = new StaticValueFunction(ValBoolean.create(matches)).createGenerator();
-
-        } else {
-            if (params[1] instanceof Val) {
-                // Test regex is valid.
-                final String regex = params[1].toString();
-                if (regex.isEmpty()) {
-                    throw new ParseException(
-                            "An empty regex has been defined for second argument of '" + name + "' function", 0);
-                }
-                PatternCache.get(regex);
-            }
+            final String string = params[0].toString();
+            final String substring = params[1].toString();
+            final boolean result = string.contains(substring);
+            gen = new StaticValueFunction(ValBoolean.create(result)).createGenerator();
         }
     }
 
@@ -123,16 +105,15 @@ class Match extends AbstractManyChildFunction {
             if (!val.type().isValue()) {
                 return val;
             }
-            final Val valRegex = childGenerators[1].eval(storedValues, childDataSupplier);
-            if (!valRegex.type().isValue()) {
-                return ValErr.wrap(valRegex);
+            final Val valSubString = childGenerators[1].eval(storedValues, childDataSupplier);
+            if (!valSubString.type().isValue()) {
+                return ValErr.wrap(valSubString);
             }
 
             try {
-                final String value = val.toString();
-                final String regex = valRegex.toString();
-                final Pattern pattern = PatternCache.get(regex);
-                return ValBoolean.create(pattern.matcher(value).matches());
+                final String string = val.toString();
+                final String substring = valSubString.toString();
+                return ValBoolean.create(string.contains(substring));
 
             } catch (final RuntimeException e) {
                 return ValErr.create(e.getMessage());
