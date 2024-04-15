@@ -208,8 +208,6 @@ public class AnalyticsDataSetup {
                     .typeName(StreamTypeNames.RAW_EVENTS)
                     .build();
             try (final Target target = store.openTarget(metaProperties)) {
-                final Meta meta = target.getMeta();
-
                 try (final OutputStreamProvider outputStreamProvider = target.next()) {
                     try (final InputStream inputStream =
                             new ByteArrayInputStream(newData.getBytes(StandardCharsets.UTF_8));
