@@ -919,13 +919,6 @@ textarea.clipboardCopy {
     text-transform: uppercase;
 }
 
-.example-label {
-    font-size: 92%;
-    opacity: 80%;
-    margin-top: 0.1rem;
-    margin-bottom: 0.1rem;
-}
-
 /* TODO AT - not sure if these need to be done here or somewhere else */
 select:focus-visible,
 input:focus-visible {
