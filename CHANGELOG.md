@@ -13,6 +13,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.3-beta.16] - 2024-04-15
+
+* Issue **#4203** : Fix event capture getting stuck on buttons.
+
+* Issue **#4204** : Make `indexOf()` and `lastIndexOf()` return `-1` when not found.
+
+* Issue **#4205** : Add `contains()` function.
+
+* Issue **#4209** : Support `and()` function in `eval`.
+
+* Issue **#4212** : Fix shards stuck in opening state.
+
+
 ## [v7.3-beta.15] - 2024-04-10
 
 * Issue **#4172** : Fix NPE when running an empty sQL query.
@@ -419,7 +432,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.15...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.16...HEAD
+[v7.3-beta.16]: https://github.com/gchq/stroom/compare/v7.3-beta.15...v7.3-beta.16
 [v7.3-beta.15]: https://github.com/gchq/stroom/compare/v7.3-beta.14...v7.3-beta.15
 [v7.3-beta.14]: https://github.com/gchq/stroom/compare/v7.3-beta.13...v7.3-beta.14
 [v7.3-beta.13]: https://github.com/gchq/stroom/compare/v7.3-beta.12...v7.3-beta.13
