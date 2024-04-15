@@ -28,8 +28,11 @@ import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 
+import java.util.Optional;
+
 @EntityEventHandler(type = LuceneIndexDoc.DOCUMENT_TYPE)
 class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
+
     private final NodeInfo nodeInfo;
     private final LuceneIndexDocCacheImpl indexStructureCache;
     private final IndexShardService indexShardService;
@@ -61,11 +64,11 @@ class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
 
         final ResultPage<IndexShard> shards = indexShardService.find(criteria);
         shards.getValues().forEach(shard -> {
-            final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriter(shard.getId());
-            if (indexShardWriter != null) {
+            final Optional<IndexShardWriter> optional = indexShardWriterCache.getIfPresent(shard.getId());
+            optional.ifPresent(indexShardWriter -> {
                 final LuceneIndexDoc index = indexStructureCache.get(indexRef);
                 indexShardWriter.setMaxDocumentCount(index.getMaxDocsPerShard());
-            }
+            });
         });
     }
 }

@@ -17,7 +17,6 @@
 package stroom.index.impl;
 
 import stroom.index.shared.IndexException;
-import stroom.index.shared.IndexShardKey;
 
 public interface IndexShardWriter {
 
@@ -34,6 +33,4 @@ public interface IndexShardWriter {
     long getIndexShardId();
 
     long getCreationTime();
-
-    long getLastUsedTime();
 }

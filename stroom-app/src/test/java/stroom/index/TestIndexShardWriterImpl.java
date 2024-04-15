@@ -103,7 +103,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         final IndexShard indexShard = indexShardService.createIndexShard(indexShardKey1, nodeInfo.getThisNodeName());
 
         // Create a writer in the pool
-        final IndexShardWriter writer1 = indexShardWriterCache.getWriter(indexShard.getId());
+        final IndexShardWriter writer1 = indexShardWriterCache.getOrOpenWriter(indexShard.getId());
 
         // Assert that there is 1 writer in the pool.
         assertThat(indexShardService.find(FindIndexShardCriteria.matchAll()).size()).isEqualTo(1);
@@ -155,8 +155,8 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         final IndexShard indexShard2 = indexShardService.createIndexShard(indexShardKey2, nodeInfo.getThisNodeName());
 
         // Create 2 writers in the pool.
-        final IndexShardWriter writer1 = indexShardWriterCache.getWriter(indexShard1.getId());
-        final IndexShardWriter writer2 = indexShardWriterCache.getWriter(indexShard2.getId());
+        final IndexShardWriter writer1 = indexShardWriterCache.getOrOpenWriter(indexShard1.getId());
+        final IndexShardWriter writer2 = indexShardWriterCache.getOrOpenWriter(indexShard2.getId());
 
         // Assert that there are 2 writers in the pool.
         assertThat(indexShardService.find(FindIndexShardCriteria.matchAll()).size()).isEqualTo(2);
@@ -227,7 +227,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         final ResultPage<IndexShard> indexShardResultPage = indexShardService.find(FindIndexShardCriteria.matchAll());
         assertThat(indexShardResultPage.size()).isOne();
         final IndexShard indexShard1 = indexShardResultPage.getFirst();
-        final IndexShardWriter writer1 = indexShardWriterCache.getWriter(indexShard1.getId());
+        final IndexShardWriter writer1 = indexShardWriterCache.getOrOpenWriter(indexShard1.getId());
 
         // Make sure the writer is full.
         assertThatThrownBy(() -> writer1.addDocument(document)).isInstanceOf(IndexException.class);
@@ -239,13 +239,13 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         indexer.addDocument(indexShardKey1, document);
 
         // Get the new writer.
-        final IndexShardWriter writer2 = indexShardWriterCache.getWriter(indexShard1.getId());
+        final IndexShardWriter writer2 = indexShardWriterCache.getOrOpenWriter(indexShard1.getId());
 
         // Make sure the writers are not the same.
         assertThat(writer2).isNotEqualTo(writer1);
 
         for (int i = 1; i < 10; i++) {
-            assertThat(indexShardWriterCache.getWriter(indexShard1.getId())).isEqualTo(writer2);
+            assertThat(indexShardWriterCache.getOrOpenWriter(indexShard1.getId())).isEqualTo(writer2);
             indexer.addDocument(indexShardKey1, document);
         }
 

@@ -21,6 +21,7 @@ import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexShardUtil;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.LuceneVersion;
@@ -143,6 +144,16 @@ public class MockIndexShardService implements IndexShardService {
     @Override
     public boolean setStatus(final Long id,
                              final IndexShard.IndexShardStatus status) {
+        final IndexShard indexShard = map.get(id);
+        if (null != indexShard) {
+            indexShard.setStatus(status);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean forceStatus(final Long id, final IndexShardStatus status) {
         final IndexShard indexShard = map.get(id);
         if (null != indexShard) {
             indexShard.setStatus(status);

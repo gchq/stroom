@@ -52,7 +52,7 @@ public class MockIndexer implements Indexer {
     public void addDocument(final IndexShardKey key, final IndexDocument document) {
         final IndexShard indexShard = indexShardMap.computeIfAbsent(key, k ->
                 indexShardService.createIndexShard(k, null));
-        final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriter(indexShard.getId());
+        final IndexShardWriter indexShardWriter = indexShardWriterCache.getOrOpenWriter(indexShard.getId());
         indexShardWriter.addDocument(document);
     }
 }

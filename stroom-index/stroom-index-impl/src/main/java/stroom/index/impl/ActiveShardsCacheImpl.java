@@ -178,7 +178,7 @@ public class ActiveShardsCacheImpl implements ActiveShardsCache {
         private boolean addDocument(final IndexDocument document,
                                     final IndexShard indexShard,
                                     final boolean throwException) {
-            final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriter(indexShard.getId());
+            final IndexShardWriter indexShardWriter = indexShardWriterCache.getOrOpenWriter(indexShard.getId());
             try {
                 indexShardWriter.addDocument(document);
                 return true;

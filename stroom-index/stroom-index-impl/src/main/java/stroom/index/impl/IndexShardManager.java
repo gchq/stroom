@@ -141,7 +141,7 @@ public class IndexShardManager {
                             while (!Thread.currentThread().isInterrupted() && iter.hasNext()) {
                                 final IndexShard shard = iter.next();
                                 final IndexShardWriter indexShardWriter =
-                                        indexShardWriterCache.getWriter(shard.getId());
+                                        indexShardWriterCache.getOrOpenWriter(shard.getId());
                                 try {
                                     if (indexShardWriter != null) {
                                         LOGGER.debug(() ->
@@ -290,7 +290,7 @@ public class IndexShardManager {
                     new DocRef(LuceneIndexDoc.DOCUMENT_TYPE, shard.getIndexUuid()));
             if (index == null) {
                 // If there is no associated index then delete the shard.
-                setStatus(shard.getId(), IndexShardStatus.DELETED);
+                forceStatus(shard.getId(), IndexShardStatus.DELETED);
 
             } else {
                 final Integer retentionDayAge = index.getRetentionDayAge();
@@ -306,13 +306,13 @@ public class IndexShardManager {
                             .toEpochMilli();
 
                     if (partitionToTime < retentionTime) {
-                        setStatus(shard.getId(), IndexShardStatus.DELETED);
+                        forceStatus(shard.getId(), IndexShardStatus.DELETED);
                     }
                 }
             }
         } catch (final DocumentNotFoundException e) {
             // If there is no associated index then delete the shard.
-            setStatus(shard.getId(), IndexShardStatus.DELETED);
+            forceStatus(shard.getId(), IndexShardStatus.DELETED);
 
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
@@ -336,7 +336,7 @@ public class IndexShardManager {
         });
     }
 
-    public void setStatus(final long indexShardId, final IndexShardStatus status) {
+    public boolean setStatus(final long indexShardId, final IndexShardStatus status) {
         // Allow the thing to run without a service (e.g. benchmark mode)
         if (indexShardService != null) {
             final Lock lock = shardUpdateLocks.getLockForKey(indexShardId);
@@ -345,6 +345,33 @@ public class IndexShardManager {
                 final IndexShard indexShard = indexShardService.loadById(indexShardId);
                 if (indexShard != null) {
                     final boolean success = indexShardService.setStatus(indexShard.getId(), status);
+                    if (!success) {
+                        LOGGER.error("State transition from " +
+                                indexShard.getStatus() +
+                                " to " +
+                                status +
+                                " was attempted but is not allowed");
+                    }
+                    return success;
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.error(e::getMessage, e);
+            } finally {
+                lock.unlock();
+            }
+        }
+        return false;
+    }
+
+    private void forceStatus(final long indexShardId, final IndexShardStatus status) {
+        // Allow the thing to run without a service (e.g. benchmark mode)
+        if (indexShardService != null) {
+            final Lock lock = shardUpdateLocks.getLockForKey(indexShardId);
+            lock.lock();
+            try {
+                final IndexShard indexShard = indexShardService.loadById(indexShardId);
+                if (indexShard != null) {
+                    final boolean success = indexShardService.forceStatus(indexShard.getId(), status);
                     if (!success) {
                         LOGGER.debug("State transition from " +
                                 indexShard.getStatus() +

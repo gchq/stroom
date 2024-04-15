@@ -34,6 +34,8 @@ public interface IndexShardService {
 
     boolean setStatus(Long id, IndexShard.IndexShardStatus status);
 
+    boolean forceStatus(Long id, IndexShard.IndexShardStatus status);
+
     void update(long indexShardId,
                 Integer documentCount,
                 Long commitDurationMs,

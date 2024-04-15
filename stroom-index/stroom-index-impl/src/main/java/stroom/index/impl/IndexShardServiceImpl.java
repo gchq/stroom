@@ -23,6 +23,7 @@ import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardFields;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
@@ -129,6 +130,12 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
                              final IndexShard.IndexShardStatus status) {
         return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () ->
                 indexShardDao.setStatus(id, status));
+    }
+
+    @Override
+    public boolean forceStatus(final Long id, final IndexShardStatus status) {
+        return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () ->
+                indexShardDao.forceStatus(id, status));
     }
 
     @Override

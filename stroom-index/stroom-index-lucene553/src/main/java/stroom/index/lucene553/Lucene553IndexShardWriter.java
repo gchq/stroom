@@ -107,7 +107,6 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
 
     private final AtomicBoolean open = new AtomicBoolean();
     private final AtomicInteger adding = new AtomicInteger();
-    private volatile Instant lastUsedTime;
 
     /**
      * Convenience constructor used in tests.
@@ -140,7 +139,6 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
                     StroomDuration.ZERO);
             this.indexShardId = indexShard.getId();
             this.creationTime = System.currentTimeMillis();
-            this.lastUsedTime = Instant.ofEpochMilli(creationTime);
             this.maxDocumentCount = maxDocumentCount;
 
             // Find the index shard dir.
@@ -277,7 +275,6 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
                 }
 
                 final Instant startTime = Instant.now();
-                this.lastUsedTime = startTime;
                 indexWriter.addDocument(document);
 
                 if (!slowIndexWriteWarningThreshold.isZero()) {
@@ -462,11 +459,6 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
     @Override
     public long getCreationTime() {
         return creationTime;
-    }
-
-    @Override
-    public long getLastUsedTime() {
-        return lastUsedTime.toEpochMilli();
     }
 
     @Override

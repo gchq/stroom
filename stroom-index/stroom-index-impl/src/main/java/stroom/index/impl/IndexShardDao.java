@@ -63,6 +63,14 @@ public interface IndexShardDao {
     boolean setStatus(Long id, IndexShard.IndexShardStatus status);
 
     /**
+     * Force the status of a shard
+     *
+     * @param id     The database ID of the shard to update
+     * @param status The new status value
+     */
+    boolean forceStatus(Long id, IndexShard.IndexShardStatus status);
+
+    /**
      * Update the details of the contents of a shard
      *
      * @param id               The database ID
