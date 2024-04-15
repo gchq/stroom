@@ -26,7 +26,6 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -48,8 +47,6 @@ public class ExplorerNodeRemoveTagsViewImpl
 
     @UiField
     ListBox nodeTagsListBox;
-    @UiField
-    Label nodeTagsLabel;
     private List<DocRef> docRefs;
 
     @Inject
@@ -125,7 +122,6 @@ public class ExplorerNodeRemoveTagsViewImpl
         final List<String> tagsList = GwtNullSafe.stream(nodeTags)
                 .sorted()
                 .collect(Collectors.toList());
-        nodeTagsLabel.setText("Select the tag(s) to remove from the documents");
 
         nodeTagsListBox.clear();
         for (final String string : tagsList) {
