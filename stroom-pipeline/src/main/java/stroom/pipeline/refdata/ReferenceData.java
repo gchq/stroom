@@ -422,7 +422,7 @@ public class ReferenceData {
             final long byteCount = contextStream.size();
             // Only use context data if we actually have some.
             if (byteCount > MINIMUM_BYTE_COUNT) {
-                // load the context data into the RefDataStore so it is available for lookups
+                // load the context data into the RefDataStore, so it is available for lookups
                 contextDataLoader.load(
                         contextStream,
                         meta,
