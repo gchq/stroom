@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.3-beta.17] - 2024-04-16
+
+* Issue **#4214** : Fix index shard writer errors.
+
+
 ## [v7.3-beta.16] - 2024-04-15
 
 * Issue **#4203** : Fix event capture getting stuck on buttons.
@@ -432,7 +437,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.16...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.17...HEAD
+[v7.3-beta.17]: https://github.com/gchq/stroom/compare/v7.3-beta.16...v7.3-beta.17
 [v7.3-beta.16]: https://github.com/gchq/stroom/compare/v7.3-beta.15...v7.3-beta.16
 [v7.3-beta.15]: https://github.com/gchq/stroom/compare/v7.3-beta.14...v7.3-beta.15
 [v7.3-beta.14]: https://github.com/gchq/stroom/compare/v7.3-beta.13...v7.3-beta.14
