@@ -1,6 +1,6 @@
 package stroom.docstore.impl.db;
 
-import stroom.docstore.impl.Persistence;
+import stroom.docstore.api.Persistence;
 
 import com.google.inject.AbstractModule;
 

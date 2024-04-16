@@ -20,7 +20,7 @@ package stroom.statistics.impl.sql.filter;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.mock.MockDocRefInfoService;
-import stroom.docstore.impl.Persistence;
+import stroom.docstore.api.Persistence;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.docstore.impl.StoreFactoryImpl;
 import stroom.docstore.impl.memory.MemoryPersistence;

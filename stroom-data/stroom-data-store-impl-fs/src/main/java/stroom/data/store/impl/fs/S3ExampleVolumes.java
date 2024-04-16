@@ -1,5 +1,6 @@
 package stroom.data.store.impl.fs;
 
+import stroom.data.store.api.FsVolumeGroupService;
 import stroom.data.store.impl.fs.shared.AwsBasicCredentials;
 import stroom.data.store.impl.fs.shared.AwsCredentialsProviderType;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;

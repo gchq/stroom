@@ -5,6 +5,7 @@ dependencies {
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
     implementation libs.guice

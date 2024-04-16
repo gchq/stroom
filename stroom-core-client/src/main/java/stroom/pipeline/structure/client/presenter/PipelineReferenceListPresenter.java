@@ -215,6 +215,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
 
         String className = null;
         final State state = referenceStateMap.get(pipelineReference);
+        //noinspection EnhancedSwitchMigration // Cos GWT :-(
         switch (state) {
             case ADDED:
                 className = ADDED;
@@ -404,7 +405,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
         // See if we need to load accurate doc refs (we do this to get correct entity names for display)
         final Set<DocRef> docRefs = new HashSet<>();
         references.forEach(ref -> addPipelineReference(docRefs, ref));
-        if (docRefs.size() > 0) {
+        if (!docRefs.isEmpty()) {
             // Load entities.
             restFactory
                     .create(EXPLORER_RESOURCE)
@@ -485,6 +486,10 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private enum State {
         INHERITED,

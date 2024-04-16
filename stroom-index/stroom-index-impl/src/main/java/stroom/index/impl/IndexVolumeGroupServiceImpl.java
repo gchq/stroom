@@ -210,7 +210,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
 
                                 // See if we have already created a volume for this node.
                                 final List<IndexVolume> existingVolumesInGroup =
-                                        indexVolumeDao.getVolumesInGroup(groupName);
+                                        indexVolumeDao.getVolumesInGroup(newGroup.asDocRef());
                                 final boolean exists = existingVolumesInGroup
                                         .stream()
                                         .map(IndexVolume::getNodeName)

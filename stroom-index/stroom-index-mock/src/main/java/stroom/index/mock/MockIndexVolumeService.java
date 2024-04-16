@@ -17,6 +17,7 @@
 
 package stroom.index.mock;
 
+import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.impl.IndexVolumeService;
 import stroom.index.shared.IndexVolume;
@@ -60,7 +61,7 @@ public class MockIndexVolumeService implements IndexVolumeService {
     }
 
     @Override
-    public IndexVolume selectVolume(final String groupName, final String nodeName) {
+    public IndexVolume selectVolume(final DocRef indexVolumeGroup, final String nodeName) {
         return null;
     }
 }

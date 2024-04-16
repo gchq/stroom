@@ -26,8 +26,10 @@ import java.util.Map;
 
 public interface NonExplorerDocRefProvider {
 
-    DocRef getOwnerDocument(DocRef docRef,
-                            Map<String, byte[]> dataMap);
+    default DocRef getOwnerDocument(DocRef docRef,
+                                    Map<String, byte[]> dataMap) {
+        return docRef;
+    }
 
     /**
      * Find a docref in the explorer tree that is nearest to the provided non-explorer based docref,
@@ -37,7 +39,9 @@ public interface NonExplorerDocRefProvider {
      * @return an explorer docref that is located in a suitable location for association with the supplied docref
      * (or null if no suitable explorer docref is found)
      */
-    DocRef findNearestExplorerDocRef(final DocRef docref);
+    default DocRef findNearestExplorerDocRef(final DocRef docref) {
+        return null;
+    }
 
     /**
      * Allows an alternative name to be provided for a docref

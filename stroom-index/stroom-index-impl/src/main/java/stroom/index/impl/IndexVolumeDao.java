@@ -1,5 +1,6 @@
 package stroom.index.impl;
 
+import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeGroup;
@@ -41,17 +42,18 @@ public interface IndexVolumeDao {
      * Retrieve all the volumes in a specific group, on a specific node.
      * Used to retrieve a volume on which to put a new shard.
      *
-     * @param groupName The name of the group to filter on.
-     * @param nodeName  The node on which the volume must belong.
+     * @param indexVolumeGroup The group to filter on.
+     * @param nodeName         The node on which the volume must belong.
      * @return A list of candidate Index Volumes.
      */
-    List<IndexVolume> getVolumesInGroupOnNode(String groupName, String nodeName);
+    List<IndexVolume> getVolumesInGroupOnNode(final DocRef indexVolumeGroup,
+                                              final String nodeName);
 
-    List<IndexVolume> getVolumesInGroup(String groupName);
+    List<IndexVolume> getVolumesInGroup(DocRef indexVolumeGroup);
 
     List<IndexVolume> getVolumesInGroup(final int groupid);
 
-    Map<String, List<IndexVolume>> getVolumesOnNodeGrouped(final String nodeName);
+    Map<DocRef, List<IndexVolume>> getVolumesOnNodeGrouped(final String nodeName);
 
     ResultPage<IndexVolume> find(ExpressionCriteria criteria);
 

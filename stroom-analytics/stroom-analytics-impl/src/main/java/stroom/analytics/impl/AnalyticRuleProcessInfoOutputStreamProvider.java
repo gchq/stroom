@@ -3,7 +3,8 @@ package stroom.analytics.impl;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
-import stroom.feed.api.VolumeGroupNameProvider;
+import stroom.docref.DocRef;
+import stroom.feed.api.FsVolumeGroupProvider;
 import stroom.meta.api.MetaProperties;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.destination.DestinationProvider;
@@ -32,7 +33,7 @@ public class AnalyticRuleProcessInfoOutputStreamProvider extends AbstractElement
     private final String pipelineUuid;
     private final RecordCount recordCount;
     private final ErrorReceiverProxy errorReceiverProxy;
-    private final VolumeGroupNameProvider volumeGroupNameProvider;
+    private final FsVolumeGroupProvider fsVolumeGroupProvider;
 
     private OutputStream processInfoOutputStream;
     private Target processInfoStreamTarget;
@@ -42,13 +43,13 @@ public class AnalyticRuleProcessInfoOutputStreamProvider extends AbstractElement
                                                 final String pipelineUuid,
                                                 final RecordCount recordCount,
                                                 final ErrorReceiverProxy errorReceiverProxy,
-                                                final VolumeGroupNameProvider volumeGroupNameProvider) {
+                                                final FsVolumeGroupProvider fsVolumeGroupProvider) {
         this.streamStore = streamStore;
         this.feedName = feedName;
         this.pipelineUuid = pipelineUuid;
         this.recordCount = recordCount;
         this.errorReceiverProxy = errorReceiverProxy;
-        this.volumeGroupNameProvider = volumeGroupNameProvider;
+        this.fsVolumeGroupProvider = fsVolumeGroupProvider;
     }
 
     @Override
@@ -77,9 +78,9 @@ public class AnalyticRuleProcessInfoOutputStreamProvider extends AbstractElement
                     .pipelineUuid(pipelineUuid)
                     .build();
 
-            final String volumeGroupName = volumeGroupNameProvider
+            final DocRef volumeGroup = fsVolumeGroupProvider
                     .getVolumeGroupName(feedName, StreamTypeNames.ERROR, null);
-            processInfoStreamTarget = streamStore.openTarget(metaProperties, volumeGroupName);
+            processInfoStreamTarget = streamStore.openTarget(metaProperties, volumeGroup);
             processInfoOutputStream = new WrappedOutputStream(processInfoStreamTarget.next().get()) {
                 @Override
                 public void close() throws IOException {

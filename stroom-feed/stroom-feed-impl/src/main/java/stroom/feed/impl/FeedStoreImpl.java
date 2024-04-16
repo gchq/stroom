@@ -17,11 +17,13 @@
 
 package stroom.feed.impl;
 
+import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docref.StringMatch;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
@@ -33,12 +35,14 @@ import stroom.feed.shared.FeedDoc;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
+import stroom.util.NullSafe;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Message;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -55,15 +59,20 @@ public class FeedStoreImpl implements FeedStore {
     private final Store<FeedDoc> store;
     private final FeedNameValidator feedNameValidator;
     private final SecurityContext securityContext;
+    private final FeedSerialiser feedSerialiser;
+    private final DocRefInfoService docRefInfoService;
 
     @Inject
     public FeedStoreImpl(final StoreFactory storeFactory,
                          final FeedNameValidator feedNameValidator,
-                         final FeedSerialiser serialiser,
-                         final SecurityContext securityContext) {
-        this.store = storeFactory.createStore(serialiser, FeedDoc.DOCUMENT_TYPE, FeedDoc.class);
+                         final FeedSerialiser feedSerialiser,
+                         final SecurityContext securityContext,
+                         final DocRefInfoService docRefInfoService) {
+        this.docRefInfoService = docRefInfoService;
+        this.store = storeFactory.createStore(feedSerialiser, FeedDoc.DOCUMENT_TYPE, FeedDoc.class);
         this.feedNameValidator = feedNameValidator;
         this.securityContext = securityContext;
+        this.feedSerialiser = feedSerialiser;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -207,7 +216,38 @@ public class FeedStoreImpl implements FeedStore {
             newDocRef = new DocRef(docRef.getType(), docRef.getUuid(), newName);
         }
 
-        return store.importDocument(newDocRef, dataMap, importState, importSettings);
+        final Map<String, byte[]> effectiveDataMap = migrateLegacyVolGroupName(dataMap);
+        return store.importDocument(newDocRef, effectiveDataMap, importState, importSettings);
+    }
+
+    @SuppressWarnings("deprecation") // feedDoc.getVolumeGroup needed for legacy migration
+    private Map<String, byte[]> migrateLegacyVolGroupName(Map<String, byte[]> dataMap) {
+        // Support legacy export zips created when vol groups were defined by name
+        // rather than docref. Try to look up the vol grp name to get a docref
+        Map<String, byte[]> effectiveDataMap = dataMap;
+        try {
+            final FeedDoc feedDoc = feedSerialiser.read(dataMap);
+            if (feedDoc.getVolumeGroupDocRef() == null
+                    && feedDoc.getVolumeGroup() != null) {
+                final List<DocRef> docRefs = docRefInfoService.findByName(
+                        FsVolumeGroup.DOCUMENT_TYPE,
+                        feedDoc.getVolumeGroup(),
+                        false);
+                final DocRef volGrpDocRef = NullSafe.hasItems(docRefs)
+                        ? docRefs.get(0)
+                        // Name is unique so never > 1
+                        : null;
+                if (volGrpDocRef != null) {
+                    feedDoc.setVolumeGroupDocRef(volGrpDocRef);
+                }
+                // Clear the name as it is not needed now
+                feedDoc.setVolumeGroup(null);
+                effectiveDataMap = feedSerialiser.write(feedDoc);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return effectiveDataMap;
     }
 
     @Override

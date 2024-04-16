@@ -25,6 +25,7 @@ import stroom.data.store.api.Target;
 import stroom.data.store.impl.AttributeMapFactory;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.docref.DocRef;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
@@ -77,7 +78,7 @@ class FsStore implements Store, AttributeMapFactory {
     }
 
     @Override
-    public Target openTarget(final MetaProperties metaProperties, final String volumeGroup) {
+    public Target openTarget(final MetaProperties metaProperties, final DocRef volumeGroup) {
         LOGGER.debug(() -> "openTarget() " + metaProperties);
 
         final FsVolume volume = volumeService.getVolume(volumeGroup);

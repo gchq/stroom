@@ -20,11 +20,14 @@ package stroom.docstore.api;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docref.HasFindDocsByName;
 import stroom.util.shared.Document;
 
 import java.util.Objects;
 
-public interface DocumentActionHandler<D extends Document> {
+// At the moment I think we have a handler for all types except for folder.
+// As we don't have a Folder class we can't support folders, unless we drop the generics
+public interface DocumentActionHandler<D extends Document> extends HasFindDocsByName {
 
     D readDocument(DocRef docRef);
 

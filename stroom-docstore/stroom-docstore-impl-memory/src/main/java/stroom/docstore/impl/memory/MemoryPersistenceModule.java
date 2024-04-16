@@ -16,7 +16,7 @@
 
 package stroom.docstore.impl.memory;
 
-import stroom.docstore.impl.Persistence;
+import stroom.docstore.api.Persistence;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 

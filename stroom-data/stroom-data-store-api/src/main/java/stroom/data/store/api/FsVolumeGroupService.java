@@ -1,4 +1,4 @@
-package stroom.data.store.impl.fs;
+package stroom.data.store.api;
 
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.docref.DocRef;
@@ -22,14 +22,22 @@ public interface FsVolumeGroupService {
 
     FsVolumeGroup update(FsVolumeGroup indexVolumeGroup);
 
-    @Deprecated
+    /**
+     * Should only be used for checking if another vol group exists with this name.
+     * Fetching vol groups should be done by ID/{@link DocRef}
+     */
     FsVolumeGroup get(String name);
 
     FsVolumeGroup get(int id);
 
     FsVolumeGroup get(DocRef docRef);
 
+    FsVolumeGroup getDefaultVolumeGroup();
+
     void delete(int id);
 
     void ensureDefaultVolumes();
+
+    List<FsVolumeGroup> find(final List<String> nameFilters,
+                             final boolean allowWildCards);
 }

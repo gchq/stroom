@@ -495,7 +495,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
     }
 
     @Override
-    public IndexVolume selectVolume(final String groupName, final String nodeName) {
+    public IndexVolume selectVolume(final DocRef indexVolumeGroup, final String nodeName) {
         List<IndexVolume> indexVolumes;
 
         // Make sure the default group and vols exist
@@ -503,11 +503,11 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
 
         if (nodeInfo.getThisNodeName().equals(nodeName)) {
             // we can check local vol map
-            indexVolumes = getCurrentVolumeMap().getVolumes(groupName, nodeName)
-                    .orElseGet(() -> indexVolumeDao.getVolumesInGroupOnNode(groupName, nodeName));
+            indexVolumes = getCurrentVolumeMap().getVolumes(indexVolumeGroup, nodeName)
+                    .orElseGet(() -> indexVolumeDao.getVolumesInGroupOnNode(indexVolumeGroup, nodeName));
         } else {
             // Not this node so have to read the DB
-            indexVolumes = indexVolumeDao.getVolumesInGroupOnNode(groupName, nodeName);
+            indexVolumes = indexVolumeDao.getVolumesInGroupOnNode(indexVolumeGroup, nodeName);
         }
 
         indexVolumes = removeIneligibleVolumes(indexVolumes);
@@ -515,7 +515,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         if (!indexVolumes.isEmpty()) {
             indexVolumes.sort(Comparator.nullsFirst(Comparator.comparing(IndexVolume::getPath)));
 
-            final HasCapacitySelector volumeSelector = getVolumeSelector(groupName, nodeName);
+            final HasCapacitySelector volumeSelector = getVolumeSelector(indexVolumeGroup, nodeName);
 
             final IndexVolume selectedIndexVolume = volumeSelector.select(indexVolumes);
 
@@ -530,7 +530,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
                         LogUtil.message("Selector {} returned null for group {}, node {} and volumes [{}]. " +
                                         "Selectors should return something for a non-empty list.",
                                 volumeSelector.getClass().getSimpleName(),
-                                groupName,
+                                indexVolumeGroup,
                                 nodeName,
                                 indexVolumes));
             }
@@ -538,7 +538,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         } else {
             throw new IndexException(
                     "Unable to find any non-full index volumes for index volume group '"
-                            + groupName + "' for node " + nodeName);
+                            + indexVolumeGroup + "' for node " + nodeName);
         }
     }
 
@@ -592,9 +592,9 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         }
     }
 
-    private HasCapacitySelector getVolumeSelector(final String groupName,
+    private HasCapacitySelector getVolumeSelector(final DocRef indexVolumeGroup,
                                                   final String nodeName) {
-        final VolGroupNode volGroupNode = new VolGroupNode(groupName, nodeName);
+        final VolGroupNode volGroupNode = new VolGroupNode(indexVolumeGroup, nodeName);
         HasCapacitySelector currentSelector = volGroupNodeToVolSelectorCache.get(volGroupNode);
 
         String requiredSelectorName = HasCapacitySelectorFactory.DEFAULT_SELECTOR_NAME;
@@ -651,7 +651,9 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
                 .build();
     }
 
+
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
     private static class VolumeMap {
 
@@ -660,9 +662,9 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
 
         VolumeMap(final long createTime,
                   final String nodeName,
-                  final Map<String, List<IndexVolume>> groupNameToVolumesMap) {
+                  final Map<DocRef, List<IndexVolume>> groupToVolumesMap) {
             this.createTime = createTime;
-            this.groupNameToVolumesMap = groupNameToVolumesMap.entrySet()
+            this.groupNameToVolumesMap = groupToVolumesMap.entrySet()
                     .stream()
                     .collect(Collectors.toMap(
                             entry -> new VolGroupNode(entry.getKey(), nodeName),
@@ -673,8 +675,8 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
             return groupNameToVolumesMap;
         }
 
-        public Optional<List<IndexVolume>> getVolumes(final String groupName, final String nodeName) {
-            return Optional.ofNullable(groupNameToVolumesMap.get(new VolGroupNode(groupName, nodeName)));
+        public Optional<List<IndexVolume>> getVolumes(final DocRef indexVolumeGroup, final String nodeName) {
+            return Optional.ofNullable(groupNameToVolumesMap.get(new VolGroupNode(indexVolumeGroup, nodeName)));
         }
 
         public long getCreateTime() {
@@ -690,22 +692,25 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         }
     }
 
+
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
     private static class VolGroupNode {
 
-        private final String groupName;
+        private final DocRef indexVolumeGroup;
         private final String nodeName;
         private final int hashcode;
 
-        private VolGroupNode(final String groupName, final String nodeName) {
-            this.groupName = Objects.requireNonNull(groupName, "Index volume group name must be specified");
+        private VolGroupNode(final DocRef indexVolumeGroup, final String nodeName) {
+            this.indexVolumeGroup = Objects.requireNonNull(
+                    indexVolumeGroup, "Index volume group name must be specified");
             this.nodeName = Objects.requireNonNull(nodeName, "Index volume node name must be specified");
-            this.hashcode = Objects.hash(groupName, nodeName);
+            this.hashcode = Objects.hash(indexVolumeGroup, nodeName);
         }
 
-        public String getGroupName() {
-            return groupName;
+        public DocRef getIndexVolumeGroup() {
+            return indexVolumeGroup;
         }
 
         public String getNodeName() {
@@ -721,7 +726,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
                 return false;
             }
             final VolGroupNode that = (VolGroupNode) o;
-            return groupName.equals(that.groupName) && nodeName.equals(that.nodeName);
+            return indexVolumeGroup.equals(that.indexVolumeGroup) && nodeName.equals(that.nodeName);
         }
 
         @Override
@@ -732,7 +737,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         @Override
         public String toString() {
             return "VolGroupNode{" +
-                    "groupName='" + groupName + '\'' +
+                    "indexVolumeGroup='" + indexVolumeGroup + '\'' +
                     ", nodeName='" + nodeName + '\'' +
                     '}';
         }

@@ -1,7 +1,6 @@
-package stroom.docstore.impl;
+package stroom.docstore.api;
 
 import stroom.docref.DocRef;
-import stroom.docstore.api.RWLockFactory;
 import stroom.util.NullSafe;
 import stroom.util.PredicateUtil;
 import stroom.util.string.PatternUtil;

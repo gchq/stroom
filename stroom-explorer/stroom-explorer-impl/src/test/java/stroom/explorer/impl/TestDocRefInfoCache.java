@@ -22,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -216,6 +217,16 @@ class TestDocRefInfoCache {
         @Override
         public DocRefInfo info(final String uuid) {
             return NullSafe.get(docRefs.get(uuid), TestDocRefInfoCache::buildInfo);
+        }
+
+        @Override
+        public Set<DocRef> listDocuments() {
+            return null;
+        }
+
+        @Override
+        public List<DocRef> findByNames(final List<String> names, final boolean allowWildCards) {
+            return Collections.emptyList();
         }
     }
 

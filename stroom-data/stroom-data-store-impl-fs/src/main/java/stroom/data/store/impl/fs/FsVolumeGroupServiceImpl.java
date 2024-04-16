@@ -1,9 +1,9 @@
 package stroom.data.store.impl.fs;
 
+import stroom.data.store.api.FsVolumeGroupService;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup.Builder;
 import stroom.docref.DocRef;
-import stroom.index.shared.IndexVolumeGroup;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
@@ -132,8 +132,15 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
     @Override
     public FsVolumeGroup get(final DocRef docRef) {
         ensureDefaultVolumes();
+        Objects.requireNonNull(docRef);
         return securityContext.secureResult(() ->
                 volumeGroupDao.get(docRef));
+    }
+
+    @Override
+    public FsVolumeGroup getDefaultVolumeGroup() {
+        ensureDefaultVolumes();
+        return securityContext.secureResult(volumeGroupDao::getDefaultVolumeGroup);
     }
 
     @Override
@@ -158,6 +165,12 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
         }
     }
 
+    @Override
+    public List<FsVolumeGroup> find(final List<String> nameFilters,
+                                    final boolean allowWildCards) {
+        return volumeGroupDao.find(nameFilters, allowWildCards);
+    }
+
     private synchronized void createDefaultVolumes() {
         if (!createdDefaultVolumes && !creatingDefaultVolumes) {
             try {
@@ -167,12 +180,12 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
                     final boolean isEnabled = volumeConfig.isCreateDefaultStreamVolumesOnStart();
                     if (isEnabled) {
                         if (volumeConfig.getDefaultStreamVolumeGroupName() != null) {
-                            final FsVolumeGroup indexVolumeGroup = new FsVolumeGroup();
+                            final FsVolumeGroup fsVolumeGroup = new FsVolumeGroup();
                             final String groupName = volumeConfig.getDefaultStreamVolumeGroupName();
-                            indexVolumeGroup.setName(groupName);
-                            indexVolumeGroup.setDefaultVolume(true);
-                            indexVolumeGroup.setUuid(IndexVolumeGroup.DEFAULT_VOLUME_UUID);
-                            AuditUtil.stamp(securityContext, indexVolumeGroup);
+                            fsVolumeGroup.setName(groupName);
+                            fsVolumeGroup.setDefaultVolume(true);
+                            fsVolumeGroup.setUuid(FsVolumeGroup.DEFAULT_VOLUME_UUID);
+                            AuditUtil.stamp(securityContext, fsVolumeGroup);
 
                             LOGGER.info("Creating default volume group [{}]", groupName);
 //                            final FsVolumeGroup newGroup = volumeGroupDao.getOrCreate(indexVolumeGroup);

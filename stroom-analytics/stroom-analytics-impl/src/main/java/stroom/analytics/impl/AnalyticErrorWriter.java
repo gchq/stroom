@@ -1,7 +1,7 @@
 package stroom.analytics.impl;
 
 import stroom.data.store.api.Store;
-import stroom.feed.api.VolumeGroupNameProvider;
+import stroom.feed.api.FsVolumeGroupProvider;
 import stroom.pipeline.DefaultErrorWriter;
 import stroom.pipeline.ErrorWriterProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -31,7 +31,7 @@ public class AnalyticErrorWriter {
     private final ErrorWriterProxy errorWriterProxy;
     private final RecordCount recordCount;
     private final Store store;
-    private final VolumeGroupNameProvider volumeGroupNameProvider;
+    private final FsVolumeGroupProvider volumeGroupNameProvider;
 
     @Inject
     public AnalyticErrorWriter(final RecordErrorReceiver recordErrorReceiver,
@@ -39,7 +39,7 @@ public class AnalyticErrorWriter {
                                final ErrorWriterProxy errorWriterProxy,
                                final RecordCount recordCount,
                                final Store store,
-                               final VolumeGroupNameProvider volumeGroupNameProvider) {
+                               final FsVolumeGroupProvider volumeGroupNameProvider) {
         this.recordErrorReceiver = recordErrorReceiver;
         this.errorReceiverProxy = errorReceiverProxy;
         this.errorWriterProxy = errorWriterProxy;

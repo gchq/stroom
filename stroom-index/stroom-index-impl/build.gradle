@@ -12,6 +12,7 @@ dependencies {
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-explorer:stroom-docrefinfo-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
@@ -46,11 +47,14 @@ dependencies {
     implementation libs.ws_rs_api
     //implementation libs.xml_apis
 
+    testImplementation project(':stroom-docstore:stroom-docstore-impl')
     testImplementation project(':stroom-index:stroom-index-mock')
     testImplementation project(':stroom-test-common')
 
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter_api
+    testImplementation libs.mockito_core
+    testImplementation libs.mockito_junit_jupiter
     testImplementation libs.vavr
 
     // The following logging libs are needed when running junits outside dropwizard

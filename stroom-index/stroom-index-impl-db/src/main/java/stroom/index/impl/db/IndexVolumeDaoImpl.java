@@ -4,6 +4,7 @@ import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
+import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.impl.IndexVolumeDao;
 import stroom.index.impl.db.jooq.Tables;
@@ -139,24 +140,25 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
     }
 
     @Override
-    public List<IndexVolume> getVolumesInGroupOnNode(final String groupName, final String nodeName) {
+    public List<IndexVolume> getVolumesInGroupOnNode(final DocRef indexVolumeGroup,
+                                                     final String nodeName) {
         return JooqUtil.contextResult(indexDbConnProvider, context -> context
                         .select()
                         .from(INDEX_VOLUME)
                         .join(INDEX_VOLUME_GROUP).on(INDEX_VOLUME_GROUP.ID.eq(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID))
-                        .where(INDEX_VOLUME_GROUP.NAME.eq(groupName))
+                        .where(INDEX_VOLUME_GROUP.UUID.eq(indexVolumeGroup.getUuid()))
                         .and(INDEX_VOLUME.NODE_NAME.eq(nodeName))
                         .fetch())
                 .map(RECORD_TO_INDEX_VOLUME_MAPPER::apply);
     }
 
     @Override
-    public List<IndexVolume> getVolumesInGroup(final String groupName) {
+    public List<IndexVolume> getVolumesInGroup(final DocRef indexVolumeGroup) {
         return JooqUtil.contextResult(indexDbConnProvider, context -> context
                         .select()
                         .from(INDEX_VOLUME)
                         .join(INDEX_VOLUME_GROUP).on(INDEX_VOLUME_GROUP.ID.eq(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID))
-                        .where(INDEX_VOLUME_GROUP.NAME.eq(groupName))
+                        .where(INDEX_VOLUME_GROUP.UUID.eq(indexVolumeGroup.getUuid()))
                         .fetch())
                 .map(RECORD_TO_INDEX_VOLUME_MAPPER::apply);
     }
@@ -172,18 +174,26 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
     }
 
     @Override
-    public Map<String, List<IndexVolume>> getVolumesOnNodeGrouped(final String nodeName) {
-        final Map<String, List<IndexVolume>> map = new HashMap<>();
+    public Map<DocRef, List<IndexVolume>> getVolumesOnNodeGrouped(final String nodeName) {
+        final Map<DocRef, List<IndexVolume>> map = new HashMap<>();
         JooqUtil.contextResult(indexDbConnProvider, context -> context
-                        .select(INDEX_VOLUME_GROUP.NAME, INDEX_VOLUME.asterisk())
+                        .select(
+                                INDEX_VOLUME_GROUP.NAME,
+                                INDEX_VOLUME_GROUP.UUID,
+                                INDEX_VOLUME.asterisk())
                         .from(INDEX_VOLUME)
                         .join(INDEX_VOLUME_GROUP).on(INDEX_VOLUME_GROUP.ID.eq(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID))
                         .where(INDEX_VOLUME.NODE_NAME.eq(nodeName))
                         .fetch())
                 .forEach(rec -> {
                     final String groupName = rec.get(INDEX_VOLUME_GROUP.NAME);
+                    final String uuid = rec.get(INDEX_VOLUME_GROUP.UUID);
+                    final DocRef docRef = IndexVolumeGroup.buildDocRef()
+                            .name(groupName)
+                            .uuid(uuid)
+                            .build();
                     final IndexVolume indexVolume = RECORD_TO_INDEX_VOLUME_MAPPER.apply(rec);
-                    map.computeIfAbsent(groupName, k -> new ArrayList<>())
+                    map.computeIfAbsent(docRef, k -> new ArrayList<>())
                             .add(indexVolume);
                 });
         return map;

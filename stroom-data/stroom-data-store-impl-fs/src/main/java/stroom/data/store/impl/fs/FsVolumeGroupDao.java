@@ -36,4 +36,6 @@ public interface FsVolumeGroupDao {
     void delete(int id);
 
     FsVolumeGroup create(FsVolumeGroup fsVolumeGroup);
+
+    List<FsVolumeGroup> find(List<String> nameFilters, boolean allowWildCards);
 }

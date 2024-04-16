@@ -4,6 +4,7 @@ import stroom.docrefinfo.api.DocRefDecorator;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.docrefinfo.mock.MockDocRefInfoService;
 import stroom.docstore.api.DocumentSerialiser2;
+import stroom.docstore.api.Persistence;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;

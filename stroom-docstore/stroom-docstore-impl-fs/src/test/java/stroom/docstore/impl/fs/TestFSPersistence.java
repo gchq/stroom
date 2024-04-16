@@ -1,7 +1,7 @@
 package stroom.docstore.impl.fs;
 
 import stroom.docref.DocRef;
-import stroom.docstore.impl.Persistence;
+import stroom.docstore.api.Persistence;
 import stroom.docstore.shared.Doc;
 import stroom.util.json.JsonUtil;
 

@@ -15,8 +15,6 @@ import java.util.Map;
 
 public class JsonSerialiser2<D> implements Serialiser2<D> {
 
-    private static final String META = "meta";
-
     private final Class<D> clazz;
     private final ObjectMapper mapper;
 

@@ -2,33 +2,41 @@ package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docref.HasFindDocsByName;
 import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocumentActionHandlers;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.api.SecurityContext;
 import stroom.util.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 class DocRefInfoServiceImpl implements DocRefInfoService {
 
     private final DocRefInfoCache docRefInfoCache;
     private final SecurityContext securityContext;
+    private final Provider<DocumentActionHandlers> documentActionHandlersProvider;
     private final ExplorerActionHandlers explorerActionHandlers;
 
     @Inject
     DocRefInfoServiceImpl(final DocRefInfoCache docRefInfoCache,
                           final SecurityContext securityContext,
+                          final Provider<DocumentActionHandlers> documentActionHandlersProvider,
                           final ExplorerActionHandlers explorerActionHandlers) {
         this.docRefInfoCache = docRefInfoCache;
         this.securityContext = securityContext;
+        this.documentActionHandlersProvider = documentActionHandlersProvider;
         this.explorerActionHandlers = explorerActionHandlers;
     }
 
@@ -77,13 +85,30 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
                 if (type == null) {
                     // No type so have to search all handlers
                     final List<DocRef> result = new ArrayList<>();
-                    explorerActionHandlers.forEach((handlerType, handler) -> {
+                    final Set<String> typesChecked = new HashSet<>();
+
+                    // Some types are not documents and some are not explorer types so
+                    // check both
+                    documentActionHandlersProvider.get().forEach(handler -> {
                         result.addAll(handler.findByName(nameFilter, allowWildCards));
+                        typesChecked.add(handler.getType());
+                    });
+
+                    explorerActionHandlers.forEach((handlerType, handler) -> {
+                        if (!typesChecked.contains(handler.getDocumentType().getType())) {
+                            result.addAll(handler.findByName(nameFilter, allowWildCards));
+                        }
                     });
                     return result;
                 } else {
-                    final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);
+                    HasFindDocsByName handler = null;
+                    handler = documentActionHandlersProvider.get().getHandler(type);
+                    if (handler == null) {
+                        handler = explorerActionHandlers.getHandler(type);
+                    }
+
                     Objects.requireNonNull(handler, () -> "No handler for type " + type);
+
                     return handler.findByName(nameFilter, allowWildCards);
                 }
             });

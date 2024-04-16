@@ -5,10 +5,12 @@ import stroom.data.store.impl.fs.db.jooq.tables.records.FsVolumeGroupRecord;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
+import stroom.db.util.JooqUtil.BooleanOperator;
 import stroom.docref.DocRef;
 import stroom.util.NullSafe;
 
 import jakarta.inject.Inject;
+import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Record;
 import org.jooq.exception.DataAccessException;
@@ -77,6 +79,21 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
             }
             return genericDao.create(context, fsVolumeGroup);
         });
+    }
+
+    @Override
+    public List<FsVolumeGroup> find(final List<String> nameFilters, final boolean allowWildCards) {
+        final Condition condition = JooqUtil.createWildCardedStringsCondition(
+                FS_VOLUME_GROUP.NAME, nameFilters, true, BooleanOperator.OR);
+
+        return JooqUtil.contextResult(fsDataStoreDbConnProvider, context ->
+                        context.select()
+                                .from(FS_VOLUME_GROUP)
+                                .where(condition)
+                                .fetch())
+                .stream()
+                .map(RECORD_TO_FS_VOLUME_GROUP_MAPPER)
+                .toList();
     }
 
     @Override

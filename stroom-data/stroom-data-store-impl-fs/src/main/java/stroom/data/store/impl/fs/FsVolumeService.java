@@ -1,6 +1,7 @@
 package stroom.data.store.impl.fs;
 
 import stroom.cluster.lock.api.ClusterLockService;
+import stroom.data.store.api.FsVolumeGroupService;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
@@ -239,15 +240,13 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     /**
      * @return An active and non-full volume selected by the configured volume selector
      */
-    public FsVolume getVolume(final String volumeGroupName) {
-        final String volumeGroup;
+    public FsVolume getVolume(final DocRef volumeGroup) {
+        DocRef effectiveVolumeGroup = volumeGroup;
 
         // Use the default volume group if null.
-        if (volumeGroupName == null || volumeGroupName.isBlank()) {
+        if (effectiveVolumeGroup == null) {
             LOGGER.debug("Using default volume group");
-            volumeGroup = volumeConfigProvider.get().getDefaultStreamVolumeGroupName();
-        } else {
-            volumeGroup = volumeGroupName;
+            effectiveVolumeGroup = fsVolumeGroupService.getDefaultVolumeGroup().asDocRef();
         }
 
         return securityContext.insecureResult(() -> {
@@ -264,7 +263,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         });
     }
 
-    private Set<FsVolume> getVolumeSet(final String volumeGroup, final VolumeUseStatus streamStatus) {
+    private Set<FsVolume> getVolumeSet(final DocRef volumeGroup, final VolumeUseStatus streamStatus) {
         final HasCapacitySelector volumeSelector = getVolumeSelector();
         final List<FsVolume> allVolumeList = getCurrentVolumes()
                 .getMap()
@@ -472,15 +471,16 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         ensureDefaultVolumes();
 
         final Instant now = Instant.now();
-        final Map<String, List<FsVolume>> volumes = new HashMap<>();
+        // vol grp docRef => volumes
+        final Map<DocRef, List<FsVolume>> volumes = new HashMap<>();
 
         final FindFsVolumeCriteria findVolumeCriteria = FindFsVolumeCriteria.matchAll();
         findVolumeCriteria.addSort(FindFsVolumeCriteria.FIELD_ID, false, false);
         final List<FsVolume> dbVolumes = find(findVolumeCriteria).getValues();
-        final Map<Integer, String> groupNameMap = fsVolumeGroupService
+        final Map<Integer, DocRef> groupIdToDocRefMap = fsVolumeGroupService
                 .getAll()
                 .stream()
-                .collect(Collectors.toMap(FsVolumeGroup::getId, FsVolumeGroup::getName));
+                .collect(Collectors.toMap(FsVolumeGroup::getId, FsVolumeGroup::asDocRef));
 
         final StroomDuration volumeStateUpdateThreshold = volumeConfigProvider.get().getMaxVolumeStateAge();
         final long updateTimeCutOffEpochMs = now.minus(volumeStateUpdateThreshold.getDuration()).toEpochMilli();
@@ -501,16 +501,16 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
                 // Record some statistics for the use of this volume.
                 recordStats(volume);
-                final String groupName = groupNameMap.get(volume.getVolumeGroupId());
-                volumes.computeIfAbsent(groupName, k -> new ArrayList<>()).add(volume);
+                final DocRef volGroupDocRef = groupIdToDocRefMap.get(volume.getVolumeGroupId());
+                volumes.computeIfAbsent(volGroupDocRef, k -> new ArrayList<>()).add(volume);
             }
         } else {
             LOGGER.debug(() -> LogUtil.message("Not updating state for vols {}, with min update time {}",
                     dbVolumes,
                     optMinUpdateTimeEpochMs.map(DateUtil::createNormalDateTimeString)));
             for (final FsVolume volume : dbVolumes) {
-                final String groupName = groupNameMap.get(volume.getVolumeGroupId());
-                volumes.computeIfAbsent(groupName, k -> new ArrayList<>()).add(volume);
+                final DocRef volGroupDocRef = groupIdToDocRefMap.get(volume.getVolumeGroupId());
+                volumes.computeIfAbsent(volGroupDocRef, k -> new ArrayList<>()).add(volume);
             }
         }
 
@@ -841,17 +841,22 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         return pathCreator.toAppPath(volume.getPath());
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class Volumes {
 
         private final long createTime;
-        private final Map<String, List<FsVolume>> map;
+        // Vol grp DocRef => volumes
+        private final Map<DocRef, List<FsVolume>> map;
 
-        Volumes(final long createTime, final Map<String, List<FsVolume>> map) {
+        Volumes(final long createTime, final Map<DocRef, List<FsVolume>> map) {
             this.createTime = createTime;
             this.map = map;
         }
 
-        public Map<String, List<FsVolume>> getMap() {
+        public Map<DocRef, List<FsVolume>> getMap() {
             return map;
         }
 

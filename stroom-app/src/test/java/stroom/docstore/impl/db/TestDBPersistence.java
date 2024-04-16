@@ -2,7 +2,7 @@ package stroom.docstore.impl.db;
 
 
 import stroom.docref.DocRef;
-import stroom.docstore.impl.Persistence;
+import stroom.docstore.api.Persistence;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import jakarta.inject.Inject;

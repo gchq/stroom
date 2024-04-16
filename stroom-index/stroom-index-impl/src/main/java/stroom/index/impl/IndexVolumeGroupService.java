@@ -22,6 +22,10 @@ public interface IndexVolumeGroupService {
 
     IndexVolumeGroup update(IndexVolumeGroup indexVolumeGroup);
 
+    /**
+     * Should only be used for checking if another vol group exists with this name.
+     * Fetching vol groups should be done by ID/{@link DocRef}
+     */
     IndexVolumeGroup get(String name);
 
     IndexVolumeGroup get(int id);

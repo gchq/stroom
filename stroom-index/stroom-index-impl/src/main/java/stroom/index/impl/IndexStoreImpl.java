@@ -17,11 +17,13 @@
 
 package stroom.index.impl;
 
+import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docref.StringMatch;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
@@ -31,12 +33,14 @@ import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.index.shared.LuceneIndexDoc;
+import stroom.util.NullSafe;
 import stroom.util.shared.Message;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -51,13 +55,18 @@ public class IndexStoreImpl implements IndexStore {
             LuceneIndexDoc.ICON);
     private final Store<LuceneIndexDoc> store;
     private final Provider<IndexFieldService> indexFieldServiceProvider;
+    private final IndexSerialiser serialiser;
+    private final DocRefInfoService docRefInfoService;
 
     @Inject
     IndexStoreImpl(final StoreFactory storeFactory,
                    final IndexSerialiser serialiser,
-                   final Provider<IndexFieldService> indexFieldServiceProvider) {
+                   final Provider<IndexFieldService> indexFieldServiceProvider,
+                   final DocRefInfoService docRefInfoService) {
+        this.docRefInfoService = docRefInfoService;
         this.store = storeFactory.createStore(serialiser, LuceneIndexDoc.DOCUMENT_TYPE, LuceneIndexDoc.class);
         this.indexFieldServiceProvider = indexFieldServiceProvider;
+        this.serialiser = serialiser;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -167,9 +176,41 @@ public class IndexStoreImpl implements IndexStore {
                                  final Map<String, byte[]> dataMap,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
-        final DocRef ref = store.importDocument(docRef, dataMap, importState, importSettings);
+
+        final Map<String, byte[]> effectiveDataMap = migrateLegacyVolGroupName(dataMap);
+        final DocRef ref = store.importDocument(docRef, effectiveDataMap, importState, importSettings);
         indexFieldServiceProvider.get().transferFieldsToDB(ref);
         return ref;
+    }
+
+    @SuppressWarnings("deprecation") // indexDoc.getVolumeGroupName needed for legacy migration
+    private Map<String, byte[]> migrateLegacyVolGroupName(Map<String, byte[]> dataMap) {
+        // Support legacy export zips created when vol groups were defined by name
+        // rather than docref. Try to look up the vol grp name to get a docref
+        Map<String, byte[]> effectiveDataMap = dataMap;
+        try {
+            final LuceneIndexDoc indexDoc = serialiser.read(dataMap);
+            if (indexDoc.getVolumeGroupDocRef() == null
+                    && indexDoc.getVolumeGroupName() != null) {
+                final List<DocRef> docRefs = docRefInfoService.findByName(
+                        FsVolumeGroup.DOCUMENT_TYPE,
+                        indexDoc.getVolumeGroupName(),
+                        false);
+                final DocRef volGrpDocRef = NullSafe.hasItems(docRefs)
+                        ? docRefs.get(0)
+                        // Name is unique so never > 1
+                        : null;
+                if (volGrpDocRef != null) {
+                    indexDoc.setVolumeGroupDocRef(volGrpDocRef);
+                }
+                // Clear the name as it is not needed now
+                indexDoc.setVolumeGroupName(null);
+                effectiveDataMap = serialiser.write(indexDoc);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return effectiveDataMap;
     }
 
     @Override

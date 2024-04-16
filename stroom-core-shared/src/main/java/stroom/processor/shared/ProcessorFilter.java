@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.docref.HasDocRef;
 import stroom.docref.HasUuid;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.util.shared.Document;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasIntegerId;
 
@@ -33,7 +34,7 @@ import java.util.Comparator;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId, HasDocRef {
+public class ProcessorFilter implements Document, HasAuditInfo, HasUuid, HasIntegerId, HasDocRef {
 
     public static final String ENTITY_TYPE = "ProcessorFilter";
 

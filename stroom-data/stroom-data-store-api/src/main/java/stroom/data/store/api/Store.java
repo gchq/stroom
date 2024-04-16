@@ -17,6 +17,7 @@
 
 package stroom.data.store.api;
 
+import stroom.docref.DocRef;
 import stroom.meta.api.MetaProperties;
 
 /**
@@ -45,7 +46,7 @@ public interface Store {
      *
      * @return the stream to write to
      */
-    Target openTarget(MetaProperties metaProperties, String volumeGroup) throws DataException;
+    Target openTarget(MetaProperties metaProperties, DocRef volumeGroup) throws DataException;
 
     /**
      * <p>

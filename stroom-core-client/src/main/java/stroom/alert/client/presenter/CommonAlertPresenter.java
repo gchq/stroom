@@ -19,6 +19,7 @@ package stroom.alert.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.CommonAlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -69,12 +70,9 @@ public class CommonAlertPresenter
         }
 
         final SafeHtml detail = event.getDetail();
-        final int height;
-        if (detail == null || detail.asString().trim().length() == 0) {
-            height = 200;
-        } else {
-            height = 500;
-        }
+        final int height = GwtNullSafe.isBlankString(detail, SafeHtml::asString)
+                ? 300
+                : 500;
 
         getView().setDetail(detail);
 

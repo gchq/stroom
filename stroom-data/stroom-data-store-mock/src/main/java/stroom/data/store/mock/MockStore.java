@@ -33,6 +33,7 @@ import stroom.data.store.impl.fs.SegmentInputStreamProvider;
 import stroom.data.store.impl.fs.SegmentInputStreamProviderFactory;
 import stroom.data.store.impl.fs.SegmentOutputStreamProvider;
 import stroom.data.store.impl.fs.SegmentOutputStreamProviderFactory;
+import stroom.docref.DocRef;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
@@ -135,7 +136,7 @@ public class MockStore implements Store, Clearable {
     }
 
     @Override
-    public Target openTarget(final MetaProperties metaProperties, final String volumeGroup) {
+    public Target openTarget(final MetaProperties metaProperties, final DocRef volumeGroup) {
         final Meta meta = metaService.create(metaProperties);
 
         final Map<String, ByteArrayOutputStream> typeMap = new HashMap<>();

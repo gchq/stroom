@@ -23,10 +23,11 @@ import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
+import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.api.FeedProperties;
-import stroom.feed.api.VolumeGroupNameProvider;
+import stroom.feed.api.FsVolumeGroupProvider;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
@@ -137,7 +138,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
     private final NodeInfo nodeInfo;
     private final PipelineDataCache pipelineDataCache;
     private final InternalStatisticsReceiver internalStatisticsReceiver;
-    private final VolumeGroupNameProvider volumeGroupNameProvider;
+    private final FsVolumeGroupProvider volumeGroupNameProvider;
 
     private Processor streamProcessor;
     private ProcessorFilter processorFilter;
@@ -167,7 +168,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                                             final NodeInfo nodeInfo,
                                             final PipelineDataCache pipelineDataCache,
                                             final InternalStatisticsReceiver internalStatisticsReceiver,
-                                            final VolumeGroupNameProvider volumeGroupNameProvider) {
+                                            final FsVolumeGroupProvider volumeGroupNameProvider) {
         this.pipelineFactory = pipelineFactory;
         this.streamStore = store;
         this.pipelineStore = pipelineStore;
@@ -606,7 +607,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
         private final ProcessorTask processorTask;
         private final RecordCount recordCount;
         private final ErrorReceiverProxy errorReceiverProxy;
-        private final VolumeGroupNameProvider volumeGroupNameProvider;
+        private final FsVolumeGroupProvider fsVolumeGroupProvider;
 
         private OutputStream processInfoOutputStream;
         private Target processInfoStreamTarget;
@@ -620,7 +621,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                                         final ProcessorTask processorTask,
                                         final RecordCount recordCount,
                                         final ErrorReceiverProxy errorReceiverProxy,
-                                        final VolumeGroupNameProvider volumeGroupNameProvider) {
+                                        final FsVolumeGroupProvider fsVolumeGroupProvider) {
             this.streamStore = streamStore;
             this.metaData = metaData;
             this.meta = meta;
@@ -630,7 +631,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
             this.processorTask = processorTask;
             this.recordCount = recordCount;
             this.errorReceiverProxy = errorReceiverProxy;
-            this.volumeGroupNameProvider = volumeGroupNameProvider;
+            this.fsVolumeGroupProvider = fsVolumeGroupProvider;
         }
 
         @Override
@@ -678,9 +679,9 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                         .processorTaskId(processorTaskId)
                         .build();
 
-                final String volumeGroupName = volumeGroupNameProvider
+                final DocRef volumeGroup = fsVolumeGroupProvider
                         .getVolumeGroupName(meta.getFeedName(), StreamTypeNames.ERROR, null);
-                processInfoStreamTarget = streamStore.openTarget(dataProperties, volumeGroupName);
+                processInfoStreamTarget = streamStore.openTarget(dataProperties, volumeGroup);
                 processInfoOutputStream = new WrappedOutputStream(processInfoStreamTarget.next().get()) {
                     @Override
                     public void close() throws IOException {

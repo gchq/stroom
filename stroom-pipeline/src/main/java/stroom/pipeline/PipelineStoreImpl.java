@@ -17,11 +17,13 @@
 
 package stroom.pipeline;
 
+import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docref.StringMatch;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
@@ -34,11 +36,13 @@ import stroom.importexport.shared.ImportState;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorFilterUtil;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.util.NullSafe;
 import stroom.util.shared.Message;
 import stroom.util.shared.ResultPage;
 
@@ -46,6 +50,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -64,15 +69,20 @@ public class PipelineStoreImpl implements PipelineStore {
     private final Store<PipelineDoc> store;
     private final Provider<ProcessorFilterService> processorFilterServiceProvider;
     private final Provider<ProcessorService> processorServiceProvider;
+    private final PipelineSerialiser serialiser;
+    private final DocRefInfoService docRefInfoService;
 
     @Inject
     public PipelineStoreImpl(final StoreFactory storeFactory,
                              final PipelineSerialiser serialiser,
                              final Provider<ProcessorFilterService> processorFilterServiceProvider,
-                             final Provider<ProcessorService> processorServiceProvider) {
+                             final Provider<ProcessorService> processorServiceProvider,
+                             final DocRefInfoService docRefInfoService) {
         this.processorServiceProvider = processorServiceProvider;
+        this.docRefInfoService = docRefInfoService;
         this.store = storeFactory.createStore(serialiser, PipelineDoc.DOCUMENT_TYPE, PipelineDoc.class);
         this.processorFilterServiceProvider = processorFilterServiceProvider;
+        this.serialiser = serialiser;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -221,7 +231,49 @@ public class PipelineStoreImpl implements PipelineStore {
                                  final Map<String, byte[]> dataMap,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
-        return store.importDocument(docRef, dataMap, importState, importSettings);
+        final Map<String, byte[]> effectiveDataMap = migrateLegacyVolGroupName(dataMap);
+        return store.importDocument(docRef, effectiveDataMap, importState, importSettings);
+    }
+
+    private Map<String, byte[]> migrateLegacyVolGroupName(Map<String, byte[]> dataMap) {
+        // Support legacy export zips created when vol groups were defined by name
+        // rather than docref. Try to look up the vol grp name to get a docref
+        Map<String, byte[]> effectiveDataMap = dataMap;
+        try {
+            final PipelineDoc pipelineDoc = serialiser.read(dataMap);
+            migrateProperties(pipelineDoc.getPipelineData().getAddedProperties());
+            migrateProperties(pipelineDoc.getPipelineData().getRemovedProperties());
+            effectiveDataMap = serialiser.write(pipelineDoc);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return effectiveDataMap;
+    }
+
+    private void migrateProperties(final List<PipelineProperty> properties) {
+        for (final PipelineProperty pipelineProperty : NullSafe.list(properties)) {
+            if ("volumeGroup".equals(pipelineProperty.getName())) {
+                boolean valueChanged = false;
+                if (NullSafe.nonNull(pipelineProperty.getValue(), PipelinePropertyValue::getString)) {
+                    final List<DocRef> volGrpDocRefs = docRefInfoService.findByName(
+                            FsVolumeGroup.DOCUMENT_TYPE,
+                            pipelineProperty.getValue().getString(),
+                            false);
+                    final DocRef volGrpDocRef = NullSafe.hasItems(volGrpDocRefs)
+                            ? volGrpDocRefs.get(0)
+                            // Name is unique so never > 1
+                            : null;
+                    if (volGrpDocRef != null) {
+                        pipelineProperty.setValue(new PipelinePropertyValue(volGrpDocRef));
+                        valueChanged = true;
+                    }
+                }
+                // Clear the name as it is not needed now
+                if (!valueChanged) {
+                    pipelineProperty.setValue(new PipelinePropertyValue());
+                }
+            }
+        }
     }
 
     @Override

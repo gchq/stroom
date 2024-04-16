@@ -24,7 +24,7 @@ import stroom.data.zip.StroomZipFileType;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
-import stroom.feed.api.VolumeGroupNameProvider;
+import stroom.feed.api.FsVolumeGroupProvider;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaService;
@@ -54,7 +54,7 @@ class TestStreamTargetStreamHandler extends AbstractProcessIntegrationTest {
     @Inject
     private MetaService metaService;
     @Inject
-    private VolumeGroupNameProvider volumeGroupNameProvider;
+    private FsVolumeGroupProvider volumeGroupNameProvider;
 
     /**
      * This test is used to check that feeds that are set to be reference feeds

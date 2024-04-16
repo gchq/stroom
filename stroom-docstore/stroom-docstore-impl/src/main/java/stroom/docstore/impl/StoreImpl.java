@@ -28,6 +28,7 @@ import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.DocumentSerialiser2;
+import stroom.docstore.api.Persistence;
 import stroom.docstore.api.Store;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocRefUtil;
@@ -51,7 +52,6 @@ import stroom.util.shared.PermissionException;
 import stroom.util.shared.Severity;
 import stroom.util.string.StringMatcher;
 
-import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.io.IOException;
@@ -88,7 +88,6 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     private final AtomicBoolean dirty = new AtomicBoolean();
 
-    @Inject
     StoreImpl(final Persistence persistence,
               final EntityEventBus entityEventBus,
               final ImportConverter importConverter,
@@ -381,7 +380,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                                 convertedDataMap,
                                 new AuditFieldFilter<>(),
                                 updatedFields);
-                        if (updatedFields.size() == 0) {
+                        if (updatedFields.isEmpty()) {
                             importState.setState(State.EQUAL);
                         }
                     }

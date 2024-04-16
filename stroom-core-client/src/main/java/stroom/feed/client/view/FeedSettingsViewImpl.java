@@ -16,6 +16,7 @@
 
 package stroom.feed.client.view;
 
+import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.feed.client.presenter.FeedSettingsPresenter.FeedSettingsView;
 import stroom.feed.shared.FeedDoc;
@@ -47,11 +48,13 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
     @UiField
     CustomCheckBox reference;
     @UiField
-    SelectionBox<String> volumeGroup;
+    SelectionBox<DocRef> volumeGroup;
 
     @Inject
     public FeedSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+
+        volumeGroup.setDisplayValueFunction(DocRef::getName);
     }
 
     @Override
@@ -90,7 +93,7 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
     }
 
     @Override
-    public SelectionBox<String> getVolumeGroup() {
+    public SelectionBox<DocRef> getVolumeGroup() {
         return volumeGroup;
     }
 
@@ -104,6 +107,10 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
         reference.setEnabled(!readOnly);
         volumeGroup.setEnabled(!readOnly);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, FeedSettingsViewImpl> {
 

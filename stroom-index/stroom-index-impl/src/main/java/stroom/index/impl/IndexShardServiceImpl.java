@@ -26,6 +26,7 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardFields;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneVersion;
 import stroom.index.shared.LuceneVersionUtil;
@@ -36,6 +37,7 @@ import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
+import stroom.util.NullSafe;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -48,6 +50,7 @@ import jakarta.inject.Singleton;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.Optional;
 
 @Singleton
@@ -62,6 +65,7 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
     private final LuceneIndexDocCache indexStructureCache;
     private final IndexShardDao indexShardDao;
     private final IndexVolumeService indexVolumeService;
+    private final IndexVolumeGroupService indexVolumeGroupService;
     private final PathCreator pathCreator;
 
     private LuceneVersion indexVersion = LuceneVersionUtil.CURRENT_LUCENE_VERSION;
@@ -71,11 +75,13 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
                           final LuceneIndexDocCache indexStructureCache,
                           final IndexShardDao indexShardDao,
                           final IndexVolumeService indexVolumeService,
+                          final IndexVolumeGroupService indexVolumeGroupService,
                           final PathCreator pathCreator) {
         this.securityContext = securityContext;
         this.indexStructureCache = indexStructureCache;
         this.indexShardDao = indexShardDao;
         this.indexVolumeService = indexVolumeService;
+        this.indexVolumeGroupService = indexVolumeGroupService;
         this.pathCreator = pathCreator;
     }
 
@@ -95,7 +101,8 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
         return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             final LuceneIndexDoc index = indexStructureCache.get(
                     new DocRef(LuceneIndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
-            final IndexVolume indexVolume = indexVolumeService.selectVolume(index.getVolumeGroupName(), ownerNodeName);
+            final DocRef indexVolGroup = getIndexVolumeGroup(index);
+            final IndexVolume indexVolume = indexVolumeService.selectVolume(indexVolGroup, ownerNodeName);
 
             // Test the validity of the volume path.
             final Path path = pathCreator.toAppPath(indexVolume.getPath());
@@ -109,6 +116,14 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
                     ownerNodeName,
                     indexVersion.getDisplayValue());
         });
+    }
+
+    private DocRef getIndexVolumeGroup(final LuceneIndexDoc indexDoc) {
+        return Objects.requireNonNullElseGet(
+                indexDoc.getVolumeGroupDocRef(),
+                () -> NullSafe.get(
+                        indexVolumeGroupService.getDefaultVolumeGroup(),
+                        IndexVolumeGroup::asDocRef));
     }
 
     @Override

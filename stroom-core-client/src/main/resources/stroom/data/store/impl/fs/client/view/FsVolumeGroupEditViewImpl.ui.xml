@@ -4,11 +4,18 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="fsVolumeGroupEditVolumeGroupName" label="Volume Group Name">
+        <form:FormGroup identity="fsVolumeGroupEditVolumeGroupName"
+                        label="Volume Group Name">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="fsVolumeGroupEditVolumeIsDefault" label="Is Default Volume Group?">
-            <tickbox:CustomCheckBox ui:field="isDefaultCheckBox" />
+        <form:FormGroup identity="fsVolumeGroupEditVolumeIsDefault"
+                        label="Is Default Volume Group?">
+            <form:HelpHTML>
+                The default Volume Group will be used for writing streams if no Volume is explicitly selected.
+                For example if no Volume Group is specified in Feed Settings, then steams will be written to the
+                Volume Group marked as default. Only one Volume Group can be marked as default.
+            </form:HelpHTML>
+            <tickbox:CustomCheckBox ui:field="isDefaultCheckBox"/>
         </form:FormGroup>
         <g:SimplePanel ui:field="list" styleName="dock-max stroom-control"/>
     </g:FlowPanel>

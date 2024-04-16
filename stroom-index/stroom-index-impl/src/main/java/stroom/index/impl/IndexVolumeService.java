@@ -1,5 +1,6 @@
 package stroom.index.impl;
 
+import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.ValidationResult;
@@ -28,5 +29,5 @@ public interface IndexVolumeService {
      * @throws stroom.index.shared.IndexException When no suitable {@link IndexVolume} can
      *                                            be found.
      */
-    IndexVolume selectVolume(final String groupName, final String nodeName);
+    IndexVolume selectVolume(final DocRef indexVolumeGroup, final String nodeName);
 }

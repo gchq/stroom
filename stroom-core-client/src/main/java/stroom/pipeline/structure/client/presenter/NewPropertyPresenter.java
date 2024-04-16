@@ -31,6 +31,7 @@ import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.structure.client.presenter.PropertyListPresenter.Source;
 import stroom.pipeline.structure.client.view.NewPropertyUiHandlers;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
@@ -72,9 +73,10 @@ public class NewPropertyPresenter
     private TextBox textBox;
 
     private String currentDataType;
-    private String currentVolumeGroup;
+    private DocRef currentVolumeGroup;
     private boolean dataTypePresenterInitialised;
-    private SelectionBox<String> dataTypeWidget;
+    private SelectionBox<String> stringDataTypeWidget;
+    private SelectionBox<DocRef> docRefDataTypeWidget;
     private boolean entityPresenterInitialised;
 
     @Inject
@@ -163,9 +165,9 @@ public class NewPropertyPresenter
         final PipelinePropertyType propertyType = property.getPropertyType();
 
         if ("streamType".equals(propertyType.getName())) {
-            property.setValue(new PipelinePropertyValue(dataTypeWidget.getValue()));
+            property.setValue(new PipelinePropertyValue(stringDataTypeWidget.getValue()));
         } else if ("volumeGroup".equals(propertyType.getName())) {
-            property.setValue(new PipelinePropertyValue(dataTypeWidget.getValue()));
+            property.setValue(new PipelinePropertyValue(docRefDataTypeWidget.getValue()));
         } else if ("boolean".equals(propertyType.getType())) {
             final String value = listBox.getValue();
             property.setValue(new PipelinePropertyValue(Boolean.valueOf(value)));
@@ -280,7 +282,7 @@ public class NewPropertyPresenter
 
     private void enterDataTypeMode(final PipelineProperty property) {
         if (!dataTypePresenterInitialised) {
-            dataTypeWidget = new SelectionBox<>();
+            stringDataTypeWidget = new SelectionBox<>();
 
             // Load data types.
             restFactory
@@ -288,23 +290,23 @@ public class NewPropertyPresenter
                     .method(MetaResource::getTypes)
                     .onSuccess(result -> {
                         if (result != null) {
-                            dataTypeWidget.addItems(result);
+                            stringDataTypeWidget.addItems(result);
                         }
 
                         if (currentDataType != null) {
-                            dataTypeWidget.setValue(currentDataType);
+                            stringDataTypeWidget.setValue(currentDataType);
                         }
 
                         dataTypePresenterInitialised = true;
                     })
                     .exec();
 
-            dataTypeWidget.addValueChangeHandler(event -> {
+            stringDataTypeWidget.addValueChangeHandler(event -> {
                 setDirty(true);
                 getView().setSource(Source.LOCAL);
             });
 
-            final Widget widget = dataTypeWidget;
+            final Widget widget = stringDataTypeWidget;
             widget.getElement().getStyle().setWidth(100, Unit.PCT);
             widget.getElement().getStyle().setMarginBottom(0, Unit.PX);
             getView().setValueWidget(widget);
@@ -317,43 +319,43 @@ public class NewPropertyPresenter
             currentDataType = property.getValue().toString();
         }
 
-        dataTypeWidget.setValue(currentDataType);
+        stringDataTypeWidget.setValue(currentDataType);
     }
 
     private void enterVolumeGroupMode(final PipelineProperty property) {
         if (!dataTypePresenterInitialised) {
-            dataTypeWidget = new SelectionBox<>();
+            docRefDataTypeWidget = new SelectionBox<>();
 
             // Load data types.
             restFactory
                     .create(VOLUME_GROUP_RESOURCE)
                     .method(res -> res.find(new ExpressionCriteria()))
                     .onSuccess(result -> {
-                        dataTypeWidget.clear();
-                        dataTypeWidget.setNonSelectString("");
+                        docRefDataTypeWidget.clear();
+                        docRefDataTypeWidget.setNonSelectString("");
                         if (result != null && result.getValues() != null) {
-                            dataTypeWidget.addItems(
+                            docRefDataTypeWidget.addItems(
                                     result
                                             .getValues()
                                             .stream()
-                                            .map(FsVolumeGroup::getName)
+                                            .map(FsVolumeGroup::asDocRef)
                                             .collect(Collectors.toList()));
                         }
 
                         if (currentVolumeGroup != null) {
-                            dataTypeWidget.setValue(currentVolumeGroup);
+                            docRefDataTypeWidget.setValue(currentVolumeGroup);
                         }
 
                         dataTypePresenterInitialised = true;
                     })
                     .exec();
 
-            dataTypeWidget.addValueChangeHandler(event -> {
+            docRefDataTypeWidget.addValueChangeHandler(event -> {
                 setDirty(true);
                 getView().setSource(Source.LOCAL);
             });
 
-            final Widget widget = dataTypeWidget;
+            final Widget widget = stringDataTypeWidget;
             widget.getElement().getStyle().setWidth(100, Unit.PCT);
             widget.getElement().getStyle().setMarginBottom(0, Unit.PX);
             getView().setValueWidget(widget);
@@ -361,12 +363,12 @@ public class NewPropertyPresenter
             dataTypePresenterInitialised = true;
         }
 
-        currentVolumeGroup = null;
-        if (property.getValue() != null && property.getValue().getString() != null) {
-            currentVolumeGroup = property.getValue().toString();
-        }
+        currentVolumeGroup = GwtNullSafe.get(
+                property,
+                PipelineProperty::getValue,
+                PipelinePropertyValue::getEntity);
 
-        dataTypeWidget.setValue(currentVolumeGroup);
+        docRefDataTypeWidget.setValue(currentVolumeGroup);
     }
 
     private void enterEntityMode(final PipelineProperty property) {
@@ -413,6 +415,10 @@ public class NewPropertyPresenter
     private void setDirty(final boolean dirty) {
         setDirty(dirty, true);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface NewPropertyView extends View, Focus, HasUiHandlers<NewPropertyUiHandlers> {
 

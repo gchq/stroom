@@ -24,8 +24,9 @@ import stroom.data.store.api.Target;
 import stroom.data.zip.StroomZipEntries;
 import stroom.data.zip.StroomZipEntry;
 import stroom.data.zip.StroomZipFileType;
+import stroom.docref.DocRef;
 import stroom.feed.api.FeedProperties;
-import stroom.feed.api.VolumeGroupNameProvider;
+import stroom.feed.api.FsVolumeGroupProvider;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaProperties;
@@ -72,7 +73,7 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
     private final Store store;
     private final FeedProperties feedProperties;
     private final MetaStatistics metaDataStatistics;
-    private final VolumeGroupNameProvider volumeGroupNameProvider;
+    private final FsVolumeGroupProvider fsVolumeGroupProvider;
     private final String typeName;
     private final AttributeMap globalAttributeMap;
     private final HashSet<Meta> streamSet;
@@ -90,14 +91,14 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
     StreamTargetStreamHandler(final Store store,
                               final FeedProperties feedProperties,
                               final MetaStatistics metaDataStatistics,
-                              final VolumeGroupNameProvider volumeGroupNameProvider,
+                              final FsVolumeGroupProvider fsVolumeGroupProvider,
                               final String feedName,
                               final String typeName,
                               final AttributeMap globalAttributeMap) {
         this.store = store;
         this.feedProperties = feedProperties;
         this.metaDataStatistics = metaDataStatistics;
-        this.volumeGroupNameProvider = volumeGroupNameProvider;
+        this.fsVolumeGroupProvider = fsVolumeGroupProvider;
         this.currentFeedName = feedName;
         this.typeName = typeName;
         this.streamSet = new HashSet<>();
@@ -302,9 +303,9 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
                     .effectiveMs(effectiveMs)
                     .build();
 
-            final String volumeGroupName = volumeGroupNameProvider
+            final DocRef volumeGroup = fsVolumeGroupProvider
                     .getVolumeGroupName(feedName, typeName, null);
-            final Target streamTarget = store.openTarget(metaProperties, volumeGroupName);
+            final Target streamTarget = store.openTarget(metaProperties, volumeGroup);
             streamSet.add(streamTarget.getMeta());
             return streamTarget;
         });

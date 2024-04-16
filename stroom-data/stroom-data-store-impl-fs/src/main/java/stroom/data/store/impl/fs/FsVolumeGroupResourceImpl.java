@@ -1,5 +1,6 @@
 package stroom.data.store.impl.fs;
 
+import stroom.data.store.api.FsVolumeGroupService;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
 import stroom.docref.DocRef;
@@ -39,7 +40,6 @@ class FsVolumeGroupResourceImpl implements FsVolumeGroupResource {
         return volumeGroupServiceProvider.get().get(docRef);
     }
 
-    @Deprecated
     @Override
     public FsVolumeGroup fetchByName(final String name) {
         return volumeGroupServiceProvider.get().get(name);

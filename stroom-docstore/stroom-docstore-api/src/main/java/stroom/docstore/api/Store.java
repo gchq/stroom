@@ -4,9 +4,9 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docref.HasFindDocsByContent;
 import stroom.docref.HasFindDocsByName;
-import stroom.docstore.shared.Doc;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
+import stroom.util.shared.Document;
 import stroom.util.shared.Message;
 
 import java.util.List;
@@ -15,7 +15,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-public interface Store<D extends Doc>
+public interface Store<D extends Document>
         extends DocumentActionHandler<D>, HasFindDocsByName, HasFindDocsByContent {
     ////////////////////////////////////////////////////////////////////////
     // START OF ExplorerActionHandler
@@ -98,7 +98,7 @@ public interface Store<D extends Doc>
 //    List<DocRef> findByNames(final List<String> name,
 //                             final boolean allowWildCards);
 
-    interface DocumentCreator<D extends Doc> {
+    interface DocumentCreator<D extends Document> {
 
         D create(final String type,
                  final String uuid,

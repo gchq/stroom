@@ -226,6 +226,7 @@ public class FeedDoc extends Doc {
 
     /**
      * The volume group used to be referenced by name, which is brittle, but is now done with a DocRef
+     * See {@link FeedDoc#getVolumeGroupDocRef()}.
      */
     @Deprecated
     public String getVolumeGroup() {
@@ -234,6 +235,7 @@ public class FeedDoc extends Doc {
 
     /**
      * The volume group used to be referenced by name, which is brittle, but is now done with a DocRef
+     * See {@link FeedDoc#setVolumeGroupDocRef(DocRef)}.
      */
     @Deprecated // Use VolumeGroupDocRef
     public void setVolumeGroup(final String volumeGroup) {

@@ -2,6 +2,7 @@ package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docstore.api.DocumentActionHandlers;
 import stroom.security.mock.MockSecurityContext;
 
 import org.assertj.core.api.Assertions;
@@ -61,6 +62,8 @@ class TestDocRefInfoServiceImpl {
     private DocRefInfoCache mockDocRefInfoCache;
     @Mock
     private ExplorerActionHandlers mockExplorerActionHandlers;
+    @Mock
+    private DocumentActionHandlers mockDocumentActionHandlers;
 
     private MockSecurityContext mockSecurityContext = new MockSecurityContext();
 
@@ -71,6 +74,7 @@ class TestDocRefInfoServiceImpl {
         docRefInfoService = new DocRefInfoServiceImpl(
                 mockDocRefInfoCache,
                 mockSecurityContext,
+                () -> mockDocumentActionHandlers,
                 mockExplorerActionHandlers);
     }
 

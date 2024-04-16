@@ -1,5 +1,6 @@
 package stroom.index;
 
+import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.impl.IndexVolumeService;
@@ -64,9 +65,11 @@ public class TestIndexVolumeServiceImpl extends AbstractCoreIntegrationTest {
 
         final Map<String, Map<String, List<String>>> grpToNodeToPathMap = new HashMap<>();
         final Map<String, Map<String, List<IndexVolume>>> grpToNodeToVolMap = new HashMap<>();
+        final List<IndexVolumeGroup> indexVolumeGroups = new ArrayList<>();
 
         GROUP_NAMES.forEach(groupName -> {
             final IndexVolumeGroup volumeGroup = indexVolumeGroupService.getOrCreate(groupName);
+            indexVolumeGroups.add(volumeGroup);
 
             NODE_NAMES.forEach(nodeName -> {
                 for (int i = 0; i < 3; i++) {
@@ -100,17 +103,17 @@ public class TestIndexVolumeServiceImpl extends AbstractCoreIntegrationTest {
         Assertions.assertThat(indexVolumeService.find(new ExpressionCriteria()).getValues())
                 .hasSize(NODE_NAMES.size() * GROUP_NAMES.size() * 3);
 
-        final String groupName = GROUP_NAMES.get(0);
+        final DocRef groupDocRef = indexVolumeGroups.get(0).asDocRef();
         NODE_NAMES.forEach(nodeName -> {
-            final List<IndexVolume> expectedVolumes = grpToNodeToVolMap.get(groupName)
+            final List<IndexVolume> expectedVolumes = grpToNodeToVolMap.get(groupDocRef)
                     .get(nodeName);
             for (int i = 0; i < 3; i++) {
-                final IndexVolume indexVolume = indexVolumeService.selectVolume(groupName, nodeName);
+                final IndexVolume indexVolume = indexVolumeService.selectVolume(groupDocRef, nodeName);
 
                 Assertions.assertThat(indexVolume)
                         .isNotNull();
                 Assertions.assertThat(indexVolume.getIndexVolumeGroupId())
-                        .isEqualTo(indexVolumeGroupService.get(groupName).getId());
+                        .isEqualTo(indexVolumeGroupService.get(groupDocRef).getId());
                 Assertions.assertThat(indexVolume.getNodeName())
                         .isEqualTo(nodeName);
 

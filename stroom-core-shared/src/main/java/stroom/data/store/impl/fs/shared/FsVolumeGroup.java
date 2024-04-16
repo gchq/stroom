@@ -2,10 +2,9 @@ package stroom.data.store.impl.fs.shared;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRef.TypedBuilder;
-import stroom.docref.HasDocRef;
 import stroom.docref.HasNameMutable;
+import stroom.util.shared.Document;
 import stroom.util.shared.GwtNullSafe;
-import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasIntegerId;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -18,7 +17,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 @JsonInclude(Include.NON_NULL)
-public class FsVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMutable, HasDocRef {
+public class FsVolumeGroup implements Document, HasIntegerId, HasNameMutable {
 
     public static final String DOCUMENT_TYPE = "FsVolumeGroup";
 

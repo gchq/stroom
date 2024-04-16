@@ -21,7 +21,7 @@ import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
-import stroom.feed.api.VolumeGroupNameProvider;
+import stroom.feed.api.FsVolumeGroupProvider;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.meta.api.MetaSecurityFilter;
@@ -39,7 +39,7 @@ public class FeedModule extends AbstractModule {
         bind(FeedStore.class).to(FeedStoreImpl.class);
         bind(FeedProperties.class).to(FeedPropertiesImpl.class);
         bind(MetaSecurityFilter.class).to(MetaSecurityFilterImpl.class);
-        bind(VolumeGroupNameProvider.class).to(VolumeGroupNameProviderImpl.class);
+        bind(FsVolumeGroupProvider.class).to(FsVolumeGroupProviderImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
                 .addBinding(FeedStoreImpl.class);

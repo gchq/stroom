@@ -57,6 +57,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -407,6 +408,20 @@ public class ProcessorFilterImportExportHandlerImpl
     public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
         return null;
     }
+    ////////////////////////////////////////////////////////////////////////
+    // START OF HasFindByName
+    ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public List<DocRef> findByNames(final List<String> names, final boolean allowWildCards) {
+        // Proc filters have no name
+        return Collections.emptyList();
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    // END OF HasFindByName
+    ////////////////////////////////////////////////////////////////////////
+
 
     ////////////////////////////////////////////////////////////////////////
     // START OF HasDependencies

@@ -20,9 +20,10 @@ package stroom.pipeline.writer;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.WrappedSegmentOutputStream;
+import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
-import stroom.feed.api.VolumeGroupNameProvider;
+import stroom.feed.api.FsVolumeGroupProvider;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.Meta;
@@ -77,7 +78,7 @@ public class StreamAppender extends AbstractAppender {
     private final MetaData metaData;
     private final RecordCount recordCount;
     private final DocRefInfoService docRefInfoService;
-    private final VolumeGroupNameProvider volumeGroupNameProvider;
+    private final FsVolumeGroupProvider fsVolumeGroupProvider;
 
     private DocRef feedRef;
     private String streamType;
@@ -85,7 +86,7 @@ public class StreamAppender extends AbstractAppender {
     private Target streamTarget;
     private WrappedSegmentOutputStream wrappedSegmentOutputStream;
     private long count;
-    private String volumeGroup;
+    private DocRef volumeGroup;
 
     private ProcessStatistics lastProcessStatistics;
 
@@ -97,7 +98,7 @@ public class StreamAppender extends AbstractAppender {
                           final MetaData metaData,
                           final RecordCount recordCount,
                           final DocRefInfoService docRefInfoService,
-                          final VolumeGroupNameProvider volumeGroupNameProvider) {
+                          final FsVolumeGroupProvider fsVolumeGroupProvider) {
         super(errorReceiverProxy);
         this.errorReceiverProxy = errorReceiverProxy;
         this.streamStore = streamStore;
@@ -106,7 +107,7 @@ public class StreamAppender extends AbstractAppender {
         this.metaData = metaData;
         this.recordCount = recordCount;
         this.docRefInfoService = docRefInfoService;
-        this.volumeGroupNameProvider = volumeGroupNameProvider;
+        this.fsVolumeGroupProvider = fsVolumeGroupProvider;
     }
 
     @Override
@@ -165,9 +166,9 @@ public class StreamAppender extends AbstractAppender {
                 .processorTaskId(processorTaskId)
                 .build();
 
-        final String volumeGroupName = volumeGroupNameProvider
-                .getVolumeGroupName(feed, streamType, volumeGroup);
-        streamTarget = streamStore.openTarget(metaProperties, volumeGroupName);
+        final DocRef volumeGroup = fsVolumeGroupProvider
+                .getVolumeGroupName(feed, streamType, this.volumeGroup);
+        streamTarget = streamStore.openTarget(metaProperties, volumeGroup);
 
         wrappedSegmentOutputStream = new WrappedSegmentOutputStream(streamTarget.next().get()) {
             @Override
@@ -306,10 +307,11 @@ public class StreamAppender extends AbstractAppender {
         super.setSplitRecords(splitRecords);
     }
 
+    @PipelinePropertyDocRef(types = {FsVolumeGroup.DOCUMENT_TYPE})
     @PipelineProperty(
             description = "Optionally override the default volume group of the destination feed.",
             displayPriority = 7)
-    public void setVolumeGroup(final String volumeGroup) {
+    public void setVolumeGroup(final DocRef volumeGroup) {
         this.volumeGroup = volumeGroup;
     }
 

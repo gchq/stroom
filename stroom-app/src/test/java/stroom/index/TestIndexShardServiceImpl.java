@@ -24,6 +24,7 @@ import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.impl.IndexVolumeService;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolumeGroup;
 import stroom.node.api.NodeInfo;
 import stroom.test.AbstractCoreIntegrationTest;
 
@@ -50,16 +51,16 @@ class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
     void testSelectIndexVolume_unknownGroup() {
         assertThrows(IndexException.class,
                 () -> indexVolumeService.selectVolume(
-                        "unknown",
+                        IndexVolumeGroup.buildDocRef().randomUuid().name("unknown").build(),
                         nodeInfo.getThisNodeName()));
     }
 
     @Test
     void testSelectIndexVolume_validGroup() {
-        final String groupName = indexVolumeGroupService.getNames().get(0);
+        final IndexVolumeGroup indexVolumeGroup = indexVolumeGroupService.getAll().get(0);
 
         final IndexVolume indexVolume = indexVolumeService.selectVolume(
-                groupName,
+                indexVolumeGroup.asDocRef(),
                 nodeInfo.getThisNodeName());
 
         Assertions.assertThat(indexVolume)

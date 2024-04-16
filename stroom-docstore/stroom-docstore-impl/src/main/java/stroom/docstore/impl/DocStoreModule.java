@@ -1,6 +1,7 @@
 package stroom.docstore.impl;
 
 import stroom.docstore.api.DocumentResourceHelper;
+import stroom.docstore.api.Persistence;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.StoreFactory;
 import stroom.event.logging.api.DocumentEventLog;

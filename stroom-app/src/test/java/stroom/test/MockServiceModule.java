@@ -7,7 +7,7 @@ import stroom.data.store.mock.MockStreamStoreModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
 import stroom.explorer.impl.MockExplorerModule;
-import stroom.feed.api.VolumeGroupNameProvider;
+import stroom.feed.api.FsVolumeGroupProvider;
 import stroom.feed.impl.MockFeedModule;
 import stroom.importexport.impl.ImportExportModule;
 import stroom.index.mock.MockIndexModule;
@@ -132,7 +132,7 @@ public class MockServiceModule extends AbstractModule {
     }
 
     @Provides
-    VolumeGroupNameProvider volumeGroupNameProvider() {
+    FsVolumeGroupProvider volumeGroupNameProvider() {
         return (feedName, streamType, overrideVolumeGroup) -> null;
     }
 }
