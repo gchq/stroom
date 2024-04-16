@@ -28,7 +28,6 @@ import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.NullSafe;
-import stroom.util.concurrent.StripedLock;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
@@ -55,7 +54,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
 /**
@@ -74,8 +72,6 @@ public class IndexShardManager {
     private final TaskContextFactory taskContextFactory;
     private final SecurityContext securityContext;
     private final PathCreator pathCreator;
-
-    private final StripedLock shardUpdateLocks = new StripedLock();
     private final AtomicBoolean deletingShards = new AtomicBoolean();
 
     @Inject
@@ -290,7 +286,7 @@ public class IndexShardManager {
                     new DocRef(LuceneIndexDoc.DOCUMENT_TYPE, shard.getIndexUuid()));
             if (index == null) {
                 // If there is no associated index then delete the shard.
-                forceStatus(shard.getId(), IndexShardStatus.DELETED);
+                logicalDelete(shard.getId());
 
             } else {
                 final Integer retentionDayAge = index.getRetentionDayAge();
@@ -306,84 +302,68 @@ public class IndexShardManager {
                             .toEpochMilli();
 
                     if (partitionToTime < retentionTime) {
-                        forceStatus(shard.getId(), IndexShardStatus.DELETED);
+                        logicalDelete(shard.getId());
                     }
                 }
             }
         } catch (final DocumentNotFoundException e) {
             // If there is no associated index then delete the shard.
-            forceStatus(shard.getId(), IndexShardStatus.DELETED);
+            logicalDelete(shard.getId());
 
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         }
     }
 
-    public IndexShard load(final long indexShardId) {
-        return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
-            // Allow the thing to run without a service (e.g. benchmark mode)
-            if (indexShardService != null) {
-                final Lock lock = shardUpdateLocks.getLockForKey(indexShardId);
-                lock.lock();
-                try {
-                    return indexShardService.loadById(indexShardId);
-                } finally {
-                    lock.unlock();
-                }
-            }
-
-            return null;
-        });
-    }
-
     public boolean setStatus(final long indexShardId, final IndexShardStatus status) {
         // Allow the thing to run without a service (e.g. benchmark mode)
         if (indexShardService != null) {
-            final Lock lock = shardUpdateLocks.getLockForKey(indexShardId);
-            lock.lock();
             try {
-                final IndexShard indexShard = indexShardService.loadById(indexShardId);
-                if (indexShard != null) {
-                    final boolean success = indexShardService.setStatus(indexShard.getId(), status);
-                    if (!success) {
-                        LOGGER.error("State transition from " +
-                                indexShard.getStatus() +
-                                " to " +
-                                status +
-                                " was attempted but is not allowed");
+                final boolean success = indexShardService.setStatus(indexShardId, status);
+                if (!success) {
+                    final IndexShard indexShard = indexShardService.loadById(indexShardId);
+                    if (indexShard != null) {
+                        try {
+                            throw new RuntimeException("State transition from " +
+                                    indexShard.getStatus() +
+                                    " to " +
+                                    status +
+                                    " was attempted but is not allowed");
+                        } catch (final RuntimeException e) {
+                            LOGGER.error(e::getMessage, e);
+                        }
                     }
-                    return success;
                 }
+                return success;
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
-            } finally {
-                lock.unlock();
             }
         }
         return false;
     }
 
-    private void forceStatus(final long indexShardId, final IndexShardStatus status) {
+    public void logicalDelete(final Long id) {
         // Allow the thing to run without a service (e.g. benchmark mode)
         if (indexShardService != null) {
-            final Lock lock = shardUpdateLocks.getLockForKey(indexShardId);
-            lock.lock();
             try {
-                final IndexShard indexShard = indexShardService.loadById(indexShardId);
-                if (indexShard != null) {
-                    final boolean success = indexShardService.forceStatus(indexShard.getId(), status);
-                    if (!success) {
-                        LOGGER.debug("State transition from " +
-                                indexShard.getStatus() +
-                                " to " +
-                                status +
-                                " was attempted but is not allowed");
-                    }
-                }
+                indexShardService.logicalDelete(id);
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
-            } finally {
-                lock.unlock();
+            }
+        }
+    }
+
+    /**
+     * Set a shard to CLOSED if it is OPEN, OPENING or CLOSING.
+     * @param id The id of the shard to reset.
+     */
+    public void reset(final Long id) {
+        // Allow the thing to run without a service (e.g. benchmark mode)
+        if (indexShardService != null) {
+            try {
+                indexShardService.reset(id);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e::getMessage, e);
             }
         }
     }
@@ -395,17 +375,11 @@ public class IndexShardManager {
                        final Long fileSize) {
         // Allow the thing to run without a service (e.g. benchmark mode)
         if (indexShardService != null) {
-            final Lock lock = shardUpdateLocks.getLockForKey(indexShardId);
-            lock.lock();
-            try {
-                indexShardService.update(indexShardId,
-                        documentCount,
-                        commitDurationMs,
-                        commitMs,
-                        fileSize);
-            } finally {
-                lock.unlock();
-            }
+            indexShardService.update(indexShardId,
+                    documentCount,
+                    commitDurationMs,
+                    commitMs,
+                    fileSize);
         }
     }
 

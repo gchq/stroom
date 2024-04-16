@@ -310,12 +310,25 @@ class IndexShardDaoImpl implements IndexShardDao {
     }
 
     @Override
-    public boolean forceStatus(final Long id, final IndexShardStatus status) {
-        return JooqUtil.contextResult(indexDbConnProvider, context -> context
+    public void logicalDelete(final Long id) {
+        JooqUtil.context(indexDbConnProvider, context -> context
                 .update(INDEX_SHARD)
-                .set(INDEX_SHARD.STATUS, status.getPrimitiveValue())
+                .set(INDEX_SHARD.STATUS, IndexShardStatus.DELETED.getPrimitiveValue())
                 .where(INDEX_SHARD.ID.eq(id))
-                .execute()) > 0;
+                .execute());
+    }
+
+    @Override
+    public void reset(final Long id) {
+        JooqUtil.context(indexDbConnProvider, context -> context
+                .update(INDEX_SHARD)
+                .set(INDEX_SHARD.STATUS, IndexShardStatus.CLOSED.getPrimitiveValue())
+                .where(INDEX_SHARD.ID.eq(id))
+                .and(INDEX_SHARD.STATUS.eq(IndexShardStatus.OPENING.getPrimitiveValue())
+                        .or(INDEX_SHARD.STATUS.eq(IndexShardStatus.OPEN.getPrimitiveValue()))
+                        .or(INDEX_SHARD.STATUS.eq(IndexShardStatus.CLOSING.getPrimitiveValue()))
+                )
+                .execute());
     }
 
     @Override

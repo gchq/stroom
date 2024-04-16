@@ -31,7 +31,6 @@ import stroom.data.store.api.SourceUtil;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
 import stroom.index.VolumeTestConfigModule;
-import stroom.index.mock.MockIndexShardWriterExecutorModule;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -66,7 +65,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
-@IncludeModule(MockIndexShardWriterExecutorModule.class)
 class AbstractAnalyticsTest extends StroomIntegrationTest {
 
     static final SimpleDuration INSTANT = SimpleDuration

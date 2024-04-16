@@ -63,12 +63,14 @@ public interface IndexShardDao {
     boolean setStatus(Long id, IndexShard.IndexShardStatus status);
 
     /**
-     * Force the status of a shard
-     *
-     * @param id     The database ID of the shard to update
-     * @param status The new status value
+     * Force the status of a shard to be deleted
      */
-    boolean forceStatus(Long id, IndexShard.IndexShardStatus status);
+    void logicalDelete(Long id);
+
+    /**
+     * Reset the status of node to `closed` on startup
+     */
+    void reset(Long id);
 
     /**
      * Update the details of the contents of a shard

@@ -153,13 +153,19 @@ public class MockIndexShardService implements IndexShardService {
     }
 
     @Override
-    public boolean forceStatus(final Long id, final IndexShardStatus status) {
+    public void logicalDelete(final Long id) {
         final IndexShard indexShard = map.get(id);
         if (null != indexShard) {
-            indexShard.setStatus(status);
-            return true;
+            indexShard.setStatus(IndexShardStatus.DELETED);
         }
-        return false;
+    }
+
+    @Override
+    public void reset(final Long id) {
+        final IndexShard indexShard = map.get(id);
+        if (null != indexShard) {
+            indexShard.setStatus(IndexShardStatus.CLOSED);
+        }
     }
 
     @Override

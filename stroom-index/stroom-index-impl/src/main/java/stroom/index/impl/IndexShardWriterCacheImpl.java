@@ -28,9 +28,11 @@ import stroom.index.shared.LuceneVersion;
 import stroom.index.shared.LuceneVersionUtil;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
-import stroom.util.concurrent.StripedLock;
+import stroom.task.api.ThreadPoolImpl;
+import stroom.task.shared.ThreadPool;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.io.PathCreator;
@@ -47,30 +49,31 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
 
 @Singleton
 public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardWriterCacheImpl.class);
 
+    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Index Shard Writer Cache", 3);
+
     private final NodeInfo nodeInfo;
     private final IndexShardService indexShardService;
     private final LuceneIndexDocCache luceneIndexDocCache;
     private final IndexShardManager indexShardManager;
     private final StroomCache<Long, IndexShardWriter> cache;
-    private final StripedLock stripedLock = new StripedLock();
-    private final AtomicLong openWriterCount = new AtomicLong();
-    private final IndexShardWriterExecutorProvider executorProvider;
+    private final Map<Long, IndexShardWriter> openShards = new ConcurrentHashMap<>();
+    private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final SecurityContext securityContext;
     private final PathCreator pathCreator;
@@ -82,7 +85,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                                      final Provider<IndexWriterConfig> indexWriterConfigProvider,
                                      final LuceneIndexDocCache luceneIndexDocCache,
                                      final IndexShardManager indexShardManager,
-                                     final IndexShardWriterExecutorProvider executorProvider,
+                                     final ExecutorProvider executorProvider,
                                      final TaskContextFactory taskContextFactory,
                                      final SecurityContext securityContext,
                                      final PathCreator pathCreator,
@@ -92,7 +95,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         this.indexShardService = indexShardService;
         this.luceneIndexDocCache = luceneIndexDocCache;
         this.indexShardManager = indexShardManager;
-        this.executorProvider = executorProvider;
+        this.executor = executorProvider.get(THREAD_POOL);
         this.taskContextFactory = taskContextFactory;
         this.securityContext = securityContext;
         this.pathCreator = pathCreator;
@@ -101,7 +104,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         cache = cacheManager.create(
                 "Index Shard Writer Cache",
                 () -> indexWriterConfigProvider.get().getIndexShardWriterCache(),
-                (k, v) -> close(v, getExecutor()));
+                (k, v) -> close(k, executor));
 
     }
 
@@ -113,30 +116,30 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     @Override
     public IndexShardWriter getOrOpenWriter(final long indexShardId) {
         return cache.get(indexShardId, (k) -> {
-            final IndexShardWriter indexShardWriter = openWriter(k);
+            final IndexShardWriter indexShardWriter = open(k);
             if (indexShardWriter == null) {
                 throw new IndexException("Unable to create writer for " + indexShardId);
             }
-
             return indexShardWriter;
         });
     }
 
     /**
-     * We expect to get lock exceptions as writers are removed from the open writers cache and closed
-     * asynchronously via `removeElementsExceedingTTLandTTI`. If this happens we expect this exception and
-     * will return null from this method so that the calling code will create a new shard instead.
-     * This means more shards are created but stops closing shards from blocking indexing.
-     *
      * @param indexShardId The id of the index shard.
      * @return A writer for the index shard.
      */
-    private IndexShardWriter openWriter(final long indexShardId) {
-        IndexShardWriter indexShardWriter = null;
+    private IndexShardWriter open(final long indexShardId) {
+        return openShards.compute(indexShardId, (k, v) -> {
+            if (v != null) {
+                closeWriter(v);
+            }
+            return openWriter(indexShardId);
+        });
+    }
 
-        final Lock lock = stripedLock.getLockForKey(indexShardId);
-        lock.lock();
-        try {
+    private IndexShardWriter openWriter(final long indexShardId) {
+        return securityContext.asProcessingUserResult(() -> {
+            IndexShardWriter indexShardWriter = null;
             final IndexShard indexShard = indexShardService.loadById(indexShardId);
 
             // Get the index fields.
@@ -165,41 +168,54 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
                     indexShardWriter = writer;
 
-                } catch (final UncheckedLockObtainException t) {
-                    // We expect to get lock exceptions as writers are removed from the open writers cache and closed
-                    // asynchronously via `removeElementsExceedingTTLandTTI`. If this happens we expect this exception
-                    // and will return null from this method so that the calling code will create a new shard instead.
-                    // This means more shards are created but stops closing shards from blocking indexing.
-                    LOGGER.debug(() -> "Error opening " + indexShardId, t);
-                    LOGGER.trace(t::getMessage, t);
-
                 } catch (final RuntimeException e) {
-                    // Something unexpected went wrong.
                     if (isNew) {
                         LOGGER.error(() -> "Deleting new index shard because (" + e + ")", e);
-                        if (indexShardManager.setStatus(indexShardId, IndexShardStatus.DELETED)) {
-                            // Output some debug.
-                            LOGGER.debug(() -> "Deleted " + indexShardId);
-                        }
-
                     } else {
-                        LOGGER.error(e::getMessage, e);
+                        LOGGER.error(() -> "Error opening index shard " + indexShardId, e);
                     }
-                }
-
-                // Something went wrong so set the shard state back to closed.
-                if (indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSED)) {
-                    // Output some debug.
-                    LOGGER.debug(() -> "Closed " + indexShardId);
                 }
             }
 
-            openWriterCount.incrementAndGet();
-            return indexShardWriter;
+            if (indexShardWriter == null) {
+                if (isNew) {
+                    // If this was a new shard then delete it immediately.
+                    indexShardManager.logicalDelete(indexShardId);
+                } else {
+                    // Something went wrong so set the shard state back to closed.
+                    indexShardManager.reset(indexShardId);
+                }
+            }
 
-        } finally {
-            lock.unlock();
-        }
+            return indexShardWriter;
+        });
+    }
+
+    private void closeWriter(final IndexShardWriter indexShardWriter) {
+        final long indexShardId = indexShardWriter.getIndexShardId();
+        securityContext.asProcessingUser(() -> {
+            try {
+                try {
+                    LOGGER.debug(() ->
+                            "Closing " + indexShardId);
+                    LOGGER.trace(() ->
+                            "Closing " + indexShardId);
+
+                    // Set the status of the shard to closing so it won't be used again immediately when removed
+                    // from the map.
+                    indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSING);
+
+                    // Close the shard.
+                    indexShardWriter.close();
+
+                } finally {
+                    // Update the shard status.
+                    indexShardManager.reset(indexShardId);
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.error(e::getMessage, e);
+            }
+        });
     }
 
     @Override
@@ -224,7 +240,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                     final CountDownLatch countDownLatch = new CountDownLatch(openWritersIdSet.size());
                     openWritersIdSet.forEach(indexShardId -> {
                         try {
-                            flush(indexShardId, getExecutor())
+                            flush(indexShardId, executor)
                                     .thenRun(countDownLatch::countDown);
                         } catch (final RuntimeException e) {
                             LOGGER.error(e::getMessage, e);
@@ -254,9 +270,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
     @Override
     public void close(final IndexShardWriter indexShardWriter) {
-        taskContextFactory.current().info(() ->
-                "Closing index shard writer for shard: " + indexShardWriter.getIndexShardId());
         cache.invalidate(indexShardWriter.getIndexShardId());
+        cache.evictExpiredElements();
     }
 
     @Override
@@ -266,95 +281,62 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             LOGGER.debug(() -> "Deleted " + indexShardId);
         }
         cache.invalidate(indexShardId);
+        cache.evictExpiredElements();
     }
 
     private CompletableFuture<Void> flush(final long indexShardId,
                                           final Executor executor) {
-        final Lock lock = stripedLock.getLockForKey(indexShardId);
-        lock.lock();
-        final Runnable runnable = taskContextFactory.context(
-                "Flushing writer",
-                TerminateHandlerFactory.NOOP_FACTORY,
-                taskContext -> cache.getIfPresent(indexShardId).ifPresent(indexShardWriter -> {
-                    try {
-                        taskContext.info(() ->
-                                "Flushing writer for index shard " + indexShardWriter);
-
-                        // Flush the shard.
-                        indexShardWriter.flush();
-                    } catch (final RuntimeException e) {
-                        LOGGER.error(e::getMessage, e);
-                    }
-                }));
-        return CompletableFuture
-                .runAsync(runnable, executor)
-                .whenComplete((r, t) -> {
-                    lock.unlock();
-                    if (t != null) {
-                        LOGGER.error(t::getMessage, t);
-                    }
-                });
-    }
-
-    private Executor getExecutor() {
-//        if (sychronous.get()) {
-//            return executorProvider.getSyncExecutor();
-//        }
-        return executorProvider.getAsyncExecutor();
-    }
-
-    private void close(final IndexShardWriter indexShardWriter,
-                       final Executor executor) {
-        final long indexShardId = indexShardWriter.getIndexShardId();
-        final Lock lock = stripedLock.getLockForKey(indexShardId);
-        lock.lock();
-        try {
-            // Set the status of the shard to closing so it won't be used again immediately when removed
-            // from the map.
-            indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSING);
-            // Close the shard.
-            final Runnable supplier = taskContextFactory.context(
-                    "Closing writer",
+        return securityContext.asProcessingUserResult(() -> {
+            final Runnable runnable = taskContextFactory.context(
+                    "Flushing writer",
                     TerminateHandlerFactory.NOOP_FACTORY,
-                    taskContext -> {
+                    taskContext -> cache.getIfPresent(indexShardId).ifPresent(indexShardWriter -> {
                         try {
-                            try {
-                                LOGGER.debug(() ->
-                                        "Closing " + indexShardId);
-                                LOGGER.trace(() ->
-                                        "Closing " + indexShardId);
+                            taskContext.info(() ->
+                                    "Flushing writer for index shard " + indexShardWriter);
 
-                                taskContext.info(() -> "Closing writer for index shard " + indexShardId);
-
-                                // Close the shard.
-                                indexShardWriter.close();
-
-                            } finally {
-                                // Update the shard status.
-                                if (indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSED)) {
-                                    // Output some debug.
-                                    LOGGER.debug(() -> "Closed " + indexShardId);
-                                }
-                            }
+                            // Flush the shard.
+                            indexShardWriter.flush();
                         } catch (final RuntimeException e) {
                             LOGGER.error(e::getMessage, e);
                         }
-                    });
-            final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(
-                    supplier,
-                    executor);
-            completableFuture.whenComplete((r, t) -> {
-                openWriterCount.decrementAndGet();
-                lock.unlock();
-                if (t != null) {
-                    LOGGER.error(t::getMessage, t);
-                }
-            });
-        } catch (final Exception e) {
-            LOGGER.error(e::getMessage, e);
-            openWriterCount.decrementAndGet();
-            lock.unlock();
-        }
+                    }));
+            return CompletableFuture
+                    .runAsync(runnable, executor);
+        });
+    }
+
+    private void close(final long indexShardId,
+                       final Executor executor) {
+        securityContext.asProcessingUser(() -> {
+            try {
+                // Close the shard.
+                final Runnable supplier = taskContextFactory.context(
+                        "Closing writer",
+                        TerminateHandlerFactory.NOOP_FACTORY,
+                        taskContext -> {
+                            taskContext.info(() -> "Closing writer for index shard " +
+                                    indexShardId);
+                            openShards.compute(indexShardId, (k, v) -> {
+                                if (v != null) {
+                                    closeWriter(v);
+                                }
+                                return null;
+                            });
+                        });
+                CompletableFuture
+                        .runAsync(
+                                supplier,
+                                executor)
+                        .whenComplete((r, t) -> {
+                            if (t != null) {
+                                LOGGER.error(t::getMessage, t);
+                            }
+                        });
+            } catch (final Exception e) {
+                LOGGER.error(e::getMessage, e);
+            }
+        });
     }
 
     synchronized void startup() {
@@ -384,18 +366,18 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                     cache.clear();
 
                     // Report on closing progress.
-                    if (openWriterCount.get() > 0) {
+                    if (!openShards.isEmpty()) {
                         // Create a scheduled executor for us to continually log index shard writer action progress.
                         try (final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor()) {
                             // Start logging action progress.
                             executor.scheduleAtFixedRate(() ->
                                             LOGGER.info(() ->
-                                                    "Waiting for " + openWriterCount.get() + " index shards to close"),
+                                                    "Waiting for " + openShards.size() + " index shards to close"),
                                     10,
                                     10,
                                     TimeUnit.SECONDS);
 
-                            while (openWriterCount.get() > 0) {
+                            while (!openShards.isEmpty()) {
                                 ThreadUtil.sleep(500);
                             }
                             // Shut down the progress logging executor.
@@ -415,7 +397,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         try {
             LOGGER.info(() -> "Changing shard status to closed (" + indexShard + ")");
             indexShard.setStatus(IndexShardStatus.CLOSED);
-            indexShardService.forceStatus(indexShard.getId(), IndexShardStatus.CLOSED);
+            indexShardService.reset(indexShard.getId());
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         }

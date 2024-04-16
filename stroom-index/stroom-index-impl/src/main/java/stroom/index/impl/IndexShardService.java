@@ -34,7 +34,15 @@ public interface IndexShardService {
 
     boolean setStatus(Long id, IndexShard.IndexShardStatus status);
 
-    boolean forceStatus(Long id, IndexShard.IndexShardStatus status);
+    /**
+     * Force the status of a shard to be deleted
+     */
+    void logicalDelete(Long id);
+
+    /**
+     * Reset the status of node to `closed` on startup
+     */
+    void reset(Long id);
 
     void update(long indexShardId,
                 Integer documentCount,
