@@ -163,17 +163,9 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                 fileVolume.setVolumeState(fileVolumeState);
 
                 if (fileVolume.getVolumeGroupId() == null) {
-                    final String volGroupName = volumeConfigProvider.get().getDefaultStreamVolumeGroupName();
-                    final DocRef docRef = FsVolumeGroup.buildDefaultVolumeGroupDocRef(volGroupName);
-                    final FsVolumeGroup volumeGroup = FsVolumeGroup.builder()
-                            .withName(volGroupName)
-                            .withUuid(docRef.getUuid())
-                            .withDefaultVolume(true)
-                            .build();
-                    final FsVolumeGroup fsVolumeGroup = fsVolumeGroupService
-                            .create(volumeGroup);
-                    if (fsVolumeGroup != null) {
-                        fileVolume.setVolumeGroupId(fsVolumeGroup.getId());
+                    final FsVolumeGroup defaultVolumeGroup = fsVolumeGroupService.getDefaultVolumeGroup();
+                    if (defaultVolumeGroup != null) {
+                        fileVolume.setVolumeGroupId(defaultVolumeGroup.getId());
                     }
                 }
 

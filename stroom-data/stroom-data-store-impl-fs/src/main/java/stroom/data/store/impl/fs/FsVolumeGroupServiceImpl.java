@@ -188,45 +188,7 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
                             AuditUtil.stamp(securityContext, fsVolumeGroup);
 
                             LOGGER.info("Creating default volume group [{}]", groupName);
-//                            final FsVolumeGroup newGroup = volumeGroupDao.getOrCreate(indexVolumeGroup);
-
-//                            // Now create associated volumes within the group
-//                            if (volumeConfig.getDefaultStreamVolumePaths() != null) {
-//                                final String nodeName = nodeInfo.getThisNodeName();
-//
-//                                // See if we have already created a volume for this node.
-//                                final List<FsVolume> existingVolumesInGroup =
-//                                        volumeDao.getVolumesInGroup(groupName);
-//                                final boolean exists = existingVolumesInGroup
-//                                        .stream()
-//                                        .map(FsVolume::getNodeName)
-//                                        .anyMatch(name -> name.equals(nodeName));
-//                                if (!exists) {
-//                                    final List<String> paths = volumeConfig.getDefaultFsVolumeGroupPaths();
-//                                    for (String path : paths) {
-//                                        final Path resolvedPath = pathCreator.toAppPath(path);
-//
-//                                        LOGGER.info("Creating index volume with path {}",
-//                                                resolvedPath.toAbsolutePath().normalize());
-//
-//                                        final OptionalLong byteLimitOption = getDefaultVolumeLimit(
-//                                                resolvedPath.toString());
-//
-//                                        final IndexVolume indexVolume = new IndexVolume();
-//                                        indexVolume.setFsVolumeGroupId(newGroup.getId());
-//                                        indexVolume.setBytesLimit(byteLimitOption.orElse(0L));
-//                                        indexVolume.setNodeName(nodeName);
-//                                        indexVolume.setPath(resolvedPath.toString());
-//                                        AuditUtil.stamp(processingUserIdentity, indexVolume);
-//
-//                                        volumeDao.create(indexVolume);
-//                                    }
-//                                }
-//                            } else {
-//                                LOGGER.warn(() -> "Unable to create default index volume group. " +
-//                                        "Properties defaultVolumeGroupPaths defaultVolumeGroupNodes " +
-//                                        "and defaultVolumeGroupLimit must all be defined.");
-//                            }
+                            volumeGroupDao.getOrCreate(fsVolumeGroup);
                         } else {
                             LOGGER.warn(() -> "Unable to create default index " +
                                     "Property defaultVolumeGroupName must be defined.");

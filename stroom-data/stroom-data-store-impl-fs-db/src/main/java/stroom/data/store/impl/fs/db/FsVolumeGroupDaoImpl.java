@@ -101,8 +101,12 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
         Objects.requireNonNull(fsVolumeGroup);
         return JooqUtil.transactionResultWithOptimisticLocking(fsDataStoreDbConnProvider, context -> {
             if (fsVolumeGroup.isDefaultVolume()) {
-                // Can only have one that is default
-                removeCurrentDefault(context);
+                // Can only have one that is default so ensure all others are not
+                context.update(FS_VOLUME_GROUP)
+                        .set(FS_VOLUME_GROUP.IS_DEFAULT, (Boolean) null)
+                        .where(FS_VOLUME_GROUP.IS_DEFAULT.eq(true))
+                        .and(FS_VOLUME_GROUP.UUID.eq(fsVolumeGroup.getUuid()))
+                        .execute();
             }
             return genericDao.tryCreate(
                     context,
