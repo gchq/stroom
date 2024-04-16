@@ -8,19 +8,20 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class ByteBufferFactoryImpl extends ByteBufferFactory {
 
     private static final double LOG2 = Math.log(2);
-    private static final int MAX_CACHED_BUFFER_SIZE = 1024;
-    private static final int MIN_CACHED_BUFFER_SIZE = Integer.BYTES; // Cache buffers big enough for single integers and above.
+    static final int MAX_CACHED_BUFFER_SIZE = 1024;
+
+    // Cache buffers big enough for single integers and above.
+    private static final int MIN_CACHED_BUFFER_SIZE = Integer.BYTES;
     private final int minExponent;
 
-    private final ArrayBlockingQueue<ByteBuffer>[] buffers;
+    final Pool[] pools;
 
-    @SuppressWarnings("unchecked")
     public ByteBufferFactoryImpl() {
         minExponent = getMinExponent(MIN_CACHED_BUFFER_SIZE);
         final int exponent = getExponent(MAX_CACHED_BUFFER_SIZE);
-        buffers = new ArrayBlockingQueue[exponent + 1];
-        for (int i = minExponent; i < buffers.length; i++) {
-            buffers[i] = new ArrayBlockingQueue<>(1000);
+        pools = new Pool[exponent + 1];
+        for (int i = minExponent; i < pools.length; i++) {
+            pools[i] = new Pool(1000);
         }
     }
 
@@ -28,8 +29,8 @@ public class ByteBufferFactoryImpl extends ByteBufferFactory {
     public ByteBuffer acquire(final int size) {
         if (size <= MAX_CACHED_BUFFER_SIZE) {
             final int exponent = getExponent(size);
-            final ArrayBlockingQueue<ByteBuffer> queue = buffers[exponent];
-            ByteBuffer byteBuffer = queue.poll();
+            final Pool pool = pools[exponent];
+            ByteBuffer byteBuffer = pool.poll();
             if (byteBuffer != null) {
                 if (byteBuffer.capacity() >= size) {
                     byteBuffer.clear();
@@ -52,14 +53,14 @@ public class ByteBufferFactoryImpl extends ByteBufferFactory {
             unmap(byteBuffer);
         } else {
             final int exponent = getExponent(byteBuffer.capacity());
-            final ArrayBlockingQueue<ByteBuffer> queue = buffers[exponent];
-            if (!queue.offer(byteBuffer)) {
+            final Pool pool = pools[exponent];
+            if (!pool.offer(byteBuffer)) {
                 unmap(byteBuffer);
             }
         }
     }
 
-    private int getExponent(final int size) {
+    int getExponent(final int size) {
         return Math.max(minExponent, getMinExponent(size));
     }
 
@@ -77,5 +78,22 @@ public class ByteBufferFactoryImpl extends ByteBufferFactory {
 
     private void unmap(final ByteBuffer byteBuffer) {
         ByteBufferSupport.unmap(byteBuffer);
+    }
+
+    static class Pool {
+
+        private final ArrayBlockingQueue<ByteBuffer> queue;
+
+        public Pool(final int capacity) {
+            queue = new ArrayBlockingQueue<>(capacity);
+        }
+
+        public ByteBuffer poll() {
+            return queue.poll();
+        }
+
+        public boolean offer(final ByteBuffer byteBuffer) {
+            return queue.offer(byteBuffer);
+        }
     }
 }
