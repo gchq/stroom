@@ -85,7 +85,7 @@ public class CommonAlertPresenter
                         .build())
                 .height(Size
                         .builder()
-//                        .initial(height)
+                        .initial(height)
                         .min(200)
                         .resizable(true)
                         .build())

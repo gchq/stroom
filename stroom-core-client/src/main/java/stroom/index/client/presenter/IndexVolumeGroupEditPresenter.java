@@ -225,8 +225,16 @@ public class IndexVolumeGroupEditPresenter
 
                             if (hasChanged) {
                                 try {
-                                    doWithGroupNameValidation(getView().getName(), volumeGroup.getId(), () ->
-                                            updateVolumeGroup(consumer, volumeGroup));
+                                    final String message = "You have de-selected the default volume group " +
+                                            "status. This will prevent streams from " +
+                                            "being written if no volume group is specified on the Feed/Pipeline. " +
+                                            "You should make another volume group the default before continuing.";
+                                    ConfirmEvent.fire(this, message, ok -> {
+                                        if (ok) {
+                                            doWithGroupNameValidation(getView().getName(), volumeGroup.getId(), () ->
+                                                    updateVolumeGroup(consumer, volumeGroup));
+                                        }
+                                    });
                                 } catch (final RuntimeException e) {
                                     AlertEvent.fireError(
                                             IndexVolumeGroupEditPresenter.this,

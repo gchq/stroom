@@ -132,9 +132,16 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
     private void delete() {
         final List<FsVolumeGroup> list = volumeStatusListPresenter.getSelectionModel().getSelectedItems();
         if (GwtNullSafe.hasItems(list)) {
-            final String message = list.size() > 1
+            String message = list.size() > 1
                     ? "Are you sure you want to delete the selected volume group?"
                     : "Are you sure you want to delete the selected volume groups?";
+
+            if (list.stream().anyMatch(FsVolumeGroup::isDefaultVolume)) {
+                //noinspection TextBlockMigration // GWT :-(
+                message += "\n\nYou are deleting the default volume group. This will prevent streams from " +
+                        "being written if no volume group is specified on the Feed/Pipeline. You should " +
+                        "make another volume group the default before continuing.";
+            }
 
             ConfirmEvent.fire(FsVolumeGroupPresenter.this, message,
                     result -> {
