@@ -191,9 +191,11 @@ public class ActiveShardsCacheImpl implements ActiveShardsCache {
                 LOGGER.trace(e::getMessage, e);
 
             } catch (final RuntimeException e) {
-                LOGGER.error(e::getMessage, e);
                 if (throwException) {
+                    LOGGER.error(e::getMessage, e);
                     throw e;
+                } else {
+                    LOGGER.debug(e::getMessage, e);
                 }
             }
             return false;
@@ -241,7 +243,7 @@ public class ActiveShardsCacheImpl implements ActiveShardsCache {
             final List<IndexShard> indexShards = new ArrayList<>();
             final ResultPage<IndexShard> indexShardResultPage = indexShardService.find(criteria);
             for (final IndexShard indexShard : indexShardResultPage.getValues()) {
-                // Look for non deleted, non full, non corrupt index shards.
+                // Look for non deleted, non-full, non-corrupt index shards.
                 if (IndexShardStatus.CLOSED.equals(indexShard.getStatus()) &&
                         indexShard.getDocumentCount() < maxDocsPerShard) {
                     indexShards.add(indexShard);
