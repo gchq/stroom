@@ -52,6 +52,7 @@ public class IndexModule extends AbstractModule {
         bind(IndexVolumeService.class).to(IndexVolumeServiceImpl.class);
         bind(IndexVolumeGroupService.class).to(IndexVolumeGroupServiceImpl.class);
         bind(IndexShardService.class).to(IndexShardServiceImpl.class);
+        bind(IndexShardCreator.class).to(IndexShardCreatorImpl.class);
         bind(IndexFieldService.class).to(IndexFieldServiceImpl.class);
         bind(Indexer.class).to(IndexerImpl.class);
         bind(ActiveShardsCache.class).to(ActiveShardsCacheImpl.class);

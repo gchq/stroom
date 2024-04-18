@@ -68,9 +68,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Index Shard Writer Cache", 3);
 
     private final NodeInfo nodeInfo;
-    private final IndexShardService indexShardService;
     private final LuceneIndexDocCache luceneIndexDocCache;
-    private final IndexShardManager indexShardManager;
+    private final IndexShardDao indexShardDao;
     private final StroomCache<Long, IndexShardWriter> cache;
     private final Map<Long, IndexShardWriter> openShards = new ConcurrentHashMap<>();
     private final Executor executor;
@@ -84,7 +83,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                                      final IndexShardService indexShardService,
                                      final Provider<IndexWriterConfig> indexWriterConfigProvider,
                                      final LuceneIndexDocCache luceneIndexDocCache,
-                                     final IndexShardManager indexShardManager,
+                                     final IndexShardDao indexShardDao,
                                      final ExecutorProvider executorProvider,
                                      final TaskContextFactory taskContextFactory,
                                      final SecurityContext securityContext,
@@ -92,9 +91,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                                      final LuceneProviderFactory luceneProviderFactory,
                                      final CacheManager cacheManager) {
         this.nodeInfo = nodeInfo;
-        this.indexShardService = indexShardService;
         this.luceneIndexDocCache = luceneIndexDocCache;
-        this.indexShardManager = indexShardManager;
+        this.indexShardDao = indexShardDao;
         this.executor = executorProvider.get(THREAD_POOL);
         this.taskContextFactory = taskContextFactory;
         this.securityContext = securityContext;
@@ -140,16 +138,21 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private IndexShardWriter openWriter(final long indexShardId) {
         return securityContext.asProcessingUserResult(() -> {
             IndexShardWriter indexShardWriter = null;
-            final IndexShard indexShard = indexShardService.loadById(indexShardId);
+            final Optional<IndexShard> optional = indexShardDao.fetch(indexShardId);
+            if (optional.isEmpty()) {
+                LOGGER.error(() -> "Unable to find index shard with id = " + indexShardId);
+                return null;
+            }
 
             // Get the index fields.
+            final IndexShard indexShard = optional.get();
             final LuceneIndexDoc luceneIndexDoc = luceneIndexDocCache.get(new DocRef(LuceneIndexDoc.DOCUMENT_TYPE,
                     indexShard.getIndexUuid()));
 
             // Mark the index shard as opening.
             final boolean isNew = IndexShardStatus.NEW.equals(indexShard.getStatus());
             LOGGER.debug(() -> "Opening " + indexShardId);
-            if (indexShardManager.setStatus(indexShardId, IndexShardStatus.OPENING)) {
+            if (indexShardDao.setStatus(indexShardId, IndexShardStatus.OPENING)) {
                 try {
                     final LuceneVersion luceneVersion = LuceneVersionUtil
                             .getLuceneVersion(indexShard.getIndexVersion());
@@ -159,7 +162,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                             luceneIndexDoc.getMaxDocsPerShard());
 
                     // We have opened the index so update the DB object.
-                    if (indexShardManager.setStatus(indexShardId, IndexShardStatus.OPEN)) {
+                    if (indexShardDao.setStatus(indexShardId, IndexShardStatus.OPEN)) {
                         // Output some debug.
                         LOGGER.debug(() ->
                                 "Opened " + indexShardId + " in " +
@@ -180,10 +183,10 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             if (indexShardWriter == null) {
                 if (isNew) {
                     // If this was a new shard then delete it immediately.
-                    indexShardManager.logicalDelete(indexShardId);
+                    indexShardDao.logicalDelete(indexShardId);
                 } else {
                     // Something went wrong so set the shard state back to closed.
-                    indexShardManager.reset(indexShardId);
+                    indexShardDao.reset(indexShardId);
                 }
             }
 
@@ -203,14 +206,14 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
                     // Set the status of the shard to closing so it won't be used again immediately when removed
                     // from the map.
-                    indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSING);
+                    indexShardDao.setStatus(indexShardId, IndexShardStatus.CLOSING);
 
                     // Close the shard.
                     indexShardWriter.close();
 
                 } finally {
                     // Update the shard status.
-                    indexShardManager.reset(indexShardId);
+                    indexShardDao.reset(indexShardId);
                 }
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
@@ -276,10 +279,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
     @Override
     public void delete(final long indexShardId) {
-        if (indexShardManager.setStatus(indexShardId, IndexShardStatus.DELETED)) {
-            // Output some debug.
-            LOGGER.debug(() -> "Deleted " + indexShardId);
-        }
+        indexShardDao.logicalDelete(indexShardId);
+        LOGGER.debug(() -> "Deleted " + indexShardId);
         cache.invalidate(indexShardId);
         cache.evictExpiredElements();
     }
@@ -349,7 +350,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                 criteria.getIndexShardStatusSet().add(IndexShardStatus.OPEN);
                 criteria.getIndexShardStatusSet().add(IndexShardStatus.OPENING);
                 criteria.getIndexShardStatusSet().add(IndexShardStatus.CLOSING);
-                final ResultPage<IndexShard> indexShardResultPage = indexShardService.find(criteria);
+                final ResultPage<IndexShard> indexShardResultPage = indexShardDao.find(criteria);
                 for (final IndexShard indexShard : indexShardResultPage.getValues()) {
                     clean(indexShard);
                 }
@@ -397,7 +398,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         try {
             LOGGER.info(() -> "Changing shard status to closed (" + indexShard + ")");
             indexShard.setStatus(IndexShardStatus.CLOSED);
-            indexShardService.reset(indexShard.getId());
+            indexShardDao.reset(indexShard.getId());
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         }

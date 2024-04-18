@@ -33,7 +33,8 @@ public class ActiveShardsCacheImpl implements ActiveShardsCache {
 
     private final NodeInfo nodeInfo;
     private final IndexShardWriterCache indexShardWriterCache;
-    private final IndexShardService indexShardService;
+    private final IndexShardDao indexShardDao;
+    private final IndexShardCreator indexShardCreator;
     private final LuceneIndexDocCache luceneIndexDocCache;
     private final SecurityContext securityContext;
 
@@ -43,14 +44,16 @@ public class ActiveShardsCacheImpl implements ActiveShardsCache {
     @Inject
     ActiveShardsCacheImpl(final IndexShardWriterCache indexShardWriterCache,
                           final NodeInfo nodeInfo,
-                          final IndexShardService indexShardService,
+                          final IndexShardDao indexShardDao,
+                          final IndexShardCreator indexShardCreator,
                           final LuceneIndexDocCache luceneIndexDocCache,
                           final CacheManager cacheManager,
                           final Provider<IndexWriterConfig> indexWriterConfigProvider,
                           final SecurityContext securityContext) {
         this.indexShardWriterCache = indexShardWriterCache;
         this.nodeInfo = nodeInfo;
-        this.indexShardService = indexShardService;
+        this.indexShardDao = indexShardDao;
+        this.indexShardCreator = indexShardCreator;
         this.luceneIndexDocCache = luceneIndexDocCache;
         this.securityContext = securityContext;
 
@@ -77,7 +80,8 @@ public class ActiveShardsCacheImpl implements ActiveShardsCache {
             return new ActiveShards(
                     nodeInfo,
                     indexShardWriterCache,
-                    indexShardService,
+                    indexShardDao,
+                    indexShardCreator,
                     luceneIndexDoc.getShardsPerPartition(),
                     luceneIndexDoc.getMaxDocsPerShard(),
                     indexShardKey);
@@ -90,7 +94,8 @@ public class ActiveShardsCacheImpl implements ActiveShardsCache {
 
         private final NodeInfo nodeInfo;
         private final IndexShardWriterCache indexShardWriterCache;
-        private final IndexShardService indexShardService;
+        private final IndexShardDao indexShardDao;
+        private final IndexShardCreator indexShardCreator;
         private final IndexShardKey indexShardKey;
         private final ReentrantLock lock = new ReentrantLock();
         private final Integer shardsPerPartition;
@@ -100,13 +105,15 @@ public class ActiveShardsCacheImpl implements ActiveShardsCache {
 
         public ActiveShards(final NodeInfo nodeInfo,
                             final IndexShardWriterCache indexShardWriterCache,
-                            final IndexShardService indexShardService,
+                            final IndexShardDao indexShardDao,
+                            final IndexShardCreator indexShardCreator,
                             final Integer shardsPerPartition,
                             final Integer maxDocsPerShard,
                             final IndexShardKey indexShardKey) {
             this.nodeInfo = nodeInfo;
             this.indexShardWriterCache = indexShardWriterCache;
-            this.indexShardService = indexShardService;
+            this.indexShardDao = indexShardDao;
+            this.indexShardCreator = indexShardCreator;
             this.shardsPerPartition = shardsPerPartition;
             this.maxDocsPerShard = maxDocsPerShard;
             this.indexShardKey = indexShardKey;
@@ -241,7 +248,7 @@ public class ActiveShardsCacheImpl implements ActiveShardsCache {
             criteria.getPartition().setString(indexShardKey.getPartition().getLabel());
 
             final List<IndexShard> indexShards = new ArrayList<>();
-            final ResultPage<IndexShard> indexShardResultPage = indexShardService.find(criteria);
+            final ResultPage<IndexShard> indexShardResultPage = indexShardDao.find(criteria);
             for (final IndexShard indexShard : indexShardResultPage.getValues()) {
                 // Look for non deleted, non-full, non-corrupt index shards.
                 if (IndexShardStatus.CLOSED.equals(indexShard.getStatus()) &&
@@ -256,7 +263,7 @@ public class ActiveShardsCacheImpl implements ActiveShardsCache {
          * Creates a new index shard writer for the specified key and opens a writer for it.
          */
         private IndexShard createNewShard(final IndexShardKey indexShardKey) {
-            return indexShardService.createIndexShard(indexShardKey, nodeInfo.getThisNodeName());
+            return indexShardCreator.createIndexShard(indexShardKey, nodeInfo.getThisNodeName());
         }
     }
 }

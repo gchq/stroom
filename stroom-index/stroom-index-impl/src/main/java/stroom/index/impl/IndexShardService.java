@@ -19,36 +19,15 @@ package stroom.index.impl;
 
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShardKey;
-import stroom.index.shared.LuceneVersion;
 import stroom.util.shared.ResultPage;
 
 public interface IndexShardService {
-    IndexShard loadById(Long id);
 
+    /**
+     * Locate shards based on various criteria
+     *
+     * @param criteria The details of the query
+     * @return Index Shards matching the criteria
+     */
     ResultPage<IndexShard> find(FindIndexShardCriteria criteria);
-
-    IndexShard createIndexShard(IndexShardKey indexShardKey, String ownerNodeName);
-
-    boolean delete(IndexShard indexShard);
-
-    boolean setStatus(Long id, IndexShard.IndexShardStatus status);
-
-    /**
-     * Force the status of a shard to be deleted
-     */
-    void logicalDelete(Long id);
-
-    /**
-     * Reset the status of node to `closed` on startup
-     */
-    void reset(Long id);
-
-    void update(long indexShardId,
-                Integer documentCount,
-                Long commitDurationMs,
-                Long commitMs,
-                Long fileSize);
-
-    void setIndexVersion(LuceneVersion indexVersion);
 }

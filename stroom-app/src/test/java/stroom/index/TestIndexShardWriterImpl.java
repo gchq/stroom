@@ -22,9 +22,10 @@ import stroom.datasource.api.v2.FieldType;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.impl.IndexDocument;
+import stroom.index.impl.IndexShardCreator;
+import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexShardManager;
 import stroom.index.impl.IndexShardManager.IndexShardAction;
-import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.IndexStore;
@@ -67,7 +68,9 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
-    private IndexShardService indexShardService;
+    private IndexShardDao indexShardDao;
+    @Inject
+    private IndexShardCreator indexShardCreator;
     @Inject
     private IndexShardManager indexShardManager;
     @Inject
@@ -90,7 +93,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
 
     @Test
     void testSingle() {
-        assertThat(indexShardService.find(FindIndexShardCriteria.matchAll()).size()).isZero();
+        assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isZero();
 
         // Do some work.
         final IndexDocument document = new IndexDocument();
@@ -100,13 +103,13 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         final DocRef indexRef1 = commonTestScenarioCreator.createIndex("TEST_2010a");
         final LuceneIndexDoc index1 = indexStore.readDocument(indexRef1);
         final IndexShardKey indexShardKey1 = IndexShardKey.createKey(index1);
-        final IndexShard indexShard = indexShardService.createIndexShard(indexShardKey1, nodeInfo.getThisNodeName());
+        final IndexShard indexShard = indexShardCreator.createIndexShard(indexShardKey1, nodeInfo.getThisNodeName());
 
         // Create a writer in the pool
         final IndexShardWriter writer1 = indexShardWriterCache.getOrOpenWriter(indexShard.getId());
 
         // Assert that there is 1 writer in the pool.
-        assertThat(indexShardService.find(FindIndexShardCriteria.matchAll()).size()).isEqualTo(1);
+        assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isEqualTo(1);
 
         final FindIndexShardCriteria criteria = FindIndexShardCriteria.matchAll();
         checkDocCount(0, writer1);
@@ -138,7 +141,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
 
     @Test
     void testSimple() {
-        assertThat(indexShardService.find(FindIndexShardCriteria.matchAll()).size()).isZero();
+        assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isZero();
 
         // Do some work.
         final IndexDocument document = new IndexDocument();
@@ -147,19 +150,19 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         final DocRef indexRef1 = commonTestScenarioCreator.createIndex("TEST_2010");
         final LuceneIndexDoc index1 = indexStore.readDocument(indexRef1);
         final IndexShardKey indexShardKey1 = IndexShardKey.createKey(index1);
-        final IndexShard indexShard1 = indexShardService.createIndexShard(indexShardKey1, nodeInfo.getThisNodeName());
+        final IndexShard indexShard1 = indexShardCreator.createIndexShard(indexShardKey1, nodeInfo.getThisNodeName());
 
         final DocRef indexRef2 = commonTestScenarioCreator.createIndex("TEST_2011");
         final LuceneIndexDoc index2 = indexStore.readDocument(indexRef2);
         final IndexShardKey indexShardKey2 = IndexShardKey.createKey(index2);
-        final IndexShard indexShard2 = indexShardService.createIndexShard(indexShardKey2, nodeInfo.getThisNodeName());
+        final IndexShard indexShard2 = indexShardCreator.createIndexShard(indexShardKey2, nodeInfo.getThisNodeName());
 
         // Create 2 writers in the pool.
         final IndexShardWriter writer1 = indexShardWriterCache.getOrOpenWriter(indexShard1.getId());
         final IndexShardWriter writer2 = indexShardWriterCache.getOrOpenWriter(indexShard2.getId());
 
         // Assert that there are 2 writers in the pool.
-        assertThat(indexShardService.find(FindIndexShardCriteria.matchAll()).size()).isEqualTo(2);
+        assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isEqualTo(2);
 
         final FindIndexShardCriteria criteria = FindIndexShardCriteria.matchAll();
 
@@ -224,7 +227,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
             indexer.addDocument(indexShardKey1, document);
         }
 
-        final ResultPage<IndexShard> indexShardResultPage = indexShardService.find(FindIndexShardCriteria.matchAll());
+        final ResultPage<IndexShard> indexShardResultPage = indexShardDao.find(FindIndexShardCriteria.matchAll());
         assertThat(indexShardResultPage.size()).isOne();
         final IndexShard indexShard1 = indexShardResultPage.getFirst();
         final IndexShardWriter writer1 = indexShardWriterCache.getOrOpenWriter(indexShard1.getId());
@@ -258,7 +261,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
 
     @Test
     void testFileSystemError() throws IOException {
-        assertThat(indexShardService.find(FindIndexShardCriteria.matchAll()).size()).isZero();
+        assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isZero();
 
         // Make index volume paths that we cannot write to.
         final Path tempDir = Files.createTempDirectory("stroom");
@@ -286,7 +289,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
 
     @Test
     void testChangeFieldType() {
-        assertThat(indexShardService.find(FindIndexShardCriteria.matchAll()).size()).isZero();
+        assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isZero();
 
         final DocRef indexRef1 = commonTestScenarioCreator.createIndex("TEST_2010",
                 commonTestScenarioCreator.createIndexFields(),
@@ -313,7 +316,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
                 .build(), ValString.create("12345")));
         indexer.addDocument(indexShardKey1, document1);
         indexer.addDocument(indexShardKey1, document1);
-        assertThat(indexShardService.find(criteria).size()).isOne();
+        assertThat(indexShardDao.find(criteria).size()).isOne();
 
         final IndexDocument document2 = new IndexDocument();
         document2.add(new FieldValue(LuceneIndexField
@@ -327,7 +330,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
                 .build(), ValInteger.create(12345)));
         indexer.addDocument(indexShardKey1, document2);
         indexer.addDocument(indexShardKey1, document2);
-        assertThat(indexShardService.find(criteria).size()).isEqualTo(2);
+        assertThat(indexShardDao.find(criteria).size()).isEqualTo(2);
 
         final IndexDocument document3 = new IndexDocument();
         document3.add(new FieldValue(LuceneIndexField
@@ -341,13 +344,13 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
                 .build(), ValString.create("12345")));
         indexer.addDocument(indexShardKey1, document3);
         indexer.addDocument(indexShardKey1, document3);
-        assertThat(indexShardService.find(criteria).size()).isEqualTo(3);
+        assertThat(indexShardDao.find(criteria).size()).isEqualTo(3);
     }
 
     @Disabled
     @Test
     void testPerformance() {
-        assertThat(indexShardService.find(FindIndexShardCriteria.matchAll()).size()).isZero();
+        assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isZero();
 
         final DocRef indexRef1 = commonTestScenarioCreator.createIndex("TEST_2010",
                 commonTestScenarioCreator.createIndexFields(),
@@ -375,12 +378,12 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
     }
 
     private void checkDocCount(final int expected, final long indexShardId) {
-        final IndexShard loaded = indexShardService.loadById(indexShardId);
+        final IndexShard loaded = indexShardDao.fetch(indexShardId).orElseThrow();
         assertThat(loaded.getDocumentCount()).isEqualTo(expected);
     }
 
     private boolean compareStatus(final IndexShardStatus expected, final long indexShardId) {
-        final IndexShard loaded = indexShardService.loadById(indexShardId);
+        final IndexShard loaded = indexShardDao.fetch(indexShardId).orElseThrow();
         return expected.equals(loaded.getStatus());
     }
 }
