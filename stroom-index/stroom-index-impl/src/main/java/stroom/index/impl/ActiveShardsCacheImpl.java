@@ -19,6 +19,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -185,25 +186,34 @@ public class ActiveShardsCacheImpl implements ActiveShardsCache {
         private boolean addDocument(final IndexDocument document,
                                     final IndexShard indexShard,
                                     final boolean throwException) {
-            final IndexShardWriter indexShardWriter = indexShardWriterCache.getOrOpenWriter(indexShard.getId());
             try {
-                indexShardWriter.addDocument(document);
-                return true;
+                final IndexShardWriter indexShardWriter = indexShardWriterCache.getOrOpenWriter(indexShard.getId());
+                try {
+                    indexShardWriter.addDocument(document);
+                    return true;
 
-            } catch (final ShardFullException e) {
-                removeActiveShard(indexShard);
-                indexShardWriterCache.close(indexShardWriter);
+                } catch (final IndexException | UncheckedIOException e) {
+                    LOGGER.trace(e::getMessage, e);
 
-            } catch (final IndexException | IllegalArgumentException e) {
-                LOGGER.trace(e::getMessage, e);
+                    removeActiveShard(indexShard);
+                    indexShardWriterCache.close(indexShardWriter);
 
-            } catch (final RuntimeException e) {
+                } catch (final RuntimeException e) {
+                    if (throwException) {
+                        LOGGER.error(e::getMessage, e);
+                        throw e;
+                    } else {
+                        LOGGER.debug(e::getMessage, e);
+                    }
+                }
+            } catch (final IndexException e) {
                 if (throwException) {
                     LOGGER.error(e::getMessage, e);
                     throw e;
                 } else {
                     LOGGER.debug(e::getMessage, e);
                 }
+                removeActiveShard(indexShard);
             }
             return false;
         }
@@ -230,11 +240,15 @@ public class ActiveShardsCacheImpl implements ActiveShardsCache {
 
         private synchronized void addActiveShard(final IndexShardKey indexShardKey) {
             final IndexShard indexShard = createNewShard(indexShardKey);
-            indexShards.add(indexShard);
+            final List<IndexShard> list = new ArrayList<>(indexShards);
+            list.add(indexShard);
+            indexShards = list;
         }
 
         private synchronized void removeActiveShard(final IndexShard indexShard) {
-            indexShards.remove(indexShard);
+            final List<IndexShard> list = new ArrayList<>(indexShards);
+            list.remove(indexShard);
+            indexShards = list;
         }
 
         /**

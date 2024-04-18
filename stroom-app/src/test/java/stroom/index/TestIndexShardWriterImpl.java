@@ -46,6 +46,7 @@ import stroom.search.extraction.FieldValue;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
+import stroom.util.io.FileUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 
@@ -57,7 +58,9 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -370,6 +373,87 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
                 .build(), ValString.create("12345")));
         for (int i = 0; i < 1000000; i++) {
             indexer.addDocument(indexShardKey1, document1);
+        }
+    }
+
+    @Test
+    void testDelete() {
+        assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isZero();
+
+        final DocRef indexRef1 = commonTestScenarioCreator.createIndex("TEST_2010",
+                commonTestScenarioCreator.createIndexFields(),
+                1000000);
+        final LuceneIndexDoc index1 = indexStore.readDocument(indexRef1);
+        final IndexShardKey indexShardKey1 = IndexShardKey.createKey(index1);
+
+        final IndexDocument document1 = new IndexDocument();
+        document1.add(new FieldValue(LuceneIndexField
+                .builder()
+                .fldName("SourcePort")
+                .fldType(FieldType.TEXT)
+                .analyzerType(AnalyzerType.ALPHA_NUMERIC)
+                .termPositions(false)
+                .indexed(true)
+                .stored(false)
+                .build(), ValString.create("12345")));
+
+        final Selection<IndexShardStatus> deleted = Selection.selectNone();
+        deleted.add(IndexShardStatus.DELETED);
+        final FindIndexShardCriteria findDeleted = FindIndexShardCriteria.builder()
+                .indexShardStatusSet(deleted).build();
+
+        for (int j = 0; j < 10; j++) {
+            // Delete every shard.
+            indexShardManager.performAction(FindIndexShardCriteria.matchAll(), IndexShardAction.DELETE);
+            assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isEqualTo(j);
+            assertThat(indexShardDao.find(findDeleted).size()).isEqualTo(j);
+
+            // Now add more data.
+            for (int i = 0; i < 10; i++) {
+                indexer.addDocument(indexShardKey1, document1);
+            }
+            assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isEqualTo(j + 1);
+            assertThat(indexShardDao.find(findDeleted).size()).isEqualTo(j);
+        }
+    }
+
+    @Test
+    void testCorruption() {
+        assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isZero();
+
+        final DocRef indexRef1 = commonTestScenarioCreator.createIndex("TEST_2010",
+                commonTestScenarioCreator.createIndexFields(),
+                1000000);
+        final LuceneIndexDoc index1 = indexStore.readDocument(indexRef1);
+        final IndexShardKey indexShardKey1 = IndexShardKey.createKey(index1);
+
+        final IndexDocument document1 = new IndexDocument();
+        document1.add(new FieldValue(LuceneIndexField
+                .builder()
+                .fldName("SourcePort")
+                .fldType(FieldType.TEXT)
+                .analyzerType(AnalyzerType.ALPHA_NUMERIC)
+                .termPositions(false)
+                .indexed(true)
+                .stored(false)
+                .build(), ValString.create("12345")));
+
+        final List<IndexVolume> volumeList = indexVolumeDao.getAll();
+        for (int j = 0; j < 10; j++) {
+            // Flush.
+            indexShardManager.performAction(FindIndexShardCriteria.matchAll(), IndexShardAction.FLUSH);
+
+            // Delete every shard file.
+            for (final IndexVolume indexVolume : volumeList) {
+                FileUtil.deleteContents(Paths.get(indexVolume.getPath()));
+            }
+            assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isEqualTo(j);
+
+            // Now add more data.
+            for (int i = 0; i < 10; i++) {
+                indexer.addDocument(indexShardKey1, document1);
+            }
+            assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isEqualTo(j + 1);
         }
     }
 
