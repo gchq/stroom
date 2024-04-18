@@ -98,6 +98,10 @@ public interface Store<D extends Document>
 //    List<DocRef> findByNames(final List<String> name,
 //                             final boolean allowWildCards);
 
+
+    // --------------------------------------------------------------------------------
+
+
     interface DocumentCreator<D extends Document> {
 
         D create(final String type,

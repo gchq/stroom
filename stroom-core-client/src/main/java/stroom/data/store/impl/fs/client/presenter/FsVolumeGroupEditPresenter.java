@@ -113,8 +113,12 @@ public class FsVolumeGroupEditPresenter
 
     private void create() {
         final FsVolume fsVolume = new FsVolume();
-        fsVolume.setVolumeGroupId(volumeGroup.getId());
+        fsVolume.setVolumeGroupId(getVolumeGroup().getId());
         editVolume(fsVolume, "Add Volume");
+    }
+
+    private FsVolumeGroup getVolumeGroup() {
+        return volumeGroup;
     }
 
     private void edit() {
@@ -192,6 +196,7 @@ public class FsVolumeGroupEditPresenter
         if (!open) {
             open = true;
 
+            // Capture the state before we edit
             this.volumeGroup = volumeGroup.copy()
                     .build();
             volumeStatusListPresenter.setGroup(volumeGroup);
@@ -207,30 +212,36 @@ public class FsVolumeGroupEditPresenter
                     .onShow(e -> getView().focus())
                     .onHideRequest(event -> {
                         if (event.isOk()) {
-                            volumeGroup.setName(getView().getName());
-                            volumeGroup.setDefaultVolume(getView().isDefault());
-                            final boolean hasChanged = !GwtNullSafe.equalProperties(
-                                    this.volumeGroup, volumeGroup, FsVolumeGroup::getName)
-                                    || !GwtNullSafe.equalProperties(
-                                    this.volumeGroup, volumeGroup, FsVolumeGroup::isDefaultVolume);
+                            final String name = getView().getName();
+                            final boolean isDefault = getView().isDefault();
+                            final boolean hasChanged = !Objects.equals(this.volumeGroup.getName(), name)
+                                    || !Objects.equals(this.volumeGroup.isDefaultVolume(), isDefault);
 //                            GWT.log("hasChanged " + hasChanged);
                             if (hasChanged) {
-                                try {
-                                    final String message = "You have de-selected the default volume group " +
-                                            "status. This will prevent streams from " +
-                                            "being written if no volume group is specified on the Feed/Pipeline. " +
-                                            "You should make another volume group the default before continuing.";
-                                    ConfirmEvent.fire(this, message, ok -> {
-                                        if (ok) {
-                                            doWithGroupNameValidation(getView().getName(), volumeGroup.getId(), () ->
-                                                    editVolumeGroup(consumer, volumeGroup));
-                                        }
-                                    });
-                                } catch (final RuntimeException e) {
-                                    AlertEvent.fireError(
-                                            FsVolumeGroupEditPresenter.this,
-                                            e.getMessage(),
-                                            null);
+                                final boolean isDefaultStateRemoved = this.volumeGroup.isDefaultVolume()
+                                        && !isDefault;
+                                if (isDefaultStateRemoved) {
+                                    final String message = "You cannot remove the default state from the " +
+                                            "volume group. " +
+                                            "This will prevent streams from being written if no volume group " +
+                                            "is explicitly specified on the Feed/Pipeline. " +
+                                            "You should first make another volume group the default.";
+                                    AlertEvent.fireError(this, message, null);
+                                } else {
+                                    try {
+                                        // Change a copy in case it fails validation
+                                        final FsVolumeGroup volumeGroupCopy = volumeGroup.copy()
+                                                .withName(name)
+                                                .withDefaultVolume(isDefault)
+                                                .build();
+                                        doWithGroupNameValidation(getView().getName(), volumeGroupCopy.getId(), () ->
+                                                editVolumeGroup(consumer, volumeGroupCopy));
+                                    } catch (final RuntimeException e) {
+                                        AlertEvent.fireError(
+                                                FsVolumeGroupEditPresenter.this,
+                                                e.getMessage(),
+                                                null);
+                                    }
                                 }
                             } else {
                                 consumer.accept(null);

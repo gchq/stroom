@@ -31,7 +31,6 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DelayedUpdate;
-import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -203,12 +202,13 @@ public class IndexVolumeGroupEditPresenter
         if (!open) {
             open = true;
 
+            // Capture the state before we edit
             this.volumeGroup = volumeGroup.copy()
                     .build();
             getView().setName(volumeGroup.getName());
             getView().setDefault(volumeGroup.isDefaultVolume());
 
-            final PopupSize popupSize = PopupSize.resizable(1000, 600);
+            final PopupSize popupSize = PopupSize.resizable(1400, 600);
             ShowPopupEvent.builder(this)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
                     .popupSize(popupSize)
@@ -216,30 +216,36 @@ public class IndexVolumeGroupEditPresenter
                     .onShow(e -> getView().focus())
                     .onHideRequest(event -> {
                         if (event.isOk()) {
-                            volumeGroup.setName(getView().getName());
-                            volumeGroup.setDefaultVolume(getView().isDefault());
-                            final boolean hasChanged = !GwtNullSafe.equalProperties(
-                                    this.volumeGroup, volumeGroup, IndexVolumeGroup::getName)
-                                    || !GwtNullSafe.equalProperties(
-                                    this.volumeGroup, volumeGroup, IndexVolumeGroup::isDefaultVolume);
+                            final String name = getView().getName();
+                            final boolean isDefault = getView().isDefault();
+                            final boolean hasChanged = !Objects.equals(this.volumeGroup.getName(), name)
+                                    || !Objects.equals(this.volumeGroup.isDefaultVolume(), isDefault);
 
                             if (hasChanged) {
-                                try {
-                                    final String message = "You have de-selected the default volume group " +
-                                            "status. This will prevent streams from " +
-                                            "being written if no volume group is specified on the Feed/Pipeline. " +
-                                            "You should make another volume group the default before continuing.";
-                                    ConfirmEvent.fire(this, message, ok -> {
-                                        if (ok) {
-                                            doWithGroupNameValidation(getView().getName(), volumeGroup.getId(), () ->
-                                                    updateVolumeGroup(consumer, volumeGroup));
-                                        }
-                                    });
-                                } catch (final RuntimeException e) {
-                                    AlertEvent.fireError(
-                                            IndexVolumeGroupEditPresenter.this,
-                                            e.getMessage(),
-                                            null);
+                                final boolean isDefaultStateRemoved = this.volumeGroup.isDefaultVolume()
+                                        && !isDefault;
+                                if (isDefaultStateRemoved) {
+                                    final String message = "You cannot remove the default state from the " +
+                                            "volume group. " +
+                                            "This will prevent events from being indexed if no volume group " +
+                                            "is explicitly specified on the Index. " +
+                                            "You should first make another volume group the default.";
+                                    AlertEvent.fireError(this, message, null);
+                                } else {
+                                    try {
+                                        // Change a copy in case it fails validation
+                                        final IndexVolumeGroup volumeGroupCopy = volumeGroup.copy()
+                                                .withName(name)
+                                                .withDefaultVolume(isDefault)
+                                                .build();
+                                        doWithGroupNameValidation(getView().getName(), volumeGroupCopy.getId(), () ->
+                                                updateVolumeGroup(consumer, volumeGroupCopy));
+                                    } catch (final RuntimeException e) {
+                                        AlertEvent.fireError(
+                                                IndexVolumeGroupEditPresenter.this,
+                                                e.getMessage(),
+                                                null);
+                                    }
                                 }
                             } else {
                                 consumer.accept(null);

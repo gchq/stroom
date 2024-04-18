@@ -30,6 +30,10 @@ public final class ColumnSizeConstants {
      * Column with the heading 'Enabled'
      */
     public static final int ENABLED_COL = 62;
+    /**
+     * Action column with no heading
+     */
+    public static final int ACTION_COL = 40;
 
     private ColumnSizeConstants() {
         // Constants.

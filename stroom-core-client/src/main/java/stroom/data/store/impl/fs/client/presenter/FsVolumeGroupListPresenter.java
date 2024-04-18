@@ -17,7 +17,7 @@
 package stroom.data.store.impl.fs.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.cell.info.client.ActionCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
@@ -28,19 +28,30 @@ import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
 import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.widget.menu.client.presenter.Item;
+import stroom.widget.menu.client.presenter.MenuBuilder;
+import stroom.widget.menu.client.presenter.MenuPresenter;
+import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class FsVolumeGroupListPresenter extends MyPresenterWidget<PagerView> {
 
@@ -51,13 +62,19 @@ public class FsVolumeGroupListPresenter extends MyPresenterWidget<PagerView> {
     private final MyDataGrid<FsVolumeGroup> dataGrid;
     private final MultiSelectionModelImpl<FsVolumeGroup> selectionModel;
     private final RestDataProvider<FsVolumeGroup, ResultPage<FsVolumeGroup>> dataProvider;
+    private final MenuPresenter menuPresenter;
+
+    private Consumer<List<FsVolumeGroup>> deleteHandler = null;
+    private Consumer<FsVolumeGroup> editHandler;
 
     @Inject
     public FsVolumeGroupListPresenter(final EventBus eventBus,
                                       final PagerView view,
-                                      final RestFactory restFactory) {
+                                      final RestFactory restFactory,
+                                      final MenuPresenter menuPresenter) {
         super(eventBus, view);
         this.restFactory = restFactory;
+        this.menuPresenter = menuPresenter;
         this.dataGrid = new MyDataGrid<>();
         this.selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
@@ -105,33 +122,93 @@ public class FsVolumeGroupListPresenter extends MyPresenterWidget<PagerView> {
                 ColumnSizeConstants.UUID_COL);
 
         // Is Default
-        final Column<FsVolumeGroup, TickBoxState> defaultColumn = DataGridUtil.updatableTickBoxColumnBuilder(
-                        FsVolumeGroup::isDefaultVolume)
+        final Column<FsVolumeGroup, String> defaultColumn = DataGridUtil.textColumnBuilder(
+                        FsVolumeGroup::isDefaultVolume,
+                        isDefault -> isDefault
+                                ? "Yes"
+                                : null)
                 .centerAligned()
                 .build();
-
-        defaultColumn.setFieldUpdater((idx, row, tickBoxState) -> {
-            row.setDefaultVolume(tickBoxState.toBoolean());
-            restFactory
-                    .create(FS_VOLUME_GROUP_RESOURCE)
-                    .method(res -> res.update(row.getId(), row))
-                    .onSuccess(fsVolumeGroup -> {
-                        refresh();
-                    })
-                    .onFailure(restError -> {
-                        AlertEvent.fireError(this, restError.getMessage(), null);
-                    })
-                    .exec();
-        });
 
         dataGrid.addColumn(
                 defaultColumn,
                 DataGridUtil.headingBuilder("Default Group")
-                        .withToolTip("If checked, this group will be used when no group has been specified.")
+                        .withToolTip("If set, this group will be used when no group has been specified.")
                         .build(),
                 100);  // To allow for heading width
 
+        // Action
+        addActionButtonColumn();
+
         DataGridUtil.addEndColumn(dataGrid);
+    }
+
+    private void addActionButtonColumn() {
+        final ActionCell<FsVolumeGroup> actionCell = new ActionCell<>(this::showActionMenu);
+        final Column<FsVolumeGroup, FsVolumeGroup> actionColumn = DataGridUtil.columnBuilder(
+                Function.identity(),
+                () -> actionCell
+        ).build();
+        dataGrid.addColumn(actionColumn, "", ColumnSizeConstants.ACTION_COL);
+    }
+
+    private void showActionMenu(final FsVolumeGroup fsVolumeGroup, final NativeEvent event) {
+
+        final PopupPosition popupPosition = new PopupPosition(event.getClientX() + 10, event.getClientY());
+        menuPresenter.setData(buildActionMenu(fsVolumeGroup));
+        ShowPopupEvent.builder(menuPresenter)
+                .popupType(PopupType.POPUP)
+                .popupPosition(popupPosition)
+                .fire();
+    }
+
+    private List<Item> buildActionMenu(final FsVolumeGroup fsVolumeGroup) {
+
+        final MenuBuilder builder = MenuBuilder.builder()
+                .withIconMenuItem(itemBuilder -> itemBuilder
+                        .icon(SvgImage.EDIT)
+                        .text("Edit")
+                        .command(() -> onEditVolGrp(fsVolumeGroup)));
+
+        if (!fsVolumeGroup.isDefaultVolume()) {
+            builder
+                    .withIconMenuItem(itemBuilder -> itemBuilder
+                            .icon(SvgImage.EDIT)
+                            .text("Make Default")
+                            .command(() -> onMakeDefault(fsVolumeGroup)))
+                    .withIconMenuItem(itemBuilder -> itemBuilder
+                            .icon(SvgImage.DELETE)
+                            .text("Delete")
+                            .command(() -> onDeleteVolGrp(fsVolumeGroup)));
+        }
+        return builder.build();
+    }
+
+    private void onDeleteVolGrp(final FsVolumeGroup fsVolumeGroup) {
+        if (deleteHandler != null && fsVolumeGroup != null) {
+            deleteHandler.accept(GwtNullSafe.asList(fsVolumeGroup));
+        }
+    }
+
+    private void onEditVolGrp(final FsVolumeGroup fsVolumeGroup) {
+        if (editHandler != null && fsVolumeGroup != null) {
+            editHandler.accept(fsVolumeGroup);
+        }
+
+    }
+
+    private void onMakeDefault(final FsVolumeGroup fsVolumeGroup) {
+        fsVolumeGroup.setDefaultVolume(true);
+        restFactory
+                .create(FS_VOLUME_GROUP_RESOURCE)
+                .method(res -> res.update(fsVolumeGroup.getId(), fsVolumeGroup))
+                .onSuccess(fsVolumeGroup2 -> {
+                    refresh();
+                })
+                .onFailure(restError -> {
+                    AlertEvent.fireError(this, restError.getMessage(), null);
+                })
+                .exec();
     }
 
     public MultiSelectionModel<FsVolumeGroup> getSelectionModel() {
@@ -140,5 +217,13 @@ public class FsVolumeGroupListPresenter extends MyPresenterWidget<PagerView> {
 
     public void refresh() {
         dataProvider.refresh();
+    }
+
+    public void setDeleteHandler(final Consumer<List<FsVolumeGroup>> deleteHandler) {
+        this.deleteHandler = deleteHandler;
+    }
+
+    public void setEditHandler(final Consumer<FsVolumeGroup> editHandler) {
+        this.editHandler = editHandler;
     }
 }

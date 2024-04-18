@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
 
+// TODO delete, probably
 public class FsVolumeGroupPersistence implements Persistence {
 
     private final FsVolumeGroupService fsVolumeGroupService;

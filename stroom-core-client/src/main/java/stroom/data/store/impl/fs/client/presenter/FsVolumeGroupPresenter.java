@@ -17,6 +17,7 @@
 
 package stroom.data.store.impl.fs.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.grid.client.WrapperView;
@@ -71,6 +72,9 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
         deleteButton = volumeStatusListPresenter.getView().addButton(SvgPresets.DELETE);
 
         view.setView(volumeStatusListPresenter.getView());
+
+        volumeStatusListPresenter.setDeleteHandler(this::delete);
+        volumeStatusListPresenter.setEditHandler(this::edit);
     }
 
     @Override
@@ -130,32 +134,35 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
     }
 
     private void delete() {
-        final List<FsVolumeGroup> list = volumeStatusListPresenter.getSelectionModel().getSelectedItems();
-        if (GwtNullSafe.hasItems(list)) {
-            String message = list.size() > 1
-                    ? "Are you sure you want to delete the selected volume group?"
-                    : "Are you sure you want to delete the selected volume groups?";
+        final List<FsVolumeGroup> fsVolumeGroups = volumeStatusListPresenter.getSelectionModel().getSelectedItems();
+        delete(fsVolumeGroups);
+    }
 
-            if (list.stream().anyMatch(FsVolumeGroup::isDefaultVolume)) {
-                //noinspection TextBlockMigration // GWT :-(
-                message += "\n\nYou are deleting the default volume group. This will prevent streams from " +
-                        "being written if no volume group is specified on the Feed/Pipeline. You should " +
-                        "make another volume group the default before continuing.";
-            }
-
-            ConfirmEvent.fire(FsVolumeGroupPresenter.this, message,
-                    result -> {
-                        if (result) {
-                            volumeStatusListPresenter.getSelectionModel().clear();
-                            for (final FsVolumeGroup volume : list) {
-                                restFactory
-                                        .create(FS_VOLUME_GROUP_RESOURCE)
-                                        .method(res -> res.delete(volume.getId()))
-                                        .onSuccess(response -> refresh())
-                                        .exec();
+    private void delete(final List<FsVolumeGroup> fsVolumeGroups) {
+        if (GwtNullSafe.hasItems(fsVolumeGroups)) {
+            if (fsVolumeGroups.stream().anyMatch(FsVolumeGroup::isDefaultVolume)) {
+                final String msg = "You cannot delete the default volume group. This will prevent streams from " +
+                        "being written if no volume group is explicitly specified on the Feed/Pipeline. " +
+                        "You should first make another volume group the default.";
+                AlertEvent.fireError(this, msg, null);
+            } else {
+                final String message = fsVolumeGroups.size() > 1
+                        ? "Are you sure you want to delete the selected volume group?"
+                        : "Are you sure you want to delete the selected volume groups?";
+                ConfirmEvent.fire(FsVolumeGroupPresenter.this, message,
+                        result -> {
+                            if (result) {
+                                volumeStatusListPresenter.getSelectionModel().clear();
+                                for (final FsVolumeGroup volume : fsVolumeGroups) {
+                                    restFactory
+                                            .create(FS_VOLUME_GROUP_RESOURCE)
+                                            .method(res -> res.delete(volume.getId()))
+                                            .onSuccess(response -> refresh())
+                                            .exec();
+                                }
                             }
-                        }
-                    });
+                        });
+            }
         }
     }
 

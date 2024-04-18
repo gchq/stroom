@@ -17,6 +17,7 @@
 
 package stroom.index.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.grid.client.WrapperView;
@@ -152,30 +153,29 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
     private void delete() {
         final List<IndexVolumeGroup> list = volumeStatusListPresenter.getSelectionModel().getSelectedItems();
         if (GwtNullSafe.hasItems(list)) {
-            String message = list.size() > 1
-                    ? "Are you sure you want to delete the selected volume group?"
-                    : "Are you sure you want to delete the selected volume groups?";
-
             if (list.stream().anyMatch(IndexVolumeGroup::isDefaultVolume)) {
-                //noinspection TextBlockMigration // GWT :-(
-                message += "\n\nYou are deleting the default volume group. This will prevent streams from " +
-                        "being written if no volume group is specified on the Feed/Pipeline. You should " +
-                        "make another volume group the default before continuing.";
-            }
-
-            ConfirmEvent.fire(IndexVolumeGroupPresenter.this, message,
-                    result -> {
-                        if (result) {
-                            volumeStatusListPresenter.getSelectionModel().clear();
-                            for (final IndexVolumeGroup volume : list) {
-                                restFactory
-                                        .create(INDEX_VOLUME_GROUP_RESOURCE)
-                                        .method(res -> res.delete(volume.getId()))
-                                        .onSuccess(response -> refresh())
-                                        .exec();
+                final String msg = "You cannot delete the default volume group. This will prevent events from " +
+                        "being indexed if no volume group is explicitly specified on the Index. You should first " +
+                        "make another volume group the default.";
+                AlertEvent.fireError(this, msg, null);
+            } else {
+                final String message = list.size() > 1
+                        ? "Are you sure you want to delete the selected volume group?"
+                        : "Are you sure you want to delete the selected volume groups?";
+                ConfirmEvent.fire(IndexVolumeGroupPresenter.this, message,
+                        result -> {
+                            if (result) {
+                                volumeStatusListPresenter.getSelectionModel().clear();
+                                for (final IndexVolumeGroup volume : list) {
+                                    restFactory
+                                            .create(INDEX_VOLUME_GROUP_RESOURCE)
+                                            .method(res -> res.delete(volume.getId()))
+                                            .onSuccess(response -> refresh())
+                                            .exec();
+                                }
                             }
-                        }
-                    });
+                        });
+            }
         }
     }
 

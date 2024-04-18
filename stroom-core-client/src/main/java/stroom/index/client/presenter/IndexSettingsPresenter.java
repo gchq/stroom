@@ -85,7 +85,7 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
         getView().setPartitionSize(index.getPartitionSize());
         getView().setTimeField(index.getTimeField());
         updateRetentionAge(SupportedRetentionAge.get(index.getRetentionDayAge()));
-        updateGroupList(index.getVolumeGroupName());
+        updateGroupList(index.getVolumeGroupDocRef());
         pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline());
     }
 
@@ -98,11 +98,8 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
         index.setTimeField(getView().getTimeField());
         index.setRetentionDayAge(getView().getRetentionAge().getValue().getDays());
 
-        String volumeGroupName = getView().getVolumeGroups().getValue();
-        if (volumeGroupName != null && volumeGroupName.length() == 0) {
-            volumeGroupName = null;
-        }
-        index.setVolumeGroupName(volumeGroupName);
+        final DocRef volumeGroup = getView().getVolumeGroups().getValue();
+        index.setVolumeGroupDocRef(volumeGroup);
         index.setDefaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference());
         return index;
     }
@@ -113,27 +110,31 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
         getView().getRetentionAge().setValue(selected);
     }
 
-    private void updateGroupList(final String selected) {
+    private void updateGroupList(final DocRef selectedVolumeGroup) {
         restFactory
                 .create(INDEX_VOLUME_GROUP_RESOURCE)
                 .method(res -> res.find(new ExpressionCriteria()))
                 .onSuccess(result -> {
-                    final List<String> volumeGroupNames = result
+                    final List<DocRef> volumeGroupNames = result
                             .getValues()
                             .stream()
-                            .map(IndexVolumeGroup::getName)
+                            .map(IndexVolumeGroup::asDocRef)
                             .collect(Collectors.toList());
 
-                    SelectionBox<String> listBox = getView().getVolumeGroups();
+                    final SelectionBox<DocRef> listBox = getView().getVolumeGroups();
                     listBox.clear();
-                    listBox.addItem("");
+                    listBox.addItem(null);
                     listBox.addItems(volumeGroupNames);
-                    if (selected != null && !selected.isEmpty()) {
-                        listBox.setValue(selected);
+                    if (selectedVolumeGroup != null) {
+                        listBox.setValue(selectedVolumeGroup);
                     }
                 })
                 .exec();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface IndexSettingsView extends View, ReadOnlyChangeHandler, HasUiHandlers<IndexSettingsUiHandlers> {
 
@@ -159,7 +160,7 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
 
         SelectionBox<SupportedRetentionAge> getRetentionAge();
 
-        SelectionBox<String> getVolumeGroups();
+        SelectionBox<DocRef> getVolumeGroups();
 
         void setDefaultExtractionPipelineView(View view);
     }

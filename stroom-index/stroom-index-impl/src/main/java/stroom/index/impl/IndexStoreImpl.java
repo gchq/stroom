@@ -213,6 +213,10 @@ public class IndexStoreImpl implements IndexStore {
         return effectiveDataMap;
     }
 
+    private void migrateLegacyVolGroupName() {
+
+    }
+
     @Override
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,

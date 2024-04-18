@@ -16,6 +16,7 @@
 
 package stroom.index.client.view;
 
+import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.feed.client.presenter.SupportedRetentionAge;
 import stroom.index.client.presenter.IndexSettingsPresenter.IndexSettingsView;
@@ -54,7 +55,7 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
     @UiField
     SelectionBox<SupportedRetentionAge> retentionAge;
     @UiField
-    SelectionBox<String> volumeGroups;
+    SelectionBox<DocRef> volumeGroups;
     @UiField
     SimplePanel defaultExtractionPipeline;
 
@@ -79,6 +80,8 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
         partitionSize.setValue(1L);
         partitionSize.setMin(1L);
         partitionSize.setMax(100L);
+
+        volumeGroups.setDisplayValueFunction(DocRef::getName);
     }
 
     @Override
@@ -142,7 +145,7 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
     }
 
     @Override
-    public SelectionBox<String> getVolumeGroups() {
+    public SelectionBox<DocRef> getVolumeGroups() {
         return volumeGroups;
     }
 
@@ -192,7 +195,7 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
     }
 
     @UiHandler("volumeGroups")
-    public void onVolumeGroupsValueChange(final ValueChangeEvent<String> e) {
+    public void onVolumeGroupsValueChange(final ValueChangeEvent<DocRef> e) {
         fireChange();
     }
 
@@ -201,6 +204,10 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
             getUiHandlers().onChange();
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, IndexSettingsViewImpl> {
 

@@ -150,7 +150,7 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                 COL_WIDTH_NAME);
 
         // From (action menu))
-        addActionButtonColumn(Dependency::getFrom, "", 40);
+        addActionButtonColumn(Dependency::getFrom, "", ColumnSizeConstants.ACTION_COL);
 
         // To (Icon)
         dataGrid.addColumn(DataGridUtil.svgPresetColumnBuilder(false, (Dependency row) ->
