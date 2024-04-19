@@ -17,7 +17,7 @@
 
 package stroom.search;
 
-import stroom.index.impl.IndexShardService;
+import stroom.index.impl.IndexShardCreator;
 import stroom.index.shared.LuceneVersion;
 
 import jakarta.inject.Inject;
@@ -28,11 +28,11 @@ class TestInteractiveSearchLucene980 extends AbstractInteractiveSearchTest {
     private static boolean doneSetup;
 
     @Inject
-    private IndexShardService indexShardService;
+    private IndexShardCreator indexShardCreator;
 
     @BeforeEach
     void setup() {
-        indexShardService.setIndexVersion(LuceneVersion.LUCENE_9_8_0);
+        indexShardCreator.setIndexVersion(LuceneVersion.LUCENE_9_8_0);
         if (!doneSetup) {
             super.setup();
             doneSetup = true;

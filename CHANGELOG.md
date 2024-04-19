@@ -13,6 +13,29 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#4221** : Remove `id` column from `index_field` and change the primary key to be `(fk_index_field_source_id, name)`. Add retry logic and existing field check when adding fields to mitigate against deadlocks.
+
+* Issue **#4218** : Fix index shard state transition.
+
+* Issue **#4220** : Fix index shard creation.
+
+* Issue **#4217** : Suppress expected shard write errors.
+
+* Issue **#4215** : Fix NPE during context lookup with no context data loaded.
+
+* Issue **#4214** : Fix index shard writer errors.
+
+* Issue **#4203** : Fix event capture getting stuck on buttons.
+
+* Issue **#4204** : Make `indexOf()` and `lastIndexOf()` return `-1` when not found.
+
+* Issue **#4205** : Add `contains()` function.
+
+* Issue **#4209** : Support `and()` function in `eval`.
+
+* Issue **#4212** : Fix shards stuck in opening state.
+
+
 ## [v7.4-beta.2] - 2024-04-10
 
 * Issue **#4161** : Fix cron schedule time UI.

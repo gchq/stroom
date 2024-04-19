@@ -14,6 +14,7 @@ import jakarta.ws.rs.BadRequestException;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Provides system information for inspecting index shards.
@@ -28,14 +29,14 @@ public class IndexSystemInfo implements HasSystemInfo {
     private static final String PARAM_NAME_SHARD_ID = "shardId";
 
     private final LuceneProviderFactory luceneProviderFactory;
-    private final IndexShardService indexShardService;
+    private final IndexShardDao indexShardDao;
     private final NodeInfo nodeInfo;
 
     @Inject
-    public IndexSystemInfo(final IndexShardService indexShardService,
+    public IndexSystemInfo(final IndexShardDao indexShardDao,
                            final NodeInfo nodeInfo,
                            final LuceneProviderFactory luceneProviderFactory) {
-        this.indexShardService = indexShardService;
+        this.indexShardDao = indexShardDao;
         this.nodeInfo = nodeInfo;
         this.luceneProviderFactory = luceneProviderFactory;
     }
@@ -82,10 +83,11 @@ public class IndexSystemInfo implements HasSystemInfo {
                                            final Integer limit,
                                            final Long streamId) {
         try {
-            final IndexShard indexShard = indexShardService.loadById(shardId);
-            if (indexShard == null) {
+            final Optional<IndexShard> optional = indexShardDao.fetch(shardId);
+            if (optional.isEmpty()) {
                 throw new RuntimeException("Unknown shardId " + shardId);
             }
+            final IndexShard indexShard = optional.get();
             if (doesThisNodeOwnTheShard(indexShard)) {
                 final LuceneVersion luceneVersion = LuceneVersionUtil.getLuceneVersion(indexShard.getIndexVersion());
                 return luceneProviderFactory.get(luceneVersion)

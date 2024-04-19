@@ -20,7 +20,7 @@ import stroom.datasource.api.v2.AnalyzerType;
 import stroom.datasource.api.v2.IndexField;
 import stroom.index.impl.IndexConfig;
 import stroom.index.impl.IndexDocument;
-import stroom.index.impl.IndexShardManager;
+import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexShardUtil;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.ShardFullException;
@@ -73,7 +73,7 @@ class Lucene980IndexShardWriter implements IndexShardWriter {
      */
     private final Map<String, Analyzer> fieldAnalyzers = new ConcurrentHashMap<>();
 
-    private final IndexShardManager indexShardManager;
+    private final IndexShardDao indexShardDao;
     private final StroomDuration slowIndexWriteWarningThreshold;
     /**
      * When we are in debug mode we track some important info from the LUCENE
@@ -107,17 +107,16 @@ class Lucene980IndexShardWriter implements IndexShardWriter {
 
     private final AtomicBoolean open = new AtomicBoolean();
     private final AtomicInteger adding = new AtomicInteger();
-    private volatile Instant lastUsedTime;
 
     /**
      * Convenience constructor used in tests.
      */
-    Lucene980IndexShardWriter(final IndexShardManager indexShardManager,
+    Lucene980IndexShardWriter(final IndexShardDao indexShardDao,
                               final IndexConfig indexConfig,
                               final IndexShard indexShard,
                               final PathCreator pathCreator,
                               final int maxDocumentCount) {
-        this(indexShardManager,
+        this(indexShardDao,
                 indexConfig,
                 indexShard,
                 DEFAULT_RAM_BUFFER_MB_SIZE,
@@ -125,14 +124,14 @@ class Lucene980IndexShardWriter implements IndexShardWriter {
                 maxDocumentCount);
     }
 
-    Lucene980IndexShardWriter(final IndexShardManager indexShardManager,
+    Lucene980IndexShardWriter(final IndexShardDao indexShardDao,
                               final IndexConfig indexConfig,
                               final IndexShard indexShard,
                               final int ramBufferSizeMB,
                               final PathCreator pathCreator,
                               final int maxDocumentCount) {
         try {
-            this.indexShardManager = indexShardManager;
+            this.indexShardDao = indexShardDao;
             this.slowIndexWriteWarningThreshold = NullSafe.getOrElse(
                     indexConfig,
                     IndexConfig::getIndexWriterConfig,
@@ -140,7 +139,6 @@ class Lucene980IndexShardWriter implements IndexShardWriter {
                     StroomDuration.ZERO);
             this.indexShardId = indexShard.getId();
             this.creationTime = System.currentTimeMillis();
-            this.lastUsedTime = Instant.ofEpochMilli(creationTime);
             this.maxDocumentCount = maxDocumentCount;
 
             // Find the index shard dir.
@@ -277,7 +275,6 @@ class Lucene980IndexShardWriter implements IndexShardWriter {
                 }
 
                 final Instant startTime = Instant.now();
-                this.lastUsedTime = startTime;
                 indexWriter.addDocument(document);
 
                 if (!slowIndexWriteWarningThreshold.isZero()) {
@@ -449,8 +446,12 @@ class Lucene980IndexShardWriter implements IndexShardWriter {
                         final Long commitDurationMs,
                         final Long commitMs,
                         final Long fileSize) {
-        if (indexShardManager != null) {
-            indexShardManager.update(indexShardId, documentCount, commitDurationMs, commitMs, fileSize);
+        if (indexShardDao != null) {
+            // Output some debug so we know how long commits are taking.
+            LOGGER.debug(() -> String.format("Documents written %s (%s)",
+                    documentCount,
+                    ModelStringUtil.formatDurationString(commitDurationMs)));
+            indexShardDao.update(indexShardId, documentCount, commitDurationMs, commitMs, fileSize);
         }
     }
 
@@ -462,11 +463,6 @@ class Lucene980IndexShardWriter implements IndexShardWriter {
     @Override
     public long getCreationTime() {
         return creationTime;
-    }
-
-    @Override
-    public long getLastUsedTime() {
-        return lastUsedTime.toEpochMilli();
     }
 
     @Override
