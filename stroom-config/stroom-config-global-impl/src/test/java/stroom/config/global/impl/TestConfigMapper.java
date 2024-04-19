@@ -7,6 +7,7 @@ import stroom.bytebuffer.ByteBufferPoolConfig;
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
 import stroom.config.app.AppConfig;
+import stroom.config.app.CrossModuleConfig;
 import stroom.config.app.DataConfig;
 import stroom.config.app.PropertyServiceConfig;
 import stroom.config.app.SecurityConfig;
@@ -912,6 +913,7 @@ class TestConfigMapper {
         @SuppressWarnings("checkstyle:LineLength")
         public TestConfig(
                 @JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE) final boolean haltBootOnConfigValidationFailure,
+                @JsonProperty(CrossModuleConfig.NAME) final CrossModuleConfig crossModuleConfig,
                 @JsonProperty(PROP_NAME_ACTIVITY) final ActivityConfig activityConfig,
                 @JsonProperty(PROP_NAME_ANALYTICS) final AnalyticsConfig analyticsConfig,
                 @JsonProperty(PROP_NAME_ANNOTATION) final AnnotationConfig annotationConfig,
@@ -968,6 +970,7 @@ class TestConfigMapper {
                 @JsonProperty("boxed") final TestBoxedConfig testBoxedConfig) {
 
             super(haltBootOnConfigValidationFailure,
+                    crossModuleConfig,
                     activityConfig,
                     analyticsConfig,
                     annotationConfig,

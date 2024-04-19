@@ -13,9 +13,11 @@ import org.flywaydb.core.api.FlywayException;
 import org.flywaydb.core.api.MigrationInfo;
 import org.flywaydb.core.api.MigrationVersion;
 import org.flywaydb.core.api.configuration.FluentConfiguration;
+import org.flywaydb.core.api.migration.JavaMigration;
 import org.flywaydb.core.api.output.MigrateResult;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
@@ -75,11 +77,28 @@ public final class FlywayUtil {
                                final List<String> flywayLocations,
                                final String flywayTableName,
                                final String moduleName) {
-        migrate(dataSource, flywayLocations, null, flywayTableName, moduleName);
+        migrate(dataSource, flywayLocations, null, null, flywayTableName, moduleName);
     }
 
     public static void migrate(final DataSource dataSource,
                                final List<String> flywayLocations,
+                               final MigrationVersion target,
+                               final String flywayTableName,
+                               final String moduleName) {
+        migrate(dataSource, flywayLocations, null, target, flywayTableName, moduleName);
+    }
+
+    public static void migrate(final DataSource dataSource,
+                               final Collection<JavaMigration> javaMigrations,
+                               final MigrationVersion target,
+                               final String flywayTableName,
+                               final String moduleName) {
+        migrate(dataSource, null, javaMigrations, target, flywayTableName, moduleName);
+    }
+
+    public static void migrate(final DataSource dataSource,
+                               final List<String> flywayLocations,
+                               final Collection<JavaMigration> javaMigrations,
                                final MigrationVersion target,
                                final String flywayTableName,
                                final String moduleName) {
@@ -92,17 +111,31 @@ public final class FlywayUtil {
         } else {
             LOGGER.info(LogUtil.inBoxOnNewLine("Migrating database module: {}", moduleName));
 
-            final String[] migrationLocations = NullSafe.list(flywayLocations)
-                    .stream()
-                    .filter(Objects::nonNull)
-                    .distinct()
-                    .toArray(String[]::new);
-
-            final FluentConfiguration fluentConfiguration = Flyway.configure()
+            FluentConfiguration fluentConfiguration = Flyway.configure()
                     .dataSource(dataSource)
-                    .locations(migrationLocations)
                     .table(flywayTableName)
                     .baselineOnMigrate(true);
+
+            // Typical case for our db modules. Flyway finds the sql/java migs in the
+            // locations (one per module) and instantiates them.
+            if (NullSafe.hasItems(flywayLocations)) {
+                final String[] migrationLocations = flywayLocations.stream()
+                        .filter(Objects::nonNull)
+                        .distinct()
+                        .toArray(String[]::new);
+
+                fluentConfiguration = fluentConfiguration.locations(migrationLocations);
+            }
+
+            // For our AbstractAppWideJavaDbMigration classes which we wire up with guice
+            // and provide as objects
+            if (NullSafe.hasItems(javaMigrations)) {
+                final JavaMigration[] javaMigrationsArr = javaMigrations.stream()
+                        .filter(Objects::nonNull)
+                        .distinct()
+                        .toArray(JavaMigration[]::new);
+                fluentConfiguration.javaMigrations(javaMigrationsArr);
+            }
 
             // Set the target for the migration, i.e. only migrate up to this point.
             // Used for testing migrations.

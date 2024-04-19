@@ -103,6 +103,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
 
     private final boolean haltBootOnConfigValidationFailure;
 
+    private final CrossModuleConfig crossModuleConfig;
     private final ActivityConfig activityConfig;
     private final AnalyticsConfig analyticsConfig;
     private final AnnotationConfig annotationConfig;
@@ -149,6 +150,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
      */
     public AppConfig() {
         this(true,
+                new CrossModuleConfig(),
                 new ActivityConfig(),
                 new AnalyticsConfig(),
                 new AnnotationConfig(),
@@ -194,6 +196,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @SuppressWarnings("checkstyle:linelength")
     @JsonCreator
     public AppConfig(@JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE) final boolean haltBootOnConfigValidationFailure,
+                     @JsonProperty(CrossModuleConfig.NAME) final CrossModuleConfig crossModuleConfig,
                      @JsonProperty(PROP_NAME_ACTIVITY) final ActivityConfig activityConfig,
                      @JsonProperty(PROP_NAME_ANALYTICS) final AnalyticsConfig analyticsConfig,
                      @JsonProperty(PROP_NAME_ANNOTATION) final AnnotationConfig annotationConfig,
@@ -235,6 +238,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_UI_URI) final UiUriConfig uiUri,
                      @JsonProperty(PROP_NAME_VOLUMES) final VolumeConfig volumeConfig) {
         this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
+        this.crossModuleConfig = crossModuleConfig;
         this.activityConfig = activityConfig;
         this.analyticsConfig = analyticsConfig;
         this.annotationConfig = annotationConfig;
@@ -286,6 +290,11 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
             "configuration file. If false, the errors will simply be logged. Setting this to false is not advised.")
     public boolean isHaltBootOnConfigValidationFailure() {
         return haltBootOnConfigValidationFailure;
+    }
+
+    @JsonProperty(CrossModuleConfig.NAME)
+    public CrossModuleConfig getAppDbConfig() {
+        return crossModuleConfig;
     }
 
     @JsonProperty(PROP_NAME_ACTIVITY)
