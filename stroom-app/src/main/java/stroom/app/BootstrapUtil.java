@@ -131,9 +131,10 @@ public class BootstrapUtil {
 
                     final BootStrapModule bootstrapModule = bootStrapModuleSupplier.get();
 
+                    // This will trigger the migrations to happen as part of the guice
+                    // binding initialisation
                     final Injector injector = Guice.createInjector(bootstrapModule);
 
-                    // Force all data sources to be created so we can force migrations to run.
                     final Set<DataSource> dataSources = injector.getInstance(
                             Key.get(GuiceUtil.setOf(DataSource.class)));
 

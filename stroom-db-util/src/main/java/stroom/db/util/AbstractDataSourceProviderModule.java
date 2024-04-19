@@ -1,19 +1,19 @@
 package stroom.db.util;
 
 import stroom.config.common.AbstractDbConfig;
+import stroom.util.NullSafe;
 import stroom.util.db.ForceLegacyMigration;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Injector;
 import com.google.inject.Provides;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import javax.sql.DataSource;
 
 /**
@@ -31,8 +31,6 @@ public abstract class AbstractDataSourceProviderModule<
 
     protected abstract T_CONN_PROV createConnectionProvider(DataSource dataSource);
 
-    private static final Map<DataSource, Set<String>> COMPLETED_MIGRATIONS = new ConcurrentHashMap<>();
-
     @Override
     protected void configure() {
         super.configure();
@@ -40,11 +38,12 @@ public abstract class AbstractDataSourceProviderModule<
         LOGGER.debug("Configure() called on " + this.getClass().getCanonicalName());
 
         // MultiBind the connection provider so we can see status for all databases.
-        GuiceUtil.buildMultiBinder(binder(), DataSource.class).addBinding(getConnectionProviderType());
+        NullSafe.consume(getConnectionProviderType(), type ->
+                GuiceUtil.buildMultiBinder(binder(), DataSource.class).addBinding(getConnectionProviderType()));
     }
 
     /**
-     * We inject {@link ForceLegacyMigration} to ensure that the the core DB migration has happened before all
+     * We inject {@link ForceLegacyMigration} to ensure that the core DB migration has happened before all
      * other migrations.
      * <p>
      * This provider means the FlyWay migration will be triggered on first use of a datasource.
@@ -54,7 +53,8 @@ public abstract class AbstractDataSourceProviderModule<
     public T_CONN_PROV getConnectionProvider(
             final Provider<T_CONFIG> configProvider,
             final DataSourceFactory dataSourceFactory,
-            @SuppressWarnings("unused") final ForceLegacyMigration forceLegacyMigration) {
+            @SuppressWarnings("unused") final ForceLegacyMigration forceLegacyMigration,
+            final Injector injector) {
 
         LOGGER.debug(() -> "Getting connection provider for " + getModuleName());
 
@@ -63,9 +63,11 @@ public abstract class AbstractDataSourceProviderModule<
                 getModuleName(),
                 createUniquePool());
 
-        LOGGER.logDurationIfInfoEnabled(() ->
-                        performMigration(dataSource),
-                "Performed migration for " + getModuleName());
+        final DurationTimer timer = DurationTimer.start();
+        final boolean didMigration = performMigration(dataSource, injector);
+        if (didMigration) {
+            LOGGER.info("Performed migration for {} in {}", getModuleName(), timer);
+        }
 
         return createConnectionProvider(dataSource);
     }
@@ -74,7 +76,13 @@ public abstract class AbstractDataSourceProviderModule<
         return false;
     }
 
-    protected abstract void performMigration(DataSource dataSource);
+    /**
+     * @param injector Don't inject classes from other db modules, or it will create unwanted
+     *                 dependencies between modules. Intended for use with CrossModuleDbMigrationsModule
+     *                 only.
+     * @return True if the migration was run, whether it migrated anything or not.
+     */
+    protected abstract boolean performMigration(DataSource dataSource, final Injector injector);
 
     @Override
     public boolean equals(final Object o) {
