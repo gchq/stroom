@@ -295,7 +295,8 @@ class IndexShardDaoImpl implements IndexShardDao {
                     .or(INDEX_SHARD.STATUS.eq(IndexShardStatus.NEW.getPrimitiveValue()));
             case OPEN -> INDEX_SHARD.STATUS.eq(IndexShardStatus.OPENING.getPrimitiveValue());
             case CLOSING -> INDEX_SHARD.STATUS.eq(IndexShardStatus.OPEN.getPrimitiveValue());
-            case CLOSED -> INDEX_SHARD.STATUS.eq(IndexShardStatus.CLOSING.getPrimitiveValue());
+            case CLOSED -> INDEX_SHARD.STATUS.eq(IndexShardStatus.OPENING.getPrimitiveValue())
+                    .or(INDEX_SHARD.STATUS.eq(IndexShardStatus.CLOSING.getPrimitiveValue()));
             case DELETED -> DSL.trueCondition();
             case CORRUPT -> INDEX_SHARD.STATUS.ne(IndexShardStatus.DELETED.getPrimitiveValue());
         };
@@ -306,6 +307,28 @@ class IndexShardDaoImpl implements IndexShardDao {
                 .where(INDEX_SHARD.ID.eq(id))
                 .and(currentStateCondition)
                 .execute()) > 0;
+    }
+
+    @Override
+    public void logicalDelete(final Long id) {
+        JooqUtil.context(indexDbConnProvider, context -> context
+                .update(INDEX_SHARD)
+                .set(INDEX_SHARD.STATUS, IndexShardStatus.DELETED.getPrimitiveValue())
+                .where(INDEX_SHARD.ID.eq(id))
+                .execute());
+    }
+
+    @Override
+    public void reset(final Long id) {
+        JooqUtil.context(indexDbConnProvider, context -> context
+                .update(INDEX_SHARD)
+                .set(INDEX_SHARD.STATUS, IndexShardStatus.CLOSED.getPrimitiveValue())
+                .where(INDEX_SHARD.ID.eq(id))
+                .and(INDEX_SHARD.STATUS.eq(IndexShardStatus.OPENING.getPrimitiveValue())
+                        .or(INDEX_SHARD.STATUS.eq(IndexShardStatus.OPEN.getPrimitiveValue()))
+                        .or(INDEX_SHARD.STATUS.eq(IndexShardStatus.CLOSING.getPrimitiveValue()))
+                )
+                .execute());
     }
 
     @Override

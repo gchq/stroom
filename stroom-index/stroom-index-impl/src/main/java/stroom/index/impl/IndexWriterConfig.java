@@ -16,6 +16,8 @@ import jakarta.validation.constraints.NotNull;
 public class IndexWriterConfig extends AbstractConfig implements IsStroomConfig {
 
     private final CacheConfig activeShardCache;
+    private final CacheConfig indexShardWriterCache;
+    @Deprecated
     private final IndexShardWriterCacheConfig indexShardWriterCacheConfig;
     private final StroomDuration slowIndexWriteWarningThreshold;
 
@@ -23,6 +25,10 @@ public class IndexWriterConfig extends AbstractConfig implements IsStroomConfig 
         activeShardCache = CacheConfig.builder()
                 .maximumSize(100L)
                 .expireAfterWrite(StroomDuration.ofHours(1))
+                .build();
+        indexShardWriterCache = CacheConfig.builder()
+                .maximumSize(100L)
+                .expireAfterAccess(StroomDuration.ofHours(1))
                 .build();
         indexShardWriterCacheConfig = IndexShardWriterCacheConfig.builder()
                 .withCoreItems(50)
@@ -35,9 +41,11 @@ public class IndexWriterConfig extends AbstractConfig implements IsStroomConfig 
     @JsonCreator
     public IndexWriterConfig(
             @JsonProperty("activeShardCache") final CacheConfig activeShardCache,
+            @JsonProperty("indexShardWriterCache") final CacheConfig indexShardWriterCache,
             @JsonProperty("cache") final IndexShardWriterCacheConfig indexShardWriterCacheConfig,
             @JsonProperty("slowIndexWriteWarningThreshold") final StroomDuration slowIndexWriteWarningThreshold) {
         this.activeShardCache = activeShardCache;
+        this.indexShardWriterCache = indexShardWriterCache;
         this.indexShardWriterCacheConfig = indexShardWriterCacheConfig;
         this.slowIndexWriteWarningThreshold = slowIndexWriteWarningThreshold;
     }
@@ -46,6 +54,11 @@ public class IndexWriterConfig extends AbstractConfig implements IsStroomConfig 
         return activeShardCache;
     }
 
+    public CacheConfig getIndexShardWriterCache() {
+        return indexShardWriterCache;
+    }
+
+    @Deprecated
     @JsonProperty("cache")
     public IndexShardWriterCacheConfig getIndexShardWriterCacheConfig() {
         return indexShardWriterCacheConfig;
@@ -63,6 +76,7 @@ public class IndexWriterConfig extends AbstractConfig implements IsStroomConfig 
     public String toString() {
         return "IndexWriterConfig{" +
                 "activeShardCache=" + activeShardCache +
+                ", indexShardWriterCache=" + indexShardWriterCache +
                 ", indexShardWriterCacheConfig=" + indexShardWriterCacheConfig +
                 ", slowIndexWriteWarningThreshold=" + slowIndexWriteWarningThreshold +
                 '}';

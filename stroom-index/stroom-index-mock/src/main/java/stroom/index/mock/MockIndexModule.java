@@ -22,7 +22,8 @@ import stroom.index.impl.IndexElementModule;
 import stroom.index.impl.IndexFieldCacheImpl;
 import stroom.index.impl.IndexFieldProvidersImpl;
 import stroom.index.impl.IndexFieldService;
-import stroom.index.impl.IndexShardService;
+import stroom.index.impl.IndexShardCreator;
+import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.IndexStoreImpl;
@@ -52,7 +53,8 @@ public class MockIndexModule extends AbstractModule {
         bind(IndexStore.class).to(IndexStoreImpl.class);
         bind(IndexVolumeService.class).to(MockIndexVolumeService.class);
         bind(IndexVolumeGroupService.class).to(MockIndexVolumeGroupService.class);
-        bind(IndexShardService.class).to(MockIndexShardService.class);
+        bind(IndexShardDao.class).to(MockIndexShardDao.class);
+        bind(IndexShardCreator.class).to(MockIndexShardCreator.class);
         bind(IndexFieldService.class).to(MockIndexFieldService.class);
         bind(Indexer.class).to(MockIndexer.class);
 

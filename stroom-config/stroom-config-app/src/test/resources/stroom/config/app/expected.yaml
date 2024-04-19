@@ -387,6 +387,11 @@ appConfig:
         minItems: 0
         timeToIdle: "PT0S"
         timeToLive: "PT0S"
+      indexShardWriterCache:
+        expireAfterAccess: "PT1H"
+        expireAfterWrite: null
+        maximumSize: 100
+        refreshAfterWrite: null
       slowIndexWriteWarningThreshold: "PT1S"
   job:
     db:

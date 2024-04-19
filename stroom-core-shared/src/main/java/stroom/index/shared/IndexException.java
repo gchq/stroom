@@ -18,8 +18,6 @@ package stroom.index.shared;
 
 public class IndexException extends RuntimeException {
 
-    private static final long serialVersionUID = -482925256715483280L;
-
     public IndexException(final Throwable t) {
         super(t);
     }

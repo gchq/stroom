@@ -228,6 +228,32 @@ class TestRefDataOnHeapStore {
         doKeyRangeValueOverwriteTest(false, value1, value2, expectedFinalValue);
     }
 
+    @Test
+    void testGetWithNoLoad_stringKey() {
+        final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
+        MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "map1");
+        String key = "myKey";
+
+        assertThat(refDataStore.getKeyValueEntryCount())
+                .isEqualTo(0);
+
+        assertThat(refDataStore.getValue(mapDefinition, key))
+                .isEmpty();
+    }
+
+    @Test
+    void testGetWithNoLoad_longKey() {
+        final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
+        MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "map1");
+        String key = "123";
+
+        assertThat(refDataStore.getKeyValueEntryCount())
+                .isEqualTo(0);
+
+        assertThat(refDataStore.getValue(mapDefinition, key))
+                .isEmpty();
+    }
+
     private void doKeyValueOverwriteTest(final boolean overwriteExisting,
                                          final StringValue value1,
                                          final StringValue value2,
