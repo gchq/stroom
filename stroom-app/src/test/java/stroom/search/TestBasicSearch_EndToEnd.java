@@ -21,7 +21,7 @@ package stroom.search;
 import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
-import stroom.index.impl.IndexShardService;
+import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexShardUtil;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -50,7 +50,7 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     @Inject
     private IndexStore indexStore;
     @Inject
-    private IndexShardService indexShardService;
+    private IndexShardDao indexShardDao;
     @Inject
     private CommonIndexingTestHelper commonIndexingTestHelper;
     @Inject
@@ -158,7 +158,7 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     private void test(final ExpressionOperator.Builder expression,
                       final long expectedStreams,
                       final long expectedEvents) {
-        final ResultPage<IndexShard> resultPage = indexShardService.find(FindIndexShardCriteria.matchAll());
+        final ResultPage<IndexShard> resultPage = indexShardDao.find(FindIndexShardCriteria.matchAll());
         for (final IndexShard indexShard : resultPage.getValues()) {
             System.out.println("Using index " + IndexShardUtil.getIndexPath(indexShard, pathCreator));
         }

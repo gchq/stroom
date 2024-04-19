@@ -19,7 +19,6 @@ package stroom.index.mock;
 import stroom.index.impl.IndexDocument;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.shared.IndexException;
-import stroom.index.shared.IndexShard;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,13 +33,11 @@ public class MockIndexShardWriter implements IndexShardWriter {
 
     private final int maxDocumentCount;
     private final AtomicInteger documentCount = new AtomicInteger();
-    private final long lastUsedTime;
 
     MockIndexShardWriter(final long indexShardId, final int maxDocumentCount) {
         this.indexShardId = indexShardId;
         this.maxDocumentCount = maxDocumentCount;
         this.creationTime = System.currentTimeMillis();
-        this.lastUsedTime = creationTime;
     }
 
     @Override
@@ -89,10 +86,5 @@ public class MockIndexShardWriter implements IndexShardWriter {
     @Override
     public long getCreationTime() {
         return creationTime;
-    }
-
-    @Override
-    public long getLastUsedTime() {
-        return lastUsedTime;
     }
 }

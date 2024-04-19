@@ -4,6 +4,12 @@
 package stroom.index.impl.db.jooq;
 
 
+import org.jooq.ForeignKey;
+import org.jooq.TableField;
+import org.jooq.UniqueKey;
+import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
+
 import stroom.index.impl.db.jooq.tables.IndexField;
 import stroom.index.impl.db.jooq.tables.IndexFieldSource;
 import stroom.index.impl.db.jooq.tables.IndexShard;
@@ -14,12 +20,6 @@ import stroom.index.impl.db.jooq.tables.records.IndexFieldSourceRecord;
 import stroom.index.impl.db.jooq.tables.records.IndexShardRecord;
 import stroom.index.impl.db.jooq.tables.records.IndexVolumeGroupRecord;
 import stroom.index.impl.db.jooq.tables.records.IndexVolumeRecord;
-
-import org.jooq.ForeignKey;
-import org.jooq.TableField;
-import org.jooq.UniqueKey;
-import org.jooq.impl.DSL;
-import org.jooq.impl.Internal;
 
 
 /**
@@ -33,8 +33,7 @@ public class Keys {
     // UNIQUE and PRIMARY KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final UniqueKey<IndexFieldRecord> KEY_INDEX_FIELD_INDEX_FIELD_SOURCE_ID_NAME = Internal.createUniqueKey(IndexField.INDEX_FIELD, DSL.name("KEY_index_field_index_field_source_id_name"), new TableField[] { IndexField.INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID, IndexField.INDEX_FIELD.NAME }, true);
-    public static final UniqueKey<IndexFieldRecord> KEY_INDEX_FIELD_PRIMARY = Internal.createUniqueKey(IndexField.INDEX_FIELD, DSL.name("KEY_index_field_PRIMARY"), new TableField[] { IndexField.INDEX_FIELD.ID }, true);
+    public static final UniqueKey<IndexFieldRecord> KEY_INDEX_FIELD_PRIMARY = Internal.createUniqueKey(IndexField.INDEX_FIELD, DSL.name("KEY_index_field_PRIMARY"), new TableField[] { IndexField.INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID, IndexField.INDEX_FIELD.NAME }, true);
     public static final UniqueKey<IndexFieldSourceRecord> KEY_INDEX_FIELD_SOURCE_INDEX_FIELD_SOURCE_TYPE_UUID = Internal.createUniqueKey(IndexFieldSource.INDEX_FIELD_SOURCE, DSL.name("KEY_index_field_source_index_field_source_type_uuid"), new TableField[] { IndexFieldSource.INDEX_FIELD_SOURCE.TYPE, IndexFieldSource.INDEX_FIELD_SOURCE.UUID }, true);
     public static final UniqueKey<IndexFieldSourceRecord> KEY_INDEX_FIELD_SOURCE_PRIMARY = Internal.createUniqueKey(IndexFieldSource.INDEX_FIELD_SOURCE, DSL.name("KEY_index_field_source_PRIMARY"), new TableField[] { IndexFieldSource.INDEX_FIELD_SOURCE.ID }, true);
     public static final UniqueKey<IndexShardRecord> KEY_INDEX_SHARD_PRIMARY = Internal.createUniqueKey(IndexShard.INDEX_SHARD, DSL.name("KEY_index_shard_PRIMARY"), new TableField[] { IndexShard.INDEX_SHARD.ID }, true);

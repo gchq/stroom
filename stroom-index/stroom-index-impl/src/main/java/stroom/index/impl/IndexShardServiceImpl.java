@@ -24,141 +24,36 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardFields;
-import stroom.index.shared.IndexShardKey;
-import stroom.index.shared.IndexVolume;
-import stroom.index.shared.IndexVolumeGroup;
-import stroom.index.shared.LuceneIndexDoc;
-import stroom.index.shared.LuceneVersion;
-import stroom.index.shared.LuceneVersionUtil;
 import stroom.query.common.v2.FieldInfoResultPageBuilder;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
-import stroom.util.NullSafe;
-import stroom.util.io.PathCreator;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Objects;
 import java.util.Optional;
 
 @Singleton
 public class IndexShardServiceImpl implements IndexShardService, Searchable {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardServiceImpl.class);
-
-    private static final String PERMISSION = PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION;
-
-
     private final SecurityContext securityContext;
-    private final LuceneIndexDocCache indexStructureCache;
     private final IndexShardDao indexShardDao;
-    private final IndexVolumeService indexVolumeService;
-    private final IndexVolumeGroupService indexVolumeGroupService;
-    private final PathCreator pathCreator;
-
-    private LuceneVersion indexVersion = LuceneVersionUtil.CURRENT_LUCENE_VERSION;
 
     @Inject
     IndexShardServiceImpl(final SecurityContext securityContext,
-                          final LuceneIndexDocCache indexStructureCache,
-                          final IndexShardDao indexShardDao,
-                          final IndexVolumeService indexVolumeService,
-                          final IndexVolumeGroupService indexVolumeGroupService,
-                          final PathCreator pathCreator) {
+                          final IndexShardDao indexShardDao) {
         this.securityContext = securityContext;
-        this.indexStructureCache = indexStructureCache;
         this.indexShardDao = indexShardDao;
-        this.indexVolumeService = indexVolumeService;
-        this.indexVolumeGroupService = indexVolumeGroupService;
-        this.pathCreator = pathCreator;
-    }
-
-    @Override
-    public IndexShard loadById(final Long id) {
-        return securityContext.secureResult(() -> indexShardDao.fetch(id).orElse(null));
     }
 
     @Override
     public ResultPage<IndexShard> find(final FindIndexShardCriteria criteria) {
-        return securityContext.secureResult(() -> indexShardDao.find(criteria));
-    }
-
-    @Override
-    public IndexShard createIndexShard(final IndexShardKey indexShardKey,
-                                       final String ownerNodeName) {
-        return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
-            final LuceneIndexDoc index = indexStructureCache.get(
-                    new DocRef(LuceneIndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
-            final DocRef indexVolGroup = getIndexVolumeGroup(index);
-            final IndexVolume indexVolume = indexVolumeService.selectVolume(indexVolGroup, ownerNodeName);
-
-            // Test the validity of the volume path.
-            final Path path = pathCreator.toAppPath(indexVolume.getPath());
-            if (!Files.isDirectory(path)) {
-                throw new RuntimeException("Index volume path not found: " + indexVolume.getPath());
-            }
-
-            return indexShardDao.create(
-                    indexShardKey,
-                    indexVolume,
-                    ownerNodeName,
-                    indexVersion.getDisplayValue());
-        });
-    }
-
-    private DocRef getIndexVolumeGroup(final LuceneIndexDoc indexDoc) {
-        return Objects.requireNonNullElseGet(
-                indexDoc.getVolumeGroupDocRef(),
-                () -> NullSafe.get(
-                        indexVolumeGroupService.getDefaultVolumeGroup(),
-                        IndexVolumeGroup::asDocRef));
-    }
-
-    @Override
-    public boolean delete(final IndexShard indexShard) {
-        return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
-            if (!securityContext.hasDocumentPermission(indexShard.getIndexUuid(), DocumentPermissionNames.DELETE)) {
-                throw new PermissionException(
-                        securityContext.getUserIdentityForAudit(),
-                        "You do not have permission to delete index shard");
-            }
-
-            return indexShardDao.delete(indexShard.getId());
-        });
-    }
-
-    @Override
-    public boolean setStatus(final Long id,
-                             final IndexShard.IndexShardStatus status) {
-        return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () ->
-                indexShardDao.setStatus(id, status));
-    }
-
-    @Override
-    public void update(final long indexShardId,
-                       final Integer documentCount,
-                       final Long commitDurationMs,
-                       final Long commitMs,
-                       final Long fileSize) {
-        securityContext.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
-            // Output some debug so we know how long commits are taking.
-            LOGGER.debug(() -> String.format("Documents written %s (%s)",
-                    documentCount,
-                    ModelStringUtil.formatDurationString(commitDurationMs)));
-            indexShardDao.update(indexShardId, documentCount, commitDurationMs, commitMs, fileSize);
-        });
+        return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION,
+                () -> indexShardDao.find(criteria));
     }
 
     @Override
@@ -185,12 +80,7 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
                        final ValuesConsumer consumer) {
-        securityContext.secure(PERMISSION, () ->
+        securityContext.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () ->
                 indexShardDao.search(criteria, fieldIndex, consumer));
-    }
-
-    @Override
-    public void setIndexVersion(final LuceneVersion indexVersion) {
-        this.indexVersion = indexVersion;
     }
 }
