@@ -40,9 +40,6 @@ import java.util.Optional;
 @Singleton
 public class IndexShardServiceImpl implements IndexShardService, Searchable {
 
-    private static final String PERMISSION = PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION;
-
-
     private final SecurityContext securityContext;
     private final IndexShardDao indexShardDao;
 
@@ -55,7 +52,8 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
 
     @Override
     public ResultPage<IndexShard> find(final FindIndexShardCriteria criteria) {
-        return securityContext.secureResult(() -> indexShardDao.find(criteria));
+        return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION,
+                () -> indexShardDao.find(criteria));
     }
 
     @Override
@@ -82,7 +80,7 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
                        final ValuesConsumer consumer) {
-        securityContext.secure(PERMISSION, () ->
+        securityContext.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () ->
                 indexShardDao.search(criteria, fieldIndex, consumer));
     }
 }
