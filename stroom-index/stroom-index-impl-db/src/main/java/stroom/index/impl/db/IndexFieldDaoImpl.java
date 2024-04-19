@@ -25,23 +25,36 @@ import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
 import stroom.index.impl.IndexFieldDao;
 import stroom.index.shared.IndexFieldImpl;
+import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.StringUtil;
 
 import jakarta.inject.Inject;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
+import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 
+import java.sql.SQLTransactionRollbackException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static stroom.index.impl.db.jooq.tables.IndexField.INDEX_FIELD;
 import static stroom.index.impl.db.jooq.tables.IndexFieldSource.INDEX_FIELD_SOURCE;
 
 public class IndexFieldDaoImpl implements IndexFieldDao {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexFieldDaoImpl.class);
+    public static final int MAX_DEADLOCK_RETRY_ATTEMPTS = 20;
 
     private final IndexDbConnProvider queryDatasourceDbConnProvider;
 
@@ -92,46 +105,95 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                 .set(INDEX_FIELD_SOURCE.UUID, docRef.getUuid())
                 .set(INDEX_FIELD_SOURCE.NAME, docRef.getName())
                 .onDuplicateKeyIgnore()
+                .returningResult(INDEX_FIELD_SOURCE.ID)
                 .execute();
     }
 
     @Override
     public void addFields(final DocRef docRef, final Collection<IndexField> fields) {
-        // Do this outside the txn so other threads can see it asap
-        ensureFieldSource(docRef);
+        if (NullSafe.hasItems(fields)) {
+            // Do this outside the txn so other threads can see it asap
+            ensureFieldSource(docRef);
 
-        JooqUtil.transaction(queryDatasourceDbConnProvider, txnContext -> {
-            // Get a record lock on the field source, so we are the only thread
-            // that can mutate the index fields for that source, else we can get a deadlock.
-            final int fieldSourceId = getFieldSource(txnContext, docRef, true)
-                    .orElseThrow(() -> new RuntimeException("No field source found for " + docRef));
+            boolean success = false;
+            AtomicInteger attempt = new AtomicInteger(0);
 
-            // Insert any new fields under lock
-            var c = txnContext.insertInto(INDEX_FIELD,
-                    INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID,
-                    INDEX_FIELD.TYPE,
-                    INDEX_FIELD.NAME,
-                    INDEX_FIELD.ANALYZER,
-                    INDEX_FIELD.INDEXED,
-                    INDEX_FIELD.STORED,
-                    INDEX_FIELD.TERM_POSITIONS,
-                    INDEX_FIELD.CASE_SENSITIVE);
+            while (!success) {
+                if (attempt.incrementAndGet() > MAX_DEADLOCK_RETRY_ATTEMPTS) {
+                    throw new RuntimeException(LogUtil.message("Gave up retrying {} upsert after {} attempts",
+                            INDEX_FIELD.getName(), attempt.get()));
+                }
 
-            for (final IndexField field : fields) {
-                c = c.values(fieldSourceId,
-                        (byte) field.getFldType().getIndex(),
-                        field.getFldName(),
-                        field.getAnalyzerType().getDisplayValue(),
-                        field.isIndexed(),
-                        field.isStored(),
-                        field.isTermPositions(),
-                        field.isCaseSensitive());
+                try {
+                    JooqUtil.transaction(queryDatasourceDbConnProvider, txnContext -> {
+                        // Get a record lock on the field source, so we are the only thread
+                        // that can mutate the index fields for that source, else we can get a deadlock.
+                        final int fieldSourceId = getFieldSource(txnContext, docRef, true)
+                                .orElseThrow(() -> new RuntimeException("No field source found for " + docRef));
+
+                        // Establish which fields are already there, so we don't need to touch them.
+                        // This will reduce the number of records/gaps locked so hopefully reduce the risk
+                        // of deadlocks.
+                        final Set<String> existingFieldNames = new HashSet<>(txnContext.select(INDEX_FIELD.NAME)
+                                .from(INDEX_FIELD)
+                                .where(INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID.eq(fieldSourceId))
+                                .fetch(INDEX_FIELD.NAME));
+
+                        // Insert any new fields under lock
+                        var c = txnContext.insertInto(INDEX_FIELD,
+                                INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID,
+                                INDEX_FIELD.TYPE,
+                                INDEX_FIELD.NAME,
+                                INDEX_FIELD.ANALYZER,
+                                INDEX_FIELD.INDEXED,
+                                INDEX_FIELD.STORED,
+                                INDEX_FIELD.TERM_POSITIONS,
+                                INDEX_FIELD.CASE_SENSITIVE);
+
+                        int fieldCount = 0;
+                        for (final IndexField field : fields) {
+                            if (!existingFieldNames.contains(field.getFldName())) {
+                                c = c.values(
+                                        fieldSourceId,
+                                        (byte) field.getFldType().getIndex(),
+                                        field.getFldName(),
+                                        field.getAnalyzerType().getDisplayValue(),
+                                        field.isIndexed(),
+                                        field.isStored(),
+                                        field.isTermPositions(),
+                                        field.isCaseSensitive());
+                                fieldCount++;
+                            }
+                        }
+                        LOGGER.debug("{} fields to upsert on {}", fieldCount, docRef);
+                        if (fieldCount > 0) {
+                            // The update part doesn't update anything, intentiaonally
+                            c.onDuplicateKeyUpdate()
+                                    .set(INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID, fieldSourceId)
+                                    .execute();
+                        }
+                    });
+                    success = true;
+                } catch (Exception e) {
+                    // Deadlocks are likely as the upsert will create gap locks in the ID idx which has
+                    // fields from different indexes all mixed in together.
+                    if (e instanceof DataAccessException
+                            && e.getCause() instanceof SQLTransactionRollbackException sqlTxnRollbackEx
+                            && NullSafe.containsIgnoringCase(sqlTxnRollbackEx.getMessage(), "deadlock")) {
+                        LOGGER.warn(() -> LogUtil.message(
+                                "Deadlock trying to upsert {} {} into {}. Attempt: {}. Will retry. " +
+                                        "Enable DEBUG for full stacktrace.",
+                                fields.size(),
+                                StringUtil.plural("field", fields.size()),
+                                INDEX_FIELD.getName(),
+                                attempt.get()));
+                        LOGGER.debug(e.getMessage(), e);
+                    } else {
+                        throw new RuntimeException(e);
+                    }
+                }
             }
-            // Effectively ignore existing fields
-            c.onDuplicateKeyUpdate()
-                    .set(INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID, fieldSourceId)
-                    .execute();
-        });
+        }
     }
 
     @Override
@@ -242,4 +304,13 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
         }
         return condition;
     }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record PrimaryKey(long fieldSourceId, String fieldName) {
+
+    }
 }
+
