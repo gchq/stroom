@@ -15,6 +15,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import javax.sql.DataSource;
 
 public class DbUtil {
@@ -50,6 +52,32 @@ public class DbUtil {
                 connectionConfig.getUrl(),
                 connectionConfig.getUser(),
                 connectionConfig.getPassword());
+    }
+
+    public static void doWithPreparedStatement(final DataSource dataSource,
+                                               final String sql,
+                                               final Consumer<PreparedStatement> consumer) {
+        if (consumer != null) {
+            try (final PreparedStatement prepStmt = dataSource.getConnection().prepareStatement(sql)) {
+                consumer.accept(prepStmt);
+            } catch (SQLException e) {
+                throw new RuntimeException(LogUtil.message("Error running SQL: '{}', {}", sql, e.getMessage()), e);
+            }
+        }
+    }
+
+    public static <T> T getWithPreparedStatement(final DataSource dataSource,
+                                                 final String sql,
+                                                 final Function<PreparedStatement, T> function) {
+        if (function != null) {
+            try (final PreparedStatement prepStmt = dataSource.getConnection().prepareStatement(sql)) {
+                return function.apply(prepStmt);
+            } catch (SQLException e) {
+                throw new RuntimeException(LogUtil.message("Error running SQL: '{}', {}", sql, e.getMessage()), e);
+            }
+        } else {
+            return null;
+        }
     }
 
     public static void waitForConnection(final ConnectionConfig connectionConfig) {
