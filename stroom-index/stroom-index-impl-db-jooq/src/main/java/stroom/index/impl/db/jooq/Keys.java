@@ -39,10 +39,8 @@ public class Keys {
     public static final UniqueKey<IndexShardRecord> KEY_INDEX_SHARD_PRIMARY = Internal.createUniqueKey(IndexShard.INDEX_SHARD, DSL.name("KEY_index_shard_PRIMARY"), new TableField[] { IndexShard.INDEX_SHARD.ID }, true);
     public static final UniqueKey<IndexVolumeRecord> KEY_INDEX_VOLUME_NODE_NAME_PATH = Internal.createUniqueKey(IndexVolume.INDEX_VOLUME, DSL.name("KEY_index_volume_node_name_path"), new TableField[] { IndexVolume.INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID, IndexVolume.INDEX_VOLUME.NODE_NAME, IndexVolume.INDEX_VOLUME.PATH }, true);
     public static final UniqueKey<IndexVolumeRecord> KEY_INDEX_VOLUME_PRIMARY = Internal.createUniqueKey(IndexVolume.INDEX_VOLUME, DSL.name("KEY_index_volume_PRIMARY"), new TableField[] { IndexVolume.INDEX_VOLUME.ID }, true);
-    public static final UniqueKey<IndexVolumeGroupRecord> KEY_INDEX_VOLUME_GROUP_IS_DEFAULT_IDX = Internal.createUniqueKey(IndexVolumeGroup.INDEX_VOLUME_GROUP, DSL.name("KEY_index_volume_group_is_default_idx"), new TableField[] { IndexVolumeGroup.INDEX_VOLUME_GROUP.IS_DEFAULT }, true);
     public static final UniqueKey<IndexVolumeGroupRecord> KEY_INDEX_VOLUME_GROUP_NAME = Internal.createUniqueKey(IndexVolumeGroup.INDEX_VOLUME_GROUP, DSL.name("KEY_index_volume_group_name"), new TableField[] { IndexVolumeGroup.INDEX_VOLUME_GROUP.NAME }, true);
     public static final UniqueKey<IndexVolumeGroupRecord> KEY_INDEX_VOLUME_GROUP_PRIMARY = Internal.createUniqueKey(IndexVolumeGroup.INDEX_VOLUME_GROUP, DSL.name("KEY_index_volume_group_PRIMARY"), new TableField[] { IndexVolumeGroup.INDEX_VOLUME_GROUP.ID }, true);
-    public static final UniqueKey<IndexVolumeGroupRecord> KEY_INDEX_VOLUME_GROUP_UUID_IDX = Internal.createUniqueKey(IndexVolumeGroup.INDEX_VOLUME_GROUP, DSL.name("KEY_index_volume_group_uuid_idx"), new TableField[] { IndexVolumeGroup.INDEX_VOLUME_GROUP.UUID }, true);
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions

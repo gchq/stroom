@@ -10,12 +10,12 @@ import java.util.function.Function;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function9;
+import org.jooq.Function7;
 import org.jooq.Identity;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Records;
-import org.jooq.Row9;
+import org.jooq.Row7;
 import org.jooq.Schema;
 import org.jooq.SelectField;
 import org.jooq.Table;
@@ -87,16 +87,6 @@ public class IndexVolumeGroup extends TableImpl<IndexVolumeGroupRecord> {
      */
     public final TableField<IndexVolumeGroupRecord, String> NAME = createField(DSL.name("name"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
-    /**
-     * The column <code>stroom.index_volume_group.is_default</code>.
-     */
-    public final TableField<IndexVolumeGroupRecord, Byte> IS_DEFAULT = createField(DSL.name("is_default"), SQLDataType.TINYINT, this, "");
-
-    /**
-     * The column <code>stroom.index_volume_group.uuid</code>.
-     */
-    public final TableField<IndexVolumeGroupRecord, String> UUID = createField(DSL.name("uuid"), SQLDataType.VARCHAR(255).nullable(false), this, "");
-
     private IndexVolumeGroup(Name alias, Table<IndexVolumeGroupRecord> aliased) {
         this(alias, aliased, null);
     }
@@ -147,7 +137,7 @@ public class IndexVolumeGroup extends TableImpl<IndexVolumeGroupRecord> {
 
     @Override
     public List<UniqueKey<IndexVolumeGroupRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.KEY_INDEX_VOLUME_GROUP_NAME, Keys.KEY_INDEX_VOLUME_GROUP_IS_DEFAULT_IDX, Keys.KEY_INDEX_VOLUME_GROUP_UUID_IDX);
+        return Arrays.asList(Keys.KEY_INDEX_VOLUME_GROUP_NAME);
     }
 
     @Override
@@ -195,18 +185,18 @@ public class IndexVolumeGroup extends TableImpl<IndexVolumeGroupRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row9 type methods
+    // Row7 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row9<Integer, Integer, Long, String, Long, String, String, Byte, String> fieldsRow() {
-        return (Row9) super.fieldsRow();
+    public Row7<Integer, Integer, Long, String, Long, String, String> fieldsRow() {
+        return (Row7) super.fieldsRow();
     }
 
     /**
      * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
      */
-    public <U> SelectField<U> mapping(Function9<? super Integer, ? super Integer, ? super Long, ? super String, ? super Long, ? super String, ? super String, ? super Byte, ? super String, ? extends U> from) {
+    public <U> SelectField<U> mapping(Function7<? super Integer, ? super Integer, ? super Long, ? super String, ? super Long, ? super String, ? super String, ? extends U> from) {
         return convertFrom(Records.mapping(from));
     }
 
@@ -214,7 +204,7 @@ public class IndexVolumeGroup extends TableImpl<IndexVolumeGroupRecord> {
      * Convenience mapping calling {@link SelectField#convertFrom(Class,
      * Function)}.
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function9<? super Integer, ? super Integer, ? super Long, ? super String, ? super Long, ? super String, ? super String, ? super Byte, ? super String, ? extends U> from) {
+    public <U> SelectField<U> mapping(Class<U> toType, Function7<? super Integer, ? super Integer, ? super Long, ? super String, ? super Long, ? super String, ? super String, ? extends U> from) {
         return convertFrom(toType, Records.mapping(from));
     }
 }
