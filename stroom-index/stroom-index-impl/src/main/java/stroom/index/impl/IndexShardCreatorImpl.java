@@ -4,22 +4,26 @@ import stroom.docref.DocRef;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneVersion;
 import stroom.index.shared.LuceneVersionUtil;
 import stroom.security.api.SecurityContext;
+import stroom.util.NullSafe;
 import stroom.util.io.PathCreator;
 
 import jakarta.inject.Inject;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 
 public class IndexShardCreatorImpl implements IndexShardCreator {
 
     private final LuceneIndexDocCache luceneIndexDocCache;
     private final IndexShardDao indexShardDao;
     private final IndexVolumeService indexVolumeService;
+    private final IndexVolumeGroupService indexVolumeGroupService;
     private final PathCreator pathCreator;
     private final SecurityContext securityContext;
 
@@ -29,11 +33,13 @@ public class IndexShardCreatorImpl implements IndexShardCreator {
     IndexShardCreatorImpl(final LuceneIndexDocCache indexStructureCache,
                           final IndexShardDao indexShardDao,
                           final IndexVolumeService indexVolumeService,
+                          final IndexVolumeGroupService indexVolumeGroupService,
                           final PathCreator pathCreator,
                           final SecurityContext securityContext) {
         this.luceneIndexDocCache = indexStructureCache;
         this.indexShardDao = indexShardDao;
         this.indexVolumeService = indexVolumeService;
+        this.indexVolumeGroupService = indexVolumeGroupService;
         this.pathCreator = pathCreator;
         this.securityContext = securityContext;
     }
@@ -45,7 +51,9 @@ public class IndexShardCreatorImpl implements IndexShardCreator {
         return securityContext.asProcessingUserResult(() -> {
             final LuceneIndexDoc index = luceneIndexDocCache.get(
                     new DocRef(LuceneIndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
-            final IndexVolume indexVolume = indexVolumeService.selectVolume(index.getVolumeGroupName(), ownerNodeName);
+            final IndexVolume indexVolume = indexVolumeService.selectVolume(
+                    getIndexVolumeGroup(index),
+                    ownerNodeName);
 
             // Test the validity of the volume path.
             final Path path = pathCreator.toAppPath(indexVolume.getPath());
@@ -59,6 +67,14 @@ public class IndexShardCreatorImpl implements IndexShardCreator {
                     ownerNodeName,
                     indexVersion.getDisplayValue());
         });
+    }
+
+    private DocRef getIndexVolumeGroup(final LuceneIndexDoc indexDoc) {
+        return Objects.requireNonNullElseGet(
+                indexDoc.getVolumeGroupDocRef(),
+                () -> NullSafe.get(
+                        indexVolumeGroupService.getDefaultVolumeGroup(),
+                        IndexVolumeGroup::asDocRef));
     }
 
     @Override
