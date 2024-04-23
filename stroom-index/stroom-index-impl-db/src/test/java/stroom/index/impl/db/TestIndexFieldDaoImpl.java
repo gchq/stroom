@@ -171,16 +171,24 @@ class TestIndexFieldDaoImpl {
         final ExecutorService executorService = Executors.newFixedThreadPool(threads);
         final CountDownLatch startLatch = new CountDownLatch(1);
 
+        JooqUtil.context(indexDbConnProvider, context -> {
+            assertThat(count(context, INDEX_FIELD))
+                    .isEqualTo(0);
+        });
+
         final List<CompletableFuture<?>> futures = new ArrayList<>();
         for (int i = 0; i < threads; i++) {
             final int finalI = i;
             final CompletableFuture<Void> future = CompletableFuture.runAsync(
                     ThrowingRunnable.unchecked(() -> {
-                        final List<IndexField> fields = finalI % 2 == 0
+                        final List<IndexField> fields = finalI % 3 == 0
                                 ? List.of(FIELD_1, FIELD_3)
                                 : List.of(FIELD_2, FIELD_3);
                         startLatch.await();
-                        indexFieldDao.addFields(DOC_REF_1, fields);
+                        final DocRef docRef = finalI % 2 == 0
+                                ? DOC_REF_1
+                                : DOC_REF_2;
+                        indexFieldDao.addFields(docRef, fields);
                         LOGGER.debug("Thread {} complete", finalI);
                     }), executorService);
             futures.add(future);
@@ -190,8 +198,11 @@ class TestIndexFieldDaoImpl {
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
                 .get();
 
-        final List<IndexField> fields = getFields(DOC_REF_1);
+        List<IndexField> fields = getFields(DOC_REF_1);
+        assertThat(fields.size())
+                .isEqualTo(3);
 
+        fields = getFields(DOC_REF_2);
         assertThat(fields.size())
                 .isEqualTo(3);
     }

@@ -4,18 +4,17 @@
 package stroom.index.impl.db.jooq.tables;
 
 
-import stroom.index.impl.db.jooq.Keys;
-import stroom.index.impl.db.jooq.Stroom;
-import stroom.index.impl.db.jooq.tables.records.IndexFieldRecord;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Function;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function9;
-import org.jooq.Identity;
+import org.jooq.Function8;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Records;
-import org.jooq.Row9;
+import org.jooq.Row8;
 import org.jooq.Schema;
 import org.jooq.SelectField;
 import org.jooq.Table;
@@ -26,9 +25,9 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.function.Function;
+import stroom.index.impl.db.jooq.Keys;
+import stroom.index.impl.db.jooq.Stroom;
+import stroom.index.impl.db.jooq.tables.records.IndexFieldRecord;
 
 
 /**
@@ -51,11 +50,6 @@ public class IndexField extends TableImpl<IndexFieldRecord> {
     public Class<IndexFieldRecord> getRecordType() {
         return IndexFieldRecord.class;
     }
-
-    /**
-     * The column <code>stroom.index_field.id</code>.
-     */
-    public final TableField<IndexFieldRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
 
     /**
      * The column <code>stroom.index_field.fk_index_field_source_id</code>.
@@ -136,18 +130,8 @@ public class IndexField extends TableImpl<IndexFieldRecord> {
     }
 
     @Override
-    public Identity<IndexFieldRecord, Long> getIdentity() {
-        return (Identity<IndexFieldRecord, Long>) super.getIdentity();
-    }
-
-    @Override
     public UniqueKey<IndexFieldRecord> getPrimaryKey() {
         return Keys.KEY_INDEX_FIELD_PRIMARY;
-    }
-
-    @Override
-    public List<UniqueKey<IndexFieldRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.KEY_INDEX_FIELD_INDEX_FIELD_SOURCE_ID_NAME);
     }
 
     @Override
@@ -208,18 +192,18 @@ public class IndexField extends TableImpl<IndexFieldRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row9 type methods
+    // Row8 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row9<Long, Integer, Byte, String, String, Boolean, Boolean, Boolean, Boolean> fieldsRow() {
-        return (Row9) super.fieldsRow();
+    public Row8<Integer, Byte, String, String, Boolean, Boolean, Boolean, Boolean> fieldsRow() {
+        return (Row8) super.fieldsRow();
     }
 
     /**
      * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
      */
-    public <U> SelectField<U> mapping(Function9<? super Long, ? super Integer, ? super Byte, ? super String, ? super String, ? super Boolean, ? super Boolean, ? super Boolean, ? super Boolean, ? extends U> from) {
+    public <U> SelectField<U> mapping(Function8<? super Integer, ? super Byte, ? super String, ? super String, ? super Boolean, ? super Boolean, ? super Boolean, ? super Boolean, ? extends U> from) {
         return convertFrom(Records.mapping(from));
     }
 
@@ -227,7 +211,7 @@ public class IndexField extends TableImpl<IndexFieldRecord> {
      * Convenience mapping calling {@link SelectField#convertFrom(Class,
      * Function)}.
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function9<? super Long, ? super Integer, ? super Byte, ? super String, ? super String, ? super Boolean, ? super Boolean, ? super Boolean, ? super Boolean, ? extends U> from) {
+    public <U> SelectField<U> mapping(Class<U> toType, Function8<? super Integer, ? super Byte, ? super String, ? super String, ? super Boolean, ? super Boolean, ? super Boolean, ? super Boolean, ? extends U> from) {
         return convertFrom(toType, Records.mapping(from));
     }
 }
