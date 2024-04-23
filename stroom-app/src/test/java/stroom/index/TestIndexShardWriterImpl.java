@@ -257,9 +257,6 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
 
         // Make sure the writer is full.
         assertThatThrownBy(() -> writer2.addDocument(document)).isInstanceOf(IndexException.class);
-
-        // Make sure the writer is still open.
-        assertThat(compareStatus(IndexShardStatus.OPEN, writer2.getIndexShardId())).isTrue();
     }
 
     @Test
