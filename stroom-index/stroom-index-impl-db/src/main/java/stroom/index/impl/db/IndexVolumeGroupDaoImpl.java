@@ -2,6 +2,7 @@ package stroom.index.impl.db;
 
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
+import stroom.db.util.JooqUtil.BooleanOperator;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.IndexVolumeGroupDao;
@@ -11,6 +12,7 @@ import stroom.util.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Record;
 import org.jooq.exception.DataAccessException;
@@ -20,11 +22,11 @@ import org.slf4j.LoggerFactory;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static stroom.index.impl.db.jooq.Tables.INDEX_VOLUME_GROUP;
+import static stroom.index.impl.db.jooq.tables.IndexVolume.INDEX_VOLUME;
 
 class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
 
@@ -98,34 +100,23 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
 
     @Override
     public IndexVolumeGroup getOrCreate(final IndexVolumeGroup indexVolumeGroup) {
-        Optional<Integer> optional = JooqUtil.contextResult(indexDbConnProvider, context -> context
-                        .insertInto(INDEX_VOLUME_GROUP,
-                                INDEX_VOLUME_GROUP.VERSION,
-                                INDEX_VOLUME_GROUP.CREATE_USER,
-                                INDEX_VOLUME_GROUP.CREATE_TIME_MS,
-                                INDEX_VOLUME_GROUP.UPDATE_USER,
-                                INDEX_VOLUME_GROUP.UPDATE_TIME_MS,
-                                INDEX_VOLUME_GROUP.NAME,
-                                INDEX_VOLUME_GROUP.UUID,
-                                INDEX_VOLUME_GROUP.IS_DEFAULT)
-                        .values(1,
-                                indexVolumeGroup.getCreateUser(),
-                                indexVolumeGroup.getCreateTimeMs(),
-                                indexVolumeGroup.getUpdateUser(),
-                                indexVolumeGroup.getUpdateTimeMs(),
-                                indexVolumeGroup.getName(),
-                                indexVolumeGroup.getUuid(),
-                                indexVolumeGroup.isDefaultVolume())
-                        .onDuplicateKeyIgnore()
-                        .returning(INDEX_VOLUME_GROUP.ID)
-                        .fetchOptional())
-                .map(IndexVolumeGroupRecord::getId);
-
-        return optional.map(id -> {
-            indexVolumeGroup.setId(id);
-            indexVolumeGroup.setVersion(1);
-            return indexVolumeGroup;
-        }).orElse(get(indexVolumeGroup.getName()));
+        Objects.requireNonNull(indexVolumeGroup);
+        return JooqUtil.transactionResultWithOptimisticLocking(indexDbConnProvider, context -> {
+            if (indexVolumeGroup.isDefaultVolume()) {
+                // Can only have one that is default so ensure all others are not
+                context.update(INDEX_VOLUME_GROUP)
+                        .set(INDEX_VOLUME_GROUP.IS_DEFAULT, (Boolean) null)
+                        .where(INDEX_VOLUME_GROUP.IS_DEFAULT.eq(true))
+                        .and(INDEX_VOLUME_GROUP.UUID.ne(indexVolumeGroup.getUuid()))
+                        .execute();
+            }
+            return genericDao.tryCreate(
+                    context,
+                    indexVolumeGroup,
+                    INDEX_VOLUME_GROUP.UUID,
+                    null,
+                    null);
+        });
     }
 
     @Override
@@ -217,6 +208,21 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
     }
 
     @Override
+    public List<IndexVolumeGroup> find(final List<String> nameFilters, final boolean allowWildCards) {
+        final Condition condition = JooqUtil.createWildCardedStringsCondition(
+                INDEX_VOLUME_GROUP.NAME, nameFilters, true, BooleanOperator.OR);
+
+        return JooqUtil.contextResult(indexDbConnProvider, context ->
+                        context.select()
+                                .from(INDEX_VOLUME_GROUP)
+                                .where(condition)
+                                .fetch())
+                .stream()
+                .map(RECORD_TO_INDEX_VOLUME_GROUP_MAPPER)
+                .toList();
+    }
+
+    @Override
     public IndexVolumeGroup getDefaultVolumeGroup() {
         return JooqUtil.contextResult(indexDbConnProvider, context -> context
                         .select()
@@ -254,9 +260,15 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
 
     @Override
     public void delete(int id) {
-        genericDao.delete(id);
-    }
+        JooqUtil.transaction(indexDbConnProvider, txnContext -> {
+            // Delete the child volumes first
+            txnContext.deleteFrom(INDEX_VOLUME)
+                    .where(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID.eq(id))
+                    .execute();
 
+            genericDao.delete(txnContext, id);
+        });
+    }
 
     private static Boolean toDbIsDefaultValue(final IndexVolumeGroup indexVolumeGroup) {
         return indexVolumeGroup.isDefaultVolume()

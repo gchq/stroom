@@ -7,6 +7,7 @@ import stroom.index.shared.IndexVolumeGroup.Builder;
 import stroom.util.AuditUtil;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -102,5 +103,10 @@ public class MockIndexVolumeGroupService implements IndexVolumeGroupService {
     @Override
     public void ensureDefaultVolumes() {
 
+    }
+
+    @Override
+    public List<IndexVolumeGroup> find(final List<String> nameFilters, final boolean allowWildCards) {
+        return Collections.emptyList();
     }
 }

@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Singleton
-@EntityEventHandler(type = FsVolumeGroupServiceImpl.ENTITY_TYPE, action = {
+@EntityEventHandler(type = FsVolumeGroup.DOCUMENT_TYPE, action = {
         EntityAction.UPDATE,
         EntityAction.CREATE,
         EntityAction.DELETE})
@@ -74,8 +74,11 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
         final FsVolumeGroup copy = builder.build();
         AuditUtil.stamp(securityContext, copy);
 
-        return securityContext.secureResult(() ->
+        final FsVolumeGroup fsVolumeGroup2 = securityContext.secureResult(() ->
                 volumeGroupDao.create(copy));
+
+        fireChange(EntityAction.CREATE, fsVolumeGroup2);
+        return fsVolumeGroup2;
     }
 
     @Override
@@ -89,7 +92,7 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
         AuditUtil.stamp(securityContext, indexVolumeGroup);
         final FsVolumeGroup result = securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> volumeGroupDao.getOrCreate(indexVolumeGroup));
-        fireChange(EntityAction.CREATE);
+        fireChange(EntityAction.CREATE, result);
         return result;
     }
 
@@ -112,7 +115,7 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
         AuditUtil.stamp(securityContext, indexVolumeGroup);
         final FsVolumeGroup result = securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> volumeGroupDao.update(indexVolumeGroup));
-        fireChange(EntityAction.UPDATE);
+        fireChange(EntityAction.UPDATE, result);
         return result;
     }
 
@@ -147,16 +150,12 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
     public void delete(int id) {
         securityContext.secure(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> {
-//                    //TODO Transaction?
-//                    var indexVolumesInGroup = volumeDao.getAll().stream()
-//                            .filter(indexVolume ->
-//                                    indexVolume.getVolumeGroupId().equals(id))
-//                            .toList();
-//                    indexVolumesInGroup.forEach(indexVolume ->
-//                            volumeDao.delete(indexVolume.getId()));
-                    volumeGroupDao.delete(id);
+                    final FsVolumeGroup fsVolumeGroup = volumeGroupDao.get(id);
+                    if (fsVolumeGroup != null) {
+                        volumeGroupDao.delete(id);
+                        fireChange(EntityAction.DELETE, fsVolumeGroup);
+                    }
                 });
-        fireChange(EntityAction.DELETE);
     }
 
     public void ensureDefaultVolumes() {
@@ -227,12 +226,12 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
 //        }
 //    }
 
-    private void fireChange(final EntityAction action) {
+    private void fireChange(final EntityAction action, final FsVolumeGroup fsVolumeGroup) {
         if (entityEventBusProvider != null) {
             try {
                 final EntityEventBus entityEventBus = entityEventBusProvider.get();
                 if (entityEventBus != null) {
-                    entityEventBus.fire(new EntityEvent(EVENT_DOCREF, action));
+                    entityEventBus.fire(new EntityEvent(fsVolumeGroup.asDocRef(), action));
                 }
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);

@@ -251,7 +251,7 @@ public final class SetupSampleDataBean {
         final List<IndexVolume> indexVolumes = indexVolumeGroupService.getNames()
                 .parallelStream()
                 .flatMap(groupName -> indexVolumeService.find(new ExpressionCriteria()).stream())
-                .collect(Collectors.toList());
+                .toList();
 
         LOGGER.info("Checking available index volumes, found:\n{}",
                 indexVolumes.stream()
@@ -347,7 +347,7 @@ public final class SetupSampleDataBean {
                     dataLoader.loadInputStream(
                             feedName,
                             "Gen data",
-                        null,
+                            null,
                             StreamUtil.stringToStream(randomData),
                             false,
                             startTime);
@@ -459,7 +459,7 @@ public final class SetupSampleDataBean {
                 dataLoader.loadInputStream(
                         STATS_COUNT_API_FEED_NAME,
                         "Sample statistics count data for export to API",
-                    null,
+                        null,
                         StreamUtil.stringToStream(sampleData),
                         false,
                         startTime);

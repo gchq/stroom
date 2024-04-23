@@ -31,6 +31,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DelayedUpdate;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -152,8 +153,8 @@ public class IndexVolumeGroupEditPresenter
 
     private void delete() {
         final List<IndexVolume> list = volumeStatusListPresenter.getSelectionModel().getSelectedItems();
-        if (list != null && list.size() > 0) {
-            String message = "Are you sure you want to delete the selected volume?";
+        if (GwtNullSafe.hasItems(list)) {
+            String message = "Are you sure you want to delete this volume?";
             if (list.size() > 1) {
                 message = "Are you sure you want to delete the selected volumes?";
             }

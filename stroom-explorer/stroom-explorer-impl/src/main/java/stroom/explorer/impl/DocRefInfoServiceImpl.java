@@ -27,24 +27,24 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
     private final DocRefInfoCache docRefInfoCache;
     private final SecurityContext securityContext;
     private final Provider<DocumentActionHandlers> documentActionHandlersProvider;
-    private final ExplorerActionHandlers explorerActionHandlers;
+    private final Provider<ExplorerActionHandlers> explorerActionHandlersProvider;
 
     @Inject
     DocRefInfoServiceImpl(final DocRefInfoCache docRefInfoCache,
                           final SecurityContext securityContext,
                           final Provider<DocumentActionHandlers> documentActionHandlersProvider,
-                          final ExplorerActionHandlers explorerActionHandlers) {
+                          final Provider<ExplorerActionHandlers> explorerActionHandlersProvider) {
         this.docRefInfoCache = docRefInfoCache;
         this.securityContext = securityContext;
         this.documentActionHandlersProvider = documentActionHandlersProvider;
-        this.explorerActionHandlers = explorerActionHandlers;
+        this.explorerActionHandlersProvider = explorerActionHandlersProvider;
     }
 
     @Override
     public List<DocRef> findByType(final String type) {
         Objects.requireNonNull(type);
         return securityContext.asProcessingUserResult(() -> {
-            final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);
+            final ExplorerActionHandler handler = explorerActionHandlersProvider.get().getHandler(type);
             Objects.requireNonNull(handler, () -> "No handler for type " + type);
             return new ArrayList<>(handler.listDocuments());
         });
@@ -94,7 +94,7 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
                         typesChecked.add(handler.getType());
                     });
 
-                    explorerActionHandlers.forEach((handlerType, handler) -> {
+                    explorerActionHandlersProvider.get().forEach((handlerType, handler) -> {
                         if (!typesChecked.contains(handler.getDocumentType().getType())) {
                             result.addAll(handler.findByName(nameFilter, allowWildCards));
                         }
@@ -104,7 +104,7 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
                     HasFindDocsByName handler = null;
                     handler = documentActionHandlersProvider.get().getHandler(type);
                     if (handler == null) {
-                        handler = explorerActionHandlers.getHandler(type);
+                        handler = explorerActionHandlersProvider.get().getHandler(type);
                     }
 
                     Objects.requireNonNull(handler, () -> "No handler for type " + type);
@@ -124,7 +124,7 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
             return Collections.emptyList();
         } else {
             return securityContext.asProcessingUserResult(() -> {
-                final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);
+                final ExplorerActionHandler handler = explorerActionHandlersProvider.get().getHandler(type);
                 Objects.requireNonNull(handler, () -> "No handler for type " + type);
                 return handler.findByNames(nameFilters, allowWildCards);
             });

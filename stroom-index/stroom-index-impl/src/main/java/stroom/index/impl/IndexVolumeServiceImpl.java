@@ -75,7 +75,7 @@ import java.util.stream.Collectors;
         EntityAction.UPDATE,
         EntityAction.CREATE,
         EntityAction.DELETE})
-@EntityEventHandler(type = IndexVolumeGroupService.ENTITY_TYPE, action = {
+@EntityEventHandler(type = IndexVolumeGroup.DOCUMENT_TYPE, action = {
         EntityAction.UPDATE,
         EntityAction.CREATE,
         EntityAction.DELETE})

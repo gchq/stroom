@@ -15,6 +15,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
+import java.util.Objects;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.sql.DataSource;
@@ -57,6 +59,8 @@ public class DbUtil {
     public static void doWithPreparedStatement(final DataSource dataSource,
                                                final String sql,
                                                final Consumer<PreparedStatement> consumer) {
+        Objects.requireNonNull(dataSource);
+        Objects.requireNonNull(sql);
         if (consumer != null) {
             try (final PreparedStatement prepStmt = dataSource.getConnection().prepareStatement(sql)) {
                 consumer.accept(prepStmt);
@@ -69,6 +73,8 @@ public class DbUtil {
     public static <T> T getWithPreparedStatement(final DataSource dataSource,
                                                  final String sql,
                                                  final Function<PreparedStatement, T> function) {
+        Objects.requireNonNull(dataSource);
+        Objects.requireNonNull(sql);
         if (function != null) {
             try (final PreparedStatement prepStmt = dataSource.getConnection().prepareStatement(sql)) {
                 return function.apply(prepStmt);
@@ -77,6 +83,86 @@ public class DbUtil {
             }
         } else {
             return null;
+        }
+    }
+
+    /**
+     * Run the selectSql and pass the value in the first column of each row to the valueConsumer
+     */
+    public static <T> void forEachValue(final DataSource dataSource,
+                                        final String selectSql,
+                                        final Class<T> valueType,
+                                        final Consumer<T> valueConsumer) {
+        Objects.requireNonNull(dataSource);
+        Objects.requireNonNull(selectSql);
+        Objects.requireNonNull(valueType);
+        if (valueConsumer != null) {
+            try (final Statement statement = dataSource.getConnection().createStatement()) {
+                try (final ResultSet resultSet = statement.executeQuery(selectSql)) {
+                    while (resultSet.next()) {
+                        final T val = resultSet.getObject(1, valueType);
+                        valueConsumer.accept(val);
+                    }
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(
+                        LogUtil.message("Error running SQL: '{}', {}", selectSql, e.getMessage()), e);
+            }
+        }
+    }
+
+    /**
+     * Run the selectSql and pass the values in the first and second column of each row
+     * respectively to the valuesConsumer
+     */
+    public static <T1, T2> void forEachBiValue(final DataSource dataSource,
+                                               final String selectSql,
+                                               final Class<T1> value1Type,
+                                               final Class<T2> value2Type,
+                                               final BiConsumer<T1, T2> valuesConsumer) {
+        Objects.requireNonNull(dataSource);
+        Objects.requireNonNull(selectSql);
+        Objects.requireNonNull(value1Type);
+        Objects.requireNonNull(value2Type);
+        if (valuesConsumer != null) {
+            try (final Statement statement = dataSource.getConnection().createStatement()) {
+                try (final ResultSet resultSet = statement.executeQuery(selectSql)) {
+                    while (resultSet.next()) {
+                        final T1 val1 = resultSet.getObject(1, value1Type);
+                        final T2 val2 = resultSet.getObject(2, value2Type);
+                        valuesConsumer.accept(val1, val2);
+                    }
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(
+                        LogUtil.message("Error running SQL: '{}', {}", selectSql, e.getMessage()), e);
+            }
+        }
+    }
+
+    public static int executeUpdate(final DataSource dataSource,
+                                    final String dmlSql) {
+        Objects.requireNonNull(dataSource);
+        Objects.requireNonNull(dmlSql);
+        try (final Statement statement = dataSource.getConnection().createStatement()) {
+            return statement.executeUpdate(dmlSql);
+        } catch (SQLException e) {
+            throw new RuntimeException(
+                    LogUtil.message("Error running SQL: '{}', {}", dmlSql, e.getMessage()), e);
+        }
+    }
+
+    public static int executeUpdate(final DataSource dataSource,
+                                    final String dmlSql,
+                                    final Object... args) {
+        Objects.requireNonNull(dataSource);
+        Objects.requireNonNull(dmlSql);
+        try (final PreparedStatement preparedStatement = dataSource.getConnection().prepareStatement(dmlSql)) {
+
+            return preparedStatement.executeUpdate(dmlSql);
+        } catch (SQLException e) {
+            throw new RuntimeException(
+                    LogUtil.message("Error running SQL: '{}', {}", dmlSql, e.getMessage()), e);
         }
     }
 

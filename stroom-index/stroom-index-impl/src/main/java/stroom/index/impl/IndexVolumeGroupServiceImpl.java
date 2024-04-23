@@ -1,5 +1,6 @@
 package stroom.index.impl;
 
+import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.docref.DocRef;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.index.shared.IndexVolume;
@@ -96,7 +97,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
         AuditUtil.stamp(securityContext, indexVolumeGroup);
         final IndexVolumeGroup result = securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeGroupDao.getOrCreate(indexVolumeGroup));
-        fireChange(EntityAction.CREATE);
+        fireChange(EntityAction.CREATE, result);
         return result;
     }
 
@@ -109,7 +110,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
         AuditUtil.stamp(securityContext, indexVolumeGroup);
         final IndexVolumeGroup result = securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeGroupDao.getOrCreate(indexVolumeGroup));
-        fireChange(EntityAction.CREATE);
+        fireChange(EntityAction.CREATE, result);
         return result;
     }
 
@@ -134,7 +135,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
         AuditUtil.stamp(securityContext, indexVolumeGroup);
         final IndexVolumeGroup result = securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeGroupDao.update(indexVolumeGroup));
-        fireChange(EntityAction.UPDATE);
+        fireChange(EntityAction.UPDATE, result);
         return result;
     }
 
@@ -168,22 +169,24 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
     public void delete(int id) {
         securityContext.secure(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> {
-                    //TODO Transaction?
-                    var indexVolumesInGroup = indexVolumeDao.getAll().stream()
-                            .filter(indexVolume ->
-                                    indexVolume.getIndexVolumeGroupId().equals(id))
-                            .toList();
-                    indexVolumesInGroup.forEach(indexVolume ->
-                            indexVolumeDao.delete(indexVolume.getId()));
-                    indexVolumeGroupDao.delete(id);
+                    final IndexVolumeGroup indexVolumeGroup = indexVolumeGroupDao.get(id);
+                    if (indexVolumeGroup != null) {
+                        fireChange(EntityAction.DELETE, indexVolumeGroup);
+                        // Also deletes volumes
+                        indexVolumeGroupDao.delete(id);
+                    }
                 });
-        fireChange(EntityAction.DELETE);
     }
 
     public void ensureDefaultVolumes() {
         if (!createdDefaultVolumes) {
             createDefaultVolumes();
         }
+    }
+
+    @Override
+    public List<IndexVolumeGroup> find(final List<String> nameFilters, final boolean allowWildCards) {
+        return indexVolumeGroupDao.find(nameFilters, allowWildCards);
     }
 
     private synchronized void createDefaultVolumes() {
@@ -199,6 +202,8 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
                             final UserIdentity processingUserIdentity = userIdentityFactory.getServiceUserIdentity();
                             final String groupName = volumeConfig.getDefaultIndexVolumeGroupName();
                             indexVolumeGroup.setName(groupName);
+                            indexVolumeGroup.setDefaultVolume(true);
+                            indexVolumeGroup.setUuid(FsVolumeGroup.DEFAULT_VOLUME_UUID);
                             AuditUtil.stamp(processingUserIdentity, indexVolumeGroup);
 
                             LOGGER.info("Creating default index volume group [{}]", groupName);
@@ -279,12 +284,12 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
         }
     }
 
-    private void fireChange(final EntityAction action) {
+    private void fireChange(final EntityAction action, final IndexVolumeGroup indexVolumeGroup) {
         if (entityEventBusProvider != null) {
             try {
                 final EntityEventBus entityEventBus = entityEventBusProvider.get();
                 if (entityEventBus != null) {
-                    entityEventBus.fire(new EntityEvent(EVENT_DOCREF, action));
+                    entityEventBus.fire(new EntityEvent(indexVolumeGroup.asDocRef(), action));
                 }
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);

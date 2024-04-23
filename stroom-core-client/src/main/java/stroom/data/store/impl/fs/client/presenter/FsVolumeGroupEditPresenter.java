@@ -145,7 +145,7 @@ public class FsVolumeGroupEditPresenter
     private void delete() {
         final List<FsVolume> list = volumeStatusListPresenter.getSelectionModel().getSelectedItems();
         if (GwtNullSafe.hasItems(list)) {
-            String message = "Are you sure you want to delete the selected volume?";
+            String message = "Are you sure you want to delete this volume?";
             if (list.size() > 1) {
                 message = "Are you sure you want to delete the selected volumes?";
             }

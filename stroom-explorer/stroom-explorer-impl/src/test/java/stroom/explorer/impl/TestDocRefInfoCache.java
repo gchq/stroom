@@ -80,7 +80,7 @@ class TestDocRefInfoCache {
                 ExplorerConfig::new,
                 securityContext,
                 () -> documentActionHandlers,
-                mockExplorerActionHandlers);
+                () -> mockExplorerActionHandlers);
     }
 
     @Test

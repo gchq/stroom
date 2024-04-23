@@ -75,7 +75,7 @@ class TestDocRefInfoServiceImpl {
                 mockDocRefInfoCache,
                 mockSecurityContext,
                 () -> mockDocumentActionHandlers,
-                mockExplorerActionHandlers);
+                () -> mockExplorerActionHandlers);
     }
 
     private void initMockCache() {

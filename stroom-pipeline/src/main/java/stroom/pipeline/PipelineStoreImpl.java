@@ -26,6 +26,7 @@ import stroom.docref.StringMatch;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -239,13 +240,15 @@ public class PipelineStoreImpl implements PipelineStore {
         // Support legacy export zips created when vol groups were defined by name
         // rather than docref. Try to look up the vol grp name to get a docref
         Map<String, byte[]> effectiveDataMap = dataMap;
-        try {
-            final PipelineDoc pipelineDoc = serialiser.read(dataMap);
-            migrateProperties(pipelineDoc.getPipelineData().getAddedProperties());
-            migrateProperties(pipelineDoc.getPipelineData().getRemovedProperties());
-            effectiveDataMap = serialiser.write(pipelineDoc);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        if (effectiveDataMap != null && effectiveDataMap.containsKey(Serialiser2.META)) {
+            try {
+                final PipelineDoc pipelineDoc = serialiser.read(dataMap);
+                migrateProperties(pipelineDoc.getPipelineData().getAddedProperties());
+                migrateProperties(pipelineDoc.getPipelineData().getRemovedProperties());
+                effectiveDataMap = serialiser.write(pipelineDoc);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
         return effectiveDataMap;
     }

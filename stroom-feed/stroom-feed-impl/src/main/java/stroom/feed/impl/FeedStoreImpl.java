@@ -25,6 +25,7 @@ import stroom.docref.DocRefInfo;
 import stroom.docref.StringMatch;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.docstore.api.AuditFieldFilter;
+import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -225,27 +226,29 @@ public class FeedStoreImpl implements FeedStore {
         // Support legacy export zips created when vol groups were defined by name
         // rather than docref. Try to look up the vol grp name to get a docref
         Map<String, byte[]> effectiveDataMap = dataMap;
-        try {
-            final FeedDoc feedDoc = feedSerialiser.read(dataMap);
-            if (feedDoc.getVolumeGroupDocRef() == null
-                    && feedDoc.getVolumeGroup() != null) {
-                final List<DocRef> docRefs = docRefInfoService.findByName(
-                        FsVolumeGroup.DOCUMENT_TYPE,
-                        feedDoc.getVolumeGroup(),
-                        false);
-                final DocRef volGrpDocRef = NullSafe.hasItems(docRefs)
-                        ? docRefs.get(0)
-                        // Name is unique so never > 1
-                        : null;
-                if (volGrpDocRef != null) {
-                    feedDoc.setVolumeGroupDocRef(volGrpDocRef);
+        if (dataMap != null && dataMap.containsKey(Serialiser2.META)) {
+            try {
+                final FeedDoc feedDoc = feedSerialiser.read(dataMap);
+                if (feedDoc.getVolumeGroupDocRef() == null
+                        && feedDoc.getVolumeGroup() != null) {
+                    final List<DocRef> docRefs = docRefInfoService.findByName(
+                            FsVolumeGroup.DOCUMENT_TYPE,
+                            feedDoc.getVolumeGroup(),
+                            false);
+                    final DocRef volGrpDocRef = NullSafe.hasItems(docRefs)
+                            ? docRefs.get(0)
+                            // Name is unique so never > 1
+                            : null;
+                    if (volGrpDocRef != null) {
+                        feedDoc.setVolumeGroupDocRef(volGrpDocRef);
+                    }
+                    // Clear the name as it is not needed now
+                    feedDoc.setVolumeGroup(null);
+                    effectiveDataMap = feedSerialiser.write(feedDoc);
                 }
-                // Clear the name as it is not needed now
-                feedDoc.setVolumeGroup(null);
-                effectiveDataMap = feedSerialiser.write(feedDoc);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
         return effectiveDataMap;
     }

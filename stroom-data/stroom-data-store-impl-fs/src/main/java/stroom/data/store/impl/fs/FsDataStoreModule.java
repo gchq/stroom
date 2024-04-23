@@ -20,6 +20,8 @@ import stroom.data.store.api.FsVolumeGroupService;
 import stroom.data.store.api.Store;
 import stroom.data.store.impl.AttributeMapFactory;
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.shared.FsVolumeGroup;
+import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.util.guice.GuiceUtil;
@@ -57,6 +59,9 @@ public class FsDataStoreModule extends AbstractModule {
 
         HasSystemInfoBinder.create(binder())
                 .bind(FsVolumeService.class);
+
+        DocumentActionHandlerBinder.create(binder())
+                .bind(FsVolumeGroup.DOCUMENT_TYPE, FsVolumeGroupDocumentActionHandler.class);
     }
 
     @Override

@@ -314,10 +314,7 @@ public class NewPropertyPresenter
             dataTypePresenterInitialised = true;
         }
 
-        currentDataType = null;
-        if (property.getValue() != null && property.getValue().getString() != null) {
-            currentDataType = property.getValue().toString();
-        }
+        currentDataType = GwtNullSafe.toString(property, PipelineProperty::getValue);
 
         stringDataTypeWidget.setValue(currentDataType);
     }
@@ -331,7 +328,6 @@ public class NewPropertyPresenter
                     .create(VOLUME_GROUP_RESOURCE)
                     .method(res -> res.find(new ExpressionCriteria()))
                     .onSuccess(result -> {
-                        docRefDataTypeWidget.clear();
                         docRefDataTypeWidget.setNonSelectString("");
                         if (result != null && result.getValues() != null) {
                             docRefDataTypeWidget.addItems(
@@ -355,7 +351,7 @@ public class NewPropertyPresenter
                 getView().setSource(Source.LOCAL);
             });
 
-            final Widget widget = stringDataTypeWidget;
+            final Widget widget = docRefDataTypeWidget;
             widget.getElement().getStyle().setWidth(100, Unit.PCT);
             widget.getElement().getStyle().setMarginBottom(0, Unit.PX);
             getView().setValueWidget(widget);

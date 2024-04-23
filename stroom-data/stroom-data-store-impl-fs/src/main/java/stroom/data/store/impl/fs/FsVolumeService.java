@@ -233,19 +233,21 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
      * @return An active and non-full volume selected by the configured volume selector
      */
     public FsVolume getVolume(final DocRef volumeGroup) {
-        DocRef effectiveVolumeGroup = volumeGroup;
+        final DocRef effectiveVolumeGroup;
 
         // Use the default volume group if null.
-        if (effectiveVolumeGroup == null) {
+        if (volumeGroup == null) {
             LOGGER.debug("Using default volume group");
             effectiveVolumeGroup = fsVolumeGroupService.getDefaultVolumeGroup().asDocRef();
+        } else {
+            effectiveVolumeGroup = volumeGroup;
         }
 
         return securityContext.insecureResult(() -> {
             // Can't call this in the ctor as it causes a circular dep problem with EntityEventBus
             ensureDefaultVolumes();
 
-            final Set<FsVolume> set = getVolumeSet(volumeGroup, VolumeUseStatus.ACTIVE);
+            final Set<FsVolume> set = getVolumeSet(effectiveVolumeGroup, VolumeUseStatus.ACTIVE);
             if (!set.isEmpty()) {
                 final FsVolume volume = set.iterator().next();
                 LOGGER.trace("Using volume {}", volume);

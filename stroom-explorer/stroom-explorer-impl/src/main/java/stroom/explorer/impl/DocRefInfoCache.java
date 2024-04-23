@@ -55,7 +55,8 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
     private final SecurityContext securityContext;
     // Provider to avoid circular guice dependency issue
     private final Provider<DocumentActionHandlers> documentActionHandlersProvider;
-    private final ExplorerActionHandlers explorerActionHandlers;
+    // Provider to avoid circular guice dependency issue
+    private final Provider<ExplorerActionHandlers> explorerActionHandlersProvider;
 
 
     @Inject
@@ -63,10 +64,10 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
                     final Provider<ExplorerConfig> explorerConfigProvider,
                     final SecurityContext securityContext,
                     final Provider<DocumentActionHandlers> documentActionHandlersProvider,
-                    final ExplorerActionHandlers explorerActionHandlers) {
+                    final Provider<ExplorerActionHandlers> explorerActionHandlersProvider) {
         this.securityContext = securityContext;
         this.documentActionHandlersProvider = documentActionHandlersProvider;
-        this.explorerActionHandlers = explorerActionHandlers;
+        this.explorerActionHandlersProvider = explorerActionHandlersProvider;
 
         cache = cacheManager.createLoadingCache(
                 CACHE_NAME,
@@ -113,7 +114,7 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
         // Folder is not a DocumentActionHandler so check in ExplorerActionHandlers
         return optInfo
                 .or(() ->
-                        explorerActionHandlers.stream()
+                        explorerActionHandlersProvider.get().stream()
                                 .filter(handler ->
                                         !typesChecked.contains(handler.getDocumentType().getType()))
                                 .map(handler -> {
@@ -138,7 +139,7 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
 
         if (docRefInfo == null) {
             docRefInfo = NullSafe.get(
-                    explorerActionHandlers.getHandler(type),
+                    explorerActionHandlersProvider.get().getHandler(type),
                     handler -> handler.info(uuid));
         }
         return docRefInfo;

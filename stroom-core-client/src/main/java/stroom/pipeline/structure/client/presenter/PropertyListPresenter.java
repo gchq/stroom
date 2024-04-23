@@ -404,7 +404,7 @@ public class PropertyListPresenter
             }
         }
 
-        if (docRefs.size() > 0) {
+        if (!docRefs.isEmpty()) {
             // Load entities.
             restFactory
                     .create(EXPLORER_RESOURCE)
@@ -504,6 +504,10 @@ public class PropertyListPresenter
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public enum Source implements HasDisplayValue {
         LOCAL("Local"),

@@ -21,6 +21,7 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import static stroom.data.store.impl.fs.db.jooq.tables.FsVolume.FS_VOLUME;
 import static stroom.data.store.impl.fs.db.jooq.tables.FsVolumeGroup.FS_VOLUME_GROUP;
 
 class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
@@ -105,7 +106,7 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
                 context.update(FS_VOLUME_GROUP)
                         .set(FS_VOLUME_GROUP.IS_DEFAULT, (Boolean) null)
                         .where(FS_VOLUME_GROUP.IS_DEFAULT.eq(true))
-                        .and(FS_VOLUME_GROUP.UUID.eq(fsVolumeGroup.getUuid()))
+                        .and(FS_VOLUME_GROUP.UUID.ne(fsVolumeGroup.getUuid()))
                         .execute();
             }
             return genericDao.tryCreate(
@@ -237,7 +238,14 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
 
     @Override
     public void delete(int id) {
-        genericDao.delete(id);
+        JooqUtil.transaction(fsDataStoreDbConnProvider, txnContext -> {
+            // Delete the child volumes first
+            txnContext.deleteFrom(FS_VOLUME)
+                    .where(FS_VOLUME.FK_FS_VOLUME_GROUP_ID.eq(id))
+                    .execute();
+
+            genericDao.delete(txnContext, id);
+        });
     }
 
 }

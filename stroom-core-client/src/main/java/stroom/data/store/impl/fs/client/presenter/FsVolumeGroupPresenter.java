@@ -146,8 +146,10 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
                         "You should first make another volume group the default.";
                 AlertEvent.fireError(this, msg, null);
             } else {
+                // TODO check there are no deps using the vol grps?
+                // TODO add in the number of child volumes affected
                 final String message = fsVolumeGroups.size() > 1
-                        ? "Are you sure you want to delete the selected volume group?"
+                        ? "Are you sure you want to delete this volume group?"
                         : "Are you sure you want to delete the selected volume groups?";
                 ConfirmEvent.fire(FsVolumeGroupPresenter.this, message,
                         result -> {

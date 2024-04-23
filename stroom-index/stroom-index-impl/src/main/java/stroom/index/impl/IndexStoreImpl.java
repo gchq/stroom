@@ -25,6 +25,7 @@ import stroom.docref.DocRefInfo;
 import stroom.docref.StringMatch;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.docstore.api.AuditFieldFilter;
+import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -188,33 +189,31 @@ public class IndexStoreImpl implements IndexStore {
         // Support legacy export zips created when vol groups were defined by name
         // rather than docref. Try to look up the vol grp name to get a docref
         Map<String, byte[]> effectiveDataMap = dataMap;
-        try {
-            final LuceneIndexDoc indexDoc = serialiser.read(dataMap);
-            if (indexDoc.getVolumeGroupDocRef() == null
-                    && indexDoc.getVolumeGroupName() != null) {
-                final List<DocRef> docRefs = docRefInfoService.findByName(
-                        FsVolumeGroup.DOCUMENT_TYPE,
-                        indexDoc.getVolumeGroupName(),
-                        false);
-                final DocRef volGrpDocRef = NullSafe.hasItems(docRefs)
-                        ? docRefs.get(0)
-                        // Name is unique so never > 1
-                        : null;
-                if (volGrpDocRef != null) {
-                    indexDoc.setVolumeGroupDocRef(volGrpDocRef);
+        if (dataMap != null && dataMap.containsKey(Serialiser2.META)) {
+            try {
+                final LuceneIndexDoc indexDoc = serialiser.read(dataMap);
+                if (indexDoc.getVolumeGroupDocRef() == null
+                        && indexDoc.getVolumeGroupName() != null) {
+                    final List<DocRef> docRefs = docRefInfoService.findByName(
+                            FsVolumeGroup.DOCUMENT_TYPE,
+                            indexDoc.getVolumeGroupName(),
+                            false);
+                    final DocRef volGrpDocRef = NullSafe.hasItems(docRefs)
+                            ? docRefs.get(0)
+                            // Name is unique so never > 1
+                            : null;
+                    if (volGrpDocRef != null) {
+                        indexDoc.setVolumeGroupDocRef(volGrpDocRef);
+                    }
+                    // Clear the name as it is not needed now
+                    indexDoc.setVolumeGroupName(null);
+                    effectiveDataMap = serialiser.write(indexDoc);
                 }
-                // Clear the name as it is not needed now
-                indexDoc.setVolumeGroupName(null);
-                effectiveDataMap = serialiser.write(indexDoc);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
         return effectiveDataMap;
-    }
-
-    private void migrateLegacyVolGroupName() {
-
     }
 
     @Override

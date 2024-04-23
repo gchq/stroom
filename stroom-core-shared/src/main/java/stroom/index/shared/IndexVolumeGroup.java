@@ -2,9 +2,8 @@ package stroom.index.shared;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRef.TypedBuilder;
-import stroom.docref.HasDocRef;
 import stroom.docref.HasNameMutable;
-import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.Document;
 import stroom.util.shared.HasIntegerId;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -17,7 +16,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 @JsonInclude(Include.NON_NULL)
-public class IndexVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMutable, HasDocRef {
+public class IndexVolumeGroup implements Document, HasIntegerId, HasNameMutable {
 
     public static final String DOCUMENT_TYPE = "IndexVolumeGroup";
 

@@ -19,6 +19,7 @@ package stroom.index.impl;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.lifecycle.api.LifecycleBinder;
@@ -114,6 +115,9 @@ public class IndexModule extends AbstractModule {
         HasSystemInfoBinder.create(binder())
                 .bind(IndexVolumeServiceImpl.class);
         HasSystemInfoBinder.create(binder()).bind(IndexSystemInfo.class);
+
+        DocumentActionHandlerBinder.create(binder())
+                .bind(IndexVolumeGroup.DOCUMENT_TYPE, IndexVolumeGroupDocumentActionHandler.class);
     }
 
     private static class IndexShardDelete extends RunnableWrapper {

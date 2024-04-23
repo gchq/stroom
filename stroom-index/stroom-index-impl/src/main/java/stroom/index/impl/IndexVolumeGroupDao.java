@@ -33,4 +33,5 @@ public interface IndexVolumeGroupDao {
 
     IndexVolumeGroup get(DocRef docRef);
 
+    List<IndexVolumeGroup> find(List<String> nameFilters, boolean allowWildCards);
 }
