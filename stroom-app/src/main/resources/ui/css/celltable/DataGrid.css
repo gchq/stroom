@@ -55,6 +55,14 @@
     vertical-align: middle;
 }
 
+.dataGridHeader.center-align {
+  text-align: center;
+}
+
+.dataGridHeader.right-align {
+  text-align: right;
+}
+
 .dataGridHeader * {
 	font-weight: 500;
 }
