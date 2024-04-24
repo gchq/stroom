@@ -21,6 +21,7 @@ import stroom.svg.client.Preset;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.Expander;
 import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.GwtUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.TreeAction;
 import stroom.widget.util.client.SafeHtmlUtil;
@@ -38,7 +39,6 @@ import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.cellview.client.SafeHtmlHeader;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
-import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -63,24 +63,17 @@ public class DataGridUtil {
     }
 
     public static Header<SafeHtml> createRightAlignedHeader(final String headerText) {
-        final SafeHtml safeHtml = new SafeHtmlBuilder()
-                .appendHtmlConstant("<span style=\"text-align: right;\">")
-                .appendEscaped(headerText)
-                .appendHtmlConstant("</span>")
-                .toSafeHtml();
-
-        final Header<SafeHtml> header = new SafeHtmlHeader(safeHtml);
+        final Header<SafeHtml> header = new SafeHtmlHeader(SafeHtmlUtils.fromString(headerText));
+        header.setHeaderStyleNames(GwtUtil.appendStyles(
+                header.getHeaderStyleNames(), "right-align"));
         return header;
     }
 
     public static Header<SafeHtml> createCenterAlignedHeader(final String headerText) {
-        final SafeHtml safeHtml = new SafeHtmlBuilder()
-                .appendHtmlConstant("<span style=\"text-align: center;\">")
-                .appendEscaped(headerText)
-                .appendHtmlConstant("</span>")
-                .toSafeHtml();
-
-        final Header<SafeHtml> header = new SafeHtmlHeader(safeHtml);
+        final Header<SafeHtml> header = new SafeHtmlHeader(SafeHtmlUtils.fromString(headerText));
+        header.setHeaderStyleNames(GwtUtil.appendStyles(
+                header.getHeaderStyleNames(),
+                "center-align"));
         return header;
     }
 
