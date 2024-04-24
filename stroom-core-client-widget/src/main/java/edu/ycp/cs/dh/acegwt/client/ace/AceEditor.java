@@ -875,6 +875,8 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 	}-*/;
 
     public native void beautify() /*-{
+        // Relies on ace/beautify/beautify.js from https://cdnjs.com/libraries/js-beautify
+
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 
 		var source = editor.getSession().getValue();
