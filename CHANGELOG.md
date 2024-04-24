@@ -13,6 +13,10 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.4-beta.3] - 2024-04-24
+
+* Fix tag filter in Edit Tags dialog not being in-sync with filter input.
+
 * Issue **#4221** : Remove `id` column from `index_field` and change the primary key to be `(fk_index_field_source_id, name)`. Add retry logic and existing field check when adding fields to mitigate against deadlocks.
 
 * Issue **#4218** : Fix index shard state transition.
@@ -470,7 +474,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.3...HEAD
+[v7.4-beta.3]: https://github.com/gchq/stroom/compare/v7.4-beta.2...v7.4-beta.3
 [v7.4-beta.2]: https://github.com/gchq/stroom/compare/v7.4-beta.1...v7.4-beta.2
 [v7.4-beta.1]: https://github.com/gchq/stroom/compare/v7.3-beta.11...v7.4-beta.1
 [v7.2.2]: https://github.com/gchq/stroom/compare/v7.2.1...v7.2.2
