@@ -42,7 +42,7 @@ public class DuplicateKeyFactory {
         final byte[] bytes;
 
         try (final Output output = new Output(512, -1)) {
-            output.writeString(analyticRuleDoc.toString());
+            output.writeString(analyticRuleDoc.getUuid());
             bytes = output.toBytes();
         }
 //        bufferSize = Math.max(bufferSize, bytes.length);
