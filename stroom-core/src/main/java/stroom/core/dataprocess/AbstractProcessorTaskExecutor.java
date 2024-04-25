@@ -139,7 +139,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
     private final InternalStatisticsReceiver internalStatisticsReceiver;
     private final VolumeGroupNameProvider volumeGroupNameProvider;
 
-    private Processor streamProcessor;
+    private Processor processor;
     private ProcessorFilter processorFilter;
     private ProcessorTask processorTask;
     private Source streamSource;
@@ -198,7 +198,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                                 final ProcessorFilter processorFilter,
                                 final ProcessorTask processorTask,
                                 final Source streamSource) {
-        this.streamProcessor = processor;
+        this.processor = processor;
         this.processorFilter = processorFilter;
         this.processorTask = processorTask;
         this.streamSource = streamSource;
@@ -302,8 +302,8 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
             // Set the pipeline so it can be used by a filter if needed.
             pipelineDoc = pipelineStore.readDocument(getProcessDecorator().getPipeline());
             if (pipelineDoc == null) {
-                final String msg = "Pipeline " + streamProcessor.getPipelineUuid()
-                        + " cannot be found for processor with id " + streamProcessor.getId();
+                final String msg = "Pipeline " + processor.getPipelineUuid()
+                        + " cannot be found for processor with id " + processor.getId();
                 LOGGER.error(msg);
                 throw new RuntimeException(msg);
             }
@@ -331,7 +331,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
             LOGGER.info(() -> processingInfo);
 
             // Hold the source and feed so the pipeline filters can get them.
-            streamProcessorHolder.setStreamProcessor(streamProcessor, processorTask);
+            streamProcessorHolder.setStreamProcessor(processor, processorTask);
 
             // Process the streams.
             final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
