@@ -70,7 +70,7 @@ class TestDuplicateCheckFactory {
     @Test
     void test() {
         final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
-        final DuplicateCheck duplicateCheck = createDuplicateCheck(duplicateCheckFactory);
+        final DuplicateCheck duplicateCheck = createDuplicateCheck(duplicateCheckFactory, "test");
         final Row row = new Row("test", List.of("test"), 0, "", "");
         assertThat(duplicateCheck.check(row)).isTrue();
         for (int i = 0; i < 10; i++) {
@@ -81,7 +81,7 @@ class TestDuplicateCheckFactory {
     @Test
     void testReload() {
         final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
-        final DuplicateCheck duplicateCheck = createDuplicateCheck(duplicateCheckFactory);
+        final DuplicateCheck duplicateCheck = createDuplicateCheck(duplicateCheckFactory, "test");
         final Row row = new Row("test", List.of("test"), 0, "", "");
         assertThat(duplicateCheck.check(row)).isTrue();
         for (int i = 0; i < 10; i++) {
@@ -90,7 +90,24 @@ class TestDuplicateCheckFactory {
         duplicateCheckFactory.close();
 
         final DuplicateCheckFactoryImpl duplicateCheckFactory2 = createDuplicateCheckFactory();
-        final DuplicateCheck duplicateCheck2 = createDuplicateCheck(duplicateCheckFactory2);
+        final DuplicateCheck duplicateCheck2 = createDuplicateCheck(duplicateCheckFactory2, "test");
+        for (int i = 0; i < 10; i++) {
+            assertThat(duplicateCheck2.check(row)).isFalse();
+        }
+    }
+
+    @Test
+    void testDifferentAnalytic() {
+        final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
+        final DuplicateCheck duplicateCheck1 = createDuplicateCheck(duplicateCheckFactory, "test1");
+        final Row row = new Row("test", List.of("test"), 0, "", "");
+        assertThat(duplicateCheck1.check(row)).isTrue();
+        for (int i = 0; i < 10; i++) {
+            assertThat(duplicateCheck1.check(row)).isFalse();
+        }
+
+        final DuplicateCheck duplicateCheck2 = createDuplicateCheck(duplicateCheckFactory, "test2");
+        assertThat(duplicateCheck2.check(row)).isTrue();
         for (int i = 0; i < 10; i++) {
             assertThat(duplicateCheck2.check(row)).isFalse();
         }
@@ -111,8 +128,10 @@ class TestDuplicateCheckFactory {
                 new AnalyticResultStoreConfig());
     }
 
-    private DuplicateCheck createDuplicateCheck(final DuplicateCheckFactoryImpl duplicateCheckFactory) {
+    private DuplicateCheck createDuplicateCheck(final DuplicateCheckFactoryImpl duplicateCheckFactory,
+                                                final String ruleUUID) {
         final AnalyticRuleDoc analyticRuleDoc = AnalyticRuleDoc.builder()
+                .uuid(ruleUUID)
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query("test")
                 .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
