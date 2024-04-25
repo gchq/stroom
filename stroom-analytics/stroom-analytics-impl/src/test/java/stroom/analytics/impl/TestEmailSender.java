@@ -1,6 +1,6 @@
 package stroom.analytics.impl;
 
-import stroom.analytics.shared.AnalyticNotificationEmailDestination;
+import stroom.analytics.shared.NotificationEmailDestination;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -15,7 +15,7 @@ class TestEmailSender {
     @Mock
     private AnalyticsConfig mockAnalyticsConfig;
 
-    private RuleEmailTemplatingService ruleEmailTemplatingService = new RuleEmailTemplatingService();
+    private final RuleEmailTemplatingService ruleEmailTemplatingService = new RuleEmailTemplatingService();
 
     @Disabled // manual only due to reliance on smtp.freesmtpservers.com
     @Test
@@ -30,7 +30,7 @@ class TestEmailSender {
         final EmailSender emailSender = new EmailSender(() ->
                 mockAnalyticsConfig, ruleEmailTemplatingService);
 
-        final AnalyticNotificationEmailDestination destination = AnalyticNotificationEmailDestination.builder()
+        final NotificationEmailDestination destination = NotificationEmailDestination.builder()
                 .to("bar@bar.com")
                 .subjectTemplate("{{ headline }}")
                 .bodyTemplate("Detector {{ detectorName }} spotted something")
