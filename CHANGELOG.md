@@ -13,6 +13,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.4-beta.4] - 2024-04-25
+
+* Issue **#4188** : Allow multiple analytic notifications.
+
+* Issue **#4224** : Fix editor Format command for Text converter entities. Also fix editor Format command for Script entities (i.e. JS/JSON).
+
+* Issue **#4228** : Fix right alignment of column headers.
+
+* Issue **#4230** : Fix step location delimiter.
+
+
 ## [v7.4-beta.3] - 2024-04-24
 
 * Fix tag filter in Edit Tags dialog not being in-sync with filter input.
@@ -474,7 +485,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.3...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.4...HEAD
+[v7.4-beta.4]: https://github.com/gchq/stroom/compare/v7.4-beta.3...v7.4-beta.4
 [v7.4-beta.3]: https://github.com/gchq/stroom/compare/v7.4-beta.2...v7.4-beta.3
 [v7.4-beta.2]: https://github.com/gchq/stroom/compare/v7.4-beta.1...v7.4-beta.2
 [v7.4-beta.1]: https://github.com/gchq/stroom/compare/v7.3-beta.11...v7.4-beta.1
