@@ -589,7 +589,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/AnalyticNotificationEmailDestination"
+                "$ref" : "#/components/schemas/NotificationEmailDestination"
               }
             }
           },
@@ -10919,84 +10919,6 @@
           }
         }
       },
-      "AnalyticNotificationConfig" : {
-        "type" : "object",
-        "properties" : {
-          "destination" : {
-            "$ref" : "#/components/schemas/AnalyticNotificationDestination"
-          },
-          "destinationType" : {
-            "type" : "string",
-            "enum" : [ "STREAM", "EMAIL" ]
-          },
-          "errorFeed" : {
-            "$ref" : "#/components/schemas/DocRef"
-          },
-          "limitNotifications" : {
-            "type" : "boolean"
-          },
-          "maxNotifications" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "resumeAfter" : {
-            "$ref" : "#/components/schemas/SimpleDuration"
-          }
-        }
-      },
-      "AnalyticNotificationDestination" : {
-        "type" : "object",
-        "discriminator" : {
-          "propertyName" : "type"
-        },
-        "properties" : {
-          "type" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "type" ]
-      },
-      "AnalyticNotificationEmailDestination" : {
-        "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/AnalyticNotificationDestination"
-        }, {
-          "type" : "object",
-          "properties" : {
-            "bcc" : {
-              "type" : "string"
-            },
-            "bodyTemplate" : {
-              "type" : "string"
-            },
-            "cc" : {
-              "type" : "string"
-            },
-            "subjectTemplate" : {
-              "type" : "string"
-            },
-            "to" : {
-              "type" : "string"
-            }
-          }
-        } ]
-      },
-      "AnalyticNotificationStreamDestination" : {
-        "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/AnalyticNotificationDestination"
-        }, {
-          "type" : "object",
-          "properties" : {
-            "destinationFeed" : {
-              "$ref" : "#/components/schemas/DocRef"
-            },
-            "useSourceFeedIfPossible" : {
-              "type" : "boolean"
-            }
-          }
-        } ]
-      },
       "AnalyticProcessConfig" : {
         "type" : "object",
         "discriminator" : {
@@ -11013,7 +10935,7 @@
         "type" : "object",
         "properties" : {
           "analyticNotificationConfig" : {
-            "$ref" : "#/components/schemas/AnalyticNotificationConfig"
+            "$ref" : "#/components/schemas/NotificationConfig"
           },
           "analyticProcessConfig" : {
             "$ref" : "#/components/schemas/AnalyticProcessConfig"
@@ -11032,12 +10954,21 @@
           "description" : {
             "type" : "string"
           },
+          "errorFeed" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
           "languageVersion" : {
             "type" : "string",
             "enum" : [ "STROOM_QL_VERSION_0_1", "SIGMA" ]
           },
           "name" : {
             "type" : "string"
+          },
+          "notifications" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/NotificationConfig"
+            }
           },
           "parameters" : {
             "type" : "array",
@@ -15930,6 +15861,84 @@
           }
         }
       },
+      "NotificationConfig" : {
+        "type" : "object",
+        "properties" : {
+          "destination" : {
+            "$ref" : "#/components/schemas/NotificationDestination"
+          },
+          "destinationType" : {
+            "type" : "string",
+            "enum" : [ "STREAM", "EMAIL" ]
+          },
+          "limitNotifications" : {
+            "type" : "boolean"
+          },
+          "maxNotifications" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "resumeAfter" : {
+            "$ref" : "#/components/schemas/SimpleDuration"
+          },
+          "uuid" : {
+            "type" : "string"
+          }
+        }
+      },
+      "NotificationDestination" : {
+        "type" : "object",
+        "discriminator" : {
+          "propertyName" : "type"
+        },
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "type" ]
+      },
+      "NotificationEmailDestination" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/NotificationDestination"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "bcc" : {
+              "type" : "string"
+            },
+            "bodyTemplate" : {
+              "type" : "string"
+            },
+            "cc" : {
+              "type" : "string"
+            },
+            "subjectTemplate" : {
+              "type" : "string"
+            },
+            "to" : {
+              "type" : "string"
+            }
+          }
+        } ]
+      },
+      "NotificationStreamDestination" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/NotificationDestination"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "destinationFeed" : {
+              "$ref" : "#/components/schemas/DocRef"
+            },
+            "useSourceFeedIfPossible" : {
+              "type" : "boolean"
+            }
+          }
+        } ]
+      },
       "NumberFormatSettings" : {
         "type" : "object",
         "allOf" : [ {
@@ -19682,6 +19691,9 @@
             },
             "enabled" : {
               "type" : "boolean"
+            },
+            "errorFeed" : {
+              "$ref" : "#/components/schemas/DocRef"
             },
             "maxMetaCreateTimeMs" : {
               "type" : "integer",
