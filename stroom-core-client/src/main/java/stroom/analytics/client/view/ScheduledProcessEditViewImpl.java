@@ -16,8 +16,8 @@
 
 package stroom.analytics.client.view;
 
-import stroom.analytics.client.presenter.ScheduledProcessEditView;
 import stroom.analytics.client.presenter.ProcessingStatusUiHandlers;
+import stroom.analytics.client.presenter.ScheduledProcessEditView;
 import stroom.item.client.SelectionBox;
 import stroom.schedule.client.ScheduleBox;
 import stroom.widget.datepicker.client.DateTimeBox;

@@ -56,10 +56,10 @@ appConfig:
       offHeapResults: true
       valueQueueSize: 10000
     streamingAnalyticCache:
-      expireAfterAccess: "PT10M"
+      expireAfterAccess: null
       expireAfterWrite: null
       maximumSize: 1000
-      refreshAfterWrite: null
+      refreshAfterWrite: "PT10M"
     timezone: "UTC"
   annotation:
     createText: "Create Annotation"

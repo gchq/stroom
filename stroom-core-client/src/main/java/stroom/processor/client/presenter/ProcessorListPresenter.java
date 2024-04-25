@@ -41,7 +41,6 @@ import stroom.docref.DocRef;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.preferences.client.DateTimeFormatter;
 import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
@@ -85,7 +84,6 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
     private final RestDataProvider<ProcessorListRow, ProcessorListRowResultPage> dataProvider;
     private final TooltipPresenter tooltipPresenter;
     private final FetchProcessorRequest request;
-    private final DateTimeFormatter dateTimeFormatter;
     private final ProcessorInfoBuilder processorInfoBuilder;
     private boolean doneDataDisplay = false;
     private Column<ProcessorListRow, Expander> expanderColumn;
@@ -105,7 +103,6 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                                   final PagerView view,
                                   final TooltipPresenter tooltipPresenter,
                                   final RestFactory restFactory,
-                                  final DateTimeFormatter dateTimeFormatter,
                                   final ProcessorInfoBuilder processorInfoBuilder) {
         super(eventBus, view);
 
@@ -114,7 +111,6 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         view.setDataWidget(dataGrid);
 
         this.tooltipPresenter = tooltipPresenter;
-        this.dateTimeFormatter = dateTimeFormatter;
         this.processorInfoBuilder = processorInfoBuilder;
 
         request = new FetchProcessorRequest();
@@ -212,7 +208,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         if (nextSelection != null) {
             for (final ProcessorListRow row : data.getValues()) {
                 if (row instanceof ProcessorFilterRow) {
-                    if (nextSelection.equals(((ProcessorFilterRow) row).getProcessorFilter())) {
+                    if (nextSelection.equals(row)) {
                         selectionModel.setSelected(row);
                         break;
                     }

@@ -28,10 +28,10 @@ import stroom.analytics.client.presenter.AnalyticProcessingPresenter.AnalyticPro
 import stroom.analytics.client.presenter.AnalyticRulePresenter;
 import stroom.analytics.client.presenter.AnalyticStreamDestinationPresenter;
 import stroom.analytics.client.presenter.AnalyticStreamDestinationPresenter.AnalyticStreamDestinationView;
-import stroom.analytics.client.presenter.ScheduledProcessingPresenter;
-import stroom.analytics.client.presenter.ScheduledProcessingPresenter.ScheduledProcessingView;
 import stroom.analytics.client.presenter.ScheduledProcessEditPresenter;
 import stroom.analytics.client.presenter.ScheduledProcessEditView;
+import stroom.analytics.client.presenter.ScheduledProcessingPresenter;
+import stroom.analytics.client.presenter.ScheduledProcessingPresenter.ScheduledProcessingView;
 import stroom.analytics.client.presenter.StreamingProcessingPresenter;
 import stroom.analytics.client.presenter.StreamingProcessingPresenter.StreamingProcessingView;
 import stroom.analytics.client.presenter.TableBuilderProcessingPresenter;
