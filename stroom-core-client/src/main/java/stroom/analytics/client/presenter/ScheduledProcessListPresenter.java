@@ -55,7 +55,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.function.Consumer;
 
-public class ExecutionScheduleListPresenter
+public class ScheduledProcessListPresenter
         extends MyPresenterWidget<PagerView> {
 
     private static final ExecutionScheduleResource EXECUTION_SCHEDULE_RESOURCE =
@@ -72,13 +72,13 @@ public class ExecutionScheduleListPresenter
     private final ButtonView removeButton;
     private ExecutionScheduleRequest request;
     private boolean initialised;
-    private ExecutionPresenter executionPresenter;
+    private ScheduledProcessingPresenter scheduledProcessingPresenter;
 
     @Inject
-    public ExecutionScheduleListPresenter(final EventBus eventBus,
-                                          final PagerView view,
-                                          final RestFactory restFactory,
-                                          final DateTimeFormatter dateTimeFormatter) {
+    public ScheduledProcessListPresenter(final EventBus eventBus,
+                                         final PagerView view,
+                                         final RestFactory restFactory,
+                                         final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
@@ -118,13 +118,13 @@ public class ExecutionScheduleListPresenter
 
     @Override
     protected void onBind() {
-        registerHandler(addButton.addClickHandler(e -> executionPresenter.add()));
-        registerHandler(editButton.addClickHandler(e -> executionPresenter.edit()));
-        registerHandler(removeButton.addClickHandler(e -> executionPresenter.remove()));
+        registerHandler(addButton.addClickHandler(e -> scheduledProcessingPresenter.add()));
+        registerHandler(editButton.addClickHandler(e -> scheduledProcessingPresenter.edit()));
+        registerHandler(removeButton.addClickHandler(e -> scheduledProcessingPresenter.remove()));
         registerHandler(selectionModel.addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
-                executionPresenter.edit();
+                scheduledProcessingPresenter.edit();
             }
         }));
     }
@@ -264,7 +264,7 @@ public class ExecutionScheduleListPresenter
         selectionModel.setSelected(executionSchedule);
     }
 
-    public void setExecutionPresenter(final ExecutionPresenter executionPresenter) {
-        this.executionPresenter = executionPresenter;
+    public void setScheduledProcessingPresenter(final ScheduledProcessingPresenter scheduledProcessingPresenter) {
+        this.scheduledProcessingPresenter = scheduledProcessingPresenter;
     }
 }

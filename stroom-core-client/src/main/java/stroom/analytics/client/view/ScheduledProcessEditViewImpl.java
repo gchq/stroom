@@ -16,7 +16,7 @@
 
 package stroom.analytics.client.view;
 
-import stroom.analytics.client.presenter.ExecutionScheduleEditView;
+import stroom.analytics.client.presenter.ScheduledProcessEditView;
 import stroom.analytics.client.presenter.ProcessingStatusUiHandlers;
 import stroom.item.client.SelectionBox;
 import stroom.schedule.client.ScheduleBox;
@@ -34,9 +34,9 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.List;
 
-public class ExecutionScheduleEditViewImpl
+public class ScheduledProcessEditViewImpl
         extends ViewWithUiHandlers<ProcessingStatusUiHandlers>
-        implements ExecutionScheduleEditView {
+        implements ScheduledProcessEditView {
 
     private final Widget widget;
 
@@ -56,7 +56,7 @@ public class ExecutionScheduleEditViewImpl
     private String selectedNode;
 
     @Inject
-    public ExecutionScheduleEditViewImpl(final Binder binder) {
+    public ScheduledProcessEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -158,7 +158,7 @@ public class ExecutionScheduleEditViewImpl
         getUiHandlers().onDirty();
     }
 
-    public interface Binder extends UiBinder<Widget, ExecutionScheduleEditViewImpl> {
+    public interface Binder extends UiBinder<Widget, ScheduledProcessEditViewImpl> {
 
     }
 }

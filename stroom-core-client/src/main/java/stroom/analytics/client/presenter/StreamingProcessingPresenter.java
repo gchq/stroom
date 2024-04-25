@@ -1,5 +1,6 @@
 package stroom.analytics.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.analytics.client.presenter.StreamingProcessingPresenter.StreamingProcessingView;
 import stroom.analytics.shared.AnalyticProcessResource;
 import stroom.analytics.shared.AnalyticRuleDoc;
@@ -7,6 +8,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.processor.client.presenter.ProcessorPresenter;
 
 import com.google.gwt.core.client.GWT;
@@ -24,6 +26,7 @@ public class StreamingProcessingPresenter
 
     private final ProcessorPresenter processorPresenter;
     private final RestFactory restFactory;
+    private DocumentEditPresenter<?, ?> documentEditPresenter;
 
     @Inject
     public StreamingProcessingPresenter(final EventBus eventBus,
@@ -34,6 +37,18 @@ public class StreamingProcessingPresenter
         this.processorPresenter = processorPresenter;
         this.restFactory = restFactory;
         getView().setProcessorsView(processorPresenter.getView());
+
+        processorPresenter.setEditInterceptor(() -> {
+            if (documentEditPresenter != null && documentEditPresenter.isDirty()) {
+                AlertEvent.fireWarn(
+                        this,
+                        "Please save the rule and ensure all settings are correct before adding executions",
+                        null);
+                return false;
+            } else {
+                return true;
+            }
+        });
     }
 
     public void update(final AnalyticRuleDoc analyticRuleDoc,
@@ -57,6 +72,10 @@ public class StreamingProcessingPresenter
     @Override
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
+    }
+
+    public void setDocumentEditPresenter(final DocumentEditPresenter<?, ?> documentEditPresenter) {
+        this.documentEditPresenter = documentEditPresenter;
     }
 
     public interface StreamingProcessingView extends View {

@@ -51,7 +51,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.function.Consumer;
 
-public class ExecutionHistoryListPresenter
+public class ScheduledProcessHistoryListPresenter
         extends MyPresenterWidget<PagerView> {
 
     private static final ExecutionScheduleResource EXECUTION_SCHEDULE_RESOURCE =
@@ -65,13 +65,13 @@ public class ExecutionHistoryListPresenter
     private ExecutionHistoryRequest request;
     private boolean initialised;
     private final ButtonView replayButton;
-    private ExecutionPresenter executionPresenter;
+    private ScheduledProcessingPresenter scheduledProcessingPresenter;
 
     @Inject
-    public ExecutionHistoryListPresenter(final EventBus eventBus,
-                                         final PagerView view,
-                                         final RestFactory restFactory,
-                                         final DateTimeFormatter dateTimeFormatter) {
+    public ScheduledProcessHistoryListPresenter(final EventBus eventBus,
+                                                final PagerView view,
+                                                final RestFactory restFactory,
+                                                final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
         this.dateTimeFormatter = dateTimeFormatter;
 
@@ -172,7 +172,7 @@ public class ExecutionHistoryListPresenter
 
     private void replay() {
         final ExecutionHistory executionHistory = selectionModel.getSelected();
-        executionPresenter.replay(executionHistory);
+        scheduledProcessingPresenter.replay(executionHistory);
     }
 
     public void setExecutionSchedule(final ExecutionSchedule executionSchedule) {
@@ -205,7 +205,7 @@ public class ExecutionHistoryListPresenter
         return selectionModel.addSelectionHandler(handler);
     }
 
-    public void setExecutionPresenter(final ExecutionPresenter executionPresenter) {
-        this.executionPresenter = executionPresenter;
+    public void setScheduledProcessingPresenter(final ScheduledProcessingPresenter scheduledProcessingPresenter) {
+        this.scheduledProcessingPresenter = scheduledProcessingPresenter;
     }
 }

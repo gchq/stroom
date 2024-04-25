@@ -28,8 +28,8 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.function.Consumer;
 
-public class ExecutionScheduleEditPresenter
-        extends MyPresenterWidget<ExecutionScheduleEditView>
+public class ScheduledProcessEditPresenter
+        extends MyPresenterWidget<ScheduledProcessEditView>
         implements ProcessingStatusUiHandlers, HasDirtyHandlers {
 
     private static final ExecutionScheduleResource EXECUTION_SCHEDULE_RESOURCE =
@@ -39,13 +39,13 @@ public class ExecutionScheduleEditPresenter
     private ExecutionSchedule executionSchedule;
 
     @Inject
-    public ExecutionScheduleEditPresenter(final EventBus eventBus,
-                                          final ExecutionScheduleEditView view,
-                                          final DocSelectionBoxPresenter errorFeedPresenter,
-                                          final NodeManager nodeManager,
-                                          final Provider<SchedulePopup> schedulePresenterProvider,
-                                          final Provider<DateTimePopup> dateTimePopupProvider,
-                                          final RestFactory restFactory) {
+    public ScheduledProcessEditPresenter(final EventBus eventBus,
+                                         final ScheduledProcessEditView view,
+                                         final DocSelectionBoxPresenter errorFeedPresenter,
+                                         final NodeManager nodeManager,
+                                         final Provider<SchedulePopup> schedulePresenterProvider,
+                                         final Provider<DateTimePopup> dateTimePopupProvider,
+                                         final RestFactory restFactory) {
         super(eventBus, view);
         view.setUiHandlers(this);
         view.getStartTime().setPopupProvider(dateTimePopupProvider);

@@ -16,7 +16,7 @@
 
 package stroom.analytics.client.view;
 
-import stroom.analytics.client.presenter.ExecutionPresenter.ExecutionView;
+import stroom.analytics.client.presenter.ScheduledProcessingPresenter.ScheduledProcessingView;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -26,9 +26,9 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-public class ExecutionViewImpl
+public class ScheduledProcessingViewImpl
         extends ViewImpl
-        implements ExecutionView {
+        implements ScheduledProcessingView {
 
     private final Widget widget;
 
@@ -38,7 +38,7 @@ public class ExecutionViewImpl
     SimplePanel executionHistoryList;
 
     @Inject
-    public ExecutionViewImpl(final Binder binder) {
+    public ScheduledProcessingViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -57,7 +57,7 @@ public class ExecutionViewImpl
         this.executionHistoryList.setWidget(view.asWidget());
     }
 
-    public interface Binder extends UiBinder<Widget, ExecutionViewImpl> {
+    public interface Binder extends UiBinder<Widget, ScheduledProcessingViewImpl> {
 
     }
 }

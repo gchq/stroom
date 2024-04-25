@@ -48,6 +48,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.Objects;
+import java.util.function.Supplier;
 
 public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.ProcessorView>
         implements HasDocumentRead<Object> {
@@ -75,6 +76,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     private boolean isAdmin;
 
     private ExpressionOperator defaultExpression;
+    private Supplier<Boolean> editInterceptor = () -> true;
 
     @Inject
     public ProcessorPresenter(final EventBus eventBus,
@@ -305,28 +307,30 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     private void edit(final ProcessorFilter filter,
                       final ExpressionOperator defaultExpression,
                       final String ownerDisplayName) {
-        if (filter == null && ProcessorType.STREAMING_ANALYTIC.equals(processorType)) {
-            processorEditPresenterProvider.get()
-                    .show(processorType,
-                            docRef,
-                            null,
-                            defaultExpression,
-                            System.currentTimeMillis(),
-                            null,
-                            result -> {
-                                if (result != null) {
-                                    // The owner can't be changed in the editor
-                                    refresh(result, ownerDisplayName);
-                                }
-                            });
-        } else {
-            processorEditPresenterProvider.get()
-                    .show(processorType, docRef, filter, null, result -> {
-                        if (result != null) {
-                            // The owner can't be changed in the editor
-                            refresh(result, ownerDisplayName);
-                        }
-                    });
+        if (editInterceptor.get()) {
+            if (filter == null && ProcessorType.STREAMING_ANALYTIC.equals(processorType)) {
+                processorEditPresenterProvider.get()
+                        .show(processorType,
+                                docRef,
+                                null,
+                                defaultExpression,
+                                System.currentTimeMillis(),
+                                null,
+                                result -> {
+                                    if (result != null) {
+                                        // The owner can't be changed in the editor
+                                        refresh(result, ownerDisplayName);
+                                    }
+                                });
+            } else {
+                processorEditPresenterProvider.get()
+                        .show(processorType, docRef, filter, null, result -> {
+                            if (result != null) {
+                                // The owner can't be changed in the editor
+                                refresh(result, ownerDisplayName);
+                            }
+                        });
+            }
         }
     }
 
@@ -390,6 +394,10 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
 
     public void setDefaultExpression(final ExpressionOperator defaultExpression) {
         this.defaultExpression = defaultExpression;
+    }
+
+    public void setEditInterceptor(final Supplier<Boolean> editInterceptor) {
+        this.editInterceptor = editInterceptor;
     }
 
     // --------------------------------------------------------------------------------

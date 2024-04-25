@@ -102,6 +102,7 @@ public class NotificationListPresenter
 
     private void add() {
         final AnalyticNotificationEditPresenter presenter = editPresenterProvider.get();
+        presenter.read(NotificationConfig.builder().build());
         ShowPopupEvent
                 .builder(presenter)
                 .popupType(PopupType.OK_CANCEL_DIALOG)

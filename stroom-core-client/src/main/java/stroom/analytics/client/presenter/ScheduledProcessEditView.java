@@ -9,7 +9,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 
-public interface ExecutionScheduleEditView extends View,
+public interface ScheduledProcessEditView extends View,
         HasUiHandlers<ProcessingStatusUiHandlers>,
         Focus {
 

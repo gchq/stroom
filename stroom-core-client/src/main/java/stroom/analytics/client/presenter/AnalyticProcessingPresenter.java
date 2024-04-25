@@ -31,6 +31,7 @@ import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.HasChangeDataHandlers;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.ui.config.client.UiConfigCache;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -43,29 +44,35 @@ public class AnalyticProcessingPresenter
         implements AnalyticProcessingUiHandlers, HasChangeDataHandlers<AnalyticProcessType> {
 
     private final DocSelectionBoxPresenter errorFeedPresenter;
-    private final ExecutionPresenter executionSchedulePresenter;
+    private final ScheduledProcessingPresenter scheduledProcessingPresenter;
     private final TableBuilderProcessingPresenter tableBuilderProcessingPresenter;
     private final StreamingProcessingPresenter streamingProcessingPresenter;
+    private final UiConfigCache uiConfigCache;
 
     @Inject
     public AnalyticProcessingPresenter(final EventBus eventBus,
                                        final AnalyticProcessingView view,
                                        final DocSelectionBoxPresenter errorFeedPresenter,
-                                       final ExecutionPresenter executionSchedulePresenter,
+                                       final ScheduledProcessingPresenter scheduledProcessingPresenter,
                                        final TableBuilderProcessingPresenter tableBuilderProcessingPresenter,
-                                       final StreamingProcessingPresenter streamingProcessingPresenter) {
+                                       final StreamingProcessingPresenter streamingProcessingPresenter,
+                                       final UiConfigCache uiConfigCache) {
         super(eventBus, view);
+        this.uiConfigCache = uiConfigCache;
         this.errorFeedPresenter = errorFeedPresenter;
-        this.executionSchedulePresenter = executionSchedulePresenter;
+        this.scheduledProcessingPresenter = scheduledProcessingPresenter;
         this.tableBuilderProcessingPresenter = tableBuilderProcessingPresenter;
         this.streamingProcessingPresenter = streamingProcessingPresenter;
         view.setUiHandlers(this);
 
-        executionSchedulePresenter.setDocumentEditPresenter(this);
-
         errorFeedPresenter.setIncludedTypes(FeedDoc.DOCUMENT_TYPE);
         errorFeedPresenter.setRequiredPermissions(DocumentPermissionNames.READ);
         getView().setErrorFeedView(errorFeedPresenter.getView());
+    }
+
+    public void setDocumentEditPresenter(final DocumentEditPresenter<?, ?> documentEditPresenter) {
+        scheduledProcessingPresenter.setDocumentEditPresenter(documentEditPresenter);
+        streamingProcessingPresenter.setDocumentEditPresenter(documentEditPresenter);
     }
 
     @Override
@@ -90,23 +97,32 @@ public class AnalyticProcessingPresenter
 
     @Override
     protected void onRead(final DocRef docRef, final AnalyticRuleDoc analyticRuleDoc, final boolean readOnly) {
-        errorFeedPresenter.setSelectedEntityReference(analyticRuleDoc.getErrorFeed());
-        final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
-        final AnalyticProcessType analyticProcessType = analyticRuleDoc.getAnalyticProcessType() == null
-                ? AnalyticProcessType.SCHEDULED_QUERY
-                : analyticRuleDoc.getAnalyticProcessType();
-        setProcessType(analyticProcessType);
+        uiConfigCache.get().onSuccess(extendedUiConfig -> {
+            if (analyticRuleDoc.getErrorFeed() == null) {
+                errorFeedPresenter.setSelectedEntityReference(
+                        extendedUiConfig.getAnalyticUiDefaultConfig().getDefaultErrorFeed());
+            } else {
+                errorFeedPresenter.setSelectedEntityReference(
+                        analyticRuleDoc.getErrorFeed());
+            }
 
-        if (AnalyticProcessType.SCHEDULED_QUERY.equals(analyticProcessType)) {
-            executionSchedulePresenter.read(docRef);
-        } else if (AnalyticProcessType.STREAMING.equals(analyticProcessType)) {
-            streamingProcessingPresenter.update(getEntity(), isReadOnly(), analyticRuleDoc.getQuery());
-        } else if (analyticProcessConfig instanceof TableBuilderAnalyticProcessConfig) {
-            final TableBuilderAnalyticProcessConfig ac =
-                    (TableBuilderAnalyticProcessConfig) analyticProcessConfig;
-            tableBuilderProcessingPresenter.read(docRef, ac);
+            final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
+            final AnalyticProcessType analyticProcessType = analyticRuleDoc.getAnalyticProcessType() == null
+                    ? AnalyticProcessType.SCHEDULED_QUERY
+                    : analyticRuleDoc.getAnalyticProcessType();
+            setProcessType(analyticProcessType);
 
-        }
+            if (AnalyticProcessType.SCHEDULED_QUERY.equals(analyticProcessType)) {
+                scheduledProcessingPresenter.read(docRef);
+            } else if (AnalyticProcessType.STREAMING.equals(analyticProcessType)) {
+                streamingProcessingPresenter.update(getEntity(), isReadOnly(), analyticRuleDoc.getQuery());
+            } else if (analyticProcessConfig instanceof TableBuilderAnalyticProcessConfig) {
+                final TableBuilderAnalyticProcessConfig ac =
+                        (TableBuilderAnalyticProcessConfig) analyticProcessConfig;
+                tableBuilderProcessingPresenter.read(docRef, ac);
+
+            }
+        });
     }
 
     private void setProcessType(final AnalyticProcessType analyticProcessType) {
@@ -117,8 +133,8 @@ public class AnalyticProcessingPresenter
                 break;
             }
             case SCHEDULED_QUERY: {
-                executionSchedulePresenter.read(getEntity().asDocRef());
-                getView().setProcessSettings(executionSchedulePresenter.getView());
+                scheduledProcessingPresenter.read(getEntity().asDocRef());
+                getView().setProcessSettings(scheduledProcessingPresenter.getView());
                 break;
             }
             case TABLE_BUILDER: {

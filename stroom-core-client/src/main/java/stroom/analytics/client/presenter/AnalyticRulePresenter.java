@@ -53,6 +53,7 @@ public class AnalyticRulePresenter
         super(eventBus, view);
 
         final AnalyticProcessingPresenter analyticProcessingPresenter = processPresenterProvider.get();
+        analyticProcessingPresenter.setDocumentEditPresenter(this);
         analyticProcessingPresenter.addChangeDataHandler(e ->
                 setRuleType(analyticProcessingPresenter.getView().getProcessingType()));
 
