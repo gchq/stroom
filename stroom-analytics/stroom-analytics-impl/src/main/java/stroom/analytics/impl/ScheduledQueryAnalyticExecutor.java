@@ -86,6 +86,7 @@ public class ScheduledQueryAnalyticExecutor {
     private final ExpressionContextFactory expressionContextFactory;
     private final SecurityContext securityContext;
     private final ExecutionScheduleDao executionScheduleDao;
+    private final DuplicateCheckFactory duplicateCheckFactory;
 
     @Inject
     ScheduledQueryAnalyticExecutor(final AnalyticHelper analyticHelper,
@@ -100,7 +101,8 @@ public class ScheduledQueryAnalyticExecutor {
                                    final SearchRequestFactory searchRequestFactory,
                                    final ExpressionContextFactory expressionContextFactory,
                                    final SecurityContext securityContext,
-                                   final ExecutionScheduleDao executionScheduleDao) {
+                                   final ExecutionScheduleDao executionScheduleDao,
+                                   final DuplicateCheckFactory duplicateCheckFactory) {
         this.analyticHelper = analyticHelper;
         this.executorProvider = executorProvider;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
@@ -114,6 +116,7 @@ public class ScheduledQueryAnalyticExecutor {
         this.expressionContextFactory = expressionContextFactory;
         this.securityContext = securityContext;
         this.executionScheduleDao = executionScheduleDao;
+        this.duplicateCheckFactory = duplicateCheckFactory;
     }
 
     public void exec() {
@@ -348,50 +351,53 @@ public class ScheduledQueryAnalyticExecutor {
                     detectionConsumerProxy.setCompiledColumns(compiledColumns);
                     detectionConsumerProxy.setDetectionsConsumerProvider(detectionConsumerProvider);
 
+                    final DuplicateCheck duplicateCheck = duplicateCheckFactory.create(analytic, compiledColumns);
                     try {
                         detectionConsumerProxy.start();
                         final Consumer<Row> itemConsumer = row -> {
-                            Long streamId = null;
-                            Long eventId = null;
-                            final List<DetectionValue> values = new ArrayList<>();
-                            for (int i = 0; i < dataStore.getColumns().size(); i++) {
-                                if (i < row.getValues().size()) {
-                                    final String columnName = dataStore.getColumns().get(i).getName();
-                                    final String value = row.getValues().get(i);
-                                    if (value != null) {
-                                        if (IndexConstants.STREAM_ID.equals(columnName)) {
-                                            streamId = DetectionConsumerProxy.getSafeLong(value);
-                                        } else if (IndexConstants.EVENT_ID.equals(columnName)) {
-                                            eventId = DetectionConsumerProxy.getSafeLong(value);
+                            if (duplicateCheck.check(row)) {
+                                Long streamId = null;
+                                Long eventId = null;
+                                final List<DetectionValue> values = new ArrayList<>();
+                                for (int i = 0; i < dataStore.getColumns().size(); i++) {
+                                    if (i < row.getValues().size()) {
+                                        final String columnName = dataStore.getColumns().get(i).getName();
+                                        final String value = row.getValues().get(i);
+                                        if (value != null) {
+                                            if (IndexConstants.STREAM_ID.equals(columnName)) {
+                                                streamId = DetectionConsumerProxy.getSafeLong(value);
+                                            } else if (IndexConstants.EVENT_ID.equals(columnName)) {
+                                                eventId = DetectionConsumerProxy.getSafeLong(value);
+                                            }
+                                            values.add(new DetectionValue(columnName, value));
                                         }
-                                        values.add(new DetectionValue(columnName, value));
                                     }
                                 }
-                            }
 
-                            List<DetectionLinkedEvent> linkedEvents = null;
-                            if (streamId != null || eventId != null) {
-                                linkedEvents = List.of(new DetectionLinkedEvent(null, streamId, eventId));
-                            }
+                                List<DetectionLinkedEvent> linkedEvents = null;
+                                if (streamId != null || eventId != null) {
+                                    linkedEvents = List.of(new DetectionLinkedEvent(null, streamId, eventId));
+                                }
 
-                            final Detection detection = Detection
-                                    .builder()
-                                    .withDetectTime(DateUtil.createNormalDateTimeString())
-                                    .withDetectorName(analytic.getName())
-                                    .withDetectorUuid(analytic.getUuid())
-                                    .withDetectorVersion(analytic.getVersion())
-                                    .withDetailedDescription(analytic.getDescription())
-                                    .withRandomDetectionUniqueId()
-                                    .withDetectionRevision(0)
-                                    .withExecutionSchedule(NullSafe
-                                            .get(executionSchedule, ExecutionSchedule::getName))
-                                    .withExecutionTime(executionTime)
-                                    .withEffectiveExecutionTime(effectiveExecutionTime)
-                                    .notDefunct()
-                                    .withValues(values)
-                                    .withLinkedEvents(linkedEvents)
-                                    .build();
-                            detectionConsumerProxy.getDetectionConsumer().accept(detection);
+                                final Detection detection = Detection
+                                        .builder()
+                                        .withDetectTime(DateUtil.createNormalDateTimeString())
+                                        .withDetectorName(analytic.getName())
+                                        .withDetectorUuid(analytic.getUuid())
+                                        .withDetectorVersion(analytic.getVersion())
+                                        .withDetailedDescription(analytic.getDescription())
+                                        .withRandomDetectionUniqueId()
+                                        .withDetectionRevision(0)
+                                        .withExecutionSchedule(NullSafe
+                                                .get(executionSchedule, ExecutionSchedule::getName))
+                                        .withExecutionTime(executionTime)
+                                        .withEffectiveExecutionTime(effectiveExecutionTime)
+                                        .notDefunct()
+                                        .withValues(values)
+                                        .withLinkedEvents(linkedEvents)
+                                        .build();
+                                detectionConsumerProxy.getDetectionConsumer().accept(detection);
+                            }
                         };
                         final Consumer<Long> countConsumer = count -> {
 

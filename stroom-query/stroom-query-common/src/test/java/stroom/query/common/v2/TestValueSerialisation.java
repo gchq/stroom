@@ -58,6 +58,6 @@ public class TestValueSerialisation {
         }
         Assertions.assertThat(readStoredValues).isEqualTo(storedValues);
 
-        byteBufferFactory.release(rowValue, false);
+        byteBufferFactory.release(rowValue);
     }
 }

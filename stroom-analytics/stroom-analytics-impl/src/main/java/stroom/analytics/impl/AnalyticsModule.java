@@ -63,6 +63,7 @@ public class AnalyticsModule extends AbstractModule {
                 .bind(ExecutionScheduleResourceImpl.class);
 
         bind(AnalyticsService.class).to(AnalyticsServiceImpl.class);
+        bind(DuplicateCheckFactory.class).to(DuplicateCheckFactoryImpl.class);
 
         // Live federated search provision.
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)

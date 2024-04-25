@@ -279,8 +279,8 @@ public class LmdbRowKeyFactoryFactory {
                     stop.flip();
                     consumer.accept(KeyRange.closedOpen(start, stop));
                 } finally {
-                    byteBufferFactory.release(start, false);
-                    byteBufferFactory.release(stop, false);
+                    byteBufferFactory.release(start);
+                    byteBufferFactory.release(stop);
                 }
             }
         }
@@ -364,8 +364,8 @@ public class LmdbRowKeyFactoryFactory {
                     stop.flip();
                     consumer.accept(KeyRange.closedOpen(start, stop));
                 } finally {
-                    byteBufferFactory.release(start, false);
-                    byteBufferFactory.release(stop, false);
+                    byteBufferFactory.release(start);
+                    byteBufferFactory.release(stop);
                 }
             }
         }

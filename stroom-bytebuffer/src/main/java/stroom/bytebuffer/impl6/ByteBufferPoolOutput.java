@@ -94,7 +94,7 @@ public class ByteBufferPoolOutput extends UnsafeByteBufferOutput {
                 setBuffer(newBuffer, -1);
 
                 this.byteBuffer = newBuffer;
-                this.byteBufferFactory.release(oldBuffer, true);
+                this.byteBufferFactory.release(oldBuffer);
 
                 return true;
             }

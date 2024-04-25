@@ -51,10 +51,14 @@ public class LmdbEnv2 implements AutoCloseable {
     }
 
     public Dbi<ByteBuffer> openDbi(final String dbName) {
+        return openDbi(dbName, DbiFlags.MDB_CREATE);
+    }
+
+    public Dbi<ByteBuffer> openDbi(final String dbName, final DbiFlags... flags) {
         final byte[] nameBytes = dbName == null
                 ? null
                 : dbName.getBytes(UTF_8);
-        return env.openDbi(nameBytes, DbiFlags.MDB_CREATE);
+        return env.openDbi(nameBytes, flags);
     }
 
     /**

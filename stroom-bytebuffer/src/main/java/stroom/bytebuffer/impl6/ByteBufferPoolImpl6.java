@@ -207,17 +207,13 @@ public class ByteBufferPoolImpl6 extends ByteBufferFactory implements ByteBuffer
     }
 
     @Override
-    public void release(final ByteBuffer byteBuffer, final boolean destroy) {
+    public void release(final ByteBuffer byteBuffer) {
         if (byteBuffer != null && byteBuffer.isDirect()) {
-            if (destroy) {
+            final int offset = getOffset(byteBuffer.capacity());
+            if (isUnPooled(offset)) {
                 ByteBufferSupport.unmap(byteBuffer);
             } else {
-                final int offset = getOffset(byteBuffer.capacity());
-                if (isUnPooled(offset)) {
-                    ByteBufferSupport.unmap(byteBuffer);
-                } else {
-                    pooledBufferQueues[offset].release(byteBuffer);
-                }
+                pooledBufferQueues[offset].release(byteBuffer);
             }
         }
     }

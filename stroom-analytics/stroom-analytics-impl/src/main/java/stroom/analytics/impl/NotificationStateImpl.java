@@ -35,11 +35,6 @@ public class NotificationStateImpl implements NotificationState {
     }
 
     @Override
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    @Override
     public synchronized void enableIfPossible() {
         // Determine if notifications have been disabled.
         if (!enabled && analyticNotificationConfig != null) {

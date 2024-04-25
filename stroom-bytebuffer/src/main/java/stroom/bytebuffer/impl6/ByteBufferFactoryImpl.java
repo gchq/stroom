@@ -48,7 +48,7 @@ public class ByteBufferFactoryImpl extends ByteBufferFactory {
     }
 
     @Override
-    public void release(final ByteBuffer byteBuffer, final boolean destroy) {
+    public void release(final ByteBuffer byteBuffer) {
         if (byteBuffer.capacity() > MAX_CACHED_BUFFER_SIZE) {
             unmap(byteBuffer);
         } else {

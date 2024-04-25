@@ -30,7 +30,7 @@ public class ByteBufferFactory {
      *
      * @param byteBuffer The byte buffer to release back to the pool.
      */
-    public void release(final ByteBuffer byteBuffer, final boolean destroy) {
+    public void release(final ByteBuffer byteBuffer) {
         if (byteBuffer != null && byteBuffer.isDirect()) {
             ByteBufferSupport.unmap(byteBuffer);
         }

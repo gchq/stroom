@@ -564,7 +564,7 @@ public class LmdbDataStore implements DataStore {
                         });
 
                         final boolean ok = put(writeTxn, dbi, lmdbKV.getRowKey(), newValueBuffer);
-                        bufferFactory.release(newValueBuffer, false);
+                        bufferFactory.release(newValueBuffer);
 
                         if (!ok) {
                             LOGGER.debug(() -> "Unable to update");
@@ -604,8 +604,8 @@ public class LmdbDataStore implements DataStore {
 
             } finally {
                 // Release buffers back to the pool.
-                bufferFactory.release(lmdbKV.getRowKey(), false);
-                bufferFactory.release(lmdbKV.getRowValue(), false);
+                bufferFactory.release(lmdbKV.getRowKey());
+                bufferFactory.release(lmdbKV.getRowValue());
             }
         });
     }
@@ -1645,38 +1645,6 @@ public class LmdbDataStore implements DataStore {
         @Override
         public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
             return complete.await(timeout, unit);
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private static class TransferState {
-
-        private final AtomicBoolean terminated = new AtomicBoolean();
-        private volatile Thread thread;
-
-        public boolean isTerminated() {
-            return terminated.get();
-        }
-
-        public synchronized void terminate() {
-            terminated.set(true);
-            if (thread != null) {
-                thread.interrupt();
-            }
-        }
-
-        public synchronized void setThread(final Thread thread) {
-            this.thread = thread;
-            if (terminated.get()) {
-                if (thread != null) {
-                    thread.interrupt();
-                } else if (Thread.interrupted()) {
-                    LOGGER.debug(() -> "Cleared interrupt state");
-                }
-            }
         }
     }
 }
