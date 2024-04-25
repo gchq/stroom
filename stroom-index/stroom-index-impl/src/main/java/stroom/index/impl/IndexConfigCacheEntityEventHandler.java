@@ -28,21 +28,24 @@ import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 
+import java.util.Optional;
+
 @EntityEventHandler(type = LuceneIndexDoc.DOCUMENT_TYPE)
 class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
+
     private final NodeInfo nodeInfo;
     private final LuceneIndexDocCacheImpl indexStructureCache;
-    private final IndexShardService indexShardService;
+    private final IndexShardDao indexShardDao;
     private final IndexShardWriterCache indexShardWriterCache;
 
     @Inject
     IndexConfigCacheEntityEventHandler(final NodeInfo nodeInfo,
                                        final LuceneIndexDocCacheImpl indexStructureCache,
-                                       final IndexShardService indexShardService,
+                                       final IndexShardDao indexShardDao,
                                        final IndexShardWriterCache indexShardWriterCache) {
         this.nodeInfo = nodeInfo;
         this.indexStructureCache = indexStructureCache;
-        this.indexShardService = indexShardService;
+        this.indexShardDao = indexShardDao;
         this.indexShardWriterCache = indexShardWriterCache;
     }
 
@@ -59,13 +62,13 @@ class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
         criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
         criteria.getIndexUuidSet().add(indexRef.getUuid());
 
-        final ResultPage<IndexShard> shards = indexShardService.find(criteria);
+        final ResultPage<IndexShard> shards = indexShardDao.find(criteria);
         shards.getValues().forEach(shard -> {
-            final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriter(shard.getId());
-            if (indexShardWriter != null) {
+            final Optional<IndexShardWriter> optional = indexShardWriterCache.getIfPresent(shard.getId());
+            optional.ifPresent(indexShardWriter -> {
                 final LuceneIndexDoc index = indexStructureCache.get(indexRef);
                 indexShardWriter.setMaxDocumentCount(index.getMaxDocsPerShard());
-            }
+            });
         });
     }
 }

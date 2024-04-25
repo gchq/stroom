@@ -23,6 +23,7 @@ import stroom.index.shared.LuceneIndexDoc;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.lifecycle.api.LifecycleBinder;
 import stroom.query.common.v2.IndexFieldCache;
+import stroom.query.common.v2.IndexFieldProviders;
 import stroom.searchable.api.Searchable;
 import stroom.util.RunnableWrapper;
 import stroom.util.entityevent.EntityEvent;
@@ -42,11 +43,13 @@ public class IndexModule extends AbstractModule {
 
         bind(IndexShardWriterCache.class).to(IndexShardWriterCacheImpl.class);
         bind(LuceneIndexDocCache.class).to(LuceneIndexDocCacheImpl.class);
+        bind(IndexFieldProviders.class).to(IndexFieldProvidersImpl.class);
         bind(IndexFieldCache.class).to(IndexFieldCacheImpl.class);
         bind(IndexStore.class).to(IndexStoreImpl.class);
         bind(IndexVolumeService.class).to(IndexVolumeServiceImpl.class);
         bind(IndexVolumeGroupService.class).to(IndexVolumeGroupServiceImpl.class);
         bind(IndexShardService.class).to(IndexShardServiceImpl.class);
+        bind(IndexShardCreator.class).to(IndexShardCreatorImpl.class);
         bind(IndexFieldService.class).to(IndexFieldServiceImpl.class);
         bind(Indexer.class).to(IndexerImpl.class);
         bind(ActiveShardsCache.class).to(ActiveShardsCacheImpl.class);

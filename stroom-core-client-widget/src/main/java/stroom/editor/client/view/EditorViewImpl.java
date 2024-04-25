@@ -50,6 +50,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceMarkerType;
 import edu.ycp.cs.dh.acegwt.client.ace.AceRange;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -65,6 +66,13 @@ import javax.inject.Inject;
 public class EditorViewImpl
         extends AbstractEditorViewImpl
         implements EditorView {
+
+    // These modes are all XML and thus can be formatted as XML
+    private static final EnumSet<AceEditorMode> XML_MODES = EnumSet.of(
+            AceEditorMode.XML,
+            AceEditorMode.STROOM_DATA_SPLITTER,
+            AceEditorMode.STROOM_FRAGMENT_PARSER,
+            AceEditorMode.STROOM_COMBINED_PARSER);
 
     private static final IndicatorPopup indicatorPopup = new IndicatorPopup();
     private final Action formatAction;
@@ -301,7 +309,7 @@ public class EditorViewImpl
             final AceEditorCursorPosition cursorPosition = editor.getCursorPosition();
 
             final String formattedText;
-            if (AceEditorMode.XML.equals(mode)) {
+            if (isModeXml(mode)) {
                 formattedText = formatAsIfXml(getText());
                 setText(formattedText);
             } else {
@@ -322,6 +330,10 @@ public class EditorViewImpl
 
             applyFormattedHighlights(formattedText);
         });
+    }
+
+    private boolean isModeXml(final AceEditorMode mode) {
+        return XML_MODES.contains(mode);
     }
 
     private void applyFormattedHighlights(final String formattedText) {

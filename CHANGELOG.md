@@ -13,6 +13,93 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.4-beta.3] - 2024-04-24
+
+* Fix tag filter in Edit Tags dialog not being in-sync with filter input.
+
+* Issue **#4221** : Remove `id` column from `index_field` and change the primary key to be `(fk_index_field_source_id, name)`. Add retry logic and existing field check when adding fields to mitigate against deadlocks.
+
+* Issue **#4218** : Fix index shard state transition.
+
+* Issue **#4220** : Fix index shard creation.
+
+* Issue **#4217** : Suppress expected shard write errors.
+
+* Issue **#4215** : Fix NPE during context lookup with no context data loaded.
+
+* Issue **#4214** : Fix index shard writer errors.
+
+* Issue **#4203** : Fix event capture getting stuck on buttons.
+
+* Issue **#4204** : Make `indexOf()` and `lastIndexOf()` return `-1` when not found.
+
+* Issue **#4205** : Add `contains()` function.
+
+* Issue **#4209** : Support `and()` function in `eval`.
+
+* Issue **#4212** : Fix shards stuck in opening state.
+
+
+## [v7.4-beta.2] - 2024-04-10
+
+* Issue **#4161** : Fix cron schedule time UI.
+
+* Issue **#4160** : Fix date time picker.
+
+* Add the `ctrl+enter` key bind to dashboards to start/stop the query. Make the `ctrl+enter` key bind work on any part of the screen for Queries.
+
+* Add various 'Goto' type sequential key binds, e.g. `gt` for 'Goto Server Tasks'.
+
+* Change the Documentation tab to default to edit mode if the user has write permission and there is currently no documentation.
+
+* Add `ctrl+/` and `/` key binds for focusing on the explorer tree and current tab quick filters respectively.
+
+* Create a 'Copy As' explorer tree context menu sub-menu containing 'Copy (Name|UUID|Link) to Clipboard'.
+
+* Issue **#4184** : Add API specification link to help menu.
+
+* Issue **#4167** : Add templating of email subject and body in scheduled query rules. Template language is a sub-set of Jinja templating.
+
+* Issue **#4039** : Make tick boxes in conditional formatting table clickable.
+
+* Add help buttons to edit conditional rule dialog and add F1 keybind for opening help.
+
+* Issue **#4119** : Set stepping location from a popup and not inline editor.
+
+* Issue **#4187** : Fix scheduled executor stop behaviour.
+
+* Rename DB migration script from `V07_03_00_001__job_node.sql` to `V07_04_00_005__job_node.sql`. If you are deploying this version onto an existing 7.4 version then you will need to run the following sql `delete from job_schema_history where version = '07.03.00.001';`.
+
+* Issue **#4172** : Fix NPE when running an empty sQL query.
+
+* Issue **#4168** : Increase width of Id column on Annotations Linked Events dialog. Also increase size of dialog and the width of the left hand split pane.
+
+* Issue **#3998** : Clear visualisations when no data is returned rather than showing `no data`.
+
+* Issue **#4179** : Add text input control to dashboards.
+
+* Issue **#4151** : Prevent runaway creation of index shards when there are file system problems.
+
+* Issue **#4035** : Fix nasty error when changing permissions of a pipeline filter.
+
+* Issue **#4142** : Index shards now cope with field changes.
+
+* Issue **#4183** : Fix processor filter edit.
+
+* Issue **#4190** : Make MapDataStore sort and trim settings configurable.
+
+* Issue **#4192** : Fix NPE when selecting Info context menu item for any folder.
+
+* Issue **#4178** : Change the Info popup so that you can click Info for another entity and it will just update the popup content without hiding it.
+
+* Issue **#4196** : Fix warning message when the byte buffer pool hits its threshold.
+
+* Issue **#4175** : Fix `Batch module not found` error when sending emails.
+
+* Issue **#4199** : Fix internal statistics error when a pipeline is owned by a user with limited privileges.
+
+* Issue **#4195** : Fix SQL deadlock with dynamic index fields.
+
 * Issue **#4169** : Fix index field `Positions` setting not being passed through to Lucene resulting in corrupt shards.
 
 * Issue **#4051** : Fix search extraction for Elastic indexes.
@@ -387,6 +474,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.3...HEAD
+[v7.4-beta.3]: https://github.com/gchq/stroom/compare/v7.4-beta.2...v7.4-beta.3
+[v7.4-beta.2]: https://github.com/gchq/stroom/compare/v7.4-beta.1...v7.4-beta.2
 [v7.4-beta.1]: https://github.com/gchq/stroom/compare/v7.3-beta.11...v7.4-beta.1
 [v7.2.2]: https://github.com/gchq/stroom/compare/v7.2.1...v7.2.2

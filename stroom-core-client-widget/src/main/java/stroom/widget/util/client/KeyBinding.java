@@ -174,21 +174,24 @@ public class KeyBinding {
 
     private static boolean shouldCheckKeySequence(final NativeEvent e) {
         final EventTarget eventTarget = e.getEventTarget();
+        final boolean shouldCheck;
         if (eventTarget != null) {
             if (Element.is(eventTarget)) {
                 final Element element = Element.as(eventTarget);
                 final String className = GwtNullSafe.string(element.getClassName());
                 // TODO this is really clunky. Need to create our own textbox and text area
                 //  components so that we can control the key events
-                return !className.contains("gwt-TextBox")
+                shouldCheck = !className.contains("gwt-TextBox")
                         && !className.contains("gwt-TextArea")
                         && !className.contains("ace_text-input");
             } else {
-                return true;
+                shouldCheck = true;
             }
         } else {
-            return true;
+            shouldCheck = true;
         }
+//        GWT.log("shouldCheck: " + shouldCheck);
+        return shouldCheck;
     }
 
     private static Action testKeyDownEvent(final NativeEvent e,

@@ -154,6 +154,23 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
+  crossModule:
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverPassword: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+      connectionPool:
+        cachePrepStmts: false
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        leakDetectionThreshold: "PT0S"
+        maxLifetime: "PT30M"
+        maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
   data:
     filesystemVolume:
       createDefaultStreamVolumesOnStart: true
@@ -387,6 +404,11 @@ appConfig:
         minItems: 0
         timeToIdle: "PT0S"
         timeToLive: "PT0S"
+      indexShardWriterCache:
+        expireAfterAccess: "PT1H"
+        expireAfterWrite: null
+        maximumSize: 100
+        refreshAfterWrite: null
       slowIndexWriteWarningThreshold: "PT1S"
   job:
     db:

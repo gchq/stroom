@@ -5,6 +5,7 @@ import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import com.google.inject.Injector;
 import com.zaxxer.hikari.HikariDataSource;
 import org.flywaydb.core.api.MigrationVersion;
 import org.flywaydb.core.api.configuration.FluentConfiguration;
@@ -51,12 +52,13 @@ public abstract class AbstractFlyWayDbModule<T_CONFIG extends AbstractDbConfig, 
     }
 
     @Override
-    protected void performMigration(final DataSource dataSource) {
+    protected boolean performMigration(final DataSource dataSource, final Injector injector) {
         FlywayUtil.migrate(dataSource,
                 getFlyWayLocations(),
                 getMigrationTarget().orElse(null),
                 getFlyWayTableName(),
                 getModuleName());
+        return true;
     }
 
     /**

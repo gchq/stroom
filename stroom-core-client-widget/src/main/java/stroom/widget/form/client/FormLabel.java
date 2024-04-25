@@ -22,6 +22,11 @@ public class FormLabel extends Composite {
         lbl.getElement().setInnerText(label);
     }
 
+    public String getLabel() {
+        return lbl.getElement().getInnerText();
+    }
+
+
     // --------------------------------------------------------------------------------
 
 

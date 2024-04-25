@@ -16,9 +16,13 @@
 
 package stroom.index.impl;
 
+import java.util.Optional;
+
 public interface IndexShardWriterCache {
 
-    IndexShardWriter getWriter(long indexShardId);
+    Optional<IndexShardWriter> getIfPresent(long indexShardId);
+
+    IndexShardWriter getOrOpenWriter(long indexShardId);
 
     void flush(long indexShardId);
 

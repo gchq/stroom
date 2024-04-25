@@ -70,8 +70,8 @@ public class StepLocationLinkPresenter
     public void setStepLocation(final StepLocation stepLocation) {
         this.stepLocation = stepLocation;
         getView().getLabel().getElement().setInnerHTML("[" +
-                stepLocation.getMetaId() + "&nbsp;-&nbsp;" +
-                (stepLocation.getPartIndex() + 1) + "&nbsp;-&nbsp;" +
+                stepLocation.getMetaId() + ":" +
+                (stepLocation.getPartIndex() + 1) + ":" +
                 (stepLocation.getRecordIndex() + 1) +
                 "]");
     }

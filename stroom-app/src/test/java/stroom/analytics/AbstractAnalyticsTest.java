@@ -16,6 +16,7 @@
 
 package stroom.analytics;
 
+import stroom.analytics.impl.AnalyticHelper;
 import stroom.analytics.rule.impl.AnalyticRuleStore;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.NotificationConfig;
@@ -30,7 +31,6 @@ import stroom.data.store.api.SourceUtil;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
 import stroom.index.VolumeTestConfigModule;
-import stroom.index.mock.MockIndexShardWriterExecutorModule;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -67,7 +67,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
-@IncludeModule(MockIndexShardWriterExecutorModule.class)
 class AbstractAnalyticsTest extends StroomIntegrationTest {
 
     static final SimpleDuration INSTANT = SimpleDuration
@@ -84,6 +83,8 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
     private AnalyticRuleStore analyticRuleStore;
     @Inject
     private AnalyticsDataSetup analyticsDataSetup;
+    @Inject
+    private AnalyticHelper analyticHelper;
 
     @BeforeEach
     final void setup() {
@@ -109,6 +110,8 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
         if (analyticsDataSetup.getDetections() == null) {
             throw new NullPointerException("Detections missing");
         }
+
+        assertThat(analyticHelper.getRules().size()).isZero();
     }
 
     @Override
@@ -128,6 +131,10 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
                 .errorFeed(analyticsDataSetup.getDetections())
                 .build();
         analyticRuleStore.writeDocument(analyticRuleDoc);
+
+        assertThat(analyticHelper.getRules().size()).isOne();
+        assertThat(analyticHelper.getRules().getFirst().getUuid()).isEqualTo(alertRuleDocRef.getUuid());
+
         return alertRuleDocRef;
     }
 

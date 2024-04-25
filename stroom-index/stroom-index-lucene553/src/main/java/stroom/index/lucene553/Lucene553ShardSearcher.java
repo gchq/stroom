@@ -55,6 +55,7 @@ import org.apache.lucene553.search.Query;
 import org.apache.lucene553.search.SearcherManager;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -159,8 +160,8 @@ class Lucene553ShardSearcher implements LuceneShardSearcher {
         IndexWriter indexWriter = null;
 
         // Load the current index shard.
-        final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriter(indexShardId);
-        if (indexShardWriter instanceof final Lucene553IndexShardWriter writer) {
+        final Optional<IndexShardWriter> optional = indexShardWriterCache.getIfPresent(indexShardId);
+        if (optional.isPresent() && optional.get() instanceof final Lucene553IndexShardWriter writer) {
             indexWriter = writer.getWriter();
         }
 

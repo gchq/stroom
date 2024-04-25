@@ -6,13 +6,13 @@
     <g:FlowPanel styleName="removeNodeTags max form flex-column">
         <g:FlowPanel styleName="removeNodeTagsListsContainer form dock-max flex-row">
             <form:FormGroup identity="removeNodeTagsNodeTags"
-                            addStyleNames="removeNodeTagsNodeTagsFrmGrp dock-max">
-                <g:FlowPanel styleName="max form">
-                    <g:Label ui:field="nodeTagsLabel"
-                             addStyleNames="form-label dock-min"/>
-                    <g:ListBox ui:field="nodeTagsListBox"
-                               addStyleNames="form-control dock-max max"/>
-                </g:FlowPanel>
+                            addStyleNames="removeNodeTagsNodeTagsFrmGrp dock-max"
+                            label="Existing Tags">
+                <form:HelpHTML>
+                    Select the tag(s) to remove from the documents.
+                </form:HelpHTML>
+                <g:ListBox ui:field="nodeTagsListBox"
+                           addStyleNames="form-control dock-max max"/>
             </form:FormGroup>
         </g:FlowPanel>
     </g:FlowPanel>

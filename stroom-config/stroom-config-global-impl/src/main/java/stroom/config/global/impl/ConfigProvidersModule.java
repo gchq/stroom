@@ -90,6 +90,15 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.config.app.CrossModuleConfig getCrossModuleConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.config.app.CrossModuleConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.config.app.DataConfig getDataConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
@@ -841,10 +850,20 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.security.identity.config.SmtpConfig getSmtpConfig2ButThrow(
+    stroom.config.common.AbstractDbConfig getAbstractDbConfigButThrow(
             final ConfigMapper configMapper) {
         throw new UnsupportedOperationException(
-                "stroom.security.identity.config.SmtpConfig cannot be injected directly. "
+                "stroom.config.common.AbstractDbConfig cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.config.common.ConnectionConfig getConnectionConfigButThrow(
+            final ConfigMapper configMapper) {
+        throw new UnsupportedOperationException(
+                "stroom.config.common.ConnectionConfig cannot be injected directly. "
                         + "Inject a config class that uses it or one of its sub-class instead.");
     }
 
@@ -871,26 +890,6 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.config.common.ConnectionConfig getConnectionConfigButThrow(
-            final ConfigMapper configMapper) {
-        throw new UnsupportedOperationException(
-                "stroom.config.common.ConnectionConfig cannot be injected directly. "
-                        + "Inject a config class that uses it or one of its sub-class instead.");
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
-    stroom.config.common.AbstractDbConfig getAbstractDbConfigButThrow(
-            final ConfigMapper configMapper) {
-        throw new UnsupportedOperationException(
-                "stroom.config.common.AbstractDbConfig cannot be injected directly. "
-                        + "Inject a config class that uses it or one of its sub-class instead.");
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
     stroom.query.common.v2.ResultStoreLmdbConfig getResultStoreLmdbConfigButThrow(
             final ConfigMapper configMapper) {
         throw new UnsupportedOperationException(
@@ -905,6 +904,26 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         throw new UnsupportedOperationException(
                 "stroom.query.common.v2.AbstractResultStoreConfig cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.query.common.v2.ResultStoreMapConfig getResultStoreMapConfigButThrow(
+            final ConfigMapper configMapper) {
+        throw new UnsupportedOperationException(
+                "stroom.query.common.v2.ResultStoreMapConfig cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.security.identity.config.SmtpConfig getSmtpConfig2ButThrow(
+            final ConfigMapper configMapper) {
+        throw new UnsupportedOperationException(
+                "stroom.security.identity.config.SmtpConfig cannot be injected directly. "
                         + "Inject a config class that uses it or one of its sub-class instead.");
     }
 

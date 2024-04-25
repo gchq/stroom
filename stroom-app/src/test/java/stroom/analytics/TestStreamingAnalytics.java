@@ -25,7 +25,6 @@ import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
 import stroom.docref.DocRef;
 import stroom.index.VolumeTestConfigModule;
-import stroom.index.mock.MockIndexShardWriterExecutorModule;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.node.api.NodeInfo;
@@ -56,7 +55,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
-@IncludeModule(MockIndexShardWriterExecutorModule.class)
 class TestStreamingAnalytics extends AbstractAnalyticsTest {
 
     @Inject

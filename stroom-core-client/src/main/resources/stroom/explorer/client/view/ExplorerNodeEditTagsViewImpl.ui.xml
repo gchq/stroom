@@ -8,46 +8,54 @@
         <form:FormGroup identity="editNodeTagsAddTags"
                         label="Add/Filter Tag(s)"
                         addStyleNames="editNodeTagsAddTagsFrmGrp dock-min form">
-            <g:FlowPanel styleName="max form dock-min">
-                <g:HTML styleName="editNodeTagsAddTagsLabel example-label">
-                    E.g. One tag '<code>extraction-pipeline</code>' or multiple tags '<code>system-x system-y</code>'.
-                </g:HTML>
-                <g:FlowPanel styleName="editNodeTagsAddTagsInputContainer flex-row dock-min form">
-                    <g:FlowPanel styleName="editNodeTagsAddTagsInputPanel flex-row dock-max form">
-                        <g:TextBox ui:field="textBox"
-                                   addStyleNames="editNodeTagsAddTagsInput form-control lower-case-input dock-max"/>
-                        <b:ButtonPanel ui:field="clearButtonPanel"
-                                       addStyleNames="align-center dock-min"/>
-                    </g:FlowPanel>
-                    <b:ButtonPanel ui:field="inputButtonPanel"
+            <form:DescriptionHTML>
+                E.g. One tag '<code>extraction-pipeline</code>' or
+                multiple tags '<code>system-x system-y</code>'.
+            </form:DescriptionHTML>
+            <form:HelpHTML>
+                <p>Either enter a full tag then press the Enter key or click the Add button to add the tag,
+                or enter a partial tag to filter the list of All Known Tags using the partial tag.</p>
+                <p><strong>Note</strong>: All users have visibility of all tags even if they do not have
+                    visibility of the document the tag is used on.</p>
+            </form:HelpHTML>
+            <g:FlowPanel styleName="editNodeTagsAddTagsInputContainer flex-row dock-min form">
+                <g:FlowPanel styleName="editNodeTagsAddTagsInputPanel flex-row dock-max form">
+                    <g:TextBox ui:field="textBox"
+                               addStyleNames="editNodeTagsAddTagsInput form-control lower-case-input dock-max"/>
+                    <b:ButtonPanel ui:field="clearButtonPanel"
                                    addStyleNames="align-center dock-min"/>
                 </g:FlowPanel>
+                <b:ButtonPanel ui:field="inputButtonPanel"
+                               addStyleNames="align-center dock-min"/>
             </g:FlowPanel>
         </form:FormGroup>
 
         <g:FlowPanel styleName="editNodeTagsListsContainer form dock-max flex-row">
             <form:FormGroup identity="editNodeTagsAllTags"
-                            addStyleNames="editNodeTagsAllTagsFrmGrp dock-max max">
-                <g:FlowPanel styleName="max form dock-max">
-                    <g:Label ui:field="editNodeTagsAllTagsLabel"
-                             addStyleNames="form-label dock-min">All known tags
-                    </g:Label>
-                    <g:ListBox ui:field="allTagsListBox"
-                               addStyleNames="form-control dock-max max"/>
-                </g:FlowPanel>
+                            ui:field="allTagsFormGroup"
+                            addStyleNames="editNodeTagsAllTagsFrmGrp dock-max max"
+                            label="All known tags">
+                <form:HelpHTML>
+                    A list of all tags currently in use across all documents in Stroom.
+                    The list also includes any suggested tags configured using the property
+                    <code>stroom.explorer.suggestedTags</code>.
+                </form:HelpHTML>
+                <g:ListBox ui:field="allTagsListBox"
+                           addStyleNames="form-control dock-max max"/>
             </form:FormGroup>
 
             <b:ButtonPanel ui:field="nodeTagsButtonPanel"
                            addStyleNames="form dock-min flex-column dock-min justify-content-center"/>
 
             <form:FormGroup identity="editNodeTagsNodeTags"
-                            addStyleNames="editNodeTagsNodeTagsFrmGrp dock-max">
-                <g:FlowPanel styleName="max form">
-                    <g:Label ui:field="nodeTagsLabel"
-                             addStyleNames="form-label dock-min"/>
-                    <g:ListBox ui:field="nodeTagsListBox"
-                               addStyleNames="form-control dock-max max"/>
-                </g:FlowPanel>
+                            ui:field="nodeTagsFormGroup"
+                            addStyleNames="editNodeTagsNodeTagsFrmGrp dock-max"
+                            label="">
+                <form:HelpHTML>
+                    A list of all tags currently assigned to this/these document(s).
+                </form:HelpHTML>
+                <g:ListBox ui:field="nodeTagsListBox"
+                           addStyleNames="form-control dock-max max"/>
             </form:FormGroup>
         </g:FlowPanel>
 

@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
@@ -66,9 +67,10 @@ class Lucene553SystemInfoProvider implements IndexSystemInfoProvider {
     @Override
     public SystemInfoResult getSystemInfo(final IndexShard indexShard, final Integer limit, final Long streamId) {
         // This may be null if we don't happen to have a writer
-        final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriter(indexShard.getId());
-        final IndexWriter indexWriter = NullSafe
-                .get(indexShardWriter, w -> ((Lucene553IndexShardWriter) w).getWriter());
+        final Optional<IndexShardWriter> optional = indexShardWriterCache.getIfPresent(indexShard.getId());
+        final IndexWriter indexWriter = optional
+                .map(indexShardWriter -> ((Lucene553IndexShardWriter) indexShardWriter).getWriter())
+                .orElse(null);
 
         IndexShardSearcher indexShardSearcher = null;
         try {

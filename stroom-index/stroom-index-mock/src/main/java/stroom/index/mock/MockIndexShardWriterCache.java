@@ -23,6 +23,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
@@ -42,7 +43,12 @@ public class MockIndexShardWriterCache implements IndexShardWriterCache {
     }
 
     @Override
-    public IndexShardWriter getWriter(final long indexShardId) {
+    public Optional<IndexShardWriter> getIfPresent(final long indexShardId) {
+        return Optional.ofNullable(openWritersByShardId.get(indexShardId));
+    }
+
+    @Override
+    public IndexShardWriter getOrOpenWriter(final long indexShardId) {
         return openWritersByShardId.computeIfAbsent(indexShardId, k ->
                 new MockIndexShardWriter(indexShardId, maxDocumentCount));
     }

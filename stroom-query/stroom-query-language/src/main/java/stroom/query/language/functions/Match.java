@@ -68,7 +68,7 @@ class Match extends AbstractManyChildFunction {
             final String value = params[0].toString();
             final String regex = params[1].toString();
 
-            if (regex.length() == 0) {
+            if (regex.isEmpty()) {
                 throw new ParseException(
                         "An empty regex has been defined for second argument of '" + name + "' function", 0);
             }
@@ -81,7 +81,7 @@ class Match extends AbstractManyChildFunction {
             if (params[1] instanceof Val) {
                 // Test regex is valid.
                 final String regex = params[1].toString();
-                if (regex.length() == 0) {
+                if (regex.isEmpty()) {
                     throw new ParseException(
                             "An empty regex has been defined for second argument of '" + name + "' function", 0);
                 }

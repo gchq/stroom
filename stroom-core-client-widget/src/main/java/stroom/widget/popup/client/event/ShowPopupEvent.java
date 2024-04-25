@@ -21,6 +21,7 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -199,7 +200,6 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
         }
 
         public Builder addAutoHidePartner(final Element... autoHidePartner) {
-
             this.autoHidePartners.addAll(GwtNullSafe.asList(autoHidePartner));
             return this;
         }
@@ -222,10 +222,13 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
         public void fire() {
             // By default, we will automatically hide popups unless they have a handler that alters the behaviour.
             if (hideRequestHandler == null) {
-                hideRequestHandler = e -> HidePopupEvent.builder(presenterWidget)
-                        .autoClose(e.isAutoClose())
-                        .ok(e.isOk())
-                        .fire();
+                hideRequestHandler = e -> {
+                    GWT.log("isOk: " + e.isOk());
+                    HidePopupEvent.builder(presenterWidget)
+                            .autoClose(e.isAutoClose())
+                            .ok(e.isOk())
+                            .fire();
+                };
             }
 
             Element[] elements = null;
@@ -233,6 +236,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
                 elements = autoHidePartners.toArray(new Element[0]);
             }
 
+//            if (!presenterWidget.getView().asWidget().isVisible()) {
             presenterWidget.fireEvent(new ShowPopupEvent(
                     presenterWidget,
                     popupType,
@@ -244,6 +248,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
                     hideHandler,
                     modal,
                     elements));
+//            }
         }
     }
 }
