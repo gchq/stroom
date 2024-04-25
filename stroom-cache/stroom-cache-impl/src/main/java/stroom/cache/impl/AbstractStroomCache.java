@@ -297,7 +297,9 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
         addEntries(map, cache.stats().toString());
 
         map.forEach((k, v) -> {
-            if (k.startsWith("Expire") || k.equals("TotalLoadTime")) {
+            if (k.startsWith("Expire") ||
+                    k.equals("TotalLoadTime") ||
+                    k.equals("RefreshAfterWrite")) {
                 convertNanosToDuration(map, k, v);
             }
         });
