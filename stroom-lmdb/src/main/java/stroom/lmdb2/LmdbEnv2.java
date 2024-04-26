@@ -1,10 +1,11 @@
 package stroom.lmdb2;
 
+import stroom.lmdb.LmdbConfig;
 import stroom.lmdb.LmdbEnv;
-import stroom.util.io.FileUtil;
+import stroom.util.io.ByteSize;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.ModelStringUtil;
+import stroom.util.logging.LogUtil;
 
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
@@ -12,14 +13,13 @@ import org.lmdbjava.Env;
 import org.lmdbjava.EnvFlags;
 import org.lmdbjava.Txn;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.EnumSet;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -27,25 +27,19 @@ public class LmdbEnv2 implements AutoCloseable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbEnv2.class);
 
-    private static final String DATA_FILE_NAME = "data.mdb";
-    private static final String LOCK_FILE_NAME = "lock.mdb";
-
     private final Env<ByteBuffer> env;
 
-    private final Path localDir;
-    private final boolean isDedicatedDir;
+    private final LmdbEnvDir lmdbEnvDir;
     private final String name;
     private final Set<EnvFlags> envFlags;
 
 
     LmdbEnv2(final Env<ByteBuffer> env,
-             final Path localDir,
-             final boolean isDedicatedDir,
+             final LmdbEnvDir lmdbEnvDir,
              final String name,
              final Set<EnvFlags> envFlags) {
         this.env = env;
-        this.localDir = localDir;
-        this.isDedicatedDir = isDedicatedDir;
+        this.lmdbEnvDir = lmdbEnvDir;
         this.name = name;
         this.envFlags = envFlags;
     }
@@ -110,8 +104,8 @@ public class LmdbEnv2 implements AutoCloseable {
         return env.isClosed();
     }
 
-    public Path getLocalDir() {
-        return localDir;
+    public LmdbEnvDir getDir() {
+        return lmdbEnvDir;
     }
 
     /**
@@ -122,64 +116,103 @@ public class LmdbEnv2 implements AutoCloseable {
             throw new RuntimeException(("LMDB environment at {} is still open"));
         }
 
-        LOGGER.debug("Deleting LMDB environment {} and all its contents", localDir.toAbsolutePath().normalize());
-
-        // May be useful to see the sizes of db before they are deleted
-        LOGGER.doIfDebugEnabled(this::dumpMdbFileSize);
-
-        if (Files.isDirectory(localDir)) {
-            if (isDedicatedDir) {
-                // Dir dedicated to the env so can delete the whole dir
-                if (!FileUtil.deleteDir(localDir)) {
-                    throw new RuntimeException("Unable to delete dir: " + FileUtil.getCanonicalPath(localDir));
-                }
-            } else {
-                // Not dedicated dir so just delete the files
-                deleteEnvFile(LOCK_FILE_NAME);
-                deleteEnvFile(DATA_FILE_NAME);
-            }
-        }
+        lmdbEnvDir.delete();
     }
 
-    private void deleteEnvFile(final String filename) {
-        final Path file = localDir.resolve(filename);
-        if (Files.isRegularFile(file)) {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private LmdbEnvDir lmdbEnvDir;
+        private final Set<EnvFlags> envFlags = EnumSet.noneOf(EnvFlags.class);
+
+        protected int maxReaders = LmdbConfig.DEFAULT_MAX_READERS;
+        protected ByteSize maxStoreSize = LmdbConfig.DEFAULT_MAX_STORE_SIZE;
+        protected int maxDbs = 1;
+        protected boolean isReadAheadEnabled = LmdbConfig.DEFAULT_IS_READ_AHEAD_ENABLED;
+        protected boolean isReaderBlockedByWriter = LmdbConfig.DEFAULT_IS_READER_BLOCKED_BY_WRITER;
+        protected String name = null;
+
+        private Builder() {
+        }
+
+        public Builder config(final LmdbConfig lmdbConfig) {
+            this.maxReaders = lmdbConfig.getMaxReaders();
+            this.maxStoreSize = lmdbConfig.getMaxStoreSize();
+            this.isReadAheadEnabled = lmdbConfig.isReadAheadEnabled();
+            this.isReaderBlockedByWriter = lmdbConfig.isReaderBlockedByWriter();
+            return this;
+        }
+
+        public Builder lmdbEnvDir(final LmdbEnvDir lmdbEnvDir) {
+            this.lmdbEnvDir = lmdbEnvDir;
+            return this;
+        }
+
+        public Builder maxDbCount(final int maxDbCount) {
+            this.maxDbs = maxDbCount;
+            return this;
+        }
+
+        public Builder addEnvFlag(final EnvFlags envFlag) {
+            this.envFlags.add(envFlag);
+            return this;
+        }
+
+        public Builder envFlags(final EnvFlags... envFlags) {
+            this.envFlags.addAll(Arrays.asList(envFlags));
+            return this;
+        }
+
+        public Builder envFlags(final Collection<EnvFlags> envFlags) {
+            this.envFlags.addAll(envFlags);
+            return this;
+        }
+
+        public Builder name(final String name) {
+            this.name = name;
+            return this;
+        }
+
+
+        public LmdbEnv2 build() {
+            final Env<ByteBuffer> env;
             try {
-                LOGGER.info("Deleting file {}", file.toAbsolutePath());
-                Files.delete(file);
-            } catch (IOException e) {
-                throw new RuntimeException("Unable to delete dir: " + FileUtil.getCanonicalPath(localDir));
+                final Env.Builder<ByteBuffer> builder = Env.create()
+                        .setMapSize(maxStoreSize.getBytes())
+                        .setMaxDbs(maxDbs)
+                        .setMaxReaders(maxReaders);
+
+                if (envFlags.contains(EnvFlags.MDB_NORDAHEAD) && isReadAheadEnabled) {
+                    throw new RuntimeException("Can't set isReadAheadEnabled to true and add flag "
+                            + EnvFlags.MDB_NORDAHEAD);
+                }
+
+                envFlags.add(EnvFlags.MDB_NOTLS);
+                if (!isReadAheadEnabled) {
+                    envFlags.add(EnvFlags.MDB_NORDAHEAD);
+                }
+
+                LOGGER.debug("Creating LMDB environment in dir {}, maxSize: {}, maxDbs {}, maxReaders {}, "
+                                + "isReadAheadEnabled {}, isReaderBlockedByWriter {}, envFlags {}",
+                        lmdbEnvDir.toString(),
+                        maxStoreSize,
+                        maxDbs,
+                        maxReaders,
+                        isReadAheadEnabled,
+                        isReaderBlockedByWriter,
+                        envFlags);
+
+                final EnvFlags[] envFlagsArr = envFlags.toArray(new EnvFlags[0]);
+                env = builder.open(lmdbEnvDir.getEnvDir().toFile(), envFlagsArr);
+            } catch (Exception e) {
+                throw new RuntimeException(LogUtil.message(
+                        "Error creating LMDB env at {}: {}",
+                        lmdbEnvDir.toString(), e.getMessage()), e);
             }
-        } else {
-            LOGGER.error("LMDB env file {} doesn't exist", file.toAbsolutePath());
-        }
-    }
-
-    private void dumpMdbFileSize() {
-        if (Files.isDirectory(localDir)) {
-
-            try (Stream<Path> stream = Files.list(localDir)) {
-                stream
-                        .filter(path ->
-                                !Files.isDirectory(path))
-                        .filter(file ->
-                                file.toString().toLowerCase().endsWith("data.mdb"))
-                        .map(file -> {
-                            try {
-                                final long fileSizeBytes = Files.size(file);
-                                return localDir.getFileName().resolve(file.getFileName())
-                                        + " - file size: "
-                                        + ModelStringUtil.formatIECByteSizeString(fileSizeBytes);
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-                        })
-                        .forEach(LOGGER::debug);
-
-            } catch (IOException e) {
-                LOGGER.debug("Unable to list dir {} due to {}",
-                        localDir.toAbsolutePath().normalize(), e.getMessage());
-            }
+            return new LmdbEnv2(env, lmdbEnvDir, name, envFlags);
         }
     }
 }

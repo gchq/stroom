@@ -87,6 +87,7 @@ public class ScheduledQueryAnalyticExecutor {
     private final SecurityContext securityContext;
     private final ExecutionScheduleDao executionScheduleDao;
     private final DuplicateCheckFactory duplicateCheckFactory;
+    private final DuplicateCheckDirs duplicateCheckDirs;
 
     @Inject
     ScheduledQueryAnalyticExecutor(final AnalyticHelper analyticHelper,
@@ -102,7 +103,8 @@ public class ScheduledQueryAnalyticExecutor {
                                    final ExpressionContextFactory expressionContextFactory,
                                    final SecurityContext securityContext,
                                    final ExecutionScheduleDao executionScheduleDao,
-                                   final DuplicateCheckFactory duplicateCheckFactory) {
+                                   final DuplicateCheckFactory duplicateCheckFactory,
+                                   final DuplicateCheckDirs duplicateCheckDirs) {
         this.analyticHelper = analyticHelper;
         this.executorProvider = executorProvider;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
@@ -117,6 +119,7 @@ public class ScheduledQueryAnalyticExecutor {
         this.securityContext = securityContext;
         this.executionScheduleDao = executionScheduleDao;
         this.duplicateCheckFactory = duplicateCheckFactory;
+        this.duplicateCheckDirs = duplicateCheckDirs;
     }
 
     public void exec() {
@@ -124,6 +127,9 @@ public class ScheduledQueryAnalyticExecutor {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         try {
             info(() -> "Starting scheduled analytic processing");
+
+            // Start by finding a set of UUIDs for existing rule checking stores.
+            final List<String> duplicateStoreDirs = duplicateCheckDirs.getAnalyticRuleUUIDList();
 
             // Load rules.
             final List<AnalyticRuleDoc> analytics = loadScheduledQueryAnalytics();
@@ -146,6 +152,10 @@ public class ScheduledQueryAnalyticExecutor {
 
             // Join.
             workQueue.join();
+
+            // Delete unused duplicate stores.
+            duplicateCheckDirs.deleteUnused(duplicateStoreDirs, analytics);
+
             info(() -> LogUtil.message("Finished scheduled analytic processing in {}", logExecutionTime));
         } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
             LOGGER.debug("Task terminated", e);
@@ -327,14 +337,17 @@ public class ScheduledQueryAnalyticExecutor {
                         .requestedRange(OffsetRange.UNBOUNDED)
                         .build();
 
+                // Create a result store and begin search.
                 final RequestAndStore requestAndStore = searchResponseCreatorManager
                         .getResultStore(mappedRequest);
                 final SearchRequest modifiedRequest = requestAndStore.searchRequest();
                 try {
                     final DataStore dataStore = requestAndStore
                             .resultStore().getData(SearchRequestFactory.TABLE_COMPONENT_ID);
+                    // Wait for search to complete.
                     dataStore.getCompletionState().awaitCompletion();
 
+                    // Now consume all results as detections.
                     final TableSettings tableSettings = resultRequest.getMappings().getFirst();
                     final Map<String, String> paramMap = ParamUtil
                             .createParamMap(mappedRequest.getQuery().getParams());
@@ -351,8 +364,8 @@ public class ScheduledQueryAnalyticExecutor {
                     detectionConsumerProxy.setCompiledColumns(compiledColumns);
                     detectionConsumerProxy.setDetectionsConsumerProvider(detectionConsumerProvider);
 
-                    final DuplicateCheck duplicateCheck = duplicateCheckFactory.create(analytic, compiledColumns);
-                    try {
+                    try (final DuplicateCheck duplicateCheck =
+                            duplicateCheckFactory.create(analytic, compiledColumns)) {
                         detectionConsumerProxy.start();
                         final Consumer<Row> itemConsumer = row -> {
                             if (duplicateCheck.check(row)) {
@@ -448,6 +461,7 @@ public class ScheduledQueryAnalyticExecutor {
                         detectionConsumerProxy.end();
                     }
                 } finally {
+                    // Destroy search result store.
                     searchResponseCreatorManager.destroy(modifiedRequest.getKey(), DestroyReason.NO_LONGER_NEEDED);
                 }
             }

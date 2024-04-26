@@ -9,7 +9,9 @@ import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.docref.DocRef;
 import stroom.expression.api.ExpressionContext;
 import stroom.lmdb.LmdbConfig;
-import stroom.lmdb2.LmdbEnvFactory2;
+import stroom.lmdb2.LmdbEnv2;
+import stroom.lmdb2.LmdbEnvDir;
+import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.FindResultStoreCriteria;
 import stroom.query.api.v2.OffsetRange;
@@ -73,7 +75,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnalyticDataStores.class);
 
-    private final LmdbEnvFactory2 lmdbEnvFactory;
+    private final LmdbEnvDirFactory lmdbEnvDirFactory;
     private final Provider<AnalyticResultStoreConfig> analyticStoreConfigProvider;
     private final AnalyticRuleStore analyticRuleStore;
     private final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper;
@@ -86,7 +88,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
     private final ByteBufferFactory bufferFactory;
 
     @Inject
-    public AnalyticDataStores(final LmdbEnvFactory2 lmdbEnvFactory,
+    public AnalyticDataStores(final LmdbEnvDirFactory lmdbEnvDirFactory,
                               final PathCreator pathCreator,
                               final AnalyticRuleStore analyticRuleStore,
                               final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper,
@@ -96,7 +98,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                               final NodeInfo nodeInfo,
                               final SecurityContext securityContext,
                               final ByteBufferFactory bufferFactory) {
-        this.lmdbEnvFactory = lmdbEnvFactory;
+        this.lmdbEnvDirFactory = lmdbEnvDirFactory;
         this.analyticRuleStore = analyticRuleStore;
         this.analyticStoreConfigProvider = analyticStoreConfigProvider;
         this.analyticRuleSearchRequestHelper = analyticRuleSearchRequestHelper;
@@ -278,10 +280,15 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         final AnalyticResultStoreConfig storeConfig = analyticStoreConfigProvider.get();
 
         final String subDirectory = getAnalyticStoreDir(queryKey, componentId);
-        final LmdbEnvFactory2.Builder lmdbEnvBuilder = lmdbEnvFactory
+        final LmdbEnvDir lmdbEnvDir = lmdbEnvDirFactory
                 .builder()
                 .config(storeConfig.getLmdbConfig())
-                .subDir(subDirectory);
+                .subDir(subDirectory)
+                .build();
+        final LmdbEnv2.Builder lmdbEnvBuilder = LmdbEnv2
+                .builder()
+                .config(storeConfig.getLmdbConfig())
+                .lmdbEnvDir(lmdbEnvDir);
         final SearchRequestSource searchRequestSource = SearchRequestSource
                 .builder()
                 .sourceType(SourceType.TABLE_BUILDER_ANALYTIC)

@@ -28,7 +28,7 @@ import stroom.docref.DocRef;
 import stroom.expression.api.ExpressionContext;
 import stroom.lmdb.LmdbLibrary;
 import stroom.lmdb.LmdbLibraryConfig;
-import stroom.lmdb2.LmdbEnvFactory2;
+import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.Row;
 import stroom.query.common.v2.AnalyticResultStoreConfig;
@@ -51,7 +51,8 @@ import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestDuplicateCheckFactory {
+@Deprecated
+class TestDuplicateCheckFactoryImpl {
 
     private Path tempDir;
     private ExecutorService executorService;
@@ -117,12 +118,11 @@ class TestDuplicateCheckFactory {
         final TempDirProvider tempDirProvider = () -> tempDir;
         final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
         final LmdbLibraryConfig lmdbLibraryConfig = new LmdbLibraryConfig();
-        final LmdbEnvFactory2 lmdbEnvFactory = new LmdbEnvFactory2(
-                new LmdbLibrary(pathCreator, tempDirProvider, () -> lmdbLibraryConfig),
-                pathCreator);
+        final LmdbEnvDirFactory lmdbEnvDirFactory = new LmdbEnvDirFactory(
+                new LmdbLibrary(pathCreator, tempDirProvider, () -> lmdbLibraryConfig), pathCreator);
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
         return new DuplicateCheckFactoryImpl(
-                lmdbEnvFactory,
+                lmdbEnvDirFactory,
                 () -> executorService,
                 byteBufferFactory,
                 new AnalyticResultStoreConfig());
