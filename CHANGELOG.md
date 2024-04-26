@@ -13,6 +13,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.4-beta.5] - 2024-04-26
+
+* Issue **#4232** : Enforce save before creating rule executors.
+
+* Issue **#4234** : Add change handler for streaming rule cache.
+
+* Issue **#4235** : Fix RefreshAfterWrite cache setting display to be a duration.
+
+
 ## [v7.4-beta.4] - 2024-04-25
 
 * Issue **#4188** : Allow multiple analytic notifications.
@@ -485,7 +494,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.4...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.5...HEAD
+[v7.4-beta.5]: https://github.com/gchq/stroom/compare/v7.4-beta.4...v7.4-beta.5
 [v7.4-beta.4]: https://github.com/gchq/stroom/compare/v7.4-beta.3...v7.4-beta.4
 [v7.4-beta.3]: https://github.com/gchq/stroom/compare/v7.4-beta.2...v7.4-beta.3
 [v7.4-beta.2]: https://github.com/gchq/stroom/compare/v7.4-beta.1...v7.4-beta.2
