@@ -97,7 +97,7 @@ public class ProcessorModule extends AbstractModule {
                         .frequencySchedule("1m"))
                 .bindJobTo(ProcessorTaskCreatorJob.class, builder -> builder
                         .name("Processor Task Creator")
-                        .description("Create Processor Tasks From Processor Filters")
+                        .description("Create Processor Tasks from Processor Filters")
                         .frequencySchedule("10s")
                         .enabled(false)
                         .advanced(false));
