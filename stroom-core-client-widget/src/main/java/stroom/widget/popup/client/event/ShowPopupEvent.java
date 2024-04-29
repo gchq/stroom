@@ -21,7 +21,6 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -223,7 +222,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
             // By default, we will automatically hide popups unless they have a handler that alters the behaviour.
             if (hideRequestHandler == null) {
                 hideRequestHandler = e -> {
-                    GWT.log("isOk: " + e.isOk());
+//                    GWT.log("isOk: " + e.isOk());
                     HidePopupEvent.builder(presenterWidget)
                             .autoClose(e.isAutoClose())
                             .ok(e.isOk())

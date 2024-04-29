@@ -21,12 +21,17 @@ import stroom.activity.client.ActivityChangedEvent;
 import stroom.activity.client.CurrentActivity;
 import stroom.activity.shared.Activity.ActivityDetails;
 import stroom.activity.shared.Activity.Prop;
+import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.core.client.MenuKeys;
+import stroom.dashboard.shared.DashboardDoc;
+import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.OpenDocumentEvent;
+import stroom.documentation.shared.DocumentationDoc;
+import stroom.explorer.client.event.CreateNewDocumentEvent;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.FocusExplorerFilterEvent;
@@ -40,14 +45,22 @@ import stroom.explorer.client.presenter.NavigationPresenter.NavigationProxy;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.feed.shared.FeedDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.main.client.event.ShowMainEvent;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.TextConverterDoc;
+import stroom.pipeline.shared.XsltDoc;
+import stroom.query.shared.QueryDoc;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
 import stroom.util.shared.GwtNullSafe;
+import stroom.view.shared.ViewDoc;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
@@ -58,7 +71,6 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.client.ui.Button;
@@ -204,6 +216,33 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
                 FocusExplorerFilterEvent.fire(this));
         KeyBinding.addCommand(Action.GOTO_EXPLORER_TREE, () ->
                 FocusExplorerTreeEvent.fire(this));
+        // Binds for creating a document of a given type
+        KeyBinding.addCommand(Action.CREATE_ELASTIC_INDEX, () ->
+                CreateNewDocumentEvent.fire(this, ElasticIndexDoc.DOCUMENT_TYPE));
+        KeyBinding.addCommand(Action.CREATE_DASHBOARD, () ->
+                CreateNewDocumentEvent.fire(this, DashboardDoc.DOCUMENT_TYPE));
+        KeyBinding.addCommand(Action.CREATE_FEED, () ->
+                CreateNewDocumentEvent.fire(this, FeedDoc.DOCUMENT_TYPE));
+        KeyBinding.addCommand(Action.CREATE_FOLDER, () ->
+                CreateNewDocumentEvent.fire(this, ExplorerConstants.FOLDER));
+        KeyBinding.addCommand(Action.CREATE_DICTIONARY, () ->
+                CreateNewDocumentEvent.fire(this, DictionaryDoc.DOCUMENT_TYPE));
+        KeyBinding.addCommand(Action.CREATE_LUCENE_INDEX, () ->
+                CreateNewDocumentEvent.fire(this, LuceneIndexDoc.DOCUMENT_TYPE));
+        KeyBinding.addCommand(Action.CREATE_DOCUMENTATION, () ->
+                CreateNewDocumentEvent.fire(this, DocumentationDoc.DOCUMENT_TYPE));
+        KeyBinding.addCommand(Action.CREATE_PIPELINE, () ->
+                CreateNewDocumentEvent.fire(this, PipelineDoc.DOCUMENT_TYPE));
+        KeyBinding.addCommand(Action.CREATE_QUERY, () ->
+                CreateNewDocumentEvent.fire(this, QueryDoc.DOCUMENT_TYPE));
+        KeyBinding.addCommand(Action.CREATE_ANALYTIC_RULE, () ->
+                CreateNewDocumentEvent.fire(this, AnalyticRuleDoc.DOCUMENT_TYPE));
+        KeyBinding.addCommand(Action.CREATE_TEXT_CONVERTER, () ->
+                CreateNewDocumentEvent.fire(this, TextConverterDoc.DOCUMENT_TYPE));
+        KeyBinding.addCommand(Action.CREATE_VIEW, () ->
+                CreateNewDocumentEvent.fire(this, ViewDoc.DOCUMENT_TYPE));
+        KeyBinding.addCommand(Action.CREATE_XSLT, () ->
+                CreateNewDocumentEvent.fire(this, XsltDoc.DOCUMENT_TYPE));
     }
 
     @Override
@@ -399,7 +438,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
 
     @Override
     public void onRefresh(final RefreshExplorerTreeEvent event) {
-        GWT.log("onRefresh " + event);
+//        GWT.log("onRefresh " + event);
         explorerTree.getTreeModel().refresh();
     }
 

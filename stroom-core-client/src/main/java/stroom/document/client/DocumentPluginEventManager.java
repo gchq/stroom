@@ -45,6 +45,7 @@ import stroom.document.client.event.ShowMoveDocumentDialogEvent;
 import stroom.document.client.event.ShowPermissionsDialogEvent;
 import stroom.document.client.event.ShowRenameDocumentDialogEvent;
 import stroom.document.client.event.WriteDocumentEvent;
+import stroom.explorer.client.event.CreateNewDocumentEvent;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
@@ -422,6 +423,28 @@ public class DocumentPluginEventManager extends Plugin {
                                 .popupPosition(event.getPopupPosition())
                                 .addAutoHidePartner(event.getElement())
                                 .fire(this));
+            }
+        }));
+
+        // Handle key bind for creating a doc in the selected folder
+        registerHandler(getEventBus().addHandler(CreateNewDocumentEvent.getType(), event -> {
+            final List<ExplorerNode> selectedItems = getSelectedItems();
+            // TODO The CreateDocumentPresenter has an exp tree picker on it so debatable whether
+            //  we should just show the dialog regardless of selection/perms and let the dialog
+            //  deal with it.
+            if (selectedItems.size() == 1) {
+                final ExplorerNode explorerNode = selectedItems.get(0);
+                fetchPermissions(selectedItems, documentPermissions -> {
+                    final ExplorerNodePermissions permissions = documentPermissions.get(explorerNode);
+                    final String type = event.getDocumentType();
+                    if (permissions.hasCreatePermission(type)) {
+                        documentTypeCache.fetch(documentTypes -> {
+                            GwtNullSafe.consume(documentTypes.getDocumentType(type), documentType -> {
+                                fireShowCreateDocumentDialogEvent(documentType, explorerNode);
+                            });
+                        });
+                    }
+                });
             }
         }));
 
@@ -878,10 +901,8 @@ public class DocumentPluginEventManager extends Plugin {
         return children;
     }
 
-    private IconMenuItem createIconMenuItemFromDocumentType(
-            final DocumentType documentType,
-            final ExplorerNode explorerNode
-    ) {
+    private void fireShowCreateDocumentDialogEvent(final DocumentType documentType,
+                                                   final ExplorerNode explorerNode) {
         final Consumer<ExplorerNode> newDocumentConsumer = newDocNode -> {
             final DocRef docRef = newDocNode.getDocRef();
             // Open the document in the content pane.
@@ -891,19 +912,26 @@ public class DocumentPluginEventManager extends Plugin {
             }
         };
 
+        ShowCreateDocumentDialogEvent.fire(
+                DocumentPluginEventManager.this,
+                "New " + documentType.getDisplayType(),
+                explorerNode,
+                documentType.getType(),
+                "",
+                true,
+                newDocumentConsumer);
+    }
+
+    private IconMenuItem createIconMenuItemFromDocumentType(
+            final DocumentType documentType,
+            final ExplorerNode explorerNode) {
+
         return new IconMenuItem.Builder()
                 .priority(1)
                 .icon(documentType.getIcon())
                 .text(documentType.getDisplayType())
                 .command(() ->
-                        ShowCreateDocumentDialogEvent.fire(
-                                DocumentPluginEventManager.this,
-                                "New " + documentType.getDisplayType(),
-                                explorerNode,
-                                documentType.getType(),
-                                "",
-                                true,
-                                newDocumentConsumer))
+                        fireShowCreateDocumentDialogEvent(documentType, explorerNode))
                 .build();
     }
 
@@ -1392,6 +1420,7 @@ public class DocumentPluginEventManager extends Plugin {
 
     private boolean isDirty(final TabData tabData) {
         if (tabData instanceof HasSave) {
+            @SuppressWarnings("PatternVariableCanBeUsed") // cos GWT
             final HasSave hasSave = (HasSave) tabData;
             return hasSave.isDirty();
         }
