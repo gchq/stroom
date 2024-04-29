@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.4-beta.6] - 2024-04-29
+
+* Issue **#4240** : Fix creation of new shards when non-full shards already exist for a partition.
+
+
 ## [v7.4-beta.5] - 2024-04-26
 
 * Issue **#4232** : Enforce save before creating rule executors.
@@ -494,7 +499,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.5...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.6...HEAD
+[v7.4-beta.6]: https://github.com/gchq/stroom/compare/v7.4-beta.5...v7.4-beta.6
 [v7.4-beta.5]: https://github.com/gchq/stroom/compare/v7.4-beta.4...v7.4-beta.5
 [v7.4-beta.4]: https://github.com/gchq/stroom/compare/v7.4-beta.3...v7.4-beta.4
 [v7.4-beta.3]: https://github.com/gchq/stroom/compare/v7.4-beta.2...v7.4-beta.3
