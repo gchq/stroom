@@ -38,7 +38,7 @@ public class AnalyticsConfig extends AbstractConfig implements IsStroomConfig, H
         emailConfig = new EmailConfig();
         streamingAnalyticCache = CacheConfig.builder()
                 .maximumSize(1000L)
-                .expireAfterAccess(StroomDuration.ofMinutes(10))
+                .refreshAfterWrite(StroomDuration.ofMinutes(10))
                 .build();
     }
 

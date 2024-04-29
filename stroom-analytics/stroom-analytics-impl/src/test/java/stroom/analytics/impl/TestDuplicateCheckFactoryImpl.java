@@ -28,7 +28,7 @@ import stroom.docref.DocRef;
 import stroom.expression.api.ExpressionContext;
 import stroom.lmdb.LmdbLibrary;
 import stroom.lmdb.LmdbLibraryConfig;
-import stroom.lmdb2.LmdbEnvFactory2;
+import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.Row;
 import stroom.query.common.v2.AnalyticResultStoreConfig;
@@ -51,7 +51,8 @@ import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestDuplicateCheckFactory {
+@Deprecated
+class TestDuplicateCheckFactoryImpl {
 
     private Path tempDir;
     private ExecutorService executorService;
@@ -70,7 +71,7 @@ class TestDuplicateCheckFactory {
     @Test
     void test() {
         final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
-        final DuplicateCheck duplicateCheck = createDuplicateCheck(duplicateCheckFactory);
+        final DuplicateCheck duplicateCheck = createDuplicateCheck(duplicateCheckFactory, "test");
         final Row row = new Row("test", List.of("test"), 0, "", "");
         assertThat(duplicateCheck.check(row)).isTrue();
         for (int i = 0; i < 10; i++) {
@@ -81,7 +82,7 @@ class TestDuplicateCheckFactory {
     @Test
     void testReload() {
         final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
-        final DuplicateCheck duplicateCheck = createDuplicateCheck(duplicateCheckFactory);
+        final DuplicateCheck duplicateCheck = createDuplicateCheck(duplicateCheckFactory, "test");
         final Row row = new Row("test", List.of("test"), 0, "", "");
         assertThat(duplicateCheck.check(row)).isTrue();
         for (int i = 0; i < 10; i++) {
@@ -90,7 +91,24 @@ class TestDuplicateCheckFactory {
         duplicateCheckFactory.close();
 
         final DuplicateCheckFactoryImpl duplicateCheckFactory2 = createDuplicateCheckFactory();
-        final DuplicateCheck duplicateCheck2 = createDuplicateCheck(duplicateCheckFactory2);
+        final DuplicateCheck duplicateCheck2 = createDuplicateCheck(duplicateCheckFactory2, "test");
+        for (int i = 0; i < 10; i++) {
+            assertThat(duplicateCheck2.check(row)).isFalse();
+        }
+    }
+
+    @Test
+    void testDifferentAnalytic() {
+        final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
+        final DuplicateCheck duplicateCheck1 = createDuplicateCheck(duplicateCheckFactory, "test1");
+        final Row row = new Row("test", List.of("test"), 0, "", "");
+        assertThat(duplicateCheck1.check(row)).isTrue();
+        for (int i = 0; i < 10; i++) {
+            assertThat(duplicateCheck1.check(row)).isFalse();
+        }
+
+        final DuplicateCheck duplicateCheck2 = createDuplicateCheck(duplicateCheckFactory, "test2");
+        assertThat(duplicateCheck2.check(row)).isTrue();
         for (int i = 0; i < 10; i++) {
             assertThat(duplicateCheck2.check(row)).isFalse();
         }
@@ -100,19 +118,20 @@ class TestDuplicateCheckFactory {
         final TempDirProvider tempDirProvider = () -> tempDir;
         final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
         final LmdbLibraryConfig lmdbLibraryConfig = new LmdbLibraryConfig();
-        final LmdbEnvFactory2 lmdbEnvFactory = new LmdbEnvFactory2(
-                new LmdbLibrary(pathCreator, tempDirProvider, () -> lmdbLibraryConfig),
-                pathCreator);
+        final LmdbEnvDirFactory lmdbEnvDirFactory = new LmdbEnvDirFactory(
+                new LmdbLibrary(pathCreator, tempDirProvider, () -> lmdbLibraryConfig), pathCreator);
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
         return new DuplicateCheckFactoryImpl(
-                lmdbEnvFactory,
+                lmdbEnvDirFactory,
                 () -> executorService,
                 byteBufferFactory,
                 new AnalyticResultStoreConfig());
     }
 
-    private DuplicateCheck createDuplicateCheck(final DuplicateCheckFactoryImpl duplicateCheckFactory) {
+    private DuplicateCheck createDuplicateCheck(final DuplicateCheckFactoryImpl duplicateCheckFactory,
+                                                final String ruleUUID) {
         final AnalyticRuleDoc analyticRuleDoc = AnalyticRuleDoc.builder()
+                .uuid(ruleUUID)
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query("test")
                 .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)

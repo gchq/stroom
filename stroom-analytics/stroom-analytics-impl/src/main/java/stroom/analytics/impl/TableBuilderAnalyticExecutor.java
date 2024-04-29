@@ -46,7 +46,6 @@ import stroom.search.extraction.FieldListConsumerHolder;
 import stroom.search.extraction.FieldValueExtractor;
 import stroom.search.extraction.FieldValueExtractorFactory;
 import stroom.search.extraction.MemoryIndex;
-import stroom.search.extraction.ValueConsumerHolder;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.task.api.ExecutorProvider;
@@ -98,7 +97,6 @@ public class TableBuilderAnalyticExecutor {
     private final PipelineStore pipelineStore;
     private final PipelineDataCache pipelineDataCache;
     private final Provider<AnalyticsStreamProcessor> analyticsStreamProcessorProvider;
-    private final Provider<ValueConsumerHolder> valueConsumerHolderProvider;
     private final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider;
     private final Provider<ExtractionState> extractionStateProvider;
     private final AnalyticDataStores analyticDataStores;
@@ -123,7 +121,6 @@ public class TableBuilderAnalyticExecutor {
                                         final PipelineStore pipelineStore,
                                         final PipelineDataCache pipelineDataCache,
                                         final Provider<AnalyticsStreamProcessor> analyticsStreamProcessorProvider,
-                                        final Provider<ValueConsumerHolder> valueConsumerHolderProvider,
                                         final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider,
                                         final Provider<ExtractionState> extractionStateProvider,
                                         final TaskContextFactory taskContextFactory,
@@ -142,7 +139,6 @@ public class TableBuilderAnalyticExecutor {
         this.pipelineStore = pipelineStore;
         this.pipelineDataCache = pipelineDataCache;
         this.analyticsStreamProcessorProvider = analyticsStreamProcessorProvider;
-        this.valueConsumerHolderProvider = valueConsumerHolderProvider;
         this.fieldListConsumerHolderProvider = fieldListConsumerHolderProvider;
         this.extractionStateProvider = extractionStateProvider;
         this.taskContextFactory = taskContextFactory;
@@ -399,9 +395,6 @@ public class TableBuilderAnalyticExecutor {
                         final FieldListConsumerHolder fieldListConsumerHolder =
                                 fieldListConsumerHolderProvider.get();
                         fieldListConsumerHolder.setFieldListConsumer(fieldListConsumer);
-
-                        final ValueConsumerHolder valueConsumerHolder = valueConsumerHolderProvider.get();
-                        valueConsumerHolder.setFieldListConsumer(fieldListConsumer);
 
                         try {
                             fieldListConsumer.start();

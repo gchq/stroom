@@ -21,7 +21,6 @@ import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.expression.api.DateTimeSettings;
 import stroom.expression.api.ExpressionContext;
 import stroom.lmdb2.LmdbEnv2;
-import stroom.lmdb2.LmdbEnvFactory2;
 import stroom.lmdb2.WriteTxn;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionOperator;
@@ -137,7 +136,7 @@ public class LmdbDataStore implements DataStore {
     private final ByteBufferFactory bufferFactory;
 
     public LmdbDataStore(final SearchRequestSource searchRequestSource,
-                         final LmdbEnvFactory2.Builder lmdbEnvBuilder,
+                         final LmdbEnv2.Builder lmdbEnvBuilder,
                          final AbstractResultStoreConfig resultStoreConfig,
                          final QueryKey queryKey,
                          final String componentId,
@@ -729,7 +728,7 @@ public class LmdbDataStore implements DataStore {
 
     @Override
     public long getByteSize() {
-        return FileUtil.getByteSize(lmdbEnv.getLocalDir());
+        return FileUtil.getByteSize(lmdbEnv.getDir().getEnvDir());
     }
 
     @Override

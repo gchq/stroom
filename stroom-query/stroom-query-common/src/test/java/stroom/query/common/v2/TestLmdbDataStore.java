@@ -20,7 +20,9 @@ import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.expression.api.ExpressionContext;
 import stroom.lmdb.LmdbLibrary;
 import stroom.lmdb.LmdbLibraryConfig;
-import stroom.lmdb2.LmdbEnvFactory2;
+import stroom.lmdb2.LmdbEnv2;
+import stroom.lmdb2.LmdbEnvDir;
+import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
@@ -83,11 +85,13 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         final TempDirProvider tempDirProvider = () -> tempDir;
         final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
         final LmdbLibraryConfig lmdbLibraryConfig = new LmdbLibraryConfig();
-        final LmdbEnvFactory2 lmdbEnvFactory = new LmdbEnvFactory2(
-                new LmdbLibrary(pathCreator, tempDirProvider, () -> lmdbLibraryConfig),
-                pathCreator);
-        final LmdbEnvFactory2.Builder lmdbEnvBuilder = lmdbEnvFactory.builder()
-                .config(resultStoreConfig.getLmdbConfig());
+        final LmdbEnvDirFactory lmdbEnvDirFactory = new LmdbEnvDirFactory(
+                new LmdbLibrary(pathCreator, tempDirProvider, () -> lmdbLibraryConfig), pathCreator);
+        final LmdbEnvDir lmdbEnvDir = lmdbEnvDirFactory.builder().config(resultStoreConfig.getLmdbConfig()).build();
+        final LmdbEnv2.Builder lmdbEnvBuilder = LmdbEnv2
+                .builder()
+                .config(resultStoreConfig.getLmdbConfig())
+                .lmdbEnvDir(lmdbEnvDir);
 
         final ErrorConsumerImpl errorConsumer = new ErrorConsumerImpl();
 

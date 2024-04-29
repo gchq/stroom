@@ -4,7 +4,9 @@ import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.expression.api.ExpressionContext;
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb.LmdbEnv;
-import stroom.lmdb2.LmdbEnvFactory2;
+import stroom.lmdb2.LmdbEnv2;
+import stroom.lmdb2.LmdbEnvDir;
+import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
@@ -38,7 +40,7 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbDataStoreFactory.class);
 
-    private final LmdbEnvFactory2 lmdbEnvFactory;
+    private final LmdbEnvDirFactory lmdbEnvDirFactory;
     private final Provider<SearchResultStoreConfig> resultStoreConfigProvider;
     private final Provider<Executor> executorProvider;
     private final Path searchResultStoreDir;
@@ -46,13 +48,13 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
     private final ByteBufferFactory bufferFactory;
 
     @Inject
-    public LmdbDataStoreFactory(final LmdbEnvFactory2 lmdbEnvFactory,
+    public LmdbDataStoreFactory(final LmdbEnvDirFactory lmdbEnvDirFactory,
                                 final Provider<SearchResultStoreConfig> resultStoreConfigProvider,
                                 final PathCreator pathCreator,
                                 final Provider<Executor> executorProvider,
                                 final MapDataStoreFactory mapDataStoreFactory,
                                 final ByteBufferFactory bufferFactory) {
-        this.lmdbEnvFactory = lmdbEnvFactory;
+        this.lmdbEnvDirFactory = lmdbEnvDirFactory;
         this.resultStoreConfigProvider = resultStoreConfigProvider;
         this.executorProvider = executorProvider;
         this.mapDataStoreFactory = mapDataStoreFactory;
@@ -95,10 +97,16 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
 
         } else {
             final String subDirectory = queryKey + "_" + componentId + "_" + UUID.randomUUID();
-            final LmdbEnvFactory2.Builder lmdbEnvBuilder = lmdbEnvFactory
+            final LmdbEnvDir lmdbEnvDir = lmdbEnvDirFactory
                     .builder()
                     .config(resultStoreConfig.getLmdbConfig())
-                    .subDir(subDirectory);
+                    .subDir(subDirectory)
+                    .build();
+
+            final LmdbEnv2.Builder lmdbEnvBuilder = LmdbEnv2
+                    .builder()
+                    .config(resultStoreConfig.getLmdbConfig())
+                    .lmdbEnvDir(lmdbEnvDir);
 
             return new LmdbDataStore(
                     searchRequestSource,

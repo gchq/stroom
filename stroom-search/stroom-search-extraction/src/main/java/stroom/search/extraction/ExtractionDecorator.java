@@ -66,7 +66,7 @@ public class ExtractionDecorator {
     private final PipelineStore pipelineStore;
     private final PipelineDataCache pipelineDataCache;
     private final Provider<ExtractionTaskHandler> handlerProvider;
-    private final Provider<ValueConsumerHolder> valueConsumerHolderProvider;
+    private final Provider<QueryInfoHolder> queryInfoHolderProvider;
     private final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider;
     private final QueryKey queryKey;
 
@@ -88,7 +88,7 @@ public class ExtractionDecorator {
                         final PipelineStore pipelineStore,
                         final PipelineDataCache pipelineDataCache,
                         final Provider<ExtractionTaskHandler> handlerProvider,
-                        final Provider<ValueConsumerHolder> valueConsumerHolderProvider,
+                        final Provider<QueryInfoHolder> queryInfoHolderProvider,
                         final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider,
                         final QueryKey queryKey) {
         this.fieldValueExtractorFactory = fieldValueExtractorFactory;
@@ -102,7 +102,7 @@ public class ExtractionDecorator {
         this.pipelineStore = pipelineStore;
         this.pipelineDataCache = pipelineDataCache;
         this.handlerProvider = handlerProvider;
-        this.valueConsumerHolderProvider = valueConsumerHolderProvider;
+        this.queryInfoHolderProvider = queryInfoHolderProvider;
         this.fieldListConsumerHolderProvider = fieldListConsumerHolderProvider;
         this.queryKey = queryKey;
 
@@ -357,10 +357,9 @@ public class ExtractionDecorator {
                             fieldListConsumer.setReceiver(receiver.valuesConsumer);
                             fieldListConsumerHolderProvider.get().setFieldListConsumer(fieldListConsumer);
 
-                            final ValueConsumerHolder valueConsumerHolder = valueConsumerHolderProvider.get();
-                            valueConsumerHolder.setQueryKey(queryKey);
-                            valueConsumerHolder.setFieldIndex(receiver.fieldIndex);
-                            valueConsumerHolder.setFieldListConsumer(fieldListConsumer);
+                            final QueryInfoHolder queryInfoHolder = queryInfoHolderProvider.get();
+                            queryInfoHolder.setQueryKey(queryKey);
+                            queryInfoHolder.setFieldIndex(receiver.fieldIndex);
 
                             return handler.extract(
                                     taskContext,

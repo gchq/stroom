@@ -3,7 +3,8 @@ package stroom.analytics.impl;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.lmdb2.LmdbEnv2;
-import stroom.lmdb2.LmdbEnvFactory2;
+import stroom.lmdb2.LmdbEnvDir;
+import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.lmdb2.WriteTxn;
 import stroom.query.api.v2.Row;
 import stroom.query.common.v2.AnalyticResultStoreConfig;
@@ -30,6 +31,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Deprecated
 @Singleton
 public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
 
@@ -47,18 +49,23 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
     private final CountDownLatch transferring = new CountDownLatch(1);
 
     @Inject
-    public DuplicateCheckFactoryImpl(final LmdbEnvFactory2 lmdbEnvFactory,
+    public DuplicateCheckFactoryImpl(final LmdbEnvDirFactory lmdbEnvDirFactory,
                                      final Provider<Executor> executorProvider,
                                      final ByteBufferFactory byteBufferFactory,
                                      final AnalyticResultStoreConfig analyticResultStoreConfig) {
-        this.lmdbEnv = lmdbEnvFactory
+        final LmdbEnvDir lmdbEnvDir = lmdbEnvDirFactory
                 .builder()
                 .config(analyticResultStoreConfig.getLmdbConfig())
-                .subDir("duplicates")
+                .subDir("duplicate-check")
+                .build();
+        this.lmdbEnv = LmdbEnv2
+                .builder()
+                .config(analyticResultStoreConfig.getLmdbConfig())
+                .lmdbEnvDir(lmdbEnvDir)
                 .maxDbCount(1)
                 .addEnvFlag(EnvFlags.MDB_NOTLS)
                 .build();
-        this.dbi = lmdbEnv.openDbi("duplicates", DbiFlags.MDB_CREATE, DbiFlags.MDB_DUPSORT);
+        this.dbi = lmdbEnv.openDbi("duplicate-check", DbiFlags.MDB_CREATE, DbiFlags.MDB_DUPSORT);
         queue = new ArrayBlockingQueue<>(10);
         this.byteBufferFactory = byteBufferFactory;
 
@@ -227,6 +234,11 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
             }
 
             return result;
+        }
+
+        @Override
+        public void close() {
+
         }
     }
 }

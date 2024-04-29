@@ -5,7 +5,7 @@ import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
 import stroom.lmdb.LmdbLibrary;
 import stroom.lmdb.LmdbLibraryConfig;
-import stroom.lmdb2.LmdbEnvFactory2;
+import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -96,11 +96,10 @@ class TestSearchResultCreation {
         final LmdbLibraryConfig lmdbLibraryConfig = new LmdbLibraryConfig();
         final TempDirProvider tempDirProvider = () -> tempDir;
         final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
-        final LmdbEnvFactory2 lmdbEnvFactory = new LmdbEnvFactory2(
-                new LmdbLibrary(pathCreator, tempDirProvider, () -> lmdbLibraryConfig),
-                pathCreator);
+        final LmdbEnvDirFactory lmdbEnvDirFactory = new LmdbEnvDirFactory(
+                new LmdbLibrary(pathCreator, tempDirProvider, () -> lmdbLibraryConfig), pathCreator);
         dataStoreFactory = new LmdbDataStoreFactory(
-                lmdbEnvFactory,
+                lmdbEnvDirFactory,
                 SearchResultStoreConfig::new,
                 pathCreator,
                 () -> executorService,
