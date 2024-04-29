@@ -47,6 +47,7 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
@@ -213,6 +214,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e -> {
             selectedDoc = null;
             if (e.getTabData() instanceof DocumentTabData) {
+                @SuppressWarnings("PatternVariableCanBeUsed") // cos GWT
                 final DocumentTabData documentTabData = (DocumentTabData) e.getTabData();
                 selectedDoc = documentTabData.getDocRef();
             }
@@ -265,7 +267,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
                     explorerTree.getSelectionModel(),
                     event.getSelectionType()));
             final ExplorerNode selectedNode = explorerTree.getSelectionModel().getSelected();
-            final boolean enabled = explorerTree.getSelectionModel().getSelectedItems().size() > 0 &&
+            final boolean enabled = GwtNullSafe.hasItems(explorerTree.getSelectionModel().getSelectedItems()) &&
                     !ExplorerConstants.isFavouritesNode(selectedNode) &&
                     !ExplorerConstants.isSystemNode(selectedNode);
             add.setEnabled(enabled);
@@ -308,7 +310,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
     }
 
     public void deleteItem() {
-        if (explorerTree.getSelectionModel().getSelectedItems().size() > 0) {
+        if (GwtNullSafe.hasItems(explorerTree.getSelectionModel().getSelectedItems())) {
             ExplorerTreeDeleteEvent.fire(this);
         }
     }
@@ -346,7 +348,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         // Tell all plugins to add new menu items.
         BeforeRevealMenubarEvent.fire(this, menuItems);
         final List<Item> items = menuItems.getMenuItems(MenuKeys.MAIN_MENU);
-        if (items != null && items.size() > 0) {
+        if (GwtNullSafe.hasItems(items)) {
             ShowMenuEvent
                     .builder()
                     .items(items)
