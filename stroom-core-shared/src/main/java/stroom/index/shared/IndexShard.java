@@ -313,6 +313,10 @@ public class IndexShard {
         return sb.toString();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     /**
      * The status of this indexUuid shard
      */

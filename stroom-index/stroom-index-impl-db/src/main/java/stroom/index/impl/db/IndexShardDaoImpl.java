@@ -30,6 +30,8 @@ import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
 import stroom.util.shared.ResultPage;
@@ -62,6 +64,8 @@ import static stroom.index.impl.db.jooq.tables.IndexVolume.INDEX_VOLUME;
 
 @Singleton // holding all the volume selectors
 class IndexShardDaoImpl implements IndexShardDao {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardDaoImpl.class);
 
     private static final Function<Record, IndexShard> RECORD_TO_INDEX_SHARD_MAPPER = record -> {
         final IndexShard indexShard = new IndexShard();
@@ -301,12 +305,16 @@ class IndexShardDaoImpl implements IndexShardDao {
             case CORRUPT -> INDEX_SHARD.STATUS.ne(IndexShardStatus.DELETED.getPrimitiveValue());
         };
 
-        return JooqUtil.contextResult(indexDbConnProvider, context -> context
+        final boolean didUpdate = JooqUtil.contextResult(indexDbConnProvider, context -> context
                 .update(INDEX_SHARD)
                 .set(INDEX_SHARD.STATUS, status.getPrimitiveValue())
                 .where(INDEX_SHARD.ID.eq(id))
                 .and(currentStateCondition)
                 .execute()) > 0;
+
+        LOGGER.debug("Setting shard status to {} for shard id {}, didUpdate: {}", status, id, didUpdate);
+
+        return didUpdate;
     }
 
     @Override
