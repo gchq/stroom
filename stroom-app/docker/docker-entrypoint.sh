@@ -11,6 +11,7 @@ if [ "$(id -u)" = '0' ]; then
     # change ownership of docker volume directories
     # WARNING: use chown -R with caution as some dirs (e.g. proxy-repo) can
     # contain MANY files, resulting in a big delay on container start
+    chown stroom:stroom /stroom/analytic_store
     chown stroom:stroom /stroom/content_pack_import
     chown stroom:stroom /stroom/lmdb_library
     chown stroom:stroom /stroom/logs
