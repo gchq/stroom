@@ -30,8 +30,8 @@ class TestWorkQueue {
         for (int i = 0; i < itemCount; i++) {
             workQueue.exec(() -> {
                 highWaterMarkTracker.increment();
-                completionLatch.countDown();
                 cnt.increment();
+                completionLatch.countDown();
                 highWaterMarkTracker.decrement();
             });
         }
@@ -57,8 +57,8 @@ class TestWorkQueue {
         for (int i = 0; i < itemCount; i++) {
             workQueue.exec(() -> {
                 highWaterMarkTracker.increment();
-                completionLatch.countDown();
                 cnt.increment();
+                completionLatch.countDown();
                 highWaterMarkTracker.decrement();
             });
         }
@@ -95,10 +95,10 @@ class TestWorkQueue {
                     throw new RuntimeException("Didn't count down to zero");
                 }
                 highWaterMarkTracker.increment();
-                completionLatch.countDown();
                 cnt.increment();
                 // Tiny sleep to give it more of a chance of running concurrently with other threads
                 ThreadUtil.sleepIgnoringInterrupts(5);
+                completionLatch.countDown();
                 highWaterMarkTracker.decrement();
             }));
         }
