@@ -28,11 +28,9 @@ public class LmdbEnv2 implements AutoCloseable {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbEnv2.class);
 
     private final Env<ByteBuffer> env;
-
     private final LmdbEnvDir lmdbEnvDir;
     private final String name;
     private final Set<EnvFlags> envFlags;
-
 
     LmdbEnv2(final Env<ByteBuffer> env,
              final LmdbEnvDir lmdbEnvDir,
@@ -123,6 +121,10 @@ public class LmdbEnv2 implements AutoCloseable {
         return new Builder();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Builder {
 
         private LmdbEnvDir lmdbEnvDir;
@@ -175,7 +177,6 @@ public class LmdbEnv2 implements AutoCloseable {
             this.name = name;
             return this;
         }
-
 
         public LmdbEnv2 build() {
             final Env<ByteBuffer> env;
