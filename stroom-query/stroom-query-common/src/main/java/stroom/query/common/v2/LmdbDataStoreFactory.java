@@ -3,8 +3,7 @@ package stroom.query.common.v2;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.expression.api.ExpressionContext;
 import stroom.lmdb.LmdbConfig;
-import stroom.lmdb.LmdbEnv;
-import stroom.lmdb2.LmdbEnv2;
+import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.LmdbEnvDir;
 import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.query.api.v2.QueryKey;
@@ -103,7 +102,7 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                     .subDir(subDirectory)
                     .build();
 
-            final LmdbEnv2.Builder lmdbEnvBuilder = LmdbEnv2
+            final LmdbEnv.Builder lmdbEnvBuilder = LmdbEnv
                     .builder()
                     .config(resultStoreConfig.getLmdbConfig())
                     .lmdbEnvDir(lmdbEnvDir);
@@ -169,7 +168,7 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                                                      final BasicFileAttributes attrs) {
                         if (Files.isRegularFile(file)) {
                             totalSizeBytes.add(attrs.size());
-                            if (LmdbEnv.isLmdbDataFile(file)) {
+                            if (LmdbEnvDir.isLmdbDataFile(file)) {
                                 storeCount.increment();
                             }
                         }

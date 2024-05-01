@@ -99,4 +99,9 @@ public class LmdbEnvDir {
     public String toString() {
         return FileUtil.getCanonicalPath(envDir);
     }
+
+    public static boolean isLmdbDataFile(final Path file) {
+        return file != null
+                && (file.endsWith(DATA_FILE_NAME) || file.endsWith(LOCK_FILE_NAME));
+    }
 }

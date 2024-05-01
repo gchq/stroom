@@ -1,6 +1,7 @@
 package stroom.query.common.v2;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.lmdb2.LmdbDb;
 import stroom.lmdb2.WriteTxn;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
@@ -12,12 +13,11 @@ import stroom.util.logging.Metrics;
 import com.esotericsoftware.kryo.KryoException;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
-import org.lmdbjava.Dbi;
 
 import java.io.ByteArrayInputStream;
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class LmdbPayloadCreator {
 
@@ -133,9 +133,9 @@ public class LmdbPayloadCreator {
     }
 
     boolean addPayload(final WriteTxn writeTxn,
-                       final Dbi<ByteBuffer> dbi,
+                       final LmdbDb db,
                        final boolean complete) {
-        final LmdbPayload payload = createPayload(writeTxn, dbi, complete);
+        final LmdbPayload payload = createPayload(writeTxn, db, complete);
         doPut(payload);
         return payload.isFinalPayload();
     }
@@ -155,16 +155,17 @@ public class LmdbPayloadCreator {
     }
 
     private LmdbPayload createPayload(final WriteTxn writeTxn,
-                                      final Dbi<ByteBuffer> dbi,
+                                      final LmdbDb db,
                                       final boolean complete) {
         SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_CREATE_PAYLOAD);
         return Metrics.measure("createPayload", () -> {
             if (maxPayloadSize > 0) {
                 final PayloadOutput payloadOutput = new PayloadOutput(minPayloadSize);
-                boolean finalPayload = complete;
-                long size = 0;
-                long count = 0;
-                try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(writeTxn.get())) {
+                final AtomicBoolean finalPayload = new AtomicBoolean(complete);
+                db.iterate(writeTxn, cursorIterable -> {
+                    long size = 0;
+                    long count = 0;
+
                     for (final KeyVal<ByteBuffer> kv : cursorIterable) {
                         final ByteBuffer keyBuffer = kv.key();
                         final ByteBuffer valBuffer = kv.val();
@@ -184,25 +185,25 @@ public class LmdbPayloadCreator {
                                 payloadOutput.writeInt(valBuffer.remaining());
                                 payloadOutput.writeByteBuffer(valBuffer);
 
-                                dbi.delete(writeTxn.get(), keyBuffer.flip());
+                                db.delete(writeTxn, keyBuffer.flip());
 
                             } else {
                                 // We have reached the maximum payload size so stop adding.
                                 // We also can't be complete as more payloads will be needed.
-                                finalPayload = false;
+                                finalPayload.set(false);
                                 break;
                             }
                         }
                     }
-                }
+                });
 
                 writeTxn.commit();
                 payloadOutput.close();
-                return new LmdbPayload(finalPayload, payloadOutput.toBytes());
+                return new LmdbPayload(finalPayload.get(), payloadOutput.toBytes());
 
             } else {
                 final PayloadOutput payloadOutput = new PayloadOutput(minPayloadSize);
-                try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(writeTxn.get())) {
+                db.iterate(writeTxn, cursorIterable -> {
                     for (final KeyVal<ByteBuffer> kv : cursorIterable) {
                         final ByteBuffer keyBuffer = kv.key();
                         final ByteBuffer valBuffer = kv.val();
@@ -212,9 +213,9 @@ public class LmdbPayloadCreator {
                         payloadOutput.writeInt(valBuffer.remaining());
                         payloadOutput.writeByteBuffer(valBuffer);
                     }
-                }
+                });
 
-                dbi.drop(writeTxn.get());
+                db.drop(writeTxn);
                 writeTxn.commit();
                 payloadOutput.close();
                 return new LmdbPayload(complete, payloadOutput.toBytes());

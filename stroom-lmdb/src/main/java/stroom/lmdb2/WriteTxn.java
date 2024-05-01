@@ -1,59 +1,66 @@
 package stroom.lmdb2;
 
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-
 import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
 
-public class WriteTxn implements AutoCloseable {
+public class WriteTxn extends AbstractTxn {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(WriteTxn.class);
-
-    private final Env<ByteBuffer> env;
     private Txn<ByteBuffer> txn;
 
-    WriteTxn(final Env<ByteBuffer> env) {
-        this.env = env;
+    WriteTxn(final Env<ByteBuffer> env, final LmdbErrorHandler lmdbErrorHandler) {
+        super(env, lmdbErrorHandler);
     }
 
-    public Txn<ByteBuffer> get() {
+    @Override
+    synchronized Txn<ByteBuffer> get() {
+        checkThread();
         try {
             if (txn == null) {
                 txn = env.txnWrite();
             }
             return txn;
         } catch (final RuntimeException e) {
-            LOGGER.error(e::getMessage, e);
+            lmdbErrorHandler.error(e);
             throw e;
         }
     }
 
-    public void commit() {
+    public synchronized void commit() {
+        checkThread();
         try {
             if (txn != null) {
                 txn.commit();
-                txn.close();
-                txn = null;
             }
         } catch (final RuntimeException e) {
-            LOGGER.error(e::getMessage, e);
+            lmdbErrorHandler.error(e);
             throw e;
+        } finally {
+            try {
+                if (txn != null) {
+                    txn.close();
+                }
+            } catch (final RuntimeException e) {
+                lmdbErrorHandler.error(e);
+            } finally {
+                txn = null;
+            }
         }
     }
 
     @Override
-    public void close() {
+    public synchronized void close() {
+        checkThread();
         try {
             if (txn != null) {
                 txn.close();
-                txn = null;
             }
         } catch (final RuntimeException e) {
-            LOGGER.error(e::getMessage, e);
+            lmdbErrorHandler.error(e);
             throw e;
+        } finally {
+            txn = null;
         }
     }
 }

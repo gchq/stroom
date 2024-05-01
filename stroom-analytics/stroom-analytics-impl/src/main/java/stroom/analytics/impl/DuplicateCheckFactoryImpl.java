@@ -2,7 +2,8 @@ package stroom.analytics.impl;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
-import stroom.lmdb2.LmdbEnv2;
+import stroom.lmdb2.LmdbDb;
+import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.LmdbEnvDir;
 import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.lmdb2.WriteTxn;
@@ -18,12 +19,10 @@ import stroom.util.logging.Metrics;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.EnvFlags;
 import org.lmdbjava.PutFlags;
 
-import java.nio.ByteBuffer;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
@@ -39,8 +38,8 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
 
     private static final long COMMIT_FREQUENCY_MS = 10000;
 
-    private final LmdbEnv2 lmdbEnv;
-    private final Dbi<ByteBuffer> dbi;
+    private final LmdbEnv lmdbEnv;
+    private final LmdbDb db;
     private final ArrayBlockingQueue<WriteOperation> queue;
     private final ByteBufferFactory byteBufferFactory;
     private final int maxPutsBeforeCommit = 100;
@@ -58,7 +57,7 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
                 .config(analyticResultStoreConfig.getLmdbConfig())
                 .subDir("duplicate-check")
                 .build();
-        this.lmdbEnv = LmdbEnv2
+        this.lmdbEnv = LmdbEnv
                 .builder()
                 .config(analyticResultStoreConfig.getLmdbConfig())
                 .lmdbEnvDir(lmdbEnvDir)
@@ -66,7 +65,7 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
                 .maxReaders(1)
                 .addEnvFlag(EnvFlags.MDB_NOTLS)
                 .build();
-        this.dbi = lmdbEnv.openDbi("duplicate-check", DbiFlags.MDB_CREATE, DbiFlags.MDB_DUPSORT);
+        this.db = lmdbEnv.openDb("duplicate-check", DbiFlags.MDB_CREATE, DbiFlags.MDB_DUPSORT);
         queue = new ArrayBlockingQueue<>(10);
         this.byteBufferFactory = byteBufferFactory;
 
@@ -87,66 +86,63 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
         Metrics.measure("Transfer", () -> {
             transferState.setThread(Thread.currentThread());
 
-            WriteTxn writeTxn = lmdbEnv.txnWrite();
-            try {
-                long lastCommitMs = System.currentTimeMillis();
-                long uncommittedCount = 0;
-
+            lmdbEnv.write(writeTxn -> {
                 try {
-                    while (!transferState.isTerminated()) {
-                        LOGGER.trace(() -> "Transferring");
-                        final WriteOperation queueItem = queue.poll(1, TimeUnit.SECONDS);
+                    long lastCommitMs = System.currentTimeMillis();
+                    long uncommittedCount = 0;
 
-                        if (queueItem != null) {
-                            queueItem.apply(dbi, writeTxn);
-                            uncommittedCount++;
-                        }
+                    try {
+                        while (!transferState.isTerminated()) {
+                            LOGGER.trace(() -> "Transferring");
+                            final WriteOperation queueItem = queue.poll(1, TimeUnit.SECONDS);
 
-                        if (uncommittedCount > 0) {
-                            final long count = uncommittedCount;
-                            if (count >= maxPutsBeforeCommit ||
-                                    lastCommitMs < System.currentTimeMillis() - COMMIT_FREQUENCY_MS) {
+                            if (queueItem != null) {
+                                queueItem.apply(db, writeTxn);
+                                uncommittedCount++;
+                            }
 
-                                // Commit
-                                LOGGER.trace(() -> {
-                                    if (count >= maxPutsBeforeCommit) {
-                                        return "Committing for max puts " + maxPutsBeforeCommit;
-                                    } else {
-                                        return "Committing for elapsed time";
-                                    }
-                                });
-                                commit(writeTxn);
-                                lastCommitMs = System.currentTimeMillis();
-                                uncommittedCount = 0;
+                            if (uncommittedCount > 0) {
+                                final long count = uncommittedCount;
+                                if (count >= maxPutsBeforeCommit ||
+                                        lastCommitMs < System.currentTimeMillis() - COMMIT_FREQUENCY_MS) {
+
+                                    // Commit
+                                    LOGGER.trace(() -> {
+                                        if (count >= maxPutsBeforeCommit) {
+                                            return "Committing for max puts " + maxPutsBeforeCommit;
+                                        } else {
+                                            return "Committing for elapsed time";
+                                        }
+                                    });
+                                    writeTxn.commit();
+                                    lastCommitMs = System.currentTimeMillis();
+                                    uncommittedCount = 0;
+                                }
                             }
                         }
+                    } catch (final InterruptedException e) {
+                        LOGGER.trace(e::getMessage, e);
+                        // Keep interrupting this thread.
+                        Thread.currentThread().interrupt();
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e::getMessage, e);
                     }
-                } catch (final InterruptedException e) {
-                    LOGGER.trace(e::getMessage, e);
-                    // Keep interrupting this thread.
-                    Thread.currentThread().interrupt();
-                } catch (final RuntimeException e) {
+
+                    if (uncommittedCount > 0) {
+                        LOGGER.debug(() -> "Final commit");
+                        writeTxn.commit();
+                    }
+
+                } catch (final Throwable e) {
                     LOGGER.error(e::getMessage, e);
+                } finally {
+                    // Ensure we complete.
+                    LOGGER.debug(() -> "Finished transfer while loop");
+                    transferState.setThread(null);
+                    transferring.countDown();
                 }
-
-                if (uncommittedCount > 0) {
-                    LOGGER.debug(() -> "Final commit");
-                    commit(writeTxn);
-                }
-
-            } catch (final Throwable e) {
-                LOGGER.error(e::getMessage, e);
-            } finally {
-                // Ensure we complete.
-                LOGGER.debug(() -> "Finished transfer while loop");
-                transferState.setThread(null);
-                transferring.countDown();
-            }
+            });
         });
-    }
-
-    private void commit(final WriteTxn writeTxn) {
-        writeTxn.commit();
     }
 
     public synchronized void close() {
@@ -177,7 +173,7 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
 
     public interface WriteOperation {
 
-        void apply(Dbi<ByteBuffer> dbi, WriteTxn writeTxn);
+        void apply(LmdbDb db, WriteTxn writeTxn);
     }
 
     private static class DuplicateCheckImpl implements DuplicateCheck {
@@ -204,7 +200,7 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
                 final WriteOperation writeOperation = (dbi, writeTxn) -> {
                     boolean success = false;
                     try {
-                        success = dbi.put(writeTxn.get(),
+                        success = dbi.put(writeTxn,
                                 lmdbKV.getRowKey(),
                                 lmdbKV.getRowValue(),
                                 PutFlags.MDB_NODUPDATA);

@@ -2,7 +2,8 @@ package stroom.analytics.impl;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
-import stroom.lmdb2.LmdbEnv2;
+import stroom.lmdb2.LmdbDb;
+import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.LmdbEnvDir;
 import stroom.lmdb2.WriteTxn;
 import stroom.query.api.v2.Row;
@@ -14,12 +15,9 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.EnvFlags;
 import org.lmdbjava.PutFlags;
-
-import java.nio.ByteBuffer;
 
 @Singleton
 public class DuplicateCheckFactoryImpl2 implements DuplicateCheckFactory {
@@ -56,8 +54,8 @@ public class DuplicateCheckFactoryImpl2 implements DuplicateCheckFactory {
     private static class DuplicateCheckImpl implements DuplicateCheck {
 
         private final Thread thread;
-        private final LmdbEnv2 lmdbEnv;
-        private final Dbi<ByteBuffer> dbi;
+        private final LmdbEnv lmdbEnv;
+        private final LmdbDb db;
         private final ByteBufferFactory byteBufferFactory;
         private final DuplicateKeyFactory2 duplicateKeyFactory;
         private final WriteTxn writeTxn;
@@ -75,7 +73,7 @@ public class DuplicateCheckFactoryImpl2 implements DuplicateCheckFactory {
                     byteBufferFactory,
                     compiledColumns);
             final LmdbEnvDir lmdbEnvDir = duplicateCheckDirs.getDir(analyticRuleDoc);
-            this.lmdbEnv = LmdbEnv2
+            this.lmdbEnv = LmdbEnv
                     .builder()
                     .config(analyticResultStoreConfig.getLmdbConfig())
                     .lmdbEnvDir(lmdbEnvDir)
@@ -84,9 +82,9 @@ public class DuplicateCheckFactoryImpl2 implements DuplicateCheckFactory {
                     .addEnvFlag(EnvFlags.MDB_NOTLS)
                     .build();
 
-            this.dbi = lmdbEnv.openDbi("duplicate-check", DbiFlags.MDB_CREATE, DbiFlags.MDB_DUPSORT);
+            this.db = lmdbEnv.openDb("duplicate-check", DbiFlags.MDB_CREATE, DbiFlags.MDB_DUPSORT);
             this.byteBufferFactory = byteBufferFactory;
-            writeTxn = lmdbEnv.txnWrite();
+            writeTxn = lmdbEnv.writeTxn();
         }
 
         @Override
@@ -100,7 +98,7 @@ public class DuplicateCheckFactoryImpl2 implements DuplicateCheckFactory {
 
             try {
                 try {
-                    result = dbi.put(writeTxn.get(),
+                    result = db.put(writeTxn,
                             lmdbKV.getRowKey(),
                             lmdbKV.getRowValue(),
                             PutFlags.MDB_NODUPDATA);

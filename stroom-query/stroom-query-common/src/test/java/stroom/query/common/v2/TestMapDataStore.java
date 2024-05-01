@@ -34,7 +34,8 @@ class TestMapDataStore extends AbstractDataStoreTest {
                      final String componentId,
                      final TableSettings tableSettings,
                      final SearchResultStoreConfig resultStoreConfig,
-                     final DataStoreSettings dataStoreSettings) {
+                     final DataStoreSettings dataStoreSettings,
+                     final String subDir) {
         final FieldIndex fieldIndex = new FieldIndex();
         final ErrorConsumerImpl errorConsumer = new ErrorConsumerImpl();
         final ExpressionContext expressionContext = new ExpressionContext();

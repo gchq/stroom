@@ -9,7 +9,7 @@ import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.docref.DocRef;
 import stroom.expression.api.ExpressionContext;
 import stroom.lmdb.LmdbConfig;
-import stroom.lmdb2.LmdbEnv2;
+import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.LmdbEnvDir;
 import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.node.api.NodeInfo;
@@ -285,7 +285,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 .config(storeConfig.getLmdbConfig())
                 .subDir(subDirectory)
                 .build();
-        final LmdbEnv2.Builder lmdbEnvBuilder = LmdbEnv2
+        final LmdbEnv.Builder lmdbEnvBuilder = LmdbEnv
                 .builder()
                 .config(storeConfig.getLmdbConfig())
                 .lmdbEnvDir(lmdbEnvDir);

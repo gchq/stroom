@@ -5,26 +5,39 @@ import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
 
-public class ReadTxn implements AutoCloseable {
+public class ReadTxn extends AbstractTxn {
 
-    private final Env<ByteBuffer> env;
     private Txn<ByteBuffer> txn;
 
-    public ReadTxn(final Env<ByteBuffer> env) {
-        this.env = env;
-    }
-
-    Txn<ByteBuffer> get() {
-        if (txn == null) {
-            txn = env.txnRead();
-        }
-        return txn;
+    ReadTxn(final Env<ByteBuffer> env, final LmdbErrorHandler lmdbErrorHandler) {
+        super(env, lmdbErrorHandler);
     }
 
     @Override
-    public void close() {
-        if (txn != null) {
-            txn.close();
+    synchronized Txn<ByteBuffer> get() {
+        checkThread();
+        try {
+            if (txn == null) {
+                txn = env.txnRead();
+            }
+            return txn;
+        } catch (final RuntimeException e) {
+            lmdbErrorHandler.error(e);
+            throw e;
+        }
+    }
+
+    @Override
+    public synchronized void close() {
+        checkThread();
+        try {
+            if (txn != null) {
+                txn.close();
+            }
+        } catch (final RuntimeException e) {
+            lmdbErrorHandler.error(e);
+            throw e;
+        } finally {
             txn = null;
         }
     }

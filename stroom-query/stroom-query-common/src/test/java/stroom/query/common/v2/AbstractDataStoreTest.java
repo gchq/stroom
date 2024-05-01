@@ -682,7 +682,8 @@ abstract class AbstractDataStoreTest {
                 "0",
                 tableSettings,
                 new SearchResultStoreConfig(),
-                dataStoreSettings);
+                dataStoreSettings,
+                UUID.randomUUID().toString());
     }
 
     abstract DataStore create(SearchRequestSource searchRequestSource,
@@ -690,5 +691,6 @@ abstract class AbstractDataStoreTest {
                               String componentId,
                               TableSettings tableSettings,
                               SearchResultStoreConfig resultStoreConfig,
-                              DataStoreSettings dataStoreSettings);
+                              DataStoreSettings dataStoreSettings,
+                              String subDirectory);
 }

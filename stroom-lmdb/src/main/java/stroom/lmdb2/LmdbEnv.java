@@ -1,17 +1,14 @@
 package stroom.lmdb2;
 
 import stroom.lmdb.LmdbConfig;
-import stroom.lmdb.LmdbEnv;
 import stroom.util.io.ByteSize;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
 import org.lmdbjava.EnvFlags;
-import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -23,11 +20,9 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+public class LmdbEnv implements AutoCloseable {
 
-public class LmdbEnv2 implements AutoCloseable {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbEnv2.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbEnv.class);
 
     private final Env<ByteBuffer> env;
     private final LmdbEnvDir lmdbEnvDir;
@@ -35,17 +30,22 @@ public class LmdbEnv2 implements AutoCloseable {
     private final int maxDbs;
     private final int maxReaders;
     private final Set<EnvFlags> envFlags;
+    private final LmdbErrorHandler errorHandler;
 
-    LmdbEnv2(final LmdbEnvDir lmdbEnvDir,
-             final ByteSize maxStoreSize,
-             final int maxDbs,
-             final int maxReaders,
-             final Set<EnvFlags> envFlags) {
+    private WriteTxn writeTxn;
+
+    LmdbEnv(final LmdbEnvDir lmdbEnvDir,
+            final ByteSize maxStoreSize,
+            final int maxDbs,
+            final int maxReaders,
+            final Set<EnvFlags> envFlags,
+            final LmdbErrorHandler errorHandler) {
         this.lmdbEnvDir = lmdbEnvDir;
         this.maxStoreSize = maxStoreSize;
         this.maxDbs = maxDbs;
         this.maxReaders = maxReaders;
         this.envFlags = envFlags;
+        this.errorHandler = errorHandler;
 
         try {
             final Env.Builder<ByteBuffer> builder = Env.create()
@@ -87,60 +87,73 @@ public class LmdbEnv2 implements AutoCloseable {
                 .toList();
     }
 
-    public Dbi<ByteBuffer> openDbi(final String dbName) {
-        return openDbi(dbName, DbiFlags.MDB_CREATE);
+    public ByteSize getMaxStoreSize() {
+        return maxStoreSize;
     }
 
-    public Dbi<ByteBuffer> openDbi(final String dbName, final DbiFlags... flags) {
-        final byte[] nameBytes = dbName == null
-                ? null
-                : dbName.getBytes(UTF_8);
-        return env.openDbi(nameBytes, flags);
+    public LmdbDb openDb(final String dbName) {
+        return openDb(dbName, DbiFlags.MDB_CREATE);
+    }
+
+    public LmdbDb openDb(final String dbName, final DbiFlags... flags) {
+        return new LmdbDb(env, dbName, Set.of(flags), errorHandler);
+    }
+
+    public synchronized WriteTxn writeTxn() {
+        // Ensure there is only ever a single write txn.
+        if (writeTxn == null) {
+            writeTxn = new WriteTxn(env, errorHandler);
+        } else {
+            // Make sure it is still the same thread asking for the write txn.
+            writeTxn.checkThread();
+        }
+        return writeTxn;
+    }
+
+    public ReadTxn readTxn() {
+        return new ReadTxn(env, errorHandler);
     }
 
     /**
-     * Obtain a read-only transaction.
+     * Synchronise writes to ensure only a single thread can write.
      *
-     * @return a read-only transaction
+     * @param consumer Consumer for the write transaction.
      */
-    public Txn<ByteBuffer> txnRead() {
-        return env.txnRead();
-    }
-
-    /**
-     * Obtain a read-write transaction.
-     *
-     * @return a read-write transaction
-     */
-    public WriteTxn txnWrite() {
-        return new WriteTxn(env);
-    }
-
-    public void read(final Consumer<Txn<ByteBuffer>> consumer) {
-        try (final Txn<ByteBuffer> txn = env.txnRead()) {
+    public synchronized void write(final Consumer<WriteTxn> consumer) {
+        try (final WriteTxn txn = writeTxn()) {
             consumer.accept(txn);
         } catch (final RuntimeException e) {
-            LOGGER.error(e::getMessage, e);
+            errorHandler.error(e);
             throw e;
         }
     }
 
-    public <R> R readResult(final Function<Txn<ByteBuffer>, R> function) {
-        try (final Txn<ByteBuffer> txn = env.txnRead()) {
+    public void read(final Consumer<ReadTxn> consumer) {
+        try (final ReadTxn txn = readTxn()) {
+            consumer.accept(txn);
+        } catch (final RuntimeException e) {
+            errorHandler.error(e);
+            throw e;
+        }
+    }
+
+    public <R> R readResult(final Function<ReadTxn, R> function) {
+        try (final ReadTxn txn = new ReadTxn(env, errorHandler)) {
             return function.apply(txn);
         } catch (final RuntimeException e) {
-            LOGGER.error(e::getMessage, e);
+            errorHandler.error(e);
             throw e;
         }
-    }
-
-    public long count(final Dbi<ByteBuffer> dbi) {
-        return readResult(txn -> dbi.stat(txn).entries);
     }
 
     @Override
     public void close() {
-        env.close();
+        try {
+            env.close();
+        } catch (final RuntimeException e) {
+            errorHandler.error(e);
+            throw e;
+        }
     }
 
     public boolean isClosed() {
@@ -152,14 +165,19 @@ public class LmdbEnv2 implements AutoCloseable {
     }
 
     /**
-     * Deletes {@link LmdbEnv} from the filesystem if it is already closed.
+     * Deletes {@link stroom.lmdb.LmdbEnv} from the filesystem if it is already closed.
      */
     public void delete() {
-        if (!env.isClosed()) {
-            throw new RuntimeException(("LMDB environment at {} is still open"));
-        }
+        try {
+            if (!env.isClosed()) {
+                throw new RuntimeException(("LMDB environment at {} is still open"));
+            }
 
-        lmdbEnvDir.delete();
+            lmdbEnvDir.delete();
+        } catch (final RuntimeException e) {
+            errorHandler.error(e);
+            throw e;
+        }
     }
 
     @Override
@@ -188,6 +206,7 @@ public class LmdbEnv2 implements AutoCloseable {
         private int maxDbs = 1;
         private int maxReaders = LmdbConfig.DEFAULT_MAX_READERS;
         private final Set<EnvFlags> envFlags = EnumSet.noneOf(EnvFlags.class);
+        private LmdbErrorHandler errorHandler = e -> LOGGER.error(e::getMessage, e);
 
 
         //        protected boolean isReadAheadEnabled = LmdbConfig.DEFAULT_IS_READ_AHEAD_ENABLED;
@@ -239,8 +258,19 @@ public class LmdbEnv2 implements AutoCloseable {
             return this;
         }
 
-        public LmdbEnv2 build() {
-            return new LmdbEnv2(lmdbEnvDir, maxStoreSize, maxDbs, maxReaders, envFlags);
+        public Builder errorHandler(final LmdbErrorHandler errorHandler) {
+            this.errorHandler = errorHandler;
+            return this;
+        }
+
+        public LmdbEnv build() {
+            return new LmdbEnv(
+                    lmdbEnvDir,
+                    maxStoreSize,
+                    maxDbs,
+                    maxReaders,
+                    envFlags,
+                    errorHandler);
         }
     }
 }
