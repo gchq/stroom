@@ -452,8 +452,8 @@ public class LmdbDataStore implements DataStore {
                             finalPayload = payloadCreator.addPayload(writeTxn, db, true);
                         }
                         // Make sure we end with an empty payload to indicate completion.
-                        // Adding a final empty payload to the queue ensures that a consuming node will have to request the
-                        // payload from the queue before we complete.
+                        // Adding a final empty payload to the queue ensures that a consuming node will have to request
+                        // the payload from the queue before we complete.
                         LOGGER.debug(() -> "Final payload");
                         payloadCreator.finalPayload();
                     }
