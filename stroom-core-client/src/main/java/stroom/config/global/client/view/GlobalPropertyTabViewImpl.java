@@ -67,7 +67,7 @@ public class GlobalPropertyTabViewImpl
 
     @Override
     public void focusFilter() {
-        nameFilter.focus();
+        nameFilter.forceFocus();
     }
 
 
