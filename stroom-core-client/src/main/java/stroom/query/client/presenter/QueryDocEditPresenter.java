@@ -34,6 +34,7 @@ import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource;
+import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryResource;
@@ -116,6 +117,7 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                 AlertEvent.fireError(this, "No default processing node configured", null);
             } else {
                 final String query = queryEditPresenter.getQuery();
+                final TimeRange timeRange = queryEditPresenter.getTimeRange();
                 restFactory
                         .create(QUERY_RESOURCE)
                         .method(res -> res.validateQuery(query))
@@ -129,7 +131,7 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                                 if (validateExpressionResult.isGroupBy()) {
                                     analyticProcessType = AnalyticProcessType.SCHEDULED_QUERY;
                                 }
-                                createRule(analyticUiDefaultConfig, query, analyticProcessType);
+                                createRule(analyticUiDefaultConfig, query, timeRange, analyticProcessType);
                             }
                         })
                         .onFailure(restError -> {
@@ -142,10 +144,11 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
 
     private void createRule(final AnalyticUiDefaultConfig analyticUiDefaultConfig,
                             final String query,
+                            final TimeRange timeRange,
                             final AnalyticProcessType analyticProcessType) {
         final Consumer<ExplorerNode> newDocumentConsumer = newNode -> {
             final DocRef ruleDoc = newNode.getDocRef();
-            loadNewRule(ruleDoc, analyticUiDefaultConfig, query, analyticProcessType);
+            loadNewRule(ruleDoc, analyticUiDefaultConfig, query, timeRange, analyticProcessType);
         };
 
         // First get the explorer node for the docref.
@@ -169,6 +172,7 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
     private void loadNewRule(final DocRef ruleDocRef,
                              final AnalyticUiDefaultConfig analyticUiDefaultConfig,
                              final String query,
+                             final TimeRange timeRange,
                              final AnalyticProcessType analyticProcessType) {
         restFactory
                 .create(ANALYTIC_RULE_RESOURCE)
@@ -177,13 +181,13 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                     // Create default config.
                     switch (analyticProcessType) {
                         case SCHEDULED_QUERY:
-                            createDefaultScheduledRule(ruleDocRef, doc, analyticUiDefaultConfig, query);
+                            createDefaultScheduledRule(ruleDocRef, doc, analyticUiDefaultConfig, query, timeRange);
                             break;
                         case TABLE_BUILDER:
-                            createDefaultTableBuilderRule(ruleDocRef, doc, analyticUiDefaultConfig, query);
+                            createDefaultTableBuilderRule(ruleDocRef, doc, analyticUiDefaultConfig, query, timeRange);
                             break;
                         default:
-                            createDefaultStreamingRule(ruleDocRef, doc, analyticUiDefaultConfig, query);
+                            createDefaultStreamingRule(ruleDocRef, doc, analyticUiDefaultConfig, query, timeRange);
                     }
                 })
                 .exec();
@@ -192,11 +196,13 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
     private void createDefaultStreamingRule(final DocRef ruleDocRef,
                                             final AnalyticRuleDoc doc,
                                             final AnalyticUiDefaultConfig analyticUiDefaultConfig,
-                                            final String query) {
+                                            final String query,
+                                            final TimeRange timeRange) {
         AnalyticRuleDoc updated = doc
                 .copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
+                .timeRange(timeRange)
                 .analyticProcessType(AnalyticProcessType.STREAMING)
                 .notifications(createDefaultNotificationConfig(analyticUiDefaultConfig))
                 .errorFeed(analyticUiDefaultConfig.getDefaultErrorFeed())
@@ -207,7 +213,8 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
     private void createDefaultScheduledRule(final DocRef ruleDocRef,
                                             final AnalyticRuleDoc doc,
                                             final AnalyticUiDefaultConfig analyticUiDefaultConfig,
-                                            final String query) {
+                                            final String query,
+                                            final TimeRange timeRange) {
 //        final SimpleDuration oneHour = SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build();
 //        final ScheduledQueryAnalyticProcessConfig analyticProcessConfig =
 //                ScheduledQueryAnalyticProcessConfig.builder()
@@ -221,6 +228,7 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                 .copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
+                .timeRange(timeRange)
                 .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
 //                .analyticProcessConfig(analyticProcessConfig)
                 .notifications(createDefaultNotificationConfig(analyticUiDefaultConfig))
@@ -232,7 +240,8 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
     private void createDefaultTableBuilderRule(final DocRef ruleDocRef,
                                                final AnalyticRuleDoc doc,
                                                final AnalyticUiDefaultConfig analyticUiDefaultConfig,
-                                               final String query) {
+                                               final String query,
+                                               final TimeRange timeRange) {
         final SimpleDuration oneHour = SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build();
         final TableBuilderAnalyticProcessConfig analyticProcessConfig =
                 TableBuilderAnalyticProcessConfig.builder()
@@ -245,6 +254,7 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                 .copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
+                .timeRange(timeRange)
                 .analyticProcessType(AnalyticProcessType.TABLE_BUILDER)
                 .analyticProcessConfig(analyticProcessConfig)
                 .notifications(createDefaultNotificationConfig(analyticUiDefaultConfig))
