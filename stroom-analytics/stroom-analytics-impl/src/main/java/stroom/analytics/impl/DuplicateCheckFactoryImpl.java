@@ -62,7 +62,8 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
                 .builder()
                 .config(analyticResultStoreConfig.getLmdbConfig())
                 .lmdbEnvDir(lmdbEnvDir)
-                .maxDbCount(1)
+                .maxDbs(1)
+                .maxReaders(1)
                 .addEnvFlag(EnvFlags.MDB_NOTLS)
                 .build();
         this.dbi = lmdbEnv.openDbi("duplicate-check", DbiFlags.MDB_CREATE, DbiFlags.MDB_DUPSORT);
@@ -164,12 +165,6 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
                 LOGGER.trace(e::getMessage, e);
                 // Keep interrupting this thread.
                 Thread.currentThread().interrupt();
-            }
-
-            try {
-                dbi.close();
-            } catch (final RuntimeException e) {
-                LOGGER.error(e::getMessage, e);
             }
 
             try {

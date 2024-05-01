@@ -1,7 +1,6 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
-import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.lmdb2.LmdbEnv2;
 import stroom.lmdb2.LmdbEnvDir;
@@ -15,18 +14,12 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.lmdbjava.CursorIterable;
-import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.EnvFlags;
 import org.lmdbjava.PutFlags;
-import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 
 @Singleton
 public class DuplicateCheckFactoryImpl2 implements DuplicateCheckFactory {
@@ -86,37 +79,14 @@ public class DuplicateCheckFactoryImpl2 implements DuplicateCheckFactory {
                     .builder()
                     .config(analyticResultStoreConfig.getLmdbConfig())
                     .lmdbEnvDir(lmdbEnvDir)
-                    .maxDbCount(1)
+                    .maxDbs(1)
+                    .maxReaders(1)
                     .addEnvFlag(EnvFlags.MDB_NOTLS)
                     .build();
 
             this.dbi = lmdbEnv.openDbi("duplicate-check", DbiFlags.MDB_CREATE, DbiFlags.MDB_DUPSORT);
             this.byteBufferFactory = byteBufferFactory;
             writeTxn = lmdbEnv.txnWrite();
-        }
-
-        private List<String> getDBNames() {
-            final List<String> names = new ArrayList<>();
-            try {
-                final Dbi<ByteBuffer> root = lmdbEnv.openDbi(null);
-                try {
-                    try (final Txn<ByteBuffer> txn = lmdbEnv.txnRead()) {
-                        try (final CursorIterable<ByteBuffer> cursorIterable = root.iterate(txn)) {
-                            for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
-                                final String name = new String(
-                                        ByteBufferUtils.toBytes(keyVal.key()),
-                                        StandardCharsets.UTF_8);
-                                names.add(name);
-                            }
-                        }
-                    }
-                } finally {
-                    root.close();
-                }
-            } catch (final Exception e) {
-                LOGGER.error(e::getMessage, e);
-            }
-            return names;
         }
 
         @Override
@@ -167,12 +137,6 @@ public class DuplicateCheckFactoryImpl2 implements DuplicateCheckFactory {
             try {
                 // Final commit.
                 writeTxn.commit();
-            } catch (final RuntimeException e) {
-                LOGGER.error(e::getMessage, e);
-            }
-
-            try {
-                dbi.close();
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
             }

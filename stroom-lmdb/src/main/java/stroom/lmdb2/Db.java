@@ -224,8 +224,4 @@ public class Db<K, V> implements Clearable {
     public void clear() {
         writeQueue.write(txn -> dbi.drop(txn.get(), false));
     }
-
-    public void close() {
-        dbi.close();
-    }
 }

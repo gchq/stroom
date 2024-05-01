@@ -205,8 +205,9 @@ public class LmdbDataStore implements DataStore {
         maxPutsBeforeCommit = resultStoreConfig.getMaxPutsBeforeCommit();
 
         this.lmdbEnv = lmdbEnvBuilder
-                .maxDbCount(1)
+                .maxDbs(1)
                 .addEnvFlag(EnvFlags.MDB_NOTLS)
+                .maxReaders(1)
                 .build();
         this.dbi = lmdbEnv.openDbi(queryKey + "_" + componentId);
 
@@ -652,13 +653,6 @@ public class LmdbDataStore implements DataStore {
                 LOGGER.trace(e::getMessage, e);
                 // Keep interrupting this thread.
                 Thread.currentThread().interrupt();
-            }
-
-            try {
-                dbi.close();
-            } catch (final RuntimeException e) {
-                LOGGER.error(e::getMessage, e);
-                errorConsumer.add(e);
             }
 
             try {

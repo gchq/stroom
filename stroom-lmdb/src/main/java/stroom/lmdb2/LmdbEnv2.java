@@ -14,9 +14,11 @@ import org.lmdbjava.EnvFlags;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -29,17 +31,60 @@ public class LmdbEnv2 implements AutoCloseable {
 
     private final Env<ByteBuffer> env;
     private final LmdbEnvDir lmdbEnvDir;
-    private final String name;
+    private final ByteSize maxStoreSize;
+    private final int maxDbs;
+    private final int maxReaders;
     private final Set<EnvFlags> envFlags;
 
-    LmdbEnv2(final Env<ByteBuffer> env,
-             final LmdbEnvDir lmdbEnvDir,
-             final String name,
+    LmdbEnv2(final LmdbEnvDir lmdbEnvDir,
+             final ByteSize maxStoreSize,
+             final int maxDbs,
+             final int maxReaders,
              final Set<EnvFlags> envFlags) {
-        this.env = env;
         this.lmdbEnvDir = lmdbEnvDir;
-        this.name = name;
+        this.maxStoreSize = maxStoreSize;
+        this.maxDbs = maxDbs;
+        this.maxReaders = maxReaders;
         this.envFlags = envFlags;
+
+        try {
+            final Env.Builder<ByteBuffer> builder = Env.create()
+                    .setMapSize(maxStoreSize.getBytes())
+                    .setMaxDbs(maxDbs)
+                    .setMaxReaders(maxReaders);
+
+//            if (envFlags.contains(EnvFlags.MDB_NORDAHEAD) && isReadAheadEnabled) {
+//                throw new RuntimeException("Can't set isReadAheadEnabled to true and add flag "
+//                        + EnvFlags.MDB_NORDAHEAD);
+//            }
+
+//            envFlags.add(EnvFlags.MDB_NOTLS);
+//            if (!isReadAheadEnabled) {
+//                envFlags.add(EnvFlags.MDB_NORDAHEAD);
+//            }
+
+            LOGGER.debug("Creating LMDB environment in dir {}, maxSize: {}, maxDbs {}, maxReaders {}, "
+                            + "envFlags {}",
+                    lmdbEnvDir.toString(),
+                    maxStoreSize,
+                    maxDbs,
+                    maxReaders,
+                    envFlags);
+
+            final EnvFlags[] envFlagsArr = envFlags.toArray(new EnvFlags[0]);
+            env = builder.open(lmdbEnvDir.getEnvDir().toFile(), envFlagsArr);
+        } catch (Exception e) {
+            throw new RuntimeException(LogUtil.message(
+                    "Error creating LMDB env at {}: {}",
+                    lmdbEnvDir.toString(), e.getMessage()), e);
+        }
+    }
+
+    private List<String> getDBNames() {
+        return env.getDbiNames()
+                .stream()
+                .map(bytes -> new String(bytes, StandardCharsets.UTF_8))
+                .toList();
     }
 
     public Dbi<ByteBuffer> openDbi(final String dbName) {
@@ -117,6 +162,17 @@ public class LmdbEnv2 implements AutoCloseable {
         lmdbEnvDir.delete();
     }
 
+    @Override
+    public String toString() {
+        return "Env{" +
+                "lmdbEnvDir=" + lmdbEnvDir +
+                ", maxStoreSize=" + maxStoreSize +
+                ", maxDbs=" + maxDbs +
+                ", maxReaders=" + maxReaders +
+                ", envFlags=" + envFlags +
+                '}';
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -128,23 +184,23 @@ public class LmdbEnv2 implements AutoCloseable {
     public static class Builder {
 
         private LmdbEnvDir lmdbEnvDir;
+        private ByteSize maxStoreSize = LmdbConfig.DEFAULT_MAX_STORE_SIZE;
+        private int maxDbs = 1;
+        private int maxReaders = LmdbConfig.DEFAULT_MAX_READERS;
         private final Set<EnvFlags> envFlags = EnumSet.noneOf(EnvFlags.class);
 
-        protected int maxReaders = LmdbConfig.DEFAULT_MAX_READERS;
-        protected ByteSize maxStoreSize = LmdbConfig.DEFAULT_MAX_STORE_SIZE;
-        protected int maxDbs = 1;
-        protected boolean isReadAheadEnabled = LmdbConfig.DEFAULT_IS_READ_AHEAD_ENABLED;
-        protected boolean isReaderBlockedByWriter = LmdbConfig.DEFAULT_IS_READER_BLOCKED_BY_WRITER;
-        protected String name = null;
+
+        //        protected boolean isReadAheadEnabled = LmdbConfig.DEFAULT_IS_READ_AHEAD_ENABLED;
+//        protected boolean isReaderBlockedByWriter = LmdbConfig.DEFAULT_IS_READER_BLOCKED_BY_WRITER;
 
         private Builder() {
         }
 
         public Builder config(final LmdbConfig lmdbConfig) {
-            this.maxReaders = lmdbConfig.getMaxReaders();
             this.maxStoreSize = lmdbConfig.getMaxStoreSize();
-            this.isReadAheadEnabled = lmdbConfig.isReadAheadEnabled();
-            this.isReaderBlockedByWriter = lmdbConfig.isReaderBlockedByWriter();
+            this.maxReaders = lmdbConfig.getMaxReaders();
+//            this.isReadAheadEnabled = lmdbConfig.isReadAheadEnabled();
+//            this.isReaderBlockedByWriter = lmdbConfig.isReaderBlockedByWriter();
             return this;
         }
 
@@ -153,8 +209,18 @@ public class LmdbEnv2 implements AutoCloseable {
             return this;
         }
 
-        public Builder maxDbCount(final int maxDbCount) {
-            this.maxDbs = maxDbCount;
+        public Builder maxStoreSize(final ByteSize maxStoreSize) {
+            this.maxStoreSize = maxStoreSize;
+            return this;
+        }
+
+        public Builder maxDbs(final int maxDbs) {
+            this.maxDbs = maxDbs;
+            return this;
+        }
+
+        public Builder maxReaders(final int maxReaders) {
+            this.maxReaders = maxReaders;
             return this;
         }
 
@@ -173,47 +239,8 @@ public class LmdbEnv2 implements AutoCloseable {
             return this;
         }
 
-        public Builder name(final String name) {
-            this.name = name;
-            return this;
-        }
-
         public LmdbEnv2 build() {
-            final Env<ByteBuffer> env;
-            try {
-                final Env.Builder<ByteBuffer> builder = Env.create()
-                        .setMapSize(maxStoreSize.getBytes())
-                        .setMaxDbs(maxDbs)
-                        .setMaxReaders(maxReaders);
-
-                if (envFlags.contains(EnvFlags.MDB_NORDAHEAD) && isReadAheadEnabled) {
-                    throw new RuntimeException("Can't set isReadAheadEnabled to true and add flag "
-                            + EnvFlags.MDB_NORDAHEAD);
-                }
-
-                envFlags.add(EnvFlags.MDB_NOTLS);
-                if (!isReadAheadEnabled) {
-                    envFlags.add(EnvFlags.MDB_NORDAHEAD);
-                }
-
-                LOGGER.debug("Creating LMDB environment in dir {}, maxSize: {}, maxDbs {}, maxReaders {}, "
-                                + "isReadAheadEnabled {}, isReaderBlockedByWriter {}, envFlags {}",
-                        lmdbEnvDir.toString(),
-                        maxStoreSize,
-                        maxDbs,
-                        maxReaders,
-                        isReadAheadEnabled,
-                        isReaderBlockedByWriter,
-                        envFlags);
-
-                final EnvFlags[] envFlagsArr = envFlags.toArray(new EnvFlags[0]);
-                env = builder.open(lmdbEnvDir.getEnvDir().toFile(), envFlagsArr);
-            } catch (Exception e) {
-                throw new RuntimeException(LogUtil.message(
-                        "Error creating LMDB env at {}: {}",
-                        lmdbEnvDir.toString(), e.getMessage()), e);
-            }
-            return new LmdbEnv2(env, lmdbEnvDir, name, envFlags);
+            return new LmdbEnv2(lmdbEnvDir, maxStoreSize, maxDbs, maxReaders, envFlags);
         }
     }
 }
