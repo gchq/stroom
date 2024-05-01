@@ -26,6 +26,7 @@ import stroom.analytics.shared.NotificationDestinationType;
 import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
+import stroom.dashboard.client.main.UniqueUtil;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
@@ -272,6 +273,7 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                         .build();
         final NotificationConfig notificationConfig = NotificationConfig
                 .builder()
+                .uuid(UniqueUtil.generateUUID())
                 .limitNotifications(false)
                 .maxNotifications(100)
                 .resumeAfter(SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build())

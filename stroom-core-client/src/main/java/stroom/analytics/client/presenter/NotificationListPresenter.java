@@ -149,9 +149,19 @@ public class NotificationListPresenter
                     if (result) {
                         final NotificationConfig selected = selectionModel.getSelected();
                         if (selected != null) {
+                            int index = list.indexOf(selected);
                             list.remove(selected);
                             setDirty(true);
                             refresh();
+
+                            // Select next item.
+                            if (list.size() > 0) {
+                                index = Math.max(index, 0);
+                                index = Math.min(index, list.size() - 1);
+                                selectionModel.setSelected(list.get(index));
+                            } else {
+                                selectionModel.clear();
+                            }
                         }
                     }
                 });
@@ -219,8 +229,12 @@ public class NotificationListPresenter
 
     private void replace(NotificationConfig notificationConfig) {
         final int index = list.indexOf(notificationConfig);
-        list.remove(notificationConfig);
-        list.add(index, notificationConfig);
+        if (index >= 0) {
+            list.remove(notificationConfig);
+            list.add(index, notificationConfig);
+        } else {
+            list.add(notificationConfig);
+        }
     }
 
     private void enableButtons() {
