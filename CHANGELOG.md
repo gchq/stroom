@@ -13,6 +13,25 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.4-beta.7] - 2024-05-01
+
+* Add key binds for creating documents.
+
+* Improve error message when you don't have permission to create an item in a folder. Now included the folder name.
+
+* Replace _group_ with _folder_ on Create/Move/Copy document dialogues.
+
+* Add `/stroom/analytic_store/` as a docker managed volume.
+
+* Issue **#4250** : Fix LMDB segfault.
+
+* Issue **#4238** : Force focus on properties quick filter.
+
+* Issue **#4246** : Inherit time range when creating rule from query.
+
+* Issue **#4247** : Fix notification UUID.
+
+
 ## [v7.4-beta.6] - 2024-04-29
 
 * Issue **#4240** : Fix creation of new shards when non-full shards already exist for a partition.
@@ -499,7 +518,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.6...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.7...HEAD
+[v7.4-beta.7]: https://github.com/gchq/stroom/compare/v7.4-beta.6...v7.4-beta.7
 [v7.4-beta.6]: https://github.com/gchq/stroom/compare/v7.4-beta.5...v7.4-beta.6
 [v7.4-beta.5]: https://github.com/gchq/stroom/compare/v7.4-beta.4...v7.4-beta.5
 [v7.4-beta.4]: https://github.com/gchq/stroom/compare/v7.4-beta.3...v7.4-beta.4
