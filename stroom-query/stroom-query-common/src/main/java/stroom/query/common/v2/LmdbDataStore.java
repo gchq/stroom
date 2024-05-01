@@ -1195,10 +1195,10 @@ public class LmdbDataStore implements DataStore {
         }
     }
 
-    public static <R> R iterateResult(final Dbi<ByteBuffer> dbi,
-                                      final Txn<ByteBuffer> readTxn,
-                                      final KeyRange<ByteBuffer> keyRange,
-                                      final Function<Iterator<KeyVal<ByteBuffer>>, R> iteratorConsumer) {
+    private static <R> R iterateResult(final Dbi<ByteBuffer> dbi,
+                                       final Txn<ByteBuffer> readTxn,
+                                       final KeyRange<ByteBuffer> keyRange,
+                                       final Function<Iterator<KeyVal<ByteBuffer>>, R> iteratorConsumer) {
         try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(
                 readTxn,
                 keyRange)) {
@@ -1214,10 +1214,10 @@ public class LmdbDataStore implements DataStore {
         return null;
     }
 
-    public static void iterate(final Dbi<ByteBuffer> dbi,
-                               final Txn<ByteBuffer> readTxn,
-                               final KeyRange<ByteBuffer> keyRange,
-                               final Consumer<Iterator<KeyVal<ByteBuffer>>> iteratorConsumer) {
+    private static void iterate(final Dbi<ByteBuffer> dbi,
+                                final Txn<ByteBuffer> readTxn,
+                                final KeyRange<ByteBuffer> keyRange,
+                                final Consumer<Iterator<KeyVal<ByteBuffer>>> iteratorConsumer) {
         try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(
                 readTxn,
                 keyRange)) {

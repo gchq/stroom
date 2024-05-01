@@ -57,6 +57,9 @@ public class DuplicateCheckFactoryImpl2 implements DuplicateCheckFactory {
     }
 
 
+    // --------------------------------------------------------------------------------
+
+
     private static class DuplicateCheckImpl implements DuplicateCheck {
 
         private final Thread thread;

@@ -472,6 +472,10 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         return analyticResultStoreDir;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public record AnalyticDataStore(SearchRequest searchRequest, LmdbDataStore lmdbDataStore) {
 
         public SearchRequest getSearchRequest() {

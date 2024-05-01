@@ -64,7 +64,7 @@ public class ByteBufferFactoryImpl extends ByteBufferFactory {
         return Math.max(minExponent, getMinExponent(size));
     }
 
-    public static int getMinExponent(int n) {
+    private static int getMinExponent(int n) {
         return (int) Math.ceil(log2(n));
     }
 
@@ -72,13 +72,17 @@ public class ByteBufferFactoryImpl extends ByteBufferFactory {
         return (int) Math.pow(2, exponent);
     }
 
-    public static double log2(int n) {
+    private static double log2(int n) {
         return Math.log(n) / LOG2;
     }
 
     private void unmap(final ByteBuffer byteBuffer) {
         ByteBufferSupport.unmap(byteBuffer);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     static class Pool {
 
