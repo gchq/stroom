@@ -31,6 +31,7 @@ public class KeyBinding {
     private static final Map<Action, KeySequence> ACTION_TO_KEY_SEQUENCE_MAP = new HashMap<>();
 
     private static final int GOTO_FIRST_KEY = KeyCodes.KEY_G;
+    private static final int CREATE_DOC_FIRST_KEY = KeyCodes.KEY_C;
     private static final int SUB_TAB_FIRST_KEY = KeyCodes.KEY_T;
 
     private static final int KEY_SEQUENCE_TIMER_DELAY = 1_000;
@@ -83,22 +84,37 @@ public class KeyBinding {
                 Shortcut.builder().shift().keyCode(KeyCodes.KEY_SHIFT).build(),
                 Shortcut.builder().shift().keyCode(KeyCodes.KEY_SHIFT).build());
 
-        // Sort these by 2nd key
-        addKeySequence(Action.GOTO_APP_PERMS, GOTO_FIRST_KEY, KeyCodes.KEY_A);
-        addKeySequence(Action.GOTO_CACHES, GOTO_FIRST_KEY, KeyCodes.KEY_C);
-        addKeySequence(Action.GOTO_DEPENDENCIES, GOTO_FIRST_KEY, KeyCodes.KEY_D);
-        addKeySequence(Action.GOTO_EXPLORER_TREE, GOTO_FIRST_KEY, KeyCodes.KEY_E);
-        addKeySequence(Action.GOTO_INDEX_VOLUMES, GOTO_FIRST_KEY, KeyCodes.KEY_I);
-        addKeySequence(Action.GOTO_JOBS, GOTO_FIRST_KEY, KeyCodes.KEY_J);
-        addKeySequence(Action.GOTO_API_KEYS, GOTO_FIRST_KEY, KeyCodes.KEY_K);
-        addKeySequence(Action.GOTO_NODES, GOTO_FIRST_KEY, KeyCodes.KEY_N);
-        addKeySequence(Action.GOTO_PROPERTIES, GOTO_FIRST_KEY, KeyCodes.KEY_P);
-        addKeySequence(Action.GOTO_DATA_RETENTION, GOTO_FIRST_KEY, KeyCodes.KEY_R);
-        addKeySequence(Action.GOTO_SEARCH_RESULTS, GOTO_FIRST_KEY, KeyCodes.KEY_S);
-        addKeySequence(Action.GOTO_TASKS, GOTO_FIRST_KEY, KeyCodes.KEY_T);
-        addKeySequence(Action.GOTO_USER_PREFERENCES, GOTO_FIRST_KEY, KeyCodes.KEY_U);
-        addKeySequence(Action.GOTO_FS_VOLUMES, GOTO_FIRST_KEY, KeyCodes.KEY_V);
-        addKeySequence(Action.GOTO_USER_ACCOUNTS, GOTO_FIRST_KEY, KeyCodes.KEY_X);
+        // Binds for Going To a single instance screen. Sort these by 2nd key
+        addGotoKeySequence(Action.GOTO_APP_PERMS, KeyCodes.KEY_A);
+        addGotoKeySequence(Action.GOTO_CACHES, KeyCodes.KEY_C);
+        addGotoKeySequence(Action.GOTO_DEPENDENCIES, KeyCodes.KEY_D);
+        addGotoKeySequence(Action.GOTO_EXPLORER_TREE, KeyCodes.KEY_E);
+        addGotoKeySequence(Action.GOTO_INDEX_VOLUMES, KeyCodes.KEY_I);
+        addGotoKeySequence(Action.GOTO_JOBS, KeyCodes.KEY_J);
+        addGotoKeySequence(Action.GOTO_API_KEYS, KeyCodes.KEY_K);
+        addGotoKeySequence(Action.GOTO_NODES, KeyCodes.KEY_N);
+        addGotoKeySequence(Action.GOTO_PROPERTIES, KeyCodes.KEY_P);
+        addGotoKeySequence(Action.GOTO_DATA_RETENTION, KeyCodes.KEY_R);
+        addGotoKeySequence(Action.GOTO_SEARCH_RESULTS, KeyCodes.KEY_S);
+        addGotoKeySequence(Action.GOTO_TASKS, KeyCodes.KEY_T);
+        addGotoKeySequence(Action.GOTO_USER_PREFERENCES, KeyCodes.KEY_U);
+        addGotoKeySequence(Action.GOTO_FS_VOLUMES, KeyCodes.KEY_V);
+        addGotoKeySequence(Action.GOTO_USER_ACCOUNTS, KeyCodes.KEY_X);
+
+        // Binds for creating a document. Sort these by 2nd key
+        addCreateDocKeySequence(Action.CREATE_ELASTIC_INDEX, KeyCodes.KEY_C);
+        addCreateDocKeySequence(Action.CREATE_DASHBOARD, KeyCodes.KEY_D);
+        addCreateDocKeySequence(Action.CREATE_FEED, KeyCodes.KEY_E);
+        addCreateDocKeySequence(Action.CREATE_FOLDER, KeyCodes.KEY_F);
+        addCreateDocKeySequence(Action.CREATE_DICTIONARY, KeyCodes.KEY_I);
+        addCreateDocKeySequence(Action.CREATE_LUCENE_INDEX, KeyCodes.KEY_L);
+        addCreateDocKeySequence(Action.CREATE_DOCUMENTATION, KeyCodes.KEY_O);
+        addCreateDocKeySequence(Action.CREATE_PIPELINE, KeyCodes.KEY_P);
+        addCreateDocKeySequence(Action.CREATE_QUERY, KeyCodes.KEY_Q);
+        addCreateDocKeySequence(Action.CREATE_ANALYTIC_RULE, KeyCodes.KEY_R);
+        addCreateDocKeySequence(Action.CREATE_TEXT_CONVERTER, KeyCodes.KEY_T);
+        addCreateDocKeySequence(Action.CREATE_VIEW, KeyCodes.KEY_V);
+        addCreateDocKeySequence(Action.CREATE_XSLT, KeyCodes.KEY_X);
 
 //        addKeySequence(Action.DOCUMENTATION, SUB_TAB_FIRST_KEY, KeyCodes.KEY_D);
 //        addKeySequence(Action.SETTINGS, SUB_TAB_FIRST_KEY, KeyCodes.KEY_S);
@@ -381,6 +397,22 @@ public class KeyBinding {
         }
     }
 
+    static void addGotoKeySequence(final Action action,
+                                   final int keyCode2) {
+        addKeySequence(
+                action,
+                Shortcut.unmodifiedKey(GOTO_FIRST_KEY),
+                Shortcut.unmodifiedKey(keyCode2));
+    }
+
+    static void addCreateDocKeySequence(final Action action,
+                                        final int keyCode2) {
+        addKeySequence(
+                action,
+                Shortcut.unmodifiedKey(CREATE_DOC_FIRST_KEY),
+                Shortcut.unmodifiedKey(keyCode2));
+    }
+
     static void addKeySequence(final Action action,
                                final int keyCode1,
                                final int keyCode2) {
@@ -534,6 +566,9 @@ public class KeyBinding {
         INFO,
         FOCUS_FILTER,
         FOCUS_EXPLORER_FILTER,
+        SETTINGS,
+
+        // GOTO key sequences
         GOTO_PROPERTIES,
         GOTO_API_KEYS,
         GOTO_CACHES,
@@ -547,9 +582,23 @@ public class KeyBinding {
         GOTO_FS_VOLUMES,
         GOTO_APP_PERMS,
         GOTO_INDEX_VOLUMES,
-        SETTINGS,
         GOTO_USER_ACCOUNTS,
-        GOTO_USER_PREFERENCES
+        GOTO_USER_PREFERENCES,
+
+        // Create Doc key sequences
+        CREATE_ELASTIC_INDEX, // C
+        CREATE_DASHBOARD, // D
+        CREATE_FEED, // E
+        CREATE_FOLDER, // F
+        CREATE_DICTIONARY, // I
+        CREATE_LUCENE_INDEX, // L
+        CREATE_DOCUMENTATION, // O
+        CREATE_PIPELINE, // P
+        CREATE_QUERY, // Q
+        CREATE_ANALYTIC_RULE, // R
+        CREATE_TEXT_CONVERTER, // T
+        CREATE_VIEW, // V
+        CREATE_XSLT, // X
     }
 
 

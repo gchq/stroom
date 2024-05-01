@@ -1421,8 +1421,13 @@ class ExplorerServiceImpl
         } else {
             if (!securityContext.hasDocumentPermission(folderUUID,
                     DocumentPermissionNames.getDocumentCreatePermission(type))) {
+                final String folderName = Optional.ofNullable(explorerTreeModel.getModel().getNode(folderUUID))
+                        .map(ExplorerNode::getName)
+                        .filter(name -> !name.isEmpty())
+                        .map(name -> "'" + name + "' (" + folderUUID + ")")
+                        .orElse(folderUUID);
                 throw new PermissionException(securityContext.getUserIdentityForAudit(),
-                        "You do not have permission to create (" + type + ") in folder " + folderUUID);
+                        "You do not have permission to create " + type + " in folder " + folderName);
             }
         }
     }
