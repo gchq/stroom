@@ -365,11 +365,9 @@ public class LmdbDataStore implements DataStore {
     private void transfer() {
         Metrics.measure("Transfer", () -> {
             transferState.setThread(Thread.currentThread());
-
-            env.write(writeTxn -> {
-                CurrentDbState currentDbState = getCurrentDbState();
-
-                try {
+            try {
+                env.write(writeTxn -> {
+                    CurrentDbState currentDbState = getCurrentDbState();
                     long lastCommitMs = System.currentTimeMillis();
                     long uncommittedCount = 0;
 
@@ -457,18 +455,18 @@ public class LmdbDataStore implements DataStore {
                         LOGGER.debug(() -> "Final payload");
                         payloadCreator.finalPayload();
                     }
-
-                } catch (final Throwable e) {
-                    LOGGER.error(e::getMessage, e);
-                    error(e);
-                } finally {
-                    // Ensure we complete.
-                    queue.terminate();
-                    complete.countDown();
-                    LOGGER.debug(() -> "Finished transfer while loop");
-                    transferState.setThread(null);
-                }
-            });
+                });
+            } catch (final Throwable e) {
+                LOGGER.error(e::getMessage, e);
+                error(e);
+            } finally {
+                // Ensure we complete.
+                queue.terminate();
+                // The LMDB environment will be closed after we complete.
+                complete.countDown();
+                LOGGER.debug(() -> "Finished transfer while loop");
+                transferState.setThread(null);
+            }
         });
     }
 

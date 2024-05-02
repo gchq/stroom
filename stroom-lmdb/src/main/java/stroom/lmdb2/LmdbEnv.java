@@ -53,16 +53,6 @@ public class LmdbEnv implements AutoCloseable {
                     .setMaxDbs(maxDbs)
                     .setMaxReaders(maxReaders);
 
-//            if (envFlags.contains(EnvFlags.MDB_NORDAHEAD) && isReadAheadEnabled) {
-//                throw new RuntimeException("Can't set isReadAheadEnabled to true and add flag "
-//                        + EnvFlags.MDB_NORDAHEAD);
-//            }
-
-//            envFlags.add(EnvFlags.MDB_NOTLS);
-//            if (!isReadAheadEnabled) {
-//                envFlags.add(EnvFlags.MDB_NORDAHEAD);
-//            }
-
             LOGGER.debug("Creating LMDB environment in dir {}, maxSize: {}, maxDbs {}, maxReaders {}, "
                             + "envFlags {}",
                     lmdbEnvDir.toString(),
@@ -105,7 +95,7 @@ public class LmdbEnv implements AutoCloseable {
             writeTxn = new WriteTxn(env, errorHandler);
         } else {
             // Make sure it is still the same thread asking for the write txn.
-            writeTxn.checkThread();
+            writeTxn.check();
         }
         return writeTxn;
     }

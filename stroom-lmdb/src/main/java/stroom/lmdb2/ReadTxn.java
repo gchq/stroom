@@ -15,7 +15,7 @@ public class ReadTxn extends AbstractTxn {
 
     @Override
     synchronized Txn<ByteBuffer> get() {
-        checkThread();
+        check();
         try {
             if (txn == null) {
                 txn = env.txnRead();
@@ -30,7 +30,7 @@ public class ReadTxn extends AbstractTxn {
     @Override
     public synchronized void close() {
         if (txn != null) {
-            checkThread();
+            check();
             try {
                 txn.close();
             } catch (final RuntimeException e) {

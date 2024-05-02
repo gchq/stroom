@@ -15,7 +15,7 @@ public class WriteTxn extends AbstractTxn {
 
     @Override
     synchronized Txn<ByteBuffer> get() {
-        checkThread();
+        check();
         try {
             if (txn == null) {
                 txn = env.txnWrite();
@@ -29,7 +29,7 @@ public class WriteTxn extends AbstractTxn {
 
     public synchronized void commit() {
         if (txn != null) {
-            checkThread();
+            check();
             try {
                 txn.commit();
             } catch (final RuntimeException e) {
@@ -50,7 +50,7 @@ public class WriteTxn extends AbstractTxn {
     @Override
     public synchronized void close() {
         if (txn != null) {
-            checkThread();
+            check();
             try {
                 txn.close();
             } catch (final RuntimeException e) {
