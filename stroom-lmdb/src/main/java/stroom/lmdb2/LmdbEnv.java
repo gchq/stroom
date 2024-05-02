@@ -218,7 +218,9 @@ public class LmdbEnv implements AutoCloseable {
         public Builder config(final LmdbConfig lmdbConfig) {
             this.maxStoreSize = lmdbConfig.getMaxStoreSize();
             this.maxReaders = lmdbConfig.getMaxReaders();
-//            this.isReadAheadEnabled = lmdbConfig.isReadAheadEnabled();
+            if (!lmdbConfig.isReadAheadEnabled()) {
+                envFlags.add(EnvFlags.MDB_NORDAHEAD);
+            }
 //            this.isReaderBlockedByWriter = lmdbConfig.isReaderBlockedByWriter();
             return this;
         }

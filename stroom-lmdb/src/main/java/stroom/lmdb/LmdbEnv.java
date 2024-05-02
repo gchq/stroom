@@ -717,10 +717,16 @@ public class LmdbEnv implements AutoCloseable {
             checkState();
             if (writeTxn != null) {
                 LOGGER.trace("Committing txn with batchCounter: {}", batchCounter);
-                writeTxn.commit();
-                writeTxn.close();
-                writeTxn = null;
-                batchCounter = 0;
+                try {
+                    writeTxn.commit();
+                } finally {
+                    try {
+                        writeTxn.close();
+                    } finally {
+                        writeTxn = null;
+                        batchCounter = 0;
+                    }
+                }
                 return true;
             } else {
                 return false;

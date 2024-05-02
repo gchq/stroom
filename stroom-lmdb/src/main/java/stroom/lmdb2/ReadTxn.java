@@ -29,16 +29,16 @@ public class ReadTxn extends AbstractTxn {
 
     @Override
     public synchronized void close() {
-        checkThread();
-        try {
-            if (txn != null) {
+        if (txn != null) {
+            checkThread();
+            try {
                 txn.close();
+            } catch (final RuntimeException e) {
+                lmdbErrorHandler.error(e);
+                throw e;
+            } finally {
+                txn = null;
             }
-        } catch (final RuntimeException e) {
-            lmdbErrorHandler.error(e);
-            throw e;
-        } finally {
-            txn = null;
         }
     }
 }

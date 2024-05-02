@@ -28,39 +28,37 @@ public class WriteTxn extends AbstractTxn {
     }
 
     public synchronized void commit() {
-        checkThread();
-        try {
-            if (txn != null) {
-                txn.commit();
-            }
-        } catch (final RuntimeException e) {
-            lmdbErrorHandler.error(e);
-            throw e;
-        } finally {
+        if (txn != null) {
+            checkThread();
             try {
-                if (txn != null) {
-                    txn.close();
-                }
+                txn.commit();
             } catch (final RuntimeException e) {
                 lmdbErrorHandler.error(e);
+                throw e;
             } finally {
-                txn = null;
+                try {
+                    txn.close();
+                } catch (final RuntimeException e) {
+                    lmdbErrorHandler.error(e);
+                } finally {
+                    txn = null;
+                }
             }
         }
     }
 
     @Override
     public synchronized void close() {
-        checkThread();
-        try {
-            if (txn != null) {
+        if (txn != null) {
+            checkThread();
+            try {
                 txn.close();
+            } catch (final RuntimeException e) {
+                lmdbErrorHandler.error(e);
+                throw e;
+            } finally {
+                txn = null;
             }
-        } catch (final RuntimeException e) {
-            lmdbErrorHandler.error(e);
-            throw e;
-        } finally {
-            txn = null;
         }
     }
 }

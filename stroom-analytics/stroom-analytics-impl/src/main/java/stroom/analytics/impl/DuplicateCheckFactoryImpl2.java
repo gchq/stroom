@@ -53,7 +53,6 @@ public class DuplicateCheckFactoryImpl2 implements DuplicateCheckFactory {
 
     private static class DuplicateCheckImpl implements DuplicateCheck {
 
-        private final Thread thread;
         private final LmdbEnv lmdbEnv;
         private final LmdbDb db;
         private final ByteBufferFactory byteBufferFactory;
@@ -67,8 +66,6 @@ public class DuplicateCheckFactoryImpl2 implements DuplicateCheckFactory {
                                   final AnalyticResultStoreConfig analyticResultStoreConfig,
                                   final AnalyticRuleDoc analyticRuleDoc,
                                   final CompiledColumns compiledColumns) {
-            thread = Thread.currentThread();
-
             this.duplicateKeyFactory = new DuplicateKeyFactory2(
                     byteBufferFactory,
                     compiledColumns);
@@ -89,10 +86,6 @@ public class DuplicateCheckFactoryImpl2 implements DuplicateCheckFactory {
 
         @Override
         public boolean check(final Row row) {
-            if (thread != Thread.currentThread()) {
-                throw new RuntimeException("Unexpected thread used. This will break LMDB.");
-            }
-
             final LmdbKV lmdbKV = duplicateKeyFactory.createRow(row);
             boolean result = false;
 
@@ -126,10 +119,6 @@ public class DuplicateCheckFactoryImpl2 implements DuplicateCheckFactory {
 
         @Override
         public void close() {
-            if (thread != Thread.currentThread()) {
-                throw new RuntimeException("Unexpected thread used. This will break LMDB.");
-            }
-
             LOGGER.debug(() -> "close called");
             LOGGER.trace(() -> "close()", new RuntimeException("close"));
             try {

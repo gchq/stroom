@@ -139,9 +139,18 @@ public class LmdbDb {
         }
     }
 
-    public boolean delete(WriteTxn txn, final ByteBuffer key) {
+    public boolean delete(final WriteTxn txn, final ByteBuffer key) {
         try {
             return dbi.delete(txn.get(), key);
+        } catch (final RuntimeException e) {
+            error(e);
+            throw e;
+        }
+    }
+
+    public boolean delete(final WriteTxn txn, final ByteBuffer key, final ByteBuffer value) {
+        try {
+            return dbi.delete(txn.get(), key, value);
         } catch (final RuntimeException e) {
             error(e);
             throw e;

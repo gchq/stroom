@@ -19,7 +19,7 @@ public abstract class AbstractTxn implements AutoCloseable {
 
     void checkThread() {
         if (thread != Thread.currentThread()) {
-            throw new RuntimeException("Unexpected thread used for write txn.");
+            throw new RuntimeException("Unexpected thread used. This will break LMDB.");
         }
     }
 
