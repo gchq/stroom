@@ -65,6 +65,9 @@ import java.util.stream.StreamSupport;
  * See<a href=" https://www.youtube.com/watch?v=tEa5sAh-kVk&t=10">YouTube</a> for a talk by
  * Howard Chu on the design of LMDB to better understand how it works
  * <p>
+ * See <a href="http://www.lmdb.tech/media/20141120-BuildStuff-Lightning.pdf">here</a> for the slides from
+ * the YouTube vid.
+ * <p>
  * See <a href="https://github.com/lmdbjava/lmdbjava/wiki">LMDBJava Wiki</a> for useful usage recommendations
  * <p>
  * Dos/Don'ts
