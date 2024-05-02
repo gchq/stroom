@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.4-beta.8] - 2024-05-02
+
+* Issue **#4253** : Prevent `CancellationException` being seen when user stops query.
+
+
 ## [v7.4-beta.7] - 2024-05-01
 
 * Add key binds for creating documents.
@@ -518,7 +523,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.7...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.8...HEAD
+[v7.4-beta.8]: https://github.com/gchq/stroom/compare/v7.4-beta.7...v7.4-beta.8
 [v7.4-beta.7]: https://github.com/gchq/stroom/compare/v7.4-beta.6...v7.4-beta.7
 [v7.4-beta.6]: https://github.com/gchq/stroom/compare/v7.4-beta.5...v7.4-beta.6
 [v7.4-beta.5]: https://github.com/gchq/stroom/compare/v7.4-beta.4...v7.4-beta.5
