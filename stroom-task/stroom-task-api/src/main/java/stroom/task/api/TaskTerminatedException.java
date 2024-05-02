@@ -21,6 +21,7 @@ import stroom.util.shared.EntityServiceException;
 
 import java.nio.channels.ClosedByInterruptException;
 import java.util.Optional;
+import java.util.concurrent.CancellationException;
 import javax.xml.transform.TransformerException;
 
 public class TaskTerminatedException extends EntityServiceException {
@@ -40,7 +41,8 @@ public class TaskTerminatedException extends EntityServiceException {
                 return Optional.of(taskTerminatedException);
             } else if (e instanceof InterruptedException
                     || e instanceof ClosedByInterruptException
-                    || e instanceof UncheckedInterruptedException) {
+                    || e instanceof UncheckedInterruptedException
+                    || e instanceof CancellationException) {
                 return Optional.of(new TaskTerminatedException());
             } else if (e instanceof final TransformerException transformerEx) {
                 if (transformerEx.getException() instanceof final TaskTerminatedException taskTerminatedEx) {
