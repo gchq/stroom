@@ -6,6 +6,7 @@ import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.FetchNodeStatusResponse;
 import stroom.node.shared.FindNodeStatusCriteria;
 import stroom.node.shared.NodeResource;
+import stroom.task.client.TaskListener;
 
 import com.google.gwt.core.client.GWT;
 
@@ -81,21 +82,35 @@ public class NodeManager {
 
     public void listAllNodes(final Consumer<List<String>> nodeListConsumer,
                              final Consumer<RestError> errorConsumer) {
+        listAllNodes(nodeListConsumer, errorConsumer, null);
+    }
+
+    public void listAllNodes(final Consumer<List<String>> nodeListConsumer,
+                             final Consumer<RestError> errorConsumer,
+                             final TaskListener taskListener) {
         restFactory
                 .create(NODE_RESOURCE)
                 .method(NodeResource::listAllNodes)
                 .onSuccess(nodeListConsumer)
                 .onFailure(errorConsumer)
+                .taskListener(taskListener)
                 .exec();
     }
 
     public void listEnabledNodes(final Consumer<List<String>> nodeListConsumer,
                                  final Consumer<RestError> errorConsumer) {
+        listEnabledNodes(nodeListConsumer, errorConsumer, null);
+    }
+
+    public void listEnabledNodes(final Consumer<List<String>> nodeListConsumer,
+                                 final Consumer<RestError> errorConsumer,
+                                 final TaskListener taskListener) {
         restFactory
                 .create(NODE_RESOURCE)
                 .method(NodeResource::listEnabledNodes)
                 .onSuccess(nodeListConsumer)
                 .onFailure(errorConsumer)
+                .taskListener(taskListener)
                 .exec();
     }
 }

@@ -157,6 +157,7 @@ public class FindInContentPresenter
                                 resetFocus();
                             })
                             .onFailure(errorConsumer)
+//                            .taskListener(getView())
                             .exec();
                 }
             }

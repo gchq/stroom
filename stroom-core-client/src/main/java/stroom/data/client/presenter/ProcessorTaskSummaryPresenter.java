@@ -88,6 +88,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
                         .method(res -> res.findSummary(criteria))
                         .onSuccess(dataConsumer)
                         .onFailure(errorConsumer)
+                        .taskListener(view)
                         .exec();
             }
 

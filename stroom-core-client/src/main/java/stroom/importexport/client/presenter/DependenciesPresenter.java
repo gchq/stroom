@@ -114,6 +114,7 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                         .method(res -> res.fetchDependencies(criteria))
                         .onSuccess(dataConsumer)
                         .onFailure(errorConsumer)
+                        .taskListener(view)
                         .exec();
             }
         };

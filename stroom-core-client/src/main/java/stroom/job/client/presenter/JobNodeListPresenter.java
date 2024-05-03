@@ -113,6 +113,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                         .method(res -> res.find(findJobNodeCriteria))
                         .onSuccess(dataConsumer)
                         .onFailure(errorConsumer)
+                        .taskListener(view)
                         .exec();
             }
 
@@ -189,7 +190,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
 
             @Override
             protected void showHelp(final JobNode row) {
-                clientPropertyCache.get()
+                clientPropertyCache.get(getView())
                         .onSuccess(result -> {
                             final String helpUrl = result.getHelpUrlJobs();
                             if (helpUrl != null && helpUrl.trim().length() > 0) {

@@ -53,7 +53,7 @@ public class Pager extends AbstractPager {
     @UiField(provided = true)
     SvgButton last;
     @UiField(provided = true)
-    SvgButton refresh;
+    RefreshButton refresh;
     @UiField
     Label lblTitle;
     @UiField
@@ -83,7 +83,7 @@ public class Pager extends AbstractPager {
         prev = SvgButton.create(SvgPresets.STEP_BACKWARD_BLUE);
         next = SvgButton.create(SvgPresets.STEP_FORWARD_BLUE);
         last = SvgButton.create(SvgPresets.FAST_FORWARD_BLUE);
-        refresh = SvgButton.create(SvgPresets.REFRESH_BLUE);
+        refresh = new RefreshButton();
 
         initWidget(binder.createAndBindUi(this));
 
@@ -92,7 +92,7 @@ public class Pager extends AbstractPager {
         setupButton(prev);
         setupButton(next);
         setupButton(last);
-        setupButton(refresh);
+        refresh.setEnabled(false);
     }
 
     private void setupButton(SvgButton button) {
@@ -348,21 +348,11 @@ public class Pager extends AbstractPager {
     }
 
     public void setRefreshing(final boolean refreshing) {
-        if (refreshing) {
-            refresh.getElement().addClassName("fa-spin");
-        } else {
-            refresh.getElement().removeClassName("fa-spin");
-        }
+        refresh.setRefreshing(refreshing);
     }
 
     public void setTitle(final String title) {
         lblTitle.setText(title);
-    }
-
-    public void setToVisibleState(final boolean isVisible) {
-        lblTo.setVisible(isVisible);
-//            txtTo.setVisible(isVisible);
-        lblToSeparator.setVisible(isVisible);
     }
 
     public interface Binder extends UiBinder<Widget, Pager> {

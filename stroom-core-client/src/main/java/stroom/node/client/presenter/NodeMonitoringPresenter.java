@@ -121,7 +121,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
 
             @Override
             protected void changeData(final FetchNodeStatusResponse data) {
-                uiConfigCache.get()
+                uiConfigCache.get(getView())
                         .onSuccess(uiConfig -> {
                             final NodeMonitoringConfig nodeMonitoringConfig = uiConfig.getNodeMonitoring();
 

@@ -1,6 +1,7 @@
 package stroom.dispatch.client;
 
 import stroom.task.client.TaskEndEvent;
+import stroom.task.client.TaskListener;
 import stroom.task.client.TaskStartEvent;
 
 import com.google.gwt.event.shared.HasHandlers;

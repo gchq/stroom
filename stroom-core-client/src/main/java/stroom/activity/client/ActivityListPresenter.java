@@ -109,6 +109,7 @@ public class ActivityListPresenter
                         .method(res -> res.list(name))
                         .onSuccess(dataConsumer)
                         .onFailure(errorConsumer)
+                        .taskListener(view)
                         .exec();
             }
         };

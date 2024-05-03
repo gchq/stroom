@@ -11,6 +11,7 @@ import stroom.query.api.v2.ResultStoreInfo;
 import stroom.query.shared.DestroyStoreRequest;
 import stroom.query.shared.ResultStoreResource;
 import stroom.query.shared.UpdateStoreRequest;
+import stroom.task.client.TaskListener;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.ResultPage;
 
@@ -46,24 +47,27 @@ public class ResultStoreModel {
 
     public void fetch(final Range range,
                       final Consumer<ResultPage<ResultStoreInfo>> dataConsumer,
-                      final Consumer<RestError> errorConsumer) {
+                      final Consumer<RestError> errorConsumer,
+                      final TaskListener taskListener) {
         this.range = range;
         this.dataConsumer = dataConsumer;
         delayedUpdate.reset();
-        fetchNodes(range, dataConsumer, errorConsumer);
+        fetchNodes(range, dataConsumer, errorConsumer, taskListener);
     }
 
     private void fetchNodes(final Range range,
                             final Consumer<ResultPage<ResultStoreInfo>> dataConsumer,
-                            final Consumer<RestError> errorConsumer) {
+                            final Consumer<RestError> errorConsumer,
+                            final TaskListener taskListener) {
         nodeManager.listAllNodes(
-                nodeNames -> fetchTasksForNodes(range, dataConsumer, nodeNames),
-                errorConsumer);
+                nodeNames -> fetchTasksForNodes(range, dataConsumer, nodeNames, taskListener),
+                errorConsumer, taskListener);
     }
 
     private void fetchTasksForNodes(final Range range,
                                     final Consumer<ResultPage<ResultStoreInfo>> dataConsumer,
-                                    final List<String> nodeNames) {
+                                    final List<String> nodeNames,
+                                    final TaskListener taskListener) {
         responseMap.clear();
         CriteriaUtil.setRange(criteria, range);
         for (final String nodeName : nodeNames) {
@@ -78,6 +82,7 @@ public class ResultStoreModel {
                         responseMap.remove(nodeName);
                         delayedUpdate.update();
                     })
+                    .taskListener(taskListener)
                     .exec();
         }
     }

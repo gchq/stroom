@@ -124,6 +124,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                         .method(res -> res.find(request))
                         .onSuccess(dataConsumer)
                         .onFailure(errorConsumer)
+                        .taskListener(view)
                         .exec();
             }
 

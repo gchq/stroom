@@ -110,8 +110,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
 
             @Override
             protected void showHelp(final Job row) {
-
-                clientPropertyCache.get()
+                clientPropertyCache.get(view)
                         .onSuccess(result -> {
                             final String helpUrl = result.getHelpUrlJobs();
                             if (helpUrl != null && helpUrl.trim().length() > 0) {
@@ -156,6 +155,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
                                 .method(JobResource::list)
                                 .onSuccess(dataConsumer)
                                 .onFailure(errorConsumer)
+                                .taskListener(view)
                                 .exec();
                     }
 

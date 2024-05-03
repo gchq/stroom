@@ -123,7 +123,7 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
                                         final Consumer<RestError> errorConsumer) {
                         CacheListPresenter.this.range = range;
                         CacheListPresenter.this.dataConsumer = dataConsumer;
-                        nodeManager.listAllNodes(nodeNames -> fetchNamesForNodes(nodeNames), errorConsumer);
+                        nodeManager.listAllNodes(nodeNames -> fetchNamesForNodes(nodeNames), errorConsumer, getView());
                     }
                 };
         dataProvider.addDataDisplay(dataGrid);
@@ -163,9 +163,8 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
                         allCacheIdentities.addAll(response.getValues());
                         delayedUpdate.update();
                     })
-                    .onFailure(throwable -> {
-                        delayedUpdate.update();
-                    })
+                    .onFailure(throwable -> delayedUpdate.update())
+                    .taskListener(getView())
                     .exec();
         }
     }

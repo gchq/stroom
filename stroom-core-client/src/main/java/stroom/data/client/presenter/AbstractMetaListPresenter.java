@@ -155,6 +155,7 @@ public abstract class AbstractMetaListPresenter
                             .method(res -> res.findMetaRow(criteria))
                             .onSuccess(dataConsumer)
                             .onFailure(errorConsumer)
+                            .taskListener(view)
                             .exec();
                 } else {
                     dataConsumer.accept(new ResultPage<>(Collections.emptyList()));

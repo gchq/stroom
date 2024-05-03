@@ -81,6 +81,7 @@ public class UserDataProvider implements Refreshable {
                             .method(res -> res.find(criteria))
                             .onSuccess(dataConsumer)
                             .onFailure(errorConsumer)
+//                            .taskListener()
                             .exec();
                 }
 

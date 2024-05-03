@@ -17,6 +17,7 @@
 package stroom.data.client.view;
 
 import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
+import stroom.data.pager.client.RefreshButton;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.HasItems;
 import stroom.widget.button.client.SvgButton;
@@ -59,9 +60,8 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
     SvgButton nextPageBtn;
     @UiField(provided = true)
     SvgButton lastPageBtn;
-
-    @UiField(provided = true)
-    SvgButton refreshBtn;
+    @UiField
+    RefreshButton refresh;
 
     private HasItems display;
 
@@ -90,13 +90,11 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
         previousPageBtn = SvgButton.create(SvgPresets.STEP_BACKWARD_BLUE);
         nextPageBtn = SvgButton.create(SvgPresets.STEP_FORWARD_BLUE);
         lastPageBtn = SvgButton.create(SvgPresets.FAST_FORWARD_BLUE);
-        refreshBtn = SvgButton.create(SvgPresets.REFRESH_BLUE);
 
         setupButton(firstPageBtn, true, false);
         setupButton(previousPageBtn, true, false);
         setupButton(nextPageBtn, true, false);
         setupButton(lastPageBtn, true, false);
-        setupButton(refreshBtn, true, true);
     }
 
     private void updateButtonTitles() {
@@ -144,7 +142,6 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
 
             nextPageBtn.setEnabled(!display.isLastPage());
             lastPageBtn.setEnabled(!display.isLastPage());
-            refreshBtn.setEnabled(true);
 
             updateButtonTitles();
 
@@ -160,7 +157,7 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
         previousPageBtn.setVisible(isVisible);
         nextPageBtn.setVisible(isVisible);
         lastPageBtn.setVisible(isVisible);
-        refreshBtn.setVisible(isVisible);
+        refresh.setVisible(isVisible);
     }
 
 
@@ -236,10 +233,10 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
         }
     }
 
-    @UiHandler("refreshBtn")
+    @UiHandler("refresh")
     void onClickRefresh(final ClickEvent event) {
         if (display != null) {
-            refreshBtn.setEnabled(false);
+            refresh.setEnabled(false);
             display.refresh();
         }
     }
@@ -250,11 +247,7 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
 
     @Override
     public void setRefreshing(final boolean refreshing) {
-        if (refreshing) {
-            refreshBtn.getElement().addClassName("fa-spin");
-        } else {
-            refreshBtn.getElement().removeClassName("fa-spin");
-        }
+        refresh.setRefreshing(refreshing);
     }
 
     @Override

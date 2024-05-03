@@ -19,6 +19,7 @@ package stroom.ui.config.client;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.task.client.TaskListener;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
@@ -58,7 +59,7 @@ public class UiConfigCache implements HasHandlers {
                     // alive unnecessarily.
                     if (securityContext.isLoggedIn()) {
                         refreshing = true;
-                        refresh()
+                        refresh(null)
                                 .onSuccess(result -> refreshing = false)
                                 .onFailure(throwable -> refreshing = false);
                     }
@@ -72,7 +73,7 @@ public class UiConfigCache implements HasHandlers {
         refreshTimer.scheduleRepeating(ONE_MINUTE);
     }
 
-    public Future<ExtendedUiConfig> refresh() {
+    public Future<ExtendedUiConfig> refresh(TaskListener taskListener) {
         final FutureImpl<ExtendedUiConfig> future = new FutureImpl<>();
         restFactory
                 .create(CONFIG_RESOURCE)
@@ -82,14 +83,19 @@ public class UiConfigCache implements HasHandlers {
                     future.setResult(result);
                     PropertyChangeEvent.fire(UiConfigCache.this, result);
                 }).onFailure(error -> future.setThrowable(error.getException()))
+                .taskListener(taskListener)
                 .exec();
         return future;
     }
 
     public Future<ExtendedUiConfig> get() {
+        return get(null);
+    }
+
+    public Future<ExtendedUiConfig> get(TaskListener taskListener) {
         final ExtendedUiConfig props = clientProperties;
         if (props == null) {
-            return refresh();
+            return refresh(taskListener);
         }
 
         final FutureImpl<ExtendedUiConfig> future = new FutureImpl<>();

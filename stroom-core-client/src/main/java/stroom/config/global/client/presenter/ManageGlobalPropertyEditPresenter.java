@@ -462,7 +462,7 @@ public final class ManageGlobalPropertyEditPresenter
                         if (hideOnSave) {
                             event.hide();
                             // Refresh client properties in case they were affected by this change.
-                            clientPropertyCache.refresh();
+                            clientPropertyCache.refresh(null);
                         }
                     })
                     .onFailure(throwable ->
@@ -477,7 +477,7 @@ public final class ManageGlobalPropertyEditPresenter
                         if (hideOnSave) {
                             event.hide();
                             // Refresh client properties in case they were affected by this change.
-                            clientPropertyCache.refresh();
+                            clientPropertyCache.refresh(null);
                         }
                     })
                     .onFailure(throwable ->

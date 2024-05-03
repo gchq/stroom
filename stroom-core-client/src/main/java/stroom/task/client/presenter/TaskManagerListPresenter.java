@@ -440,7 +440,7 @@ public class TaskManagerListPresenter
                            final Consumer<RestError> errorConsumer) {
         nodeManager.listAllNodes(
                 nodeNames -> fetchTasksForNodes(range, dataConsumer, nodeNames),
-                errorConsumer);
+                errorConsumer, getView());
     }
 
     private void fetchTasksForNodes(final Range range,
@@ -461,6 +461,7 @@ public class TaskManagerListPresenter
                         errorMap.put(nodeName, Collections.singletonList(throwable.getMessage()));
                         delayedUpdate.update();
                     })
+                    .taskListener(getView())
                     .exec();
         }
     }

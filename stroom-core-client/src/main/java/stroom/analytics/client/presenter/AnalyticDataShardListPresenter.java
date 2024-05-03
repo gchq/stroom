@@ -31,6 +31,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.node.client.NodeManager;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.task.client.TaskListener;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
@@ -125,7 +126,7 @@ public class AnalyticDataShardListPresenter
                 AnalyticDataShardListPresenter.this.range = range;
                 AnalyticDataShardListPresenter.this.dataConsumer = dataConsumer;
                 delayedUpdate.reset();
-                fetchNodes(range, dataConsumer, errorConsumer);
+                fetchNodes(range, dataConsumer, errorConsumer, view);
             }
         };
     }
@@ -160,15 +161,17 @@ public class AnalyticDataShardListPresenter
 
     public void fetchNodes(final Range range,
                            final Consumer<ResultPage<AnalyticDataShard>> dataConsumer,
-                           final Consumer<RestError> errorConsumer) {
+                           final Consumer<RestError> errorConsumer,
+                           final TaskListener taskListener) {
         nodeManager.listAllNodes(
-                nodeNames -> fetchTasksForNodes(range, dataConsumer, nodeNames),
-                errorConsumer);
+                nodeNames -> fetchTasksForNodes(range, dataConsumer, nodeNames, taskListener),
+                errorConsumer, taskListener);
     }
 
     private void fetchTasksForNodes(final Range range,
                                     final Consumer<ResultPage<AnalyticDataShard>> dataConsumer,
-                                    final List<String> nodeNames) {
+                                    final List<String> nodeNames,
+                                    final TaskListener taskListener) {
         responseMap.clear();
         for (final String nodeName : nodeNames) {
             if (criteria.getAnalyticDocUuid() != null) {
@@ -186,6 +189,7 @@ public class AnalyticDataShardListPresenter
                             errorMap.put(nodeName, Collections.singletonList(throwable.getMessage()));
                             delayedUpdate.update();
                         })
+                        .taskListener(taskListener)
                         .exec();
             }
 

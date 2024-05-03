@@ -138,7 +138,7 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
                     protected void exec(final Range range,
                                         final Consumer<ResultPage<ResultStoreInfo>> dataConsumer,
                                         final Consumer<RestError> errorConsumer) {
-                        resultStoreModel.fetch(range, dataConsumer, errorConsumer);
+                        resultStoreModel.fetch(range, dataConsumer, errorConsumer, view);
                     }
                 };
         dataProvider.addDataDisplay(dataGrid);

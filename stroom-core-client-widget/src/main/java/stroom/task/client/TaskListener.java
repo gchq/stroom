@@ -1,4 +1,4 @@
-package stroom.dispatch.client;
+package stroom.task.client;
 
 public interface TaskListener {
 

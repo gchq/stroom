@@ -306,7 +306,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
                         CacheNodeListPresenter.this.dataConsumer = dataConsumer;
                         delayedUpdate.reset();
                         nodeManager.listAllNodes(nodeNames ->
-                                fetchTasksForNodes(dataConsumer, errorConsumer, nodeNames), errorConsumer);
+                                fetchTasksForNodes(dataConsumer, errorConsumer, nodeNames), errorConsumer, getView());
                     }
                 };
                 dataProvider.addDataDisplay(dataGrid);
@@ -337,6 +337,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
                         responseMap.remove(nodeName);
                         delayedUpdate.update();
                     })
+                    .taskListener(getView())
                     .exec();
         }
     }

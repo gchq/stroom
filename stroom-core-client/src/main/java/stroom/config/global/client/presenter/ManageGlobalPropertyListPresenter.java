@@ -194,7 +194,8 @@ public class ManageGlobalPropertyListPresenter
                 error ->
                         showError(
                                 error.getException(),
-                                "Error getting list of all nodes. Only properties for one node will be shown"));
+                                "Error getting list of all nodes. Only properties for one node will be shown"),
+                getView());
     }
 
     private void refreshPropertiesForNode(final String nodeName) {

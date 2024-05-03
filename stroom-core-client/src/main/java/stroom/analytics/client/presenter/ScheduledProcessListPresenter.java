@@ -107,6 +107,7 @@ public class ScheduledProcessListPresenter
                             .method(res -> res.fetchExecutionSchedule(request))
                             .onSuccess(dataConsumer)
                             .onFailure(errorConsumer)
+                            .taskListener(view)
                             .exec();
                 }
             }

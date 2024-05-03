@@ -1,5 +1,6 @@
 package stroom.dispatch.client;
 
+import stroom.task.client.TaskListener;
 import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.core.client.GWT;

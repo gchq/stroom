@@ -46,6 +46,8 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
     @UiField
     SimplePanel listContainer;
 
+    private int taskCount;
+
     private final Widget widget;
 
     @Inject
@@ -92,6 +94,18 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
     @Override
     public void setPagerVisible(final boolean visible) {
         pagerContainer.setVisible(visible);
+    }
+
+    @Override
+    public void incrementTaskCount() {
+        taskCount++;
+        pager.setRefreshing(taskCount > 0);
+    }
+
+    @Override
+    public void decrementTaskCount() {
+        taskCount--;
+        pager.setRefreshing(taskCount > 0);
     }
 
     public interface Binder extends UiBinder<Widget, PagerViewImpl> {

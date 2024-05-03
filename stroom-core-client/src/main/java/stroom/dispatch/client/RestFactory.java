@@ -1,5 +1,7 @@
 package stroom.dispatch.client;
 
+import stroom.task.client.TaskListener;
+
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.function.Consumer;

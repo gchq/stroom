@@ -24,6 +24,7 @@ import stroom.security.shared.FindApiKeyCriteria;
 import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.TaskListener;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Selection;
@@ -112,7 +113,7 @@ public class ApiKeysListPresenter
                                 final Consumer<RestError> errorConsumer) {
                 ApiKeysListPresenter.this.range = range;
                 ApiKeysListPresenter.this.dataConsumer = dataConsumer;
-                fetchData(range, dataConsumer, errorConsumer);
+                fetchData(range, dataConsumer, errorConsumer, view);
             }
         };
         dataProvider.addDataDisplay(dataGrid);
@@ -309,7 +310,8 @@ public class ApiKeysListPresenter
 
     private void fetchData(final Range range,
                            final Consumer<ApiKeyResultPage> dataConsumer,
-                           final Consumer<RestError> errorConsumer) {
+                           final Consumer<RestError> errorConsumer,
+                           final TaskListener taskListener) {
         restFactory
                 .create(API_KEY_RESOURCE)
                 .method(res -> res.find(criteria))
@@ -336,6 +338,7 @@ public class ApiKeysListPresenter
                             "Error fetching API Keys: " + throwable.getMessage(),
                             null);
                 })
+                .taskListener(taskListener)
                 .exec();
     }
 
