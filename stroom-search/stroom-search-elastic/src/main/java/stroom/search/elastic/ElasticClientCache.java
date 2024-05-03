@@ -18,13 +18,13 @@ package stroom.search.elastic;
 
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 
-import org.elasticsearch.client.RestHighLevelClient;
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 public interface ElasticClientCache {
-    void context(ElasticConnectionConfig key, Consumer<RestHighLevelClient> consumer);
+    void context(ElasticConnectionConfig key, Consumer<ElasticsearchClient> consumer);
 
-    <R> R contextResult(ElasticConnectionConfig key, Function<RestHighLevelClient, R> function);
+    <R> R contextResult(ElasticConnectionConfig key, Function<ElasticsearchClient, R> function);
 }

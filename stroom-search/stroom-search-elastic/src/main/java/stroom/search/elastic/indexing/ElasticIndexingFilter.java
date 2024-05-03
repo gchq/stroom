@@ -43,34 +43,31 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
+import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.Refresh;
+import co.elastic.clients.elasticsearch._types.aggregations.AggregationBuilders;
+import co.elastic.clients.elasticsearch._types.aggregations.CompositeAggregate;
+import co.elastic.clients.elasticsearch._types.aggregations.CompositeAggregation;
+import co.elastic.clients.elasticsearch._types.aggregations.CompositeAggregationSource;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
+import co.elastic.clients.elasticsearch.core.BulkRequest;
+import co.elastic.clients.elasticsearch.core.BulkRequest.Builder;
+import co.elastic.clients.elasticsearch.core.BulkResponse;
+import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
+import co.elastic.clients.elasticsearch.core.DeleteByQueryResponse;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
+import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
+import co.elastic.clients.util.BinaryData;
+import co.elastic.clients.util.ContentType;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.ws.rs.NotFoundException;
-import org.elasticsearch.ElasticsearchStatusException;
-import org.elasticsearch.action.DocWriteRequest.OpType;
-import org.elasticsearch.action.bulk.BulkItemResponse.Failure;
-import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.support.WriteRequest.RefreshPolicy;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.index.query.TermQueryBuilder;
-import org.elasticsearch.index.reindex.BulkByScrollResponse;
-import org.elasticsearch.index.reindex.DeleteByQueryRequest;
-import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.Aggregations;
-import org.elasticsearch.search.aggregations.bucket.composite.CompositeAggregation;
-import org.elasticsearch.search.aggregations.bucket.composite.CompositeAggregation.Bucket;
-import org.elasticsearch.search.aggregations.bucket.composite.CompositeAggregationBuilder;
-import org.elasticsearch.search.aggregations.bucket.composite.CompositeValuesSourceBuilder;
-import org.elasticsearch.search.aggregations.bucket.composite.TermsValuesSourceBuilder;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.xcontent.XContentType;
+import org.elasticsearch.client.ResponseException;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -109,8 +106,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticIndexingFilter.class);
     private static final JsonFactory JSON_FACTORY = new JsonFactory();
     private static final int INITIAL_JSON_STREAM_SIZE_BYTES = 1024;
-    private static final int ES_MAX_EXCEPTION_CHARS = 1024;
-    private static final String ES_TOO_MANY_REQUESTS_STATUS = "TOO_MANY_REQUESTS";
+    private static final int ES_COMPOSITE_BATCH_SIZE = 100; // Number of index names to retrieve per request
+    private static final int ES_MAX_EXCEPTION_CHARS = 4096;
+    private static final int ES_TOO_MANY_REQUESTS_STATUS = 429;
     private static final Pattern INDEX_NAME_VALUE_PATTERN = Pattern.compile("(\\{[^}]+?})");
     private static final Pattern INDEX_BASE_NAME_PATTERN = Pattern.compile("^([^{]+)");
 
@@ -137,7 +135,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     String pipelineName;
 
     // State
-    private final List<IndexRequest> indexRequests;
+    private final List<BulkOperation> bulkOperations;
     private final ByteArrayOutputStream currentDocument;
     private final StringBuilder valueBuffer = new StringBuilder();
     private Set<String> indexNameVariables = new HashSet<>();
@@ -170,7 +168,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         this.streamProcessorHolder = streamProcessorHolder;
         this.metaHolder = metaHolder;
 
-        indexRequests = new ArrayList<>();
+        bulkOperations = new ArrayList<>();
         currentDocument = new ByteArrayOutputStream(INITIAL_JSON_STREAM_SIZE_BYTES);
         currentRetry = 0;
     }
@@ -355,7 +353,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                 case JSONParser.XML_ELEMENT_STRING:
                     value = valueBuffer.toString();
                     try {
-                        if (value.length() > 0) {
+                        if (!value.isEmpty()) {
                             if (includeField(currentDocFieldName)) {
                                 writeFieldName();
                                 jsonGenerator.writeString(value);
@@ -371,7 +369,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                 case JSONParser.XML_ELEMENT_BOOLEAN:
                     value = valueBuffer.toString();
                     try {
-                        if (value.length() > 0) {
+                        if (!value.isEmpty()) {
                             if (includeField(currentDocFieldName)) {
                                 writeFieldName();
                                 jsonGenerator.writeBoolean(Boolean.parseBoolean(value));
@@ -399,7 +397,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                 case JSONParser.XML_ELEMENT_NUMBER:
                     value = valueBuffer.toString();
                     try {
-                        if (value.length() > 0) {
+                        if (!value.isEmpty()) {
                             if (includeField(currentDocFieldName)) {
                                 writeFieldName();
                                 jsonGenerator.writeNumber(value);
@@ -425,12 +423,12 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
      * Whether to include the field in the destination document
      */
     private boolean includeField(final String fieldName) {
-        return fieldName != null && !fieldName.startsWith("_");
+        return fieldName == null || !fieldName.startsWith("_");
     }
 
     private void storeIndexNameVariableValue(final String value) {
         try {
-            if (value.length() > 0 && indexNameVariables.contains(currentDocFieldName)) {
+            if (!value.isEmpty() && indexNameVariables.contains(currentDocFieldName)) {
                 currentDocIndexNameVariables.put(currentDocFieldName, value);
             }
         } catch (IllegalArgumentException e) {
@@ -473,20 +471,25 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             if (currentDocPropertyCount > 0) {
                 jsonGenerator.flush();
 
-                final IndexRequest indexRequest = new IndexRequest(formatIndexName())
-                        .opType(OpType.CREATE)
-                        .source(currentDocument.toByteArray(), XContentType.JSON);
+                bulkOperations.add(BulkOperation.of(b -> b
+                        .create(createOp -> {
+                            createOp.index(formatIndexName());
 
-                // If an ingest pipeline name is specified, execute it when ingesting the document
-                if (ingestPipelineName != null && !ingestPipelineName.isEmpty()) {
-                    indexRequest.setPipeline(ingestPipelineName);
+                            // If an ingest pipeline name is specified, execute it when ingesting the document
+                            if (ingestPipelineName != null && !ingestPipelineName.isEmpty()) {
+                                createOp.pipeline(ingestPipelineName);
+                            }
+
+                            createOp.document(BinaryData.of(currentDocument.toByteArray(),
+                                    ContentType.APPLICATION_JSON));
+                            return createOp;
+                        })
+                ));
+
+                // If the maximum batch size has been reached, send the current batch for indexing
+                if (bulkOperations.size() >= batchSize) {
+                    indexDocuments();
                 }
-
-                indexRequests.add(indexRequest);
-            }
-
-            if (indexRequests.size() >= batchSize) {
-                indexDocuments();
             }
         } catch (IOException e) {
             fatalError("Failed to flush JSON to stream", e);
@@ -508,7 +511,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     /**
      * Delete documents from the target index, where the indexed field `StreamId` matches one of the provided IDs
      */
-    private boolean purgeDocumentsForStream(final RestHighLevelClient elasticClient, final Long streamId)
+    private boolean purgeDocumentsForStream(final ElasticsearchClient elasticClient, final Long streamId)
             throws LoggedException {
         final List<String> indexNames = getTargetIndexNames(elasticClient, streamId);
         if (indexNames != null && !indexNames.isEmpty()) {
@@ -517,16 +520,23 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                 // Delete against one index at a time. We don't delete against all indices, as this may cause
                 // the cluster limit `search.max_open_scroll_context` to be exceeded.
                 for (final String indexName : indexNames) {
-                    final DeleteByQueryRequest deleteRequest = new DeleteByQueryRequest(indexName)
-                            .setQuery(new TermQueryBuilder(ElasticIndexConstants.STREAM_ID, streamId))
-                            .setRefresh(true);
+                    final DeleteByQueryRequest deleteRequest = DeleteByQueryRequest.of(r -> r
+                            .index(indexName)
+                            .scrollSize((long) batchSize)
+                            .refresh(true)
+                            .query(q -> q
+                                    .term(t -> t
+                                            .field(ElasticIndexConstants.STREAM_ID)
+                                            .value(streamId)
+                                    )
+                            )
+                    );
 
-                    final BulkByScrollResponse deleteResponse = elasticClient.deleteByQuery(deleteRequest,
-                            RequestOptions.DEFAULT);
-                    final long deletedCount = deleteResponse.getDeleted();
+                    final DeleteByQueryResponse deleteResponse = elasticClient.deleteByQuery(deleteRequest);
+                    final long tookSeconds = deleteResponse.took() != null ? deleteResponse.took() / 1000 : 0;
 
                     LOGGER.info("Deleted {} documents matching StreamId: {} from index: {}, took {} seconds",
-                            deletedCount, streamId, indexName, deleteResponse.getTook().getSecondsFrac());
+                            deleteResponse.deleted(), streamId, indexName, tookSeconds);
                 }
             } catch (IOException e) {
                 fatalError("Failed to purge documents for StreamId: " + streamId, e);
@@ -539,51 +549,61 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     /**
      * Given a StreamId, retrieve a list of names of all indices containing matching documents
      */
-    private List<String> getTargetIndexNames(final RestHighLevelClient elasticClient, final Long streamId)
+    private List<String> getTargetIndexNames(final ElasticsearchClient elasticClient, final Long streamId)
             throws LoggedException {
         final String indicesAggregationKey = "indices";
-        final String streamIdSourceKey = "streamId";
+        final String indexNameSourceKey = "index_name";
 
-        List<CompositeValuesSourceBuilder<?>> sources = new ArrayList<>();
-        sources.add(new TermsValuesSourceBuilder(streamIdSourceKey)
-                .field(ElasticIndexConstants.INDEX_ID)
+        final Map<String, CompositeAggregationSource> compositeAggregationSource = Map.of(
+                indexNameSourceKey,
+                CompositeAggregationSource.of(source -> source
+                        .terms(t -> t.field(ElasticIndexConstants.INDEX_NAME))
+                )
         );
 
         // Create a composite aggregation to collect all the unique indices that we need to issue delete requests
         // against
         try {
-            List<String> indexNames = new ArrayList<>();
-            Map<String, Object> afterKey = null;
+            List<String> allIndexNames = new ArrayList<>();
+            Map<String, FieldValue> afterKey = null;
             int bucketSize = -1;
             while (bucketSize != 0) {
-                final CompositeAggregationBuilder compositeAgg = AggregationBuilders
-                        .composite(indicesAggregationKey, sources);
+                TermQuery query = TermQuery.of(m -> m
+                        .field(ElasticIndexConstants.STREAM_ID)
+                        .value(streamId)
+                );
+
+                final CompositeAggregation.Builder compositeAggBuilder = AggregationBuilders.composite()
+                        .sources(List.of(compositeAggregationSource));
                 if (afterKey != null) {
-                    compositeAgg.aggregateAfter(afterKey);
+                    compositeAggBuilder.after(afterKey);
                 }
-                final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder()
-                        .size(100) // Number of index names to retrieve at a time, until we have all of them
-                        .query(new TermQueryBuilder(ElasticIndexConstants.STREAM_ID, streamId))
-                        .aggregation(compositeAgg);
-                final String indexBaseName = getIndexBaseName();
-                final SearchRequest searchRequest = new SearchRequest(indexBaseName + "*")
-                        .source(searchSourceBuilder);
-                final SearchResponse searchResponse = elasticClient.search(searchRequest, RequestOptions.DEFAULT);
-                final Aggregations aggregations = searchResponse.getAggregations();
-                if (aggregations != null) {
-                    final CompositeAggregation aggregation = aggregations.get(indicesAggregationKey);
-                    final List<? extends Bucket> buckets = aggregation.getBuckets();
-                    bucketSize = buckets.size();
-                    for (final var bucket : buckets) {
-                        indexNames.add((String) bucket.getKey().get(streamIdSourceKey));
-                    }
-                    afterKey = aggregation.afterKey();
+
+                final SearchResponse<Void> response = elasticClient.search(s -> s
+                        .index(getIndexBaseName() + "*")
+                        .size(ES_COMPOSITE_BATCH_SIZE)
+                        .query(query._toQuery())
+                        .aggregations(indicesAggregationKey, compositeAggBuilder.build()._toAggregation()),
+                        Void.class
+                );
+
+                if (response.aggregations() != null && !response.aggregations().isEmpty()) {
+                    CompositeAggregate compositeAgg = response.aggregations()
+                            .get(indicesAggregationKey)
+                            .composite();
+
+                    final List<String> indexNames = compositeAgg.buckets().array()
+                            .stream().map(bucket -> bucket.key().get(indexNameSourceKey).stringValue())
+                            .toList();
+                    allIndexNames.addAll(indexNames);
+                    afterKey = compositeAgg.afterKey();
+                    bucketSize = indexNames.size();
                 } else {
                     // No index exists for this stream, so no deletion necessary
                     return null;
                 }
             }
-            return indexNames;
+            return allIndexNames;
         } catch (IOException e) {
             fatalError("Failed to list indices for reindex purge. StreamId: " + streamId + ". " +
                     "Base name: '" + indexName + "'", e);
@@ -608,7 +628,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
      * Index the current batch of documents
      */
     private void indexDocuments() {
-        if (indexRequests.size() == 0) {
+        if (bulkOperations.isEmpty()) {
             return;
         }
 
@@ -618,44 +638,54 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                 elasticClientCache.context(elasticCluster.getConnection(), elasticClient -> {
                     try {
                         // Create a new bulk indexing request, containing the current batch of documents
-                        final BulkRequest bulkRequest = new BulkRequest();
+                        final Builder bulkRequestBuilder = new BulkRequest.Builder();
 
                         // For each document, create an indexing request and append to the bulk request
-                        for (IndexRequest indexRequest : indexRequests) {
-                            bulkRequest.add(indexRequest);
-                        }
+                        bulkRequestBuilder.operations(bulkOperations);
 
                         if (refreshAfterEachBatch) {
                             // Refresh upon completion of the batch index request
-                            bulkRequest.setRefreshPolicy(RefreshPolicy.IMMEDIATE);
+                            bulkRequestBuilder.refresh(Refresh.True);
                         } else {
-                            // Only refresh after all batches have been indexed
-                            bulkRequest.setRefreshPolicy(RefreshPolicy.NONE);
+                            bulkRequestBuilder.refresh(Refresh.False);
                         }
 
-                        final BulkResponse response = elasticClient.bulk(bulkRequest, RequestOptions.DEFAULT);
-                        if (response.hasFailures()) {
-                            for (final var bulkResponse : response.getItems()) {
-                                final Failure failure = bulkResponse.getFailure();
-                                if (failure != null && failure.getStatus() != null &&
-                                        ES_TOO_MANY_REQUESTS_STATUS.equals(failure.getStatus().name())) {
-                                    throw new ElasticsearchOverloadedException(response.buildFailureMessage());
-                                }
+                        final BulkResponse response = elasticClient.bulk(bulkRequestBuilder.build());
+                        if (response.errors()) {
+                            boolean overloaded = response.items().stream()
+                                    .anyMatch(item -> item.status() == ES_TOO_MANY_REQUESTS_STATUS);
+                            if (overloaded) {
+                                // Failure was due to Elasticsearch being overloaded, so retry after a delay
+                                deleteBulkRequestDocuments(elasticClient, response);
+                                throw new ElasticsearchOverloadedException(response.toString());
+                            } else {
+                                // Request failed for some other reason, so abort without retry
+                                throw new IOException("Bulk indexing request failed: " + response);
                             }
-                            // Request failed for some other reason, so abort without retry
-                            throw new IOException("Bulk indexing request failed: " + response.buildFailureMessage());
                         } else {
                             succeeded.set(true);
                             final String retryMessage = currentRetry > 0
                                     ? " (retries: " + currentRetry + ")"
                                     : "";
-                            LOGGER.info("Pipeline '{}' indexed {} documents to Elasticsearch cluster '{}' in " +
-                                            "{} seconds" + retryMessage,
-                                    pipelineName, indexRequests.size(), elasticCluster.getName(),
-                                    response.getTook().getSecondsFrac());
+                            LOGGER.info("Pipeline '{}' indexed {} documents from stream {} to Elasticsearch cluster " +
+                                            "'{}' in {} seconds{}", pipelineName, bulkOperations.size(),
+                                    metaHolder.getMeta().getId(), elasticCluster.getName(), response.took() / 1000,
+                                    retryMessage);
                         }
-                    } catch (ElasticsearchStatusException | ElasticsearchOverloadedException e) {
-                        handleElasticsearchException(e);
+                    } catch (ElasticsearchOverloadedException e) {
+                        handleElasticsearchOverloadedException(e);
+                    } catch (ElasticsearchException e) {
+                        if (e.status() == ES_TOO_MANY_REQUESTS_STATUS) {
+                            handleElasticsearchOverloadedException(e);
+                        } else {
+                            handleElasticsearchException(e);
+                        }
+                    } catch (ResponseException e) {
+                        if (e.getResponse().getStatusLine().getStatusCode() == ES_TOO_MANY_REQUESTS_STATUS) {
+                            handleElasticsearchOverloadedException(e);
+                        } else {
+                            handleElasticsearchException(e);
+                        }
                     } catch (RuntimeException | IOException e) {
                         fatalError(e.getMessage() != null
                                 ? e.getMessage().substring(0,
@@ -668,7 +698,43 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             }
         } finally {
             currentRetry = 0;
-            indexRequests.clear();
+            bulkOperations.clear();
+        }
+    }
+
+    /**
+     * Delete any documents that were successfully indexed during a failed bulk request.
+     * This removes duplicates in the destination index.
+     */
+    private void deleteBulkRequestDocuments(final ElasticsearchClient elasticClient,
+                                            final BulkResponse response) {
+        final List<BulkOperation> deleteOperations = new ArrayList<>();
+
+        for (final BulkResponseItem item : response.items()) {
+            if (item.error() == null) {
+                deleteOperations.add(BulkOperation.of(b -> b
+                        .delete(deleteOp -> deleteOp
+                                .index(item.index())
+                                .id(item.id())
+                        )
+                ));
+            }
+        }
+
+        if (!deleteOperations.isEmpty()) {
+            try {
+                final BulkRequest bulkRequest = new BulkRequest.Builder()
+                        .operations(deleteOperations)
+                        .build();
+
+                elasticClient.bulk(bulkRequest);
+
+                LOGGER.info("Deleted {} documents from failed bulk indexing request for stream {}, pipeline '{}'",
+                        deleteOperations.size(), metaHolder.getMeta().getId(), pipelineName);
+            } catch (IOException e) {
+                LOGGER.warn("Error occurred when deleting documents indexed during a failed bulk request. " +
+                        "Stream: {}, pipeline: '{}'", metaHolder.getMeta().getId(), pipelineName, e);
+            }
         }
     }
 
@@ -677,38 +743,40 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
      * cannot queue the batched payload. Retry after a delay, if we haven't exceeded the retry
      * limit. Otherwise, terminate this thread and create an `Error` stream.
      */
-    private void handleElasticsearchException(final RuntimeException e) {
-        String statusName = "";
-        if (e instanceof ElasticsearchStatusException) {
-            statusName = ((ElasticsearchStatusException) e).status().name();
-        }
+    private void handleElasticsearchOverloadedException(final Exception e) {
         final String errorDetailMsg = e.getMessage() != null
                 ? e.getMessage().substring(0,
                 Math.min(ES_MAX_EXCEPTION_CHARS, e.getMessage().length()))
                 : "";
-        if (e instanceof ElasticsearchOverloadedException || ES_TOO_MANY_REQUESTS_STATUS.equals(statusName)) {
-            final ElasticIndexingConfig indexingConfig = elasticConfigProvider.get().getIndexingConfig();
-            if (currentRetry < indexingConfig.getRetryCount()) {
-                final long sleepDurationMs = indexingConfig.getInitialRetryBackoffPeriodMs() *
-                        ((long) currentRetry + 1);
-                try {
-                    LOGGER.warn("Indexing request by pipeline '" + pipelineName + "' was rejected by " +
-                            "Elasticsearch. Retrying in " + sleepDurationMs + " milliseconds " +
-                            "(retries: " + currentRetry + ")");
-                    Thread.sleep(sleepDurationMs);
-                } catch (InterruptedException ex) {
-                    Thread.currentThread().interrupt();
-                    fatalError("Indexing terminated after " + currentRetry + " retries: " +
-                            errorDetailMsg, ex);
-                }
-            } else {
-                fatalError("Indexing failed to complete after " + currentRetry +
-                        " retries: " + errorDetailMsg, null);
+        final ElasticIndexingConfig indexingConfig = elasticConfigProvider.get().getIndexingConfig();
+
+        if (currentRetry < indexingConfig.getRetryCount()) {
+            // Backoff by the initial interval plus an exponential amount
+            final long sleepDurationMs = indexingConfig.getInitialRetryBackoffPeriodMs() +
+                    (long) currentRetry * currentRetry;
+            try {
+                LOGGER.warn("Indexing request by pipeline '{}' for stream {} was rejected by Elasticsearch. " +
+                                "Retrying in {} milliseconds (retries: {})", pipelineName, metaHolder.getMeta().getId(),
+                        sleepDurationMs, currentRetry);
+                Thread.sleep(sleepDurationMs);
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+                fatalError("Indexing terminated after " + currentRetry + " retries: " + errorDetailMsg, ex);
             }
         } else {
-            fatalError("Indexing failed to complete after " + currentRetry +
-                    " retries: " + errorDetailMsg, null);
+            fatalError("Indexing failed to complete after " + currentRetry + " retries: " + errorDetailMsg, e);
         }
+    }
+
+    /**
+     * A general Elasticsearch indexing error occurred. Terminate processing and create an `Error` stream.
+     */
+    private void handleElasticsearchException(final Exception e) {
+        final String errorDetailMsg = e.getMessage() != null
+                ? e.getMessage().substring(0, Math.min(ES_MAX_EXCEPTION_CHARS, e.getMessage().length()))
+                : "";
+
+        fatalError("Indexing failed to complete after " + currentRetry + " retries: " + errorDetailMsg, e);
     }
 
     /**

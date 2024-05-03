@@ -12,7 +12,6 @@ import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.search.elastic.ElasticIndexCache;
-import stroom.search.elastic.ElasticIndexService;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.extraction.StoredDataQueue;
 import stroom.task.api.ExecutorProvider;
@@ -24,10 +23,9 @@ import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import co.elastic.clients.elasticsearch.core.search.BoundaryScanner;
+import co.elastic.clients.elasticsearch.core.search.Highlight;
 import jakarta.inject.Inject;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
-import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder.BoundaryScannerType;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -40,7 +38,6 @@ public class ElasticSearchFactory {
 
     private final WordListProvider wordListProvider;
     private final ElasticSearchTaskHandler elasticSearchTaskHandler;
-    private final ElasticIndexService elasticIndexService;
     private final ElasticIndexCache elasticIndexCache;
     private final IndexFieldCache indexFieldCache;
     private final TaskContextFactory taskContextFactory;
@@ -49,14 +46,12 @@ public class ElasticSearchFactory {
     @Inject
     public ElasticSearchFactory(final WordListProvider wordListProvider,
                                 final ElasticSearchTaskHandler elasticSearchTaskHandler,
-                                final ElasticIndexService elasticIndexService,
                                 final ElasticIndexCache elasticIndexCache,
                                 final IndexFieldCache indexFieldCache,
                                 final TaskContextFactory taskContextFactory,
                                 final ExecutorProvider executorProvider) {
         this.wordListProvider = wordListProvider;
         this.elasticSearchTaskHandler = elasticSearchTaskHandler;
-        this.elasticIndexService = elasticIndexService;
         this.elasticIndexCache = elasticIndexCache;
         this.indexFieldCache = indexFieldCache;
         this.taskContextFactory = taskContextFactory;
@@ -113,32 +108,34 @@ public class ElasticSearchFactory {
                         }).run(), executor);
     }
 
-    private QueryBuilder getQuery(final DocRef indexDocRef,
-                                  final IndexFieldCache indexFieldCache,
-                                  final ExpressionOperator expression,
-                                  final DateTimeSettings dateTimeSettings) {
+    private co.elastic.clients.elasticsearch._types.query_dsl.Query getQuery(final DocRef indexDocRef,
+                                                                             final IndexFieldCache indexFieldCache,
+                                                                             final ExpressionOperator expression,
+                                                                             final DateTimeSettings dateTimeSettings) {
         final SearchExpressionQueryBuilder builder = new SearchExpressionQueryBuilder(
                 indexDocRef,
                 indexFieldCache,
                 wordListProvider,
                 dateTimeSettings);
-        final QueryBuilder query = builder.buildQuery(expression);
+        final co.elastic.clients.elasticsearch._types.query_dsl.Query query = builder.buildQuery(expression);
 
         // Make sure the query was created successfully.
         if (query == null) {
             throw new SearchException("Failed to build query given expression");
         } else {
-            LOGGER.debug(() -> "Query is " + query);
+            LOGGER.debug(() -> "Query: " + query);
         }
 
         return query;
     }
 
-    private HighlightBuilder getHighlighter() {
-        return new HighlightBuilder()
-                .field("*")
-                .preTags("")
-                .postTags("")
-                .boundaryScannerType(BoundaryScannerType.WORD);
+    private Highlight getHighlighter() {
+        return Highlight.of(h -> h
+                .fields("*", f -> f
+                        .preTags("")
+                        .postTags("")
+                        .boundaryScanner(BoundaryScanner.Word)
+                )
+        );
     }
 }
