@@ -25,6 +25,7 @@ import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValInteger;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
@@ -389,7 +390,7 @@ class IndexShardDaoImpl implements IndexShardDao {
             valueMapper.map(IndexShardFields.FIELD_DOC_COUNT, INDEX_SHARD.DOCUMENT_COUNT, ValInteger::create);
             valueMapper.map(IndexShardFields.FIELD_FILE_SIZE, INDEX_SHARD.FILE_SIZE, ValLong::create);
             valueMapper.map(IndexShardFields.FIELD_STATUS, INDEX_SHARD.STATUS, this::getStatus);
-            valueMapper.map(IndexShardFields.FIELD_LAST_COMMIT, INDEX_SHARD.COMMIT_MS, ValLong::create);
+            valueMapper.map(IndexShardFields.FIELD_LAST_COMMIT, INDEX_SHARD.COMMIT_MS, ValDate::create);
             valueMapper.map(IndexShardFields.FIELD_VOLUME_PATH, INDEX_VOLUME.PATH, ValString::create);
             valueMapper.map(IndexShardFields.FIELD_VOLUME_GROUP, INDEX_VOLUME_GROUP.NAME, ValString::create);
         }
