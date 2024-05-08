@@ -79,6 +79,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
         this.showAlerts = showAlerts;
 
         final SpinnerSmall spinnerSmall = new SpinnerSmall();
+        spinnerSmall.setRefreshing(true);
         spinnerSmall.getElement().getStyle().setPosition(Style.Position.ABSOLUTE);
         spinnerSmall.getElement().getStyle().setRight(5, Style.Unit.PX);
         spinnerSmall.getElement().getStyle().setTop(5, Style.Unit.PX);

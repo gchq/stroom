@@ -347,8 +347,8 @@ public class Pager extends AbstractPager {
         refresh.setEnabled(true);
     }
 
-    public void setRefreshing(final boolean refreshing) {
-        refresh.setRefreshing(refreshing);
+    public RefreshButton getRefreshButton() {
+        return refresh;
     }
 
     public void setTitle(final String title) {

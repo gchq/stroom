@@ -1,24 +1,25 @@
 package stroom.data.pager.client;
 
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.button.client.SvgButton;
-import stroom.widget.spinner.client.SpinnerSmall;
 
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 
 public class RefreshButton extends Composite {
 
-    private final FlowPanel layout;
-    private final SvgButton refresh;
+    private final SvgButton button;
 
     public RefreshButton() {
-        refresh = SvgButton.create(SvgPresets.REFRESH_BLUE);
+        final SimplePanel refreshInner = new SimplePanel();
+        refreshInner.setStyleName("refresh-inner");
+        refreshInner.getElement().setInnerHTML(SvgImage.REFRESH.getSvg());
+        final SimplePanel refreshOuter = new SimplePanel(refreshInner);
+        refreshOuter.setStyleName("refresh-outer");
 
         final SimplePanel spinnerInner = new SimplePanel();
         spinnerInner.setStyleName("spinner-inner");
@@ -38,56 +39,55 @@ public class RefreshButton extends Composite {
         final SimplePanel pauseOuter = new SimplePanel(pauseInner);
         pauseOuter.setStyleName("pause-outer");
 
-        layout = new FlowPanel();
-        layout.setStyleName("refreshButton");
-        layout.add(refresh);
+        final FlowPanel layout = new FlowPanel();
+        layout.setStyleName("background refreshButton");
+        layout.add(refreshOuter);
         layout.add(spinnerOuter);
         layout.add(spinningOuter);
         layout.add(pauseOuter);
 
-//        spinnerSmall.addDomHandler(event -> {
-//            if (getUiHandlers() != null) {
-//                getUiHandlers().onPause();
-//            }
-//        }, ClickEvent.getType());
-//        pause.addDomHandler(event -> {
-//            if (getUiHandlers() != null) {
-//                getUiHandlers().onPause();
-//            }
-//        }, ClickEvent.getType());
+        button = new SvgButton();
+        button.addStyleName("refreshButton");
+        button.setTitle("Refresh");
+        button.setEnabled(true);
 
-        initWidget(layout);
+        button.getElement().removeAllChildren();
+        DOM.appendChild(button.getElement(), layout.getElement());
+
+        initWidget(button);
     }
 
     public void setRefreshing(final boolean refreshing) {
         if (refreshing) {
-            layout.addStyleName("refreshing");
+            button.addStyleName("refreshing");
         } else {
-            layout.removeStyleName("refreshing");
+            button.removeStyleName("refreshing");
         }
     }
 
     public void setAllowPause(final boolean allowPause) {
         if (allowPause) {
-            layout.addStyleName("allowPause");
+            button.addStyleName("allowPause");
         } else {
-            layout.removeStyleName("allowPause");
+            button.removeStyleName("allowPause");
         }
     }
 
     public void setPaused(final boolean paused) {
         if (paused) {
-            layout.addStyleName("paused");
+            button.setTitle("Resume Update");
+            button.addStyleName("paused");
         } else {
-            layout.removeStyleName("paused");
+            button.setTitle("Pause Update");
+            button.removeStyleName("paused");
         }
     }
 
     public void setEnabled(final boolean enabled) {
-        refresh.setEnabled(enabled);
+        button.setEnabled(enabled);
     }
 
     public HandlerRegistration addClickHandler(ClickHandler handler) {
-        return refresh.addClickHandler(handler);
+        return button.addClickHandler(handler);
     }
 }

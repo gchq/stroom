@@ -20,6 +20,7 @@ package stroom.analytics.client.presenter;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.docref.DocRef;
+import stroom.document.client.event.TabDataTaskListener;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
@@ -45,7 +46,7 @@ public class AnalyticRulePresenter
     @Inject
     public AnalyticRulePresenter(final EventBus eventBus,
                                  final LinkTabPanelView view,
-                                 final Provider<AnalyticQueryEditPresenter> analyticQueryEditPresenterProvider,
+                                 final AnalyticQueryEditPresenter analyticQueryEditPresenter,
                                  final Provider<NotificationListPresenter> notificationPresenterProvider,
                                  final Provider<AnalyticProcessingPresenter> processPresenterProvider,
                                  final Provider<AnalyticDataShardsPresenter> analyticDataShardsPresenterProvider,
@@ -56,8 +57,9 @@ public class AnalyticRulePresenter
         analyticProcessingPresenter.setDocumentEditPresenter(this);
         analyticProcessingPresenter.addChangeDataHandler(e ->
                 setRuleType(analyticProcessingPresenter.getView().getProcessingType()));
+        analyticQueryEditPresenter.setTaskListener(new TabDataTaskListener(eventBus, this));
 
-        addTab(QUERY, new DocumentEditTabProvider<>(analyticQueryEditPresenterProvider::get));
+        addTab(QUERY, new DocumentEditTabProvider<>(() -> analyticQueryEditPresenter));
         addTab(NOTIFICATIONS, new DocumentEditTabProvider<>(notificationPresenterProvider::get));
         addTab(EXECUTION, new DocumentEditTabProvider<>(() -> analyticProcessingPresenter));
         addTab(SHARDS, new DocumentEditTabProvider<>(analyticDataShardsPresenterProvider::get));

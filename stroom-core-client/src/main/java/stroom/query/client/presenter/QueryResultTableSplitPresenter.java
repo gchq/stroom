@@ -65,7 +65,7 @@ public class QueryResultTableSplitPresenter
     protected void onBind() {
         registerHandler(tablePresenter.addExpanderHandler(event ->
                 queryModel.refresh(QueryModel.TABLE_COMPONENT_ID)));
-        registerHandler(tablePresenter.addRangeChangeHandler(event ->
+        registerHandler(tablePresenter.addRefreshRequestHandler(event ->
                 queryModel.refresh(QueryModel.TABLE_COMPONENT_ID)));
         registerHandler(tablePresenter.getSelectionModel().addSelectionHandler(event ->
                 onSelection(tablePresenter.getSelectionModel().getSelected())));

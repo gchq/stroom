@@ -17,6 +17,7 @@
 package stroom.query.client.presenter;
 
 import stroom.dashboard.client.vis.VisFrame;
+import stroom.data.pager.client.RefreshButton;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
@@ -184,6 +185,16 @@ public class QueryResultVisPresenter
 
         registerHandler(getEventBus().addHandler(ChangeCurrentPreferencesEvent.getType(), event ->
                 visFrame.setClassName(getClassName(event.getTheme()))));
+
+        registerHandler(getView().getRefreshButton().addClickHandler(e -> {
+            if (pause) {
+                this.pause = false;
+                refresh();
+            } else {
+                this.pause = true;
+            }
+            getView().getRefreshButton().setPaused(this.pause);
+        }));
     }
 
     private String getClassName(final String theme) {
@@ -271,7 +282,7 @@ public class QueryResultVisPresenter
             updateStatusMessage();
         }
 
-        getView().setRefreshing(true);
+        getView().getRefreshButton().setRefreshing(true);
     }
 
     @Override
@@ -281,7 +292,7 @@ public class QueryResultVisPresenter
             visFrame.end();
             updateStatusMessage();
         }
-        getView().setRefreshing(false);
+        getView().getRefreshButton().setRefreshing(false);
     }
 
     private void cleanupSearchModelAssociation() {
@@ -295,8 +306,8 @@ public class QueryResultVisPresenter
 
     private void refresh() {
         currentRequestCount++;
-        getView().setPaused(pause && currentRequestCount == 0);
-        getView().setRefreshing(true);
+        getView().getRefreshButton().setPaused(pause && currentRequestCount == 0);
+        getView().getRefreshButton().setRefreshing(true);
 //        currentSearchModel.refresh(getComponentConfig().getId(), result -> {
 //            try {
 //                if (result != null) {
@@ -721,9 +732,7 @@ public class QueryResultVisPresenter
 
     public interface QueryResultVisView extends View, RequiresResize {
 
-        void setRefreshing(boolean refreshing);
-
-        void setPaused(boolean paused);
+        RefreshButton getRefreshButton();
 
         void showMessage(String message);
 

@@ -32,6 +32,7 @@ import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dashboard.shared.VisResultRequest;
+import stroom.data.pager.client.RefreshButton;
 import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -64,7 +65,6 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.Layer;
 import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.View;
@@ -76,7 +76,7 @@ import java.util.Objects;
 
 public class VisPresenter
         extends AbstractComponentPresenter<VisPresenter.VisView>
-        implements ResultComponent, StatusHandler, SelectionUiHandlers, HasSelection, VisUiHandlers {
+        implements ResultComponent, StatusHandler, SelectionUiHandlers, HasSelection {
 
     public static final String TAB_TYPE = "vis-component";
     private static final ScriptResource SCRIPT_RESOURCE = GWT.create(ScriptResource.class);
@@ -140,7 +140,6 @@ public class VisPresenter
         visFrame = new VisFrame(eventBus);
         visFrame.setUiHandlers(this);
         view.setVisFrame(visFrame);
-        view.setUiHandlers(this);
 
         RootPanel.get().add(visFrame);
 
@@ -150,17 +149,6 @@ public class VisPresenter
                 getComponents().fireComponentChangeEvent(VisPresenter.this);
             }
         };
-    }
-
-    @Override
-    public void onPause() {
-        if (pause) {
-            this.pause = false;
-            refresh();
-        } else {
-            this.pause = true;
-        }
-        getView().setPaused(this.pause);
     }
 
     @Override
@@ -230,6 +218,16 @@ public class VisPresenter
 
         registerHandler(getEventBus().addHandler(ChangeCurrentPreferencesEvent.getType(), event ->
                 visFrame.setClassName(getClassName(event.getTheme()))));
+
+        registerHandler(getView().getRefreshButton().addClickHandler(e -> {
+            if (pause) {
+                this.pause = false;
+                refresh();
+            } else {
+                this.pause = true;
+            }
+            getView().getRefreshButton().setPaused(this.pause);
+        }));
     }
 
     private String getClassName(final String theme) {
@@ -317,7 +315,7 @@ public class VisPresenter
             updateStatusMessage();
         }
 
-        getView().setRefreshing(true);
+        getView().getRefreshButton().setRefreshing(true);
     }
 
     @Override
@@ -327,7 +325,7 @@ public class VisPresenter
             visFrame.end();
             updateStatusMessage();
         }
-        getView().setRefreshing(false);
+        getView().getRefreshButton().setRefreshing(false);
     }
 
     private void cleanupSearchModelAssociation() {
@@ -341,8 +339,8 @@ public class VisPresenter
 
     private void refresh() {
         currentRequestCount++;
-        getView().setPaused(pause && currentRequestCount == 0);
-        getView().setRefreshing(true);
+        getView().getRefreshButton().setPaused(pause && currentRequestCount == 0);
+        getView().getRefreshButton().setRefreshing(true);
         currentSearchModel.refresh(getComponentConfig().getId(), result -> {
             try {
                 if (result != null) {
@@ -352,8 +350,8 @@ public class VisPresenter
                 GWT.log(e.getMessage());
             }
             currentRequestCount--;
-            getView().setPaused(pause && currentRequestCount == 0);
-            getView().setRefreshing(currentSearchModel.isSearching());
+            getView().getRefreshButton().setPaused(pause && currentRequestCount == 0);
+            getView().getRefreshButton().setRefreshing(currentSearchModel.isSearching());
         });
     }
 
@@ -754,11 +752,9 @@ public class VisPresenter
     // --------------------------------------------------------------------------------
 
 
-    public interface VisView extends View, RequiresResize, HasUiHandlers<VisUiHandlers> {
+    public interface VisView extends View, RequiresResize {
 
-        void setRefreshing(boolean refreshing);
-
-        void setPaused(boolean paused);
+        RefreshButton getRefreshButton();
 
         void showMessage(String message);
 

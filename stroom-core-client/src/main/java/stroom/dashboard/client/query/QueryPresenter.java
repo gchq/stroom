@@ -70,6 +70,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.TaskListener;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.ModelStringUtil;
@@ -935,6 +936,11 @@ public class QueryPresenter
         warningsButton.asWidget().getElement().getStyle().setOpacity(show
                 ? 1
                 : 0);
+    }
+
+    @Override
+    public void setTaskListener(final TaskListener taskListener) {
+        searchModel.setTaskListener(taskListener);
     }
 
     @Override

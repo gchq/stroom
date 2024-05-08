@@ -28,6 +28,7 @@ import stroom.query.api.v2.TimeRange;
 import stroom.query.shared.QueryContext;
 import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;
+import stroom.task.client.TaskListener;
 import stroom.util.shared.TokenError;
 
 import com.google.gwt.core.client.GWT;
@@ -50,6 +51,7 @@ public class QueryModel {
     private String queryUuid;
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
     private final ResultStoreModel resultStoreModel;
+    private TaskListener taskListener;
 
     private final ResultConsumer tablePresenter;
 
@@ -261,6 +263,7 @@ public class QueryModel {
                         }
                         resultConsumer.setData(null);
                     })
+                    .taskListener(taskListener)
                     .exec();
         }
     }
@@ -352,6 +355,7 @@ public class QueryModel {
                             poll(false);
                         }
                     })
+                    .taskListener(taskListener)
                     .exec();
         }
     }
@@ -493,5 +497,9 @@ public class QueryModel {
 
     public void setSourceType(final SourceType sourceType) {
         this.sourceType = sourceType;
+    }
+
+    public void setTaskListener(final TaskListener taskListener) {
+        this.taskListener = taskListener;
     }
 }

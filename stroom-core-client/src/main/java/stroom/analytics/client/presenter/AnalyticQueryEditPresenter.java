@@ -23,6 +23,7 @@ import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.query.client.presenter.QueryEditPresenter;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
+import stroom.task.client.TaskListener;
 
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
@@ -77,5 +78,9 @@ public class AnalyticQueryEditPresenter
     public void onClose() {
         queryEditPresenter.onClose();
         super.onClose();
+    }
+
+    public void setTaskListener(final TaskListener taskListener) {
+        queryEditPresenter.setTaskListener(taskListener);
     }
 }

@@ -150,9 +150,30 @@
 }
 
 /* Close button */
+.curveTab .curveTab-close-wrapper {
+    position: relative;
+    width: 22px;
+    height: 22px;
+}
+
+.curveTab .curveTab-spinner {
+    position: absolute;
+}
+
+.curveTab .curveTab-spinner svg {
+    color: var(--curve-tab__svg-color);
+	opacity: 0.8;
+}
+
 .curveTab .curveTab-close {
-    display: flex;
+    position: absolute;
     opacity: 0;
+    top: 2px;
+    left: -1px;
+}
+
+.curveTab:hover .curveTab-spinner {
+	opacity: 0;
 }
 
 .curveTab:hover .curveTab-close {
@@ -1593,6 +1614,10 @@ button.main-menu svg {
     border: solid 1px var(--control__border-color);
     border-radius: .25rem;
     overflow: hidden;
+}
+
+.form-control-background {
+  background-color: var(--control__background-color);
 }
 
 .form-control {

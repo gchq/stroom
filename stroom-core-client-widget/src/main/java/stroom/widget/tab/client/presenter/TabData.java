@@ -33,13 +33,6 @@ public interface TabData {
     boolean isCloseable();
 
     String getType();
-//
-//        if (this instanceof HasType) {
-//            return ((HasType) this).getType();
-//        } else {
-//            return null;
-//        }
-//    }
 
     /**
      * @param action

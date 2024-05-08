@@ -38,11 +38,9 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.view.client.RangeChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
@@ -61,13 +59,12 @@ public class QueryResultTablePresenter
     private int expanderColumnWidth;
     private final com.google.gwt.user.cellview.client.Column<TableRow, Expander> expanderColumn;
 
+    private final PagerView pagerView;
     private final MyDataGrid<TableRow> dataGrid;
     private final MultiSelectionModelImpl<TableRow> selectionModel;
     private final DataGridSelectionEventManager<TableRow> selectionEventManager;
     private boolean ignoreRangeChange;
     private boolean pause;
-    private int currentRequestCount;
-//    private QueryModel currentSearchModel;
 
     private OffsetRange requestedRange = OffsetRange.ZERO_100;
     private Set<String> openGroups = null;
@@ -79,6 +76,7 @@ public class QueryResultTablePresenter
                                      final PagerView pagerView) {
         super(eventBus, tableView);
 
+        this.pagerView = pagerView;
         this.dataGrid = new MyDataGrid<>();
         selectionModel = new MultiSelectionModelImpl<>(dataGrid);
         selectionEventManager = new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
@@ -101,6 +99,8 @@ public class QueryResultTablePresenter
             toggleOpenGroup(result.getGroupKey());
             ExpanderEvent.fire(this, result.getGroupKey());
         });
+
+        pagerView.getRefreshButton().setAllowPause(true);
     }
 
     private void toggleOpenGroup(final String group) {
@@ -143,7 +143,7 @@ public class QueryResultTablePresenter
             final com.google.gwt.view.client.Range range = event.getNewRange();
             requestedRange = new OffsetRange(range.getStart(), range.getLength());
             if (!ignoreRangeChange) {
-                fireEvent(event);
+                refresh();
             }
         }));
         registerHandler(dataGrid.addHyperlinkHandler(event -> getEventBus().fireEvent(event)));
@@ -155,6 +155,20 @@ public class QueryResultTablePresenter
 //                refresh();
 //            }
 //        }));
+
+        registerHandler(pagerView.getRefreshButton().addClickHandler(event -> {
+            if (pause) {
+                this.pause = false;
+                refresh();
+            } else {
+                this.pause = true;
+            }
+            pagerView.getRefreshButton().setPaused(this.pause);
+        }));
+    }
+
+    private void refresh() {
+        RefreshRequestEvent.fire(this);
     }
 
 //    @Override
@@ -245,12 +259,12 @@ public class QueryResultTablePresenter
 //                .tableSettings(tableSettings)
 //                .build();
 
-        getView().setRefreshing(true);
+        pagerView.getRefreshButton().setRefreshing(true);
     }
 
     @Override
     public void endSearch() {
-        getView().setRefreshing(false);
+        pagerView.getRefreshButton().setRefreshing(false);
     }
 
     @Override
@@ -476,8 +490,9 @@ public class QueryResultTablePresenter
 //        });
 //    }
 
-    public HandlerRegistration addRangeChangeHandler(RangeChangeEvent.Handler handler) {
-        return addHandler(RangeChangeEvent.getType(), handler);
+
+    public HandlerRegistration addRefreshRequestHandler(RefreshRequestEvent.Handler handler) {
+        return addHandler(RefreshRequestEvent.getType(), handler);
     }
 
     public HandlerRegistration addExpanderHandler(final ExpanderEvent.Handler handler) {
@@ -492,12 +507,8 @@ public class QueryResultTablePresenter
     // --------------------------------------------------------------------------------
 
 
-    public interface QueryResultTableView extends View, HasUiHandlers<TableUiHandlers> {
+    public interface QueryResultTableView extends View {
 
         void setTableView(View view);
-
-        void setRefreshing(boolean refreshing);
-
-        void setPaused(boolean paused);
     }
 }

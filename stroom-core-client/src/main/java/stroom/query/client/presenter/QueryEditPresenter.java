@@ -37,6 +37,7 @@ import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.client.view.QueryResultTabsView;
+import stroom.task.client.TaskListener;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Indicators;
@@ -407,7 +408,11 @@ public class QueryEditPresenter
     }
 
     public void setSourceType(final SourceType sourceType) {
-        this.queryModel.setSourceType(sourceType);
+        queryModel.setSourceType(sourceType);
+    }
+
+    public void setTaskListener(final TaskListener taskListener) {
+        queryModel.setTaskListener(taskListener);
     }
 
 

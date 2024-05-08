@@ -27,12 +27,15 @@ import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.content.client.event.SelectContentTabEvent;
 import stroom.content.client.event.SelectContentTabEvent.SelectContentTabHandler;
 import stroom.data.table.client.Refreshable;
+import stroom.document.client.event.TabDataEndTaskEvent;
+import stroom.document.client.event.TabDataStartTaskEvent;
 import stroom.explorer.client.presenter.RecentItems;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.tab.client.presenter.CurveTabLayoutPresenter;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
 import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.tab.client.view.AbstractTab;
 import stroom.widget.tab.client.view.CurveTabLayoutUiHandlers;
 
 import com.google.gwt.user.client.History;
@@ -53,6 +56,8 @@ public class ContentTabPanePresenter
         CloseContentTabHandler,
         SelectContentTabHandler,
         RefreshContentTabHandler,
+        TabDataStartTaskEvent.Handler,
+        TabDataEndTaskEvent.Handler,
         CurveTabLayoutUiHandlers {
 
     private final List<TabData> historyList = new ArrayList<>();
@@ -176,6 +181,24 @@ public class ContentTabPanePresenter
     @Override
     public void onRefresh(final RefreshContentTabEvent event) {
         refresh(event.getTabData());
+    }
+
+    @ProxyEvent
+    @Override
+    public void onStart(final TabDataStartTaskEvent event) {
+        final AbstractTab tab = getView().getTabBar().getTab(event.getTabData());
+        if (tab != null) {
+            tab.incrementTaskCount();
+        }
+    }
+
+    @ProxyEvent
+    @Override
+    public void onEnd(final TabDataEndTaskEvent event) {
+        final AbstractTab tab = getView().getTabBar().getTab(event.getTabData());
+        if (tab != null) {
+            tab.decrementTaskCount();
+        }
     }
 
     @Override

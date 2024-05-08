@@ -39,6 +39,7 @@ import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
+import stroom.task.client.TaskListener;
 
 import com.google.gwt.core.client.GWT;
 
@@ -61,6 +62,7 @@ public class SearchModel {
     private String componentId;
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
     private final ResultStoreModel resultStoreModel;
+    private TaskListener taskListener;
     private Map<String, ResultComponent> componentMap = new HashMap<>();
     private DashboardSearchResponse currentResponse;
     private String currentNode;
@@ -263,6 +265,7 @@ public class SearchModel {
                                 }
                                 resultConsumer.accept(null);
                             })
+                            .taskListener(taskListener)
                             .exec();
                 }
             }
@@ -391,6 +394,7 @@ public class SearchModel {
                             poll(Fetch.CHANGES, false);
                         }
                     })
+                    .taskListener(taskListener)
                     .exec();
         }
     }
@@ -572,5 +576,9 @@ public class SearchModel {
 
     public void setResultStoreInfo(final ResultStoreInfo resultStoreInfo) {
 
+    }
+
+    public void setTaskListener(final TaskListener taskListener) {
+        this.taskListener = taskListener;
     }
 }

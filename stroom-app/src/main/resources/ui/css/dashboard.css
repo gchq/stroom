@@ -482,65 +482,6 @@
 	text-decoration: none;
 }
 
-.dashboardTable-smallSpinner {
-	position: absolute;
-	right: 2px;
-	bottom: 2px;
-	z-index: 5;
-	width: 18px;
-	height: 18px;
-	visibility: hidden;
-	cursor: pointer;
-}
-
-.dashboardTable-pause {
-    position: absolute;
-    right: 6px;
-    bottom: 6px;
-    z-index: 5;
-    width: var(--icon-width);
-    height: var(--icon-height);
-    visibility: hidden;
-}
-
-.dashboardTable-pause svg {
-	width: var(--icon-width);
-	height: var(--icon-height);
-	color: #2196f3;
-}
-
-.dashboardTable-pause {
-  animation: pulse-animation 2s infinite;
-}
-
-@keyframes pulse-animation {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.4;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-.refreshing .dashboardTable-smallSpinner {
-	visibility: initial;
-}
-
-.paused .dashboardTable-smallSpinner {
-	visibility: hidden;
-}
-
-.refreshing .dashboardTable-pause {
-	visibility: hidden;
-}
-
-.paused .dashboardTable-pause {
-	visibility: initial;
-}
-
 .dashboardVis-outerLayout {
     position: absolute;
     top: 0;
@@ -557,65 +498,15 @@
     height: 100%;
 }
 
-.dashboardVis-smallSpinner {
+.dashboardVis-refresh {
 	position: absolute;
-	right: 2px;
-	bottom: 2px;
+	right: 9px;
+	top: 33px;
 	z-index: 5;
 	width: 18px;
 	height: 18px;
 	visibility: hidden;
-	cursor: pointer;
 }
-
-.dashboardVis-pause {
-    position: absolute;
-    right: 6px;
-    bottom: 6px;
-    z-index: 5;
-    width: var(--icon-width);
-    height: var(--icon-height);
-    visibility: hidden;
-}
-
-.dashboardVis-pause svg {
-	width: var(--icon-width);
-	height: var(--icon-height);
-	color: #2196f3;
-}
-
-.dashboardVis-pause {
-  animation: pulse-animation 2s infinite;
-}
-
-.refreshing .dashboardVis-smallSpinner {
-	visibility: initial;
-}
-
-.paused .dashboardVis-smallSpinner {
-	visibility: hidden;
-}
-
-.refreshing .dashboardVis-pause {
-	visibility: hidden;
-}
-
-.paused .dashboardVis-pause {
-	visibility: initial;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 .dashboardVis-messageOuter {
 	position: absolute;

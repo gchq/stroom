@@ -1,96 +1,13 @@
 .refreshButton {
     position: relative;
+    width: 22px;
+    height: 22px;
 }
 
-
-/*
-Style the spinner.
-*/
-.refreshButton .refreshButton-smallSpinner {
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 5;
-    width: 100%;
-    height: 100%;
-    cursor: pointer;
-    padding: 3.5px;
-    visibility: hidden;
-}
-
-.refreshing.refreshButton .refreshButton-smallSpinner,
-.paused.refreshButton .refreshButton-smallSpinner {
-    visibility: visible;
-}
-
-.refreshButton .refreshButton-smallSpinner .spinner-small {
-    border-radius: 50%;
-    border: 2.4px solid var(--icon-button__color);
-    /*border: 2.4px solid red;*/
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    display: block;
-}
-
-.refreshing.refreshButton .refreshButton-smallSpinner .spinner-small {
-    -webkit-animation: spinner-border .75s linear infinite; */
-    animation: spinner-border .75s linear infinite;
-    border-right-color: transparent;
-}
-
-/*
-Style the pause button.
-*/
-.refreshButton .refreshButton-pause {
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 5;
-    vertical-align: middle;
-    width: 100%;
-    height: 100%;
-    visibility: hidden;
-}
-
-.allowPause.refreshing.refreshButton .refreshButton-pause,
-.allowPause.paused.refreshButton .refreshButton-pause{
-    visibility: visible;
-}
-
-.refreshButton .refreshButton-pause svg {
-    width: 30%;
-    height: 30%;
-}
-
-.paused.refreshButton .refreshButton-pause {
-    animation: pulse-animation 2s infinite;
-}
-
-@keyframes pulse-animation {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.4;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-
-
-
-
-
-
-
-
-
-.refreshButton .spinner-outer,
-.refreshButton .spinning-outer,
-.refreshButton .pause-outer {
+.refresh-outer,
+.spinner-outer,
+.spinning-outer,
+.pause-outer {
     position: absolute;
     top: 0;
     left: 0;
@@ -103,40 +20,43 @@ Style the pause button.
     visibility: hidden;
 }
 
-.refreshButton .spinner-inner,
-.refreshButton .spinning-inner,
-.refreshButton .pause-inner {
+.refresh-inner,
+.spinner-inner,
+.spinning-inner,
+.pause-inner {
     display: flex;
     align-items: center;
     height: 100%;
 }
 
-.refreshButton .spinner-inner svg,
-.refreshButton .spinning-inner svg,
-.refreshButton .pause-inner svg {
+.refresh-inner svg,
+.spinner-inner svg,
+.spinning-inner svg,
+.pause-inner svg {
     width: 18px;
     height: 18px;
     color: var(--icon-button__color);
 }
 
-.refreshing.refreshButton .spinning-inner svg {
+.refreshing .spinning-inner svg {
     -webkit-animation: spinner-border .75s linear infinite;
     animation: spinner-border .75s linear infinite;
 }
 
-.paused.refreshButton {
+.paused {
     animation: pulse-animation 2s infinite;
 }
 
-.refreshing.refreshButton .spinning-outer,
-.refreshing.allowPause.refreshButton .pause-outer,
-.paused.refreshButton .spinner-outer,
-.paused.refreshButton .pause-outer {
+.refreshing .spinning-outer,
+.refreshing.allowPause .pause-outer,
+.paused .spinner-outer,
+.paused .pause-outer,
+.refresh-outer {
     visibility: visible;
 }
 
-.refreshing.refreshButton .icon-button,
-.paused.refreshButton .icon-button,
-.paused.refreshButton .spinning-outer {
+.refreshing .refresh-outer,
+.paused .refresh-outer,
+.paused .spinning-outer {
     visibility: hidden;
 }

@@ -40,6 +40,7 @@ import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryResource;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.TaskListener;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.AnalyticUiDefaultConfig;
 import stroom.util.shared.time.SimpleDuration;
@@ -320,5 +321,9 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
 
     void startStop() {
         queryEditPresenter.startStop();
+    }
+
+    public void setTaskListener(final TaskListener taskListener) {
+        queryEditPresenter.setTaskListener(taskListener);
     }
 }
