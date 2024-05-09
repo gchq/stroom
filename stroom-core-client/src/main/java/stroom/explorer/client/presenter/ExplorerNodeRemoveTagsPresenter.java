@@ -60,8 +60,7 @@ import java.util.stream.Collectors;
 public class ExplorerNodeRemoveTagsPresenter
         extends MyPresenter<ExplorerNodeRemoveTagsView, ExplorerNodeRemoveTagsProxy>
         implements ShowRemoveNodeTagsDialogEvent.Handler,
-        HidePopupRequestEvent.Handler,
-        HidePopupEvent.Handler {
+        HidePopupRequestEvent.Handler {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
@@ -117,7 +116,6 @@ public class ExplorerNodeRemoveTagsPresenter
                 .caption(caption)
                 .onShow(e -> getView().focus())
                 .onHideRequest(this)
-                .onHide(this)
                 .fire();
     }
 
@@ -151,11 +149,6 @@ public class ExplorerNodeRemoveTagsPresenter
                 })
                 .onFailure(this::handleFailure)
                 .exec();
-    }
-
-    @Override
-    public void onHide(final HidePopupEvent e) {
-
     }
 
     private void handleFailure(final RestError t) {
