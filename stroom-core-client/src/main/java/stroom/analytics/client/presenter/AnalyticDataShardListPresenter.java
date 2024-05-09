@@ -190,7 +190,7 @@ public class AnalyticDataShardListPresenter
                             delayedUpdate.update();
                         })
                         .taskListener(taskListener)
-                        .exec();
+                        .execWithListener();
             }
 
 

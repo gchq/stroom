@@ -16,7 +16,6 @@
 
 package stroom.widget.popup.client.view;
 
-import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
@@ -46,7 +45,6 @@ public class Dialog extends AbstractPopupPanel {
     private static final Binder binder = GWT.create(Binder.class);
     private final int clientLeft;
     private final int clientTop;
-    private final HideRequestUiHandlers uiHandlers;
 
     @UiField
     Label titleText;
@@ -62,8 +60,8 @@ public class Dialog extends AbstractPopupPanel {
      * Creates an empty dialog box. It should not be shown until its child
      * widget has been added using {@link #add(Widget)}.
      */
-    public Dialog(final HideRequestUiHandlers uiHandlers, final PopupType popupType) {
-        this(uiHandlers, false, popupType);
+    public Dialog(final DialogActionUiHandlers dialogEventHandler) {
+        this(dialogEventHandler, false);
     }
 
     /**
@@ -74,8 +72,9 @@ public class Dialog extends AbstractPopupPanel {
      * @param autoHide <code>true</code> if the dialog should be automatically hidden
      *                 when the user clicks outside of it
      */
-    public Dialog(final HideRequestUiHandlers uiHandlers, final boolean autoHide, final PopupType popupType) {
-        this(uiHandlers, autoHide, true, popupType);
+    public Dialog(final DialogActionUiHandlers dialogEventHandler,
+                  final boolean autoHide) {
+        this(dialogEventHandler, autoHide, true);
     }
 
     /**
@@ -88,10 +87,10 @@ public class Dialog extends AbstractPopupPanel {
      * @param modal    <code>true</code> if keyboard and mouse events for widgets not
      *                 contained by the dialog should be ignored
      */
-    public Dialog(final HideRequestUiHandlers uiHandlers, final boolean autoHide, final boolean modal,
-                  final PopupType popupType) {
-        super(autoHide, modal, popupType);
-        this.uiHandlers = uiHandlers;
+    public Dialog(final DialogActionUiHandlers dialogEventHandler,
+                  final boolean autoHide,
+                  final boolean modal) {
+        super(dialogEventHandler, autoHide, modal);
 
         setStyleName("dialog-popup");
         setWidget(binder.createAndBindUi(this));
@@ -138,23 +137,16 @@ public class Dialog extends AbstractPopupPanel {
      * to get a chance to do something about it. When hide occurs the presenter
      * will be notified via the event and will then choose whether or not to
      * force the popup to hide.
-     *
-     * @param autoClosed
-     * @see com.google.gwt.user.client.ui.PopupPanel#hide(boolean)
      */
     @Override
     public void hide(final boolean autoClosed) {
-        uiHandlers.hideRequest(new HideRequest(autoClosed, false));
-    }
-
-    @Override
-    protected void onCloseAction() {
-        hide(false);
-    }
-
-    @Override
-    protected void onOkAction() {
-        uiHandlers.hideRequest(new HideRequest(false, true));
+        if (dialogActionHandler != null) {
+            if (autoClosed) {
+                dialogActionHandler.onDialogAction(DialogAction.AUTO_CLOSE);
+            } else {
+                dialogActionHandler.onDialogAction(DialogAction.CLOSE);
+            }
+        }
     }
 
     @Override

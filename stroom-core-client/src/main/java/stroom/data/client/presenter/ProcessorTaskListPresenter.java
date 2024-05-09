@@ -103,7 +103,7 @@ public class ProcessorTaskListPresenter
                             .onSuccess(dataConsumer)
                             .onFailure(errorConsumer)
                             .taskListener(view)
-                            .exec();
+                            .execWithListener();
                 }
             }
         };

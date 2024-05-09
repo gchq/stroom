@@ -98,7 +98,7 @@ public class ScheduledProcessHistoryListPresenter
                             .onSuccess(dataConsumer)
                             .onFailure(errorConsumer)
                             .taskListener(view)
-                            .exec();
+                            .execWithListener();
                 } else {
                     dataConsumer.accept(ResultPage.empty());
                 }

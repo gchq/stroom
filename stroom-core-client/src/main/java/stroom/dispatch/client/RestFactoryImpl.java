@@ -76,16 +76,18 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         private Consumer<RestError> errorConsumer;
         private TaskListener taskListener;
 
-        public MethodExecutorImpl(final HasHandlers hasHandlers, final T service, final Function<T, R> function) {
+        public MethodExecutorImpl(final HasHandlers hasHandlers,
+                                  final T service,
+                                  final Function<T, R> function) {
             this.hasHandlers = hasHandlers;
             this.service = service;
             this.function = function;
         }
 
         @Override
-        public MethodExecutor<T, R> taskListener(final TaskListener taskListener) {
+        public TaskExecutor<T, R> taskListener(final TaskListener taskListener) {
             this.taskListener = taskListener;
-            return this;
+            return new TaskExecutorImpl<>(hasHandlers, service, function, resultConsumer, errorConsumer, taskListener);
         }
 
         @Override
@@ -116,6 +118,48 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
             function.apply(rest.call(service));
         }
     }
+
+    private static class TaskExecutorImpl<T extends DirectRestService, R> implements TaskExecutor<T, R> {
+
+        private final HasHandlers hasHandlers;
+        private final T service;
+        private final Function<T, R> function;
+
+        private final Consumer<R> resultConsumer;
+        private final Consumer<RestError> errorConsumer;
+        private final TaskListener taskListener;
+
+        public TaskExecutorImpl(final HasHandlers hasHandlers,
+                                final T service,
+                                final Function<T, R> function,
+                                final Consumer<R> resultConsumer,
+                                final Consumer<RestError> errorConsumer,
+                                final TaskListener taskListener) {
+            this.hasHandlers = hasHandlers;
+            this.service = service;
+            this.function = function;
+            this.resultConsumer = resultConsumer;
+            this.errorConsumer = errorConsumer;
+            this.taskListener = taskListener;
+        }
+
+        @Override
+        public void execWithListener() {
+            final Consumer<RestError> errorConsumer = GwtNullSafe
+                    .requireNonNullElseGet(this.errorConsumer, () -> new DefaultErrorConsumer(hasHandlers));
+            final TaskListener taskListener = GwtNullSafe
+                    .requireNonNullElseGet(this.taskListener, () -> new DefaultTaskListener(hasHandlers));
+            final MethodCallbackImpl<R> methodCallback = new MethodCallbackImpl<>(
+                    hasHandlers,
+                    resultConsumer,
+                    errorConsumer,
+                    taskListener);
+            final REST<R> rest = REST.withCallback(methodCallback);
+            taskListener.incrementTaskCount();
+            function.apply(rest.call(service));
+        }
+    }
+
 
     @Override
     public void fireEvent(final GwtEvent<?> event) {

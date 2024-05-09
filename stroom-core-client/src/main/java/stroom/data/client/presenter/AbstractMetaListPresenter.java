@@ -156,7 +156,7 @@ public abstract class AbstractMetaListPresenter
                             .onSuccess(dataConsumer)
                             .onFailure(errorConsumer)
                             .taskListener(view)
-                            .exec();
+                            .execWithListener();
                 } else {
                     dataConsumer.accept(new ResultPage<>(Collections.emptyList()));
                 }

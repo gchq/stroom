@@ -225,7 +225,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
                         })
                         .onFailure(errorConsumer)
                         .taskListener(getView())
-                        .exec();
+                        .execWithListener();
             }
         };
         dataProvider.addDataDisplay(dataGrid);

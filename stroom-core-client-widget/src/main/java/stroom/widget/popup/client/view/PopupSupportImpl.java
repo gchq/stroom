@@ -45,6 +45,7 @@ public class PopupSupportImpl implements PopupSupport {
     private HidePopupEvent.Handler hideHandler;
     private List<Element> autoHidePartners;
     private DialogButtons dialogButtons;
+    private DialogActionUiHandlers dialogActionHandler;
 
     public PopupSupportImpl(final View view,
                             final String caption,
@@ -69,10 +70,6 @@ public class PopupSupportImpl implements PopupSupport {
             autoHidePartners = new ArrayList<>();
         }
         autoHidePartners.add(element);
-    }
-
-    public List<Element> getAutoHidePartners() {
-        return autoHidePartners;
     }
 
     @Override
@@ -239,34 +236,40 @@ public class PopupSupportImpl implements PopupSupport {
                               final HideRequestUiHandlers uiHandlers) {
         Popup popup = null;
 
+        dialogActionHandler = action -> uiHandlers.hideRequest(
+                new HideRequest(action, null));
+
         if (popupSize != null) {
             switch (popupType) {
                 case POPUP:
-                    popup = new SimplePopup(uiHandlers);
+                    popup = new SimplePopup(dialogActionHandler);
                     popup.setContent(view.asWidget());
                     break;
                 case DIALOG:
-                    popup = new ResizableDialog(uiHandlers, popupSize, popupType);
+                    popup = new ResizableDialog(dialogActionHandler, popupSize);
                     popup.setContent(view.asWidget());
                     break;
                 case CLOSE_DIALOG:
-                    popup = new ResizableDialog(uiHandlers, popupSize, popupType);
                     final ResizableCloseContent closeContent = new ResizableCloseContent(uiHandlers);
+                    dialogActionHandler = closeContent;
+                    popup = new ResizableDialog(closeContent, popupSize);
                     dialogButtons = closeContent;
                     closeContent.setContent(view.asWidget());
                     popup.setContent(closeContent);
                     break;
                 case OK_CANCEL_DIALOG:
-                    popup = new ResizableDialog(uiHandlers, popupSize, popupType);
                     final ResizableOkCancelContent okCancelContent = new ResizableOkCancelContent(uiHandlers);
+                    dialogActionHandler = okCancelContent;
+                    popup = new ResizableDialog(okCancelContent, popupSize);
                     dialogButtons = okCancelContent;
                     okCancelContent.setContent(view.asWidget());
                     popup.setContent(okCancelContent);
                     break;
                 case ACCEPT_REJECT_DIALOG:
-                    popup = new ResizableDialog(uiHandlers, popupSize, popupType);
                     final ResizableAcceptRejectContent acceptRejectContent = new ResizableAcceptRejectContent(
                             uiHandlers);
+                    dialogActionHandler = acceptRejectContent;
+                    popup = new ResizableDialog(acceptRejectContent, popupSize);
                     dialogButtons = acceptRejectContent;
                     acceptRejectContent.setContent(view.asWidget());
                     popup.setContent(acceptRejectContent);
@@ -275,30 +278,33 @@ public class PopupSupportImpl implements PopupSupport {
         } else {
             switch (popupType) {
                 case POPUP:
-                    popup = new SimplePopup(uiHandlers);
+                    popup = new SimplePopup(dialogActionHandler);
                     popup.setContent(view.asWidget());
                     break;
                 case DIALOG:
-                    popup = new Dialog(uiHandlers, popupType);
+                    popup = new Dialog(dialogActionHandler);
                     popup.setContent(view.asWidget());
                     break;
                 case CLOSE_DIALOG:
-                    popup = new Dialog(uiHandlers, popupType);
                     final CloseContent closeContent = new CloseContent(uiHandlers);
+                    dialogActionHandler = closeContent;
+                    popup = new Dialog(closeContent);
                     dialogButtons = closeContent;
                     closeContent.setContent(view.asWidget());
                     popup.setContent(closeContent);
                     break;
                 case OK_CANCEL_DIALOG:
-                    popup = new Dialog(uiHandlers, popupType);
                     final OkCancelContent okCancelContent = new OkCancelContent(uiHandlers);
+                    dialogActionHandler = okCancelContent;
+                    popup = new Dialog(okCancelContent);
                     dialogButtons = okCancelContent;
                     okCancelContent.setContent(view.asWidget());
                     popup.setContent(okCancelContent);
                     break;
                 case ACCEPT_REJECT_DIALOG:
-                    popup = new Dialog(uiHandlers, popupType);
                     final AcceptRejectContent acceptRejectContent = new AcceptRejectContent(uiHandlers);
+                    dialogActionHandler = acceptRejectContent;
+                    popup = new Dialog(acceptRejectContent);
                     dialogButtons = acceptRejectContent;
                     acceptRejectContent.setContent(view.asWidget());
                     popup.setContent(acceptRejectContent);
@@ -315,5 +321,12 @@ public class PopupSupportImpl implements PopupSupport {
 
     private void setView(final View view) {
         this.view = view;
+    }
+
+    @Override
+    public void onDialogAction(final DialogAction action) {
+        if (dialogActionHandler != null) {
+            dialogActionHandler.onDialogAction(action);
+        }
     }
 }

@@ -17,12 +17,13 @@
 package stroom.dashboard.client.query;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.widget.popup.client.event.DialogEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.popup.client.view.DefaultHideRequestUiHandlers;
-import stroom.widget.popup.client.view.HideRequestUiHandlers;
+import stroom.widget.popup.client.view.DialogAction;
+import stroom.widget.popup.client.view.DialogActionUiHandlers;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
@@ -35,7 +36,8 @@ import java.util.function.Consumer;
 
 public class NamePresenter
         extends MyPresenterWidget<NamePresenter.NameView>
-        implements HidePopupRequestEvent.Handler {
+        implements HidePopupRequestEvent.Handler,
+        DialogActionUiHandlers {
 
     private Consumer<String> nameConsumer;
 
@@ -49,7 +51,7 @@ public class NamePresenter
                      final Consumer<String> nameConsumer) {
         this.nameConsumer = nameConsumer;
         getView().setName(name);
-        getView().setUiHandlers(new DefaultHideRequestUiHandlers(this));
+        getView().setUiHandlers(this);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .caption(caption)
@@ -83,7 +85,12 @@ public class NamePresenter
         HidePopupEvent.builder(this).fire();
     }
 
-    public interface NameView extends View, Focus, HasUiHandlers<HideRequestUiHandlers> {
+    @Override
+    public void onDialogAction(final DialogAction action) {
+        DialogEvent.fire(this, this, action);
+    }
+
+    public interface NameView extends View, Focus, HasUiHandlers<DialogActionUiHandlers> {
 
         String getName();
 

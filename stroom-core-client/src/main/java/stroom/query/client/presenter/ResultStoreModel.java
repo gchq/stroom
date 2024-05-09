@@ -83,7 +83,7 @@ public class ResultStoreModel {
                         delayedUpdate.update();
                     })
                     .taskListener(taskListener)
-                    .exec();
+                    .execWithListener();
         }
     }
 

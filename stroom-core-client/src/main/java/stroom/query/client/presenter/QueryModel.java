@@ -264,7 +264,7 @@ public class QueryModel {
                         resultConsumer.setData(null);
                     })
                     .taskListener(taskListener)
-                    .exec();
+                    .execWithListener();
         }
     }
 
@@ -356,7 +356,7 @@ public class QueryModel {
                         }
                     })
                     .taskListener(taskListener)
-                    .exec();
+                    .execWithListener();
         }
     }
 

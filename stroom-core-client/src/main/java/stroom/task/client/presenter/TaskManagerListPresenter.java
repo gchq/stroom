@@ -462,7 +462,7 @@ public class TaskManagerListPresenter
                         delayedUpdate.update();
                     })
                     .taskListener(getView())
-                    .exec();
+                    .execWithListener();
         }
     }
 

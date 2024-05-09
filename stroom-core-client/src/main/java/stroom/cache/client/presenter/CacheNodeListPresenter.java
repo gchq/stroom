@@ -338,7 +338,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
                         delayedUpdate.update();
                     })
                     .taskListener(getView())
-                    .exec();
+                    .execWithListener();
         }
     }
 

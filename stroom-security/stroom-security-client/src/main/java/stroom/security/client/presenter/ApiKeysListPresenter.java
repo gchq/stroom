@@ -339,7 +339,7 @@ public class ApiKeysListPresenter
                             null);
                 })
                 .taskListener(taskListener)
-                .exec();
+                .execWithListener();
     }
 
     public void setQuickFilter(final String userInput) {

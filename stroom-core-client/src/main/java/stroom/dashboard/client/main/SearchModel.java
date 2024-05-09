@@ -266,7 +266,7 @@ public class SearchModel {
                                 resultConsumer.accept(null);
                             })
                             .taskListener(taskListener)
-                            .exec();
+                            .execWithListener();
                 }
             }
         }
@@ -395,7 +395,7 @@ public class SearchModel {
                         }
                     })
                     .taskListener(taskListener)
-                    .exec();
+                    .execWithListener();
         }
     }
 

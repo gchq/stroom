@@ -110,7 +110,7 @@ public class ActivityListPresenter
                         .onSuccess(dataConsumer)
                         .onFailure(errorConsumer)
                         .taskListener(view)
-                        .exec();
+                        .execWithListener();
             }
         };
         dataProvider.addDataDisplay(dataGrid);

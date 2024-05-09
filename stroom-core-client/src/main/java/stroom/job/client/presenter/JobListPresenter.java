@@ -156,7 +156,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
                                 .onSuccess(dataConsumer)
                                 .onFailure(errorConsumer)
                                 .taskListener(view)
-                                .exec();
+                                .execWithListener();
                     }
 
                     @Override

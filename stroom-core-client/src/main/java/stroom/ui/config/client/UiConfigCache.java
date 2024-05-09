@@ -84,7 +84,7 @@ public class UiConfigCache implements HasHandlers {
                     PropertyChangeEvent.fire(UiConfigCache.this, result);
                 }).onFailure(error -> future.setThrowable(error.getException()))
                 .taskListener(taskListener)
-                .exec();
+                .execWithListener();
         return future;
     }
 

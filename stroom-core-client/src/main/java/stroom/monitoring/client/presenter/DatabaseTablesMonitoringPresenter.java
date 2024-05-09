@@ -115,7 +115,7 @@ public class DatabaseTablesMonitoringPresenter
                         .onSuccess(dataConsumer)
                         .onFailure(errorConsumer)
                         .taskListener(view)
-                        .exec();
+                        .execWithListener();
             }
         };
         dataProvider.addDataDisplay(dataGrid);

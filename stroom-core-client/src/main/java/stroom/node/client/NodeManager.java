@@ -94,7 +94,7 @@ public class NodeManager {
                 .onSuccess(nodeListConsumer)
                 .onFailure(errorConsumer)
                 .taskListener(taskListener)
-                .exec();
+                .execWithListener();
     }
 
     public void listEnabledNodes(final Consumer<List<String>> nodeListConsumer,
@@ -111,6 +111,6 @@ public class NodeManager {
                 .onSuccess(nodeListConsumer)
                 .onFailure(errorConsumer)
                 .taskListener(taskListener)
-                .exec();
+                .execWithListener();
     }
 }

@@ -115,7 +115,7 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                         .onSuccess(dataConsumer)
                         .onFailure(errorConsumer)
                         .taskListener(view)
-                        .exec();
+                        .execWithListener();
             }
         };
         dataProvider.addDataDisplay(dataGrid);

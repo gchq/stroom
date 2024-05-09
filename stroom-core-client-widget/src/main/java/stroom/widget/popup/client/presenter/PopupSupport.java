@@ -19,8 +19,9 @@ package stroom.widget.popup.client.presenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.view.DialogActionUiHandlers;
 
-public interface PopupSupport {
+public interface PopupSupport extends DialogActionUiHandlers {
 
     void show(ShowPopupEvent event);
 

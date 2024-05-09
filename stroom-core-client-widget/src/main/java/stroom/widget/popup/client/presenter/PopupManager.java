@@ -16,6 +16,7 @@
 
 package stroom.widget.popup.client.presenter;
 
+import stroom.widget.popup.client.event.DialogEvent;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -31,7 +32,7 @@ import com.gwtplatform.mvp.client.PresenterWidget;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PopupManager {
+public class PopupManager implements DialogEvent.Handler {
 
     private Map<PresenterWidget<?>, PopupSupport> popupMap;
 
@@ -43,6 +44,7 @@ public class PopupManager {
         eventBus.addHandler(DisablePopupEvent.getType(), this::disable);
         eventBus.addHandler(EnablePopupEvent.getType(), this::enable);
         eventBus.addHandler(RenamePopupEvent.getType(), this::rename);
+        eventBus.addHandler(DialogEvent.getType(), this);
     }
 
     private void show(final ShowPopupEvent event) {
@@ -109,6 +111,16 @@ public class PopupManager {
             final PopupSupport popupSupport = popupMap.get(event.getPresenterWidget());
             if (popupSupport != null) {
                 popupSupport.setCaption(event.getCaption());
+            }
+        }
+    }
+
+    @Override
+    public void onDialogAction(final DialogEvent event) {
+        if (popupMap != null) {
+            final PopupSupport popupSupport = popupMap.get(event.getPresenterWidget());
+            if (popupSupport != null) {
+                popupSupport.onDialogAction(event.getAction());
             }
         }
     }

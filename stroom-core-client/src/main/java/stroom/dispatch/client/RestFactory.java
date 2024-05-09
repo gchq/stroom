@@ -23,12 +23,17 @@ public interface RestFactory {
         /**
          * Set a task listener if we want to listen to the request start and finish events.
          **/
-        MethodExecutor<T, R> taskListener(TaskListener taskListener);
+        TaskExecutor<T, R> taskListener(TaskListener taskListener);
 
         MethodExecutor<T, R> onSuccess(Consumer<R> resultConsumer);
 
         MethodExecutor<T, R> onFailure(Consumer<RestError> errorConsumer);
 
         void exec();
+    }
+
+    interface TaskExecutor<T extends DirectRestService, R> {
+
+        void execWithListener();
     }
 }

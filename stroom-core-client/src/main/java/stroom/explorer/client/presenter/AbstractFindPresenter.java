@@ -135,7 +135,7 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
                             })
                             .onFailure(errorConsumer)
                             .taskListener(pagerView)
-                            .exec();
+                            .execWithListener();
                 }
             }
         };

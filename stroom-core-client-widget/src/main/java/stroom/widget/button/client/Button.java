@@ -137,6 +137,14 @@ public class Button extends ButtonBase implements ButtonView {
         }.schedule(1000);
     }
 
+    public void setLoading(final boolean loading) {
+        if (loading) {
+            getElement().addClassName("Button--loading");
+        } else {
+            getElement().removeClassName("Button--loading");
+        }
+    }
+
     @Override
     public void setText(final String text) {
         this.text.setInnerHTML(text);

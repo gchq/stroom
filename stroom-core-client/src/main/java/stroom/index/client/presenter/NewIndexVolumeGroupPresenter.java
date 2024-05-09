@@ -21,11 +21,13 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.NameDocumentView;
 import stroom.index.shared.IndexVolumeGroupResource;
+import stroom.widget.popup.client.event.DialogEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.popup.client.view.DefaultHideRequestUiHandlers;
+import stroom.widget.popup.client.view.DialogAction;
+import stroom.widget.popup.client.view.DialogActionUiHandlers;
 
 import com.google.gwt.core.shared.GWT;
 import com.google.inject.Inject;
@@ -36,7 +38,8 @@ import java.util.function.Consumer;
 
 public class NewIndexVolumeGroupPresenter
         extends MyPresenterWidget<NameDocumentView>
-        implements HidePopupRequestEvent.Handler {
+        implements HidePopupRequestEvent.Handler,
+        DialogActionUiHandlers {
 
     private Consumer<String> consumer;
 
@@ -56,7 +59,7 @@ public class NewIndexVolumeGroupPresenter
 
     public void show(final String name, final Consumer<String> consumer) {
         this.consumer = consumer;
-        getView().setUiHandlers(new DefaultHideRequestUiHandlers(this));
+        getView().setUiHandlers(this);
         getView().setName(name);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
@@ -101,5 +104,10 @@ public class NewIndexVolumeGroupPresenter
 
     public void hide() {
         HidePopupEvent.builder(this).fire();
+    }
+
+    @Override
+    public void onDialogAction(final DialogAction action) {
+        DialogEvent.fire(this, this, action);
     }
 }

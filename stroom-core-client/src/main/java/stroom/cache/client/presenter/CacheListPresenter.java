@@ -165,7 +165,7 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
                     })
                     .onFailure(throwable -> delayedUpdate.update())
                     .taskListener(getView())
-                    .exec();
+                    .execWithListener();
         }
     }
 

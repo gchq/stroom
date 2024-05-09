@@ -158,7 +158,7 @@ public class FindInContentPresenter
                             })
                             .onFailure(errorConsumer)
                             .taskListener(pagerView)
-                            .exec();
+                            .execWithListener();
                 }
             }
         };

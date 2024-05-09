@@ -18,8 +18,8 @@
 package stroom.entity.client.view;
 
 import stroom.entity.client.presenter.NameDocumentView;
-import stroom.widget.popup.client.view.HideRequest;
-import stroom.widget.popup.client.view.HideRequestUiHandlers;
+import stroom.widget.popup.client.view.DialogAction;
+import stroom.widget.popup.client.view.DialogActionUiHandlers;
 
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -30,7 +30,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class NameDocumentViewImpl extends ViewWithUiHandlers<HideRequestUiHandlers> implements NameDocumentView {
+public class NameDocumentViewImpl extends ViewWithUiHandlers<DialogActionUiHandlers> implements NameDocumentView {
 
     private final Widget widget;
     @UiField
@@ -65,7 +65,7 @@ public class NameDocumentViewImpl extends ViewWithUiHandlers<HideRequestUiHandle
     @UiHandler("name")
     void onKeyDown(final KeyDownEvent event) {
         if (event.getNativeKeyCode() == '\r') {
-            getUiHandlers().hideRequest(new HideRequest(false, true));
+            getUiHandlers().onDialogAction(DialogAction.OK);
         }
     }
 

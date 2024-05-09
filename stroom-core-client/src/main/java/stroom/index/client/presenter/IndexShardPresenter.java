@@ -441,7 +441,7 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, Lucene
                                 .onSuccess(dataConsumer)
                                 .onFailure(errorConsumer)
                                 .taskListener(getView())
-                                .exec();
+                                .execWithListener();
                     }
 
                     @Override
@@ -547,7 +547,7 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, Lucene
                             .method(res -> res.flushIndexShards(nodeName, selectionCriteria))
                             .onSuccess(result -> delayedUpdate.update())
                             .taskListener(getView())
-                            .exec();
+                            .execWithListener();
                 }), throwable -> {
                 },
                 getView());
@@ -565,7 +565,7 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, Lucene
                             .method(res -> res.deleteIndexShards(nodeName, selectionCriteria))
                             .onSuccess(result -> delayedUpdate.update())
                             .taskListener(getView())
-                            .exec();
+                            .execWithListener();
                 }), throwable -> {
                 },
                 getView());

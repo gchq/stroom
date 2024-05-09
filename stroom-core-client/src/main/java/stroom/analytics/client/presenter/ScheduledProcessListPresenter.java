@@ -108,7 +108,7 @@ public class ScheduledProcessListPresenter
                             .onSuccess(dataConsumer)
                             .onFailure(errorConsumer)
                             .taskListener(view)
-                            .exec();
+                            .execWithListener();
                 }
             }
         };

@@ -18,8 +18,8 @@
 package stroom.security.client.view;
 
 import stroom.security.client.presenter.CreateNewUserPresenter.CreateNewUserView;
-import stroom.widget.popup.client.view.HideRequest;
-import stroom.widget.popup.client.view.HideRequestUiHandlers;
+import stroom.widget.popup.client.view.DialogAction;
+import stroom.widget.popup.client.view.DialogActionUiHandlers;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -32,7 +32,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class CreateNewUserViewImpl
-        extends ViewWithUiHandlers<HideRequestUiHandlers>
+        extends ViewWithUiHandlers<DialogActionUiHandlers>
         implements CreateNewUserView {
 
     private final Widget widget;
@@ -99,7 +99,7 @@ public class CreateNewUserViewImpl
 
     private void handleKeyDown(final KeyDownEvent event) {
         if (event.getNativeKeyCode() == '\r') {
-            getUiHandlers().hideRequest(new HideRequest(false, true));
+            getUiHandlers().onDialogAction(DialogAction.OK);
         }
     }
 
