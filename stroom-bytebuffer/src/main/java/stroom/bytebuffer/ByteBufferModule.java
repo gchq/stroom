@@ -28,15 +28,17 @@ import com.google.inject.AbstractModule;
 
 public class ByteBufferModule extends AbstractModule {
 
+    static final Class<? extends ByteBufferPool> DEFAULT_BYTE_BUFFER_POOL = ByteBufferPoolImpl8.class;
+
     @Override
     protected void configure() {
         // If you switch impl here make sure also to do it in the SystemInfo binder below
-        bind(ByteBufferPool.class).to(ByteBufferPoolImpl6.class);
+        bind(ByteBufferPool.class).to(DEFAULT_BYTE_BUFFER_POOL);
         bind(ByteBufferFactory.class).to(ByteBufferFactoryImpl.class);
 
         HasSystemInfoBinder.create(binder())
                 .bind(ByteBufferPoolImpl6.class);
 
-        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(ByteBufferPoolImpl6.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(DEFAULT_BYTE_BUFFER_POOL);
     }
 }

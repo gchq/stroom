@@ -1,9 +1,9 @@
 package stroom.pipeline.refdata.store;
 
 import stroom.bytebuffer.ByteBufferPool;
-import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.bytebuffer.PooledByteBufferOutputStream.Factory;
+import stroom.bytebuffer.SimpleByteBufferPoolFactory;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStagingValueOutputStream {
 
-    private ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
+    private ByteBufferPool byteBufferPool = new SimpleByteBufferPoolFactory().getByteBufferPool();
     private PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory = new Factory() {
         @Override
         public PooledByteBufferOutputStream create(final int initialCapacity) {

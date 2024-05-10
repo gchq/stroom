@@ -18,8 +18,8 @@
 package stroom.lmdb;
 
 
-import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.ByteBufferSupport;
+import stroom.bytebuffer.SimpleByteBufferPoolFactory;
 import stroom.lmdb.serde.Serde;
 import stroom.lmdb.serde.StringSerde;
 import stroom.util.io.ByteSize;
@@ -59,7 +59,7 @@ class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
     void setup() {
         basicLmdbDb = new BasicLmdbDb<>(
                 lmdbEnv,
-                new ByteBufferPoolFactory().getByteBufferPool(),
+                new SimpleByteBufferPoolFactory().getByteBufferPool(),
                 stringSerde,
                 stringSerde,
                 "basicDb");

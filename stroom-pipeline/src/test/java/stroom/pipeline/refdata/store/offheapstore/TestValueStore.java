@@ -19,10 +19,10 @@ package stroom.pipeline.refdata.store.offheapstore;
 
 
 import stroom.bytebuffer.ByteBufferPool;
-import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.bytebuffer.PooledByteBufferOutputStream.Factory;
+import stroom.bytebuffer.SimpleByteBufferPoolFactory;
 import stroom.pipeline.refdata.store.BasicValueStoreHashAlgorithmImpl;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.StagingValue;
@@ -56,7 +56,7 @@ class TestValueStore extends AbstractStoreDbTest {
     private final RefDataValueSerdeFactory refDataValueSerdeFactory = new RefDataValueSerdeFactory();
     private final ValueStoreHashAlgorithm xxHashAlgorithm = new XxHashValueStoreHashAlgorithm();
     private final ValueStoreHashAlgorithm basicHashAlgorithm = new BasicValueStoreHashAlgorithmImpl();
-    private final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
+    private final ByteBufferPool byteBufferPool = new SimpleByteBufferPoolFactory().getByteBufferPool();
     private final PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory = new Factory() {
         @Override
         public PooledByteBufferOutputStream create(final int initialCapacity) {
@@ -90,7 +90,7 @@ class TestValueStore extends AbstractStoreDbTest {
     private void setupValueStoreDb(final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
         valueStoreDb = new ValueStoreDb(
                 refDataLmdbEnv,
-                new ByteBufferPoolFactory().getByteBufferPool(),
+                new SimpleByteBufferPoolFactory().getByteBufferPool(),
                 new ValueStoreKeySerde(),
                 new GenericRefDataValueSerde(refDataValueSerdeFactory),
                 valueStoreHashAlgorithm,

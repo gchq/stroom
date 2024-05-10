@@ -18,8 +18,8 @@
 package stroom.pipeline.refdata;
 
 import stroom.bytebuffer.ByteBufferPool;
-import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.PooledByteBufferOutputStream;
+import stroom.bytebuffer.SimpleByteBufferPoolFactory;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -114,7 +114,7 @@ class TestReferenceDataFilter extends StroomUnitTest {
     private RefDataLoader refDataLoader;
 
     private ByteBufferPool getByteBufferPool() {
-        return new ByteBufferPoolFactory().getByteBufferPool();
+        return new SimpleByteBufferPoolFactory().getByteBufferPool();
     }
 
     @Test

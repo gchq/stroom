@@ -1,7 +1,7 @@
 package stroom.lmdb;
 
 import stroom.bytebuffer.ByteBufferPool;
-import stroom.bytebuffer.ByteBufferPoolFactory;
+import stroom.bytebuffer.SimpleByteBufferPoolFactory;
 import stroom.lmdb.serde.IntegerSerde;
 import stroom.lmdb.serde.Serde;
 import stroom.lmdb.serde.StringSerde;
@@ -27,7 +27,7 @@ public class TestLmdbPerformance extends AbstractDualEnvLmdbTest {
     public static final int ITERATIONS = 1_000_000;
     public static final int ROUNDS = 7;
 
-    private final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
+    private final ByteBufferPool byteBufferPool = new SimpleByteBufferPoolFactory().getByteBufferPool();
 
     private BasicLmdbDb<Integer, String> db1;
     private BasicLmdbDb<Integer, String> db2;

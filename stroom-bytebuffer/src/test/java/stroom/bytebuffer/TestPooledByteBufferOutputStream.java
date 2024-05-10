@@ -43,7 +43,7 @@ class TestPooledByteBufferOutputStream {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestPooledByteBufferOutputStream.class);
 
     private ByteBufferPool getByteBufferPool() {
-        return new ByteBufferPoolFactory().getByteBufferPool();
+        return new SimpleByteBufferPoolFactory().getByteBufferPool();
     }
 
     @Test
@@ -197,7 +197,7 @@ class TestPooledByteBufferOutputStream {
                             // Reset the counter for each dynamic test
                             iteration.set(1);
 
-                            ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
+                            ByteBufferPool byteBufferPool = new SimpleByteBufferPoolFactory().getByteBufferPool();
                             final PooledByteBufferOutputStream pooledStream = new PooledByteBufferOutputStream(
                                     byteBufferPool, 10);
 

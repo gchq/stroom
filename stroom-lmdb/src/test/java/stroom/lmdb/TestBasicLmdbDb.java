@@ -18,10 +18,10 @@
 package stroom.lmdb;
 
 import stroom.bytebuffer.ByteBufferPool;
-import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.bytebuffer.PooledByteBufferPair;
+import stroom.bytebuffer.SimpleByteBufferPoolFactory;
 import stroom.lmdb.LmdbEnv.WriteTxn;
 import stroom.lmdb.UnSortedDupKey.UnsortedDupKeyFactory;
 import stroom.lmdb.serde.IntegerSerde;
@@ -91,7 +91,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestBasicLmdbDb.class);
     private static final int UNSIGNED_LONG_LEN = 4;
     private static final UnsignedBytes UNSIGNED_BYTES = UnsignedBytesInstances.ofLength(UNSIGNED_LONG_LEN);
-    private final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
+    private final ByteBufferPool byteBufferPool = new SimpleByteBufferPoolFactory().getByteBufferPool();
 
     private final UnsignedLongSerde unsignedLongSerde = new UnsignedLongSerde(UNSIGNED_LONG_LEN, UNSIGNED_BYTES);
 
@@ -281,7 +281,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
     void testDupSupport() {
         BasicLmdbDb<String, String> db = new BasicLmdbDb<>(
                 lmdbEnv,
-                new ByteBufferPoolFactory().getByteBufferPool(),
+                new SimpleByteBufferPoolFactory().getByteBufferPool(),
                 new StringSerde(),
                 new StringSerde(),
                 "dupDb",
@@ -326,7 +326,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
     void testDupSupport_unsortedValues() {
         BasicLmdbDb<UnSortedDupKey<String>, String> db = new BasicLmdbDb<>(
                 lmdbEnv,
-                new ByteBufferPoolFactory().getByteBufferPool(),
+                new SimpleByteBufferPoolFactory().getByteBufferPool(),
                 new UnSortedDupKeySerde<>(new StringSerde()),
                 new StringSerde(),
                 "dupDb",
@@ -1582,7 +1582,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
 
         return new BasicLmdbDb<>(
                 lmdbEnv,
-                new ByteBufferPoolFactory().getByteBufferPool(),
+                new SimpleByteBufferPoolFactory().getByteBufferPool(),
                 new StringSerde(),
                 new StringSerde(),
                 "db" + id);

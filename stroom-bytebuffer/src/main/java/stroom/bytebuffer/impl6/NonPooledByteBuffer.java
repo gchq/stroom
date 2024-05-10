@@ -67,7 +67,7 @@ class NonPooledByteBuffer implements PooledByteBuffer {
         Objects.requireNonNull(byteBuffer, "Already released");
         if (byteBuffer.isDirect()) {
             try {
-                LOGGER.debug("Unmapping buffer {}", byteBuffer);
+//                LOGGER.debug("Unmapping buffer {}", byteBuffer);
                 ByteBufferSupport.unmap(byteBuffer);
             } catch (final Exception e) {
                 LOGGER.error("Error releasing direct byte buffer", e);

@@ -18,7 +18,7 @@
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
 
-import stroom.bytebuffer.ByteBufferPoolFactory;
+import stroom.bytebuffer.SimpleByteBufferPoolFactory;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
@@ -47,7 +47,7 @@ class TestProcessingInfoDb extends AbstractStoreDbTest {
     void setup() {
         processingInfoDb = new ProcessingInfoDb(
                 refDataLmdbEnv,
-                new ByteBufferPoolFactory().getByteBufferPool(),
+                new SimpleByteBufferPoolFactory().getByteBufferPool(),
                 new RefStreamDefinitionSerde(),
                 new RefDataProcessingInfoSerde());
     }

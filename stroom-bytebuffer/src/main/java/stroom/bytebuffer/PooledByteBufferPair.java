@@ -37,9 +37,15 @@ public interface PooledByteBufferPair extends AutoCloseable {
      */
     void doWithByteBuffers(BiConsumer<ByteBuffer, ByteBuffer> byteBufferPairConsumer);
 
+    /**
+     * Same as {@link PooledByteBufferPair#close()}
+     */
     void release();
 
     void clear();
 
+    /**
+     * Same as {@link PooledByteBufferPair#release()}
+     */
     void close();
 }

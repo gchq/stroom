@@ -17,8 +17,8 @@
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
-import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.ByteBufferUtils;
+import stroom.bytebuffer.SimpleByteBufferPoolFactory;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
@@ -67,7 +67,7 @@ class TestRangeStoreDb extends AbstractStoreDbTest {
     void setup() {
         rangeStoreDb = new RangeStoreDb(
                 refDataLmdbEnv,
-                new ByteBufferPoolFactory().getByteBufferPool(),
+                new SimpleByteBufferPoolFactory().getByteBufferPool(),
                 new RangeStoreKeySerde(),
                 new ValueStoreKeySerde());
     }

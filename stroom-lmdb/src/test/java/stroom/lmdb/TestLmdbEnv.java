@@ -1,7 +1,7 @@
 package stroom.lmdb;
 
 import stroom.bytebuffer.ByteBufferPool;
-import stroom.bytebuffer.ByteBufferPoolFactory;
+import stroom.bytebuffer.SimpleByteBufferPoolFactory;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.lmdb.serde.StringSerde;
 import stroom.util.concurrent.HighWaterMarkTracker;
@@ -53,7 +53,7 @@ public class TestLmdbEnv {
     private static final int MAX_READERS = CORES;
 
     private static final ExecutorService executor = Executors.newCachedThreadPool();
-    private static final ByteBufferPool BYTE_BUFFER_POOL = new ByteBufferPoolFactory().getByteBufferPool();
+    private static final ByteBufferPool BYTE_BUFFER_POOL = new SimpleByteBufferPoolFactory().getByteBufferPool();
 
     @AfterAll
     static void afterAll() {

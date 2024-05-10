@@ -15,11 +15,7 @@
  *
  */
 
-package stroom.bytebuffer.impl6;
-
-import stroom.bytebuffer.ByteBufferPool;
-import stroom.bytebuffer.PooledByteBuffer;
-import stroom.bytebuffer.PooledByteBufferPair;
+package stroom.bytebuffer;
 
 import java.nio.ByteBuffer;
 import java.util.function.BiConsumer;
@@ -28,13 +24,13 @@ import java.util.function.BiConsumer;
  * Wrapper for a pair of {@link ByteBuffer}s obtained from a {@link ByteBufferPool} that can be used
  * with a try with resources block as it implements {@link AutoCloseable}.
  */
-class PooledByteBufferPairImpl implements PooledByteBufferPair {
+class PooledByteBufferPairImpl8 implements PooledByteBufferPair {
 
     private final PooledByteBuffer keyBuffer;
     private final PooledByteBuffer valueBuffer;
 
-    PooledByteBufferPairImpl(final PooledByteBuffer keyBuffer,
-                             final PooledByteBuffer valueBuffer) {
+    PooledByteBufferPairImpl8(final PooledByteBuffer keyBuffer,
+                              final PooledByteBuffer valueBuffer) {
         this.keyBuffer = keyBuffer;
         this.valueBuffer = valueBuffer;
     }
@@ -59,7 +55,7 @@ class PooledByteBufferPairImpl implements PooledByteBufferPair {
         try {
             byteBufferPairConsumer.accept(getKeyBuffer(), getValueBuffer());
         } finally {
-            release();
+            this.release();
         }
     }
 

@@ -23,6 +23,8 @@ dependencies {
 
     testImplementation libs.assertj_core
     testImplementation libs.dropwizard_jetty
+    testImplementation libs.jmh_core
+    testImplementation libs.jmh_generator_annprocess
     testImplementation libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard

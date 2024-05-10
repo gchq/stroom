@@ -1,7 +1,7 @@
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
-import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.PooledByteBuffer;
+import stroom.bytebuffer.SimpleByteBufferPoolFactory;
 import stroom.lmdb.KeyConsumer;
 import stroom.pipeline.refdata.store.StagingValue;
 import stroom.pipeline.refdata.store.StringValue;
@@ -39,7 +39,7 @@ class TestValueStoreMetaDb extends AbstractStoreDbTest {
         // the default
         valueStoreMetaDb = new ValueStoreMetaDb(
                 refDataLmdbEnv,
-                new ByteBufferPoolFactory().getByteBufferPool(),
+                new SimpleByteBufferPoolFactory().getByteBufferPool(),
                 new ValueStoreKeySerde(),
                 new ValueStoreMetaSerde());
     }

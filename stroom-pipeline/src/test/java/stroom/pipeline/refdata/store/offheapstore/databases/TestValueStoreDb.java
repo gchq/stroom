@@ -1,11 +1,11 @@
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
 
-import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.bytebuffer.PooledByteBufferOutputStream.Factory;
+import stroom.bytebuffer.SimpleByteBufferPoolFactory;
 import stroom.lmdb.EntryConsumer;
 import stroom.pipeline.refdata.store.BasicValueStoreHashAlgorithmImpl;
 import stroom.pipeline.refdata.store.FastInfosetValue;
@@ -47,7 +47,7 @@ class TestValueStoreDb extends AbstractStoreDbTest {
     private final RefDataValueSerdeFactory refDataValueSerdeFactory = new RefDataValueSerdeFactory();
     private final ValueStoreHashAlgorithm xxHashAlgorithm = new XxHashValueStoreHashAlgorithm();
     private final ValueStoreHashAlgorithm basicHashAlgorithm = new BasicValueStoreHashAlgorithmImpl();
-    private final ByteBufferPoolFactory byteBufferPoolFactory = new ByteBufferPoolFactory();
+    private final SimpleByteBufferPoolFactory byteBufferPoolFactory = new SimpleByteBufferPoolFactory();
     private final PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory = new Factory() {
         @Override
         public PooledByteBufferOutputStream create(final int initialCapacity) {
@@ -63,7 +63,7 @@ class TestValueStoreDb extends AbstractStoreDbTest {
         // the default
         valueStoreDb = new ValueStoreDb(
                 refDataLmdbEnv,
-                new ByteBufferPoolFactory().getByteBufferPool(),
+                new SimpleByteBufferPoolFactory().getByteBufferPool(),
                 new ValueStoreKeySerde(),
                 new GenericRefDataValueSerde(refDataValueSerdeFactory),
                 xxHashAlgorithm,
@@ -74,7 +74,7 @@ class TestValueStoreDb extends AbstractStoreDbTest {
     private void setupValueStoreDb(final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
         valueStoreDb = new ValueStoreDb(
                 refDataLmdbEnv,
-                new ByteBufferPoolFactory().getByteBufferPool(),
+                new SimpleByteBufferPoolFactory().getByteBufferPool(),
                 new ValueStoreKeySerde(),
                 new GenericRefDataValueSerde(refDataValueSerdeFactory),
                 valueStoreHashAlgorithm,

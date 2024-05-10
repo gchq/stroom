@@ -17,18 +17,19 @@ import java.util.TreeMap;
 @JsonPropertyOrder(alphabetic = true)
 public class ByteBufferPoolConfig extends AbstractConfig implements IsStroomConfig {
 
+    public static final String PROP_NAME_BUFFER_COUNTS = "pooledByteBufferCounts";
+
     private final int warningThresholdPercentage;
     private final Map<Integer, Integer> pooledByteBufferCounts;
     private final boolean blockOnExhaustedPool;
 
     public ByteBufferPoolConfig() {
         warningThresholdPercentage = 90;
-        // Use a treemap so we get a consistent order in the yaml so TestYamlUtil doesn't fail
+        // Use a treemap, so we get a consistent order in the yaml so TestYamlUtil doesn't fail
         pooledByteBufferCounts = new TreeMap<>(Map.of(
-                1, 50,
-                10, 50,
-                100, 50,
-                1_000, 50,
+                10, 1_000,
+                100, 1_000,
+                1_000, 500,
                 10_000, 50,
                 100_000, 10,
                 1_000_000, 3));
@@ -38,7 +39,7 @@ public class ByteBufferPoolConfig extends AbstractConfig implements IsStroomConf
     @JsonCreator
     public ByteBufferPoolConfig(
             @JsonProperty("warningThresholdPercentage") final int warningThresholdPercentage,
-            @JsonProperty("pooledByteBufferCounts") final Map<Integer, Integer> pooledByteBufferCounts,
+            @JsonProperty(PROP_NAME_BUFFER_COUNTS) final Map<Integer, Integer> pooledByteBufferCounts,
             @JsonProperty("blockOnExhaustedPool") final boolean blockOnExhaustedPool) {
         this.warningThresholdPercentage = warningThresholdPercentage;
         this.pooledByteBufferCounts = pooledByteBufferCounts;
@@ -56,8 +57,8 @@ public class ByteBufferPoolConfig extends AbstractConfig implements IsStroomConf
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("Defines the maximum number of byte buffers that will be held in the pool, " +
-            "keyed by the size of the buffer. Configured buffer sizes must be a power of ten " +
-            "(i.e. 1, 10, 100, etc.) or they will be ignored. Values should be greater than or equal to zero. " +
+            "keyed by the size of the buffer. Configured buffer sizes must be a power of ten and >= 10, " +
+            "(i.e. 10, 100, etc.) or they will be ignored. Values should be greater than or equal to zero. " +
             "Set the count to zero to indicate that a buffer size should not be pooled. An empty or null map " +
             "means no buffers will be pooled. Keys should be contiguous powers of ten from one upwards, else " +
             "any gaps will be assigned a default value of 50.")

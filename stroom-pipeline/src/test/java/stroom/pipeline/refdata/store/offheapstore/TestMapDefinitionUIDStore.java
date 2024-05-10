@@ -18,9 +18,9 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.bytebuffer.ByteBufferPool;
-import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
+import stroom.bytebuffer.SimpleByteBufferPoolFactory;
 import stroom.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
@@ -58,7 +58,7 @@ import static org.assertj.core.api.Assertions.fail;
 class TestMapDefinitionUIDStore extends AbstractStoreDbTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestMapDefinitionUIDStore.class);
-    private final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
+    private final ByteBufferPool byteBufferPool = new SimpleByteBufferPoolFactory().getByteBufferPool();
     private MapDefinitionUIDStore mapDefinitionUIDStore = null;
     private MapUidForwardDb mapUidForwardDb;
     private MapUidReverseDb mapUidReverseDb;
@@ -67,7 +67,7 @@ class TestMapDefinitionUIDStore extends AbstractStoreDbTest {
     void setup() {
         final MapDefinitionSerde mapDefinitionSerde = new MapDefinitionSerde();
         final UIDSerde uidSerde = new UIDSerde();
-        final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
+        final ByteBufferPool byteBufferPool = new SimpleByteBufferPoolFactory().getByteBufferPool();
         mapUidForwardDb = new MapUidForwardDb(refDataLmdbEnv, byteBufferPool, mapDefinitionSerde, uidSerde);
         mapUidReverseDb = new MapUidReverseDb(refDataLmdbEnv, byteBufferPool, uidSerde, mapDefinitionSerde);
 

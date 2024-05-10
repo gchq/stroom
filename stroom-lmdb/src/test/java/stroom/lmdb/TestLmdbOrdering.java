@@ -1,7 +1,7 @@
 package stroom.lmdb;
 
 import stroom.bytebuffer.ByteBufferPool;
-import stroom.bytebuffer.ByteBufferPoolFactory;
+import stroom.bytebuffer.SimpleByteBufferPoolFactory;
 import stroom.lmdb.serde.Serde;
 import stroom.lmdb.serde.StringSerde;
 import stroom.lmdb.serde.UnsignedBytes;
@@ -29,7 +29,7 @@ public class TestLmdbOrdering extends AbstractLmdbDbTest {
     private static final UnsignedBytes TWO_BYTE_UNSIGNED = UnsignedBytesInstances.TWO;
     private static final UnsignedBytes THREE_BYTE_UNSIGNED = UnsignedBytesInstances.THREE;
 
-    private final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
+    private final ByteBufferPool byteBufferPool = new SimpleByteBufferPoolFactory().getByteBufferPool();
 
     @BeforeEach
     void setup() {

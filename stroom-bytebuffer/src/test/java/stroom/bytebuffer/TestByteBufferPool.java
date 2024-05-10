@@ -20,10 +20,16 @@ package stroom.bytebuffer;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBufferPoolImpl6;
 import stroom.bytebuffer.impl6.ByteBufferPoolImpl7;
+import stroom.util.json.JsonUtil;
+import stroom.util.logging.AsciiTable;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ModelStringUtil;
 import stroom.util.sysinfo.SystemInfoResult;
 
+import com.google.common.base.Strings;
+import jakarta.inject.Provider;
 import org.eclipse.jetty.io.MappedByteBufferPool;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
@@ -36,7 +42,9 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.LongSummaryStatistics;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -48,6 +56,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -61,7 +70,7 @@ class TestByteBufferPool {
     private static final long RANDOM_SEED = 345649236493L;
 
     private ByteBufferPool getByteBufferPool() {
-        return new ByteBufferPoolFactory().getByteBufferPool();
+        return new SimpleByteBufferPoolFactory().getByteBufferPool();
     }
 
     @Test
@@ -202,8 +211,8 @@ class TestByteBufferPool {
     void testGetSystemInfo() {
         final ByteBufferPool byteBufferPool = getByteBufferPool();
 
-        final PooledByteBuffer buffer1 = byteBufferPool.getPooledByteBuffer(1);
-        final PooledByteBuffer buffer2 = byteBufferPool.getPooledByteBuffer(1);
+        final PooledByteBuffer buffer1 = byteBufferPool.getPooledByteBuffer(1); // treated as 10
+        final PooledByteBuffer buffer2 = byteBufferPool.getPooledByteBuffer(1); // treated as 10
         final PooledByteBuffer buffer3 = byteBufferPool.getPooledByteBuffer(10);
         final PooledByteBuffer buffer4 = byteBufferPool.getPooledByteBuffer(10);
         final PooledByteBuffer buffer5 = byteBufferPool.getPooledByteBuffer(10);
@@ -226,10 +235,9 @@ class TestByteBufferPool {
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(6);
 
         SystemInfoResult systemInfoResult = byteBufferPool.getSystemInfo();
-        LOGGER.info("health: {}", systemInfoResult);
+        LOGGER.info("health: {}", JsonUtil.writeValueAsString(systemInfoResult));
 
-        assertQueueSize(systemInfoResult, 1, 2);
-        assertQueueSize(systemInfoResult, 10, 3);
+        assertQueueSize(systemInfoResult, 10, 2 + 3); // size 1 + size 10
         assertQueueSize(systemInfoResult, 100, 1);
     }
 
@@ -332,9 +340,10 @@ class TestByteBufferPool {
         final ExecutorService executorService = Executors.newFixedThreadPool(threads);
         final ByteBufferPool byteBufferPool = getByteBufferPool();
 
-        doPerfTest(new ArrayList<>(), 1, iterations, byteBufferPool, executorService);
+        doPerfTest(new Results(), 1, iterations, byteBufferPool, executorService, threads);
     }
 
+    @Disabled
     @TestFactory
     List<DynamicTest> comparePerformance() {
         final List<ByteBufferPool> byteBufferPools = new ArrayList<>();
@@ -346,6 +355,7 @@ class TestByteBufferPool {
         byteBufferPools.add(new ByteBufferPoolImpl5());
         byteBufferPools.add(new ByteBufferPoolImpl6(ByteBufferPoolConfig::new));
         byteBufferPools.add(new ByteBufferPoolImpl7(new ByteBufferFactoryImpl()));
+        byteBufferPools.add(new ByteBufferPoolImpl8(ByteBufferPoolConfig::new));
         byteBufferPools.add(new JettyByteBufferPool());
 
         final int threads = 10;
@@ -388,47 +398,65 @@ class TestByteBufferPool {
                 .collect(Collectors.toList());
     }
 
-    //    @Disabled // for manual perf testing only
+    @Disabled // for manual perf testing only
     @Test
     void testPoolPerformanceComparison() {
 
-        final int threads = 10;
+        final int threads = 20;
         // Set to true for profiling in visualvm
         final boolean inProfilingMode = false;
 
         final int rounds = 3;
+//        final int rounds = 1;
         final int iterations = inProfilingMode
                 ? 5_000_000
-                : 1_000;
+                : 1_000_000;
+//                : 200_000;
 
         if (inProfilingMode) {
 //         wait for visualvm to spin up
             sleep(10_000);
         }
 
+        ByteBufferPoolConfig poolConfig = new ByteBufferPoolConfig()
+                .withPooledByteBufferCounts(Map.of(
+                        10, 100,
+                        100, 100,
+                        1_000, 100,
+                        10_000, 100,
+                        100_000, 100,
+                        1_000_000, 100
+                ));
+        final Provider<ByteBufferPoolConfig> configSupplier = () -> poolConfig;
+
         final ExecutorService executorService = Executors.newFixedThreadPool(threads);
         final ByteBufferPool nonPooledByteBufferPool = new NonPooledByteBufferPool();
-        final ByteBufferPool byteBufferPool = new stroom.bytebuffer.ByteBufferPoolImpl();
-        final ByteBufferPool byteBufferPool2 = new ByteBufferPoolImpl2();
-        final ByteBufferPool byteBufferPool3 = new ByteBufferPoolImpl3();
-        final ByteBufferPool byteBufferPool4 = new ByteBufferPoolImpl4(ByteBufferPoolConfig::new);
+//        final ByteBufferPool byteBufferPool = new stroom.bytebuffer.ByteBufferPoolImpl();
+//        final ByteBufferPool byteBufferPool2 = new ByteBufferPoolImpl2();
+//        final ByteBufferPool byteBufferPool3 = new ByteBufferPoolImpl3();
+        final ByteBufferPool byteBufferPool4 = new ByteBufferPoolImpl4(configSupplier);
         final ByteBufferPool byteBufferPool5 = new ByteBufferPoolImpl5();
+        final ByteBufferPool byteBufferPool6 = new ByteBufferPoolImpl6(configSupplier);
+//        final ByteBufferPool byteBufferPool7 = new ByteBufferPoolImpl7(new ByteBufferFactoryImpl());
+        final ByteBufferPool byteBufferPool8 = new ByteBufferPoolImpl8(configSupplier);
         final ByteBufferPool jettyByteBufferPool = new JettyByteBufferPool();
 
-        final List<String> results = new ArrayList<>();
+        final Results results = new Results();
 
         // Do them all twice so on the second run the jvm is all warmed up and the pools
         // have buffers in the pool
         IntStream.rangeClosed(1, rounds).forEach(testRound -> {
             try {
-                doPerfTest(results, testRound, iterations, nonPooledByteBufferPool, executorService);
-//                doPerfTest(results, testRound, iterations, byteBufferPool, executorService);
-//                doPerfTest(results, testRound, iterations, byteBufferPool2, executorService);
-//                doPerfTest(results, testRound, iterations, byteBufferPool3, executorService);
-                doPerfTest(results, testRound, iterations, byteBufferPool4, executorService);
-//                doPerfTest(results, testRound, iterations, byteBufferPool5, executorService);
-                doPerfTest(results, testRound, iterations, jettyByteBufferPool, executorService);
-//                doPerfTest(results, testRound, iterations, hbaseByteBufferPool, executorService);
+//                doPerfTest(results, testRound, iterations, nonPooledByteBufferPool, executorService, threads);
+//                doPerfTest(results, testRound, iterations, byteBufferPool, executorService, threads);
+//                doPerfTest(results, testRound, iterations, byteBufferPool2, executorService, threads);
+//                doPerfTest(results, testRound, iterations, byteBufferPool3, executorService, threads);
+                doPerfTest(results, testRound, iterations, byteBufferPool4, executorService, threads);
+//                doPerfTest(results, testRound, iterations, byteBufferPool5, executorService, threads);
+                doPerfTest(results, testRound, iterations, byteBufferPool6, executorService, threads);
+                doPerfTest(results, testRound, iterations, byteBufferPool8, executorService, threads);
+//                doPerfTest(results, testRound, iterations, jettyByteBufferPool, executorService, threads);
+//                doPerfTest(results, testRound, iterations, hbaseByteBufferPool, executorService, threads);
 
                 LOGGER.info("---------------------------------------------------------");
             } catch (ExecutionException | InterruptedException e) {
@@ -436,7 +464,13 @@ class TestByteBufferPool {
             }
         });
 
-        LOGGER.info("Result:\n{}", String.join("\n", results));
+        LOGGER.info("--------------------------------------------------------------------------------");
+        LOGGER.info("Impl6:\n{}", JsonUtil.writeValueAsString(byteBufferPool6.getSystemInfo().getDetails()));
+        LOGGER.info("--------------------------------------------------------------------------------");
+        LOGGER.info("Impl8:\n{}", JsonUtil.writeValueAsString(byteBufferPool8.getSystemInfo().getDetails()));
+        LOGGER.info("--------------------------------------------------------------------------------");
+        LOGGER.info("Result (values are total duration in millis for {} iterations):\n{}",
+                ModelStringUtil.formatCsv(iterations), results);
     }
 
     private void simulateUsingBuffer(final ByteBuffer buffer, final int requestedCapacity) {
@@ -458,21 +492,52 @@ class TestByteBufferPool {
 //        }
     }
 
-    private void doPerfTest(final List<String> results,
+    private void doPerfTest(final Results results,
                             final int testRound,
                             final int iterations,
                             final ByteBufferPool byteBufferPool,
-                            final ExecutorService executorService) throws ExecutionException, InterruptedException {
+                            final ExecutorService executorService,
+                            final int threads) throws ExecutionException, InterruptedException {
 
-        LOGGER.info("Using pool {}", byteBufferPool.getClass().getName());
+
+        final int[] capacities = new int[]{5, 50, 500, 5_000, 50_000, 500_000};
+        for (final int capacity : capacities) {
+            final Supplier<Integer> supplier = () -> capacity;
+            doPerfTest(
+                    results, testRound, iterations, byteBufferPool, executorService, threads, supplier,
+                    String.valueOf(capacity));
+        }
+
+        //use consistent seed for a common set of random numbers for each run
+        final Random random = new Random(RANDOM_SEED);
+        final Supplier<Integer> supplier = () -> capacities[random.nextInt(capacities.length)];
+        doPerfTest(
+                results, testRound, iterations, byteBufferPool, executorService, threads, supplier,
+                "random");
+
+    }
+
+    private void doPerfTest(final Results results,
+                            final int testRound,
+                            final int iterations,
+                            final ByteBufferPool byteBufferPool,
+                            final ExecutorService executorService,
+                            final int threads,
+                            final Supplier<Integer> capacitySupplier,
+                            final String runName) throws ExecutionException, InterruptedException {
+
+        LOGGER.info("Pool: {}, round: {}, runName: {}",
+                byteBufferPool.getClass().getSimpleName(), testRound, runName);
 
         CountDownLatch countDownLatch = new CountDownLatch(1);
 
         //use consistent seed for a common set of random numbers for each run
-        Random random = new Random(RANDOM_SEED);
+//        final Random random = new Random(RANDOM_SEED);
+//        final int[] capacities = new int[]{5, 50, 500, 5_000, 50_000, 500_000};
 
-        LOGGER.info("Scheduling tasks");
-        // submit all the runnables but they will wait till the countDownLatch is counted down
+//        LOGGER.info("Scheduling tasks");
+        // submit all the runnables, but they will wait till the countDownLatch is counted down to
+        // actually run
         final List<? extends Future<?>> futures = IntStream.rangeClosed(1, iterations)
                 .boxed()
                 .map(i -> {
@@ -484,21 +549,23 @@ class TestByteBufferPool {
                             Thread.currentThread().interrupt();
                             throw new RuntimeException(e);
                         }
-                        int capacity = 500 + random.nextInt(1000) + 1;
+//                        int capacity = 1 + random.nextInt(10_000) + 1;
+//                        int capacity = 1 + random.nextInt(100);
+//                        int capacity = capacities[random.nextInt(capacities.length)];
+                        int capacity = capacitySupplier.get();
 
                         // Using the pool
                         try (PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(capacity)) {
                             ByteBuffer buffer = pooledByteBuffer.getByteBuffer();
                             simulateUsingBuffer(buffer, capacity);
                         }
-
                     });
                 })
                 .collect(Collectors.toList());
 
         final Instant startTime = Instant.now();
 
-        LOGGER.info("About to release the latch");
+//        LOGGER.info("About to release the latch");
         // release the tasks
         countDownLatch.countDown();
 
@@ -507,13 +574,19 @@ class TestByteBufferPool {
         }
 
         final Duration duration = Duration.between(startTime, Instant.now());
-        final String msg = LogUtil.message("{}, round {}, duration {}",
-                byteBufferPool.getClass().getSimpleName(),
+        results.putResult(
+                byteBufferPool.getClass(),
                 testRound,
-                duration.toMillis());
-        LOGGER.info(msg);
-        results.add(msg);
-        LOGGER.info("System info:{}", byteBufferPool.getSystemInfo());
+                runName,
+                duration);
+
+//        final String msg = LogUtil.message("{} round {}, run {} duration {}",
+//                Strings.padEnd(byteBufferPool.getClass().getSimpleName() + ",", 30, ' '),
+//                testRound,
+//                Strings.padEnd(runName, 30, ' '),
+//                duration.toMillis());
+//        LOGGER.info("\n{}", results.toString());
+//        LOGGER.info("System info:{}", byteBufferPool.getSystemInfo());
     }
 
     private void getAndReleaseBuffer(ByteBufferPool byteBufferPool, int minCapacity) {
@@ -634,6 +707,104 @@ class TestByteBufferPool {
         @Override
         public SystemInfoResult getSystemInfo() {
             return null;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class Results {
+
+        // Map of roundNum => Map of className => Map of runName => duration
+        private final Map<Integer, Map<String, Map<String, Duration>>> map = new HashMap<>();
+
+        void putResult(final Class<?> clazz,
+                       final int round,
+                       final String runName,
+                       final Duration duration) {
+            map.computeIfAbsent(round, k -> new HashMap<>())
+                    .computeIfAbsent(clazz.getSimpleName(), k -> new HashMap<>())
+                    .put(runName, duration);
+        }
+
+        private String padRight(final String str) {
+            return Strings.padEnd(str, 30, ' ');
+        }
+
+        private String padRun(final String str) {
+            return Strings.padStart(str, 10, ' ');
+        }
+
+        private String padBar(final String str) {
+            return Strings.padEnd(str, 10, ' ');
+        }
+
+        private String padLeft(final String str) {
+            return Strings.padStart(str, 10, ' ');
+        }
+
+        @Override
+        public String toString() {
+            final List<String> lines = new ArrayList<>();
+            final List<String> runNames = map.values()
+                    .stream()
+                    .flatMap(entry -> entry.values()
+                            .stream()
+                            .flatMap(entry2 -> entry2.keySet().stream()))
+                    .distinct()
+                    .sorted()
+                    .toList();
+            final LongSummaryStatistics durationStats = map.values()
+                    .stream()
+                    .flatMap(map2 -> map2.values()
+                            .stream()
+                            .flatMap(map3 -> map3.values()
+                                    .stream()))
+                    .mapToLong(Duration::toMillis)
+                    .summaryStatistics();
+
+
+            final List<String> headings = new ArrayList<>();
+            headings.add(padRight("Class"));
+            runNames.forEach(name -> {
+                headings.add(padRun(name));
+                headings.add(padBar("Bar"));
+            });
+
+            final String delimiter = ", ";
+            final String headingRow = String.join(delimiter, headings);
+
+            map.entrySet().stream()
+                    .sorted(Entry.comparingByKey())
+                    .forEach(roundEntry -> {
+                        int roundNum = roundEntry.getKey();
+                        var mapByClassName = roundEntry.getValue();
+                        lines.add("Round " + roundNum);
+                        lines.add(headingRow);
+                        mapByClassName.entrySet()
+                                .stream()
+                                .sorted(Entry.comparingByKey())
+                                .forEach(classNameEntry -> {
+                                    final List<String> values = new ArrayList<>();
+                                    final String className = classNameEntry.getKey();
+                                    final var mapByRunName = classNameEntry.getValue();
+                                    values.add(padRight(className));
+                                    runNames.forEach(runName -> {
+                                        final Duration duration = mapByRunName.get(runName);
+                                        final long millis = duration.toMillis();
+                                        values.add(padRun(ModelStringUtil.formatCsv(millis)));
+                                        values.add(padBar(AsciiTable.asciiBar(
+                                                millis,
+                                                durationStats.getMin(),
+                                                durationStats.getMax(),
+                                                10)));
+                                    });
+                                    lines.add(String.join(delimiter, values));
+                                });
+                        lines.add("");
+                    });
+            return String.join("\n", lines);
         }
     }
 }

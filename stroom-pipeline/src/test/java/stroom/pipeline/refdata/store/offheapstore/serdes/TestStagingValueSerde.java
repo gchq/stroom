@@ -1,8 +1,8 @@
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 import stroom.bytebuffer.ByteBufferPool;
-import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.PooledByteBufferOutputStream;
+import stroom.bytebuffer.SimpleByteBufferPoolFactory;
 import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.StagingValue;
 import stroom.pipeline.refdata.store.StagingValueImpl;
@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStagingValueSerde extends AbstractSerdeTest<StagingValue, StagingValueSerde> {
 
-    private final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
+    private final ByteBufferPool byteBufferPool = new SimpleByteBufferPoolFactory().getByteBufferPool();
     private final ValueStoreHashAlgorithm valueStoreHashAlgorithm = new XxHashValueStoreHashAlgorithm();
 
 
@@ -75,7 +75,8 @@ class TestStagingValueSerde extends AbstractSerdeTest<StagingValue, StagingValue
 
     @Override
     TypeLiteral<StagingValueSerde> getSerdeType() {
-        return new TypeLiteral<StagingValueSerde>(){};
+        return new TypeLiteral<StagingValueSerde>() {
+        };
     }
 
     @Override

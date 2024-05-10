@@ -18,9 +18,9 @@
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
 
-import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
+import stroom.bytebuffer.SimpleByteBufferPoolFactory;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.pipeline.refdata.store.offheapstore.KeyValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
@@ -50,7 +50,7 @@ class TestKeyValueStoreDb extends AbstractStoreDbTest {
     void setup() {
         keyValueStoreDb = new KeyValueStoreDb(
                 refDataLmdbEnv,
-                new ByteBufferPoolFactory().getByteBufferPool(),
+                new SimpleByteBufferPoolFactory().getByteBufferPool(),
                 new KeyValueStoreKeySerde(),
                 new ValueStoreKeySerde());
     }
