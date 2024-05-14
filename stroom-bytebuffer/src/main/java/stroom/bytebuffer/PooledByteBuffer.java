@@ -51,7 +51,10 @@ public interface PooledByteBuffer extends AutoCloseable {
      */
     void clear();
 
-    Integer getCapacity();
+    /**
+     * The capacity of the underlying buffer if there is one.
+     */
+    Integer capacity();
 
     /**
      * Release the underlying {@link ByteBuffer} back to the pool. Once released,

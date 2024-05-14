@@ -53,7 +53,7 @@ class NonPooledByteBuffer implements PooledByteBuffer {
     }
 
     @Override
-    public Integer getCapacity() {
+    public Integer capacity() {
         return byteBuffer.capacity();
     }
 

@@ -91,7 +91,7 @@ class PooledByteBufferImpl implements PooledByteBuffer {
     }
 
     @Override
-    public Integer getCapacity() {
+    public Integer capacity() {
         Objects.requireNonNull(byteBuffer, "Already released");
         return byteBuffer.capacity();
     }

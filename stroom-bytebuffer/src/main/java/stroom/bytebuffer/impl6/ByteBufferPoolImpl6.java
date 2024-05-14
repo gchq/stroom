@@ -1,5 +1,6 @@
 package stroom.bytebuffer.impl6;
 
+import stroom.bytebuffer.ByteBufferFactory;
 import stroom.bytebuffer.ByteBufferPool;
 import stroom.bytebuffer.ByteBufferPoolConfig;
 import stroom.bytebuffer.ByteBufferSupport;
@@ -67,7 +68,7 @@ import java.util.stream.Collectors;
  * This impl uses {@link ArrayBlockingQueue}
  */
 @Singleton
-public class ByteBufferPoolImpl6 extends ByteBufferFactory implements ByteBufferPool {
+public class ByteBufferPoolImpl6 implements ByteBufferPool, ByteBufferFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ByteBufferPoolImpl6.class);
 

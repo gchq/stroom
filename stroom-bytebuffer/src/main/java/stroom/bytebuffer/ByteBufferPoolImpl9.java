@@ -77,14 +77,14 @@ import java.util.stream.Collectors;
  * then it will create an un-pooled buffer.
  */
 @Singleton
-public class ByteBufferPoolImpl8 implements ByteBufferPool, ByteBufferFactory {
+public class ByteBufferPoolImpl9 implements ByteBufferPool, ByteBufferFactory {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ByteBufferPoolImpl8.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ByteBufferPoolImpl9.class);
 
     // If no count is provided for a buffer size in the config then this value is used.
     private static final int DEFAULT_MAX_BUFFERS_PER_QUEUE = 50;
-    private static final int MIN_OFFSET = 1;
-    static final int MAX_BUFFER_CAPACITY = 1_000_000_000;
+    private static final int MIN_OFFSET = 2;
+    static final int MAX_BUFFER_CAPACITY = 65_536;
 
     // In each of these collections, the index/offset is the log10 of the buffer size,
     // i.e. 10 => 100, 100 => 25, 1_000 => 50 etc.
@@ -98,7 +98,7 @@ public class ByteBufferPoolImpl8 implements ByteBufferPool, ByteBufferFactory {
     private final int maxOffset;
 
     @Inject
-    public ByteBufferPoolImpl8(final Provider<ByteBufferPoolConfig> byteBufferPoolConfigProvider) {
+    public ByteBufferPoolImpl9(final Provider<ByteBufferPoolConfig> byteBufferPoolConfigProvider) {
 
         // Don't use a provider as all the props are RequiresRestart and we want system info to
         // report on config that matches what we init'd with.
@@ -120,7 +120,7 @@ public class ByteBufferPoolImpl8 implements ByteBufferPool, ByteBufferFactory {
                                 // We used to have a pool for 1 byte buffers but that is a bit pointless so
                                 // ignore+warn for those legacy config entries.
                                 LOGGER.warn("Configured buffer count entry of {}:{} (in property '{}') " +
-                                                "is not valid. It must be a power of ten, be >= 10 and <= {}. " +
+                                                "is not valid. It must be a power of two, be >= 5 and <= {}. " +
                                                 "This entry will be ignored.",
                                         size,
                                         count,
@@ -135,7 +135,7 @@ public class ByteBufferPoolImpl8 implements ByteBufferPool, ByteBufferFactory {
                         .max();
 
         if (optMaxSize.isPresent()) {
-            maxOffset = getOffset(optMaxSize.getAsInt());
+            maxOffset = PowTwoUtils.getOffset(optMaxSize.getAsInt());
             // Going from a zero based offset to a count so have to add one.
             sizesCount = maxOffset + 1;
         } else {
@@ -151,7 +151,7 @@ public class ByteBufferPoolImpl8 implements ByteBufferPool, ByteBufferFactory {
         final List<Info> infoList = new ArrayList<>(sizesCount);
         // Start at offset 1 (capacity 10)
         for (int offset = MIN_OFFSET; offset < sizesCount; offset++) {
-            int bufferCapacity = (int) Math.pow(10, offset);
+            int bufferCapacity = (int) Math.pow(2, offset);
             final Integer configuredCount = pooledByteBufferCounts.get(bufferCapacity);
             final int effectiveCount = pooledByteBufferCounts.getOrDefault(
                     bufferCapacity,
@@ -209,7 +209,7 @@ public class ByteBufferPoolImpl8 implements ByteBufferPool, ByteBufferFactory {
      * @return True if n is a power of ten, e.g. if n==10
      */
     static boolean isValidSize(Integer n) {
-        return getOffsetExact(n) != null;
+        return PowTwoUtils.getOffsetExact(n) != null;
     }
 
     @Override
@@ -222,7 +222,7 @@ public class ByteBufferPoolImpl8 implements ByteBufferPool, ByteBufferFactory {
     public void release(final ByteBuffer byteBuffer) {
         if (byteBuffer != null && byteBuffer.isDirect()) {
             final int capacity = byteBuffer.capacity();
-            final Integer offset = getOffsetExact(capacity);
+            final Integer offset = PowTwoUtils.getOffsetExact(capacity);
             if (offset != null) {
                 final PooledByteBufferQueue queue = getQueue(offset);
                 if (queue != null) {
@@ -244,7 +244,7 @@ public class ByteBufferPoolImpl8 implements ByteBufferPool, ByteBufferFactory {
 
     @Override
     public PooledByteBuffer getPooledByteBuffer(final int minCapacity) {
-        return new PooledByteBufferImpl8(() -> getBufferByMinCapacity(minCapacity));
+        return new PooledByteBufferImpl9(() -> getBufferByMinCapacity(minCapacity));
     }
 
     private ByteBuffer getUnPooledBuffer(final int minCapacity) {
@@ -259,7 +259,7 @@ public class ByteBufferPoolImpl8 implements ByteBufferPool, ByteBufferFactory {
      * The {@link ByteBuffer} may or may not be a pooled buffer.
      */
     private OwnedBuffer getBufferByMinCapacity(final int minCapacity) {
-        final int offset = getOffset(minCapacity);
+        final int offset = PowTwoUtils.getOffset(minCapacity);
         final PooledByteBufferQueue queue = getQueue(offset);
         OwnedBuffer ownedBuffer;
         if (queue == null) {
@@ -452,60 +452,6 @@ public class ByteBufferPoolImpl8 implements ByteBufferPool, ByteBufferFactory {
         }
     }
 
-    /**
-     * @return The offset of the minCapacity rounded up to the nearest power of ten
-     */
-    // Pkg private for testing
-    static int getOffset(final int minCapacity) {
-        // This is a lot faster than just doing (int) Math.ceil(Math.log10(minCapacity));
-        // See TestPowerOf10Performance for the benchmark
-        // No point having a bytebuffer of size 1 so start at 10
-        if (minCapacity <= 10) {
-            return 1;
-        } else if (minCapacity <= 100) {
-            return 2;
-        } else if (minCapacity <= 1_000) {
-            return 3;
-        } else if (minCapacity <= 10_000) {
-            return 4;
-        } else if (minCapacity <= 100_000) {
-            return 5;
-        } else if (minCapacity <= 1_000_000) {
-            return 6;
-        } else if (minCapacity <= 10_000_000) {
-            return 7;
-        } else if (minCapacity <= 100_000_000) {
-            return 8;
-        } else if (minCapacity <= 1_000_000_000) {
-            return 9;
-        } else {
-            return (int) Math.ceil(Math.log10(minCapacity));
-        }
-    }
-
-    /**
-     * @return The offset for the capacity, but only if the capacity matches exactly
-     * with a pooled buffer size. Used to ide
-     */
-    static Integer getOffsetExact(Integer capacity) {
-        if (capacity == null) {
-            return null;
-        } else {
-            return switch (capacity) {
-                case 10 -> 1;
-                case 100 -> 2;
-                case 1_000 -> 3;
-                case 10_000 -> 4;
-                case 100_000 -> 5;
-                case 1_000_000 -> 6;
-                case 10_000_000 -> 7;
-                case 100_000_000 -> 8;
-                case MAX_BUFFER_CAPACITY -> 9; // 1_000_000_000
-                default -> null;
-            };
-        }
-    }
-
     private PooledByteBufferQueue getQueue(final int offset) {
         if (offset <= maxOffset) {
             return pooledBufferQueues[offset];
@@ -520,7 +466,7 @@ public class ByteBufferPoolImpl8 implements ByteBufferPool, ByteBufferFactory {
      * @return Number of buffers known to the pool, i.e. in the pool or on loan.
      */
     int getPooledBufferCount(final int minCapacity) {
-        final int offset = getOffset(minCapacity);
+        final int offset = PowTwoUtils.getOffset(minCapacity);
         return pooledBufferQueues[offset].bufferCounter.get();
     }
 
@@ -530,7 +476,7 @@ public class ByteBufferPoolImpl8 implements ByteBufferPool, ByteBufferFactory {
      * @return Number of buffers available in the pool now.
      */
     int getAvailableBufferCount(final int minCapacity) {
-        final int offset = getOffset(minCapacity);
+        final int offset = PowTwoUtils.getOffset(minCapacity);
         return pooledBufferQueues[offset].size();
     }
 
@@ -767,14 +713,14 @@ public class ByteBufferPoolImpl8 implements ByteBufferPool, ByteBufferFactory {
     /**
      * For use by one thread.
      */
-    private static final class PooledByteBufferImpl8 implements PooledByteBuffer {
+    private static final class PooledByteBufferImpl9 implements PooledByteBuffer {
 
         // There is some code somewhere that gets a PooledByteBuffer but may not call getByteBuffer()
         // so make the buffer lazily fetched
         private Supplier<OwnedBuffer> ownedBufferSupplier;
         private OwnedBuffer ownedBuffer;
 
-        private PooledByteBufferImpl8(final Supplier<OwnedBuffer> ownedBufferSupplier) {
+        private PooledByteBufferImpl9(final Supplier<OwnedBuffer> ownedBufferSupplier) {
             this.ownedBufferSupplier = ownedBufferSupplier;
         }
 

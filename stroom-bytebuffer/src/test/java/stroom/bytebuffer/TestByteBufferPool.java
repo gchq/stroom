@@ -70,7 +70,14 @@ class TestByteBufferPool {
     private static final long RANDOM_SEED = 345649236493L;
 
     private ByteBufferPool getByteBufferPool() {
-        return new SimpleByteBufferPoolFactory().getByteBufferPool();
+        return SimpleByteBufferPoolFactory.getByteBufferPool(new ByteBufferPoolConfig()
+                .withPooledByteBufferCounts(
+                        Map.ofEntries(
+                                Map.entry(10, 1_000),
+                                Map.entry(100, 1_000),
+                                Map.entry(1_000, 1_000),
+                                Map.entry(10_000, 1_000),
+                                Map.entry(100_000, 1_000))));
     }
 
     @Test

@@ -23,11 +23,17 @@ class TestByteBufferPoolImpl4 {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestByteBufferPoolImpl4.class);
 
+    private static final ByteBufferPoolConfig IMPL4_CONFIG = new ByteBufferPoolConfig().withPooledByteBufferCounts(
+            Map.ofEntries(
+                    Map.entry(10, 1_000),
+                    Map.entry(100, 1_000),
+                    Map.entry(1_000, 1_000),
+                    Map.entry(10_000, 1_000),
+                    Map.entry(100_000, 1_000)));
+
     @Test
     void testGetBuffer_defaultConfig() {
-        final ByteBufferPoolConfig byteBufferPoolConfig = new ByteBufferPoolConfig();
-
-        doTest(byteBufferPoolConfig, 100, 1);
+        doTest(IMPL4_CONFIG, 100, 1);
     }
 
     @Test

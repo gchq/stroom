@@ -216,7 +216,7 @@ public class ByteBufferPoolImpl7 implements ByteBufferPool {
         }
 
         @Override
-        public Integer getCapacity() {
+        public Integer capacity() {
             return byteBuffer.capacity();
         }
 
@@ -293,7 +293,7 @@ public class ByteBufferPoolImpl7 implements ByteBufferPool {
         }
 
         @Override
-        public Integer getCapacity() {
+        public Integer capacity() {
             Objects.requireNonNull(byteBuffer, "Already released");
             return byteBuffer.capacity();
         }

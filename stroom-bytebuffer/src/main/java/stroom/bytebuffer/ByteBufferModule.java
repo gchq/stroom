@@ -17,9 +17,7 @@
 
 package stroom.bytebuffer;
 
-import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
-import stroom.bytebuffer.impl6.ByteBufferPoolImpl6;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasSystemInfoBinder;
 import stroom.util.shared.Clearable;
@@ -28,7 +26,7 @@ import com.google.inject.AbstractModule;
 
 public class ByteBufferModule extends AbstractModule {
 
-    static final Class<? extends ByteBufferPool> DEFAULT_BYTE_BUFFER_POOL = ByteBufferPoolImpl8.class;
+    static final Class<? extends ByteBufferPool> DEFAULT_BYTE_BUFFER_POOL = ByteBufferPoolImpl10.class;
 
     @Override
     protected void configure() {
@@ -37,7 +35,7 @@ public class ByteBufferModule extends AbstractModule {
         bind(ByteBufferFactory.class).to(ByteBufferFactoryImpl.class);
 
         HasSystemInfoBinder.create(binder())
-                .bind(ByteBufferPoolImpl6.class);
+                .bind(DEFAULT_BYTE_BUFFER_POOL);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(DEFAULT_BYTE_BUFFER_POOL);
     }

@@ -5,6 +5,7 @@ dependencies {
     implementation project(':stroom-util-shared')
 //
 //    implementation libs.guava
+    implementation libs.fastutil_core
     implementation libs.guice_assistedinject
     implementation libs.hadoopCommonShaded
     implementation libs.guice

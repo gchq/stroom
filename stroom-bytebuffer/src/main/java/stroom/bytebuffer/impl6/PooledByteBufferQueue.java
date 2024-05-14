@@ -32,7 +32,7 @@ class PooledByteBufferQueue {
     }
 
     public PooledByteBuffer get() {
-        return new PooledByteBufferImpl(this, getByteBuffer());
+        return new PooledByteBufferImpl6(this, getByteBuffer());
     }
 
     public ByteBuffer getByteBuffer() {

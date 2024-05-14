@@ -201,6 +201,7 @@ ext.libs = [
         elasticsearch                       : "org.elasticsearch:elasticsearch:$versions.elasticsearch",
         elasticsearch_core                  : "org.elasticsearch:elasticsearch-core:$versions.elasticsearch",
         fast_infoset                        : "com.sun.xml.fastinfoset:FastInfoset:2.1.1",
+        fastutil_core                       : "it.unimi.dsi:fastutil-core:8.5.13",
         flyway_core                         : "org.flywaydb:flyway-core:${versions.flyway}",
         flyway_mysql                        : "org.flywaydb:flyway-mysql:${versions.flyway}",
         gin                                 : "com.google.gwt.inject:gin:2.1.2",

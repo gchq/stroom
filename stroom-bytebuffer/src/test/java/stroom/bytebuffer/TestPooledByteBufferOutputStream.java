@@ -42,8 +42,16 @@ class TestPooledByteBufferOutputStream {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestPooledByteBufferOutputStream.class);
 
+    private static final ByteBufferPoolConfig CONFIG = new ByteBufferPoolConfig().withPooledByteBufferCounts(
+            Map.ofEntries(
+                    Map.entry(10, 1_000),
+                    Map.entry(100, 1_000),
+                    Map.entry(1_000, 1_000),
+                    Map.entry(10_000, 1_000),
+                    Map.entry(100_000, 1_000)));
+
     private ByteBufferPool getByteBufferPool() {
-        return new SimpleByteBufferPoolFactory().getByteBufferPool();
+        return SimpleByteBufferPoolFactory.getByteBufferPool(CONFIG);
     }
 
     @Test

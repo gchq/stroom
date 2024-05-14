@@ -26,13 +26,22 @@ public class ByteBufferPoolConfig extends AbstractConfig implements IsStroomConf
     public ByteBufferPoolConfig() {
         warningThresholdPercentage = 90;
         // Use a treemap, so we get a consistent order in the yaml so TestYamlUtil doesn't fail
-        pooledByteBufferCounts = new TreeMap<>(Map.of(
-                10, 1_000,
-                100, 1_000,
-                1_000, 500,
-                10_000, 50,
-                100_000, 10,
-                1_000_000, 3));
+        pooledByteBufferCounts = new TreeMap<>(Map.ofEntries(
+                Map.entry(4, 1_000),
+                Map.entry(8, 1_000),
+                Map.entry(16, 1_000),
+                Map.entry(32, 1_000),
+                Map.entry(64, 1_000),
+                Map.entry(128, 1_000),
+                Map.entry(256, 1_000),
+                Map.entry(512, 1_000),
+                Map.entry(1_024, 1_000),
+                Map.entry(2_048, 500),
+                Map.entry(4_096, 500),
+                Map.entry(8_192, 100),
+                Map.entry(16_384, 100),
+                Map.entry(32_768, 10),
+                Map.entry(65_536, 10)));
         blockOnExhaustedPool = false;
     }
 

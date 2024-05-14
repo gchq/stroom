@@ -7,13 +7,13 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-class PooledByteBufferImpl implements PooledByteBuffer {
+class PooledByteBufferImpl6 implements PooledByteBuffer {
 
     private final PooledByteBufferQueue pooledByteBufferQueue;
     private ByteBuffer byteBuffer;
 
-    PooledByteBufferImpl(final PooledByteBufferQueue pooledByteBufferQueue,
-                         final ByteBuffer byteBuffer) {
+    PooledByteBufferImpl6(final PooledByteBufferQueue pooledByteBufferQueue,
+                          final ByteBuffer byteBuffer) {
         this.pooledByteBufferQueue = pooledByteBufferQueue;
         this.byteBuffer = byteBuffer;
     }
@@ -52,7 +52,7 @@ class PooledByteBufferImpl implements PooledByteBuffer {
     }
 
     @Override
-    public Integer getCapacity() {
+    public Integer capacity() {
         Objects.requireNonNull(byteBuffer, "Already released");
         return byteBuffer.capacity();
     }

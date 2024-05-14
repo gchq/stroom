@@ -1,6 +1,6 @@
 package stroom.query.common.v2;
 
-import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferPoolOutput;
 import stroom.query.language.functions.ref.DataWriter;
 import stroom.query.language.functions.ref.KryoDataWriter;

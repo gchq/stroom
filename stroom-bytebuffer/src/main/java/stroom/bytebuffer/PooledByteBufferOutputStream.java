@@ -220,7 +220,7 @@ public class PooledByteBufferOutputStream extends OutputStream implements AutoCl
 
     public Optional<Integer> getCurrentCapacity() {
         return Optional.ofNullable(pooledByteBuffer)
-                .map(PooledByteBuffer::getCapacity);
+                .map(PooledByteBuffer::capacity);
     }
 
     @Override

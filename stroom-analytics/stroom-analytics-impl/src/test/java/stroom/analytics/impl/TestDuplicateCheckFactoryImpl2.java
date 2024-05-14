@@ -22,7 +22,7 @@ import stroom.analytics.shared.NotificationConfig;
 import stroom.analytics.shared.NotificationDestinationType;
 import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.analytics.shared.QueryLanguageVersion;
-import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.docref.DocRef;
 import stroom.expression.api.ExpressionContext;

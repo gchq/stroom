@@ -1,10 +1,8 @@
 package stroom.bytebuffer;
 
-import stroom.test.common.TestUtil;
+import stroom.util.NullSafe;
 
-import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,27 +10,143 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestByteBufferPoolImpl8 {
+class TestByteBufferPoolImpl10 {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestByteBufferPoolImpl8.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestByteBufferPoolImpl10.class);
     public static final int REQUESTED_CAPACITY = 50;
-
-    private static final ByteBufferPoolConfig IMPL8_CONFIG = new ByteBufferPoolConfig().withPooledByteBufferCounts(
-            Map.ofEntries(
-                    Map.entry(10, 1_000),
-                    Map.entry(100, 1_000),
-                    Map.entry(1_000, 1_000),
-                    Map.entry(10_000, 1_000),
-                    Map.entry(100_000, 1_000)));
 
     @Test
     void testGetBuffer_defaultConfig() {
-        doTest(IMPL8_CONFIG, 100, 1);
+        final ByteBufferPoolConfig byteBufferPoolConfig = new ByteBufferPoolConfig();
+
+        doTest(byteBufferPoolConfig, 64, 1);
+    }
+
+    @Test
+    void testGetBuffer_customConfig() {
+        final ByteBufferPoolConfig byteBufferPoolConfig = new ByteBufferPoolConfig()
+                .withPooledByteBufferCounts(Map.of(
+                        4, 100,
+                        8, 100,
+                        32, 100,
+                        128, 100));
+
+        doTest(byteBufferPoolConfig, 128, 1);
+    }
+
+    @Test
+    void testAllSizes() {
+        ByteBufferPoolConfig config = new ByteBufferPoolConfig().withPooledByteBufferCounts(
+                Map.ofEntries(
+                        Map.entry(4, 1_000),
+                        Map.entry(8, 1_000),
+                        Map.entry(16, 1_000),
+                        Map.entry(32, 1_000),
+                        Map.entry(64, 1_000),
+                        Map.entry(128, 1_000),
+                        Map.entry(256, 1_000),
+                        Map.entry(512, 1_000),
+                        Map.entry(1_024, 1_000),
+                        Map.entry(2_048, 1_000),
+                        Map.entry(4_096, 1_000),
+                        Map.entry(8_192, 1_000),
+                        Map.entry(16_384, 1_000),
+                        Map.entry(32_768, 1_000),
+                        Map.entry(65_536, 1_000)));
+
+        final List<Integer> capacities = config.getPooledByteBufferCounts()
+                .keySet()
+                .stream()
+                .sorted()
+                .toList();
+
+        ByteBufferPool pool = new ByteBufferPoolImpl10(() -> config);
+
+        // for each capacity request cap-1, cap, cap+1 to make sure we are getting the right
+        // buffers back
+        for (final int capacity : capacities) {
+            Stream.of(-1, 0, 1)
+                    .forEach(delta -> {
+                        int requestedCap = capacity + delta;
+                        pool.doWithBuffer(requestedCap, byteBuffer -> {
+                            LOGGER.debug("requestedCap: {}, actual: {}", requestedCap, byteBuffer.capacity());
+                            if (requestedCap > 65_536) {
+                                // Above our biggest pooled buffer, so we get a non pooled one of requested size
+                                assertThat(byteBuffer.capacity())
+                                        .isEqualTo(requestedCap);
+                            } else if (delta == 1) {
+                                assertThat(byteBuffer.capacity())
+                                        .isEqualTo(capacity * 2);
+                            } else {
+                                assertThat(byteBuffer.capacity())
+                                        .isEqualTo(capacity);
+                            }
+                        });
+                    });
+
+        }
+    }
+
+    @Test
+    void testAllSizes_acquireRelease() {
+        ByteBufferPoolConfig config = new ByteBufferPoolConfig().withPooledByteBufferCounts(
+                Map.ofEntries(
+                        Map.entry(4, 1_000),
+                        Map.entry(8, 1_000),
+                        Map.entry(16, 1_000),
+                        Map.entry(32, 1_000),
+                        Map.entry(64, 1_000),
+                        Map.entry(128, 1_000),
+                        Map.entry(256, 1_000),
+                        Map.entry(512, 1_000),
+                        Map.entry(1_024, 1_000),
+                        Map.entry(2_048, 1_000),
+                        Map.entry(4_096, 1_000),
+                        Map.entry(8_192, 1_000),
+                        Map.entry(16_384, 1_000),
+                        Map.entry(32_768, 1_000),
+                        Map.entry(65_536, 1_000)));
+        final List<Integer> capacities = config.getPooledByteBufferCounts()
+                .keySet()
+                .stream()
+                .sorted()
+                .toList();
+        ByteBufferPoolImpl10 pool = new ByteBufferPoolImpl10(() -> config);
+
+        // for each capacity request cap-1, cap, cap+1 to make sure we are getting the right
+        // buffers back
+        for (final int capacity : capacities) {
+            Stream.of(-1, 0, 1)
+                    .forEach(delta -> {
+                        int requestedCap = capacity + delta;
+                        ByteBuffer byteBuffer = null;
+                        try {
+                            byteBuffer = pool.acquire(requestedCap);
+                            LOGGER.debug("requestedCap: {}, actual: {}", requestedCap, byteBuffer.capacity());
+
+                            if (requestedCap > 65_536) {
+                                // Above our biggest pooled buffer, so we get a non pooled one of requested size
+                                assertThat(byteBuffer.capacity())
+                                        .isEqualTo(requestedCap);
+                            } else if (delta == 1) {
+                                assertThat(byteBuffer.capacity())
+                                        .isEqualTo(capacity * 2);
+                            } else {
+                                assertThat(byteBuffer.capacity())
+                                        .isEqualTo(capacity);
+                            }
+
+                        } finally {
+                            pool.release(byteBuffer);
+                        }
+                    });
+        }
     }
 
     @Test
@@ -62,7 +176,7 @@ class TestByteBufferPoolImpl8 {
 
         // sparse map means buffer sizes between 1 and 10_000 will get the default count and thus
         // will be pooled
-        doTest(byteBufferPoolConfig, 100, 1);
+        doTest(byteBufferPoolConfig, 10_000, 1);
     }
 
     @SuppressWarnings("checkstyle:variabledeclarationusagedistance")
@@ -120,7 +234,7 @@ class TestByteBufferPoolImpl8 {
                 .withPooledByteBufferCounts(Map.of(
                         1, poolSize,
                         capacity, poolSize));
-        final ByteBufferPoolImpl8 byteBufferPool = new ByteBufferPoolImpl8(() -> byteBufferPoolConfig);
+        final ByteBufferPoolImpl10 byteBufferPool = new ByteBufferPoolImpl10(() -> byteBufferPoolConfig);
 
         final List<PooledByteBuffer> pooledByteBuffers = IntStream.rangeClosed(1, poolSize + 5)
                 .boxed()
@@ -166,7 +280,7 @@ class TestByteBufferPoolImpl8 {
                         capacity, poolSize,
                         nextCapacity, poolSize));
 
-        final ByteBufferPoolImpl8 byteBufferPool = new ByteBufferPoolImpl8(() -> byteBufferPoolConfig);
+        final ByteBufferPoolImpl10 byteBufferPool = new ByteBufferPoolImpl10(() -> byteBufferPoolConfig);
 
         byteBufferPool.doWithBuffer(nextCapacity, byteBuffer -> {
             // This ensures the pool has a buffer with nextCapacity
@@ -231,7 +345,7 @@ class TestByteBufferPoolImpl8 {
     private ByteBufferPool doTest(final ByteBufferPoolConfig byteBufferPoolConfig,
                                   final int expectedBufferCapacity,
                                   final int expectedPoolSize) {
-        final ByteBufferPool byteBufferPool = new ByteBufferPoolImpl8(() -> byteBufferPoolConfig);
+        final ByteBufferPool byteBufferPool = new ByteBufferPoolImpl10(() -> byteBufferPoolConfig);
 
         PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(REQUESTED_CAPACITY);
 
@@ -246,111 +360,29 @@ class TestByteBufferPoolImpl8 {
         LOGGER.info("System info: {}", byteBufferPool.getSystemInfo().getDetails());
 
         // Get each of the configured sizes
-        if (byteBufferPoolConfig.getPooledByteBufferCounts() != null
-                && !byteBufferPoolConfig.getPooledByteBufferCounts().isEmpty()) {
+        final Map<Integer, Integer> pooledByteBufferCounts = byteBufferPoolConfig.getPooledByteBufferCounts();
+        if (NullSafe.hasEntries(pooledByteBufferCounts)) {
 
-            int largestNonZeroOffset = byteBufferPoolConfig.getPooledByteBufferCounts().entrySet()
-                    .stream()
-                    .filter(entry -> entry.getValue() > 0)
-                    .mapToInt(entry -> (int) Math.log10(entry.getKey()))
-                    .max()
-                    .orElse(-1);
-
-            // get a pooled buffer for each of the entries in the config unless thay have
-            // a val of zero (i.e. unPooled)
-            for (int i = 1; i <= largestNonZeroOffset; i++) {
-                int requiredSize = (int) Math.pow(10, i);
-                PooledByteBuffer pooledByteBuffer2 = byteBufferPool.getPooledByteBuffer(requiredSize);
+            final AtomicInteger expectedPooledBufferCount = new AtomicInteger();
+            pooledByteBufferCounts.forEach((capacity, count) -> {
+                // Get, use and return the buffer for this size
+                PooledByteBuffer pooledByteBuffer2 = byteBufferPool.getPooledByteBuffer(capacity);
                 final ByteBuffer byteBuffer = pooledByteBuffer2.getByteBuffer();
                 assertThat(byteBuffer)
                         .isNotNull();
+                LOGGER.debug("capacity: {}, count: {}, received: {}", capacity, count, byteBuffer.capacity());
                 pooledByteBuffer2.close();
-            }
+
+                if (count > 0) {
+                    expectedPooledBufferCount.incrementAndGet();
+                }
+            });
 
             LOGGER.info("System info: {}", byteBufferPool.getSystemInfo().getDetails());
 
-            // Should have at least one buffer due to the getPooledByteBuffer call above
-            // -1 to account for there being no pool for offset 0
-            // +1 to convert from offset to count
-            int expectedPooledBufferCount = Math.max(1, largestNonZeroOffset - 1 + 1);
-
             assertThat(byteBufferPool.getCurrentPoolSize())
-                    .isEqualTo(expectedPooledBufferCount);
+                    .isEqualTo(expectedPooledBufferCount.get());
         }
         return byteBufferPool;
-    }
-
-    @Test
-    void testIsValidSize() {
-        int i = 1;
-
-        while (i <= 1_000_000_000) {
-
-            // Make sure numbers either side are not powers of ten
-            if (i > 1) {
-                assertThat(ByteBufferPoolImpl8.isValidSize(i - 1))
-                        .isFalse();
-            }
-            if (i >= 10) {
-                assertThat(ByteBufferPoolImpl8.isValidSize(i))
-                        .isTrue();
-            } else {
-                assertThat(ByteBufferPoolImpl8.isValidSize(i))
-                        .isFalse();
-            }
-
-            assertThat(ByteBufferPoolImpl8.isValidSize(i + 1))
-                    .isFalse();
-            i *= 10;
-        }
-    }
-
-    @TestFactory
-    Stream<DynamicTest> testGetOffset() {
-        return TestUtil.buildDynamicTestStream()
-                .withInputAndOutputType(int.class)
-                .withSingleArgTestFunction(ByteBufferPoolImpl8::getOffset)
-                .withSimpleEqualityAssertion()
-                .addCase(-1, 1)
-                .addCase(0, 1)
-                .addCase(1, 1)
-                .addCase(2, 1)
-                .addCase(10, 1)
-                .addCase(11, 2)
-                .addCase(100, 2)
-                .addCase(101, 3)
-                .addCase(1000, 3)
-                .addCase(1001, 4)
-                .addCase(10000, 4)
-                .addCase(10001, 5)
-                .build();
-    }
-
-    @Test
-    void testGetOffset2() {
-        int minCapacity = 1;
-        while (minCapacity <= ByteBufferPoolImpl8.MAX_BUFFER_CAPACITY) {
-            final int expectedOffset = (int) Math.ceil(Math.log10(minCapacity));
-            final int actualOffset = ByteBufferPoolImpl8.getOffset(minCapacity);
-
-            if (minCapacity <= 10) {
-                assertThat(actualOffset)
-                        .isEqualTo(1);
-            } else {
-                assertThat(actualOffset)
-                        .isEqualTo(expectedOffset);
-
-                // Check one below is in same offset
-                assertThat(ByteBufferPoolImpl8.getOffset(minCapacity - 1))
-                        .isEqualTo(expectedOffset);
-
-                // Check one above is in next offset
-                if (minCapacity < ByteBufferPoolImpl8.MAX_BUFFER_CAPACITY) {
-                    assertThat(ByteBufferPoolImpl8.getOffset(minCapacity + 1))
-                            .isEqualTo(expectedOffset + 1);
-                }
-            }
-            minCapacity *= 10;
-        }
     }
 }

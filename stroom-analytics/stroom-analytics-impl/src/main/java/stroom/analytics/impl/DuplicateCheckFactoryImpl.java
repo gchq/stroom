@@ -1,7 +1,7 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
-import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.ByteBufferFactory;
 import stroom.lmdb2.LmdbDb;
 import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.LmdbEnvDir;

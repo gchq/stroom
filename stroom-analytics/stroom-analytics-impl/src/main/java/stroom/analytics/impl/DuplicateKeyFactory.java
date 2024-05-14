@@ -1,7 +1,7 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
-import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.ByteBufferFactory;
 import stroom.query.api.v2.Row;
 import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.LmdbKV;

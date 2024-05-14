@@ -17,6 +17,8 @@
 
 package stroom.bytebuffer.impl6;
 
+import stroom.bytebuffer.ByteBufferFactory;
+
 import com.esotericsoftware.kryo.KryoException;
 import com.esotericsoftware.kryo.io.KryoBufferOverflowException;
 import com.esotericsoftware.kryo.unsafe.UnsafeByteBufferOutput;

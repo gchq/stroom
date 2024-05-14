@@ -1,14 +1,23 @@
 package stroom.bytebuffer.impl6;
 
+import stroom.bytebuffer.ByteBufferFactory;
 import stroom.bytebuffer.ByteBufferSupport;
+import stroom.util.io.ByteSize;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.stream.Collectors;
 
-public class ByteBufferFactoryImpl extends ByteBufferFactory {
+public class ByteBufferFactoryImpl implements ByteBufferFactory {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ByteBufferFactoryImpl.class);
 
     private static final double LOG2 = Math.log(2);
-    static final int MAX_CACHED_BUFFER_SIZE = 1024;
+    static final int MAX_CACHED_BUFFER_SIZE = 8_192;
 
     // Cache buffers big enough for single integers and above.
     private static final int MIN_CACHED_BUFFER_SIZE = Integer.BYTES;
@@ -17,11 +26,12 @@ public class ByteBufferFactoryImpl extends ByteBufferFactory {
     final Pool[] pools;
 
     public ByteBufferFactoryImpl() {
+        LOGGER.debug("Initialising {}", this.getClass().getSimpleName());
         minExponent = getMinExponent(MIN_CACHED_BUFFER_SIZE);
         final int exponent = getExponent(MAX_CACHED_BUFFER_SIZE);
         pools = new Pool[exponent + 1];
         for (int i = minExponent; i < pools.length; i++) {
-            pools[i] = new Pool(1000);
+            pools[i] = new Pool(1000, pow2(i));
         }
     }
 
@@ -41,10 +51,10 @@ public class ByteBufferFactoryImpl extends ByteBufferFactory {
             }
 
             final int roundedSize = pow2(exponent);
-            return super.acquire(roundedSize);
+            return ByteBufferFactory.super.acquire(roundedSize);
         }
 
-        return super.acquire(size);
+        return ByteBufferFactory.super.acquire(size);
     }
 
     @Override
@@ -80,6 +90,28 @@ public class ByteBufferFactoryImpl extends ByteBufferFactory {
         ByteBufferSupport.unmap(byteBuffer);
     }
 
+    @Override
+    public String toString() {
+        final int bufferCount = Arrays.stream(pools)
+                .filter(Objects::nonNull)
+                .mapToInt(Pool::size)
+                .sum();
+        final String poolInfo = Arrays.stream(pools)
+                .filter(Objects::nonNull)
+                .filter(queue -> queue.size() > 0)
+                .map(queue -> queue.getBufferSize() + ":" + queue.size())
+                .collect(Collectors.joining(", "));
+        final ByteSize totalByteSize = ByteSize.ofBytes(Arrays.stream(pools)
+                .filter(Objects::nonNull)
+                .filter(queue -> queue.size() > 0)
+                .mapToInt(queue -> queue.bufferSize * queue.size())
+                .sum());
+
+        return getClass().getSimpleName()
+                + " - Pooled buffer count: " + bufferCount
+                + ", pooled size: " + totalByteSize
+                + ", pools: {" + poolInfo + "}";
+    }
 
     // --------------------------------------------------------------------------------
 
@@ -87,9 +119,11 @@ public class ByteBufferFactoryImpl extends ByteBufferFactory {
     static class Pool {
 
         private final ArrayBlockingQueue<ByteBuffer> queue;
+        private final int bufferSize;
 
-        public Pool(final int capacity) {
+        public Pool(final int capacity, final int bufferSize) {
             queue = new ArrayBlockingQueue<>(capacity);
+            this.bufferSize = bufferSize;
         }
 
         public ByteBuffer poll() {
@@ -98,6 +132,14 @@ public class ByteBufferFactoryImpl extends ByteBufferFactory {
 
         public boolean offer(final ByteBuffer byteBuffer) {
             return queue.offer(byteBuffer);
+        }
+
+        private int size() {
+            return queue.size();
+        }
+
+        private int getBufferSize() {
+            return bufferSize;
         }
     }
 }

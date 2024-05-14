@@ -1,6 +1,6 @@
 package stroom.query.common.v2;
 
-import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.ByteBufferFactory;
 import stroom.util.concurrent.CompletableQueue;
 
 public class LmdbWriteQueue extends CompletableQueue<LmdbQueueItem> {

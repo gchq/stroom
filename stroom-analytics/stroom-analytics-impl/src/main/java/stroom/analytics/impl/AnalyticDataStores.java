@@ -5,7 +5,7 @@ import stroom.analytics.shared.AnalyticDataShard;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.FindAnalyticDataShardCriteria;
 import stroom.analytics.shared.GetAnalyticShardDataRequest;
-import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.ByteBufferFactory;
 import stroom.docref.DocRef;
 import stroom.expression.api.ExpressionContext;
 import stroom.lmdb.LmdbConfig;

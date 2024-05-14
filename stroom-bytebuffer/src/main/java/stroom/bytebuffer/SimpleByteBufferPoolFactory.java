@@ -14,17 +14,28 @@ public class SimpleByteBufferPoolFactory {
     private final ByteBufferPool byteBufferPool;
 
     public SimpleByteBufferPoolFactory() {
-
-        // Make sure this is using the same impl as ByteBufferModule
-        this.byteBufferPool = new ByteBufferPoolImpl8(ByteBufferPoolConfig::new);
-
-        if (!ByteBufferModule.DEFAULT_BYTE_BUFFER_POOL.isAssignableFrom(byteBufferPool.getClass())) {
-            throw new RuntimeException(LogUtil.message("Mismatch between {} and {}",
-                    this.getClass().getName(), ByteBufferModule.class.getName()));
-        }
+        this.byteBufferPool = getByteBufferPool(new ByteBufferPoolConfig());
     }
 
+    /**
+     * @return The same instance of {@link ByteBufferPool} for each call, assuming the same instance of
+     * {@link SimpleByteBufferPoolFactory} is used. Default config is used.
+     */
     public ByteBufferPool getByteBufferPool() {
+        return byteBufferPool;
+    }
+
+    /**
+     * @param config
+     * @return A brand-new instance of {@link ByteBufferPool} for each call. Uses the supplied config.
+     */
+    public static ByteBufferPool getByteBufferPool(ByteBufferPoolConfig config) {
+        // Make sure this is using the same impl as ByteBufferModule
+        final ByteBufferPool byteBufferPool = new ByteBufferPoolImpl10(() -> config);
+        if (!ByteBufferModule.DEFAULT_BYTE_BUFFER_POOL.isAssignableFrom(byteBufferPool.getClass())) {
+            throw new RuntimeException(LogUtil.message("Mismatch between {} and {}",
+                    SimpleByteBufferPoolFactory.class.getName(), ByteBufferModule.class.getName()));
+        }
         return byteBufferPool;
     }
 }

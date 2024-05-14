@@ -1,6 +1,6 @@
 package stroom.query.common.v2;
 
-import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.ByteBufferFactory;
 import stroom.expression.api.ExpressionContext;
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb2.LmdbEnv;
