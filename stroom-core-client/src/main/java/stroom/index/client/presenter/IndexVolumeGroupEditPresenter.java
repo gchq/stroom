@@ -116,10 +116,12 @@ public class IndexVolumeGroupEditPresenter
                                             .onSuccess(response -> delayedUpdate.update())
                                             .onFailure(throwable -> {
                                             })
+                                            .taskListener(this)
                                             .exec()
                             ),
                     throwable -> {
-                    });
+                    },
+                    volumeStatusListPresenter.getTaskListener());
 
         }));
     }
@@ -136,6 +138,7 @@ public class IndexVolumeGroupEditPresenter
                     .create(INDEX_VOLUME_RESOURCE)
                     .method(res -> res.fetch(volume.getId()))
                     .onSuccess(result -> editVolume(result, "Edit Volume"))
+                    .taskListener(volumeStatusListPresenter.getTaskListener())
                     .exec();
         }
     }
@@ -143,11 +146,12 @@ public class IndexVolumeGroupEditPresenter
     private void editVolume(final IndexVolume indexVolume, final String caption) {
         final IndexVolumeEditPresenter editor = editProvider.get();
         editor.show(indexVolume, caption, result -> {
-            if (result != null) {
-                volumeStatusListPresenter.refresh();
-            }
-            editor.hide();
-        });
+                    if (result != null) {
+                        volumeStatusListPresenter.refresh();
+                    }
+                    editor.hide();
+                },
+                volumeStatusListPresenter.getTaskListener());
     }
 
     private void delete() {
@@ -166,6 +170,7 @@ public class IndexVolumeGroupEditPresenter
                                         .create(INDEX_VOLUME_RESOURCE)
                                         .method(res -> res.delete(volume.getId()))
                                         .onSuccess(response -> volumeStatusListPresenter.refresh())
+                                        .taskListener(this)
                                         .exec();
                             }
                         }
@@ -253,6 +258,7 @@ public class IndexVolumeGroupEditPresenter
                             work.run();
                         }
                     })
+                    .taskListener(this)
                     .exec();
         }
     }
@@ -263,6 +269,7 @@ public class IndexVolumeGroupEditPresenter
                 .create(INDEX_VOLUME_GROUP_RESOURCE)
                 .method(res -> res.update(volumeGroup.getId(), volumeGroup))
                 .onSuccess(consumer)
+                .taskListener(this)
                 .exec();
     }
 

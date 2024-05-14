@@ -65,7 +65,7 @@ public class ResultStoreSettingsPresenter extends MyPresenterWidget<ResultStoreS
                         try {
                             resultStoreModel.updateSettings(resultStoreInfo.getNodeName(),
                                     updateStoreRequest,
-                                    consumer);
+                                    consumer, this);
                         } catch (final RuntimeException e) {
                             AlertEvent.fireError(ResultStoreSettingsPresenter.this,
                                     e.getMessage(), null);

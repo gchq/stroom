@@ -17,7 +17,6 @@
 
 package stroom.dashboard.client.table;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.shared.EventId;
 import stroom.cell.expander.client.ExpanderCell;
@@ -80,6 +79,7 @@ import stroom.query.client.presenter.TimeZones;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
+import stroom.task.client.TaskListener;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.Expander;
@@ -185,6 +185,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         this.columnSelectionListModel = columnSelectionListModel;
         this.dataSourceClient = dataSourceClient;
 
+        columnSelectionListModel.setTaskListener(this);
+
         dataGrid = new MyDataGrid<>();
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         pagerView.setDataWidget(dataGrid);
@@ -212,20 +214,19 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 filterPresenter);
         dataGrid.setHeadingListener(columnsManager);
 
-        clientPropertyCache.get()
-                .onSuccess(result -> {
-                    final String value = result.getDefaultMaxResults();
-                    if (value != null) {
-                        final String[] parts = value.split(",");
-                        final long[] arr = new long[parts.length];
-                        for (int i = 0; i < arr.length; i++) {
-                            arr[i] = Long.parseLong(parts[i].trim());
-                        }
-                        maxResults = arr;
+        clientPropertyCache.get(result -> {
+            if (result != null) {
+                final String value = result.getDefaultMaxResults();
+                if (value != null) {
+                    final String[] parts = value.split(",");
+                    final long[] arr = new long[parts.length];
+                    for (int i = 0; i < arr.length; i++) {
+                        arr[i] = Long.parseLong(parts[i].trim());
                     }
-                })
-                .onFailure(caught -> AlertEvent.fireError(TablePresenter.this, caught.getMessage(), null));
-
+                    maxResults = arr;
+                }
+            }
+        }, pagerView);
 
         // Expander column.
         expanderColumn = new com.google.gwt.user.cellview.client.Column<TableRow, Expander>(new ExpanderCell()) {
@@ -414,8 +415,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                                 currentSearchModel.getCurrentNode(),
                                                 downloadSearchResultsRequest))
                                         .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager,
-                                                null,
+                                                this,
                                                 result))
+                                        .taskListener(this)
                                         .exec();
                             }
 
@@ -752,7 +754,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         builder.extractionPipeline(extractionPipeline).extractValues(true);
                     }
                     setSettings(builder.build());
-                });
+                }, this);
             }
         }
 
@@ -1058,6 +1060,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         return TAB_TYPE;
     }
 
+    @Override
+    public synchronized void setTaskListener(final TaskListener taskListener) {
+        super.setTaskListener(taskListener);
+        columnSelectionListModel.setTaskListener(taskListener);
+    }
 
     // --------------------------------------------------------------------------------
 

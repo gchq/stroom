@@ -20,14 +20,18 @@ import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
+import com.google.web.bindery.event.shared.EventBus;
+
+
 public class ExplorerTree extends AbstractExplorerTree {
 
     private MultiSelectionModelImpl<ExplorerNode> multiSelectionModel;
 
-    public ExplorerTree(final RestFactory restFactory,
+    public ExplorerTree(final EventBus eventBus,
+                        final RestFactory restFactory,
                         final boolean allowMultiSelect,
                         final boolean showAlerts) {
-        super(restFactory, allowMultiSelect, showAlerts);
+        super(eventBus, restFactory, allowMultiSelect, showAlerts);
     }
 
     @Override

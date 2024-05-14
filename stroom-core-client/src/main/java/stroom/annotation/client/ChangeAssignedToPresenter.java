@@ -41,7 +41,8 @@ import com.gwtplatform.mvp.client.View;
 import java.util.List;
 import java.util.Objects;
 
-public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedToView>
+public class ChangeAssignedToPresenter
+        extends MyPresenterWidget<ChangeAssignedToView>
         implements ChangeAssignedToUiHandlers {
 
     private final RestFactory restFactory;
@@ -87,6 +88,7 @@ public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedT
                                 .create(annotationResource)
                                 .method(res -> res.setAssignedTo(request))
                                 .onSuccess(values -> GWT.log("Updated " + values + " annotations"))
+                                .taskListener(this)
                                 .exec();
                     }
                     e.hide();
@@ -116,6 +118,7 @@ public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedT
                     .create(userResource)
                     .method(res -> res.getAssociates(filter))
                     .onSuccess(consumer)
+                    .taskListener(this)
                     .exec();
         });
         assignedToPresenter.clearFilter();

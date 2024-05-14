@@ -28,10 +28,15 @@ import stroom.query.api.v2.TimeRange;
 import stroom.query.shared.QueryContext;
 import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;
+import stroom.task.client.HasTaskListener;
 import stroom.task.client.TaskListener;
+import stroom.task.client.TaskListenerImpl;
 import stroom.util.shared.TokenError;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,7 +44,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class QueryModel {
+public class QueryModel implements HasTaskListener, HasHandlers {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
@@ -47,11 +52,12 @@ public class QueryModel {
     public static final String VIS_COMPONENT_ID = "vis";
 
 
+    private final EventBus eventBus;
     private final RestFactory restFactory;
     private String queryUuid;
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
     private final ResultStoreModel resultStoreModel;
-    private TaskListener taskListener;
+    private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
 
     private final ResultConsumer tablePresenter;
 
@@ -68,11 +74,13 @@ public class QueryModel {
     private final List<TokenErrorListener> tokenErrorListeners = new ArrayList<>();
     private final Map<String, ResultConsumer> resultConsumers = new HashMap<>();
 
-    public QueryModel(final RestFactory restFactory,
+    public QueryModel(final EventBus eventBus,
+                      final RestFactory restFactory,
                       final DateTimeSettingsFactory dateTimeSettingsFactory,
                       final ResultStoreModel resultStoreModel,
                       final ResultConsumer tablePresenter,
                       final ResultConsumer visPresenter) {
+        this.eventBus = eventBus;
         this.restFactory = restFactory;
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
         this.resultStoreModel = resultStoreModel;
@@ -129,14 +137,14 @@ public class QueryModel {
     private void deleteStore(final String node, final QueryKey queryKey, final DestroyReason destroyReason) {
         if (queryKey != null) {
             resultStoreModel.destroy(node, queryKey, destroyReason, (ok) ->
-                    GWT.log("Destroyed store " + queryKey));
+                    GWT.log("Destroyed store " + queryKey), taskListener);
         }
     }
 
     private void terminate(final String node, final QueryKey queryKey) {
         if (queryKey != null) {
             resultStoreModel.terminate(node, queryKey, (ok) ->
-                    GWT.log("Terminate search " + queryKey));
+                    GWT.log("Terminate search " + queryKey), taskListener);
         }
     }
 
@@ -264,7 +272,7 @@ public class QueryModel {
                         resultConsumer.setData(null);
                     })
                     .taskListener(taskListener)
-                    .execWithListener();
+                    .exec();
         }
     }
 
@@ -356,7 +364,7 @@ public class QueryModel {
                         }
                     })
                     .taskListener(taskListener)
-                    .execWithListener();
+                    .exec();
         }
     }
 
@@ -499,7 +507,13 @@ public class QueryModel {
         this.sourceType = sourceType;
     }
 
+    @Override
     public void setTaskListener(final TaskListener taskListener) {
-        this.taskListener = taskListener;
+        this.taskListener.setTaskListener(taskListener);
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> gwtEvent) {
+        eventBus.fireEvent(gwtEvent);
     }
 }

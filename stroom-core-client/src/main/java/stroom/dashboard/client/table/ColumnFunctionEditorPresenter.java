@@ -108,9 +108,6 @@ public class ColumnFunctionEditorPresenter
                 queryHelpPresenter.setDataSourceRef(indexLoader.getLoadedDataSourceRef());
             }
         }
-        queryHelpPresenter.setShowAll(false);
-        queryHelpPresenter.linkToEditor(this.editorPresenter);
-        queryHelpPresenter.refresh();
 
         final PopupSize popupSize = PopupSize.resizable(800, 700);
         ShowPopupEvent.builder(this)
@@ -125,6 +122,11 @@ public class ColumnFunctionEditorPresenter
 
     @Override
     public void onShow(final ShowPopupEvent e) {
+        queryHelpPresenter.setTaskListener(this);
+        queryHelpPresenter.setShowAll(false);
+        queryHelpPresenter.linkToEditor(this.editorPresenter);
+        queryHelpPresenter.refresh();
+
         editorPresenter.focus();
 
         // If this is done without the scheduler then we get weird behaviour when you click
@@ -157,8 +159,10 @@ public class ColumnFunctionEditorPresenter
                                     e.hide();
                                 } else {
                                     AlertEvent.fireError(tablePresenter, result.getString(), null);
+                                    e.reset();
                                 }
                             })
+                            .taskListener(this)
                             .exec();
                 }
             }
@@ -175,6 +179,7 @@ public class ColumnFunctionEditorPresenter
                         e.hide();
                     } else {
                         // Don't hide
+                        e.reset();
                     }
                 });
             }

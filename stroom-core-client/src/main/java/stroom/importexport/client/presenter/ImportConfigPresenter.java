@@ -91,6 +91,7 @@ public class ImportConfigPresenter
                             }
                         })
                         .onFailure(caught -> error(caught.getMessage()))
+                        .taskListener(ImportConfigPresenter.this)
                         .exec();
             }
 

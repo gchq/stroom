@@ -18,10 +18,10 @@
 package stroom.explorer.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.RefreshDocumentEvent;
+import stroom.explorer.client.event.ExplorerTaskListener;
 import stroom.explorer.client.event.ShowRemoveNodeTagsDialogEvent;
 import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter.ExplorerNodeRemoveTagsProxy;
 import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter.ExplorerNodeRemoveTagsView;
@@ -29,7 +29,6 @@ import stroom.explorer.shared.AddRemoveTagsRequest;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.util.shared.GwtNullSafe;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -97,7 +96,13 @@ public class ExplorerNodeRemoveTagsPresenter
                         getView().setData(docRefs, nodetags);
                         forceReveal();
                     })
-                    .onFailure(this::handleFailure)
+                    .onFailure(t -> {
+                        AlertEvent.fireError(
+                                ExplorerNodeRemoveTagsPresenter.this,
+                                t.getMessage(),
+                                null);
+                    })
+                    .taskListener(new ExplorerTaskListener(this))
                     .exec();
         }
     }
@@ -147,16 +152,14 @@ public class ExplorerNodeRemoveTagsPresenter
                                     ExplorerNodeRemoveTagsPresenter.this, docRef));
                     event.hide();
                 })
-                .onFailure(this::handleFailure)
+                .onFailure(t -> AlertEvent.fireError(
+                        ExplorerNodeRemoveTagsPresenter.this,
+                        t.getMessage(),
+                        event::reset))
+                .taskListener(this)
                 .exec();
     }
 
-    private void handleFailure(final RestError t) {
-        AlertEvent.fireError(
-                ExplorerNodeRemoveTagsPresenter.this,
-                t.getMessage(),
-                null);
-    }
 
     private boolean isSingleDocRef() {
         return GwtNullSafe.size(explorerNodes) == 1;
@@ -177,7 +180,6 @@ public class ExplorerNodeRemoveTagsPresenter
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
-
 
     // --------------------------------------------------------------------------------
 

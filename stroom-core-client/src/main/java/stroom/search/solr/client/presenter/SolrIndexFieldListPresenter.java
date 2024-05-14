@@ -56,6 +56,7 @@ public class SolrIndexFieldListPresenter extends DocumentEditPresenter<SolrIndex
 
     private static final SolrIndexResource SOLR_INDEX_RESOURCE = GWT.create(SolrIndexResource.class);
 
+    private final PagerView pagerView;
     private final MyDataGrid<SolrIndexField> dataGrid;
     private final MultiSelectionModelImpl<SolrIndexField> selectionModel;
     private final SolrIndexFieldEditPresenter indexFieldEditPresenter;
@@ -76,6 +77,7 @@ public class SolrIndexFieldListPresenter extends DocumentEditPresenter<SolrIndex
                                        final RestFactory restFactory,
                                        final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
+        this.pagerView = pagerView;
         this.indexFieldEditPresenter = indexFieldEditPresenter;
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
@@ -220,6 +222,8 @@ public class SolrIndexFieldListPresenter extends DocumentEditPresenter<SolrIndex
 
                         e.hide();
                         DirtyEvent.fire(SolrIndexFieldListPresenter.this, true);
+                    } else {
+                        e.reset();
                     }
                 } else {
                     e.hide();
@@ -273,6 +277,7 @@ public class SolrIndexFieldListPresenter extends DocumentEditPresenter<SolrIndex
                         "Unable to connect to Solr please check connection",
                         throwable.getMessage(),
                         null))
+                .taskListener(pagerView)
                 .exec();
     }
 

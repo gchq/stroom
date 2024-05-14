@@ -1,7 +1,7 @@
 package stroom.query.client.presenter;
 
 import stroom.data.client.presenter.CriteriaUtil;
-import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeManager;
 import stroom.query.api.v2.DestroyReason;
@@ -29,6 +29,7 @@ public class ResultStoreModel {
 
     private static final ResultStoreResource RESULT_STORE_RESOURCE = GWT.create(ResultStoreResource.class);
     private final FindResultStoreCriteria criteria = new FindResultStoreCriteria();
+
     private final RestFactory restFactory;
     private final NodeManager nodeManager;
     // nodeName => List<ResultStoreInfo>
@@ -47,21 +48,21 @@ public class ResultStoreModel {
 
     public void fetch(final Range range,
                       final Consumer<ResultPage<ResultStoreInfo>> dataConsumer,
-                      final Consumer<RestError> errorConsumer,
+                      final RestErrorHandler errorHandler,
                       final TaskListener taskListener) {
         this.range = range;
         this.dataConsumer = dataConsumer;
         delayedUpdate.reset();
-        fetchNodes(range, dataConsumer, errorConsumer, taskListener);
+        fetchNodes(range, dataConsumer, errorHandler, taskListener);
     }
 
     private void fetchNodes(final Range range,
                             final Consumer<ResultPage<ResultStoreInfo>> dataConsumer,
-                            final Consumer<RestError> errorConsumer,
+                            final RestErrorHandler errorHandler,
                             final TaskListener taskListener) {
         nodeManager.listAllNodes(
                 nodeNames -> fetchTasksForNodes(range, dataConsumer, nodeNames, taskListener),
-                errorConsumer, taskListener);
+                errorHandler, taskListener);
     }
 
     private void fetchTasksForNodes(final Range range,
@@ -83,7 +84,7 @@ public class ResultStoreModel {
                         delayedUpdate.update();
                     })
                     .taskListener(taskListener)
-                    .execWithListener();
+                    .exec();
         }
     }
 
@@ -97,34 +98,40 @@ public class ResultStoreModel {
 
     public void terminate(final String nodeName,
                           final QueryKey queryKey,
-                          final Consumer<Boolean> consumer) {
+                          final Consumer<Boolean> consumer,
+                          final TaskListener taskListener) {
         restFactory
                 .create(RESULT_STORE_RESOURCE)
                 .method(res -> res.terminate(nodeName, queryKey))
                 .onSuccess(consumer)
                 .onFailure(t -> consumer.accept(false))
+                .taskListener(taskListener)
                 .exec();
     }
 
     public void destroy(final String nodeName,
                         final QueryKey queryKey,
                         final DestroyReason destroyReason,
-                        final Consumer<Boolean> consumer) {
+                        final Consumer<Boolean> consumer,
+                        final TaskListener taskListener) {
         restFactory
                 .create(RESULT_STORE_RESOURCE)
                 .method(res -> res.destroy(nodeName, new DestroyStoreRequest(queryKey, destroyReason)))
                 .onSuccess(consumer)
                 .onFailure(t -> consumer.accept(false))
+                .taskListener(taskListener)
                 .exec();
     }
 
     public void updateSettings(final String nodeName,
                                final UpdateStoreRequest updateStoreRequest,
-                               final Consumer<Boolean> consumer) {
+                               final Consumer<Boolean> consumer,
+                               final TaskListener taskListener) {
         restFactory
                 .create(RESULT_STORE_RESOURCE)
                 .method(res -> res.update(nodeName, updateStoreRequest))
                 .onSuccess(consumer)
+                .taskListener(taskListener)
                 .exec();
     }
 }

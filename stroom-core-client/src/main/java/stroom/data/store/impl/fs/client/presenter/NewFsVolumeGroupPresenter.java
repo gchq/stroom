@@ -47,7 +47,6 @@ public class NewFsVolumeGroupPresenter
 
     private final RestFactory restFactory;
 
-
     @Inject
     public NewFsVolumeGroupPresenter(final EventBus eventBus,
                                      final NameDocumentView view,
@@ -77,7 +76,7 @@ public class NewFsVolumeGroupPresenter
                 AlertEvent.fireError(
                         NewFsVolumeGroupPresenter.this,
                         "You must provide a name",
-                        null);
+                        e::reset);
             } else {
                 restFactory
                         .create(FS_VOLUME_GROUP_RESOURCE)
@@ -89,11 +88,12 @@ public class NewFsVolumeGroupPresenter
                                         "Group name '"
                                                 + name
                                                 + "' is already in use by another group.",
-                                        null);
+                                        e::reset);
                             } else {
                                 consumer.accept(name);
                             }
                         })
+                        .taskListener(this)
                         .exec();
             }
         } else {

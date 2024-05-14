@@ -21,13 +21,20 @@ import stroom.data.table.client.Refreshable;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.presenter.TaskManagerPresenter.TaskManagerView;
+import stroom.task.shared.FindTaskProgressCriteria;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.util.client.KeyBinding.Action;
+import stroom.widget.util.client.TableCell;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
+
+import java.util.function.Supplier;
 
 public class TaskManagerPresenter
         extends ContentTabPresenter<TaskManagerView>
@@ -39,11 +46,30 @@ public class TaskManagerPresenter
     @Inject
     public TaskManagerPresenter(final EventBus eventBus,
                                 final TaskManagerView view,
-                                final TaskManagerListPresenter listPresenter) {
+                                final TaskManagerListPresenter listPresenter,
+                                final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         this.listPresenter = listPresenter;
         view.setUiHandlers(this);
         view.setList(listPresenter.getWidget());
+
+        uiConfigCache.get(uiConfig -> {
+            if (uiConfig != null) {
+                view.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
+                        "Server Tasks Quick Filter",
+                        builder -> builder
+                                .row(
+                                        TableCell.data(
+                                                "Matched tasks are displayed in black, un-matched but " +
+                                                        "related tasks are displayed in grey.", 2))
+                                .row(
+                                        TableCell.data("All relations of a matched task will be " +
+                                                "included in the results.", 2))
+                                .row(),
+                        FindTaskProgressCriteria.FIELD_DEFINITIONS,
+                        uiConfig.getHelpUrlQuickFilter()));
+            }
+        }, this);
     }
 
     @Override
@@ -89,6 +115,8 @@ public class TaskManagerPresenter
 
 
     public interface TaskManagerView extends View, HasUiHandlers<TaskManagerUiHandlers> {
+
+        void registerPopupTextProvider(Supplier<SafeHtml> popupTextSupplier);
 
         void setList(Widget widget);
 

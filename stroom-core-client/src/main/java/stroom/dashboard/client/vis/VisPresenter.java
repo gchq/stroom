@@ -138,6 +138,7 @@ public class VisPresenter
         this.currentPreferences = currentPreferences;
 
         visFrame = new VisFrame(eventBus);
+        visFrame.setTaskListener(getView().getRefreshButton());
         visFrame.setUiHandlers(this);
         view.setVisFrame(visFrame);
 
@@ -493,6 +494,7 @@ public class VisPresenter
                     }
                 })
                 .onFailure(caught -> failure(function, caught.getMessage()))
+                .taskListener(getView().getRefreshButton())
                 .exec();
     }
 
@@ -503,6 +505,7 @@ public class VisPresenter
                 .method(res -> res.fetchLinkedScripts(
                         new FetchLinkedScriptRequest(scriptRef, scriptCache.getLoadedScripts())))
                 .onSuccess(result -> startInjectingScripts(result, function))
+                .taskListener(getView().getRefreshButton())
                 .exec();
     }
 
@@ -747,7 +750,6 @@ public class VisPresenter
     public String getType() {
         return TAB_TYPE;
     }
-
 
     // --------------------------------------------------------------------------------
 

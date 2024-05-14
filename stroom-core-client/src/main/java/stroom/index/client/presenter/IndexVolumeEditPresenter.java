@@ -19,6 +19,7 @@ package stroom.index.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.index.client.presenter.IndexVolumeEditPresenter.IndexVolumeEditView;
 import stroom.index.shared.IndexVolume;
@@ -26,8 +27,10 @@ import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.index.shared.IndexVolumeResource;
 import stroom.item.client.SelectionBox;
 import stroom.node.client.NodeManager;
+import stroom.task.client.TaskListener;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -62,7 +65,10 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
         this.nodeManager = nodeManager;
     }
 
-    void show(final IndexVolume volume, final String caption, final Consumer<IndexVolume> consumer) {
+    void show(final IndexVolume volume,
+              final String caption,
+              final Consumer<IndexVolume> consumer,
+              final TaskListener taskListener) {
         nodeManager.listAllNodes(
                 nodeNames -> {
                     read(nodeNames, volume);
@@ -78,13 +84,19 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
                                     try {
                                         write();
                                         if (volume.getId() != null) {
-                                            doWithVolumeValidation(volume, () -> updateVolume(consumer, volume));
+                                            doWithVolumeValidation(volume, () ->
+                                                            updateVolume(consumer, volume, event, taskListener),
+                                                    event, taskListener);
                                         } else {
-                                            doWithVolumeValidation(volume, () -> createIndexVolume(consumer, volume));
+                                            doWithVolumeValidation(volume, () ->
+                                                            createIndexVolume(consumer, volume, event, taskListener),
+                                                    event, taskListener);
                                         }
 
                                     } catch (final RuntimeException e) {
-                                        AlertEvent.fireError(IndexVolumeEditPresenter.this, e.getMessage(), null);
+                                        AlertEvent.fireError(IndexVolumeEditPresenter.this,
+                                                e.getMessage(),
+                                                event::reset);
                                     }
                                 } else {
                                     consumer.accept(null);
@@ -95,11 +107,14 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
                 throwable -> {
                     AlertEvent.fireError(IndexVolumeEditPresenter.this, throwable.getMessage(), null);
                     consumer.accept(null);
-                });
+                },
+                taskListener);
     }
 
     private void doWithVolumeValidation(final IndexVolume volume,
-                                        final Runnable work) {
+                                        final Runnable work,
+                                        final HidePopupRequestEvent event,
+                                        final TaskListener taskListener) {
         restFactory
                 .create(INDEX_VOLUME_RESOURCE)
                 .method(res -> res.validate(volume))
@@ -123,29 +138,39 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
                         AlertEvent.fireError(
                                 IndexVolumeEditPresenter.this,
                                 validationResult.getMessage(),
-                                null);
+                                event::reset);
                     }
                 })
                 .onFailure(throwable -> {
-                    AlertEvent.fireError(IndexVolumeEditPresenter.this, throwable.getMessage(), null);
+                    AlertEvent.fireError(IndexVolumeEditPresenter.this, throwable.getMessage(), event::reset);
                 })
+                .taskListener(taskListener)
                 .exec();
     }
 
-    private void createIndexVolume(final Consumer<IndexVolume> savedVolumeConsumer, final IndexVolume volume) {
+    private void createIndexVolume(final Consumer<IndexVolume> savedVolumeConsumer,
+                                   final IndexVolume volume,
+                                   final HidePopupRequestEvent event,
+                                   final TaskListener taskListener) {
         restFactory
                 .create(INDEX_VOLUME_RESOURCE)
                 .method(res -> res.create(volume))
                 .onSuccess(savedVolumeConsumer)
+                .onFailure(RestErrorHandler.forPopup(this, event))
+                .taskListener(taskListener)
                 .exec();
     }
 
     private void updateVolume(final Consumer<IndexVolume> consumer,
-                              final IndexVolume volume) {
+                              final IndexVolume volume,
+                              final HidePopupRequestEvent event,
+                              final TaskListener taskListener) {
         restFactory
                 .create(INDEX_VOLUME_RESOURCE)
                 .method(res -> res.update(volume.getId(), volume))
                 .onSuccess(consumer)
+                .onFailure(RestErrorHandler.forPopup(this, event))
+                .taskListener(taskListener)
                 .exec();
     }
 

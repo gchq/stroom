@@ -34,7 +34,8 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 
-public class AboutPresenter extends MyPresenter<AboutPresenter.AboutView, AboutPresenter.AboutProxy> {
+public class AboutPresenter
+        extends MyPresenter<AboutPresenter.AboutView, AboutPresenter.AboutProxy> {
 
     private static final SessionInfoResource SESSION_INFO_RESOURCE = GWT.create(SessionInfoResource.class);
     private final RestFactory restFactory;
@@ -70,11 +71,14 @@ public class AboutPresenter extends MyPresenter<AboutPresenter.AboutView, AboutP
                     getView().getNodeName().setText("Node Name: " + sessionInfo.getNodeName());
                 })
                 .onFailure(caught -> AlertEvent.fireError(AboutPresenter.this, caught.getMessage(), null))
+                .taskListener(this)
                 .exec();
 
-        clientPropertyCache.get()
-                .onSuccess(result -> getView().setHTML(result.getAboutHtml()))
-                .onFailure(caught -> AlertEvent.fireError(AboutPresenter.this, caught.getMessage(), null));
+        clientPropertyCache.get(result -> {
+            if (result != null) {
+                getView().setHTML(result.getAboutHtml());
+            }
+        }, this);
     }
 
     @Override

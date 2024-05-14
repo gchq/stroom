@@ -24,6 +24,7 @@ import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.presenter.DynamicFieldSelectionListModel;
 import stroom.receive.rules.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
+import stroom.task.client.TaskListener;
 import stroom.util.shared.time.TimeUnit;
 
 import com.google.gwt.user.client.ui.Focus;
@@ -34,6 +35,7 @@ import com.gwtplatform.mvp.client.View;
 
 public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionRuleView> implements Focus {
     private final EditExpressionPresenter editExpressionPresenter;
+    private  final DynamicFieldSelectionListModel fieldSelectionBoxModel;
     private DataRetentionRule originalRule;
 
     @Inject
@@ -43,6 +45,7 @@ public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionR
                                       final RestFactory restFactory,
                                       final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
         super(eventBus, view);
+        this.fieldSelectionBoxModel = fieldSelectionBoxModel;
         this.editExpressionPresenter = editExpressionPresenter;
         view.setExpressionView(editExpressionPresenter.getView());
 
@@ -79,6 +82,12 @@ public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionR
                 getView().getAge(),
                 getView().getTimeUnit(),
                 getView().isForever());
+    }
+
+    @Override
+    public synchronized void setTaskListener(final TaskListener taskListener) {
+        super.setTaskListener(taskListener);
+        fieldSelectionBoxModel.setTaskListener(taskListener);
     }
 
     public interface DataRetentionRuleView extends View {

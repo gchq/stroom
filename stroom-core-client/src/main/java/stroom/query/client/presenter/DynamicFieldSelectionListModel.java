@@ -5,9 +5,16 @@ import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
 import stroom.query.client.DataSourceClient;
+import stroom.task.client.HasTaskListener;
+import stroom.task.client.TaskListener;
+import stroom.task.client.TaskListenerImpl;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
+
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Collections;
 import java.util.List;
@@ -15,14 +22,19 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
-public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
+public class DynamicFieldSelectionListModel
+        implements FieldSelectionListModel, HasTaskListener, HasHandlers {
 
+    private final EventBus eventBus;
     private final DataSourceClient dataSourceClient;
     private DocRef dataSourceRef;
     private FindFieldInfoCriteria lastCriteria;
+    private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
 
     @Inject
-    public DynamicFieldSelectionListModel(final DataSourceClient dataSourceClient) {
+    public DynamicFieldSelectionListModel(final EventBus eventBus,
+                                          final DataSourceClient dataSourceClient) {
+        this.eventBus = eventBus;
         this.dataSourceClient = dataSourceClient;
     }
 
@@ -63,7 +75,7 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
 
                         consumer.accept(resultPage);
                     }
-                });
+                }, taskListener);
             }
         }
     }
@@ -79,7 +91,7 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
 
     @Override
     public void findFieldByName(final String fieldName, final Consumer<QueryField> consumer) {
-        dataSourceClient.findFieldByName(dataSourceRef, fieldName, consumer);
+        dataSourceClient.findFieldByName(dataSourceRef, fieldName, consumer, taskListener);
     }
 
     @Override
@@ -113,5 +125,15 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
     @Override
     public boolean isEmptyItem(final FieldInfoSelectionItem selectionItem) {
         return unwrap(selectionItem) == null;
+    }
+
+    @Override
+    public void setTaskListener(final TaskListener taskListener) {
+        this.taskListener.setTaskListener(taskListener);
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> gwtEvent) {
+        eventBus.fireEvent(gwtEvent);
     }
 }

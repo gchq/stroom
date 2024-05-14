@@ -20,24 +20,22 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
-import java.util.function.Consumer;
-
 public class HidePopupRequestEvent extends GwtEvent<HidePopupRequestEvent.Handler> {
 
     private static Type<Handler> TYPE;
     private final PresenterWidget<?> presenterWidget;
     private final boolean autoClose;
     private final boolean ok;
-    private final Runnable cancelHandler;
+    private final Runnable resetHandler;
 
     private HidePopupRequestEvent(final PresenterWidget<?> presenterWidget,
                                   final boolean autoClose,
                                   final boolean ok,
-                                  final Runnable cancelHandler) {
+                                  final Runnable resetHandler) {
         this.presenterWidget = presenterWidget;
         this.autoClose = autoClose;
         this.ok = ok;
-        this.cancelHandler = cancelHandler;
+        this.resetHandler = resetHandler;
     }
 
     public static Builder builder(final PresenterWidget<?> presenterWidget) {
@@ -81,11 +79,11 @@ public class HidePopupRequestEvent extends GwtEvent<HidePopupRequestEvent.Handle
     }
 
     /**
-     * Call to cancel the request and re-enable any buttons.
+     * Call to reset/cancel the request and re-enable any buttons.
      */
-    public void cancel() {
-        if (cancelHandler != null) {
-            cancelHandler.run();
+    public void reset() {
+        if (resetHandler != null) {
+            resetHandler.run();
         }
     }
 

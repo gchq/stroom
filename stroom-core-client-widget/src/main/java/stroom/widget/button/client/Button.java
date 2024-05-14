@@ -1,6 +1,7 @@
 package stroom.widget.button.client;
 
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.TaskListener;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -10,7 +11,7 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.ButtonBase;
 
-public class Button extends ButtonBase implements ButtonView {
+public class Button extends ButtonBase implements ButtonView, TaskListener {
 
     private final Element rippleContainer;
     private final Element buttonContent;
@@ -19,6 +20,8 @@ public class Button extends ButtonBase implements ButtonView {
     private final Element icon;
     private final Element margin;
     private final Element text;
+
+    private int taskCount;
 
     /**
      * Creates a button with no caption.
@@ -157,5 +160,17 @@ public class Button extends ButtonBase implements ButtonView {
     @Override
     public void focus() {
         getElement().focus();
+    }
+
+    @Override
+    public void incrementTaskCount() {
+        taskCount++;
+        setLoading(taskCount > 0);
+    }
+
+    @Override
+    public void decrementTaskCount() {
+        taskCount--;
+        setLoading(taskCount > 0);
     }
 }

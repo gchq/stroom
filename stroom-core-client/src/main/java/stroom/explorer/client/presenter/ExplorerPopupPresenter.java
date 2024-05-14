@@ -69,18 +69,20 @@ public class ExplorerPopupPresenter
 
         getView().setUiHandlers(this);
 
-        explorerTree = new ExtendedExplorerTree(this, restFactory);
+        explorerTree = new ExtendedExplorerTree(eventBus, this, restFactory);
         setIncludeNullSelection(true);
 
         // Add views.
         view.setCellTree(explorerTree);
 
-        uiConfigCache.get()
-                .onSuccess(uiConfig ->
-                        view.setQuickFilterTooltipSupplier(() -> QuickFilterTooltipUtil.createTooltip(
-                                "Choose Item Quick Filter",
-                                ExplorerTreeFilter.FIELD_DEFINITIONS,
-                                uiConfig.getHelpUrlQuickFilter())));
+        uiConfigCache.get(uiConfig -> {
+            if (uiConfig != null) {
+                view.setQuickFilterTooltipSupplier(() -> QuickFilterTooltipUtil.createTooltip(
+                        "Choose Item Quick Filter",
+                        ExplorerTreeFilter.FIELD_DEFINITIONS,
+                        uiConfig.getHelpUrlQuickFilter()));
+            }
+        }, this);
     }
 
     public void setSelectionChangeConsumer(final Consumer<ExplorerNode> selectionChangeConsumer) {
@@ -96,6 +98,11 @@ public class ExplorerPopupPresenter
     }
 
     public void show(final Consumer<DocRef> consumer) {
+        show(consumer, () -> {
+        });
+    }
+
+    public void show(final Consumer<DocRef> consumer, final Runnable onShow) {
         initialSelection = getCurrentSelection();
         refresh();
         final PopupSize popupSize = PopupSize.resizable(500, 550);
@@ -103,22 +110,11 @@ public class ExplorerPopupPresenter
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption(caption)
-                .onShow(e -> getView().focus())
-                .onHideRequest(e -> {
-                    if (e.isOk()) {
-                        final ExplorerNode selected = getSelectedEntityData();
-                        if (isSelectionAllowed(selected)) {
-                            e.hide();
-                        } else {
-                            AlertEvent.fireError(ExplorerPopupPresenter.this,
-                                    "You must choose a valid item.", null);
-                        }
-                    } else {
-                        explorerTree.getSelectionModel().setSelected(initialSelection);
-                        e.hide();
-                    }
+                .onShow(e -> {
+                    onShow.run();
+                    getView().focus();
                 })
-                .onHide(e -> {
+                .onHideRequest(e -> {
                     if (e.isOk()) {
                         final ExplorerNode selected = getSelectedEntityData();
                         if (isSelectionAllowed(selected)) {
@@ -127,7 +123,21 @@ public class ExplorerPopupPresenter
                             consumer.accept(selected == null
                                     ? null
                                     : selected.getDocRef());
+                            e.hide();
+                        } else {
+                            AlertEvent.fireError(ExplorerPopupPresenter.this,
+                                    "You must choose a valid item.", e::reset);
                         }
+                    } else {
+                        final ExplorerNode selected = initialSelection;
+                        if (isSelectionAllowed(selected)) {
+                            selectionChangeConsumer.accept(selected);
+                            explorerTree.getSelectionModel().setSelected(selected);
+                            consumer.accept(selected == null
+                                    ? null
+                                    : selected.getDocRef());
+                        }
+                        e.hide();
                     }
                 })
                 .fire();
@@ -211,11 +221,14 @@ public class ExplorerPopupPresenter
     }
 
     public void setSelectedEntityReference(final DocRef docRef) {
-        restFactory
-                .create(EXPLORER_RESOURCE)
-                .method(res -> res.getFromDocRef(docRef))
-                .onSuccess(this::setSelectedEntityData)
-                .exec();
+        if (docRef != null) {
+            restFactory
+                    .create(EXPLORER_RESOURCE)
+                    .method(res -> res.getFromDocRef(docRef))
+                    .onSuccess(this::setSelectedEntityData)
+                    .taskListener(this)
+                    .exec();
+        }
     }
 
     private ExplorerNode getSelectedEntityData() {
@@ -248,6 +261,7 @@ public class ExplorerPopupPresenter
         this.initialQuickFilter = initialQuickFilter;
     }
 
+
     // --------------------------------------------------------------------------------
 
 
@@ -255,9 +269,10 @@ public class ExplorerPopupPresenter
 
         private final ExplorerPopupPresenter explorerDropDownTreePresenter;
 
-        public ExtendedExplorerTree(final ExplorerPopupPresenter explorerDropDownTreePresenter,
+        public ExtendedExplorerTree(final EventBus eventBus,
+                                    final ExplorerPopupPresenter explorerDropDownTreePresenter,
                                     final RestFactory restFactory) {
-            super(restFactory, false, false);
+            super(eventBus, restFactory, false, false);
             this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;
             this.getTreeModel().setIncludedRootTypes(ExplorerConstants.SYSTEM);
         }

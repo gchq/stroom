@@ -1,7 +1,7 @@
 package stroom.index.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -12,6 +12,7 @@ import stroom.index.client.presenter.IndexPresenter;
 import stroom.index.shared.IndexResource;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.task.client.TaskListener;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -49,12 +50,14 @@ public class IndexPlugin extends DocumentPlugin<LuceneIndexDoc> {
     @Override
     public void load(final DocRef docRef,
                      final Consumer<LuceneIndexDoc> resultConsumer,
-                     final Consumer<RestError> errorConsumer) {
+                     final RestErrorHandler errorHandler,
+                     final TaskListener taskListener) {
         restFactory
                 .create(INDEX_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
+                .onFailure(errorHandler)
+                .taskListener(taskListener)
                 .exec();
     }
 
@@ -62,12 +65,14 @@ public class IndexPlugin extends DocumentPlugin<LuceneIndexDoc> {
     public void save(final DocRef docRef,
                      final LuceneIndexDoc document,
                      final Consumer<LuceneIndexDoc> resultConsumer,
-                     final Consumer<RestError> errorConsumer) {
+                     final RestErrorHandler errorHandler,
+                     final TaskListener taskListener) {
         restFactory
                 .create(INDEX_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
+                .onFailure(errorHandler)
+                .taskListener(taskListener)
                 .exec();
     }
 

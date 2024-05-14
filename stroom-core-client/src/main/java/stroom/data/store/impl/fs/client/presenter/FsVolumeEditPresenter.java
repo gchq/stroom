@@ -44,7 +44,8 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.function.Consumer;
 
-public class FsVolumeEditPresenter extends MyPresenterWidget<FsVolumeEditView> {
+public class FsVolumeEditPresenter
+        extends MyPresenterWidget<FsVolumeEditView> {
 
     private static final FsVolumeResource FS_VOLUME_RESOURCE = GWT.create(FsVolumeResource.class);
 
@@ -125,6 +126,7 @@ public class FsVolumeEditPresenter extends MyPresenterWidget<FsVolumeEditView> {
                 .onFailure(throwable -> {
                     AlertEvent.fireError(FsVolumeEditPresenter.this, throwable.getMessage(), null);
                 })
+                .taskListener(this)
                 .exec();
     }
 
@@ -133,6 +135,7 @@ public class FsVolumeEditPresenter extends MyPresenterWidget<FsVolumeEditView> {
                 .create(FS_VOLUME_RESOURCE)
                 .method(res -> res.update(volume.getId(), volume))
                 .onSuccess(consumer)
+                .taskListener(this)
                 .exec();
     }
 
@@ -141,6 +144,7 @@ public class FsVolumeEditPresenter extends MyPresenterWidget<FsVolumeEditView> {
                 .create(FS_VOLUME_RESOURCE)
                 .method(res -> res.create(volume))
                 .onSuccess(consumer)
+                .taskListener(this)
                 .exec();
     }
 

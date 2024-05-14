@@ -75,8 +75,7 @@ import java.util.function.Consumer;
 public class ImportConfigConfirmPresenter extends
         MyPresenter<ImportConfigConfirmPresenter.ImportConfigConfirmView,
                 ImportConfigConfirmPresenter.ImportConfirmProxy>
-        implements ImportConfigConfirmEvent.Handler,
-        HidePopupRequestEvent.Handler {
+        implements ImportConfigConfirmEvent.Handler,        HidePopupRequestEvent.Handler {
 
     private static final ContentResource CONTENT_RESOURCE =
             com.google.gwt.core.client.GWT.create(ContentResource.class);
@@ -188,6 +187,7 @@ public class ImportConfigConfirmPresenter extends
                     updateList();
                 })
                 .onFailure(caught -> error(caught.getMessage()))
+                .taskListener(this)
                 .exec();
     }
 
@@ -462,6 +462,7 @@ public class ImportConfigConfirmPresenter extends
                 .onFailure(caught -> AlertEvent.fireError(ImportConfigConfirmPresenter.this,
                         caught.getMessage(),
                         () -> HidePopupEvent.builder(ImportConfigConfirmPresenter.this).ok(false).fire()))
+                .taskListener(this)
                 .exec();
     }
 
@@ -493,6 +494,7 @@ public class ImportConfigConfirmPresenter extends
                     // existing one.
                     clearCaches();
                 })
+                .taskListener(this)
                 .exec();
     }
 

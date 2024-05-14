@@ -80,7 +80,9 @@ public class AnalyticQueryEditPresenter
         super.onClose();
     }
 
+    @Override
     public void setTaskListener(final TaskListener taskListener) {
+        super.setTaskListener(taskListener);
         queryEditPresenter.setTaskListener(taskListener);
     }
 }

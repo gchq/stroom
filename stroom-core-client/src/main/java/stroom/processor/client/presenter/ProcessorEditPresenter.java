@@ -33,7 +33,8 @@ import com.gwtplatform.mvp.client.View;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView> {
+public class ProcessorEditPresenter
+        extends MyPresenterWidget<ProcessorEditView> {
 
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
     private static final ExpressionResource EXPRESSION_RESOURCE = GWT.create(ExpressionResource.class);
@@ -189,6 +190,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                 .onFailure(throwable -> {
                     AlertEvent.fireError(ProcessorEditPresenter.this, throwable.getMessage(), null);
                 })
+                .taskListener(this)
                 .exec();
     }
 
@@ -271,6 +273,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                     .create(PROCESSOR_FILTER_RESOURCE)
                     .method(res -> res.update(filter.getId(), filter))
                     .onSuccess(this::hide)
+                    .taskListener(this)
                     .exec();
 
         } else {
@@ -289,6 +292,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                     .create(PROCESSOR_FILTER_RESOURCE)
                     .method(res -> res.create(request))
                     .onSuccess(this::hide)
+                    .taskListener(this)
                     .exec();
         }
     }

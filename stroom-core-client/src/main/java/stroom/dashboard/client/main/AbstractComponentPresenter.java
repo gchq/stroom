@@ -35,7 +35,8 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-public abstract class AbstractComponentPresenter<V extends View> extends MyPresenterWidget<V>
+public abstract class AbstractComponentPresenter<V extends View>
+        extends MyPresenterWidget<V>
         implements Component, HasDirtyHandlers {
 
     private final Provider<?> settingsPresenterProvider;

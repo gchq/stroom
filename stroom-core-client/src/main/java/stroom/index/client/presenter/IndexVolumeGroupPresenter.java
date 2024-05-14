@@ -120,6 +120,7 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
                             presenter.hide();
                             refresh();
                         })
+                        .taskListener(this)
                         .exec();
             } else {
                 presenter.hide();
@@ -134,6 +135,7 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
                     .create(INDEX_VOLUME_GROUP_RESOURCE)
                     .method(res -> res.fetch(volume.getId()))
                     .onSuccess(this::edit)
+                    .taskListener(this)
                     .exec();
         }
     }
@@ -164,6 +166,7 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
                                         .create(INDEX_VOLUME_GROUP_RESOURCE)
                                         .method(res -> res.delete(volume.getId()))
                                         .onSuccess(response -> refresh())
+                                        .taskListener(this)
                                         .exec();
                             }
                         }

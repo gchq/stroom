@@ -17,12 +17,13 @@
 package stroom.ui.config.client;
 
 import stroom.config.global.shared.GlobalConfigResource;
+import stroom.dispatch.client.DefaultErrorHandler;
+import stroom.dispatch.client.QuietTaskListener;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.task.client.DefaultTaskListener;
 import stroom.task.client.TaskListener;
 import stroom.ui.config.shared.ExtendedUiConfig;
-import stroom.widget.util.client.Future;
-import stroom.widget.util.client.FutureImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -32,6 +33,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 
+import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -59,9 +61,7 @@ public class UiConfigCache implements HasHandlers {
                     // alive unnecessarily.
                     if (securityContext.isLoggedIn()) {
                         refreshing = true;
-                        refresh(null)
-                                .onSuccess(result -> refreshing = false)
-                                .onFailure(throwable -> refreshing = false);
+                        refresh(result -> refreshing = result != null, new QuietTaskListener());
                     }
                 }
             }
@@ -73,34 +73,31 @@ public class UiConfigCache implements HasHandlers {
         refreshTimer.scheduleRepeating(ONE_MINUTE);
     }
 
-    public Future<ExtendedUiConfig> refresh(TaskListener taskListener) {
-        final FutureImpl<ExtendedUiConfig> future = new FutureImpl<>();
+    public void refresh(final Consumer<ExtendedUiConfig> consumer,
+                        final TaskListener taskListener) {
         restFactory
                 .create(CONFIG_RESOURCE)
                 .method(GlobalConfigResource::fetchExtendedUiConfig)
                 .onSuccess(result -> {
                     clientProperties = result;
-                    future.setResult(result);
+                    consumer.accept(result);
                     PropertyChangeEvent.fire(UiConfigCache.this, result);
-                }).onFailure(error -> future.setThrowable(error.getException()))
+                })
+                .onFailure(error -> new DefaultErrorHandler(this, () -> consumer.accept(null)))
                 .taskListener(taskListener)
-                .execWithListener();
-        return future;
+                .exec();
     }
 
-    public Future<ExtendedUiConfig> get() {
-        return get(null);
+    public void get(final Consumer<ExtendedUiConfig> consumer) {
+        get(consumer, new DefaultTaskListener(this));
     }
 
-    public Future<ExtendedUiConfig> get(TaskListener taskListener) {
+    public void get(final Consumer<ExtendedUiConfig> consumer, final TaskListener taskListener) {
         final ExtendedUiConfig props = clientProperties;
         if (props == null) {
-            return refresh(taskListener);
+            refresh(consumer, taskListener);
         }
-
-        final FutureImpl<ExtendedUiConfig> future = new FutureImpl<>();
-        future.setResult(props);
-        return future;
+        consumer.accept(props);
     }
 
     public HandlerRegistration addPropertyChangeHandler(final PropertyChangeEvent.Handler handler) {
@@ -111,7 +108,7 @@ public class UiConfigCache implements HasHandlers {
         final HandlerRegistration handlerRegistration = eventBus.addHandlerToSource(PropertyChangeEvent.getType(),
                 this,
                 handler);
-        get().onSuccess(properties -> PropertyChangeEvent.fire(UiConfigCache.this, properties));
+        get(properties -> PropertyChangeEvent.fire(UiConfigCache.this, properties));
         return handlerRegistration;
     }
 

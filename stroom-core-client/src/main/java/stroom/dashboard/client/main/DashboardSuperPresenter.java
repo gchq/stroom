@@ -19,7 +19,6 @@ package stroom.dashboard.client.main;
 
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.DocRef;
-import stroom.document.client.event.TabDataTaskListener;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.HasToolbar;
@@ -55,7 +54,6 @@ public class DashboardSuperPresenter
                                    final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
         super(eventBus, view);
         this.dashboardPresenter = dashboardPresenter;
-        dashboardPresenter.setTaskListener(new TabDataTaskListener(eventBus, this));
 
         addTab(DASHBOARD, new DocumentEditTabProvider<>(() -> dashboardPresenter));
         addTab(DOCUMENTATION, new MarkdownTabProvider<DashboardDoc>(eventBus, markdownEditPresenterProvider) {

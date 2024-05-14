@@ -32,6 +32,8 @@ import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.explorer.client.event.CreateNewDocumentEvent;
+import stroom.explorer.client.event.ExplorerEndTaskEvent;
+import stroom.explorer.client.event.ExplorerStartTaskEvent;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.FocusExplorerFilterEvent;
@@ -45,6 +47,7 @@ import stroom.explorer.client.presenter.NavigationPresenter.NavigationProxy;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.feed.shared.FeedDoc;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.main.client.event.ShowMainEvent;
@@ -63,6 +66,7 @@ import stroom.util.shared.GwtNullSafe;
 import stroom.view.shared.ViewDoc;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItems;
@@ -73,6 +77,7 @@ import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -88,6 +93,7 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 public class NavigationPresenter extends MyPresenter<NavigationView, NavigationProxy>
         implements NavigationUiHandlers,
@@ -196,21 +202,29 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
 
         view.setUiHandlers(this);
 
-        explorerTree = new ExplorerTree(restFactory, true, showAlertsBtn.getState());
+        explorerTree = new ExplorerTree(eventBus, restFactory, true, showAlertsBtn.getState());
 
         // Add views.
-        uiConfigCache.get().onSuccess(uiConfig -> {
-            final ActivityConfig activityConfig = uiConfig.getActivity();
-            if (activityConfig.isEnabled()) {
-                updateActivitySummary();
-                activityButton.setStyleName("activityButton dashboard-panel");
-                activityOuter.setStyleName("activityOuter");
-                activityOuter.setWidget(activityButton);
+        uiConfigCache.get(uiConfig -> {
+            if (uiConfig != null) {
+                final ActivityConfig activityConfig = uiConfig.getActivity();
+                if (activityConfig.isEnabled()) {
+                    updateActivitySummary();
+                    activityButton.setStyleName("activityButton dashboard-panel");
+                    activityOuter.setStyleName("activityOuter");
+                    activityOuter.setWidget(activityButton);
 
-                getView().setActivityWidget(activityOuter);
+                    getView().setActivityWidget(activityOuter);
+                }
+                showAlertsBtn.setVisible(uiConfig.isDependencyWarningsEnabled());
+
+                getView().registerPopupTextProvider(() ->
+                        QuickFilterTooltipUtil.createTooltip(
+                                "Explorer Quick Filter",
+                                ExplorerTreeFilter.FIELD_DEFINITIONS,
+                                uiConfig.getHelpUrl()));
             }
-            showAlertsBtn.setVisible(uiConfig.isDependencyWarningsEnabled());
-        });
+        }, explorerTree.getTaskListener());
 
         KeyBinding.addCommand(Action.FOCUS_EXPLORER_FILTER, () ->
                 FocusExplorerFilterEvent.fire(this));
@@ -291,11 +305,11 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
 
         registerHandler(getEventBus().addHandler(FocusExplorerTreeEvent.getType(), this));
 
-//        explorerTree.addChangeHandler(fetchExplorerNodeResult -> {
-//            final boolean treeHasNodeInfo = GwtNullSafe.stream(fetchExplorerNodeResult.getRootNodes())
-//                    .anyMatch(ExplorerNode::hasNodeInfo);
-//            showAlertsBtn.setVisible(treeHasNodeInfo);
-//        });
+        // Deal with task listeners.
+        registerHandler(getEventBus().addHandler(ExplorerStartTaskEvent.getType(), e ->
+                explorerTree.getTaskListener().incrementTaskCount()));
+        registerHandler(getEventBus().addHandler(ExplorerEndTaskEvent.getType(), e ->
+                explorerTree.getTaskListener().decrementTaskCount()));
 
         registerHandler(typeFilterPresenter.addDataSelectionHandler(event -> explorerTree.setIncludedTypeSet(
                 typeFilterPresenter.getIncludedTypes().orElse(null))));
@@ -338,7 +352,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
             }
 
             activityButton.setHTML(sb.toString());
-        });
+        }, explorerTree.getTaskListener());
     }
 
     public void newItem(final Element element) {
@@ -415,7 +429,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
     public void onShowMain(final ShowMainEvent event) {
         documentTypeCache.clear();
         // Set the data for the type filter.
-        documentTypeCache.fetch(typeFilterPresenter::setDocumentTypes);
+        documentTypeCache.fetch(typeFilterPresenter::setDocumentTypes, explorerTree.getTaskListener());
 
         explorerTree.getTreeModel().reset();
         explorerTree.getTreeModel().setRequiredPermissions(DocumentPermissionNames.READ);
@@ -473,6 +487,8 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
 
 
     public interface NavigationView extends View, HasUiHandlers<NavigationUiHandlers> {
+
+        void registerPopupTextProvider(Supplier<SafeHtml> popupTextSupplier);
 
         FlowPanel getButtonContainer();
 

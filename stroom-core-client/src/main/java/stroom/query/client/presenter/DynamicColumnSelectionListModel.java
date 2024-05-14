@@ -17,10 +17,17 @@ import stroom.query.client.presenter.DynamicColumnSelectionListModel.ColumnSelec
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.HasTaskListener;
+import stroom.task.client.TaskListener;
+import stroom.task.client.TaskListenerImpl;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
+
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,17 +38,23 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
-public class DynamicColumnSelectionListModel implements SelectionListModel<Column, ColumnSelectionItem> {
+public class DynamicColumnSelectionListModel
+        implements SelectionListModel<Column, ColumnSelectionItem>, HasTaskListener, HasHandlers {
 
     private static final String NONE_TITLE = "[ none ]";
+
+    private final EventBus eventBus;
     private final DataSourceClient dataSourceClient;
     private final ClientSecurityContext clientSecurityContext;
     private DocRef dataSourceRef;
     private FindFieldInfoCriteria lastCriteria;
+    private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
 
     @Inject
-    public DynamicColumnSelectionListModel(final DataSourceClient dataSourceClient,
+    public DynamicColumnSelectionListModel(final EventBus eventBus,
+                                           final DataSourceClient dataSourceClient,
                                            final ClientSecurityContext clientSecurityContext) {
+        this.eventBus = eventBus;
         this.dataSourceClient = dataSourceClient;
         this.clientSecurityContext = clientSecurityContext;
     }
@@ -71,7 +84,7 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
                             createResults(stringMatch, parentPath, pageRequest, response);
                     consumer.accept(resultPage);
                 }
-            });
+            }, taskListener);
         }
     }
 
@@ -232,6 +245,16 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
     @Override
     public boolean isEmptyItem(final ColumnSelectionItem selectionItem) {
         return NONE_TITLE.equals(selectionItem.getLabel());
+    }
+
+    @Override
+    public void setTaskListener(final TaskListener taskListener) {
+        this.taskListener.setTaskListener(taskListener);
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> gwtEvent) {
+        eventBus.fireEvent(gwtEvent);
     }
 
     public static class ColumnSelectionItem implements SelectionItem {

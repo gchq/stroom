@@ -4,6 +4,7 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.importexport.client.presenter.DependenciesTabPresenter.DependenciesTabView;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.TaskListener;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
@@ -34,12 +35,14 @@ public class DependenciesTabPresenter
         view.setUiHandlers(this);
         setInSlot(LIST, dependenciesPresenter);
 
-        uiConfigCache.get()
-                .onSuccess(uiConfig ->
-                        view.setHelpTooltipText(QuickFilterTooltipUtil.createTooltip(
-                                "Dependencies Quick Filter Syntax",
-                                DependencyCriteria.FIELD_DEFINITIONS,
-                                uiConfig.getHelpUrlQuickFilter())));
+        uiConfigCache.get(uiConfig -> {
+            if (uiConfig != null) {
+                view.setHelpTooltipText(QuickFilterTooltipUtil.createTooltip(
+                        "Dependencies Quick Filter Syntax",
+                        DependencyCriteria.FIELD_DEFINITIONS,
+                        uiConfig.getHelpUrlQuickFilter()));
+            }
+        }, this);
     }
 
     @Override
@@ -85,6 +88,11 @@ public class DependenciesTabPresenter
         return false;
     }
 
+    @Override
+    public void setTaskListener(final TaskListener taskListener) {
+        super.setTaskListener(taskListener);
+        dependenciesPresenter.setTaskListener(taskListener);
+    }
 
     // --------------------------------------------------------------------------------
 

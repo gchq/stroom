@@ -40,12 +40,12 @@ public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreeP
     private final ExplorerTickBoxTree explorerTree;
 
     @Inject
-    public EntityCheckTreePresenter(final EntityCheckTreeView view,
-                                    final RestFactory restFactory,
-                                    final EventBus eventBus) {
+    public EntityCheckTreePresenter(final EventBus eventBus,
+                                    final EntityCheckTreeView view,
+                                    final RestFactory restFactory) {
         super(new SimpleEventBus(), view);
 
-        explorerTree = new ExplorerTickBoxTree(restFactory);
+        explorerTree = new ExplorerTickBoxTree(eventBus, restFactory);
 
         view.setCellTree(explorerTree);
     }

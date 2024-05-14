@@ -20,8 +20,10 @@ import stroom.activity.shared.AcknowledgeSplashRequest;
 import stroom.activity.shared.ActivityResource;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.UrlParameters;
+import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.event.LogoutEvent;
+import stroom.task.client.DefaultTaskListener;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SplashConfig;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -36,14 +38,14 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.function.Consumer;
 
-public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashView> {
+public class SplashPresenter
+        extends MyPresenterWidget<SplashPresenter.SplashView> {
 
     private static final ActivityResource ACTIVITY_RESOURCE = GWT.create(ActivityResource.class);
 
     private final UiConfigCache uiConfigCache;
     private final RestFactory restFactory;
     private final UrlParameters urlParameters;
-//    private boolean enabled;
 
     @Inject
     public SplashPresenter(final EventBus eventBus,
@@ -58,48 +60,52 @@ public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashVie
     }
 
     public void show(final Consumer<Boolean> consumer) {
-        uiConfigCache.get().onSuccess(uiConfig -> {
-            final SplashConfig splashConfig = uiConfig.getSplash();
-            final boolean enableSplashScreen = splashConfig.isEnabled();
-            if (enableSplashScreen && !urlParameters.isEmbedded()) {
-                final String title = splashConfig.getTitle();
-                final String body = splashConfig.getBody();
-                final String version = splashConfig.getVersion();
-                setHtml(body);
+        uiConfigCache.get(uiConfig -> {
+            if (uiConfig != null) {
+                final SplashConfig splashConfig = uiConfig.getSplash();
+                final boolean enableSplashScreen = splashConfig.isEnabled();
+                if (enableSplashScreen && !urlParameters.isEmbedded()) {
+                    final String title = splashConfig.getTitle();
+                    final String body = splashConfig.getBody();
+                    final String version = splashConfig.getVersion();
+                    setHtml(body);
 
-                final PopupSize popupSize = PopupSize.resizable(800, 600);
-                ShowPopupEvent.builder(this)
-                        .popupType(PopupType.ACCEPT_REJECT_DIALOG)
-                        .popupSize(popupSize)
-                        .caption(title)
-                        .onHideRequest(e -> {
-                            if (e.isOk()) {
-                                restFactory
-                                        .create(ACTIVITY_RESOURCE)
-                                        .method(res -> res.acknowledgeSplash(new AcknowledgeSplashRequest(body,
-                                                version)))
-                                        .onSuccess(result -> e.hide())
-                                        .exec();
-                            } else {
-                                AlertEvent.fireWarn(SplashPresenter.this,
-                                        "You must accept the terms to use this system",
-                                        null,
-                                        e::hide);
-                            }
-                        })
-                        .onHide(e -> {
-                            if (!e.isOk()) {
-                                LogoutEvent.fire(SplashPresenter.this);
-                            }
-                            consumer.accept(e.isOk());
-                        })
-                        .modal(true)
-                        .fire();
+                    final PopupSize popupSize = PopupSize.resizable(800, 600);
+                    ShowPopupEvent.builder(this)
+                            .popupType(PopupType.ACCEPT_REJECT_DIALOG)
+                            .popupSize(popupSize)
+                            .caption(title)
+                            .onHideRequest(e -> {
+                                if (e.isOk()) {
+                                    restFactory
+                                            .create(ACTIVITY_RESOURCE)
+                                            .method(res -> res.acknowledgeSplash(new AcknowledgeSplashRequest(body,
+                                                    version)))
+                                            .onSuccess(result -> e.hide())
+                                            .onFailure(new DefaultErrorHandler(this, e::reset))
+                                            .taskListener(this)
+                                            .exec();
+                                } else {
+                                    AlertEvent.fireWarn(SplashPresenter.this,
+                                            "You must accept the terms to use this system",
+                                            null,
+                                            e::hide);
+                                }
+                            })
+                            .onHide(e -> {
+                                if (!e.isOk()) {
+                                    LogoutEvent.fire(SplashPresenter.this);
+                                }
+                                consumer.accept(e.isOk());
+                            })
+                            .modal(true)
+                            .fire();
 
-            } else {
-                consumer.accept(true);
+                } else {
+                    consumer.accept(true);
+                }
             }
-        });
+        }, new DefaultTaskListener(this));
     }
 
     public void setHtml(final String html) {

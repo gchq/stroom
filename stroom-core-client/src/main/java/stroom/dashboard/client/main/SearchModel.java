@@ -39,9 +39,14 @@ import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
+import stroom.task.client.HasTaskListener;
 import stroom.task.client.TaskListener;
+import stroom.task.client.TaskListenerImpl;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,17 +57,18 @@ import java.util.Map.Entry;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class SearchModel {
+public class SearchModel implements HasTaskListener, HasHandlers {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
 
+    private final EventBus eventBus;
     private final RestFactory restFactory;
     private final IndexLoader indexLoader;
     private String dashboardUuid;
     private String componentId;
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
     private final ResultStoreModel resultStoreModel;
-    private TaskListener taskListener;
+    private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
     private Map<String, ResultComponent> componentMap = new HashMap<>();
     private DashboardSearchResponse currentResponse;
     private String currentNode;
@@ -74,10 +80,12 @@ public class SearchModel {
     private final List<SearchStateListener> searchStateListeners = new ArrayList<>();
     private final List<SearchErrorListener> errorListeners = new ArrayList<>();
 
-    public SearchModel(final RestFactory restFactory,
+    public SearchModel(final EventBus eventBus,
+                       final RestFactory restFactory,
                        final IndexLoader indexLoader,
                        final DateTimeSettingsFactory dateTimeSettingsFactory,
                        final ResultStoreModel resultStoreModel) {
+        this.eventBus = eventBus;
         this.restFactory = restFactory;
         this.indexLoader = indexLoader;
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
@@ -266,7 +274,7 @@ public class SearchModel {
                                 resultConsumer.accept(null);
                             })
                             .taskListener(taskListener)
-                            .execWithListener();
+                            .exec();
                 }
             }
         }
@@ -323,14 +331,14 @@ public class SearchModel {
     private void deleteStore(final String node, final QueryKey queryKey, final DestroyReason destroyReason) {
         if (queryKey != null) {
             resultStoreModel.destroy(node, queryKey, destroyReason, (ok) ->
-                    GWT.log("Destroyed store " + queryKey));
+                    GWT.log("Destroyed store " + queryKey), taskListener);
         }
     }
 
     private void terminate(final String node, final QueryKey queryKey) {
         if (queryKey != null) {
             resultStoreModel.terminate(node, queryKey, (ok) ->
-                    GWT.log("Terminate search " + queryKey));
+                    GWT.log("Terminate search " + queryKey), taskListener);
         }
     }
 
@@ -395,7 +403,7 @@ public class SearchModel {
                         }
                     })
                     .taskListener(taskListener)
-                    .execWithListener();
+                    .exec();
         }
     }
 
@@ -578,7 +586,13 @@ public class SearchModel {
 
     }
 
+    @Override
     public void setTaskListener(final TaskListener taskListener) {
-        this.taskListener = taskListener;
+        this.taskListener.setTaskListener(taskListener);
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> gwtEvent) {
+        eventBus.fireEvent(gwtEvent);
     }
 }

@@ -102,7 +102,7 @@ public class NameDocumentPresenter
 
             if (entityName == null || entityName.length() == 0) {
                 AlertEvent.fireWarn(NameDocumentPresenter.this,
-                        "You must provide a new name for " + entity.getDisplayValue(), e::cancel);
+                        "You must provide a new name for " + entity.getDisplayValue(), e::reset);
             } else {
                 RenameDocumentEvent.fire(NameDocumentPresenter.this,
                         NameDocumentPresenter.this,

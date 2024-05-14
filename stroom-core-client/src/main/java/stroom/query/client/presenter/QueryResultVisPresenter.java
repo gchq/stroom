@@ -85,11 +85,11 @@ public class QueryResultVisPresenter
     private boolean pause;
     private int currentRequestCount;
 
-
     private final JavaScriptObject context;
 
     @Inject
-    public QueryResultVisPresenter(final EventBus eventBus, final QueryResultVisView view,
+    public QueryResultVisPresenter(final EventBus eventBus,
+                                   final QueryResultVisView view,
                                    final RestFactory restFactory,
                                    final CurrentPreferences currentPreferences) {
         super(eventBus, view);
@@ -99,6 +99,7 @@ public class QueryResultVisPresenter
         this.currentPreferences = currentPreferences;
 
         visFrame = new VisFrame(eventBus);
+        visFrame.setTaskListener(getView().getRefreshButton());
 //        visFrame.setUiHandlers(this);
         view.setVisFrame(visFrame);
 
@@ -461,6 +462,7 @@ public class QueryResultVisPresenter
                     }
                 })
                 .onFailure(caught -> failure(function, caught.getMessage()))
+                .taskListener(this)
                 .exec();
     }
 
@@ -472,6 +474,7 @@ public class QueryResultVisPresenter
                 .method(res -> res.fetchLinkedScripts(
                         new FetchLinkedScriptRequest(scriptRef, scriptCache.getLoadedScripts())))
                 .onSuccess(result -> startInjectingScripts(result, function))
+                .taskListener(this)
                 .exec();
     }
 
@@ -715,6 +718,7 @@ public class QueryResultVisPresenter
         }
         return allSettings;
     }
+
 //
 //    @Override
 //    public List<AbstractField> getFields() {

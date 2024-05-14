@@ -38,7 +38,8 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Provider;
 
-public class DocumentationPresenter extends DocumentEditTabPresenter<LinkTabPanelView, DocumentationDoc> {
+public class DocumentationPresenter
+        extends DocumentEditTabPresenter<LinkTabPanelView, DocumentationDoc> {
 
     private static final DocumentationResource DOCUMENTATION_RESOURCE = GWT.create(DocumentationResource.class);
 
@@ -93,6 +94,7 @@ public class DocumentationPresenter extends DocumentEditTabPresenter<LinkTabPane
                     .create(DOCUMENTATION_RESOURCE)
                     .method(res -> res.download(docRef))
                     .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
+                    .taskListener(this)
                     .exec();
         }));
     }

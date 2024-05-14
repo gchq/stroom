@@ -26,7 +26,7 @@ import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.node.client.NodeManager;
@@ -122,11 +122,11 @@ public class AnalyticDataShardListPresenter
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<AnalyticDataShard>> dataConsumer,
-                                final Consumer<RestError> errorConsumer) {
+                                final RestErrorHandler errorHandler) {
                 AnalyticDataShardListPresenter.this.range = range;
                 AnalyticDataShardListPresenter.this.dataConsumer = dataConsumer;
                 delayedUpdate.reset();
-                fetchNodes(range, dataConsumer, errorConsumer, view);
+                fetchNodes(range, dataConsumer, errorHandler, view);
             }
         };
     }
@@ -161,11 +161,11 @@ public class AnalyticDataShardListPresenter
 
     public void fetchNodes(final Range range,
                            final Consumer<ResultPage<AnalyticDataShard>> dataConsumer,
-                           final Consumer<RestError> errorConsumer,
+                           final RestErrorHandler errorHandler,
                            final TaskListener taskListener) {
         nodeManager.listAllNodes(
                 nodeNames -> fetchTasksForNodes(range, dataConsumer, nodeNames, taskListener),
-                errorConsumer, taskListener);
+                errorHandler, taskListener);
     }
 
     private void fetchTasksForNodes(final Range range,
@@ -190,7 +190,7 @@ public class AnalyticDataShardListPresenter
                             delayedUpdate.update();
                         })
                         .taskListener(taskListener)
-                        .execWithListener();
+                        .exec();
             }
 
 

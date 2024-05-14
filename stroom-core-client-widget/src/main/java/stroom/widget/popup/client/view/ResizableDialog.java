@@ -17,8 +17,10 @@
 package stroom.widget.popup.client.view;
 
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.TaskListener;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.Size;
+import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.SvgImageUtil;
 
@@ -56,6 +58,8 @@ public class ResizableDialog extends AbstractPopupPanel {
     SimplePanel content;
     @UiField
     SimplePanel resizeHandle;
+    @UiField
+    SpinnerSmall spinner;
 
     private DragType dragType;
     private boolean dragging;
@@ -322,6 +326,10 @@ public class ResizableDialog extends AbstractPopupPanel {
 
     private void setResizeEnabled(final boolean enabled) {
         resizeHandle.setVisible(enabled);
+    }
+
+    public TaskListener getTaskListener() {
+        return spinner;
     }
 
     private enum DragType {

@@ -3,6 +3,7 @@ package stroom.data.client.view;
 import stroom.data.client.presenter.SourcePresenter.SourceView;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.FabButton;
+import stroom.widget.spinner.client.SpinnerLarge;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -40,7 +41,8 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
     SimplePanel progressBarPanel;
     @UiField
     FabButton steppingButton;
-
+    @UiField
+    SpinnerLarge spinner;
 
     @Inject
     public SourceViewImpl(final Binder binder) {
@@ -105,6 +107,16 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
         } else {
             progressBarPanel.clear();
         }
+    }
+
+    @Override
+    public void incrementTaskCount() {
+        spinner.incrementTaskCount();
+    }
+
+    @Override
+    public void decrementTaskCount() {
+        spinner.decrementTaskCount();
     }
 
     public interface Binder extends UiBinder<Widget, SourceViewImpl> {

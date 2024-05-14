@@ -153,6 +153,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                         Collections.sort(types);
                     }
                 })
+                .taskListener(this)
                 .exec();
 
         setAdvancedMode(true);
@@ -259,6 +260,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                             AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
                         }
                     })
+                    .taskListener(this)
                     .exec();
         }
     }
@@ -528,6 +530,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                             "Unable to display pipeline source",
                             throwable.getMessage()
                     ))
+                    .taskListener(this)
                     .exec();
         }
     }
@@ -553,6 +556,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                     // Reload the entity.
                     RefreshDocumentEvent.fire(PipelineStructurePresenter.this, docRef);
                 })
+                .taskListener(this)
                 .exec();
     }
 
@@ -610,6 +614,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                                     null);
                         }
                     })
+                    .taskListener(this)
                     .exec();
         }
 

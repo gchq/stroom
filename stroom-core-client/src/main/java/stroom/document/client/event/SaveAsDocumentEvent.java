@@ -17,7 +17,7 @@
 
 package stroom.document.client.event;
 
-import stroom.docref.DocRef;
+import stroom.document.client.DocumentTabData;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -26,16 +26,15 @@ import com.google.gwt.event.shared.HasHandlers;
 public class SaveAsDocumentEvent extends GwtEvent<SaveAsDocumentEvent.Handler> {
 
     private static Type<Handler> TYPE;
+    private final DocumentTabData tabData;
 
-    private final DocRef docRef;
-
-    private SaveAsDocumentEvent(final DocRef docRef) {
-        this.docRef = docRef;
+    private SaveAsDocumentEvent(final DocumentTabData tabData) {
+        this.tabData = tabData;
     }
 
     public static void fire(final HasHandlers handlers,
-                            final DocRef docRef) {
-        handlers.fireEvent(new SaveAsDocumentEvent(docRef));
+                            final DocumentTabData tabData) {
+        handlers.fireEvent(new SaveAsDocumentEvent(tabData));
     }
 
     public static Type<Handler> getType() {
@@ -55,8 +54,8 @@ public class SaveAsDocumentEvent extends GwtEvent<SaveAsDocumentEvent.Handler> {
         handler.onSaveAs(this);
     }
 
-    public DocRef getDocRef() {
-        return docRef;
+    public DocumentTabData getTabData() {
+        return tabData;
     }
 
     public interface Handler extends EventHandler {

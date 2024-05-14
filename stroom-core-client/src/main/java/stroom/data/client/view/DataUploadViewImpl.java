@@ -16,9 +16,7 @@
 
 package stroom.data.client.view;
 
-import stroom.data.client.presenter.DataTypeUiManager;
 import stroom.data.client.presenter.DataUploadPresenter.DataUploadView;
-import stroom.data.shared.StreamTypeNames;
 import stroom.item.client.SelectionBox;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.widget.customdatebox.client.MyDateBox;
@@ -49,17 +47,8 @@ public class DataUploadViewImpl extends ViewImpl implements DataUploadView {
 
     @Inject
     public DataUploadViewImpl(final Binder binder,
-                              final DataTypeUiManager dataTypeUiManager,
                               final UserPreferencesManager userPreferencesManager) {
         widget = binder.createAndBindUi(this);
-        dataTypeUiManager.getTypes(list -> {
-            type.clear();
-            if (list != null && !list.isEmpty()) {
-                type.addItems(list);
-                // Default to raw events
-                type.setValue(StreamTypeNames.RAW_EVENTS);
-            }
-        });
         effective.setUtc(userPreferencesManager.isUtc());
     }
 

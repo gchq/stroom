@@ -27,19 +27,24 @@ import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FetchExplorerNodesRequest;
 import stroom.explorer.shared.NodeFlag;
 import stroom.explorer.shared.NodeFlag.NodeFlagGroups;
+import stroom.task.client.HasTaskListener;
+import stroom.task.client.TaskListener;
+import stroom.task.client.TaskListenerImpl;
 import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class ExplorerTreeModel {
+public class ExplorerTreeModel implements HasTaskListener, HasHandlers {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
     public static final ExplorerNode NULL_SELECTION = ExplorerNode.builder()
@@ -50,12 +55,13 @@ public class ExplorerTreeModel {
                     .build())
             .build();
 
+    private final EventBus eventBus;
     private final OpenItems<ExplorerNodeKey> openItems = new OpenItems<>();
     private final NameFilterTimer timer = new NameFilterTimer();
     private final ExplorerTreeFilterBuilder explorerTreeFilterBuilder = new ExplorerTreeFilterBuilder();
     private final AbstractExplorerTree explorerTree;
-    private final Widget loading;
     private final RestFactory restFactory;
+    private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
 
     private Integer minDepth = 1;
     private Set<ExplorerNodeKey> ensureVisible;
@@ -69,11 +75,11 @@ public class ExplorerTreeModel {
 
     private List<ExplorerNode> currentRootNodes;
 
-    ExplorerTreeModel(final AbstractExplorerTree explorerTree,
-                      final Widget loading,
+    ExplorerTreeModel(final EventBus eventBus,
+                      final AbstractExplorerTree explorerTree,
                       final RestFactory restFactory) {
+        this.eventBus = eventBus;
         this.explorerTree = explorerTree;
-        this.loading = loading;
         this.restFactory = restFactory;
     }
 
@@ -178,7 +184,6 @@ public class ExplorerTreeModel {
 
             if (!fetching) {
                 fetching = true;
-                loading.setVisible(true);
                 Scheduler.get().scheduleDeferred(() -> {
                     final FetchExplorerNodesRequest criteria = currentCriteria;
 //                    GWT.log("fetchData - filter: " + explorerTreeFilter.getNameFilter()
@@ -191,6 +196,7 @@ public class ExplorerTreeModel {
                             .onSuccess(result -> {
                                 handleFetchResult(criteria, result);
                             })
+                            .taskListener(taskListener)
                             .exec();
                 });
             }
@@ -289,9 +295,6 @@ public class ExplorerTreeModel {
             // opened required folders to make them visible.
             ensureVisible = null;
             forceSelection = null;
-
-            // We aren't loading any more.
-            loading.setVisible(false);
         }
     }
 
@@ -403,6 +406,15 @@ public class ExplorerTreeModel {
         }
     }
 
+    @Override
+    public void setTaskListener(final TaskListener taskListener) {
+        this.taskListener.setTaskListener(taskListener);
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> gwtEvent) {
+        eventBus.fireEvent(gwtEvent);
+    }
 
     // --------------------------------------------------------------------------------
 

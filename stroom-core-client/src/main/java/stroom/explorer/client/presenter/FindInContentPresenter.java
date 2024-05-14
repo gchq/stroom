@@ -1,9 +1,10 @@
 package stroom.explorer.client.presenter;
 
 import stroom.data.client.presenter.RestDataProvider;
+import stroom.data.client.view.TaskListenerView;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.MyCellTable;
-import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.StringMatch;
 import stroom.document.client.event.OpenDocumentEvent;
@@ -62,6 +63,7 @@ public class FindInContentPresenter
     private final MultiSelectionModelImpl<FindInContentResult> selectionModel;
     private final EditorPresenter editorPresenter;
     private final RestFactory restFactory;
+    private final TaskListenerView taskListenerView;
 
     private FindInContentRequest currentQuery = new FindInContentRequest(
             new PageRequest(0, 100),
@@ -84,11 +86,15 @@ public class FindInContentPresenter
                                   final FindInContentView view,
                                   final FindInContentProxy proxy,
                                   final PagerView pagerView,
+                                  final TaskListenerView taskListenerView,
                                   final EditorPresenter editorPresenter,
                                   final RestFactory restFactory) {
         super(eventBus, view, proxy);
+        this.taskListenerView = taskListenerView;
         this.editorPresenter = editorPresenter;
         this.restFactory = restFactory;
+
+        taskListenerView.setChildView(editorPresenter.getView());
 
         cellTable = new MyCellTable<FindInContentResult>(100) {
             @Override
@@ -111,14 +117,14 @@ public class FindInContentPresenter
         cellTable.setSelectionModel(selectionModel, selectionEventManager);
 
         view.setResultView(pagerView);
-        view.setTextView(editorPresenter.getView());
+        view.setTextView(taskListenerView);
         view.setUiHandlers(this);
 
         dataProvider = new RestDataProvider<FindInContentResult, ResultPage<FindInContentResult>>(eventBus) {
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<FindInContentResult>> dataConsumer,
-                                final Consumer<RestError> errorConsumer) {
+                                final RestErrorHandler errorHandler) {
                 final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
                 currentQuery = new FindInContentRequest(pageRequest,
                         currentQuery.getSortList(),
@@ -156,9 +162,9 @@ public class FindInContentPresenter
 
                                 resetFocus();
                             })
-                            .onFailure(errorConsumer)
+                            .onFailure(errorHandler)
                             .taskListener(pagerView)
-                            .execWithListener();
+                            .exec();
                 }
             }
         };
@@ -209,6 +215,7 @@ public class FindInContentPresenter
                         }
                     })
                     .onFailure(throwable -> editorPresenter.setText(throwable.getMessage()))
+                    .taskListener(taskListenerView)
                     .exec();
         }
     }

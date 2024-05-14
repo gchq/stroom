@@ -21,7 +21,7 @@ import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolumeGroup;
@@ -67,15 +67,15 @@ public class IndexVolumeGroupListPresenter extends MyPresenterWidget<PagerView> 
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<IndexVolumeGroup>> dataConsumer,
-                                final Consumer<RestError> errorConsumer) {
+                                final RestErrorHandler errorHandler) {
                 CriteriaUtil.setRange(criteria, range);
                 restFactory
                         .create(INDEX_VOLUME_GROUP_RESOURCE)
                         .method(res -> res.find(criteria))
                         .onSuccess(dataConsumer)
-                        .onFailure(errorConsumer)
+                        .onFailure(errorHandler)
                         .taskListener(view)
-                        .execWithListener();
+                        .exec();
             }
         };
         dataProvider.addDataDisplay(dataGrid);

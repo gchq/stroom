@@ -150,6 +150,7 @@ public class AnnotationEditPresenter
                     .create(annotationResource)
                     .method(res -> res.getStatus(filter))
                     .onSuccess(consumer)
+                    .taskListener(this)
                     .exec();
         });
 
@@ -161,6 +162,7 @@ public class AnnotationEditPresenter
                     .onSuccess(userNames -> consumer.accept(userNames.stream()
                             .sorted(Comparator.comparing(UserName::getUserIdentityForAudit))
                             .collect(Collectors.toList())))
+                    .taskListener(this)
                     .exec();
         });
 
@@ -170,6 +172,7 @@ public class AnnotationEditPresenter
                     .create(annotationResource)
                     .method(res -> res.getComment(filter))
                     .onSuccess(consumer)
+                    .taskListener(this)
                     .exec();
         });
     }
@@ -196,6 +199,7 @@ public class AnnotationEditPresenter
                 .create(annotationResource)
                 .method(res -> res.getComment(null))
                 .onSuccess(values -> getView().setHasCommentValues(values != null && !values.isEmpty()))
+                .taskListener(this)
                 .exec();
     }
 
@@ -326,6 +330,7 @@ public class AnnotationEditPresenter
                         AnnotationEditPresenter.this,
                         caught.getMessage(),
                         null))
+                .taskListener(this)
                 .exec();
     }
 
@@ -359,6 +364,7 @@ public class AnnotationEditPresenter
                         .create(annotationResource)
                         .method(res -> res.get(annotation.getId()))
                         .onSuccess(this::edit)
+                        .taskListener(this)
                         .exec();
             }
         }
@@ -421,6 +427,7 @@ public class AnnotationEditPresenter
                             setStatus(values.get(0));
                         }
                     })
+                    .taskListener(this)
                     .exec();
         }
 
@@ -465,7 +472,7 @@ public class AnnotationEditPresenter
                         if (link != null) {
                             final Hyperlink hyperlink = Hyperlink.create(link);
                             if (hyperlink != null) {
-                                HyperlinkEvent.fire(this, hyperlink);
+                                HyperlinkEvent.fire(this, hyperlink, this);
                             }
                         }
                     }
@@ -933,6 +940,7 @@ public class AnnotationEditPresenter
                             .create(annotationResource)
                             .method(res -> res.get(annotationDetail.getAnnotation().getId()))
                             .onSuccess(this::updateHistory)
+                            .taskListener(this)
                             .exec();
                 }
             });

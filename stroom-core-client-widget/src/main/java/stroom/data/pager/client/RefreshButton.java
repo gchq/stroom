@@ -1,6 +1,7 @@
 package stroom.data.pager.client;
 
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.TaskListener;
 import stroom.widget.button.client.SvgButton;
 
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -10,9 +11,12 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 
-public class RefreshButton extends Composite {
+public class RefreshButton
+        extends Composite
+        implements TaskListener {
 
     private final SvgButton button;
+    private int taskCount;
 
     public RefreshButton() {
         final SimplePanel refreshInner = new SimplePanel();
@@ -89,5 +93,17 @@ public class RefreshButton extends Composite {
 
     public HandlerRegistration addClickHandler(ClickHandler handler) {
         return button.addClickHandler(handler);
+    }
+
+    @Override
+    public void incrementTaskCount() {
+        taskCount++;
+        setRefreshing(taskCount > 0);
+    }
+
+    @Override
+    public void decrementTaskCount() {
+        taskCount--;
+        setRefreshing(taskCount > 0);
     }
 }

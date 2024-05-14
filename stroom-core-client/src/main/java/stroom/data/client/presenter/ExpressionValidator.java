@@ -9,6 +9,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.shared.ExpressionResource;
 import stroom.query.shared.ValidateExpressionRequest;
+import stroom.task.client.TaskListener;
 
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.event.shared.HasHandlers;
@@ -40,7 +41,8 @@ public class ExpressionValidator {
     protected void validateExpression(final HasHandlers hasHandlers,
                                       final List<QueryField> fields,
                                       final ExpressionOperator expression,
-                                      final Consumer<ExpressionOperator> consumer) {
+                                      final Consumer<ExpressionOperator> consumer,
+                                      final TaskListener taskListener) {
         if (expression != null) {
             if (Objects.equals(expression, validatedExpression)) {
                 // Same expression as last time, nothing new to validate, so carry on
@@ -78,6 +80,7 @@ public class ExpressionValidator {
                                     hasHandlers, throwable.getMessage(), null);
                             expressionValidationMessage = throwable.getMessage();
                         })
+                        .taskListener(taskListener)
                         .exec();
             }
         }

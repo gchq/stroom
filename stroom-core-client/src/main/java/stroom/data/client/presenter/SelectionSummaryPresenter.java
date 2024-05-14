@@ -17,7 +17,8 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
-public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView> {
+public class SelectionSummaryPresenter
+        extends MyPresenterWidget<CommonAlertView> {
 
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
 
@@ -42,26 +43,29 @@ public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView
                      final Runnable runnable) {
         getView().setInfo(SafeHtmlUtil.getSafeHtml("Fetching selection summary. Please wait..."));
 
-        if (reprocess) {
-            restFactory
-                    .create(META_RESOURCE)
-                    .method(res -> res.getReprocessSelectionSummary(criteria))
-                    .onSuccess(result -> update(postAction, action, result))
-                    .exec();
-        } else {
-            restFactory
-                    .create(META_RESOURCE)
-                    .method(res -> res.getSelectionSummary(criteria))
-                    .onSuccess(result -> update(postAction, action, result))
-                    .exec();
-        }
-
         final PopupType popupType = postAction != null
                 ? PopupType.OK_CANCEL_DIALOG
                 : PopupType.CLOSE_DIALOG;
         ShowPopupEvent.builder(this)
                 .popupType(popupType)
                 .caption(caption)
+                .onShow(e -> {
+                    if (reprocess) {
+                        restFactory
+                                .create(META_RESOURCE)
+                                .method(res -> res.getReprocessSelectionSummary(criteria))
+                                .onSuccess(result -> update(postAction, action, result))
+                                .taskListener(this)
+                                .exec();
+                    } else {
+                        restFactory
+                                .create(META_RESOURCE)
+                                .method(res -> res.getSelectionSummary(criteria))
+                                .onSuccess(result -> update(postAction, action, result))
+                                .taskListener(this)
+                                .exec();
+                    }
+                })
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         runnable.run();

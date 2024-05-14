@@ -44,7 +44,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesPresenter.QueryFavouritesView> {
+public class QueryFavouritesPresenter
+        extends MyPresenterWidget<QueryFavouritesPresenter.QueryFavouritesView> {
 
     private static final StoredQueryResource STORED_QUERY_RESOURCE = GWT.create(StoredQueryResource.class);
 
@@ -195,6 +196,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
                                 .fire();
                     }
                 })
+                .taskListener(this)
                 .exec();
     }
 
@@ -210,6 +212,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
                     refresh(false);
                     namePresenter.hide();
                 })
+                .taskListener(this)
                 .exec();
     }
 
@@ -221,6 +224,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
                     refresh(false);
                     namePresenter.hide();
                 })
+                .taskListener(this)
                 .exec();
     }
 
@@ -229,6 +233,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
                 .create(STORED_QUERY_RESOURCE)
                 .method(res -> res.delete(query))
                 .onSuccess(result -> refresh(false))
+                .taskListener(this)
                 .exec();
     }
 

@@ -178,6 +178,7 @@ public class QueryEditPresenter
 
 
         queryModel = new QueryModel(
+                eventBus,
                 restFactory,
                 dateTimeSettingsFactory,
                 resultStoreModel,
@@ -245,6 +246,7 @@ public class QueryEditPresenter
     private void createNewVis() {
         destroyCurrentVis();
         currentVisPresenter = visPresenterProvider.get();
+        currentVisPresenter.setTaskListener(this);
         if (VISUALISATION.equals(linkTabsLayoutView.getTabBar().getSelectedTab())) {
             linkTabsLayoutView.getLayerContainer().show(currentVisPresenter);
         }
@@ -411,8 +413,10 @@ public class QueryEditPresenter
         queryModel.setSourceType(sourceType);
     }
 
+    @Override
     public void setTaskListener(final TaskListener taskListener) {
         queryModel.setTaskListener(taskListener);
+        queryHelpPresenter.setTaskListener(taskListener);
     }
 
 

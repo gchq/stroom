@@ -5,6 +5,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.expression.api.UserTimeZone;
 import stroom.expression.api.UserTimeZone.Use;
+import stroom.task.client.TaskListener;
 import stroom.ui.config.shared.Themes;
 import stroom.ui.config.shared.Themes.ThemeType;
 import stroom.ui.config.shared.UserPreferences;
@@ -60,37 +61,44 @@ public class UserPreferencesManager {
         fontSizeMap.put("Large", "stroom-font-size-large");
     }
 
-    public void fetch(final Consumer<UserPreferences> consumer) {
+    public void fetch(final Consumer<UserPreferences> consumer, final TaskListener taskListener) {
         restFactory
                 .create(PREFERENCES_RESOURCE)
                 .method(UserPreferencesResource::fetch)
                 .onSuccess(consumer)
+                .taskListener(taskListener)
                 .exec();
     }
 
     public void update(final UserPreferences userPreferences,
-                       final Consumer<Boolean> consumer) {
+                       final Consumer<Boolean> consumer,
+                       final TaskListener taskListener) {
         restFactory
                 .create(PREFERENCES_RESOURCE)
                 .method(res -> res.update(userPreferences))
                 .onSuccess(consumer)
+                .taskListener(taskListener)
                 .exec();
     }
 
     public void setDefaultUserPreferences(final UserPreferences userPreferences,
-                                          final Consumer<UserPreferences> consumer) {
+                                          final Consumer<UserPreferences> consumer,
+                                          final TaskListener taskListener) {
         restFactory
                 .create(PREFERENCES_RESOURCE)
                 .method(res -> res.setDefaultUserPreferences(userPreferences))
                 .onSuccess(consumer)
+                .taskListener(taskListener)
                 .exec();
     }
 
-    public void resetToDefaultUserPreferences(final Consumer<UserPreferences> consumer) {
+    public void resetToDefaultUserPreferences(final Consumer<UserPreferences> consumer,
+                                              final TaskListener taskListener) {
         restFactory
                 .create(PREFERENCES_RESOURCE)
                 .method(UserPreferencesResource::resetToDefaultUserPreferences)
                 .onSuccess(consumer)
+                .taskListener(taskListener)
                 .exec();
     }
 

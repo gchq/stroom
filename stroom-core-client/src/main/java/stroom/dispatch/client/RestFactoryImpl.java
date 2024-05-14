@@ -1,5 +1,6 @@
 package stroom.dispatch.client;
 
+import stroom.task.client.DefaultTaskListener;
 import stroom.task.client.TaskListener;
 import stroom.util.shared.GwtNullSafe;
 
@@ -73,8 +74,7 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         private final Function<T, R> function;
 
         private Consumer<R> resultConsumer;
-        private Consumer<RestError> errorConsumer;
-        private TaskListener taskListener;
+        private RestErrorHandler errorConsumer;
 
         public MethodExecutorImpl(final HasHandlers hasHandlers,
                                   final T service,
@@ -86,7 +86,6 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
 
         @Override
         public TaskExecutor<T, R> taskListener(final TaskListener taskListener) {
-            this.taskListener = taskListener;
             return new TaskExecutorImpl<>(hasHandlers, service, function, resultConsumer, errorConsumer, taskListener);
         }
 
@@ -97,25 +96,9 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         }
 
         @Override
-        public MethodExecutor<T, R> onFailure(final Consumer<RestError> errorConsumer) {
-            this.errorConsumer = errorConsumer;
+        public MethodExecutor<T, R> onFailure(final RestErrorHandler errorHandler) {
+            this.errorConsumer = errorHandler;
             return this;
-        }
-
-        @Override
-        public void exec() {
-            final Consumer<RestError> errorConsumer = GwtNullSafe
-                    .requireNonNullElseGet(this.errorConsumer, () -> new DefaultErrorConsumer(hasHandlers));
-            final TaskListener taskListener = GwtNullSafe
-                    .requireNonNullElseGet(this.taskListener, () -> new DefaultTaskListener(hasHandlers));
-            final MethodCallbackImpl<R> methodCallback = new MethodCallbackImpl<>(
-                    hasHandlers,
-                    resultConsumer,
-                    errorConsumer,
-                    taskListener);
-            final REST<R> rest = REST.withCallback(methodCallback);
-            taskListener.incrementTaskCount();
-            function.apply(rest.call(service));
         }
     }
 
@@ -126,33 +109,33 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         private final Function<T, R> function;
 
         private final Consumer<R> resultConsumer;
-        private final Consumer<RestError> errorConsumer;
+        private final RestErrorHandler errorHandler;
         private final TaskListener taskListener;
 
         public TaskExecutorImpl(final HasHandlers hasHandlers,
                                 final T service,
                                 final Function<T, R> function,
                                 final Consumer<R> resultConsumer,
-                                final Consumer<RestError> errorConsumer,
+                                final RestErrorHandler errorHandler,
                                 final TaskListener taskListener) {
             this.hasHandlers = hasHandlers;
             this.service = service;
             this.function = function;
             this.resultConsumer = resultConsumer;
-            this.errorConsumer = errorConsumer;
+            this.errorHandler = errorHandler;
             this.taskListener = taskListener;
         }
 
         @Override
-        public void execWithListener() {
-            final Consumer<RestError> errorConsumer = GwtNullSafe
-                    .requireNonNullElseGet(this.errorConsumer, () -> new DefaultErrorConsumer(hasHandlers));
+        public void exec() {
+            final RestErrorHandler errorHandler = GwtNullSafe
+                    .requireNonNullElseGet(this.errorHandler, () -> new DefaultErrorHandler(hasHandlers, null));
             final TaskListener taskListener = GwtNullSafe
                     .requireNonNullElseGet(this.taskListener, () -> new DefaultTaskListener(hasHandlers));
             final MethodCallbackImpl<R> methodCallback = new MethodCallbackImpl<>(
                     hasHandlers,
                     resultConsumer,
-                    errorConsumer,
+                    errorHandler,
                     taskListener);
             final REST<R> rest = REST.withCallback(methodCallback);
             taskListener.incrementTaskCount();
@@ -170,25 +153,25 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
 
         private final HasHandlers hasHandlers;
         private final Consumer<R> resultConsumer;
-        private final Consumer<RestError> errorConsumer;
+        private final RestErrorHandler errorHandler;
         private final TaskListener taskListener;
 
         public MethodCallbackImpl(final HasHandlers hasHandlers,
                                   final Consumer<R> resultConsumer,
-                                  final Consumer<RestError> errorConsumer,
+                                  final RestErrorHandler errorHandler,
                                   final TaskListener taskListener) {
             this.hasHandlers = hasHandlers;
             this.resultConsumer = resultConsumer;
-            this.errorConsumer = errorConsumer;
+            this.errorHandler = errorHandler;
             this.taskListener = taskListener;
         }
 
         @Override
         public void onFailure(final Method method, final Throwable throwable) {
             try {
-                errorConsumer.accept(new RestError(method, throwable));
+                errorHandler.onError(new RestError(method, throwable));
             } catch (final Throwable t) {
-                new DefaultErrorConsumer(hasHandlers).accept(new RestError(method, t));
+                new DefaultErrorHandler(hasHandlers, null).onError(new RestError(method, t));
             } finally {
                 taskListener.decrementTaskCount();
             }
@@ -201,7 +184,7 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
                     resultConsumer.accept(response);
                 }
             } catch (final Throwable t) {
-                new DefaultErrorConsumer(hasHandlers).accept(new RestError(method, t));
+                new DefaultErrorHandler(hasHandlers, null).onError(new RestError(method, t));
             } finally {
                 taskListener.decrementTaskCount();
             }

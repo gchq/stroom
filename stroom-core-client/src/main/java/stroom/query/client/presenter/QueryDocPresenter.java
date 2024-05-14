@@ -18,7 +18,6 @@
 package stroom.query.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.document.client.event.TabDataTaskListener;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.DocumentEditTabProvider;
@@ -50,7 +49,7 @@ public class QueryDocPresenter
                              final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
         super(eventBus, view);
 
-        queryDocEditPresenter.setTaskListener(new TabDataTaskListener(eventBus, this));
+        queryDocEditPresenter.setTaskListener(this);
         queryDocDocumentEditTabProvider = new DocumentEditTabProvider<>(
                 () -> queryDocEditPresenter);
 

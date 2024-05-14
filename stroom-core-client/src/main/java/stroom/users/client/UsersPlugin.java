@@ -1,12 +1,12 @@
 package stroom.users.client;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.MenuKeys;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.NodeToolsPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.DefaultTaskListener;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -52,19 +52,15 @@ public class UsersPlugin extends NodeToolsPlugin {
     protected void addChildItems(BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(getRequiredAppPermission())) {
             MenuKeys.addSecurityMenu(event.getMenuItems());
-            clientPropertyCache.get()
-                    .onSuccess(uiConfig -> {
-                        if (!uiConfig.isExternalIdentityProvider()) {
-                            addManageUsers(event, uiConfig);
-                        }
+            clientPropertyCache.get(uiConfig -> {
+                if (uiConfig != null) {
+                    if (!uiConfig.isExternalIdentityProvider()) {
+                        addManageUsers(event, uiConfig);
+                    }
+                }
 //                        addManageUserAuthorisations(event, uiConfig);
 //                        addManageGroupAuthorisations(event, uiConfig);
-                    })
-                    .onFailure(caught ->
-                            AlertEvent.fireError(
-                                    UsersPlugin.this,
-                                    caught.getMessage(),
-                                    null));
+            }, new DefaultTaskListener(this));
         }
     }
 

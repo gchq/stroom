@@ -73,6 +73,7 @@ public class ScheduledProcessEditPresenter
                     scheduleReferenceTimeConsumer.accept(new ScheduleReferenceTime(referenceTime,
                             lastExecuted));
                 })
+                .taskListener(this)
                 .exec());
 
         nodeManager.listAllNodes(
@@ -85,7 +86,8 @@ public class ScheduledProcessEditPresenter
                         .fireError(this,
                                 "Error",
                                 throwable.getMessage(),
-                                null));
+                                null),
+                this);
     }
 
     @Override

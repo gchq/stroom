@@ -48,7 +48,6 @@ public class NewIndexVolumeGroupPresenter
 
     private final RestFactory restFactory;
 
-
     @Inject
     public NewIndexVolumeGroupPresenter(final EventBus eventBus,
                                         final NameDocumentView view,
@@ -95,6 +94,7 @@ public class NewIndexVolumeGroupPresenter
                                 consumer.accept(name);
                             }
                         })
+                        .taskListener(this)
                         .exec();
             }
         } else {

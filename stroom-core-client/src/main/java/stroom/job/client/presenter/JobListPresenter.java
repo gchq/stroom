@@ -24,7 +24,7 @@ import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobResource;
@@ -86,6 +86,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
             restFactory
                     .create(JOB_RESOURCE)
                     .call(res -> res.setEnabled(row.getId(), value.toBoolean()))
+                    .taskListener(getView())
                     .exec();
         });
         dataGrid.addColumn(enabledColumn, "Enabled", 80);
@@ -110,26 +111,22 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
 
             @Override
             protected void showHelp(final Job row) {
-                clientPropertyCache.get(view)
-                        .onSuccess(result -> {
-                            final String helpUrl = result.getHelpUrlJobs();
-                            if (helpUrl != null && helpUrl.trim().length() > 0) {
-                                // This is a bit fragile as if the headings change in the docs then the anchors
-                                // wont work
-                                final String url = helpUrl + formatAnchor(row.getName());
-                                Window.open(url, "_blank", "");
-                            } else {
-                                AlertEvent.fireError(
-                                        JobListPresenter.this,
-                                        "Help is not configured!",
-                                        null);
-                            }
-                        })
-                        .onFailure(caught ->
-                                AlertEvent.fireError(
-                                        JobListPresenter.this,
-                                        caught.getMessage(),
-                                        null));
+                clientPropertyCache.get(result -> {
+                    if (result != null) {
+                        final String helpUrl = result.getHelpUrlJobs();
+                        if (helpUrl != null && helpUrl.trim().length() > 0) {
+                            // This is a bit fragile as if the headings change in the docs then the anchors
+                            // wont work
+                            final String url = helpUrl + formatAnchor(row.getName());
+                            Window.open(url, "_blank", "");
+                        } else {
+                            AlertEvent.fireError(
+                                    JobListPresenter.this,
+                                    "Help is not configured!",
+                                    null);
+                        }
+                    }
+                }, getView());
             }
 
         }, "<br/>", 20);
@@ -149,14 +146,14 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
                     @Override
                     protected void exec(final Range range,
                                         final Consumer<ResultPage<Job>> dataConsumer,
-                                        final Consumer<RestError> errorConsumer) {
+                                        final RestErrorHandler restErrorHandler) {
                         restFactory
                                 .create(JOB_RESOURCE)
                                 .method(JobResource::list)
                                 .onSuccess(dataConsumer)
-                                .onFailure(errorConsumer)
+                                .onFailure(restErrorHandler)
                                 .taskListener(view)
-                                .execWithListener();
+                                .exec();
                     }
 
                     @Override

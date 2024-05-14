@@ -16,6 +16,7 @@
 
 package stroom.widget.popup.client.presenter;
 
+import stroom.task.client.HasTaskListener;
 import stroom.widget.popup.client.event.DialogEvent;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
@@ -59,7 +60,16 @@ public class PopupManager implements DialogEvent.Handler {
             hide(HidePopupEvent.builder(presenterWidget).autoClose(true).ok(false).build());
 
         } else {
-            final PopupSupport popupSupport = new PopupSupportImpl(presenterWidget.getView(), event.getCaption(),
+            HasTaskListener hasTaskListener = null;
+            if (presenterWidget instanceof HasTaskListener) {
+                hasTaskListener = (HasTaskListener) presenterWidget;
+            }
+
+
+            final PopupSupport popupSupport = new PopupSupportImpl(
+                    presenterWidget.getView(),
+                    hasTaskListener,
+                    event.getCaption(),
                     event.getModal(), event.getAutoHidePartners());
 
             popupMap.put(presenterWidget, popupSupport);

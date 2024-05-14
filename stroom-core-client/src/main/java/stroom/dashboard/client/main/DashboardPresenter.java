@@ -45,7 +45,6 @@ import stroom.dashboard.shared.VisComponentSettings;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.document.client.event.TabDataTaskListener;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.query.api.v2.Param;
@@ -57,7 +56,7 @@ import stroom.query.client.presenter.QueryToolbarPresenter;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskListener;
+import stroom.task.client.HasTaskListener;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonPanel;
@@ -139,8 +138,6 @@ public class DashboardPresenter
     private final InlineSvgButton setConstraintsButton;
     private final ButtonPanel editToolbar;
 
-    private TaskListener taskListener;
-
     @Inject
     public DashboardPresenter(final EventBus eventBus,
                               final DashboardView view,
@@ -208,8 +205,6 @@ public class DashboardPresenter
 //        dashboardPresenter.setParamsFromLink(params);
 //        dashboardPresenter.setEmbedded(embedded);
 //        dashboardPresenter.setQueryOnOpen(queryOnOpen);
-
-        taskListener = new TabDataTaskListener(getEventBus(), this);
     }
 
     @Override
@@ -580,8 +575,10 @@ public class DashboardPresenter
                 final Queryable queryable = (Queryable) component;
                 queryable.addSearchStateListener(this);
                 queryable.addSearchErrorListener(this);
-                queryable.setTaskListener(taskListener);
+                queryable.setTaskListener(this);
                 queryable.setQueryInfo(queryInfo);
+            } else if (component instanceof HasTaskListener) {
+                ((HasTaskListener) component).setTaskListener(this);
             }
 
             component.read(componentConfig);
@@ -1136,10 +1133,6 @@ public class DashboardPresenter
     @Override
     public DocRef getDocRef() {
         return docRef;
-    }
-
-    public void setTaskListener(final TaskListener taskListener) {
-        this.taskListener = taskListener;
     }
 
     // --------------------------------------------------------------------------------

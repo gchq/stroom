@@ -27,8 +27,6 @@ import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.content.client.event.SelectContentTabEvent;
 import stroom.content.client.event.SelectContentTabEvent.SelectContentTabHandler;
 import stroom.data.table.client.Refreshable;
-import stroom.document.client.event.TabDataEndTaskEvent;
-import stroom.document.client.event.TabDataStartTaskEvent;
 import stroom.explorer.client.presenter.RecentItems;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.widget.tab.client.event.MaximiseEvent;

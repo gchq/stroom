@@ -22,13 +22,14 @@ import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeFields;
 import stroom.index.shared.IndexVolumeResource;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.task.client.TaskListener;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -212,7 +213,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<IndexVolume>> dataConsumer,
-                                final Consumer<RestError> errorConsumer) {
+                                final RestErrorHandler errorHandler) {
                 CriteriaUtil.setRange(criteria, range);
                 restFactory
                         .create(INDEX_VOLUME_RESOURCE)
@@ -223,11 +224,15 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
                                 consumer.accept(result);
                             }
                         })
-                        .onFailure(errorConsumer)
+                        .onFailure(errorHandler)
                         .taskListener(getView())
-                        .execWithListener();
+                        .exec();
             }
         };
         dataProvider.addDataDisplay(dataGrid);
+    }
+
+    public TaskListener getTaskListener() {
+        return getView();
     }
 }

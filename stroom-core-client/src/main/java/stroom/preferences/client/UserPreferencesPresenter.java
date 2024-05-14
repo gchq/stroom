@@ -145,14 +145,14 @@ public final class UserPreferencesPresenter
                 (ok) -> {
                     if (ok) {
                         final UserPreferences userPreferences = write();
-                        userPreferencesManager.setDefaultUserPreferences(userPreferences, this::reset);
+                        userPreferencesManager.setDefaultUserPreferences(userPreferences, this::reset, this);
                     }
                 });
     }
 
     @Override
     public void onRevertToDefault() {
-        userPreferencesManager.resetToDefaultUserPreferences(this::reset);
+        userPreferencesManager.resetToDefaultUserPreferences(this::reset, this);
     }
 
     private void reset(final UserPreferences userPreferences) {
@@ -180,7 +180,7 @@ public final class UserPreferencesPresenter
                             final UserPreferences newUserPreferences = write();
                             userPreferencesManager.setCurrentPreferences(newUserPreferences);
                             if (!Objects.equals(newUserPreferences, fetchedUserPreferences)) {
-                                userPreferencesManager.update(newUserPreferences, (result) -> e.hide());
+                                userPreferencesManager.update(newUserPreferences, (result) -> e.hide(), this);
                             } else {
                                 e.hide();
                             }
@@ -192,7 +192,7 @@ public final class UserPreferencesPresenter
                         }
                     })
                     .fire();
-        });
+        }, this);
     }
 
     private void read(final UserPreferences userPreferences) {

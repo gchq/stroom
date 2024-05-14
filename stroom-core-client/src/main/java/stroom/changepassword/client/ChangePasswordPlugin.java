@@ -1,11 +1,11 @@
 package stroom.changepassword.client;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.DefaultTaskListener;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
@@ -28,16 +28,16 @@ public class ChangePasswordPlugin extends Plugin {
 
     @Override
     public void onReveal(final BeforeRevealMenubarEvent event) {
-        clientPropertyCache.get()
-                .onSuccess(result -> {
-                    final IconMenuItem changePasswordMenuItem;
-                    final SvgImage icon = SvgImage.PASSWORD;
-                    changePasswordMenuItem = new IconMenuItem.Builder()
-                            .priority(5)
-                            .icon(icon)
-                            .iconColour(IconColour.GREY)
-                            .text("Change password")
-                            .command(() -> {
+        clientPropertyCache.get(result -> {
+            if (result != null) {
+                final IconMenuItem changePasswordMenuItem;
+                final SvgImage icon = SvgImage.PASSWORD;
+                changePasswordMenuItem = new IconMenuItem.Builder()
+                        .priority(5)
+                        .icon(icon)
+                        .iconColour(IconColour.GREY)
+                        .text("Change password")
+                        .command(() -> {
 //                            final Hyperlink hyperlink = new Builder()
 //                                    .text("Change password")
 //                                    .href(changePasswordUiUrl)
@@ -45,17 +45,13 @@ public class ChangePasswordPlugin extends Plugin {
 //                                    .icon(icon)
 //                                    .build();
 //                            HyperlinkEvent.fire(this, hyperlink);
-                                postMessage("changePassword");
+                            postMessage("changePassword");
 
-                            })
-                            .build();
+                        })
+                        .build();
 
-                    event.getMenuItems().addMenuItem(MenuKeys.USER_MENU, changePasswordMenuItem);
-                })
-                .onFailure(caught ->
-                        AlertEvent.fireError(
-                                ChangePasswordPlugin.this,
-                                caught.getMessage(),
-                                null));
+                event.getMenuItems().addMenuItem(MenuKeys.USER_MENU, changePasswordMenuItem);
+            }
+        }, new DefaultTaskListener(this));
     }
 }

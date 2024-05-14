@@ -18,7 +18,7 @@
 package stroom.view.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -26,6 +26,7 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.task.client.TaskListener;
 import stroom.view.client.presenter.ViewPresenter;
 import stroom.view.shared.ViewDoc;
 import stroom.view.shared.ViewResource;
@@ -66,12 +67,14 @@ public class ViewPlugin extends DocumentPlugin<ViewDoc> {
     @Override
     public void load(final DocRef docRef,
                      final Consumer<ViewDoc> resultConsumer,
-                     final Consumer<RestError> errorConsumer) {
+                     final RestErrorHandler errorHandler,
+                     final TaskListener taskListener) {
         restFactory
                 .create(VIEW_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
+                .onFailure(errorHandler)
+                .taskListener(taskListener)
                 .exec();
     }
 
@@ -79,12 +82,14 @@ public class ViewPlugin extends DocumentPlugin<ViewDoc> {
     public void save(final DocRef docRef,
                      final ViewDoc document,
                      final Consumer<ViewDoc> resultConsumer,
-                     final Consumer<RestError> errorConsumer) {
+                     final RestErrorHandler errorHandler,
+                     final TaskListener taskListener) {
         restFactory
                 .create(VIEW_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
+                .onFailure(errorHandler)
+                .taskListener(taskListener)
                 .exec();
     }
 

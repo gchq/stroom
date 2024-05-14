@@ -1,6 +1,6 @@
 package stroom.node.client;
 
-import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.FetchNodeStatusResponse;
@@ -28,89 +28,94 @@ public class NodeManager {
     }
 
     public void fetchNodeStatus(final Consumer<FetchNodeStatusResponse> dataConsumer,
-                                final Consumer<RestError> errorConsumer,
-                                final FindNodeStatusCriteria findNodeStatusCriteria) {
+                                final RestErrorHandler errorHandler,
+                                final FindNodeStatusCriteria findNodeStatusCriteria,
+                                final TaskListener taskListener) {
         restFactory
                 .create(NODE_RESOURCE)
                 .method(res -> res.find(findNodeStatusCriteria))
                 .onSuccess(dataConsumer)
-                .onFailure(errorConsumer)
+                .onFailure(errorHandler)
+                .taskListener(taskListener)
                 .exec();
     }
 
     public void ping(final String nodeName,
                      final Consumer<Long> pingConsumer,
-                     final Consumer<RestError> errorConsumer) {
+                     final RestErrorHandler errorHandler,
+                     final TaskListener taskListener) {
         restFactory
                 .create(NODE_RESOURCE)
                 .method(res -> res.ping(nodeName))
                 .onSuccess(pingConsumer)
-                .onFailure(errorConsumer)
+                .onFailure(errorHandler)
+                .taskListener(taskListener)
                 .exec();
     }
 
     public void info(final String nodeName,
                      final Consumer<ClusterNodeInfo> infoConsumer,
-                     final Consumer<RestError> errorConsumer) {
+                     final RestErrorHandler errorHandler,
+                     final TaskListener taskListener) {
         restFactory
                 .create(NODE_RESOURCE)
                 .method(res -> res.info(nodeName))
                 .onSuccess(infoConsumer)
-                .onFailure(errorConsumer)
+                .onFailure(errorHandler)
+                .taskListener(taskListener)
                 .exec();
     }
 
     public void setPriority(final String nodeName,
                             final int priority,
-                            final Consumer<Boolean> resultConsumer) {
+                            final Consumer<Boolean> resultConsumer,
+                            final TaskListener taskListener) {
         restFactory
                 .create(NODE_RESOURCE)
                 .method(res -> res.setPriority(nodeName, priority))
                 .onSuccess(resultConsumer)
+                .taskListener(taskListener)
                 .exec();
     }
 
     public void setEnabled(final String nodeName,
                            final boolean enabled,
-                           final Consumer<Boolean> resultConsumer) {
+                           final Consumer<Boolean> resultConsumer,
+                           final TaskListener taskListener) {
         restFactory
                 .create(NODE_RESOURCE)
                 .method(res -> res.setEnabled(nodeName, enabled))
                 .onSuccess(resultConsumer)
+                .taskListener(taskListener)
                 .exec();
     }
 
-    public void listAllNodes(final Consumer<List<String>> nodeListConsumer,
-                             final Consumer<RestError> errorConsumer) {
-        listAllNodes(nodeListConsumer, errorConsumer, null);
-    }
+//    public void listAllNodes(final Consumer<List<String>> nodeListConsumer,
+//                             final RestErrorHandler errorHandler) {
+//        listAllNodes(nodeListConsumer, errorConsumer, null);
+//    }
 
     public void listAllNodes(final Consumer<List<String>> nodeListConsumer,
-                             final Consumer<RestError> errorConsumer,
+                             final RestErrorHandler errorHandler,
                              final TaskListener taskListener) {
         restFactory
                 .create(NODE_RESOURCE)
                 .method(NodeResource::listAllNodes)
                 .onSuccess(nodeListConsumer)
-                .onFailure(errorConsumer)
+                .onFailure(errorHandler)
                 .taskListener(taskListener)
-                .execWithListener();
+                .exec();
     }
 
     public void listEnabledNodes(final Consumer<List<String>> nodeListConsumer,
-                                 final Consumer<RestError> errorConsumer) {
-        listEnabledNodes(nodeListConsumer, errorConsumer, null);
-    }
-
-    public void listEnabledNodes(final Consumer<List<String>> nodeListConsumer,
-                                 final Consumer<RestError> errorConsumer,
+                                 final RestErrorHandler errorHandler,
                                  final TaskListener taskListener) {
         restFactory
                 .create(NODE_RESOURCE)
                 .method(NodeResource::listEnabledNodes)
                 .onSuccess(nodeListConsumer)
-                .onFailure(errorConsumer)
+                .onFailure(errorHandler)
                 .taskListener(taskListener)
-                .execWithListener();
+                .exec();
     }
 }

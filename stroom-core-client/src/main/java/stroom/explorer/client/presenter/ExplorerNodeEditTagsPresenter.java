@@ -22,6 +22,7 @@ import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.RefreshDocumentEvent;
+import stroom.explorer.client.event.ExplorerTaskListener;
 import stroom.explorer.client.event.ShowEditNodeTagsDialogEvent;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsProxy;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsView;
@@ -29,7 +30,6 @@ import stroom.explorer.shared.AddRemoveTagsRequest;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.util.shared.GwtNullSafe;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -61,8 +61,7 @@ import java.util.stream.Collectors;
 public class ExplorerNodeEditTagsPresenter
         extends MyPresenter<ExplorerNodeEditTagsView, ExplorerNodeEditTagsProxy>
         implements ShowEditNodeTagsDialogEvent.Handler,
-        HidePopupRequestEvent.Handler,
-        HidePopupEvent.Handler {
+        HidePopupRequestEvent.Handler {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
@@ -105,6 +104,7 @@ public class ExplorerNodeEditTagsPresenter
                                         forceReveal();
                                     })
                                     .onFailure(this::handleFailure)
+                                    .taskListener(new ExplorerTaskListener(this))
                                     .exec();
                         } else {
                             // Adding to multiple so don't need to know what tags the nodes have
@@ -113,6 +113,7 @@ public class ExplorerNodeEditTagsPresenter
                         }
                     })
                     .onFailure(this::handleFailure)
+                    .taskListener(new ExplorerTaskListener(this))
                     .exec();
 
         }
@@ -143,7 +144,6 @@ public class ExplorerNodeEditTagsPresenter
                 .caption(caption)
                 .onShow(e -> getView().focus())
                 .onHideRequest(this)
-                .onHide(this)
                 .fire();
     }
 
@@ -183,6 +183,7 @@ public class ExplorerNodeEditTagsPresenter
                     event.hide();
                 })
                 .onFailure(this::handleFailure)
+                .taskListener(this)
                 .exec();
     }
 
@@ -201,12 +202,8 @@ public class ExplorerNodeEditTagsPresenter
                     event.hide();
                 })
                 .onFailure(this::handleFailure)
+                .taskListener(this)
                 .exec();
-    }
-
-    @Override
-    public void onHide(final HidePopupEvent e) {
-
     }
 
     private void handleFailure(final RestError t) {
@@ -235,7 +232,6 @@ public class ExplorerNodeEditTagsPresenter
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
-
 
     // --------------------------------------------------------------------------------
 

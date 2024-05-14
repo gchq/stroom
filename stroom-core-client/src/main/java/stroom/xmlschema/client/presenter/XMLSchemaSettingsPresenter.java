@@ -36,7 +36,11 @@ public class XMLSchemaSettingsPresenter extends DocumentEditPresenter<XMLSchemaS
     @Inject
     public XMLSchemaSettingsPresenter(final EventBus eventBus, final XMLSchemaSettingsView view) {
         super(eventBus, view);
+    }
 
+    @Override
+    protected void onBind() {
+        super.onBind();
         // Add listeners for dirty events.
         final KeyDownHandler keyDownHander = new DirtyKeyDownHander() {
             @Override
@@ -44,10 +48,10 @@ public class XMLSchemaSettingsPresenter extends DocumentEditPresenter<XMLSchemaS
                 setDirty(true);
             }
         };
-        registerHandler(view.getNamespaceURI().addKeyDownHandler(keyDownHander));
-        registerHandler(view.getSystemId().addKeyDownHandler(keyDownHander));
-        registerHandler(view.getSchemaGroup().addKeyDownHandler(keyDownHander));
-        registerHandler(view.getDeprecated().addValueChangeHandler(event -> setDirty(true)));
+        registerHandler(getView().getNamespaceURI().addKeyDownHandler(keyDownHander));
+        registerHandler(getView().getSystemId().addKeyDownHandler(keyDownHander));
+        registerHandler(getView().getSchemaGroup().addKeyDownHandler(keyDownHander));
+        registerHandler(getView().getDeprecated().addValueChangeHandler(event -> setDirty(true)));
     }
 
     @Override

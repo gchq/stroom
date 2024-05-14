@@ -39,7 +39,6 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
 
     private static final SessionInfoResource SESSION_INFO_RESOURCE = GWT.create(SessionInfoResource.class);
 
-
     @Inject
     public WelcomePresenter(final EventBus eventBus,
                             final WelcomeView view,
@@ -65,13 +64,14 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
                 })
                 .onFailure(caught ->
                         AlertEvent.fireError(WelcomePresenter.this, caught.getMessage(), null))
+                .taskListener(this)
                 .exec();
 
-        uiConfigCache.get()
-                .onSuccess(result ->
-                        view.setHTML(result.getWelcomeHtml()))
-                .onFailure(caught ->
-                        AlertEvent.fireError(WelcomePresenter.this, caught.getMessage(), null));
+        uiConfigCache.get(result -> {
+            if (result != null) {
+                view.setHTML(result.getWelcomeHtml());
+            }
+        }, this);
     }
 
     @Override

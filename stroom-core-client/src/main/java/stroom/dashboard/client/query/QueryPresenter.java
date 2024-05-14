@@ -115,6 +115,7 @@ public class QueryPresenter
     private final Provider<DocSelectionPopup> pipelineSelection;
     private final ProcessorLimitsPresenter processorLimitsPresenter;
     private final RestFactory restFactory;
+    private final UiConfigCache clientPropertyCache;
     private final LocationManager locationManager;
     private final IndexLoader indexLoader;
     private final DynamicFieldSelectionListModel fieldSelectionBoxModel;
@@ -130,8 +131,6 @@ public class QueryPresenter
     private final ButtonView warningsButton;
     private List<String> currentErrors;
     private ButtonView processButton;
-    private long defaultProcessorTimeLimit;
-    private long defaultProcessorRecordLimit;
     private boolean initialised;
     private Timer autoRefreshTimer;
     private boolean queryOnOpen;
@@ -162,6 +161,7 @@ public class QueryPresenter
         this.processorLimitsPresenter = processorLimitsPresenter;
         this.indexLoader = indexLoader;
         this.restFactory = restFactory;
+        this.clientPropertyCache = clientPropertyCache;
         this.locationManager = locationManager;
         this.fieldSelectionBoxModel = fieldSelectionBoxModel;
 
@@ -208,19 +208,13 @@ public class QueryPresenter
         setWarningsVisible(false);
 
         searchModel = new SearchModel(
+                eventBus,
                 restFactory,
                 indexLoader,
                 dateTimeSettingsFactory,
                 resultStoreModel);
         searchModel.addSearchErrorListener(this);
         searchModel.addSearchStateListener(this);
-
-        clientPropertyCache.get()
-                .onSuccess(result -> {
-                    defaultProcessorTimeLimit = result.getProcess().getDefaultTimeLimit();
-                    defaultProcessorRecordLimit = result.getProcess().getDefaultRecordLimit();
-                })
-                .onFailure(caught -> AlertEvent.fireError(QueryPresenter.this, caught.getMessage(), null));
     }
 
     @Override
@@ -537,27 +531,34 @@ public class QueryPresenter
     }
 
     private void setProcessorLimits(final QueryData queryData, final DocRef pipeline) {
-        processorLimitsPresenter.setTimeLimitMins(defaultProcessorTimeLimit);
-        processorLimitsPresenter.setRecordLimit(defaultProcessorRecordLimit);
-        ShowPopupEvent.builder(processorLimitsPresenter)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .caption("Process Search Results")
-                .onShow(e -> processorLimitsPresenter.getView().focus())
-                .onHideRequest(e -> {
-                    if (e.isOk()) {
-                        final Limits limits = new Limits();
-                        if (processorLimitsPresenter.getRecordLimit() != null) {
-                            limits.setEventCount(processorLimitsPresenter.getRecordLimit());
-                        }
-                        if (processorLimitsPresenter.getTimeLimitMins() != null) {
-                            limits.setDurationMs(processorLimitsPresenter.getTimeLimitMins() * 60 * 1000);
-                        }
-                        queryData.setLimits(limits);
-                        openEditor(queryData, pipeline);
-                    }
-                    e.hide();
-                })
-                .fire();
+        clientPropertyCache.get(result -> {
+            if (result != null) {
+                final long defaultProcessorTimeLimit = result.getProcess().getDefaultTimeLimit();
+                final long defaultProcessorRecordLimit = result.getProcess().getDefaultRecordLimit();
+
+                processorLimitsPresenter.setTimeLimitMins(defaultProcessorTimeLimit);
+                processorLimitsPresenter.setRecordLimit(defaultProcessorRecordLimit);
+                ShowPopupEvent.builder(processorLimitsPresenter)
+                        .popupType(PopupType.OK_CANCEL_DIALOG)
+                        .caption("Process Search Results")
+                        .onShow(e -> processorLimitsPresenter.getView().focus())
+                        .onHideRequest(e -> {
+                            if (e.isOk()) {
+                                final Limits limits = new Limits();
+                                if (processorLimitsPresenter.getRecordLimit() != null) {
+                                    limits.setEventCount(processorLimitsPresenter.getRecordLimit());
+                                }
+                                if (processorLimitsPresenter.getTimeLimitMins() != null) {
+                                    limits.setDurationMs(processorLimitsPresenter.getTimeLimitMins() * 60 * 1000);
+                                }
+                                queryData.setLimits(limits);
+                                openEditor(queryData, pipeline);
+                            }
+                            e.hide();
+                        })
+                        .fire();
+            }
+        }, this);
     }
 
     private void openEditor(final QueryData queryData, final DocRef pipeline) {
@@ -578,6 +579,7 @@ public class QueryPresenter
                         AlertEvent.fireInfo(this, "Created batch processor", null);
                     }
                 })
+                .taskListener(this)
                 .exec();
     }
 
@@ -778,6 +780,7 @@ public class QueryPresenter
                                 resume(getQuerySettings().getLastQueryNode(), getQuerySettings().getLastQueryKey());
                             }
                         })
+                        .taskListener(this)
                         .exec();
             }
         }
@@ -927,7 +930,8 @@ public class QueryPresenter
                     .create(DASHBOARD_RESOURCE)
                     .method(res -> res.downloadQuery(searchRequest))
                     .onSuccess(result ->
-                            ExportFileCompleteUtil.onSuccess(locationManager, null, result))
+                            ExportFileCompleteUtil.onSuccess(locationManager, this, result))
+                    .taskListener(this)
                     .exec();
         }
     }
@@ -941,6 +945,7 @@ public class QueryPresenter
     @Override
     public void setTaskListener(final TaskListener taskListener) {
         searchModel.setTaskListener(taskListener);
+        fieldSelectionBoxModel.setTaskListener(taskListener);
     }
 
     @Override

@@ -38,7 +38,8 @@ import com.gwtplatform.mvp.client.View;
 import java.util.List;
 import java.util.Objects;
 
-public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
+public class ChangeStatusPresenter
+        extends MyPresenterWidget<ChangeStatusView>
         implements ChangeStatusUiHandlers {
 
     private final RestFactory restFactory;
@@ -77,6 +78,7 @@ public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
                             changeStatus(values.get(0));
                         }
                     })
+                    .taskListener(this)
                     .exec();
         }
 
@@ -93,6 +95,7 @@ public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
                                 .create(annotationResource)
                                 .method(res -> res.setStatus(request))
                                 .onSuccess(values -> GWT.log("Updated " + values + " annotations"))
+                                .taskListener(this)
                                 .exec();
                     }
                     e.hide();
@@ -116,6 +119,7 @@ public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
                     .create(annotationResource)
                     .method(res -> res.getStatus(filter))
                     .onSuccess(consumer)
+                    .taskListener(this)
                     .exec();
         });
         statusPresenter.clearFilter();

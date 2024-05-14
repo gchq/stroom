@@ -24,7 +24,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.svg.client.Preset;
 import stroom.util.shared.ResultPage;
@@ -103,14 +103,14 @@ public class ActivityListPresenter
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<Activity>> dataConsumer,
-                                final Consumer<RestError> errorConsumer) {
+                                final RestErrorHandler errorHandler) {
                 restFactory
                         .create(ACTIVITY_RESOURCE)
                         .method(res -> res.list(name))
                         .onSuccess(dataConsumer)
-                        .onFailure(errorConsumer)
+                        .onFailure(errorHandler)
                         .taskListener(view)
-                        .execWithListener();
+                        .exec();
             }
         };
         dataProvider.addDataDisplay(dataGrid);

@@ -48,15 +48,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
+public class ActivityEditPresenter
+        extends MyPresenterWidget<ActivityEditView> {
 
     private static final ActivityResource ACTIVITY_RESOURCE = GWT.create(ActivityResource.class);
 
     private final RestFactory restFactory;
-
-    private boolean activityRecordingEnabled;
-    private String activityEditorTitle;
-    private String activityEditorBody;
+    private final UiConfigCache uiConfigCache;
 
     private Activity activity;
 
@@ -67,40 +65,40 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
                                  final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         this.restFactory = restFactory;
-
-        uiConfigCache.get()
-                .onSuccess(result -> {
-                    final ActivityConfig activityConfig = result.getActivity();
-                    activityRecordingEnabled = activityConfig.isEnabled();
-                    activityEditorTitle = activityConfig.getEditorTitle();
-                    activityEditorBody = activityConfig.getEditorBody();
-                })
-                .onFailure(caught ->
-                        AlertEvent.fireError(ActivityEditPresenter.this, caught.getMessage(), null));
+        this.uiConfigCache = uiConfigCache;
     }
 
     public void show(final Activity activity, final Consumer<Activity> consumer) {
         this.activity = activity;
-        if (activityRecordingEnabled) {
-            getView().getHtml().setHTML(activityEditorBody);
+        uiConfigCache.get(result -> {
+            if (result != null) {
+                final ActivityConfig activityConfig = result.getActivity();
+                final boolean activityRecordingEnabled = activityConfig.isEnabled();
+                final String activityEditorTitle = activityConfig.getEditorTitle();
+                final String activityEditorBody = activityConfig.getEditorBody();
 
-            final PopupSize popupSize = PopupSize.resizable(640, 480);
-            ShowPopupEvent.builder(this)
-                    .popupType(PopupType.OK_CANCEL_DIALOG)
-                    .popupSize(popupSize)
-                    .caption(activityEditorTitle)
-                    .modal(true)
-                    .onShow(e -> read())
-                    .onHideRequest(e -> {
-                        if (e.isOk()) {
-                            write(consumer);
-                        } else {
-                            consumer.accept(activity);
-                            e.hide();
-                        }
-                    })
-                    .fire();
-        }
+                if (activityRecordingEnabled) {
+                    getView().getHtml().setHTML(activityEditorBody);
+
+                    final PopupSize popupSize = PopupSize.resizable(640, 480);
+                    ShowPopupEvent.builder(this)
+                            .popupType(PopupType.OK_CANCEL_DIALOG)
+                            .popupSize(popupSize)
+                            .caption(activityEditorTitle)
+                            .modal(true)
+                            .onShow(e -> read())
+                            .onHideRequest(e -> {
+                                if (e.isOk()) {
+                                    write(consumer);
+                                } else {
+                                    consumer.accept(activity);
+                                    e.hide();
+                                }
+                            })
+                            .fire();
+                }
+            }
+        }, this);
     }
 
     private void hide() {
@@ -131,7 +129,7 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
                     if ("checkbox".equalsIgnoreCase(inputElement.getType())
                             || "radio".equalsIgnoreCase(inputElement.getType())) {
                         try {
-                            inputElement.setChecked(Boolean.valueOf(value));
+                            inputElement.setChecked(Boolean.parseBoolean(value));
                         } catch (final RuntimeException e) {
                             // Ignore.
                         }
@@ -217,6 +215,7 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
                 .create(ACTIVITY_RESOURCE)
                 .method(res -> res.validate(activity))
                 .onSuccess(result -> afterValidation(result, details, consumer))
+                .taskListener(this)
                 .exec();
     }
 
@@ -242,6 +241,7 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
 
                             update(activity, details, consumer);
                         })
+                        .taskListener(this)
                         .exec();
             } else {
                 update(activity, details, consumer);
@@ -258,6 +258,7 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
                     consumer.accept(result);
                     hide();
                 })
+                .taskListener(this)
                 .exec();
     }
 

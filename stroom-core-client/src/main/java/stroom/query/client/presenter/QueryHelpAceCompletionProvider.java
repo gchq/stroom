@@ -7,10 +7,16 @@ import stroom.docref.StringMatch.MatchType;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.QueryResource;
+import stroom.task.client.HasTaskListener;
+import stroom.task.client.TaskListener;
+import stroom.task.client.TaskListenerImpl;
 import stroom.util.shared.PageRequest;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.web.bindery.event.shared.EventBus;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletion;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionCallback;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
@@ -23,19 +29,24 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 
-public class QueryHelpAceCompletionProvider implements AceCompletionProvider {
+public class QueryHelpAceCompletionProvider
+        implements AceCompletionProvider, HasTaskListener, HasHandlers {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
+    private final EventBus eventBus;
     private final RestFactory restFactory;
     private final MarkdownConverter markdownConverter;
+    private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
 
     private DocRef dataSourceRef;
     private boolean showAll = true;
 
     @Inject
-    public QueryHelpAceCompletionProvider(final RestFactory restFactory,
+    public QueryHelpAceCompletionProvider(final EventBus eventBus,
+                                          final RestFactory restFactory,
                                           final MarkdownConverter markdownConverter) {
+        this.eventBus = eventBus;
         this.restFactory = restFactory;
         this.markdownConverter = markdownConverter;
     }
@@ -75,6 +86,7 @@ public class QueryHelpAceCompletionProvider implements AceCompletionProvider {
                             .collect(Collectors.toList());
                     callback.invokeWithCompletions(aceCompletions.toArray(new AceCompletion[0]));
                 })
+                .taskListener(taskListener)
                 .exec();
     }
 
@@ -84,5 +96,15 @@ public class QueryHelpAceCompletionProvider implements AceCompletionProvider {
 
     public void setShowAll(final boolean showAll) {
         this.showAll = showAll;
+    }
+
+    @Override
+    public void setTaskListener(final TaskListener taskListener) {
+        this.taskListener.setTaskListener(taskListener);
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> gwtEvent) {
+        eventBus.fireEvent(gwtEvent);
     }
 }
