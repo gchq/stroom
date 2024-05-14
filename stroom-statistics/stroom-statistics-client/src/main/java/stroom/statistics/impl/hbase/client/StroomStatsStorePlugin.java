@@ -85,7 +85,7 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
     }
 
     @Override
-    public void save(final DocumentTabData tabData, final TaskListener taskListener) {
+    public void save(final DocumentTabData tabData) {
         if (tabData instanceof DocumentEditPresenter<?, ?>) {
             final DocumentEditPresenter<?, StroomStatsStoreDoc> presenter =
                     (DocumentEditPresenter<?, StroomStatsStoreDoc>) tabData;
@@ -96,10 +96,10 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
                 // persistent version, and not one that has had
                 // fields added/removed/changed
                 load(DocRefUtil.create(entity),
-                        entityFromDb -> doConfirmSave(presenter, entity, entityFromDb, taskListener),
+                        entityFromDb -> doConfirmSave(presenter, entity, entityFromDb, presenter),
                         throwable -> {
                         },
-                        taskListener);
+                        presenter);
             }
         }
     }

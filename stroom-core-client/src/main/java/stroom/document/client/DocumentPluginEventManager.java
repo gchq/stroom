@@ -20,7 +20,6 @@ package stroom.document.client;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
-import stroom.content.client.presenter.TabTaskListener;
 import stroom.core.client.HasSave;
 import stroom.core.client.HasSaveRegistry;
 import stroom.core.client.UrlParameters;
@@ -280,7 +279,7 @@ public class DocumentPluginEventManager extends Plugin {
                 final DocumentTabData entityTabData = event.getTabData();
                 final DocumentPlugin<?> plugin = documentPluginRegistry.get(entityTabData.getType());
                 if (plugin != null) {
-                    plugin.save(entityTabData, new TabTaskListener(this, entityTabData));
+                    plugin.save(entityTabData);
                 }
             }
         }));
@@ -291,13 +290,17 @@ public class DocumentPluginEventManager extends Plugin {
             final DocumentPlugin<?> plugin = documentPluginRegistry.get(tabData.getType());
             if (plugin != null) {
                 // Get the explorer node for the docref.
-                final TaskListener taskListener = new TabTaskListener(this, tabData);
+                TaskListener taskListener = null;
+                if (tabData instanceof TaskListener) {
+                    taskListener = (TaskListener) tabData;
+                }
+
                 restFactory
                         .create(EXPLORER_RESOURCE)
                         .method(res -> res.getFromDocRef(tabData.getDocRef()))
                         .onSuccess(explorerNode -> {
                             // Now we have the explorer node proceed with the save as.
-                            plugin.saveAs(tabData, explorerNode, taskListener);
+                            plugin.saveAs(tabData, explorerNode);
                         })
                         .taskListener(taskListener)
                         .exec();

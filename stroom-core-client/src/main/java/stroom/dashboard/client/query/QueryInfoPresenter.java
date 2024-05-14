@@ -19,6 +19,7 @@ package stroom.dashboard.client.query;
 import stroom.activity.client.CurrentActivity;
 import stroom.activity.shared.Activity;
 import stroom.alert.client.event.AlertEvent;
+import stroom.task.client.TaskListener;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.QueryConfig;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -60,7 +61,9 @@ public class QueryInfoPresenter
         return required;
     }
 
-    public void show(final String queryInfo, final Consumer<State> consumer) {
+    public void show(final String queryInfo,
+                     final Consumer<State> consumer,
+                     final TaskListener taskListener) {
         currentActivity.getActivity(activity -> {
             final boolean required = isRequired(activity);
             uiConfigCache.get(uiConfig -> {
@@ -109,8 +112,8 @@ public class QueryInfoPresenter
                         consumer.accept(new State(null, true));
                     }
                 }
-            }, this);
-        }, this);
+            }, taskListener);
+        }, taskListener);
     }
 
     public interface QueryInfoView extends View, Focus {

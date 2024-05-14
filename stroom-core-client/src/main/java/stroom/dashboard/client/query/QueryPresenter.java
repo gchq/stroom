@@ -605,7 +605,7 @@ public class QueryPresenter
     }
 
     private void promptAndStart() {
-        queryInfo.prompt(this::start);
+        queryInfo.prompt(this::start, this);
     }
 
     @Override

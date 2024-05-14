@@ -58,6 +58,7 @@ public class DataViewImpl extends ViewImpl implements DataView {
     @Inject
     public DataViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        spinner.setVisible(false);
         layerContainer.setFade(true);
         sourceLinkLabel.setText("View Source");
         sourceLinkLabel.setVisible(true);

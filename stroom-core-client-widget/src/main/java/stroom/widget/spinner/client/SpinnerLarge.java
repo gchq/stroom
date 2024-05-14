@@ -42,6 +42,11 @@ public class SpinnerLarge extends Composite implements TaskListener {
     @Override
     public void decrementTaskCount() {
         taskCount--;
+
+        if (taskCount < 0) {
+            GWT.log("Negative task count");
+        }
+
         setVisible(taskCount > 0);
     }
 

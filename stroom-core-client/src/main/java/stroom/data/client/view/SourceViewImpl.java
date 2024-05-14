@@ -48,6 +48,7 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
     public SourceViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         steppingButton.setIcon(SvgImage.STEPPING);
+        spinner.setVisible(false);
     }
 
     @Override

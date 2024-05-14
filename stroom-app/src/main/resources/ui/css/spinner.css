@@ -20,6 +20,15 @@
 .spinner {
 }
 
+.spinner-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-left: -11px;
+    margin-top: -11px;
+    opacity: 0.5;
+}
+
 .spinner-small {
     display: inline-block;
     width: var(--icon-width);

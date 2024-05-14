@@ -16,6 +16,8 @@
 
 package stroom.task.client;
 
+import com.google.gwt.core.client.GWT;
+
 public final class TaskCount {
 
     private static int count;
@@ -30,6 +32,11 @@ public final class TaskCount {
 
     public static int decrement() {
         count--;
+
+        if (count < 0) {
+            GWT.log("Negative task count");
+        }
+
         return count;
     }
 }

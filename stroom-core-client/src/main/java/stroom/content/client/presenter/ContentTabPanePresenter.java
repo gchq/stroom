@@ -29,6 +29,9 @@ import stroom.content.client.event.SelectContentTabEvent.SelectContentTabHandler
 import stroom.data.table.client.Refreshable;
 import stroom.explorer.client.presenter.RecentItems;
 import stroom.main.client.presenter.MainPresenter;
+import stroom.task.client.DefaultTaskListener;
+import stroom.task.client.HasTaskListener;
+import stroom.task.client.TaskListener;
 import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.tab.client.presenter.CurveTabLayoutPresenter;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
@@ -54,8 +57,6 @@ public class ContentTabPanePresenter
         CloseContentTabHandler,
         SelectContentTabHandler,
         RefreshContentTabHandler,
-        TabDataStartTaskEvent.Handler,
-        TabDataEndTaskEvent.Handler,
         CurveTabLayoutUiHandlers {
 
     private final List<TabData> historyList = new ArrayList<>();
@@ -151,6 +152,12 @@ public class ContentTabPanePresenter
         // tabs.
         forceReveal();
         add(event.getTabData(), event.getLayer());
+
+        if (event.getLayer() instanceof HasTaskListener) {
+            final AbstractTab tab = getView().getTabBar().getTab(event.getTabData());
+            ((HasTaskListener) event.getLayer())
+                    .setTaskListener(new TabTaskListener(tab));
+        }
     }
 
     @ProxyEvent
@@ -167,6 +174,11 @@ public class ContentTabPanePresenter
                 }
             }
         }
+
+        if (event.getTabData() instanceof HasTaskListener) {
+            ((HasTaskListener) event.getTabData())
+                    .setTaskListener(new DefaultTaskListener(this));
+        }
     }
 
     @ProxyEvent
@@ -179,24 +191,6 @@ public class ContentTabPanePresenter
     @Override
     public void onRefresh(final RefreshContentTabEvent event) {
         refresh(event.getTabData());
-    }
-
-    @ProxyEvent
-    @Override
-    public void onStart(final TabDataStartTaskEvent event) {
-        final AbstractTab tab = getView().getTabBar().getTab(event.getTabData());
-        if (tab != null) {
-            tab.incrementTaskCount();
-        }
-    }
-
-    @ProxyEvent
-    @Override
-    public void onEnd(final TabDataEndTaskEvent event) {
-        final AbstractTab tab = getView().getTabBar().getTab(event.getTabData());
-        if (tab != null) {
-            tab.decrementTaskCount();
-        }
     }
 
     @Override
@@ -233,5 +227,24 @@ public class ContentTabPanePresenter
     @ProxyCodeSplit
     public interface ContentTabPaneProxy extends Proxy<ContentTabPanePresenter> {
 
+    }
+
+    private static class TabTaskListener implements TaskListener {
+
+        private final AbstractTab tab;
+
+        public TabTaskListener(final AbstractTab tab) {
+            this.tab = tab;
+        }
+
+        @Override
+        public void incrementTaskCount() {
+            tab.incrementTaskCount();
+        }
+
+        @Override
+        public void decrementTaskCount() {
+            tab.decrementTaskCount();
+        }
     }
 }

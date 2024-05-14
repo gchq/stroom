@@ -36,6 +36,6 @@
                                visible="false"/>
             </g:FlowPanel>
         </g:FlowPanel>
-        <spinner:SpinnerLarge ui:field="spinner" />
+        <spinner:SpinnerLarge ui:field="spinner" addStyleNames="spinner-center" />
     </g:FlowPanel>
 </ui:UiBinder>

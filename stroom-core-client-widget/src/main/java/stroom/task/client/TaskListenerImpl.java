@@ -1,5 +1,6 @@
 package stroom.task.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
@@ -9,8 +10,11 @@ public class TaskListenerImpl implements TaskListener, HasTaskListener, HasHandl
     private TaskListener taskListener = new DefaultTaskListener(this);
     private int taskCount;
 
+    private String name;
+
     public TaskListenerImpl(final HasHandlers hasHandlers) {
         this.hasHandlers = hasHandlers;
+        name = hasHandlers.getClass().getName();
     }
 
     @Override
@@ -34,6 +38,11 @@ public class TaskListenerImpl implements TaskListener, HasTaskListener, HasHandl
     @Override
     public synchronized void decrementTaskCount() {
         taskCount--;
+
+        if (taskCount < 0) {
+            GWT.log("Negative task count");
+        }
+
         taskListener.decrementTaskCount();
     }
 

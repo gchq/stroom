@@ -61,6 +61,7 @@ public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements 
         close.setEnabled(true);
 
         widget = binder.createAndBindUi(this);
+        spinner.setVisible(false);
         steppingButton.setIcon(SvgImage.STEPPING);
     }
 

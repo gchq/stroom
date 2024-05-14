@@ -48,6 +48,7 @@ public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements 
     public TextViewImpl(final Binder binder, final ClassificationLabel classification) {
         this.classification = classification;
         widget = binder.createAndBindUi(this);
+        spinner.setVisible(false);
         steppingButton.setIcon(SvgImage.STEPPING);
     }
 

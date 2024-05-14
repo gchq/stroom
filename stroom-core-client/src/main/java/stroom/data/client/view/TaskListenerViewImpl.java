@@ -16,6 +16,8 @@ public class TaskListenerViewImpl extends ViewImpl implements TaskListenerView {
     public TaskListenerViewImpl() {
         panel = new FlowPanel();
         spinner = new SpinnerLarge();
+        spinner.addStyleName("spinner-center");
+        spinner.setVisible(false);
         panel.add(spinner);
     }
 

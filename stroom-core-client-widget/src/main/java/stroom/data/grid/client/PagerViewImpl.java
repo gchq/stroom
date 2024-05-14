@@ -23,6 +23,7 @@ import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.AbstractHasData;
@@ -104,6 +105,11 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
     @Override
     public void decrementTaskCount() {
         taskCount--;
+
+        if (taskCount < 0) {
+            GWT.log("Negative task count");
+        }
+
         pager.getRefreshButton().setRefreshing(taskCount > 0);
     }
 

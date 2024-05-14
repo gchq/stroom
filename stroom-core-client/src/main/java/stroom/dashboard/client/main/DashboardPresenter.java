@@ -816,7 +816,7 @@ public class DashboardPresenter
                         queryable.setDashboardContext(this);
                         queryable.start();
                     }
-                });
+                }, this);
             }
         }
     }

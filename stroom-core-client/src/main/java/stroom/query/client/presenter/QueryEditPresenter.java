@@ -346,7 +346,7 @@ public class QueryEditPresenter
                      final boolean storeHistory) {
         // No point running the search if there is no query
         if (!GwtNullSafe.isBlankString(editorPresenter.getText())) {
-            queryInfo.prompt(() -> run(incremental, storeHistory, Function.identity()));
+            queryInfo.prompt(() -> run(incremental, storeHistory, Function.identity()), this);
         }
     }
 

@@ -3,6 +3,7 @@ package stroom.widget.button.client;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskListener;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
@@ -171,6 +172,11 @@ public class Button extends ButtonBase implements ButtonView, TaskListener {
     @Override
     public void decrementTaskCount() {
         taskCount--;
+
+        if (taskCount < 0) {
+            GWT.log("Negative task count");
+        }
+
         setLoading(taskCount > 0);
     }
 }

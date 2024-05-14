@@ -85,7 +85,7 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
     }
 
     @Override
-    public void save(final DocumentTabData tabData, final TaskListener taskListener) {
+    public void save(final DocumentTabData tabData) {
         if (tabData instanceof DocumentEditPresenter<?, ?>) {
             final DocumentEditPresenter<?, StatisticStoreDoc> presenter =
                     (DocumentEditPresenter<?, StatisticStoreDoc>) tabData;
@@ -96,10 +96,10 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
                 // persistent version, and not one that has had
                 // fields added/removed/changed
                 load(DocRefUtil.create(entity),
-                        entityFromDb -> doConfirmSave(presenter, entity, entityFromDb, taskListener),
+                        entityFromDb -> doConfirmSave(presenter, entity, entityFromDb, presenter),
                         throwable -> {
                         },
-                        taskListener);
+                        presenter);
             }
         }
     }

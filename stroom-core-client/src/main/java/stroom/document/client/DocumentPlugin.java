@@ -20,7 +20,6 @@ package stroom.document.client;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.SelectContentTabEvent;
-import stroom.content.client.presenter.TabTaskListener;
 import stroom.core.client.ContentManager;
 import stroom.core.client.HasSave;
 import stroom.core.client.event.CloseContentEvent;
@@ -215,8 +214,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
      * 5. This method will save a document.
      */
     @SuppressWarnings("unchecked")
-    public void save(final DocumentTabData tabData,
-                     final TaskListener taskListener) {
+    public void save(final DocumentTabData tabData) {
         if (tabData instanceof DocumentEditPresenter<?, ?>) {
             final DocumentEditPresenter<?, D> presenter = (DocumentEditPresenter<?, D>) tabData;
             if (presenter.isDirty()) {
@@ -229,15 +227,14 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                                 this,
                                 "Unable to save document " + finalDocument,
                                 throwable.getMessage(), null),
-                        taskListener);
+                        presenter);
             }
         }
     }
 
     @SuppressWarnings("unchecked")
     public void saveAs(final DocumentTabData tabData,
-                       final ExplorerNode explorerNode,
-                       final TaskListener taskListener) {
+                       final ExplorerNode explorerNode) {
         final DocRef docRef = explorerNode.getDocRef();
         if (tabData instanceof DocumentEditPresenter<?, ?>) {
             final DocumentEditPresenter<?, D> presenter = (DocumentEditPresenter<?, D>) tabData;
@@ -258,13 +255,13 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                     document = presenter.write(document);
                     // Save the new document and read it back into the presenter.
                     save(newDocRef, document, saveConsumer, null,
-                            taskListener);
+                            presenter);
                 };
 
                 // If the user has created a new document then load it.
                 load(newDocRef, loadConsumer, throwable -> {
                         },
-                        taskListener);
+                        presenter);
             };
 
             // Ask the user to create a new document.
@@ -282,7 +279,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
     @Override
     public void save() {
         for (final DocumentTabData tabData : tabDataToDocumentMap.keySet()) {
-            save(tabData, new TabTaskListener(this, tabData));
+            save(tabData);
         }
     }
 
@@ -504,7 +501,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                     },
                     throwable -> {
                     },
-                    new TabTaskListener(this, tabData));
+                    presenter);
         }
     }
 

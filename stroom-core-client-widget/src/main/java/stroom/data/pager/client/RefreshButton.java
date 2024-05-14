@@ -4,6 +4,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskListener;
 import stroom.widget.button.client.SvgButton;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.DOM;
@@ -104,6 +105,11 @@ public class RefreshButton
     @Override
     public void decrementTaskCount() {
         taskCount--;
+
+        if (taskCount < 0) {
+            GWT.log("Negative task count");
+        }
+
         setRefreshing(taskCount > 0);
     }
 }
