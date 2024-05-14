@@ -17,7 +17,7 @@
 package stroom.widget.popup.client.view;
 
 import stroom.task.client.TaskListener;
-import stroom.widget.spinner.client.SpinnerSmall;
+import stroom.widget.spinner.client.SpinnerLarge;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
@@ -53,7 +53,7 @@ public class Dialog extends AbstractPopupPanel {
     @UiField
     SimplePanel content;
     @UiField
-    SpinnerSmall spinner;
+    SpinnerLarge spinner;
 
     private boolean dragging;
     private int dragStartX;
@@ -67,6 +67,7 @@ public class Dialog extends AbstractPopupPanel {
      */
     public Dialog(final DialogActionUiHandlers dialogEventHandler) {
         this(dialogEventHandler, false);
+        spinner.setVisible(false);
     }
 
     /**

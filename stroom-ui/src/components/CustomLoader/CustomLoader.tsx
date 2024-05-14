@@ -26,60 +26,16 @@ interface Props {
  * Adds a message.
  */
 const CustomLoader: React.FunctionComponent<Props> = ({ title, message }) => (
-  <div className="CustomLoader">
-    <div className="CustomLoader__box">
-      <div
-        className="CustomLoader__spinner mdl-spinner mdl-spinner--single-color mdl-js-spinner is-active is-upgraded"
-        data-upgraded=",MaterialSpinner"
-      >
-        <div className="mdl-spinner__layer mdl-spinner__layer-1">
-          <div className="mdl-spinner__circle-clipper mdl-spinner__left">
-            <div className="mdl-spinner__circle" />
-          </div>
-          <div className="mdl-spinner__gap-patch">
-            <div className="mdl-spinner__circle" />
-          </div>
-          <div className="mdl-spinner__circle-clipper mdl-spinner__right">
-            <div className="mdl-spinner__circle" />
-          </div>
-        </div>
-        <div className="mdl-spinner__layer mdl-spinner__layer-2">
-          <div className="mdl-spinner__circle-clipper mdl-spinner__left">
-            <div className="mdl-spinner__circle" />
-          </div>
-          <div className="mdl-spinner__gap-patch">
-            <div className="mdl-spinner__circle" />
-          </div>
-          <div className="mdl-spinner__circle-clipper mdl-spinner__right">
-            <div className="mdl-spinner__circle" />
-          </div>
-        </div>
-        <div className="mdl-spinner__layer mdl-spinner__layer-3">
-          <div className="mdl-spinner__circle-clipper mdl-spinner__left">
-            <div className="mdl-spinner__circle" />
-          </div>
-          <div className="mdl-spinner__gap-patch">
-            <div className="mdl-spinner__circle" />
-          </div>
-          <div className="mdl-spinner__circle-clipper mdl-spinner__right">
-            <div className="mdl-spinner__circle" />
-          </div>
-        </div>
-        <div className="mdl-spinner__layer mdl-spinner__layer-4">
-          <div className="mdl-spinner__circle-clipper mdl-spinner__left">
-            <div className="mdl-spinner__circle" />
-          </div>
-          <div className="mdl-spinner__gap-patch">
-            <div className="mdl-spinner__circle" />
-          </div>
-          <div className="mdl-spinner__circle-clipper mdl-spinner__right">
-            <div className="mdl-spinner__circle" />
-          </div>
+  <div id="loading">
+    <div id="loadingBox">
+      <div id="loadingLeft">
+        <div className="spinner-blue" role="status">
+          <span className="sr-only">Loading...</span>
         </div>
       </div>
-      <div className="CustomLoader__text">
-        <div className="CustomLoader__title">{title}</div>
-        <div className="CustomLoader__message">{message}</div>
+      <div id="loadingRight">
+        <div id="loadingTitle">{title}</div>
+        <div id="loadingText">{message}</div>
       </div>
     </div>
   </div>
