@@ -45,14 +45,14 @@ public class RefreshButton
         pauseOuter.setStyleName("pause-outer");
 
         final FlowPanel layout = new FlowPanel();
-        layout.setStyleName("background refreshButton");
+        layout.setStyleName("background");
         layout.add(refreshOuter);
         layout.add(spinnerOuter);
         layout.add(spinningOuter);
         layout.add(pauseOuter);
 
         button = new SvgButton();
-        button.addStyleName("refreshButton");
+        button.addStyleName("RefreshButton SpinnerSmall");
         button.setTitle("Refresh");
         button.setEnabled(true);
 

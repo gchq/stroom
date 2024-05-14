@@ -62,8 +62,6 @@ import stroom.data.client.view.ProcessChoiceViewImpl;
 import stroom.data.client.view.SourceTabViewImpl;
 import stroom.data.client.view.SourceViewImpl;
 import stroom.data.client.view.StreamTaskViewImpl;
-import stroom.data.client.view.TaskListenerView;
-import stroom.data.client.view.TaskListenerViewImpl;
 import stroom.data.client.view.TextViewImpl;
 import stroom.editor.client.presenter.DelegatingAceCompleter;
 import stroom.editor.client.presenter.EditorPresenter;
@@ -162,6 +160,5 @@ public class StreamStoreModule extends PluginModule {
         bindSharedView(DropDownView.class, DropDownViewImpl.class);
         bindSharedView(ExplorerPopupView.class, ExplorerPopupViewImpl.class);
         bindSharedView(ClassificationWrapperView.class, ClassificationWrapperViewImpl.class);
-        bindSharedView(TaskListenerView.class, TaskListenerViewImpl.class);
     }
 }

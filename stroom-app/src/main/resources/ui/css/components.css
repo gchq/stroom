@@ -1600,14 +1600,20 @@ button.main-menu svg {
     background-color: var(--row__background-color--hovered);
 }
 
-.navigation-header-buttons {
+.navigation-toolbar {
     flex-grow: 0;
     flex-shrink: 0;
     display: flex;
     align-items: center;
     margin: 0.25rem;
     margin-top: 0;
-    justify-content: flex-end;
+}
+
+.navigation-header-buttons {
+    flex-grow: 1;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
 }
 
 .form-control-border {

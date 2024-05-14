@@ -27,24 +27,19 @@ import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FetchExplorerNodesRequest;
 import stroom.explorer.shared.NodeFlag;
 import stroom.explorer.shared.NodeFlag.NodeFlagGroups;
-import stroom.task.client.HasTaskListener;
 import stroom.task.client.TaskListener;
-import stroom.task.client.TaskListenerImpl;
 import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Timer;
-import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class ExplorerTreeModel implements HasTaskListener, HasHandlers {
+public class ExplorerTreeModel {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
     public static final ExplorerNode NULL_SELECTION = ExplorerNode.builder()
@@ -55,13 +50,12 @@ public class ExplorerTreeModel implements HasTaskListener, HasHandlers {
                     .build())
             .build();
 
-    private final EventBus eventBus;
     private final OpenItems<ExplorerNodeKey> openItems = new OpenItems<>();
     private final NameFilterTimer timer = new NameFilterTimer();
     private final ExplorerTreeFilterBuilder explorerTreeFilterBuilder = new ExplorerTreeFilterBuilder();
     private final AbstractExplorerTree explorerTree;
     private final RestFactory restFactory;
-    private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
+    private final TaskListener taskListener;
 
     private Integer minDepth = 1;
     private Set<ExplorerNodeKey> ensureVisible;
@@ -75,12 +69,12 @@ public class ExplorerTreeModel implements HasTaskListener, HasHandlers {
 
     private List<ExplorerNode> currentRootNodes;
 
-    ExplorerTreeModel(final EventBus eventBus,
-                      final AbstractExplorerTree explorerTree,
-                      final RestFactory restFactory) {
-        this.eventBus = eventBus;
+    ExplorerTreeModel(final AbstractExplorerTree explorerTree,
+                      final RestFactory restFactory,
+                      final TaskListener taskListener) {
         this.explorerTree = explorerTree;
         this.restFactory = restFactory;
+        this.taskListener = taskListener;
     }
 
     /**
@@ -404,16 +398,6 @@ public class ExplorerTreeModel implements HasTaskListener, HasHandlers {
         if (item != null) {
             refresh(openItems.toggleOpenState(item.getUniqueKey()));
         }
-    }
-
-    @Override
-    public void setTaskListener(final TaskListener taskListener) {
-        this.taskListener.setTaskListener(taskListener);
-    }
-
-    @Override
-    public void fireEvent(final GwtEvent<?> gwtEvent) {
-        eventBus.fireEvent(gwtEvent);
     }
 
     // --------------------------------------------------------------------------------

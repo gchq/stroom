@@ -19,7 +19,9 @@ package stroom.explorer.client.view;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.client.presenter.NavigationUiHandlers;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.TaskListener;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
+import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.SvgImageUtil;
 
@@ -56,6 +58,8 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
     SimplePanel explorerTreeContainer;
     @UiField
     SimplePanel activityPanel;
+    @UiField
+    SpinnerSmall spinner;
 
     @Inject
     public NavigationViewImpl(final NavigationViewImpl.Binder binder) {
@@ -121,6 +125,10 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
         nameFilter.focus();
     }
 
+    @Override
+    public TaskListener getTaskListener() {
+        return spinner;
+    }
 
     // --------------------------------------------------------------------------------
 

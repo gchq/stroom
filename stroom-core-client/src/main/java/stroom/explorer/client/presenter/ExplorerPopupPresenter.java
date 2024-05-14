@@ -26,6 +26,7 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.NodeFlag;
+import stroom.task.client.TaskListener;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupUiHandlers;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupView;
@@ -69,7 +70,7 @@ public class ExplorerPopupPresenter
 
         getView().setUiHandlers(this);
 
-        explorerTree = new ExtendedExplorerTree(eventBus, this, restFactory);
+        explorerTree = new ExtendedExplorerTree(this, restFactory, this);
         setIncludeNullSelection(true);
 
         // Add views.
@@ -269,10 +270,10 @@ public class ExplorerPopupPresenter
 
         private final ExplorerPopupPresenter explorerDropDownTreePresenter;
 
-        public ExtendedExplorerTree(final EventBus eventBus,
-                                    final ExplorerPopupPresenter explorerDropDownTreePresenter,
-                                    final RestFactory restFactory) {
-            super(eventBus, restFactory, false, false);
+        public ExtendedExplorerTree(final ExplorerPopupPresenter explorerDropDownTreePresenter,
+                                    final RestFactory restFactory,
+                                    final TaskListener taskListener) {
+            super(restFactory, taskListener, false, false);
             this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;
             this.getTreeModel().setIncludedRootTypes(ExplorerConstants.SYSTEM);
         }

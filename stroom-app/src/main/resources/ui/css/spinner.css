@@ -27,8 +27,10 @@
     margin-left: -11px;
     margin-top: -11px;
     opacity: 0.5;
+    z-index: 10;
 }
 
+/*
 .spinner-small {
     display: inline-block;
     width: var(--icon-width);
@@ -42,6 +44,7 @@
     margin: 1px;
     margin-bottom: 4px;
 }
+*/
 
 .spinner-large {
     display: inline-block;

@@ -60,6 +60,7 @@ import stroom.query.shared.QueryDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.TaskListener;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
 import stroom.util.shared.GwtNullSafe;
@@ -202,7 +203,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
 
         view.setUiHandlers(this);
 
-        explorerTree = new ExplorerTree(eventBus, restFactory, true, showAlertsBtn.getState());
+        explorerTree = new ExplorerTree(restFactory, getView().getTaskListener(), true, showAlertsBtn.getState());
 
         // Add views.
         uiConfigCache.get(uiConfig -> {
@@ -224,7 +225,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
                                 ExplorerTreeFilter.FIELD_DEFINITIONS,
                                 uiConfig.getHelpUrl()));
             }
-        }, explorerTree.getTaskListener());
+        }, getView().getTaskListener());
 
         KeyBinding.addCommand(Action.FOCUS_EXPLORER_FILTER, () ->
                 FocusExplorerFilterEvent.fire(this));
@@ -307,9 +308,9 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
 
         // Deal with task listeners.
         registerHandler(getEventBus().addHandler(ExplorerStartTaskEvent.getType(), e ->
-                explorerTree.getTaskListener().incrementTaskCount()));
+                getView().getTaskListener().incrementTaskCount()));
         registerHandler(getEventBus().addHandler(ExplorerEndTaskEvent.getType(), e ->
-                explorerTree.getTaskListener().decrementTaskCount()));
+                getView().getTaskListener().decrementTaskCount()));
 
         registerHandler(typeFilterPresenter.addDataSelectionHandler(event -> explorerTree.setIncludedTypeSet(
                 typeFilterPresenter.getIncludedTypes().orElse(null))));
@@ -352,7 +353,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
             }
 
             activityButton.setHTML(sb.toString());
-        }, explorerTree.getTaskListener());
+        }, getView().getTaskListener());
     }
 
     public void newItem(final Element element) {
@@ -429,7 +430,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
     public void onShowMain(final ShowMainEvent event) {
         documentTypeCache.clear();
         // Set the data for the type filter.
-        documentTypeCache.fetch(typeFilterPresenter::setDocumentTypes, explorerTree.getTaskListener());
+        documentTypeCache.fetch(typeFilterPresenter::setDocumentTypes, getView().getTaskListener());
 
         explorerTree.getTreeModel().reset();
         explorerTree.getTreeModel().setRequiredPermissions(DocumentPermissionNames.READ);
@@ -497,5 +498,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         void setActivityWidget(Widget widget);
 
         void focusQuickFilter();
+
+        TaskListener getTaskListener();
     }
 }

@@ -1,7 +1,6 @@
 package stroom.explorer.client.presenter;
 
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.client.view.TaskListenerView;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.MyCellTable;
 import stroom.dispatch.client.RestErrorHandler;
@@ -16,6 +15,7 @@ import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.FetchHighlightsRequest;
 import stroom.explorer.shared.FindInContentRequest;
 import stroom.explorer.shared.FindInContentResult;
+import stroom.task.client.TaskListener;
 import stroom.util.client.TextRangeUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
@@ -63,7 +63,6 @@ public class FindInContentPresenter
     private final MultiSelectionModelImpl<FindInContentResult> selectionModel;
     private final EditorPresenter editorPresenter;
     private final RestFactory restFactory;
-    private final TaskListenerView taskListenerView;
 
     private FindInContentRequest currentQuery = new FindInContentRequest(
             new PageRequest(0, 100),
@@ -86,15 +85,11 @@ public class FindInContentPresenter
                                   final FindInContentView view,
                                   final FindInContentProxy proxy,
                                   final PagerView pagerView,
-                                  final TaskListenerView taskListenerView,
                                   final EditorPresenter editorPresenter,
                                   final RestFactory restFactory) {
         super(eventBus, view, proxy);
-        this.taskListenerView = taskListenerView;
         this.editorPresenter = editorPresenter;
         this.restFactory = restFactory;
-
-        taskListenerView.setChildView(editorPresenter.getView());
 
         cellTable = new MyCellTable<FindInContentResult>(100) {
             @Override
@@ -117,7 +112,7 @@ public class FindInContentPresenter
         cellTable.setSelectionModel(selectionModel, selectionEventManager);
 
         view.setResultView(pagerView);
-        view.setTextView(taskListenerView);
+        view.setTextView(editorPresenter.getView());
         view.setUiHandlers(this);
 
         dataProvider = new RestDataProvider<FindInContentResult, ResultPage<FindInContentResult>>(eventBus) {
@@ -215,7 +210,7 @@ public class FindInContentPresenter
                         }
                     })
                     .onFailure(throwable -> editorPresenter.setText(throwable.getMessage()))
-                    .taskListener(taskListenerView)
+                    .taskListener(getView().getTaskListener())
                     .exec();
         }
     }
@@ -313,5 +308,7 @@ public class FindInContentPresenter
         void setResultView(View view);
 
         void setTextView(View view);
+
+        TaskListener getTaskListener();
     }
 }

@@ -26,7 +26,6 @@ import stroom.explorer.shared.NodeFlag;
 import stroom.task.client.TaskListener;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.util.client.AbstractSelectionEventManager;
 import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.ElementUtil;
@@ -51,7 +50,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.MaxScrollPanel;
 import com.google.gwt.view.client.CellPreviewEvent;
-import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
 import java.util.Set;
@@ -59,7 +57,6 @@ import java.util.function.Consumer;
 
 public abstract class AbstractExplorerTree extends Composite implements Focus {
 
-    private final SpinnerSmall spinnerSmall;
     private final ExplorerTreeModel treeModel;
     private final MultiSelectionModelImpl<ExplorerNode> selectionModel;
     private final MaxScrollPanel scrollPanel;
@@ -75,18 +72,12 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
     private boolean showAlerts;
     private Consumer<FetchExplorerNodeResult> changeHandler = null;
 
-    AbstractExplorerTree(final EventBus eventBus,
-                         final RestFactory restFactory,
+    AbstractExplorerTree(final RestFactory restFactory,
+                         final TaskListener taskListener,
                          final boolean allowMultiSelect,
                          final boolean showAlerts) {
         this.allowMultiSelect = allowMultiSelect;
         this.showAlerts = showAlerts;
-
-        spinnerSmall = new SpinnerSmall();
-        spinnerSmall.setRefreshing(true);
-        spinnerSmall.getElement().getStyle().setPosition(Style.Position.ABSOLUTE);
-        spinnerSmall.getElement().getStyle().setRight(5, Style.Unit.PX);
-        spinnerSmall.getElement().getStyle().setTop(5, Style.Unit.PX);
 
         explorerCell = new ExplorerCell(getTickBoxSelectionModel(), showAlerts);
         expanderClassName = explorerCell.getExpanderClassName();
@@ -104,7 +95,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
                 new ExplorerTreeSelectionEventManager(cellTable);
         cellTable.setSelectionModel(selectionModel, selectionEventManager);
 
-        treeModel = new ExplorerTreeModel(eventBus, this, restFactory) {
+        treeModel = new ExplorerTreeModel(this, restFactory, taskListener) {
             @Override
             protected void onDataChanged(final FetchExplorerNodeResult result) {
                 onData(result);
@@ -115,7 +106,6 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
                 }
             }
         };
-        treeModel.setTaskListener(spinnerSmall);
         treeModel.setShowAlerts(showAlerts);
 
         scrollPanel = new MaxScrollPanel();
@@ -126,7 +116,6 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
         flowPanel.setWidth("100%");
         flowPanel.setHeight("100%");
         flowPanel.add(scrollPanel);
-        flowPanel.add(spinnerSmall);
 
         initWidget(flowPanel);
     }
@@ -291,10 +280,6 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
 
     TickBoxSelectionModel getTickBoxSelectionModel() {
         return null;
-    }
-
-    public TaskListener getTaskListener() {
-        return spinnerSmall;
     }
 
     void showMenu(final CellPreviewEvent<ExplorerNode> e) {

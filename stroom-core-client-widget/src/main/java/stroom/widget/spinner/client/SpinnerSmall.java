@@ -38,7 +38,7 @@ public class SpinnerSmall extends Widget implements TaskListener {
         spinningOuter.setClassName("spinning-outer");
         final Element spinnerSmall = DOM.createDiv();
         spinnerSmall.appendChild(spinningOuter);
-        spinnerSmall.setClassName("refreshButton");
+        spinnerSmall.setClassName("SpinnerSmall");
         setElement(spinnerSmall);
     }
 

@@ -50,8 +50,8 @@ public class EntityTreePresenter
 
         // Debatable whether we want to show alerts or not
         explorerTree = new ExplorerTree(
-                eventBus,
                 restFactory,
+                this,
                 false,
                 false);
 
@@ -66,7 +66,7 @@ public class EntityTreePresenter
                         ExplorerTreeFilter.FIELD_DEFINITIONS,
                         uiConfig.getHelpUrlQuickFilter()));
             }
-        }, explorerTree.getTaskListener());
+        }, this);
     }
 
     @Override

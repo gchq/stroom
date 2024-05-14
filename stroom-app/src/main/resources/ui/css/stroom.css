@@ -180,6 +180,7 @@ td {
     display: flex;
     justify-content: center;
     align-items: center;
+    line-height: normal;
 }
 
 #loadingBox {
