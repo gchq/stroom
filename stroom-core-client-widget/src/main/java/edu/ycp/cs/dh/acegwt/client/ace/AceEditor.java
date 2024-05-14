@@ -357,6 +357,7 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 
         var element = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::divElement;
         var ace = $wnd.ace;
+        ace.config.$defaultOptions.renderer.theme.initialValue = "ace/theme/" + theme;
         var editor = ace.edit(element, {
             theme: "ace/theme/" + theme,
         });

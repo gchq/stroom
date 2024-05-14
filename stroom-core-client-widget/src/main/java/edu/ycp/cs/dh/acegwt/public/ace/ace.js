@@ -21344,7 +21344,7 @@ exports.edit = function(el, options) {
 
     var doc = exports.createEditSession(value);
 
-    var editor = new Editor(new Renderer(el, options.theme), doc, options);
+    var editor = new Editor(new Renderer(el), doc, options);
 
     var env = {
         document: doc,
