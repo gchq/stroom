@@ -140,8 +140,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             IndexShardWriter indexShardWriter = null;
             final Optional<IndexShard> optional = indexShardDao.fetch(indexShardId);
             if (optional.isEmpty()) {
-                LOGGER.error(() -> "Unable to find index shard with id = " + indexShardId);
-                return null;
+                throw new IndexException("Unable to find index shard with id = " + indexShardId);
             }
 
             // Get the index fields.
