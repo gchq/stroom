@@ -20,6 +20,7 @@ package stroom.bytebuffer;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBufferPoolImpl6;
 import stroom.bytebuffer.impl6.ByteBufferPoolImpl7;
+import stroom.util.io.ByteSize;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.LogUtil;
@@ -36,6 +37,10 @@ import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.management.BufferPoolMXBean;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.MemoryUsage;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
@@ -478,6 +483,52 @@ class TestByteBufferPool {
         LOGGER.info("--------------------------------------------------------------------------------");
         LOGGER.info("Result (values are total duration in millis for {} iterations):\n{}",
                 ModelStringUtil.formatCsv(iterations), results);
+    }
+
+    @Test
+    void testMxBeans() {
+        final ByteBufferPool byteBufferPool = getByteBufferPool();
+
+        final int cnt = 100;
+        final int cap = 100;
+        final List<PooledByteBuffer> buffers = new ArrayList<>();
+        for (int i = 0; i < cnt; i++) {
+            final PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(cap);
+            buffers.add(pooledByteBuffer);
+        }
+        logBufferPoolInfo();
+        LOGGER.info("Get {} {}b buffers", cnt, cap);
+        buffers.forEach(PooledByteBuffer::getByteBuffer);
+        logBufferPoolInfo();
+        buffers.forEach(PooledByteBuffer::close);
+    }
+
+    private static void logBufferPoolInfo() {
+        final MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
+        final MemoryUsage heapMemoryUsage = memoryMXBean.getHeapMemoryUsage();
+        LOGGER.info("Heap - Init: {}, Committed: {}, Max: {}, Used: {}",
+                ByteSize.ofBytes(heapMemoryUsage.getInit()),
+                ByteSize.ofBytes(heapMemoryUsage.getCommitted()),
+                ByteSize.ofBytes(heapMemoryUsage.getMax()),
+                ByteSize.ofBytes(heapMemoryUsage.getUsed()));
+
+        final MemoryUsage nonHeapMemoryUsage = memoryMXBean.getNonHeapMemoryUsage();
+        LOGGER.info("NonHeap - Init: {}, Committed: {}, Max: {}, Used: {}",
+                ByteSize.ofBytes(nonHeapMemoryUsage.getInit()),
+                ByteSize.ofBytes(nonHeapMemoryUsage.getCommitted()),
+                nonHeapMemoryUsage.getMax(),
+                ByteSize.ofBytes(nonHeapMemoryUsage.getUsed()));
+
+        ManagementFactory.getPlatformMXBeans(BufferPoolMXBean.class)
+                .stream()
+                .filter(pool -> "direct".equalsIgnoreCase(pool.getName())
+                        || "mapped".equalsIgnoreCase(pool.getName()))
+                .forEach(pool ->
+                        LOGGER.info("Pool: {}, count: {}, used: {}, capacity: {}",
+                                pool.getName(),
+                                pool.getCount(),
+                                ByteSize.ofBytes(pool.getMemoryUsed()),
+                                ByteSize.ofBytes(pool.getTotalCapacity())));
     }
 
     private void simulateUsingBuffer(final ByteBuffer buffer, final int requestedCapacity) {

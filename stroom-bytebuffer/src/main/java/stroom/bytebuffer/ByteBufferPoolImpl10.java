@@ -752,6 +752,11 @@ public class ByteBufferPoolImpl10 implements ByteBufferPool, ByteBufferFactory {
 // --------------------------------------------------------------------------------
 
 
+    /**
+     * Wraps a direct ByteBuffer alongside the queue that owns the buffer (or null if
+     * the buffer is not owned by the pool). This saves wrapper can then be passed around
+     * and saves us re-wrapping it when the buffer is returned to the pool.
+     */
     private record OwnedBuffer(ByteBuffer byteBuffer,
                                PooledByteBufferQueue pooledByteBufferQueue) {
 
@@ -781,11 +786,11 @@ public class ByteBufferPoolImpl10 implements ByteBufferPool, ByteBufferFactory {
     }
 
 
-// --------------------------------------------------------------------------------
+    // --------------------------------------------------------------------------------
 
 
     /**
-     * For use by one thread.
+     * Not thread safe
      */
     private static final class PooledByteBufferImpl10 implements PooledByteBuffer {
 
@@ -809,31 +814,17 @@ public class ByteBufferPoolImpl10 implements ByteBufferPool, ByteBufferFactory {
         @Override
         public ByteBuffer getByteBuffer() {
             final OwnedBuffer ownedBuffer = getOwnedBuffer();
-            Objects.requireNonNull(ownedBuffer, "Already released");
+            Objects.requireNonNull(ownedBuffer, "Already closed");
             return ownedBuffer.byteBuffer;
         }
 
         @Override
         public void doWithByteBuffer(final Consumer<ByteBuffer> byteBufferConsumer) {
             final OwnedBuffer ownedBuffer = getOwnedBuffer();
-            Objects.requireNonNull(ownedBuffer, "Already released");
+            Objects.requireNonNull(ownedBuffer, "Already closed");
             try (this) {
                 byteBufferConsumer.accept(ownedBuffer.byteBuffer);
             }
-        }
-
-        @Override
-        public void clear() {
-            final OwnedBuffer ownedBuffer = getOwnedBuffer();
-            Objects.requireNonNull(ownedBuffer, "Already released");
-            ownedBuffer.byteBuffer.clear();
-        }
-
-        @Override
-        public Integer capacity() {
-            final OwnedBuffer ownedBuffer = getOwnedBuffer();
-            Objects.requireNonNull(ownedBuffer, "Already released");
-            return ownedBuffer.byteBuffer.capacity();
         }
 
         @Override
