@@ -4,15 +4,20 @@ import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.query.api.v2.Row;
 import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.LmdbKV;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import com.esotericsoftware.kryo.io.Output;
 import net.openhft.hashing.LongHashFunction;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class DuplicateKeyFactory2 {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DuplicateKeyFactory2.class);
 
     private final ByteBufferFactory byteBufferFactory;
     private final boolean grouped;
@@ -48,6 +53,7 @@ public class DuplicateKeyFactory2 {
         valueByteBuffer.put(bytes);
         valueByteBuffer.flip();
 
+        LOGGER.trace(() -> "Created row (" + rowHash + ", " + Arrays.toString(bytes) + ")");
         return new LmdbKV(null, keyByteBuffer, valueByteBuffer);
     }
 
@@ -58,21 +64,25 @@ public class DuplicateKeyFactory2 {
                 for (final Integer index : groupIndexes) {
                     final String value = row.getValues().get(index);
                     if (value != null) {
+                        LOGGER.trace(() -> "Adding grouped string (" + index + ") = " + value);
                         output.writeString(value);
                     }
                 }
                 bytes = output.toBytes();
             }
+            LOGGER.trace(() -> "Grouped row bytes = " + Arrays.toString(bytes));
 
         } else {
             try (final Output output = new Output(512, -1)) {
                 for (final String value : row.getValues()) {
                     if (value != null) {
+                        LOGGER.trace(() -> "Adding ungrouped string = " + value);
                         output.writeString(value);
                     }
                 }
                 bytes = output.toBytes();
             }
+            LOGGER.trace(() -> "Ungrouped row bytes = " + Arrays.toString(bytes));
         }
         return bytes;
     }
