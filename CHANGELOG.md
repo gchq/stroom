@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.4-beta.11] - 2024-05-15
+
+* Issue **#4267** : Fix logout resource for internal IdP.
+
+* Issue **#4268** : Fix NPE affecting querying.
+
+
 ## [v7.4-beta.10] - 2024-05-15
 
 * Issue **#4258** : Stop logging unnecessary error when shard deleted.
@@ -535,7 +542,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.10...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.11...HEAD
+[v7.4-beta.11]: https://github.com/gchq/stroom/compare/v7.4-beta.10...v7.4-beta.11
 [v7.4-beta.10]: https://github.com/gchq/stroom/compare/v7.4-beta.9...v7.4-beta.10
 [v7.4-beta.9]: https://github.com/gchq/stroom/compare/v7.4-beta.8...v7.4-beta.9
 [v7.4-beta.8]: https://github.com/gchq/stroom/compare/v7.4-beta.7...v7.4-beta.8
