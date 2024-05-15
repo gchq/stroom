@@ -23,8 +23,6 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.identity.config.PasswordPolicyConfig;
 import stroom.security.identity.exceptions.NoSuchUserException;
-import stroom.security.openid.api.OpenId;
-import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.shared.PermissionException;
 
 import com.codahale.metrics.annotation.Timed;
@@ -126,8 +124,7 @@ class AuthenticationResourceImpl implements AuthenticationResource {
     @Timed
     @Override
     public Boolean logout(final HttpServletRequest request,
-                          final String postLogoutRedirectUri,
-                          final String state) {
+                          final String postLogoutRedirectUri) {
         LOGGER.debug("Received a logout request");
         final AuthenticateEventAction.Builder<Void> eventBuilder = event.logging.AuthenticateEventAction.builder()
                 .withLogonType(AuthenticateLogonType.INTERACTIVE)
@@ -154,7 +151,6 @@ class AuthenticationResourceImpl implements AuthenticationResource {
 
         try {
             UriBuilder uriBuilder = UriBuilder.fromUri(postLogoutRedirectUri);
-            uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.STATE, state);
             throw new RedirectionException(Status.TEMPORARY_REDIRECT, uriBuilder.build());
         } finally {
             stroomEventLoggingServiceProvider.get().log(
