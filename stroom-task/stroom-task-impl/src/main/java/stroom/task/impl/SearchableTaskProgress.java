@@ -12,6 +12,8 @@ import stroom.expression.matcher.ExpressionMatcherFactory;
 import stroom.query.common.v2.FieldInfoResultPageBuilder;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValDate;
+import stroom.query.language.functions.ValDuration;
 import stroom.query.language.functions.ValInteger;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
@@ -129,7 +131,14 @@ class SearchableTaskProgress implements Searchable {
                                     if (o instanceof String) {
                                         val = ValString.create((String) o);
                                     } else if (o instanceof Long) {
-                                        val = ValLong.create((long) o);
+                                        final long aLong = (long) o;
+                                        if (TaskManagerFields.FIELD_SUBMIT_TIME.equals(fieldName)) {
+                                            val = ValDate.create(aLong);
+                                        } else if (TaskManagerFields.FIELD_AGE.equals(fieldName)) {
+                                            val = ValDuration.create(aLong);
+                                        } else {
+                                            val = ValLong.create(aLong);
+                                        }
                                     } else if (o instanceof Integer) {
                                         val = ValInteger.create((int) o);
                                     }

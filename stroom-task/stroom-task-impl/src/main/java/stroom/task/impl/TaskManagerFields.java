@@ -35,7 +35,8 @@ public class TaskManagerFields {
         FIELDS.add(AGE);
         FIELDS.add(INFO);
 
-        FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
+        FIELD_MAP = FIELDS.stream()
+                .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
     }
 
     public static List<QueryField> getFields() {
