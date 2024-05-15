@@ -140,7 +140,7 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
     @Operation(
             summary = "Fetch completions for the query",
             operationId = "fetchCompletions")
-    ResultPage<CompletionValue> fetchCompletions(CompletionsRequest completionsRequest);
+    ResultPage<CompletionItem> fetchCompletions(CompletionsRequest completionsRequest);
 
     @POST
     @Path("/fetchDetail")
