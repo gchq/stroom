@@ -195,6 +195,7 @@ public class KeyBinding {
             if (Element.is(eventTarget)) {
                 final Element element = Element.as(eventTarget);
                 final String className = GwtNullSafe.string(element.getClassName());
+//                GWT.log("className: " + className + " tagName: " + element.getTagName());
                 // TODO this is really clunky. Need to create our own textbox and text area
                 //  components so that we can control the key events
                 shouldCheck = !className.contains("gwt-TextBox")

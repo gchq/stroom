@@ -33,6 +33,7 @@ import com.google.common.collect.ImmutableSortedMap;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
+import java.lang.management.BufferPoolMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryUsage;
@@ -42,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -158,55 +160,41 @@ class NodeStatusServiceUtil {
         final MemoryUsage heapUsage = memoryMXBean.getHeapMemoryUsage();
         final MemoryUsage nonHeapUsage = memoryMXBean.getNonHeapMemoryUsage();
 
-        final long heapUsed = heapUsage.getUsed();
-        final long heapComitted = heapUsage.getCommitted();
-        final long heapMax = heapUsage.getMax();
-        final long nonHeapUsed = nonHeapUsage.getUsed();
-        final long nonHeapComitted = nonHeapUsage.getCommitted();
-        final long nonHeapMax = nonHeapUsage.getMax();
+        final BiConsumer<String, Long> statAdder = (type, val) -> {
+            if (val != null && val > 0) {
+                statisticEventList.add(buildStatisticEvent(
+                        InternalStatisticKey.MEMORY,
+                        nowEpochMs,
+                        tags,
+                        type,
+                        val));
+            }
+        };
 
-        if (heapUsed > 0) {
-            statisticEventList.add(buildStatisticEvent(InternalStatisticKey.MEMORY,
-                    nowEpochMs,
-                    tags,
-                    "Heap Used",
-                    heapUsed));
-        }
-        if (heapComitted > 0) {
-            statisticEventList.add(buildStatisticEvent(InternalStatisticKey.MEMORY,
-                    nowEpochMs,
-                    tags,
-                    "Heap Committed",
-                    heapComitted));
-        }
-        if (heapMax > 0) {
-            statisticEventList.add(buildStatisticEvent(InternalStatisticKey.MEMORY,
-                    nowEpochMs,
-                    tags,
-                    "Heap Max",
-                    heapMax));
-        }
-        if (nonHeapUsed > 0) {
-            statisticEventList.add(buildStatisticEvent(InternalStatisticKey.MEMORY,
-                    nowEpochMs,
-                    tags,
-                    "Non Heap Used",
-                    nonHeapUsed));
-        }
-        if (nonHeapComitted > 0) {
-            statisticEventList.add(buildStatisticEvent(InternalStatisticKey.MEMORY,
-                    nowEpochMs,
-                    tags,
-                    "Non Heap Committed",
-                    nonHeapComitted));
-        }
-        if (nonHeapMax > 0) {
-            statisticEventList.add(buildStatisticEvent(InternalStatisticKey.MEMORY,
-                    nowEpochMs,
-                    tags,
-                    "Non Heap Max",
-                    nonHeapMax));
-        }
+        statAdder.accept("Heap Used", heapUsage.getUsed());
+        statAdder.accept("Heap Committed", heapUsage.getCommitted());
+        statAdder.accept("Heap Max", heapUsage.getMax());
+        statAdder.accept("Non Heap Used", nonHeapUsage.getUsed());
+        statAdder.accept("Non Heap Committed", nonHeapUsage.getCommitted());
+        statAdder.accept("Non Heap Max", nonHeapUsage.getMax());
+
+        final List<BufferPoolMXBean> platformMXBeans = ManagementFactory.getPlatformMXBeans(BufferPoolMXBean.class);
+
+        // Total mem used for off-heap direct byte buffers
+        platformMXBeans.stream()
+                .filter(pool -> "direct".equalsIgnoreCase(pool.getName()))
+                .findAny()
+                .ifPresent(bufferPoolMXBean -> {
+                    statAdder.accept("Direct Buffers Used", bufferPoolMXBean.getMemoryUsed());
+                });
+
+        // Total mem used for off-heap mapped byte buffers (e.g. mmapped files)
+        platformMXBeans.stream()
+                .filter(pool -> "mapped".equalsIgnoreCase(pool.getName()))
+                .findAny()
+                .ifPresent(bufferPoolMXBean -> {
+                    statAdder.accept("Mapped Buffers Used", bufferPoolMXBean.getMemoryUsed());
+                });
     }
 
     private void buildRefDataStats(final List<InternalStatisticEvent> statisticEventList,
@@ -241,7 +229,7 @@ class NodeStatusServiceUtil {
         // No point in holding a load of zeros, e.g. nodes not running processing
         final long sizeOnDisk = feedSpecificStore.getSizeOnDisk();
         final long combinedEntryCount = feedSpecificStore.getKeyValueEntryCount()
-                                        + feedSpecificStore.getRangeValueEntryCount();
+                + feedSpecificStore.getRangeValueEntryCount();
         final long processingInfoEntryCount = feedSpecificStore.getProcessingInfoEntryCount();
 
         if (sizeOnDisk > 0) {
