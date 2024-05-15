@@ -1,7 +1,8 @@
 package stroom.query.impl;
 
 import stroom.docref.StringMatch.MatchType;
-import stroom.query.shared.CompletionValue;
+import stroom.query.shared.CompletionItem;
+import stroom.query.shared.CompletionSnippet;
 import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.InsertType;
 import stroom.query.shared.QueryHelpDetail;
@@ -287,7 +288,7 @@ class Structures {
 
     public void addCompletions(final CompletionsRequest request,
                                final PageRequest pageRequest,
-                               final List<CompletionValue> resultList) {
+                               final List<CompletionItem> resultList) {
         final StringMatcher stringMatcher = new StringMatcher(request.getStringMatch());
         int count = 0;
         for (final QueryHelpRow row : list) {
@@ -304,10 +305,10 @@ class Structures {
         }
     }
 
-    private CompletionValue createCompletionValue(final QueryHelpRow row) {
+    private CompletionSnippet createCompletionValue(final QueryHelpRow row) {
         final StructureElement structureElement = map.get(row.getTitle());
         final String detail = getDetail(structureElement);
-        return new CompletionValue(
+        return new CompletionSnippet(
                 row.getTitle(),
                 structureElement.snippets[0],
                 400,
@@ -347,16 +348,18 @@ class Structures {
             }
 
             final List<String> snippets = NullSafe.asList(structureElement.snippets);
-            final InsertType insertType = NullSafe.hasItems(snippets)
-                    ? InsertType.SNIPPET
-                    : InsertType.BLANK;
-            final String insertText = snippets.get(0);
+            final String insertText = snippets.stream().findFirst().orElse(null);
+            final InsertType insertType = InsertType.snippet(insertText);
             final String documentation = getDetail(structureElement);
             return Optional.of(new QueryHelpDetail(insertType, insertText, documentation));
         }
 
         return Optional.empty();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private record StructureElement(String title, String detail, String... snippets) {
 

@@ -22,7 +22,7 @@ import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
-import stroom.query.shared.CompletionValue;
+import stroom.query.shared.CompletionItem;
 import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryDoc;
@@ -194,8 +194,8 @@ class QueryResourceImpl implements QueryResource {
 
     @Override
     @AutoLogged(OperationType.UNLOGGED)
-    public ResultPage<CompletionValue> fetchCompletions(final CompletionsRequest request) {
-        final List<CompletionValue> list = new ArrayList<>();
+    public ResultPage<CompletionItem> fetchCompletions(final CompletionsRequest request) {
+        final List<CompletionItem> list = new ArrayList<>();
         final PageRequest pageRequest = request.getPageRequest();
         if (request.isShowAll()) {
             dataSourcesProvider.get().addCompletions(request, reducePageRequest(pageRequest, list.size()), list);

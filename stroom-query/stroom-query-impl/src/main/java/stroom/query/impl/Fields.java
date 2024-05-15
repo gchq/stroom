@@ -4,6 +4,7 @@ import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch.MatchType;
+import stroom.query.shared.CompletionItem;
 import stroom.query.shared.CompletionValue;
 import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.InsertType;
@@ -12,7 +13,6 @@ import stroom.query.shared.QueryHelpField;
 import stroom.query.shared.QueryHelpRequest;
 import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpType;
-import stroom.util.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.ResultPage.ResultConsumer;
@@ -98,7 +98,7 @@ public class Fields {
 
     public void addCompletions(final CompletionsRequest request,
                                final PageRequest pageRequest,
-                               final List<CompletionValue> resultList) {
+                               final List<CompletionItem> resultList) {
         final QueryService queryService = queryServiceProvider.get();
         final Optional<DocRef> optional = Optional.ofNullable(request.getDataSourceRef())
                 .or(() -> queryService.getReferencedDataSource(request.getText()));
@@ -167,9 +167,7 @@ public class Fields {
         } else if (row.getId().startsWith(FIELDS_ID + ".") && row.getData() instanceof
                 final QueryHelpField queryHelpField) {
             final QueryField fieldInfo = queryHelpField.getField();
-            final InsertType insertType = NullSafe.isBlankString(row.getTitle())
-                    ? InsertType.BLANK
-                    : InsertType.PLAIN_TEXT;
+            final InsertType insertType = InsertType.plainText(row.getTitle());
             final String insertText = getInsertText(row.getTitle());
             final String documentation = getDetail(fieldInfo);
             return Optional.of(new QueryHelpDetail(insertType, insertText, documentation));
