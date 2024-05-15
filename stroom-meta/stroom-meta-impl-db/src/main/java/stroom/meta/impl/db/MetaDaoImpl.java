@@ -1233,7 +1233,7 @@ public class MetaDaoImpl implements MetaDao {
 
         final PageRequest pageRequest = criteria.getPageRequest();
         final Collection<Condition> conditions = createCondition(criteria.getExpression());
-        final Collection<OrderField<?>> orderFields = createOrderFields(criteria);
+        Collection<OrderField<?>> orderFields = createOrderFields(criteria);
         final List<Field<?>> dbFields = valueMapper.getDbFieldsByName(fieldNames);
         final Mapper<?>[] mappers = valueMapper.getMappersForFieldNames(fieldNames);
 
@@ -1262,6 +1262,15 @@ public class MetaDaoImpl implements MetaDao {
             }
         }
 
+        // The code originally added a default sort on ID, not sure why, but
+        // we can only add it IF ID is in the select else ordering by a field
+        // that is not in the select is incompatible with distinct. Suspect it is
+        // only needed for find() and not search().
+        if (dbFields.contains(meta.ID) && NullSafe.isEmptyCollection(criteria.getSortList())) {
+            orderFields = Collections.singleton(meta.ID);
+        }
+
+        final Collection<OrderField<?>> finalOrderFields = orderFields;
         JooqUtil.context(metaDbConnProvider, context -> {
             Integer offset = null;
             Integer numberOfRows = null;
@@ -1290,7 +1299,7 @@ public class MetaDaoImpl implements MetaDao {
 
             try (final Cursor<?> cursor = select
                     .where(conditions)
-                    .orderBy(orderFields)
+                    .orderBy(finalOrderFields)
                     .limit(offset, numberOfRows)
                     .fetchLazy()) {
 
@@ -1373,7 +1382,12 @@ public class MetaDaoImpl implements MetaDao {
         validateExpressionTerms(criteria.getExpression());
 
         final Collection<Condition> conditions = createCondition(criteria);
-        final Collection<OrderField<?>> orderFields = createOrderFields(criteria);
+        Collection<OrderField<?>> orderFields = createOrderFields(criteria);
+        // This used to be done in createOrderFields but not sure why it is needed?
+        if (NullSafe.isEmptyCollection(criteria.getSortList())) {
+            orderFields = List.of(meta.ID);
+        }
+
         final int offset = JooqUtil.getOffset(pageRequest);
         final int numberOfRows = JooqUtil.getLimit(pageRequest, true, FIND_RECORD_LIMIT);
 
@@ -1389,7 +1403,10 @@ public class MetaDaoImpl implements MetaDao {
     }
 
     private final Collection<String> extendedFieldNames =
-            MetaFields.getExtendedFields().stream().map(QueryField::getFldName).collect(Collectors.toList());
+            MetaFields.getExtendedFields()
+                    .stream()
+                    .map(QueryField::getFldName)
+                    .toList();
 
     private Set<Integer> identifyExtendedAttributesFields(final ExpressionOperator expr,
                                                           final Set<Integer> identified) {
@@ -1659,40 +1676,38 @@ public class MetaDaoImpl implements MetaDao {
 
     private Collection<Condition> createCondition(final ExpressionOperator expression) {
         Condition criteriaCondition = expressionMapper.apply(expression);
-
         return Collections.singletonList(criteriaCondition);
     }
 
     private Collection<OrderField<?>> createOrderFields(final ExpressionCriteria criteria) {
-        if (criteria.getSortList() == null || criteria.getSortList().size() == 0) {
-            return Collections.singleton(meta.ID);
+        if (NullSafe.isEmptyCollection(criteria.getSortList())) {
+            return Collections.emptyList();
         }
 
-        return criteria.getSortList().stream().map(sort -> {
-            Field<?> field;
-            if (MetaFields.ID.getFldName().equals(sort.getId())) {
-                field = meta.ID;
-            } else if (MetaFields.CREATE_TIME.getFldName().equals(sort.getId())) {
-                field = meta.CREATE_TIME;
-            } else if (MetaFields.FEED.getFldName().equals(sort.getId())) {
-                field = metaFeed.NAME;
-            } else if (MetaFields.TYPE.getFldName().equals(sort.getId())) {
-                field = metaType.NAME;
-            } else if (MetaFields.PARENT_ID.getFldName().equals(sort.getId())) {
-                field = meta.PARENT_ID;
-            } else if (MetaFields.PARENT_CREATE_TIME.getFldName().equals(sort.getId())) {
-                field = parent.CREATE_TIME;
-            } else {
-                field = meta.ID;
-            }
-
-            OrderField<?> orderField = field;
-            if (sort.isDesc()) {
-                orderField = field.desc();
-            }
-
-            return orderField;
-        }).collect(Collectors.toList());
+        return criteria.getSortList()
+                .stream()
+                .map(sort -> {
+                    Field<?> field;
+                    if (MetaFields.ID.getFldName().equals(sort.getId())) {
+                        field = meta.ID;
+                    } else if (MetaFields.CREATE_TIME.getFldName().equals(sort.getId())) {
+                        field = meta.CREATE_TIME;
+                    } else if (MetaFields.FEED.getFldName().equals(sort.getId())) {
+                        field = metaFeed.NAME;
+                    } else if (MetaFields.TYPE.getFldName().equals(sort.getId())) {
+                        field = metaType.NAME;
+                    } else if (MetaFields.PARENT_ID.getFldName().equals(sort.getId())) {
+                        field = meta.PARENT_ID;
+                    } else if (MetaFields.PARENT_CREATE_TIME.getFldName().equals(sort.getId())) {
+                        field = parent.CREATE_TIME;
+                    } else {
+                        field = meta.ID;
+                    }
+                    return sort.isDesc()
+                            ? field.desc()
+                            : field;
+                })
+                .collect(Collectors.toList());
     }
 
     @Override
