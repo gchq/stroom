@@ -91,7 +91,9 @@ public class DocResolver {
                 .filter(docRef -> docRef != null && docRef.getName() != null && docRef.getName().equals(name))
                 .toList();
         if (docRefs.isEmpty()) {
-            throw new RuntimeException("Data source \"" + name + "\" not found. You may not have permission to use it.");
+            throw new RuntimeException("Data source \"" +
+                    name +
+                    "\" not found. You may not have permission to use it.");
         } else if (docRefs.size() > 1) {
             throw new RuntimeException("Multiple data sources found for \"" + name + "\"");
         }
