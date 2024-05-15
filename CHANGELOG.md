@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.4-beta.9] - 2024-05-15
+
+* Issue **#4264** : Stop workers requesting 0 tasks from the master node.
+
+
 ## [v7.4-beta.8] - 2024-05-02
 
 * Issue **#4253** : Prevent `CancellationException` being seen when user stops query.
@@ -523,7 +528,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.8...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.9...HEAD
+[v7.4-beta.9]: https://github.com/gchq/stroom/compare/v7.4-beta.8...v7.4-beta.9
 [v7.4-beta.8]: https://github.com/gchq/stroom/compare/v7.4-beta.7...v7.4-beta.8
 [v7.4-beta.7]: https://github.com/gchq/stroom/compare/v7.4-beta.6...v7.4-beta.7
 [v7.4-beta.6]: https://github.com/gchq/stroom/compare/v7.4-beta.5...v7.4-beta.6
