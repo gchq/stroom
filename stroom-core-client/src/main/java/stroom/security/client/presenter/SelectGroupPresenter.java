@@ -83,13 +83,14 @@ public class SelectGroupPresenter extends AbstractDataUserListPresenter {
                 .popupSize(popupSize)
                 .caption("Choose Group To Add")
                 .onShow(e -> getView().focus())
-                .onHide(e -> {
+                .onHideRequest(e -> {
                     if (e.isOk() && groupConsumer != null) {
                         final User selected = getSelectionModel().getSelected();
                         if (selected != null) {
                             groupConsumer.accept(selected);
                         }
                     }
+                    e.hide();
                 })
                 .fire();
     }

@@ -259,6 +259,8 @@ public class SolrIndexFieldListPresenter extends DocumentEditPresenter<SolrIndex
                             } else {
                                 e.hide();
                             }
+                        } else {
+                            e.reset();
                         }
                     } else {
                         e.hide();

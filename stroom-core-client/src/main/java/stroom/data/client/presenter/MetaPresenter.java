@@ -222,6 +222,7 @@ public class MetaPresenter
                                                         e.hide();
                                                     } else {
                                                         // Don't hide
+                                                        e.reset();
                                                     }
                                                 });
                                     } else {

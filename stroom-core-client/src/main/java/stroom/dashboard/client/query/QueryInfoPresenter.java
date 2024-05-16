@@ -81,29 +81,29 @@ public class QueryInfoPresenter
                                 .popupSize(popupSize)
                                 .caption(queryInfoPopupTitle)
                                 .onShow(e -> getView().focus())
-                                .onHideRequest(event -> {
-                                    if (event.isOk()) {
+                                .onHideRequest(e -> {
+                                    if (e.isOk()) {
                                         boolean valid = true;
                                         if (queryInfoPopupValidationRegex != null
                                                 && !queryInfoPopupValidationRegex.isEmpty()) {
                                             valid = false;
                                             try {
                                                 valid = getView().getQueryInfo().matches(queryInfoPopupValidationRegex);
-                                            } catch (final RuntimeException e) {
-                                                AlertEvent.fireErrorFromException(QueryInfoPresenter.this, e, null);
+                                            } catch (final RuntimeException ex) {
+                                                AlertEvent.fireErrorFromException(QueryInfoPresenter.this, ex, e::reset);
                                             }
                                         }
 
                                         if (valid) {
-                                            event.hide();
+                                            e.hide();
                                             consumer.accept(new State(getView().getQueryInfo(), true));
                                         } else {
                                             AlertEvent.fireWarn(QueryInfoPresenter.this,
                                                     "The text entered is not valid",
-                                                    null);
+                                                    e::reset);
                                         }
                                     } else {
-                                        event.hide();
+                                        e.hide();
                                         consumer.accept(new State(getView().getQueryInfo(), false));
                                     }
                                 })

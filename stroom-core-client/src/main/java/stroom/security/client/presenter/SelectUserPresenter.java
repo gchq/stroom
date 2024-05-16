@@ -20,6 +20,7 @@ import stroom.cell.info.client.SvgCell;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.FindUserNameCriteria;
@@ -246,14 +247,18 @@ public class SelectUserPresenter
                 .popupSize(popupSize)
                 .caption("Choose User To Add")
                 .onShow(e -> getView().focus())
-                .onHide(e -> {
+                .onHideRequest(e -> {
                     if (e.isOk()) {
                         final UserName selected = getSelected();
                         if (selected != null) {
                             restFactory
                                     .create(USER_RESOURCE)
                                     .method(res -> res.createUser(selected))
-                                    .onSuccess(userConsumer)
+                                    .onSuccess(r -> {
+                                        userConsumer.accept(r);
+                                        e.hide();
+                                    })
+                                    .onFailure(RestErrorHandler.forPopup(this, e))
                                     .taskListener(this)
                                     .exec();
                         }

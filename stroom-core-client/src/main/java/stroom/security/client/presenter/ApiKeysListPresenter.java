@@ -29,7 +29,6 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Selection;
 import stroom.widget.button.client.InlineSvgButton;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -158,17 +157,17 @@ public class ApiKeysListPresenter
     }
 
     private void createNewKey() {
-        editApiKeyPresenter.showCreateDialog(Mode.PRE_CREATE, () -> {
+        editApiKeyPresenter.showCreateDialog(Mode.PRE_CREATE, e -> {
             dataProvider.refresh();
-            HidePopupEvent.builder(this).fire();
+            e.hide();
         });
     }
 
     private void editSelectedKey() {
         final HashedApiKey apiKey = selectionModel.getSelected();
-        editApiKeyPresenter.showEditDialog(apiKey, Mode.EDIT, () -> {
+        editApiKeyPresenter.showEditDialog(apiKey, Mode.EDIT, e -> {
             dataProvider.refresh();
-            HidePopupEvent.builder(this).fire();
+            e.hide();
         });
     }
 

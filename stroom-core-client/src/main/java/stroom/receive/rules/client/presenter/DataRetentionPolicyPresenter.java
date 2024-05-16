@@ -534,7 +534,6 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
 
                         listPresenter.getSelectionModel().setSelected(visibleRules.get(index));
                     }
-
                     e.hide();
                 })
                 .fire();

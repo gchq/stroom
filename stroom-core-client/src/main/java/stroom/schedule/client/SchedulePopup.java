@@ -169,19 +169,19 @@ public class SchedulePopup
                     // before saving. Getting the scheduled times acts as validation.
                     if (e.isOk()) {
                         validate(createSchedule(), scheduleRestriction, scheduledTimes -> {
-                            if (scheduledTimes.isError()) {
-                                AlertEvent.fireWarn(this, scheduledTimes.getError(), e::reset);
+                            if (scheduledTimes == null) {
+                                e.reset();
                             } else {
-                                e.hide();
+                                if (scheduledTimes.isError()) {
+                                    AlertEvent.fireWarn(this, scheduledTimes.getError(), e::reset);
+                                } else {
+                                    consumer.accept(createSchedule());
+                                    e.hide();
+                                }
                             }
                         });
                     } else {
                         e.hide();
-                    }
-                })
-                .onHide(e -> {
-                    if (e.isOk()) {
-                        consumer.accept(createSchedule());
                     }
                 })
                 .fire();

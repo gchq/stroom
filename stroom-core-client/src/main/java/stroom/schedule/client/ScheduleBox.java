@@ -64,12 +64,12 @@ public class ScheduleBox
         final SchedulePopup popup = getSchedulePresenter();
         if (popup != null) {
             schedulePresenterProvider.get().validate(schedule, scheduleRestriction, scheduledTimes -> {
-                if (scheduledTimes.isError()) {
+                if (scheduledTimes == null || scheduledTimes.isError()) {
                     textBox.getElement().addClassName("invalid");
                 } else {
                     textBox.getElement().removeClassName("invalid");
                 }
-                if (scheduledTimes.getSchedule() != null) {
+                if (scheduledTimes != null && scheduledTimes.getSchedule() != null) {
                     value = scheduledTimes.getSchedule();
                 }
                 consumer.accept(scheduledTimes);
@@ -113,7 +113,9 @@ public class ScheduleBox
             popup.validate(value,
                     new ScheduleRestriction(true, true, true),
                     scheduledTimes -> {
-                        this.value = scheduledTimes.getSchedule();
+                        if (scheduledTimes != null) {
+                            this.value = scheduledTimes.getSchedule();
+                        }
                         scheduleReferenceTimeConsumer.accept(scheduleReferenceTime -> {
                             popup.setScheduleRestriction(scheduleRestriction);
                             popup.setSchedule(value, scheduleReferenceTime);

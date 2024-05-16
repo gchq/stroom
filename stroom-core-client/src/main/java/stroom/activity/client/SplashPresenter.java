@@ -20,9 +20,8 @@ import stroom.activity.shared.AcknowledgeSplashRequest;
 import stroom.activity.shared.ActivityResource;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.UrlParameters;
-import stroom.dispatch.client.DefaultErrorHandler;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.security.client.api.event.LogoutEvent;
 import stroom.task.client.DefaultTaskListener;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SplashConfig;
@@ -81,22 +80,22 @@ public class SplashPresenter
                                             .create(ACTIVITY_RESOURCE)
                                             .method(res -> res.acknowledgeSplash(new AcknowledgeSplashRequest(body,
                                                     version)))
-                                            .onSuccess(result -> e.hide())
-                                            .onFailure(new DefaultErrorHandler(this, e::reset))
+                                            .onSuccess(result -> {
+                                                e.hide();
+                                                consumer.accept(e.isOk());
+                                            })
+                                            .onFailure(RestErrorHandler.forPopup(this, e))
                                             .taskListener(this)
                                             .exec();
                                 } else {
                                     AlertEvent.fireWarn(SplashPresenter.this,
                                             "You must accept the terms to use this system",
                                             null,
-                                            e::hide);
+                                            () -> {
+                                                e.hide();
+                                                consumer.accept(e.isOk());
+                                            });
                                 }
-                            })
-                            .onHide(e -> {
-                                if (!e.isOk()) {
-                                    LogoutEvent.fire(SplashPresenter.this);
-                                }
-                                consumer.accept(e.isOk());
                             })
                             .modal(true)
                             .fire();

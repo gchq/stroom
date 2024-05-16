@@ -31,6 +31,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 public class EditApiKeyPresenter
         extends MyPresenterWidget<EditApiKeyView>
@@ -44,7 +45,7 @@ public class EditApiKeyPresenter
     private final UiConfigCache uiConfigCache;
 
     private HashedApiKey apiKey;
-    private Runnable onChangeHandler = null;
+    private Consumer<HidePopupRequestEvent> hidePopupRequestEventConsumer;
 
     @Inject
     public EditApiKeyPresenter(final EventBus eventBus,
@@ -75,8 +76,8 @@ public class EditApiKeyPresenter
     }
 
     public void showCreateDialog(final Mode mode,
-                                 final Runnable onChangeHandler) {
-        this.onChangeHandler = onChangeHandler;
+                                 final Consumer<HidePopupRequestEvent> hidePopupRequestEventConsumer) {
+        this.hidePopupRequestEventConsumer = hidePopupRequestEventConsumer;
         getView().setMode(mode);
         reset();
         getView().setUiHandlers(new DefaultHideRequestUiHandlers(this));
@@ -111,8 +112,8 @@ public class EditApiKeyPresenter
 
     public void showEditDialog(final HashedApiKey apiKey,
                                final Mode mode,
-                               final Runnable onChangeHandler) {
-        this.onChangeHandler = onChangeHandler;
+                               final Consumer<HidePopupRequestEvent> hidePopupRequestEventConsumer) {
+        this.hidePopupRequestEventConsumer = hidePopupRequestEventConsumer;
         this.apiKey = apiKey;
         getView().setMode(mode);
         reset();
@@ -136,31 +137,33 @@ public class EditApiKeyPresenter
     }
 
     @Override
-    public void onHideRequest(final HidePopupRequestEvent event) {
+    public void onHideRequest(final HidePopupRequestEvent e) {
 //        GWT.log("event: " + event);
         final Mode mode = getView().getMode();
-        if (event.isOk() || Mode.POST_CREATE.equals(mode)) {
+        if (e.isOk() || Mode.POST_CREATE.equals(mode)) {
             uiConfigCache.get(uiConfig -> {
                 if (uiConfig != null) {
 //                GWT.log("mode: " + mode);
                     if (Mode.PRE_CREATE.equals(mode)) {
-                        handlePreCreateModeHide(event, uiConfig);
+                        handlePreCreateModeHide(e, uiConfig);
                     } else if (Mode.POST_CREATE.equals(mode)) {
-                        handlePostCreateModeHide(event);
+                        handlePostCreateModeHide(e);
                     } else if (Mode.EDIT.equals(mode)) {
-                        handleEditModeHide(event);
+                        handleEditModeHide(e);
                     }
+                } else {
+                    e.hide();
                 }
             }, this);
         } else {
-            event.hide();
+            e.hide();
         }
     }
 
-    private void handleEditModeHide(final HidePopupRequestEvent event) {
-        if (event.isOk()) {
+    private void handleEditModeHide(final HidePopupRequestEvent e) {
+        if (e.isOk()) {
             if (GwtNullSafe.isBlankString(getView().getName())) {
-                AlertEvent.fireError(this, "A name must be provided for the API key.", null);
+                AlertEvent.fireError(this, "A name must be provided for the API key.", e::reset);
             } else {
                 final HashedApiKey updatedApiKey = HashedApiKey.builder(this.apiKey)
                         .withName(getView().getName())
@@ -174,27 +177,31 @@ public class EditApiKeyPresenter
                         .method(res -> res.update(this.apiKey.getId(), updatedApiKey))
                         .onSuccess(apiKey -> {
                             this.apiKey = apiKey;
-                            GwtNullSafe.run(onChangeHandler);
-                            event.hide();
+                            hidePopupRequestEventConsumer.accept(e);
+                            e.hide();
                         })
                         .onFailure(throwable ->
                                 AlertEvent.fireError(this, "Error updating API key: "
-                                        + throwable.getMessage(), event::reset))
+                                        + throwable.getMessage(), e::reset))
                         .taskListener(this)
                         .exec();
             }
+        } else {
+            e.hide();
         }
     }
 
-    private void handlePostCreateModeHide(final HidePopupRequestEvent event) {
-        if (event.isOk()) {
+    private void handlePostCreateModeHide(final HidePopupRequestEvent e) {
+        if (e.isOk()) {
             ConfirmEvent.fire(this,
                     "You will never be able to view the API Key after you close " +
                             "this dialog. Stroom does not store the API Key. You must copy it elsewhere first. " +
                             "Are you sure you want to close this dialog?",
                     ok -> {
                         if (ok) {
-                            event.hide();
+                            e.hide();
+                        } else {
+                            e.reset();
                         }
                     });
         } else {
@@ -207,15 +214,17 @@ public class EditApiKeyPresenter
                                     .create(API_KEY_RESOURCE)
                                     .method(res -> res.delete(this.apiKey.getId()))
                                     .onSuccess(didDelete -> {
-                                        GwtNullSafe.run(onChangeHandler);
-                                        event.hide();
+                                        hidePopupRequestEventConsumer.accept(e);
+                                        e.hide();
                                     })
                                     .onFailure(throwable -> {
                                         AlertEvent.fireError(this, "Error deleting API key: "
-                                                + throwable.getMessage(), event::reset);
+                                                + throwable.getMessage(), e::reset);
                                     })
                                     .taskListener(this)
                                     .exec();
+                        } else {
+                            e.reset();
                         }
                     });
         }
@@ -229,14 +238,14 @@ public class EditApiKeyPresenter
         final UserName owner = getView().getOwner();
         if (expireTimeEpochMs < now) {
             AlertEvent.fireError(this, "API Key expiry date cannot be in the past "
-                    + ClientDateUtil.toISOString(maxExpiryEpochMs), null);
+                    + ClientDateUtil.toISOString(maxExpiryEpochMs), event::reset);
         } else if (expireTimeEpochMs > maxExpiryEpochMs) {
             AlertEvent.fireError(this, "API Key expiry date cannot be after "
-                    + ClientDateUtil.toISOString(maxExpiryEpochMs), null);
+                    + ClientDateUtil.toISOString(maxExpiryEpochMs), event::reset);
         } else if (GwtNullSafe.isBlankString(getView().getName())) {
-            AlertEvent.fireError(this, "A name must be provided for the API key.", null);
+            AlertEvent.fireError(this, "A name must be provided for the API key.", event::reset);
         } else if (owner == null) {
-            AlertEvent.fireError(this, "An owner must be provided for the API key.", null);
+            AlertEvent.fireError(this, "An owner must be provided for the API key.", event::reset);
         } else {
             CreateHashedApiKeyRequest request = new CreateHashedApiKeyRequest(
                     owner,
@@ -262,7 +271,7 @@ public class EditApiKeyPresenter
                         getView().setApiKey(response.getApiKey());
                         getView().setPrefix(apiKey.getApiKeyPrefix());
 
-                        GwtNullSafe.run(onChangeHandler);
+                        hidePopupRequestEventConsumer.accept(event);
                     })
                     .onFailure(throwable -> {
                         AlertEvent.fireError(this, "Error creating API key: "

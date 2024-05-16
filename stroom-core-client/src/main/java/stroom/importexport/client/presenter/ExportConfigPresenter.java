@@ -20,6 +20,7 @@ package stroom.importexport.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.LocationManager;
 import stroom.dispatch.client.ExportFileCompleteUtil;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocumentTypeCache;
@@ -191,13 +192,7 @@ public class ExportConfigPresenter
                         ExportFileCompleteUtil.onSuccess(locationManager, this, result);
                         event.hide();
                     })
-                    .onFailure(restError -> {
-                        if (restError != null) {
-                            AlertEvent.fireError(this, restError.getMessage(), event::reset);
-                        } else {
-                            event.reset();
-                        }
-                    })
+                    .onFailure(RestErrorHandler.forPopup(this, event))
                     .taskListener(this)
                     .exec();
         }

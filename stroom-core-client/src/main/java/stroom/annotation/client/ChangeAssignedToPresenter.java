@@ -19,6 +19,7 @@ package stroom.annotation.client;
 import stroom.annotation.client.ChangeAssignedToPresenter.ChangeAssignedToView;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.SetAssignedToRequest;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.UserResource;
@@ -87,11 +88,16 @@ public class ChangeAssignedToPresenter
                         restFactory
                                 .create(annotationResource)
                                 .method(res -> res.setAssignedTo(request))
-                                .onSuccess(values -> GWT.log("Updated " + values + " annotations"))
+                                .onSuccess(values -> {
+                                    GWT.log("Updated " + values + " annotations");
+                                    e.hide();
+                                })
+                                .onFailure(RestErrorHandler.forPopup(this, e))
                                 .taskListener(this)
                                 .exec();
+                    } else {
+                        e.hide();
                     }
-                    e.hide();
                 })
                 .fire();
     }

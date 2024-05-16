@@ -354,7 +354,6 @@ public class PropertyListPresenter
                         refresh();
                     }
                 }
-
                 e.hide();
             };
 

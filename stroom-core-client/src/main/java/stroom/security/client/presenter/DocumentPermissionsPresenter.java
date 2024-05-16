@@ -18,6 +18,7 @@
 package stroom.security.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.DocumentTypes;
@@ -284,10 +285,13 @@ public class DocumentPermissionsPresenter
                                         ok -> {
                                             if (ok) {
                                                 doPermissionChange(e, docRef);
+                                            } else {
+                                                e.reset();
                                             }
                                         });
                             }
                         })
+                        .onFailure(RestErrorHandler.forPopup(this, e))
                         .taskListener(this)
                         .exec();
             } else {
@@ -306,6 +310,7 @@ public class DocumentPermissionsPresenter
                         changes,
                         getView().getCascade().getValue())))
                 .onSuccess(result -> e.hide())
+                .onFailure(RestErrorHandler.forPopup(this, e))
                 .taskListener(this)
                 .exec();
     }

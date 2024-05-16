@@ -19,6 +19,7 @@ package stroom.explorer.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.RefreshDocumentEvent;
@@ -148,25 +149,25 @@ public class ExplorerNodeEditTagsPresenter
     }
 
     @Override
-    public void onHideRequest(final HidePopupRequestEvent event) {
-        if (event.isOk()) {
+    public void onHideRequest(final HidePopupRequestEvent e) {
+        if (e.isOk()) {
             final Set<String> editedTags = getView().getNodeTags();
 
             if (isSingleDocRef()) {
                 if (!Objects.equals(getSingleNode().getTags(), editedTags)) {
-                    updateTagsOnNode(event, editedTags);
+                    updateTagsOnNode(e, editedTags);
                 } else {
-                    event.hide();
+                    e.hide();
                 }
             } else {
                 if (GwtNullSafe.hasItems(editedTags)) {
-                    addTagsToNodes(event, editedTags);
+                    addTagsToNodes(e, editedTags);
                 } else {
-                    event.hide();
+                    e.hide();
                 }
             }
         } else {
-            event.hide();
+            e.hide();
         }
     }
 
@@ -182,7 +183,7 @@ public class ExplorerNodeEditTagsPresenter
                                     ExplorerNodeEditTagsPresenter.this, docRef));
                     event.hide();
                 })
-                .onFailure(this::handleFailure)
+                .onFailure(RestErrorHandler.forPopup(this, event))
                 .taskListener(this)
                 .exec();
     }
@@ -201,7 +202,7 @@ public class ExplorerNodeEditTagsPresenter
                             explorerNode.getDocRef());
                     event.hide();
                 })
-                .onFailure(this::handleFailure)
+                .onFailure(RestErrorHandler.forPopup(this, event))
                 .taskListener(this)
                 .exec();
     }

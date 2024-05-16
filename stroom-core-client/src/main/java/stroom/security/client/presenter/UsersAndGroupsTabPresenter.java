@@ -16,9 +16,8 @@
 
 package stroom.security.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dispatch.client.DefaultErrorHandler;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.FindUserCriteria;
@@ -252,7 +251,7 @@ public class UsersAndGroupsTabPresenter
                             e.hide();
                             edit(result);
                         })
-                        .onFailure(new DefaultErrorHandler(this, e::reset))
+                        .onFailure(RestErrorHandler.forPopup(this, e))
                         .taskListener(this)
                         .exec();
             } else {
@@ -272,7 +271,7 @@ public class UsersAndGroupsTabPresenter
 //                            newUserPresenter.hide();
                             edit(result);
                         })
-                        .onFailure(new DefaultErrorHandler(this, e::reset))
+                        .onFailure(RestErrorHandler.forPopup(this, e))
                         .taskListener(this)
                         .exec();
             } else {
@@ -295,10 +294,7 @@ public class UsersAndGroupsTabPresenter
                                 listPresenter.refresh();
 //                                    edit(result);
                             })
-                            .onFailure(caught -> AlertEvent.fireError(
-                                    UsersAndGroupsTabPresenter.this,
-                                    caught.getMessage(),
-                                    e::reset))
+                            .onFailure(RestErrorHandler.forPopup(this, e))
                             .taskListener(this)
                             .exec();
                 } else {

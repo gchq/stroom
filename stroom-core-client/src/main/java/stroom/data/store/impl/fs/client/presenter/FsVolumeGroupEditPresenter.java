@@ -23,11 +23,13 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
 import stroom.data.store.impl.fs.shared.FsVolumeResource;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DelayedUpdate;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -135,7 +137,6 @@ public class FsVolumeGroupEditPresenter
             if (result != null) {
                 volumeStatusListPresenter.refresh();
             }
-            editor.hide();
         });
     }
 
@@ -202,17 +203,17 @@ public class FsVolumeGroupEditPresenter
                     .popupSize(popupSize)
                     .caption(title)
                     .onShow(e -> getView().focus())
-                    .onHideRequest(event -> {
-                        if (event.isOk()) {
+                    .onHideRequest(e -> {
+                        if (e.isOk()) {
                             volumeGroup.setName(getView().getName());
                             try {
                                 doWithGroupNameValidation(getView().getName(), volumeGroup.getId(), () ->
-                                        createVolumeGroup(consumer, volumeGroup));
-                            } catch (final RuntimeException e) {
+                                        createVolumeGroup(consumer, volumeGroup, e), e);
+                            } catch (final RuntimeException ex) {
                                 AlertEvent.fireError(
                                         FsVolumeGroupEditPresenter.this,
-                                        e.getMessage(),
-                                        null);
+                                        ex.getMessage(),
+                                        e::reset);
                             }
                         } else {
                             consumer.accept(null);
@@ -224,12 +225,13 @@ public class FsVolumeGroupEditPresenter
 
     private void doWithGroupNameValidation(final String groupName,
                                            final Integer groupId,
-                                           final Runnable work) {
+                                           final Runnable work,
+                                           final HidePopupRequestEvent event) {
         if (groupName == null || groupName.isEmpty()) {
             AlertEvent.fireError(
                     FsVolumeGroupEditPresenter.this,
                     "You must provide a name for the index volume group.",
-                    null);
+                    event::reset);
         } else {
             restFactory
                     .create(FS_VOLUME_GROUP_RESOURCE)
@@ -241,22 +243,25 @@ public class FsVolumeGroupEditPresenter
                                     "Group name '"
                                             + groupName
                                             + "' is already in use by another group.",
-                                    null);
+                                    event::reset);
                         } else {
                             work.run();
                         }
                     })
+                    .onFailure(RestErrorHandler.forPopup(this, event))
                     .taskListener(this)
                     .exec();
         }
     }
 
     private void createVolumeGroup(final Consumer<FsVolumeGroup> consumer,
-                                   final FsVolumeGroup volumeGroup) {
+                                   final FsVolumeGroup volumeGroup,
+                                   final HidePopupRequestEvent event) {
         restFactory
                 .create(FS_VOLUME_GROUP_RESOURCE)
                 .method(res -> res.update(volumeGroup.getId(), volumeGroup))
-                .onSuccess(consumer)
+                .onSuccess(r -> consumer.accept(r))
+                .onFailure(RestErrorHandler.forPopup(this, event))
                 .taskListener(this)
                 .exec();
     }

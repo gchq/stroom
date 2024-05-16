@@ -19,6 +19,7 @@ package stroom.annotation.client;
 import stroom.annotation.client.ChangeStatusPresenter.ChangeStatusView;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.SetStatusRequest;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -94,11 +95,16 @@ public class ChangeStatusPresenter
                         restFactory
                                 .create(annotationResource)
                                 .method(res -> res.setStatus(request))
-                                .onSuccess(values -> GWT.log("Updated " + values + " annotations"))
+                                .onSuccess(values -> {
+                                    GWT.log("Updated " + values + " annotations");
+                                    e.hide();
+                                })
+                                .onFailure(RestErrorHandler.forPopup(this, e))
                                 .taskListener(this)
                                 .exec();
+                    } else {
+                        e.hide();
                     }
-                    e.hide();
                 })
                 .fire();
     }

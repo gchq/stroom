@@ -18,6 +18,7 @@
 package stroom.explorer.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.RefreshDocumentEvent;
@@ -125,17 +126,17 @@ public class ExplorerNodeRemoveTagsPresenter
     }
 
     @Override
-    public void onHideRequest(final HidePopupRequestEvent event) {
-        if (event.isOk()) {
+    public void onHideRequest(final HidePopupRequestEvent e) {
+        if (e.isOk()) {
             final Set<String> removeTags = getView().getRemoveTags();
 
             if (GwtNullSafe.hasItems(removeTags)) {
-                removeTagsFromNodes(event, removeTags);
+                removeTagsFromNodes(e, removeTags);
             } else {
-                event.hide();
+                e.hide();
             }
         } else {
-            event.hide();
+            e.hide();
         }
     }
 
@@ -152,10 +153,7 @@ public class ExplorerNodeRemoveTagsPresenter
                                     ExplorerNodeRemoveTagsPresenter.this, docRef));
                     event.hide();
                 })
-                .onFailure(t -> AlertEvent.fireError(
-                        ExplorerNodeRemoveTagsPresenter.this,
-                        t.getMessage(),
-                        event::reset))
+                .onFailure(RestErrorHandler.forPopup(this, event))
                 .taskListener(this)
                 .exec();
     }

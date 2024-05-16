@@ -133,6 +133,8 @@ public abstract class AbstractComponentPresenter<V extends View>
                                 }
 
                                 e.hide();
+                            } else {
+                                e.reset();
                             }
                         } else {
                             e.hide();

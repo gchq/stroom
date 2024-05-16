@@ -28,9 +28,7 @@ import stroom.docref.DocRef;
 import stroom.importexport.client.presenter.ImportUtil;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.ResourceKey;
-import stroom.widget.popup.client.event.DisablePopupEvent;
-import stroom.widget.popup.client.event.EnablePopupEvent;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -53,6 +51,7 @@ public class DataUploadPresenter
     private DocRef feedRef;
     private MetaPresenter metaPresenter;
     private final DataTypeUiManager dataTypeUiManager;
+    private HidePopupRequestEvent currentHideRequest;
 
     @Inject
     public DataUploadPresenter(final EventBus eventBus,
@@ -72,6 +71,7 @@ public class DataUploadPresenter
             public void onSubmit(final SubmitEvent event) {
                 if (!valid()) {
                     event.cancel();
+                    currentHideRequest.reset();
                 } else {
                     super.onSubmit(event);
                 }
@@ -92,14 +92,13 @@ public class DataUploadPresenter
                 restFactory
                         .create(DATA_RESOURCE)
                         .method(res -> res.upload(request))
-                        .onSuccess(result -> {
-                            hide();
-                            AlertEvent.fireInfo(DataUploadPresenter.this.metaPresenter, "Uploaded file", null);
-                            metaPresenter.refresh();
-                        })
-                        .onFailure(throwable -> {
-                            error("Error uploading file: " + throwable.getMessage());
-                        })
+                        .onSuccess(result ->
+                                AlertEvent.fireInfo(DataUploadPresenter.this.metaPresenter, "Uploaded file",
+                                        () -> {
+                                            metaPresenter.refresh();
+                                            currentHideRequest.hide();
+                                        }))
+                        .onFailure(throwable -> error("Error uploading file: " + throwable.getMessage()))
                         .taskListener(DataUploadPresenter.this)
                         .exec();
             }
@@ -153,10 +152,11 @@ public class DataUploadPresenter
                 .caption("Upload")
                 .onShow(e -> onShow())
                 .onHideRequest(e -> {
+                    currentHideRequest = e;
                     if (e.isOk()) {
                         if (valid()) {
-                            // Disable popup buttons as we are submitting.
-                            disableButtons();
+//                            // Disable popup buttons as we are submitting.
+//                            disableButtons();
                             submit();
                         } else {
                             e.reset();
@@ -181,22 +181,8 @@ public class DataUploadPresenter
         getView().focus();
     }
 
-    private void hide() {
-        HidePopupEvent.builder(this)
-                .fire();
-        enableButtons();
-    }
-
     private void error(final String message) {
-        AlertEvent.fireError(this, message, this::enableButtons);
-    }
-
-    private void disableButtons() {
-        DisablePopupEvent.builder(this).fire();
-    }
-
-    private void enableButtons() {
-        EnablePopupEvent.builder(this).fire();
+        AlertEvent.fireError(this, message, currentHideRequest::reset);
     }
 
     public interface DataUploadView extends View, Focus {

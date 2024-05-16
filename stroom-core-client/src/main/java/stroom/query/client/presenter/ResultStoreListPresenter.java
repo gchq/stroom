@@ -213,10 +213,7 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
     private void edit() {
         final ResultStoreInfo selected = getSelectionModel().getSelected();
         if (selected != null) {
-            resultStoreSettingsPresenter.show(selected, "Change Result Store Settings", ok -> {
-                resultStoreSettingsPresenter.hide();
-                refresh();
-            });
+            resultStoreSettingsPresenter.show(selected, "Change Result Store Settings", ok -> refresh());
         }
     }
 

@@ -286,14 +286,13 @@ public class FindInContentPresenter
                     .popupSize(popupSize)
                     .caption("Find In Content")
                     .onShow(e -> getView().focus())
-                    .onHideRequest(HidePopupRequestEvent::hide)
                     .onHide(e -> showing = false)
                     .fire();
         }
     }
 
     private void hide() {
-        HidePopupEvent.builder(this).fire();
+        HidePopupRequestEvent.builder(this).fire();
     }
 
     @ProxyCodeSplit

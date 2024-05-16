@@ -27,6 +27,7 @@ import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.task.client.TaskListener;
 import stroom.widget.popup.client.event.DialogEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -124,7 +125,7 @@ public class CreateDocumentPresenter
                 AlertEvent.fireWarn(
                         CreateDocumentPresenter.this,
                         "No parent folder has been selected",
-                        null);
+                        e::reset);
             } else {
                 String docName = getView().getName();
                 if (docName != null) {
@@ -135,11 +136,11 @@ public class CreateDocumentPresenter
                     AlertEvent.fireWarn(
                             CreateDocumentPresenter.this,
                             "You must provide a name for the new " + docType.toLowerCase(),
-                            null);
+                            e::reset);
                 } else {
                     CreateDocumentEvent.fire(
                             CreateDocumentPresenter.this,
-                            CreateDocumentPresenter.this,
+                            e,
                             docType,
                             docName,
                             destinationFolder,
@@ -156,6 +157,11 @@ public class CreateDocumentPresenter
         return entityTreePresenter.getSelectedItem();
     }
 
+    @Override
+    public synchronized void setTaskListener(final TaskListener taskListener) {
+        super.setTaskListener(taskListener);
+        entityTreePresenter.setTaskListener(taskListener);
+    }
 
     // --------------------------------------------------------------------------------
 

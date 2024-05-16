@@ -14,6 +14,7 @@ import stroom.query.shared.UpdateStoreRequest;
 import stroom.task.client.TaskListener;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.ResultPage;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.view.client.Range;
@@ -131,6 +132,7 @@ public class ResultStoreModel {
                 .create(RESULT_STORE_RESOURCE)
                 .method(res -> res.update(nodeName, updateStoreRequest))
                 .onSuccess(consumer)
+                .onFailure(t -> consumer.accept(false))
                 .taskListener(taskListener)
                 .exec();
     }

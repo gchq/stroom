@@ -46,7 +46,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
-public class ResizableDialog extends AbstractPopupPanel {
+public class ResizableDialog extends AbstractPopupPanel implements TaskListener {
 
     private static final Binder binder = GWT.create(Binder.class);
 
@@ -68,6 +68,7 @@ public class ResizableDialog extends AbstractPopupPanel {
     private int windowWidth;
     private int windowHeight;
     private HandlerRegistration resizeHandlerRegistration;
+    private int taskCount;
 
     /**
      * Creates an empty dialog box. It should not be shown until its child
@@ -76,7 +77,7 @@ public class ResizableDialog extends AbstractPopupPanel {
     ResizableDialog(final DialogActionUiHandlers dialogEventHandler,
                     final PopupSize popupSize) {
         this(dialogEventHandler, false, popupSize);
-        spinner.setVisible(false);
+        setSpinnerVisible(false);
     }
 
     /**
@@ -329,8 +330,29 @@ public class ResizableDialog extends AbstractPopupPanel {
         resizeHandle.setVisible(enabled);
     }
 
-    public TaskListener getTaskListener() {
-        return spinner;
+    @Override
+    public void incrementTaskCount() {
+        taskCount++;
+        setSpinnerVisible(taskCount > 0);
+    }
+
+    @Override
+    public void decrementTaskCount() {
+        taskCount--;
+
+        if (taskCount < 0) {
+            GWT.log("Negative task count");
+        }
+
+        setSpinnerVisible(taskCount > 0);
+    }
+
+    private void setSpinnerVisible(final boolean visible) {
+        if (visible) {
+            spinner.removeStyleName("spinner__hidden");
+        } else {
+            spinner.addStyleName("spinner__hidden");
+        }
     }
 
     private enum DragType {

@@ -1,5 +1,6 @@
 package stroom.schedule.client;
 
+import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.job.shared.GetScheduledTimesRequest;
 import stroom.job.shared.ScheduleRestriction;
@@ -45,6 +46,7 @@ public class ScheduledTimeClient implements HasHandlers {
                 .create(SCHEDULED_TIME_RESOURCE)
                 .method(res -> res.get(request))
                 .onSuccess(consumer)
+                .onFailure(new DefaultErrorHandler(this, () -> consumer.accept(null)))
                 .taskListener(taskListener)
                 .exec();
     }

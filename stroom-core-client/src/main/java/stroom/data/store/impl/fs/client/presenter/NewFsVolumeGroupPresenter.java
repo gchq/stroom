@@ -19,6 +19,7 @@ package stroom.data.store.impl.fs.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.NameDocumentView;
 import stroom.widget.popup.client.event.DialogEvent;
@@ -93,6 +94,7 @@ public class NewFsVolumeGroupPresenter
                                 consumer.accept(name);
                             }
                         })
+                        .onFailure(RestErrorHandler.forPopup(this, e))
                         .taskListener(this)
                         .exec();
             }

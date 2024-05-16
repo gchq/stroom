@@ -22,7 +22,6 @@ import stroom.query.api.v2.LifespanInfo;
 import stroom.query.api.v2.ResultStoreInfo;
 import stroom.query.client.presenter.ResultStoreSettingsPresenter.ResultStoreSettingsView;
 import stroom.query.shared.UpdateStoreRequest;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -59,25 +58,24 @@ public class ResultStoreSettingsPresenter extends MyPresenterWidget<ResultStoreS
                 .popupSize(popupSize)
                 .caption(title)
                 .onShow(event -> getView().focus())
-                .onHideRequest(event -> {
-                    if (event.isOk()) {
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
                         final UpdateStoreRequest updateStoreRequest = write();
                         try {
                             resultStoreModel.updateSettings(resultStoreInfo.getNodeName(),
-                                    updateStoreRequest,
-                                    consumer, this);
-                        } catch (final RuntimeException e) {
+                                    updateStoreRequest, r -> {
+                                        consumer.accept(r);
+                                        e.hide();
+                                    }, this);
+                        } catch (final RuntimeException ex) {
                             AlertEvent.fireError(ResultStoreSettingsPresenter.this,
-                                    e.getMessage(), null);
+                                    ex.getMessage(), e::reset);
                         }
                     } else {
                         consumer.accept(false);
+                        e.hide();
                     }
                 }).fire();
-    }
-
-    void hide() {
-        HidePopupEvent.builder(this).fire();
     }
 
     private void read(final ResultStoreInfo resultStoreInfo) {

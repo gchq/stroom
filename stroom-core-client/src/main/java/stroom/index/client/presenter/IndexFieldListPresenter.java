@@ -255,22 +255,22 @@ public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, Lu
         final Set<String> otherNames = getFieldNames();
 
         indexFieldEditPresenter.read(LuceneIndexField.builder().build(), otherNames);
-        indexFieldEditPresenter.show("New Field", event -> {
-            if (event.isOk()) {
+        indexFieldEditPresenter.show("New Field", e -> {
+            if (e.isOk()) {
                 try {
                     final LuceneIndexField indexField = indexFieldEditPresenter.write();
                     indexFields.add(indexField);
                     selectionModel.setSelected(indexField);
                     refresh();
 
-                    event.hide();
+                    e.hide();
                     DirtyEvent.fire(IndexFieldListPresenter.this, true);
 
-                } catch (final RuntimeException e) {
-                    AlertEvent.fireError(IndexFieldListPresenter.this, e.getMessage(), null);
+                } catch (final RuntimeException ex) {
+                    AlertEvent.fireError(IndexFieldListPresenter.this, ex.getMessage(), e::reset);
                 }
             } else {
-                event.hide();
+                e.hide();
             }
         });
     }
@@ -282,8 +282,8 @@ public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, Lu
             otherNames.remove(existingField.getFldName());
 
             indexFieldEditPresenter.read(existingField, otherNames);
-            indexFieldEditPresenter.show("Edit Field", event -> {
-                if (event.isOk()) {
+            indexFieldEditPresenter.show("Edit Field", e -> {
+                if (e.isOk()) {
                     try {
                         final LuceneIndexField indexField = indexFieldEditPresenter.write();
                         if (!indexField.equals(existingField)) {
@@ -294,17 +294,16 @@ public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, Lu
                             selectionModel.setSelected(indexField);
                             refresh();
 
-                            event.hide();
+                            e.hide();
                             DirtyEvent.fire(IndexFieldListPresenter.this, true);
                         } else {
-                            event.hide();
+                            e.hide();
                         }
-
-                    } catch (final RuntimeException e) {
-                        AlertEvent.fireError(IndexFieldListPresenter.this, e.getMessage(), null);
+                    } catch (final RuntimeException ex) {
+                        AlertEvent.fireError(IndexFieldListPresenter.this, ex.getMessage(), e::reset);
                     }
                 } else {
-                    event.hide();
+                    e.hide();
                 }
             });
         }

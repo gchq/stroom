@@ -420,7 +420,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                         .taskListener(this)
                                         .exec();
                             }
-
                             e.hide();
                         })
                         .fire();

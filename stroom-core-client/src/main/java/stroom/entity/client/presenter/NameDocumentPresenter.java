@@ -105,7 +105,7 @@ public class NameDocumentPresenter
                         "You must provide a new name for " + entity.getDisplayValue(), e::reset);
             } else {
                 RenameDocumentEvent.fire(NameDocumentPresenter.this,
-                        NameDocumentPresenter.this,
+                        e,
                         entity,
                         entityName);
             }

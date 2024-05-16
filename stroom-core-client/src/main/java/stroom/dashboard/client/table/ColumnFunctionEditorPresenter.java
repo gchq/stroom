@@ -22,6 +22,7 @@ import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.table.ColumnFunctionEditorPresenter.ColumnFunctionEditorView;
 import stroom.dashboard.shared.DashboardResource;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
@@ -158,10 +159,10 @@ public class ColumnFunctionEditorPresenter
                                             .build());
                                     e.hide();
                                 } else {
-                                    AlertEvent.fireError(tablePresenter, result.getString(), null);
-                                    e.reset();
+                                    AlertEvent.fireError(tablePresenter, result.getString(), e::reset);
                                 }
                             })
+                            .onFailure(RestErrorHandler.forPopup(this, e))
                             .taskListener(this)
                             .exec();
                 }

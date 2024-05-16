@@ -32,14 +32,14 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 public class NamePresenter
         extends MyPresenterWidget<NamePresenter.NameView>
         implements HidePopupRequestEvent.Handler,
         DialogActionUiHandlers {
 
-    private Consumer<String> nameConsumer;
+    private BiConsumer<String, HidePopupRequestEvent> nameConsumer;
 
     @Inject
     public NamePresenter(final EventBus eventBus, final NameView view) {
@@ -48,7 +48,7 @@ public class NamePresenter
 
     public void show(final String name,
                      final String caption,
-                     final Consumer<String> nameConsumer) {
+                     final BiConsumer<String, HidePopupRequestEvent> nameConsumer) {
         this.nameConsumer = nameConsumer;
         getView().setName(name);
         getView().setUiHandlers(this);
@@ -71,10 +71,10 @@ public class NamePresenter
             if (entityName == null || entityName.length() == 0) {
                 AlertEvent.fireWarn(this,
                         "You must provide a name",
-                        null);
+                        e::reset);
 
             } else {
-                nameConsumer.accept(entityName);
+                nameConsumer.accept(entityName, e);
             }
         } else {
             e.hide();

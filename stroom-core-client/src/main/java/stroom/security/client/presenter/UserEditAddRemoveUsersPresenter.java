@@ -85,9 +85,7 @@ public class UserEditAddRemoveUsersPresenter
                 restFactory
                         .create(APP_PERMISSION_RESOURCE)
                         .method(res -> res.changeUser(request))
-                        .onSuccess(result -> {
-                            refresh();
-                        })
+                        .onSuccess(result -> refresh())
                         .taskListener(this)
                         .exec();
             };

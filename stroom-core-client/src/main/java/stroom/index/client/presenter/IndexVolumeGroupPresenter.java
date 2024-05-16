@@ -20,6 +20,8 @@ package stroom.index.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.grid.client.WrapperView;
+import stroom.dispatch.client.DefaultErrorHandler;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
@@ -110,20 +112,21 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
 
     private void add() {
         final NewIndexVolumeGroupPresenter presenter = newIndexVolumeGroupPresenterProvider.get();
-        presenter.show("", name -> {
+        presenter.show("", (name, e) -> {
             if (name != null) {
                 restFactory
                         .create(INDEX_VOLUME_GROUP_RESOURCE)
                         .method(res -> res.create(name))
                         .onSuccess(indexVolumeGroup -> {
                             edit(indexVolumeGroup);
-                            presenter.hide();
+                            e.hide();
                             refresh();
                         })
+                        .onFailure(RestErrorHandler.forPopup(this, e))
                         .taskListener(this)
                         .exec();
             } else {
-                presenter.hide();
+                e.hide();
             }
         });
     }
@@ -142,11 +145,11 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
 
     private void edit(final IndexVolumeGroup indexVolumeGroup) {
         final IndexVolumeGroupEditPresenter editor = editProvider.get();
-        editor.show(indexVolumeGroup, "Edit Volume Group - " + indexVolumeGroup.getName(), result -> {
+        editor.show(indexVolumeGroup, "Edit Volume Group - " + indexVolumeGroup.getName(), (result, e) -> {
             if (result != null) {
                 refresh();
             }
-            editor.hide();
+            e.hide();
         });
     }
 

@@ -319,7 +319,7 @@ public class DocumentPluginEventManager extends Plugin {
                         event.getPermissionInheritance(),
                         explorerNode -> {
                             // Hide the create document presenter.
-                            HidePopupEvent.builder(event.getPresenter()).fire();
+                            event.getHidePopupRequestEvent().hide();
 
                             highlight(explorerNode);
 
@@ -342,7 +342,7 @@ public class DocumentPluginEventManager extends Plugin {
                 event.getDocName(),
                 event.getPermissionInheritance(), result -> {
                     // Hide the copy document presenter.
-                    HidePopupEvent.builder(event.getPresenter()).fire();
+                    event.getHidePopupRequestEvent().hide();
 
                     if (result.getMessage().length() > 0) {
                         AlertEvent.fireInfo(DocumentPluginEventManager.this,
@@ -360,7 +360,7 @@ public class DocumentPluginEventManager extends Plugin {
         registerHandler(getEventBus().addHandler(MoveDocumentEvent.getType(), event -> move(
                 event.getExplorerNodes(), event.getDestinationFolder(), event.getPermissionInheritance(), result -> {
                     // Hide the move document presenter.
-                    HidePopupEvent.builder(event.getPresenter()).fire();
+                    event.getHidePopupRequestEvent().hide();
 
                     if (result.getMessage().length() > 0) {
                         AlertEvent.fireInfo(DocumentPluginEventManager.this,
@@ -397,7 +397,7 @@ public class DocumentPluginEventManager extends Plugin {
         // 9. Handle entity rename events.
         registerHandler(getEventBus().addHandler(RenameDocumentEvent.getType(), event -> {
             // Hide the rename document presenter.
-            HidePopupEvent.builder(event.getPresenter()).fire();
+            event.getHidePopupRequestEvent().hide();
 
             rename(event.getExplorerNode(), event.getDocName(), explorerNode -> {
                 highlight(explorerNode);

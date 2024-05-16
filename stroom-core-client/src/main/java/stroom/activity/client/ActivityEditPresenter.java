@@ -23,10 +23,12 @@ import stroom.activity.shared.Activity.Prop;
 import stroom.activity.shared.ActivityResource;
 import stroom.activity.shared.ActivityValidationResult;
 import stroom.alert.client.event.AlertEvent;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
 import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -68,7 +70,8 @@ public class ActivityEditPresenter
         this.uiConfigCache = uiConfigCache;
     }
 
-    public void show(final Activity activity, final Consumer<Activity> consumer) {
+    public void show(final Activity activity,
+                     final Consumer<Activity> consumer) {
         this.activity = activity;
         uiConfigCache.get(result -> {
             if (result != null) {
@@ -89,7 +92,7 @@ public class ActivityEditPresenter
                             .onShow(e -> read())
                             .onHideRequest(e -> {
                                 if (e.isOk()) {
-                                    write(consumer);
+                                    write(consumer, e);
                                 } else {
                                     consumer.accept(activity);
                                     e.hide();
@@ -180,7 +183,8 @@ public class ActivityEditPresenter
         }
     }
 
-    protected void write(final Consumer<Activity> consumer) {
+    protected void write(final Consumer<Activity> consumer,
+                         final HidePopupRequestEvent event) {
         final List<Element> inputElements = new ArrayList<>();
         findInputElements(getView().getHtml().getElement().getChildNodes(), inputElements);
 
@@ -214,20 +218,22 @@ public class ActivityEditPresenter
         restFactory
                 .create(ACTIVITY_RESOURCE)
                 .method(res -> res.validate(activity))
-                .onSuccess(result -> afterValidation(result, details, consumer))
+                .onSuccess(result -> afterValidation(result, details, consumer, event))
+                .onFailure(RestErrorHandler.forPopup(this, event))
                 .taskListener(this)
                 .exec();
     }
 
     private void afterValidation(final ActivityValidationResult validationResult,
                                  final ActivityDetails details,
-                                 final Consumer<Activity> consumer) {
+                                 final Consumer<Activity> consumer,
+                                 final HidePopupRequestEvent event) {
         if (!validationResult.isValid()) {
             AlertEvent.fireWarn(
                     ActivityEditPresenter.this,
                     "Validation Error",
                     validationResult.getMessages(),
-                    null);
+                    event::reset);
 
         } else {
             // Save the activity.
@@ -239,25 +245,30 @@ public class ActivityEditPresenter
                             activity = result;
                             activity.setDetails(details);
 
-                            update(activity, details, consumer);
+                            update(activity, details, consumer, event);
                         })
+                        .onFailure(RestErrorHandler.forPopup(this, event))
                         .taskListener(this)
                         .exec();
             } else {
-                update(activity, details, consumer);
+                update(activity, details, consumer, event);
             }
         }
     }
 
-    private void update(final Activity activity, final ActivityDetails details, final Consumer<Activity> consumer) {
+    private void update(final Activity activity,
+                        final ActivityDetails details,
+                        final Consumer<Activity> consumer,
+                        final HidePopupRequestEvent event) {
         restFactory
                 .create(ACTIVITY_RESOURCE)
                 .method(res -> res.update(activity.getId(), activity))
                 .onSuccess(result -> {
                     ActivityEditPresenter.this.activity = result;
                     consumer.accept(result);
-                    hide();
+                    event.hide();
                 })
+                .onFailure(RestErrorHandler.forPopup(this, event))
                 .taskListener(this)
                 .exec();
     }

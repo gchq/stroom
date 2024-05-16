@@ -19,6 +19,7 @@ package stroom.index.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolume;
@@ -32,7 +33,7 @@ import stroom.query.api.v2.ExpressionUtil;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DelayedUpdate;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -47,7 +48,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 public class IndexVolumeGroupEditPresenter
         extends MyPresenterWidget<IndexVolumeGroupEditPresenter.IndexVolumeGroupEditView> {
@@ -145,11 +146,11 @@ public class IndexVolumeGroupEditPresenter
 
     private void editVolume(final IndexVolume indexVolume, final String caption) {
         final IndexVolumeEditPresenter editor = editProvider.get();
-        editor.show(indexVolume, caption, result -> {
+        editor.show(indexVolume, caption, (result, e) -> {
                     if (result != null) {
                         volumeStatusListPresenter.refresh();
                     }
-                    editor.hide();
+                    e.hide();
                 },
                 volumeStatusListPresenter.getTaskListener());
     }
@@ -184,7 +185,9 @@ public class IndexVolumeGroupEditPresenter
         deleteButton.setEnabled(enabled);
     }
 
-    void show(final IndexVolumeGroup volumeGroup, final String title, final Consumer<IndexVolumeGroup> consumer) {
+    void show(final IndexVolumeGroup volumeGroup,
+              final String title,
+              final BiConsumer<IndexVolumeGroup, HidePopupRequestEvent> consumer) {
         if (!opening) {
             opening = true;
             final ExpressionOperator expression = ExpressionUtil.equalsId(IndexVolumeFields.GROUP_ID,
@@ -201,7 +204,7 @@ public class IndexVolumeGroupEditPresenter
 
     private void open(final IndexVolumeGroup volumeGroup,
                       final String title,
-                      final Consumer<IndexVolumeGroup> consumer) {
+                      final BiConsumer<IndexVolumeGroup, HidePopupRequestEvent> consumer) {
         if (!open) {
             open = true;
 
@@ -214,21 +217,25 @@ public class IndexVolumeGroupEditPresenter
                     .popupSize(popupSize)
                     .caption(title)
                     .onShow(e -> getView().focus())
-                    .onHideRequest(event -> {
-                        if (event.isOk()) {
+                    .onHideRequest(e -> {
+                        if (e.isOk()) {
                             volumeGroup.setName(getView().getName());
                             try {
                                 doWithGroupNameValidation(getView().getName(), volumeGroup.getId(), () ->
-                                        createVolumeGroup(consumer, volumeGroup));
-                            } catch (final RuntimeException e) {
+                                        createVolumeGroup(consumer, volumeGroup, e), e);
+                            } catch (final RuntimeException ex) {
                                 AlertEvent.fireError(
                                         IndexVolumeGroupEditPresenter.this,
-                                        e.getMessage(),
-                                        null);
+                                        ex.getMessage(),
+                                        e::reset);
                             }
                         } else {
-                            consumer.accept(null);
+                            consumer.accept(null, e);
                         }
+                    })
+                    .onHide(e -> {
+                        open = false;
+                        opening = false;
                     })
                     .fire();
         }
@@ -236,12 +243,13 @@ public class IndexVolumeGroupEditPresenter
 
     private void doWithGroupNameValidation(final String groupName,
                                            final Integer groupId,
-                                           final Runnable work) {
+                                           final Runnable work,
+                                           final HidePopupRequestEvent event) {
         if (groupName == null || groupName.isEmpty()) {
             AlertEvent.fireError(
                     IndexVolumeGroupEditPresenter.this,
                     "You must provide a name for the index volume group.",
-                    null);
+                    event::reset);
         } else {
             restFactory
                     .create(INDEX_VOLUME_GROUP_RESOURCE)
@@ -253,30 +261,27 @@ public class IndexVolumeGroupEditPresenter
                                     "Group name '"
                                             + groupName
                                             + "' is already in use by another group.",
-                                    null);
+                                    event::reset);
                         } else {
                             work.run();
                         }
                     })
+                    .onFailure(RestErrorHandler.forPopup(this, event))
                     .taskListener(this)
                     .exec();
         }
     }
 
-    private void createVolumeGroup(final Consumer<IndexVolumeGroup> consumer,
-                                   final IndexVolumeGroup volumeGroup) {
+    private void createVolumeGroup(final BiConsumer<IndexVolumeGroup, HidePopupRequestEvent> consumer,
+                                   final IndexVolumeGroup volumeGroup,
+                                   final HidePopupRequestEvent event) {
         restFactory
                 .create(INDEX_VOLUME_GROUP_RESOURCE)
                 .method(res -> res.update(volumeGroup.getId(), volumeGroup))
-                .onSuccess(consumer)
+                .onSuccess(r -> consumer.accept(r, event))
+                .onFailure(RestErrorHandler.forPopup(this, event))
                 .taskListener(this)
                 .exec();
-    }
-
-    void hide() {
-        HidePopupEvent.builder(this).fire();
-        open = false;
-        opening = false;
     }
 
     public interface IndexVolumeGroupEditView extends View, Focus {

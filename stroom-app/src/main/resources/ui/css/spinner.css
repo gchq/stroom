@@ -18,6 +18,12 @@
 }
 
 .spinner {
+
+}
+
+.spinner__hidden .spinner-large {
+    opacity: 0;
+    width: 0;
 }
 
 .spinner-center {
@@ -56,6 +62,11 @@
     border-radius: 50%;
     -webkit-animation: spinner-border .75s linear infinite;
     animation: spinner-border .75s linear infinite;
+
+    transition: width 0.5s ease-in-out, opacity 0.5s ease-in-out;
+    -webkit-transition: width 0.5s ease-in-out, opacity 0.5s ease-in-out;
+    -moz-transition: width 0.5s ease-in-out, opacity 0.5s ease-in-out;
+    -o-transition: width 0.5s ease-in-out, opacity 0.5s ease-in-out;
 }
 
 .spinner-blue {

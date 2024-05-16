@@ -93,7 +93,6 @@ public class RenameTabPresenter
                 dashboardPresenter.onDirty();
             }
         }
-
         e.hide();
     }
 

@@ -18,11 +18,11 @@
 package stroom.index.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.NameDocumentView;
 import stroom.index.shared.IndexVolumeGroupResource;
 import stroom.widget.popup.client.event.DialogEvent;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -34,14 +34,14 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 public class NewIndexVolumeGroupPresenter
         extends MyPresenterWidget<NameDocumentView>
         implements HidePopupRequestEvent.Handler,
         DialogActionUiHandlers {
 
-    private Consumer<String> consumer;
+    private BiConsumer<String, HidePopupRequestEvent> consumer;
 
     private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE =
             GWT.create(IndexVolumeGroupResource.class);
@@ -56,7 +56,7 @@ public class NewIndexVolumeGroupPresenter
         this.restFactory = restFactory;
     }
 
-    public void show(final String name, final Consumer<String> consumer) {
+    public void show(final String name, final BiConsumer<String, HidePopupRequestEvent> consumer) {
         this.consumer = consumer;
         getView().setUiHandlers(this);
         getView().setName(name);
@@ -77,7 +77,7 @@ public class NewIndexVolumeGroupPresenter
                 AlertEvent.fireError(
                         NewIndexVolumeGroupPresenter.this,
                         "You must provide a name",
-                        null);
+                        e::reset);
             } else {
                 restFactory
                         .create(INDEX_VOLUME_GROUP_RESOURCE)
@@ -89,21 +89,18 @@ public class NewIndexVolumeGroupPresenter
                                         "Group name '"
                                                 + name
                                                 + "' is already in use by another group.",
-                                        null);
+                                        e::reset);
                             } else {
-                                consumer.accept(name);
+                                consumer.accept(name, e);
                             }
                         })
+                        .onFailure(RestErrorHandler.forPopup(this, e))
                         .taskListener(this)
                         .exec();
             }
         } else {
-            consumer.accept(null);
+            consumer.accept(null, e);
         }
-    }
-
-    public void hide() {
-        HidePopupEvent.builder(this).fire();
     }
 
     @Override

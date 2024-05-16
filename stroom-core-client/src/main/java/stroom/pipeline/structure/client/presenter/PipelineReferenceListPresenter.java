@@ -304,13 +304,13 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
 
                     if (pipelineReference.getPipeline() == null) {
                         AlertEvent.fireError(PipelineReferenceListPresenter.this,
-                                "You must specify a pipeline to use.", null);
+                                "You must specify a pipeline to use.", e::reset);
                     } else if (pipelineReference.getFeed() == null) {
                         AlertEvent.fireError(PipelineReferenceListPresenter.this, "You must specify a feed to use.",
-                                null);
+                                e::reset);
                     } else if (pipelineReference.getStreamType() == null) {
                         AlertEvent.fireError(PipelineReferenceListPresenter.this,
-                                "You must specify a stream type to use.", null);
+                                "You must specify a stream type to use.", e::reset);
                     } else {
                         if (!added.contains(pipelineReference)) {
                             added.add(pipelineReference);

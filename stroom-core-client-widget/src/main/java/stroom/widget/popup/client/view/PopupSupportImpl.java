@@ -252,7 +252,7 @@ public class PopupSupportImpl implements PopupSupport {
                 }
                 case DIALOG: {
                     final ResizableDialog resizableDialog = new ResizableDialog(dialogActionHandler, popupSize);
-                    hasTaskListener.setTaskListener(resizableDialog.getTaskListener());
+                    hasTaskListener.setTaskListener(resizableDialog);
                     resizableDialog.setContent(view.asWidget());
                     popup = resizableDialog;
 
@@ -265,7 +265,7 @@ public class PopupSupportImpl implements PopupSupport {
                     dialogActionHandler = closeContent;
 
                     final ResizableDialog resizableDialog = new ResizableDialog(closeContent, popupSize);
-                    hasTaskListener.setTaskListener(resizableDialog.getTaskListener());
+                    hasTaskListener.setTaskListener(resizableDialog);
                     resizableDialog.setContent(closeContent);
                     popup = resizableDialog;
 
@@ -278,7 +278,7 @@ public class PopupSupportImpl implements PopupSupport {
                     dialogButtons = okCancelContent;
 
                     final ResizableDialog resizableDialog = new ResizableDialog(okCancelContent, popupSize);
-                    hasTaskListener.setTaskListener(resizableDialog.getTaskListener());
+                    hasTaskListener.setTaskListener(resizableDialog);
                     resizableDialog.setContent(okCancelContent);
                     popup = resizableDialog;
 
@@ -292,7 +292,7 @@ public class PopupSupportImpl implements PopupSupport {
                     dialogButtons = acceptRejectContent;
 
                     final ResizableDialog resizableDialog = new ResizableDialog(acceptRejectContent, popupSize);
-                    hasTaskListener.setTaskListener(resizableDialog.getTaskListener());
+                    hasTaskListener.setTaskListener(resizableDialog);
                     resizableDialog.setContent(acceptRejectContent);
                     popup = resizableDialog;
 
@@ -318,7 +318,7 @@ public class PopupSupportImpl implements PopupSupport {
                     dialogButtons = closeContent;
 
                     final Dialog dialog = new Dialog(closeContent);
-                    hasTaskListener.setTaskListener(dialog.getTaskListener());
+                    hasTaskListener.setTaskListener(dialog);
                     dialog.setContent(closeContent);
                     popup = dialog;
 
@@ -331,7 +331,7 @@ public class PopupSupportImpl implements PopupSupport {
                     dialogButtons = okCancelContent;
 
                     final Dialog dialog = new Dialog(okCancelContent);
-                    hasTaskListener.setTaskListener(dialog.getTaskListener());
+                    hasTaskListener.setTaskListener(dialog);
                     dialog.setContent(okCancelContent);
                     popup = dialog;
 
@@ -344,7 +344,7 @@ public class PopupSupportImpl implements PopupSupport {
                     dialogButtons = acceptRejectContent;
 
                     final Dialog dialog = new Dialog(acceptRejectContent);
-                    hasTaskListener.setTaskListener(dialog.getTaskListener());
+                    hasTaskListener.setTaskListener(dialog);
                     dialog.setContent(acceptRejectContent);
                     popup = dialog;
 
