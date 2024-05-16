@@ -95,7 +95,24 @@ public class DuplicateCheckFactoryImpl2 implements DuplicateCheckFactory {
                             lmdbKV.getRowKey(),
                             lmdbKV.getRowValue(),
                             PutFlags.MDB_NODUPDATA);
-                    uncommittedCount++;
+                    if (result) {
+                        LOGGER.debug(() -> "New row (row=" +
+                                row +
+                                ", lmdbKv=" +
+                                lmdbKV +
+                                ", lmdbEnvDir=" +
+                                lmdbEnv.getDir() +
+                                ")");
+                        uncommittedCount++;
+                    } else {
+                        LOGGER.debug(() -> "Duplicate row (row=" +
+                                row +
+                                ", lmdbKv=" +
+                                lmdbKV +
+                                ", lmdbEnvDir=" +
+                                lmdbEnv.getDir() +
+                                ")");
+                    }
                 } finally {
                     byteBufferFactory.release(lmdbKV.getRowKey());
                     byteBufferFactory.release(lmdbKV.getRowValue());

@@ -11,7 +11,6 @@ import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Singleton
 class SearchableProviderImpl implements SearchableProvider, HasDataSourceDocRefs {
@@ -25,10 +24,7 @@ class SearchableProviderImpl implements SearchableProvider, HasDataSourceDocRefs
 
     @Override
     public List<DocRef> getDataSourceDocRefs() {
-        return searchables.stream()
-                .map(Searchable::getDocRef)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+        return list();
     }
 
     @Override
@@ -41,6 +37,9 @@ class SearchableProviderImpl implements SearchableProvider, HasDataSourceDocRefs
 
     @Override
     public List<DocRef> list() {
-        return searchables.stream().map(Searchable::getDocRef).toList();
+        return searchables.stream()
+                .map(Searchable::getDocRef)
+                .filter(Objects::nonNull)
+                .toList();
     }
 }

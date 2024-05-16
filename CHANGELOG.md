@@ -13,6 +13,41 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.4-beta.13] - 2024-05-15
+
+* Issue **#4256** : Change field types from `Long` to `Date` or `Duration` for various data sources. See GitHub issue for full details.
+
+* Issue **#4266** : Add types `Direct Buffers Used` and `Mapped Buffers Used` to the `Memory` internal statistic. These report the bytes used by off-heap direct/mapped byte buffers. Direct buffers are used heavily in search and reference data.
+
+* Issue **#4270** : Fix key binds like `ct` triggering when in a query term value edit field.
+
+* Issue **#4272** : Fix function and structure editor snippets not working in Query and column expression editors.
+
+
+## [v7.4-beta.12] - 2024-05-15
+
+* Issue **#4268** : Fix NPE affecting querying.
+
+
+## [v7.4-beta.11] - 2024-05-15
+
+* Issue **#4267** : Fix logout resource for internal IdP.
+
+* Issue **#4268** : Fix NPE affecting querying.
+
+
+## [v7.4-beta.10] - 2024-05-15
+
+* Issue **#4258** : Stop logging unnecessary error when shard deleted.
+
+* Issue **#4260** : Add debug for deduplication checks.
+
+
+## [v7.4-beta.9] - 2024-05-15
+
+* Issue **#4264** : Stop workers requesting 0 tasks from the master node.
+
+
 ## [v7.4-beta.8] - 2024-05-02
 
 * Issue **#4253** : Prevent `CancellationException` being seen when user stops query.
@@ -523,7 +558,12 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.8...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.13...HEAD
+[v7.4-beta.13]: https://github.com/gchq/stroom/compare/v7.4-beta.12...v7.4-beta.13
+[v7.4-beta.12]: https://github.com/gchq/stroom/compare/v7.4-beta.11...v7.4-beta.12
+[v7.4-beta.11]: https://github.com/gchq/stroom/compare/v7.4-beta.10...v7.4-beta.11
+[v7.4-beta.10]: https://github.com/gchq/stroom/compare/v7.4-beta.9...v7.4-beta.10
+[v7.4-beta.9]: https://github.com/gchq/stroom/compare/v7.4-beta.8...v7.4-beta.9
 [v7.4-beta.8]: https://github.com/gchq/stroom/compare/v7.4-beta.7...v7.4-beta.8
 [v7.4-beta.7]: https://github.com/gchq/stroom/compare/v7.4-beta.6...v7.4-beta.7
 [v7.4-beta.6]: https://github.com/gchq/stroom/compare/v7.4-beta.5...v7.4-beta.6

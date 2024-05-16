@@ -40,6 +40,7 @@ import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValInteger;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
@@ -254,9 +255,9 @@ public class MetaDaoImpl implements MetaDao {
         valueMapper.map(MetaFields.STATUS, meta.STATUS, v -> Optional.ofNullable(MetaStatusId.getStatus(v))
                 .map(w -> (Val) ValString.create(w.getDisplayValue()))
                 .orElse(ValNull.INSTANCE));
-        valueMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, ValLong::create);
-        valueMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, ValLong::create);
-        valueMapper.map(MetaFields.EFFECTIVE_TIME, meta.EFFECTIVE_TIME, ValLong::create);
+        valueMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, ValDate::create);
+        valueMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, ValDate::create);
+        valueMapper.map(MetaFields.EFFECTIVE_TIME, meta.EFFECTIVE_TIME, ValDate::create);
     }
 
     private Val getPipelineName(final String uuid) {
