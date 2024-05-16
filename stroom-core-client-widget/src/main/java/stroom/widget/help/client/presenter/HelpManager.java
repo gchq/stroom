@@ -64,7 +64,8 @@ public class HelpManager {
             // PopupPanel's constructor takes 'auto-hide' as its boolean parameter.
             // If this is set, the panel closes itself automatically when the user
             // clicks outside of it.
-            super(e -> {},true, false);
+            super(e -> {
+            }, true, false);
 
             setWidget(new HTMLPanel(content));
         }

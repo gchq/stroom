@@ -50,7 +50,11 @@ public class MoveDocumentEvent extends GwtEvent<MoveDocumentEvent.Handler> {
                             final List<ExplorerNode> explorerNodes,
                             final ExplorerNode destinationFolder,
                             final PermissionInheritance permissionInheritance) {
-        handlers.fireEvent(new MoveDocumentEvent(hidePopupRequestEvent, explorerNodes, destinationFolder, permissionInheritance));
+        handlers.fireEvent(new MoveDocumentEvent(
+                hidePopupRequestEvent,
+                explorerNodes,
+                destinationFolder,
+                permissionInheritance));
     }
 
     public static Type<Handler> getType() {

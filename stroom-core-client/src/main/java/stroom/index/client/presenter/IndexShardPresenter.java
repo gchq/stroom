@@ -548,15 +548,14 @@ public class IndexShardPresenter
     private void doFlush() {
         delayedUpdate.reset();
         nodeManager.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
-                    restFactory
-                            .create(INDEX_RESOURCE)
-                            .method(res -> res.flushIndexShards(nodeName, selectionCriteria))
-                            .onSuccess(result -> delayedUpdate.update())
-                            .taskListener(getView())
-                            .exec();
-                }), throwable -> {
-                },
-                getView());
+            restFactory
+                    .create(INDEX_RESOURCE)
+                    .method(res -> res.flushIndexShards(nodeName, selectionCriteria))
+                    .onSuccess(result -> delayedUpdate.update())
+                    .taskListener(getView())
+                    .exec();
+        }), throwable -> {
+        }, getView());
 
         AlertEvent.fireInfo(IndexShardPresenter.this,
                 "Selected index shards will be flushed. Please be patient as this may take some time.",
@@ -566,15 +565,14 @@ public class IndexShardPresenter
     private void doDelete() {
         delayedUpdate.reset();
         nodeManager.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
-                    restFactory
-                            .create(INDEX_RESOURCE)
-                            .method(res -> res.deleteIndexShards(nodeName, selectionCriteria))
-                            .onSuccess(result -> delayedUpdate.update())
-                            .taskListener(getView())
-                            .exec();
-                }), throwable -> {
-                },
-                getView());
+            restFactory
+                    .create(INDEX_RESOURCE)
+                    .method(res -> res.deleteIndexShards(nodeName, selectionCriteria))
+                    .onSuccess(result -> delayedUpdate.update())
+                    .taskListener(getView())
+                    .exec();
+        }), throwable -> {
+        }, getView());
 
         AlertEvent.fireInfo(IndexShardPresenter.this,
                 "Selected index shards will be deleted. Please be patient as this may take some time.",

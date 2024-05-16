@@ -90,7 +90,8 @@ public class QueryInfoPresenter
                                             try {
                                                 valid = getView().getQueryInfo().matches(queryInfoPopupValidationRegex);
                                             } catch (final RuntimeException ex) {
-                                                AlertEvent.fireErrorFromException(QueryInfoPresenter.this, ex, e::reset);
+                                                AlertEvent
+                                                        .fireErrorFromException(QueryInfoPresenter.this, ex, e::reset);
                                             }
                                         }
 

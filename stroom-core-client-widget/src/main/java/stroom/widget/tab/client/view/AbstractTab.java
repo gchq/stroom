@@ -58,6 +58,6 @@ public abstract class AbstractTab extends Widget implements TaskListener {
 
     @Override
     public void decrementTaskCount() {
-        
+
     }
 }

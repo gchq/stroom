@@ -97,7 +97,6 @@ import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItem;
 import stroom.widget.menu.client.presenter.Separator;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseOtherTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseSavedTabsEvent;
@@ -505,26 +504,25 @@ public class DocumentPluginEventManager extends Plugin {
                                      final boolean singleSelection,
                                      final ExplorerNode primarySelection) {
         fetchPermissions(selectedItems, documentPermissionMap ->
-                        documentTypeCache.fetch(documentTypes -> {
-                            final List<Item> menuItems = new ArrayList<>();
+                documentTypeCache.fetch(documentTypes -> {
+                    final List<Item> menuItems = new ArrayList<>();
 
-                            // Only allow the new menu to appear if we have a single selection.
-                            addNewMenuItem(menuItems,
-                                    singleSelection,
-                                    documentPermissionMap,
-                                    primarySelection,
-                                    documentTypes);
+                    // Only allow the new menu to appear if we have a single selection.
+                    addNewMenuItem(menuItems,
+                            singleSelection,
+                            documentPermissionMap,
+                            primarySelection,
+                            documentTypes);
 
-                            addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
+                    addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
 
-                            ShowMenuEvent
-                                    .builder()
-                                    .items(menuItems)
-                                    .popupPosition(event.getPopupPosition())
-                                    .allowCloseOnMoveLeft() // Right arrow opens menu, left closes it
-                                    .fire(this);
-                        }, explorerListener)
-                , explorerListener);
+                    ShowMenuEvent
+                            .builder()
+                            .items(menuItems)
+                            .popupPosition(event.getPopupPosition())
+                            .allowCloseOnMoveLeft() // Right arrow opens menu, left closes it
+                            .fire(this);
+                }, explorerListener), explorerListener);
     }
 
     private void renameItems(final List<ExplorerNode> explorerNodeList) {

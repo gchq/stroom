@@ -260,8 +260,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 
                 // If the user has created a new document then load it.
                 load(newDocRef, loadConsumer, throwable -> {
-                        },
-                        presenter);
+                }, presenter);
             };
 
             // Ask the user to create a new document.

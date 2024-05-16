@@ -147,11 +147,10 @@ public class IndexVolumeGroupEditPresenter
     private void editVolume(final IndexVolume indexVolume, final String caption) {
         final IndexVolumeEditPresenter editor = editProvider.get();
         editor.show(indexVolume, caption, result -> {
-                    if (result != null) {
-                        volumeStatusListPresenter.refresh();
-                    }
-                },
-                volumeStatusListPresenter.getTaskListener());
+            if (result != null) {
+                volumeStatusListPresenter.refresh();
+            }
+        }, volumeStatusListPresenter.getTaskListener());
     }
 
     private void delete() {
