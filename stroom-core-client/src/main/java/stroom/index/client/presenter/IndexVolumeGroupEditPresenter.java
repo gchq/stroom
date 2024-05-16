@@ -48,7 +48,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public class IndexVolumeGroupEditPresenter
         extends MyPresenterWidget<IndexVolumeGroupEditPresenter.IndexVolumeGroupEditView> {
@@ -146,11 +146,10 @@ public class IndexVolumeGroupEditPresenter
 
     private void editVolume(final IndexVolume indexVolume, final String caption) {
         final IndexVolumeEditPresenter editor = editProvider.get();
-        editor.show(indexVolume, caption, (result, e) -> {
+        editor.show(indexVolume, caption, result -> {
                     if (result != null) {
                         volumeStatusListPresenter.refresh();
                     }
-                    e.hide();
                 },
                 volumeStatusListPresenter.getTaskListener());
     }
@@ -187,7 +186,7 @@ public class IndexVolumeGroupEditPresenter
 
     void show(final IndexVolumeGroup volumeGroup,
               final String title,
-              final BiConsumer<IndexVolumeGroup, HidePopupRequestEvent> consumer) {
+              final Consumer<IndexVolumeGroup> consumer) {
         if (!opening) {
             opening = true;
             final ExpressionOperator expression = ExpressionUtil.equalsId(IndexVolumeFields.GROUP_ID,
@@ -204,7 +203,7 @@ public class IndexVolumeGroupEditPresenter
 
     private void open(final IndexVolumeGroup volumeGroup,
                       final String title,
-                      final BiConsumer<IndexVolumeGroup, HidePopupRequestEvent> consumer) {
+                      final Consumer<IndexVolumeGroup> consumer) {
         if (!open) {
             open = true;
 
@@ -230,7 +229,7 @@ public class IndexVolumeGroupEditPresenter
                                         e::reset);
                             }
                         } else {
-                            consumer.accept(null, e);
+                            e.hide();
                         }
                     })
                     .onHide(e -> {
@@ -272,13 +271,16 @@ public class IndexVolumeGroupEditPresenter
         }
     }
 
-    private void createVolumeGroup(final BiConsumer<IndexVolumeGroup, HidePopupRequestEvent> consumer,
+    private void createVolumeGroup(final Consumer<IndexVolumeGroup> consumer,
                                    final IndexVolumeGroup volumeGroup,
                                    final HidePopupRequestEvent event) {
         restFactory
                 .create(INDEX_VOLUME_GROUP_RESOURCE)
                 .method(res -> res.update(volumeGroup.getId(), volumeGroup))
-                .onSuccess(r -> consumer.accept(r, event))
+                .onSuccess(r -> {
+                    consumer.accept(r);
+                    event.hide();
+                })
                 .onFailure(RestErrorHandler.forPopup(this, event))
                 .taskListener(this)
                 .exec();

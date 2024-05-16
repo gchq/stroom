@@ -21,7 +21,6 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.dashboard.shared.StoredQueryResource;
-import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
@@ -32,7 +31,6 @@ import stroom.svg.client.SvgPresets;
 import stroom.util.shared.PageRequest;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
-import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -108,31 +106,25 @@ public class QueryFavouritesPresenter
         registerHandler(selectionModel.addDoubleSelectHandler(event -> hide()));
         registerHandler(createButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
-                namePresenter.show("", "Create New Favourite", (entityName, e) -> {
-                    final Query query = Query.builder()
-                            .dataSource(currentDataSource)
-                            .expression(currentExpression)
-                            .build();
-                    final StoredQuery queryEntity = new StoredQuery();
-                    queryEntity.setQuery(query);
-                    queryEntity.setDashboardUuid(currentDashboardUuid);
-                    queryEntity.setComponentId(queryPresenter.getId());
-                    queryEntity.setName(entityName);
-                    queryEntity.setFavourite(true);
+                final Query query = Query.builder()
+                        .dataSource(currentDataSource)
+                        .expression(currentExpression)
+                        .build();
+                final StoredQuery queryEntity = new StoredQuery();
+                queryEntity.setQuery(query);
+                queryEntity.setDashboardUuid(currentDashboardUuid);
+                queryEntity.setComponentId(queryPresenter.getId());
+                queryEntity.setName("");
+                queryEntity.setFavourite(true);
 
-                    create(queryEntity, e);
-                });
+                namePresenter.show(queryEntity, result -> refresh(false));
             }
         }));
         registerHandler(editButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
                 final StoredQuery query = selectionModel.getSelectedObject();
                 if (query != null) {
-                    namePresenter.show(query.getName(), "Rename Favourite", (entityName, e) -> {
-                        query.setName(entityName);
-                        query.setFavourite(true);
-                        update(query, e);
-                    });
+                    namePresenter.show(query, result -> refresh(false));
                 }
             }
         }));
@@ -204,32 +196,6 @@ public class QueryFavouritesPresenter
 
     private void hide() {
         HidePopupEvent.builder(this).fire();
-    }
-
-    private void create(final StoredQuery query, final HidePopupRequestEvent event) {
-        restFactory
-                .create(STORED_QUERY_RESOURCE)
-                .method(res -> res.create(query))
-                .onSuccess(result -> {
-                    refresh(false);
-                    event.hide();
-                })
-                .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskListener(this)
-                .exec();
-    }
-
-    private void update(final StoredQuery query, final HidePopupRequestEvent event) {
-        restFactory
-                .create(STORED_QUERY_RESOURCE)
-                .method(res -> res.update(query))
-                .onSuccess(result -> {
-                    refresh(false);
-                    event.hide();
-                })
-                .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskListener(this)
-                .exec();
     }
 
     private void delete(final StoredQuery query) {

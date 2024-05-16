@@ -21,6 +21,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.NameDocumentView;
+import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
 import stroom.widget.popup.client.event.DialogEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -34,14 +35,14 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public class NewIndexVolumeGroupPresenter
         extends MyPresenterWidget<NameDocumentView>
         implements HidePopupRequestEvent.Handler,
         DialogActionUiHandlers {
 
-    private BiConsumer<String, HidePopupRequestEvent> consumer;
+    private Consumer<IndexVolumeGroup> consumer;
 
     private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE =
             GWT.create(IndexVolumeGroupResource.class);
@@ -56,7 +57,7 @@ public class NewIndexVolumeGroupPresenter
         this.restFactory = restFactory;
     }
 
-    public void show(final String name, final BiConsumer<String, HidePopupRequestEvent> consumer) {
+    public void show(final String name, final Consumer<IndexVolumeGroup> consumer) {
         this.consumer = consumer;
         getView().setUiHandlers(this);
         getView().setName(name);
@@ -79,28 +80,45 @@ public class NewIndexVolumeGroupPresenter
                         "You must provide a name",
                         e::reset);
             } else {
-                restFactory
-                        .create(INDEX_VOLUME_GROUP_RESOURCE)
-                        .method(res -> res.fetchByName(name))
-                        .onSuccess(result -> {
-                            if (result != null) {
-                                AlertEvent.fireError(
-                                        NewIndexVolumeGroupPresenter.this,
-                                        "Group name '"
-                                                + name
-                                                + "' is already in use by another group.",
-                                        e::reset);
-                            } else {
-                                consumer.accept(name, e);
-                            }
-                        })
-                        .onFailure(RestErrorHandler.forPopup(this, e))
-                        .taskListener(this)
-                        .exec();
+                checkVolumeGroupName(name, e);
             }
         } else {
-            consumer.accept(null, e);
+            e.hide();
         }
+    }
+
+    private void checkVolumeGroupName(final String name, final HidePopupRequestEvent e) {
+        restFactory
+                .create(INDEX_VOLUME_GROUP_RESOURCE)
+                .method(res -> res.fetchByName(name))
+                .onSuccess(result -> {
+                    if (result != null) {
+                        AlertEvent.fireError(
+                                NewIndexVolumeGroupPresenter.this,
+                                "Group name '"
+                                        + name
+                                        + "' is already in use by another group.",
+                                e::reset);
+                    } else {
+                        createVolumeGroup(name, e);
+                    }
+                })
+                .onFailure(RestErrorHandler.forPopup(this, e))
+                .taskListener(this)
+                .exec();
+    }
+
+    private void createVolumeGroup(final String name, final HidePopupRequestEvent e) {
+        restFactory
+                .create(INDEX_VOLUME_GROUP_RESOURCE)
+                .method(res -> res.create(name))
+                .onSuccess(indexVolumeGroup -> {
+                    consumer.accept(indexVolumeGroup);
+                    e.hide();
+                })
+                .onFailure(RestErrorHandler.forPopup(this, e))
+                .taskListener(this)
+                .exec();
     }
 
     @Override

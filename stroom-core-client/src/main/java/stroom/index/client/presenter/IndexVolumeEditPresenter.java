@@ -43,7 +43,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditView> {
 
@@ -66,7 +66,7 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
 
     void show(final IndexVolume volume,
               final String caption,
-              final BiConsumer<IndexVolume, HidePopupRequestEvent> consumer,
+              final Consumer<IndexVolume> consumer,
               final TaskListener taskListener) {
         nodeManager.listAllNodes(
                 nodeNames -> {
@@ -98,7 +98,7 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
                                                 e::reset);
                                     }
                                 } else {
-                                    consumer.accept(null, e);
+                                    e.hide();
                                 }
                             })
                             .fire();
@@ -144,27 +144,33 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
                 .exec();
     }
 
-    private void createIndexVolume(final BiConsumer<IndexVolume, HidePopupRequestEvent> savedVolumeConsumer,
+    private void createIndexVolume(final Consumer<IndexVolume> savedVolumeConsumer,
                                    final IndexVolume volume,
                                    final HidePopupRequestEvent event,
                                    final TaskListener taskListener) {
         restFactory
                 .create(INDEX_VOLUME_RESOURCE)
                 .method(res -> res.create(volume))
-                .onSuccess(r -> savedVolumeConsumer.accept(r, event))
+                .onSuccess(r -> {
+                    savedVolumeConsumer.accept(r);
+                    event.hide();
+                })
                 .onFailure(RestErrorHandler.forPopup(this, event))
                 .taskListener(taskListener)
                 .exec();
     }
 
-    private void updateVolume(final BiConsumer<IndexVolume, HidePopupRequestEvent> consumer,
+    private void updateVolume(final Consumer<IndexVolume> consumer,
                               final IndexVolume volume,
                               final HidePopupRequestEvent event,
                               final TaskListener taskListener) {
         restFactory
                 .create(INDEX_VOLUME_RESOURCE)
                 .method(res -> res.update(volume.getId(), volume))
-                .onSuccess(r -> consumer.accept(r, event))
+                .onSuccess(r -> {
+                    consumer.accept(r);
+                    event.hide();
+                })
                 .onFailure(RestErrorHandler.forPopup(this, event))
                 .taskListener(taskListener)
                 .exec();
