@@ -56,8 +56,10 @@
     display: inline-block;
     width: 22px;
     height: 22px;
+    min-width: 22px;
+    min-height: 22px;
     vertical-align: text-bottom;
-    border: .25em solid #2196f3;
+    border: 3px solid #2196f3;
     border-right-color: transparent;
     border-radius: 50%;
     -webkit-animation: spinner-border .75s linear infinite;
