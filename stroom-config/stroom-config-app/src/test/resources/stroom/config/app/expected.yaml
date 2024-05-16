@@ -136,6 +136,7 @@ appConfig:
       prepStmtCacheSqlLimit: 256
   contentPackImport:
     enabled: false
+    importAsSubjectId: "admin"
     importDirectory: "content_pack_import"
   core:
     db:

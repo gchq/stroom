@@ -18,6 +18,8 @@ package stroom.importexport.impl;
 
 import stroom.importexport.shared.ImportSettings;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
+import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 
@@ -59,34 +61,41 @@ public class ContentPackImport {
     }
 
     public void startup() {
-        final boolean isEnabled = config.isEnabled();
+        final String importDirStr = config.getImportDirectory();
+        final String importAsSubjectId = config.getImportAsSubjectId();
 
-        if (isEnabled) {
-            LOGGER.info("Configured import dir is '" + config.getImportDirectory() + "'");
-            if (config.getImportDirectory() != null) {
-                final Path resolvedPath = pathCreator.toAppPath(config.getImportDirectory());
-                LOGGER.info("Importing from resolved dir '" + resolvedPath + "'");
-                securityContext.asAdminUser(() -> doImport(resolvedPath));
-            } else {
-                LOGGER.warn("Content pack import is enabled but the configured directory is null");
-            }
-        } else {
+        if (!config.isEnabled()) {
             LOGGER.info("Content pack import currently disabled via property");
+            return;
         }
-    }
-
-    // pkg private for testing
-//    void startup(final List<Path> contentPacksDirs) {
-//        final boolean isEnabled = config.isEnabled();
-//
-//        if (isEnabled) {
-//            final UserIdentity admin = securityContext.createIdentity(User.ADMIN_USER_NAME);
-//            securityContext.asUser(admin, () ->
-//                    doImport(contentPacksDirs));
-//        } else {
-//            LOGGER.info("Content pack import currently disabled via property");
+        if (NullSafe.isBlankString(importDirStr)) {
+            LOGGER.error("Content pack import is enabled but the configured directory is null");
+            return;
+        }
+        if (NullSafe.isBlankString(importAsSubjectId)) {
+            LOGGER.error("importAsSubjectId property is not set so cannot perform content import");
+            return;
+        }
+        // TODO Remove this when the work to support groups owning content is done
+//        if (config.getImportAsType() == UserType.GROUP) {
+//            LOGGER.error("Content pack import does not support importing as a group at the moment");
+//            return;
 //        }
-//    }
+        final UserIdentity userIdentity = securityContext.createIdentity(importAsSubjectId);
+
+        if (userIdentity == null) {
+            LOGGER.error("A user cannot be found with subject ID: '{}'.", importAsSubjectId);
+            return;
+        }
+
+        LOGGER.info("Configured import dir is '" + importDirStr + "'");
+        final Path resolvedPath = pathCreator.toAppPath(importDirStr);
+        LOGGER.info("Importing content as user '{}', from configured dir: {}, resolved dir: '{}'",
+                userIdentity, importDirStr, resolvedPath);
+
+        securityContext.asUser(userIdentity, () ->
+                doImport(resolvedPath));
+    }
 
     private void doImport(final Path contentPacksDir) {
 
