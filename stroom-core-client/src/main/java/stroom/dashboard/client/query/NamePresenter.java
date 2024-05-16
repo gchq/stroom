@@ -18,7 +18,6 @@ package stroom.dashboard.client.query;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.widget.popup.client.event.DialogEvent;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -79,10 +78,6 @@ public class NamePresenter
         } else {
             e.hide();
         }
-    }
-
-    public void hide() {
-        HidePopupEvent.builder(this).fire();
     }
 
     @Override

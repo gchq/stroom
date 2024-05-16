@@ -216,8 +216,12 @@ public class FsVolumeGroupEditPresenter
                                         e::reset);
                             }
                         } else {
-                            consumer.accept(null);
+                            e.hide();
                         }
+                    })
+                    .onHide(e -> {
+                        open = false;
+                        opening = false;
                     })
                     .fire();
         }
@@ -260,16 +264,13 @@ public class FsVolumeGroupEditPresenter
         restFactory
                 .create(FS_VOLUME_GROUP_RESOURCE)
                 .method(res -> res.update(volumeGroup.getId(), volumeGroup))
-                .onSuccess(r -> consumer.accept(r))
+                .onSuccess(r -> {
+                    consumer.accept(r);
+                    event.hide();
+                })
                 .onFailure(RestErrorHandler.forPopup(this, event))
                 .taskListener(this)
                 .exec();
-    }
-
-    void hide() {
-        HidePopupEvent.builder(this).fire();
-        open = false;
-        opening = false;
     }
 
     public interface FsVolumeGroupEditView extends View, Focus {

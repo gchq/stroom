@@ -87,21 +87,9 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
 
     private void add() {
         final NewFsVolumeGroupPresenter presenter = newFsVolumeGroupPresenterProvider.get();
-        presenter.show("", name -> {
-            if (name != null) {
-                restFactory
-                        .create(FS_VOLUME_GROUP_RESOURCE)
-                        .method(res -> res.create(name))
-                        .onSuccess(volumeGroup -> {
-                            edit(volumeGroup);
-                            presenter.hide();
-                            refresh();
-                        })
-                        .taskListener(this)
-                        .exec();
-            } else {
-                presenter.hide();
-            }
+        presenter.show("", volumeGroup -> {
+            edit(volumeGroup);
+            refresh();
         });
     }
 
@@ -123,7 +111,6 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
             if (result != null) {
                 refresh();
             }
-            editor.hide();
         });
     }
 

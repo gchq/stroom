@@ -27,7 +27,6 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -102,11 +101,6 @@ public class ActivityEditPresenter
                 }
             }
         }, this);
-    }
-
-    private void hide() {
-        HidePopupEvent.builder(this)
-                .fire();
     }
 
     protected void read() {
