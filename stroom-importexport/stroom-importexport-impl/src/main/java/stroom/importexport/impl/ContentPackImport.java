@@ -76,22 +76,28 @@ public class ContentPackImport {
             LOGGER.error("importAsSubjectId property is not set so cannot perform content import");
             return;
         }
-        // TODO Remove this when the work to support groups owning content is done
-//        if (config.getImportAsType() == UserType.GROUP) {
-//            LOGGER.error("Content pack import does not support importing as a group at the moment");
-//            return;
-//        }
-        final UserIdentity userIdentity = securityContext.createIdentity(importAsSubjectId);
 
+        // TODO once subjectId is made globally unique we can get rid of this
+        final boolean isGroup = switch (config.getImportAsType()) {
+            case USER -> false;
+            case GROUP -> true;
+        };
+
+        final UserIdentity userIdentity = securityContext.getIdentityBySubjectId(
+                importAsSubjectId, isGroup);
         if (userIdentity == null) {
-            LOGGER.error("A user cannot be found with subject ID: '{}'.", importAsSubjectId);
+            LOGGER.error("A {} cannot be found with subject ID: '{}'.",
+                    (isGroup
+                            ? "group"
+                            : "user"),
+                    importAsSubjectId);
             return;
         }
 
         LOGGER.info("Configured import dir is '" + importDirStr + "'");
         final Path resolvedPath = pathCreator.toAppPath(importDirStr);
         LOGGER.info("Importing content as user '{}', from configured dir: {}, resolved dir: '{}'",
-                userIdentity, importDirStr, resolvedPath);
+                userIdentity.getCombinedName(), importDirStr, resolvedPath);
 
         securityContext.asUser(userIdentity, () ->
                 doImport(resolvedPath));
@@ -102,13 +108,11 @@ public class ContentPackImport {
         final AtomicInteger successCounter = new AtomicInteger();
         final AtomicInteger failedCounter = new AtomicInteger();
 
-        LOGGER.info("ContentPackImport started, checking the following directory for content packs to import,\n{}",
-                contentPacksDir.toAbsolutePath().normalize());
-
         if (!Files.isDirectory(contentPacksDir)) {
-            LOGGER.warn("Content pack import directory {} doesn't exist", FileUtil.getCanonicalPath(contentPacksDir));
+            LOGGER.warn("Content pack import directory '{}' doesn't exist",
+                    FileUtil.getCanonicalPath(contentPacksDir));
         } else {
-            LOGGER.info("Processing content packs in directory {}", FileUtil.getCanonicalPath(contentPacksDir));
+            LOGGER.info("Processing content packs in directory '{}'", FileUtil.getCanonicalPath(contentPacksDir));
 
             try (final DirectoryStream<Path> stream = Files.newDirectoryStream(contentPacksDir, "*.zip")) {
                 stream.forEach(file -> {
@@ -137,7 +141,7 @@ public class ContentPackImport {
     }
 
     private boolean importContentPack(Path parentPath, Path contentPack) {
-        LOGGER.info("Starting import of content pack {}", FileUtil.getCanonicalPath(contentPack));
+        LOGGER.info("Starting import of content pack '{}'", FileUtil.getCanonicalPath(contentPack));
 
         try {
             //It is possible to import a content pack (or packs) with missing dependencies
@@ -148,10 +152,10 @@ public class ContentPackImport {
                     new ArrayList<>());
             moveFile(contentPack, contentPack.getParent().resolve(IMPORTED_DIR));
 
-            LOGGER.info("Completed import of content pack {}", FileUtil.getCanonicalPath(contentPack));
+            LOGGER.info("Completed import of content pack '{}'", FileUtil.getCanonicalPath(contentPack));
 
         } catch (final RuntimeException e) {
-            LOGGER.error("Error importing content pack {}", FileUtil.getCanonicalPath(contentPack), e);
+            LOGGER.error("Error importing content pack '{}'", FileUtil.getCanonicalPath(contentPack), e);
             moveFile(contentPack, contentPack.getParent().resolve(FAILED_DIR));
             return false;
         }

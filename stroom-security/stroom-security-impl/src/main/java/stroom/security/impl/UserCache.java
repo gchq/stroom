@@ -49,7 +49,7 @@ public class UserCache implements Clearable, EntityEvent.Handler {
     private static final String CACHE_NAME_BY_UUID = "User Cache (by User UUID)";
 
     private final AuthenticationService authenticationService;
-    private final LoadingStroomCache<String, Optional<User>> cacheBySubjectId;
+    private final LoadingStroomCache<CacheKey, Optional<User>> cacheBySubjectId;
     private final LoadingStroomCache<String, Optional<User>> cacheByDisplayName;
     private final LoadingStroomCache<String, Optional<User>> cacheByUuid;
 
@@ -74,14 +74,18 @@ public class UserCache implements Clearable, EntityEvent.Handler {
                     return userService.loadByUuid(userUuid);
                 });
 
+        // TODO once we make subjectId globally unique we can change the cache key
+        //  from CacheKey back to String (subjectId)
         cacheBySubjectId = cacheManager.createLoadingCache(
                 CACHE_NAME_BY_SUBJECT_ID,
                 () -> authorisationConfigProvider.get().getUserCache(),
-                subjectId -> {
-                    LOGGER.debug("Loading user with subjectId '{}' into cache '{}'",
-                            subjectId, CACHE_NAME_BY_SUBJECT_ID);
+                cacheKey -> {
+                    LOGGER.debug("Loading {} with subjectId '{}' into cache '{}'",
+                            (cacheKey.isGroup
+                                    ? "group"
+                                    : "user"), cacheKey.subjectId, CACHE_NAME_BY_SUBJECT_ID);
                     //
-                    return authenticationService.getUser(subjectId);
+                    return authenticationService.getUser(cacheKey.subjectId, cacheKey.isGroup);
                 });
 
         cacheByDisplayName = cacheManager.createLoadingCache(
@@ -108,11 +112,12 @@ public class UserCache implements Clearable, EntityEvent.Handler {
         if (NullSafe.isBlankString(name)) {
             return Optional.empty();
         } else {
-            Optional<User> optUser = cacheBySubjectId.get(name);
+            final CacheKey cacheKey = CacheKey.user(name);
+            Optional<User> optUser = cacheBySubjectId.get(cacheKey);
             if (optUser.isEmpty()) {
                 optUser = getOrCreateUser(name);
                 if (optUser.isPresent()) {
-                    cacheBySubjectId.put(name, optUser);
+                    cacheBySubjectId.put(cacheKey, optUser);
                 }
             }
             return optUser;
@@ -126,7 +131,18 @@ public class UserCache implements Clearable, EntityEvent.Handler {
         if (NullSafe.isBlankString(name)) {
             return Optional.empty();
         } else {
-            return cacheBySubjectId.get(name);
+            return cacheBySubjectId.get(CacheKey.user(name));
+        }
+    }
+
+    /**
+     * Gets a user by their unique identifier if it exists, else returns an empty optional
+     */
+    Optional<User> get(final String name, final boolean isGroup) {
+        if (NullSafe.isBlankString(name)) {
+            return Optional.empty();
+        } else {
+            return cacheBySubjectId.get(new CacheKey(name, isGroup));
         }
     }
 
@@ -139,7 +155,7 @@ public class UserCache implements Clearable, EntityEvent.Handler {
             return Optional.empty();
         } else {
             return cacheByDisplayName.get(displayName)
-                    .or(() -> cacheBySubjectId.get(displayName));
+                    .or(() -> cacheBySubjectId.get(CacheKey.user(displayName)));
         }
     }
 
@@ -185,9 +201,11 @@ public class UserCache implements Clearable, EntityEvent.Handler {
         }
 
         if (subjectId != null) {
-            cacheBySubjectId.invalidate(subjectId);
+            // Don't know if it is a user or a group so invalidate both
+            cacheBySubjectId.invalidate(CacheKey.user(subjectId));
+            cacheBySubjectId.invalidate(CacheKey.group(subjectId));
         } else {
-            cacheBySubjectId.invalidateEntries((userName, optUser) -> {
+            cacheBySubjectId.invalidateEntries((cacheKey, optUser) -> {
                 final User user = optUser.orElse(null);
                 if (user != null) {
                     return Objects.equals(userUuid, user.getUuid());
@@ -212,6 +230,21 @@ public class UserCache implements Clearable, EntityEvent.Handler {
         } else {
             cacheByDisplayName.invalidateEntries((userName, optUser) ->
                     optUser.isPresent() && Objects.equals(userUuid, optUser.get().getUuid()));
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record CacheKey(String subjectId, boolean isGroup) {
+
+        static CacheKey user(String subjectId) {
+            return new CacheKey(subjectId, false);
+        }
+
+        static CacheKey group(String subjectId) {
+            return new CacheKey(subjectId, true);
         }
     }
 }

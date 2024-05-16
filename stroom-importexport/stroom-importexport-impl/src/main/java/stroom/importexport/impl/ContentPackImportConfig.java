@@ -11,32 +11,30 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-
 @JsonPropertyOrder(alphabetic = true)
 public class ContentPackImportConfig extends AbstractConfig implements IsStroomConfig {
 
     private final boolean enabled;
     private final String importDirectory;
     private final String importAsSubjectId;
-//    private final UserType importAsType;
+    private final UserType importAsType;
 
     public ContentPackImportConfig() {
         enabled = false;
         importDirectory = "content_pack_import";
-//        importAsSubjectId = "Administrators";
-        importAsSubjectId = User.ADMIN_SUBJECT_ID; // Until we allow groups to own things
-//        importAsType = UserType.GROUP;
+        importAsSubjectId = User.ADMINISTRATORS_GROUP_SUBJECT_ID;
+        importAsType = UserType.GROUP;
     }
 
     @JsonCreator
     public ContentPackImportConfig(@JsonProperty("enabled") final boolean enabled,
                                    @JsonProperty("importDirectory") final String importDirectory,
-                                   @JsonProperty("importAsSubjectId") final String importAsSubjectId) {
-//                                   @JsonProperty("importAsType") final UserType importAsType) {
+                                   @JsonProperty("importAsSubjectId") final String importAsSubjectId,
+                                   @JsonProperty("importAsType") final UserType importAsType) {
         this.enabled = enabled;
         this.importDirectory = importDirectory;
         this.importAsSubjectId = importAsSubjectId;
-//        this.importAsType = importAsType;
+        this.importAsType = importAsType;
     }
 
     @RequiresRestart(RestartScope.SYSTEM)
@@ -66,11 +64,11 @@ public class ContentPackImportConfig extends AbstractConfig implements IsStroomC
         return importAsSubjectId;
     }
 
-//    @RequiresRestart(RestartScope.SYSTEM)
-//    @JsonPropertyDescription("The type of the entity represented by importAsSubjectId, i.g. 'USER' or 'GROUP'")
-//    public UserType getImportAsType() {
-//        return importAsType;
-//    }
+    @RequiresRestart(RestartScope.SYSTEM)
+    @JsonPropertyDescription("The type of the entity represented by importAsSubjectId, i.g. 'USER' or 'GROUP'")
+    public UserType getImportAsType() {
+        return importAsType;
+    }
 
     @Override
     public String toString() {
@@ -86,8 +84,8 @@ public class ContentPackImportConfig extends AbstractConfig implements IsStroomC
     // --------------------------------------------------------------------------------
 
 
-//    public enum UserType {
-//        USER,
-//        GROUP;
-//    }
+    public enum UserType {
+        USER,
+        GROUP;
+    }
 }
