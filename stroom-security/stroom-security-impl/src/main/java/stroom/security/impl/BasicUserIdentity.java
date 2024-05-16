@@ -15,16 +15,7 @@ public class BasicUserIdentity implements UserIdentity, HasStroomUserIdentity {
     private final String subjectId;
     private final String displayName;
     private final String fullName;
-
-    public BasicUserIdentity(final String userUuid,
-                             final String subjectId,
-                             final String displayName,
-                             final String fullName) {
-        this.userUuid = Objects.requireNonNull(userUuid);
-        this.subjectId = Objects.requireNonNull(subjectId);
-        this.displayName = displayName;
-        this.fullName = fullName;
-    }
+    private final boolean isGroup;
 
     public BasicUserIdentity(final UserName userName) {
         Objects.requireNonNull(userName);
@@ -32,6 +23,7 @@ public class BasicUserIdentity implements UserIdentity, HasStroomUserIdentity {
         this.subjectId = userName.getSubjectId(); // User.name is the unique identifier. User.id is the DB PK.
         this.displayName = userName.getDisplayName();
         this.fullName = userName.getFullName();
+        this.isGroup = userName.isGroup();
     }
 
     public BasicUserIdentity(final User user) {
@@ -40,6 +32,7 @@ public class BasicUserIdentity implements UserIdentity, HasStroomUserIdentity {
         this.subjectId = user.getSubjectId(); // User.name is the unique identifier. User.id is the DB PK.
         this.displayName = user.getDisplayName();
         this.fullName = user.getFullName();
+        this.isGroup = user.isGroup();
     }
 
     @Override
@@ -50,6 +43,11 @@ public class BasicUserIdentity implements UserIdentity, HasStroomUserIdentity {
     @Override
     public String getUuid() {
         return userUuid;
+    }
+
+    @Override
+    public boolean isGroup() {
+        return isGroup;
     }
 
     @Override
@@ -74,7 +72,8 @@ public class BasicUserIdentity implements UserIdentity, HasStroomUserIdentity {
                         ? null
                         : displayName,
                 getFullName().orElse(null),
-                userUuid);
+                userUuid,
+                isGroup);
     }
 
     @Override

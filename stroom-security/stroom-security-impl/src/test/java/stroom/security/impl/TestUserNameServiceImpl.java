@@ -23,11 +23,15 @@ class TestUserNameServiceImpl {
     void find() {
         final SecurityContext securityContext = new MockSecurityContext();
 
-        final UserName userName1a = new SimpleUserName("100", "jbloggs1", "Joe Bloggs");
-        final UserName userName1b = new SimpleUserName("200", "jsmith1", "John Smith");
+        final UserName userName1a = new SimpleUserName(
+                "100", "jbloggs1", "Joe Bloggs", false);
+        final UserName userName1b = new SimpleUserName(
+                "200", "jsmith1", "John Smith", false);
 
-        final UserName userName2a = new SimpleUserName("100", "jbloggs2", "Joe Bloggs");
-        final UserName userName2c = new SimpleUserName("300", "jdoe2", "John Doe");
+        final UserName userName2a = new SimpleUserName(
+                "100", "jbloggs2", "Joe Bloggs", false);
+        final UserName userName2c = new SimpleUserName(
+                "300", "jdoe2", "John Doe", false);
 
         final Set<UserNameProvider> userNameProviders = Set.of(
                 new MyUserNameProvider(1, List.of(

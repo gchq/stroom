@@ -18,7 +18,8 @@ class TestUserNameUtil {
     Stream<DynamicTest> testParseUsersCsvData() {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String.class)
-                .withWrappedOutputType(new TypeLiteral<List<UserName>>(){})
+                .withWrappedOutputType(new TypeLiteral<List<UserName>>() {
+                })
                 .withTestFunction(testCase ->
                         UserNameUtil.parseUsersCsvData(testCase.getInput()))
                 .withSimpleEqualityAssertion()
@@ -65,14 +66,14 @@ class TestUserNameUtil {
     }
 
     private UserName user(final String uniqueIdentity) {
-        return new SimpleUserName(uniqueIdentity);
+        return new SimpleUserName(uniqueIdentity, null, null, false);
     }
 
     private UserName user(final String uniqueIdentity, final String displayName) {
-        return new SimpleUserName(uniqueIdentity, displayName, null);
+        return new SimpleUserName(uniqueIdentity, displayName, null, false);
     }
 
     private UserName user(final String uniqueIdentity, final String displayName, final String fullName) {
-        return new SimpleUserName(uniqueIdentity, displayName, fullName);
+        return new SimpleUserName(uniqueIdentity, displayName, fullName, false);
     }
 }

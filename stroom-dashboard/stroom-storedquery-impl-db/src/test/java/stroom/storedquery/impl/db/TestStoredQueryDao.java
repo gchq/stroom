@@ -175,7 +175,8 @@ class TestStoredQueryDao {
                 .thenReturn(Optional.of(new SimpleUserName(
                         "dummy",
                         "dummy",
-                        null)));
+                        null,
+                        false)));
 
         final FindStoredQueryCriteria criteria = new FindStoredQueryCriteria();
         criteria.setDashboardUuid(dashboardRef.getUuid());

@@ -288,7 +288,7 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
                 user.getSubjectId(),
                 user.getDisplayName(),
                 user.getFullName(),
-                session,
+                user.isGroup(), session,
                 updatableToken);
 
         updatableToken.setUserIdentity(userIdentity);

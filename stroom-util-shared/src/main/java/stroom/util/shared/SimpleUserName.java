@@ -26,38 +26,45 @@ public class SimpleUserName implements Comparable<UserName>, HasAuditableUserIde
     private final String fullName;
     @JsonProperty
     private final String uuid;
+    @JsonProperty
+    private final boolean group;
 
     @JsonCreator
     public SimpleUserName(@JsonProperty("subjectId") final String subjectId,
                           @JsonProperty("displayName") final String displayName,
                           @JsonProperty("fullName") final String fullName,
-                          @JsonProperty("uuid") final String uuid) {
+                          @JsonProperty("uuid") final String uuid,
+                          @JsonProperty("group") final boolean group) {
 
-        if (subjectId == null || subjectId.trim().length() == 0) {
+        if (GwtNullSafe.isBlankString(subjectId)) {
             throw new RuntimeException("subjectId must have a value");
         }
-        this.subjectId = Objects.requireNonNull(subjectId);
+        this.subjectId = subjectId;
         this.displayName = displayName;
         this.fullName = fullName;
         this.uuid = uuid;
+        this.group = group;
     }
 
     public SimpleUserName(final String subjectId,
                           final String displayName,
-                          final String fullName) {
-        this(subjectId, displayName, fullName, null);
+                          final String fullName,
+                          final boolean group) {
+        this(subjectId, displayName, fullName, null, group);
     }
 
-    public SimpleUserName(final String subjectId) {
-        this(subjectId, null, null);
+    /**
+     * Creates a {@link SimpleUserName} representing a user.
+     */
+    public static SimpleUserName fromUserSubjectId(final String subjectId) {
+        return new SimpleUserName(subjectId, null, null, false);
     }
 
-    public static SimpleUserName fromSubjectId(final String subjectId) {
-        return new SimpleUserName(subjectId, null, null);
-    }
-
+    /**
+     * Creates a {@link SimpleUserName} representing a group.
+     */
     public static SimpleUserName fromGroupName(final String name) {
-        return new SimpleUserName(name, null, null);
+        return new SimpleUserName(name, null, null, true);
     }
 
     @Override
@@ -78,6 +85,11 @@ public class SimpleUserName implements Comparable<UserName>, HasAuditableUserIde
     @Override
     public String getUuid() {
         return uuid;
+    }
+
+    @Override
+    public boolean isGroup() {
+        return group;
     }
 
     @Override
@@ -135,6 +147,7 @@ public class SimpleUserName implements Comparable<UserName>, HasAuditableUserIde
         private String displayName = null;
         private String fullName = null;
         private String uuid = null;
+        private boolean group = false;
 
         private Builder() {
         }
@@ -144,6 +157,7 @@ public class SimpleUserName implements Comparable<UserName>, HasAuditableUserIde
             this.displayName = username.displayName;
             this.fullName = username.fullName;
             this.uuid = username.uuid;
+            this.group = username.group;
         }
 
         public Builder subjectId(final String value) {
@@ -166,8 +180,13 @@ public class SimpleUserName implements Comparable<UserName>, HasAuditableUserIde
             return this;
         }
 
+        public Builder group(final boolean isGroup) {
+            group = isGroup;
+            return this;
+        }
+
         public UserName build() {
-            return new SimpleUserName(subjectId, displayName, fullName, uuid);
+            return new SimpleUserName(subjectId, displayName, fullName, uuid, group);
         }
     }
 }

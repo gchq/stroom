@@ -18,6 +18,7 @@ public interface UserName extends HasAuditableUserIdentity {
      * <p>If {@code isGroup} is {@code true} then this is the unique name of the group.
      * A group name is defined by the user so is likely to be human friendly.
      * A user and a group can share the same name.</p>
+     *
      * @return The unique identifier for this user or group.
      */
     String getSubjectId();
@@ -48,6 +49,11 @@ public interface UserName extends HasAuditableUserIdentity {
      * @return The stroom user UUID. May be null.
      */
     String getUuid();
+
+    /**
+     * @return Whether this identity represents a single user or a group of users.
+     */
+    boolean isGroup();
 
     /**
      * @return The user identity to be used in audit events, audit columns and for display in

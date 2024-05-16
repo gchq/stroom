@@ -68,7 +68,7 @@ public class MockSecurityContext implements SecurityContext {
     }
 
     @Override
-    public UserIdentity createIdentity(final String subjectId) {
+    public UserIdentity createIdentity(final String subjectId, final boolean ensureUser) {
         return ADMIN_USER_IDENTITY;
     }
 

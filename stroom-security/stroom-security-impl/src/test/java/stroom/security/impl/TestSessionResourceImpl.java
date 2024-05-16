@@ -47,12 +47,12 @@ class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
         final String subPath = ResourcePaths.buildPath(SessionResource.LIST_PATH_PART);
 
         final SessionListResponse expectedResponse = new SessionListResponse(List.of(
-                new SessionDetails(SimpleUserName.fromSubjectId("user1"),
+                new SessionDetails(SimpleUserName.fromUserSubjectId("user1"),
                         123L,
                         456L,
                         "agent1",
                         "node1"),
-                new SessionDetails(SimpleUserName.fromSubjectId("user1"),
+                new SessionDetails(SimpleUserName.fromUserSubjectId("user1"),
                         123L,
                         456L,
                         "agent1",
@@ -77,12 +77,12 @@ class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
         final String subPath = ResourcePaths.buildPath(SessionResource.LIST_PATH_PART);
 
         final SessionListResponse expectedResponse = new SessionListResponse(List.of(
-                new SessionDetails(SimpleUserName.fromSubjectId("user1"),
+                new SessionDetails(SimpleUserName.fromUserSubjectId("user1"),
                         123L,
                         456L,
                         "agent1",
                         "node1"),
-                new SessionDetails(SimpleUserName.fromSubjectId("user1"),
+                new SessionDetails(SimpleUserName.fromUserSubjectId("user1"),
                         123L,
                         456L,
                         "agent1",

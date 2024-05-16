@@ -59,7 +59,8 @@ public class CreateNewUserPresenter extends MyPresenterWidget<CreateNewUserView>
         return new SimpleUserName(
                 getView().getSubjectId(),
                 getView().getDisplayName(),
-                getView().getFullName());
+                getView().getFullName(),
+                true);
     }
 
 

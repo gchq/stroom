@@ -22,6 +22,7 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -82,12 +83,17 @@ class SecurityContextImpl implements SecurityContext {
     }
 
     @Override
-    public UserIdentity createIdentity(final String subjectId) {
+    public UserIdentity createIdentity(final String subjectId, final boolean ensureUser) {
         Objects.requireNonNull(subjectId, "Null subjectId provided");
         // Inject as provider to avoid circular dep issues
-        return userCacheProvider.get().getOrCreate(subjectId)
-                .map(BasicUserIdentity::new)
-                .orElseThrow(() -> new AuthenticationException("Unable to find user with id=" + subjectId));
+
+        final Optional<User> optUser = ensureUser
+                ? userCacheProvider.get().getOrCreate(subjectId)
+                : userCacheProvider.get().get(subjectId);
+
+        return optUser.map(BasicUserIdentity::new)
+                .orElseThrow(() ->
+                        new AuthenticationException("Unable to find user with id=" + subjectId));
     }
 
     @Override
@@ -366,7 +372,7 @@ class SecurityContextImpl implements SecurityContext {
      */
     @Override
     public <T> T asAdminUserResult(final Supplier<T> supplier) {
-        return asUserResult(createIdentity(User.ADMIN_SUBJECT_ID), supplier);
+        return asUserResult(createIdentity(User.ADMIN_SUBJECT_ID, true), supplier);
     }
 
     /**
@@ -374,7 +380,7 @@ class SecurityContextImpl implements SecurityContext {
      */
     @Override
     public void asAdminUser(final Runnable runnable) {
-        asUser(createIdentity(User.ADMIN_SUBJECT_ID), runnable);
+        asUser(createIdentity(User.ADMIN_SUBJECT_ID, true), runnable);
     }
 
     /**

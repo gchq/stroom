@@ -38,7 +38,7 @@ public interface UserService {
     }
 
     default User getOrCreateUser(String subjectId, final Consumer<User> onCreateAction) {
-        return getOrCreateUser(SimpleUserName.fromSubjectId(subjectId), onCreateAction);
+        return getOrCreateUser(SimpleUserName.fromUserSubjectId(subjectId), onCreateAction);
     }
 
     User getOrCreateUser(UserName name, final Consumer<User> onCreateAction);

@@ -20,6 +20,7 @@ import stroom.security.openid.api.IdpType;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.util.AuditUtil;
+import stroom.util.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -54,7 +55,7 @@ public class AuthenticationService {
     }
 
     User getOrCreateUser(final String subjectId) {
-        if (subjectId == null || subjectId.trim().length() == 0) {
+        if (NullSafe.isBlankString(subjectId)) {
             return null;
         }
 

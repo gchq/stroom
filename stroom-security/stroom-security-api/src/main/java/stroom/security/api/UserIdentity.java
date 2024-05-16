@@ -8,7 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Represents the identity of a user for authentication purposes.
+ * Represents the identity of a user for back-end authentication purposes.
  */
 public interface UserIdentity extends HasAuditableUserIdentity {
 
@@ -19,6 +19,13 @@ public interface UserIdentity extends HasAuditableUserIdentity {
      * For the internal IDP this would likely be a more human friendly username.
      */
     String getSubjectId();
+
+    /**
+     * @return Whether this {@link UserIdentity} represents a single user or a named group of users.
+     */
+    default boolean isGroup() {
+        return false;
+    }
 
     /**
      * @return The non-unique username for the user, e.g. 'jbloggs'. In the absence of a specific
@@ -80,6 +87,7 @@ public interface UserIdentity extends HasAuditableUserIdentity {
         return new SimpleUserName(
                 subjectId,
                 displayName,
-                getFullName().orElse(null));
+                getFullName().orElse(null),
+                isGroup());
     }
 }

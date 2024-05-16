@@ -29,19 +29,14 @@ public class UserIdentityImpl
     private final String userUuid;
     private final String displayName;
     private final String fullName;
+    private final boolean isGroup;
     private final HttpSession httpSession;
-
-    public UserIdentityImpl(final String userUuid,
-                            final String subjectId,
-                            final HttpSession httpSession,
-                            final UpdatableToken updatableToken) {
-        this(userUuid, subjectId, null, null, httpSession, updatableToken);
-    }
 
     public UserIdentityImpl(final String userUuid,
                             final String subjectId,
                             final String displayName,
                             final String fullName,
+                            final boolean isGroup,
                             final HttpSession httpSession,
                             final UpdatableToken updatableToken) {
         this.subjectId = Objects.requireNonNull(subjectId);
@@ -50,6 +45,7 @@ public class UserIdentityImpl
         this.displayName = displayName;
         this.fullName = fullName;
         this.httpSession = httpSession;
+        this.isGroup = isGroup;
     }
 
     @Override
@@ -70,6 +66,11 @@ public class UserIdentityImpl
     @Override
     public String getUuid() {
         return userUuid;
+    }
+
+    @Override
+    public boolean isGroup() {
+        return isGroup;
     }
 
     @Override
@@ -153,7 +154,8 @@ public class UserIdentityImpl
                         ? null
                         : displayName,
                 getFullName().orElse(null),
-                userUuid);
+                userUuid,
+                isGroup);
     }
 
     @Override
@@ -184,6 +186,7 @@ public class UserIdentityImpl
                 ", userUuid='" + userUuid + '\'' +
                 ", displayName='" + displayName + '\'' +
                 ", fullName='" + fullName + '\'' +
+                ", isGroup=" + isGroup +
                 ", isInSession='" + isInSession() + '\'' +
                 '}';
     }

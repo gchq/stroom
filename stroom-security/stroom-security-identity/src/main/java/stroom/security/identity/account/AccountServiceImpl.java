@@ -118,7 +118,8 @@ public class AccountServiceImpl implements AccountService, UserNameProvider {
         return new SimpleUserName(
                 account.getUserId(),
                 account.getUserId(), // use user id for both name and displayName
-                account.getFullName());
+                account.getFullName(),
+                false);
     }
 
     private boolean shouldProvideNames() {

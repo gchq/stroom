@@ -53,8 +53,24 @@ public interface SecurityContext extends HasAuditableUserIdentity {
         return userIdentity.getUserIdentityForAudit();
     }
 
-    UserIdentity createIdentity(String subjectId);
+    /**
+     * Creates a {@link UserIdentity} instance for the supplied subjectId. Will return
+     * null if the user does not exist in stroom.
+     */
+    default UserIdentity createIdentity(String subjectId) {
+        return createIdentity(subjectId, false);
+    }
 
+    /**
+     * Creates a {@link UserIdentity} instance for the supplied subjectId. Will create
+     * a new stroom user record if one doesn't exist.
+     */
+    UserIdentity createIdentity(String subjectId, boolean ensureUser);
+
+    /**
+     * Creates a {@link UserIdentity} instance for the supplied userUuid. Will return
+     * null if the user does not exist in stroom.
+     */
     UserIdentity createIdentityByUserUuid(String userUuid);
 
     /**
@@ -68,14 +84,18 @@ public interface SecurityContext extends HasAuditableUserIdentity {
         final UserIdentity userIdentity = getUserIdentity();
         final String displayName;
         final String fullName;
+        final boolean isGroup;
+
         if (userIdentity != null) {
             displayName = userIdentity.getDisplayName();
             fullName = userIdentity.getFullName().orElse(null);
+            isGroup = userIdentity.isGroup();
         } else {
             displayName = null;
             fullName = null;
+            isGroup = false;
         }
-        return new SimpleUserName(getSubjectId(), displayName, fullName, getUserUuid());
+        return new SimpleUserName(getSubjectId(), displayName, fullName, getUserUuid(), isGroup);
     }
 
     /**
@@ -132,8 +152,8 @@ public interface SecurityContext extends HasAuditableUserIdentity {
      * Check if the user associated with this security context has the requested
      * permission on the document specified by the document docRef.
      *
-     * @param docRef The docRef of the document.
-     * @param permission   The permission we are checking for.
+     * @param docRef     The docRef of the document.
+     * @param permission The permission we are checking for.
      * @return True if the user associated with the security context has the
      * requested permission.
      */

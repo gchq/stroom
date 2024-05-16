@@ -12,13 +12,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestUserNameEntryValue {
 
     @Test
-    void testSerDeser() {
+    void testSerDeser1() {
         TestUtil.testSerialisation(
                 UserNameEntryValue.of(new SimpleUserName(
                         "myId",
                         "myDisplayName",
                         "myFullName",
-                        UUID.randomUUID().toString())),
+                        UUID.randomUUID().toString(),
+                        true)),
+                UserNameEntryValue.class);
+    }
+
+    @Test
+    void testSerDeser2() {
+        TestUtil.testSerialisation(
+                UserNameEntryValue.of(new SimpleUserName(
+                        "myId",
+                        "myDisplayName",
+                        "myFullName",
+                        UUID.randomUUID().toString(),
+                        false)),
                 UserNameEntryValue.class);
     }
 
@@ -28,7 +41,8 @@ class TestUserNameEntryValue {
                 "myId",
                 "myDisplayName",
                 "myFullName",
-                UUID.randomUUID().toString()));
+                UUID.randomUUID().toString(),
+                true));
 
         assertThat(entryValue.asUiValue())
                 .isEqualTo("myDisplayName");
@@ -41,7 +55,8 @@ class TestUserNameEntryValue {
                 "myId",
                 "myDisplayName",
                 "myFullName",
-                uuid));
+                uuid,
+                true));
 
         assertThat(entryValue.asPersistedValue())
                 .isEqualTo(uuid);

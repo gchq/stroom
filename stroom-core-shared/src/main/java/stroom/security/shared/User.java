@@ -142,6 +142,7 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
      * <p>If {@code isGroup} is {@code true} then this is the unique identifier of the group.
      * A group identifier is defined by the user so is likely to be human friendly.
      * A user and a group can share the same name.</p>
+     *
      * @return The unique identifier for this user or group.
      */
     @Override
@@ -226,7 +227,7 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
     }
 
     public UserName asUserName() {
-        return new SimpleUserName(subjectId, displayName, fullName, uuid);
+        return new SimpleUserName(subjectId, displayName, fullName, uuid, group);
     }
 
     public String asCombinedName() {

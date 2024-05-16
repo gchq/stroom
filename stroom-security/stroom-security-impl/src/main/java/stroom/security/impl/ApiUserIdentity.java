@@ -62,6 +62,12 @@ class ApiUserIdentity implements UserIdentity, HasSessionId, HasStroomUserIdenti
     }
 
     @Override
+    public boolean isGroup() {
+        // API keys are only for users
+        return false;
+    }
+
+    @Override
     public String getSessionId() {
         return sessionId;
     }
@@ -112,6 +118,7 @@ class ApiUserIdentity implements UserIdentity, HasSessionId, HasStroomUserIdenti
                         ? null
                         : displayName,
                 getFullName().orElse(null),
-                userUuid);
+                userUuid,
+                isGroup());
     }
 }

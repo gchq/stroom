@@ -108,6 +108,9 @@
 
   <module name="TreeWalker">
 
+    <!-- Would be good to enable this but it causes about 600 violations at the mo -->
+<!--    <module name="DeclarationOrder"/>-->
+
     <!-- Make the @SuppressWarnings annotations available to Checkstyle -->
     <module name="SuppressWarningsHolder" />
 

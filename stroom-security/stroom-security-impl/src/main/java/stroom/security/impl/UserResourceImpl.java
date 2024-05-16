@@ -275,6 +275,11 @@ public class UserResourceImpl implements UserResource {
             public String getUuid() {
                 return uuid;
             }
+
+            @Override
+            public boolean isGroup() {
+                return false;
+            }
         };
     }
 

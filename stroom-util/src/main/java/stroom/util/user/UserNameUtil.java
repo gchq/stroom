@@ -42,6 +42,7 @@ public class UserNameUtil {
      * i.e. You must supply the unique identifier then optionally the display name or display
      * name and full name.
      * Blank lines are ignored.
+     *
      * @param usersCsvData The user names in CSV form.
      * @return A list of {@link UserName}
      */
@@ -72,7 +73,8 @@ public class UserNameUtil {
                             return new SimpleUserName(
                                     userId,
                                     displayName,
-                                    fullName);
+                                    fullName,
+                                    false);
                         })
                         .collect(Collectors.toList());
             } catch (IOException e) {
