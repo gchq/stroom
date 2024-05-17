@@ -138,7 +138,7 @@ class TestExplorerTreePerformance extends AbstractCoreIntegrationTest {
 
             LOGGER.logDurationIfInfoEnabled(() -> {
                 securityContext.asUser(
-                        securityContext.createIdentity(user.getSubjectId()),
+                        securityContext.getOrCreateUserIdentity(user.getSubjectId()),
                         () -> {
                             // See what we get back with a user with limited permissions.
                             expandTree(findExplorerNodeCriteria, 3);
@@ -146,7 +146,7 @@ class TestExplorerTreePerformance extends AbstractCoreIntegrationTest {
             }, "Expand all as user with empty cache");
 
             LOGGER.logDurationIfInfoEnabled(() -> {
-                securityContext.asUser(securityContext.createIdentity(user.getSubjectId()), () -> {
+                securityContext.asUser(securityContext.getOrCreateUserIdentity(user.getSubjectId()), () -> {
                     // See what we get back with a user with limited permissions.
                     expandTree(findExplorerNodeCriteria, 3);
                 });

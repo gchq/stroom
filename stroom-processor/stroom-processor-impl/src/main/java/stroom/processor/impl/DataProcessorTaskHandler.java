@@ -95,7 +95,7 @@ public class DataProcessorTaskHandler {
 
     private UserIdentity getFilterOwnerIdentity(final ProcessorFilter filter) {
         try {
-            return securityContext.createIdentityByUserUuid(securityContext.getDocumentOwnerUuid(
+            return securityContext.getIdentityByUserUuid(securityContext.getDocumentOwnerUuid(
                     filter.asDocRef()));
         } catch (final RuntimeException e) {
             throw new RuntimeException(

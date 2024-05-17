@@ -20,7 +20,17 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class User implements HasAuditInfo, HasIntegerId, UserName {
 
-    public static final String ADMIN_SUBJECT_ID = "admin";
+    /**
+     * The unique subjectId of the default Admin user that gets created if
+     * auth is disabled.
+     */
+    public static final String ADMIN_USER_SUBJECT_ID = "admin";
+    /**
+     * The unique subjectId of the default Administrators group that
+     * {@link User#ADMIN_USER_SUBJECT_ID}
+     * is a member of. It is also the default group for content auto import on boot.
+     */
+    public static final String ADMINISTRATORS_GROUP_SUBJECT_ID = "Administrators";
 
     @JsonProperty
     private Integer id;
@@ -142,6 +152,7 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
      * <p>If {@code isGroup} is {@code true} then this is the unique identifier of the group.
      * A group identifier is defined by the user so is likely to be human friendly.
      * A user and a group can share the same name.</p>
+     *
      * @return The unique identifier for this user or group.
      */
     @Override
