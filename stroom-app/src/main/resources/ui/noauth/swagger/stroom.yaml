@@ -9032,8 +9032,8 @@ components:
           - SHIELD
           - SHOW
           - SHOW_MENU
+          - SPINNER_CIRCLE
           - SPINNER_PAUSE
-          - SPINNER_SPINNER
           - SPINNER_SPINNING
           - STEP
           - STEPPING
@@ -9629,8 +9629,8 @@ components:
           - SHIELD
           - SHOW
           - SHOW_MENU
+          - SPINNER_CIRCLE
           - SPINNER_PAUSE
-          - SPINNER_SPINNER
           - SPINNER_SPINNING
           - STEP
           - STEPPING
@@ -10468,8 +10468,8 @@ components:
           - SHIELD
           - SHOW
           - SHOW_MENU
+          - SPINNER_CIRCLE
           - SPINNER_PAUSE
-          - SPINNER_SPINNER
           - SPINNER_SPINNING
           - STEP
           - STEPPING
@@ -10749,8 +10749,8 @@ components:
           - SHIELD
           - SHOW
           - SHOW_MENU
+          - SPINNER_CIRCLE
           - SPINNER_PAUSE
-          - SPINNER_SPINNER
           - SPINNER_SPINNING
           - STEP
           - STEPPING
@@ -12304,8 +12304,8 @@ components:
           - SHIELD
           - SHOW
           - SHOW_MENU
+          - SPINNER_CIRCLE
           - SPINNER_PAUSE
-          - SPINNER_SPINNER
           - SPINNER_SPINNING
           - STEP
           - STEPPING
@@ -13281,8 +13281,8 @@ components:
           - SHIELD
           - SHOW
           - SHOW_MENU
+          - SPINNER_CIRCLE
           - SPINNER_PAUSE
-          - SPINNER_SPINNER
           - SPINNER_SPINNING
           - STEP
           - STEPPING
