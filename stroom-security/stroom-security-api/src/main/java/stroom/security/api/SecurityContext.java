@@ -54,13 +54,13 @@ public interface SecurityContext extends HasAuditableUserIdentity {
     }
 
     /**
-     * Gets the {@link UserIdentity} of a user identified by the subjectId or creates one if it doesn't
-     * exist.
+     * Gets the {@link UserIdentity} of a user identified by the subjectId or creates a
+     * stroom_user record for them if it doesn't already exist.
      */
     UserIdentity getOrCreateUserIdentity(String subjectId);
 
     /**
-     * Gets the {@link UserIdentity} of a user identified by the subjectId.
+     * Gets the {@link UserIdentity} of a user or group identified by the subjectId.
      *
      * @throws stroom.security.api.exception.AuthenticationException if the user/group can't be found
      */
