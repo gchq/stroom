@@ -136,7 +136,7 @@ public class UserCache implements Clearable, EntityEvent.Handler {
     }
 
     /**
-     * Gets a user by their unique identifier if it exists, else returns an empty optional
+     * Gets a user/group by their unique identifier if it exists, else returns an empty optional
      */
     Optional<User> get(final String name, final boolean isGroup) {
         if (NullSafe.isBlankString(name)) {
@@ -159,6 +159,9 @@ public class UserCache implements Clearable, EntityEvent.Handler {
         }
     }
 
+    /**
+     * Gets a user/group by their stroom user UUID if they exist.
+     */
     public Optional<User> getByUuid(final String userUuid) {
         return NullSafe.isBlankString(userUuid)
                 ? Optional.empty()
