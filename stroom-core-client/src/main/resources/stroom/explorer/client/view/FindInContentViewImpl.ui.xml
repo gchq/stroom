@@ -18,7 +18,7 @@
             </g:north>
             <g:center>
                 <g:FlowPanel ui:field="textContainer" styleName="max form-control-border form-control-background">
-                    <spinner:SpinnerLarge ui:field="spinner" styleName="spinner-center" visible="false"/>
+                    <spinner:SpinnerLarge ui:field="spinner" addStyleNames="spinner-center" />
                 </g:FlowPanel>
             </g:center>
         </g:MySplitLayoutPanel>
