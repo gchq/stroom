@@ -69,7 +69,7 @@ public class SearchModel implements HasTaskListener, HasHandlers {
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
     private final ResultStoreModel resultStoreModel;
     private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
-    private Map<String, ResultComponent> componentMap = new HashMap<>();
+    private Map<String, ResultComponent> resultComponents = new HashMap<>();
     private DashboardSearchResponse currentResponse;
     private String currentNode;
     private QueryKey currentQueryKey;
@@ -110,9 +110,7 @@ public class SearchModel implements HasTaskListener, HasHandlers {
 
         // Stop the spinner from spinning and tell components that they no
         // longer want data.
-        for (final ResultComponent resultComponent : componentMap.values()) {
-            resultComponent.endSearch();
-        }
+        resultComponents.values().forEach(ResultComponent::endSearch);
 
         // Stop polling.
         polling = false;
@@ -134,9 +132,7 @@ public class SearchModel implements HasTaskListener, HasHandlers {
 
         // Stop the spinner from spinning and tell components that they no
         // longer want data.
-        for (final ResultComponent resultComponent : componentMap.values()) {
-            resultComponent.endSearch();
-        }
+        resultComponents.values().forEach(ResultComponent::endSearch);
 
         // Stop polling.
         polling = false;
@@ -145,8 +141,6 @@ public class SearchModel implements HasTaskListener, HasHandlers {
 
     /**
      * Begin executing a new search using the supplied query expression.
-     *
-     * @param expression The expression to search with.
      */
     public void startNewSearch(final ExpressionOperator expression,
                                final List<Param> params,
@@ -193,11 +187,8 @@ public class SearchModel implements HasTaskListener, HasHandlers {
 
                 // Reset all result components and tell them that search is
                 // starting.
-                for (final Entry<String, ResultComponent> entry : componentMap.entrySet()) {
-                    final ResultComponent resultComponent = entry.getValue();
-                    resultComponent.reset();
-                    resultComponent.startSearch();
-                }
+                resultComponents.values().forEach(ResultComponent::reset);
+                resultComponents.values().forEach(ResultComponent::startSearch);
 
                 // Start polling.
                 polling = true;
@@ -211,7 +202,7 @@ public class SearchModel implements HasTaskListener, HasHandlers {
      */
     public void refresh(final String componentId, final Consumer<Result> resultConsumer) {
         final QueryKey queryKey = currentQueryKey;
-        final ResultComponent resultComponent = componentMap.get(componentId);
+        final ResultComponent resultComponent = resultComponents.get(componentId);
         if (resultComponent != null && queryKey != null) {
             final Map<String, ComponentSettings> resultComponentMap = createComponentSettingsMap();
             if (resultComponentMap != null) {
@@ -250,7 +241,6 @@ public class SearchModel implements HasTaskListener, HasHandlers {
                             .onSuccess(response -> {
                                 Result result = null;
                                 try {
-
                                     if (response != null && response.getResults() != null) {
                                         for (final Result componentResult : response.getResults()) {
                                             if (componentId.equals(componentResult.getComponentId())) {
@@ -280,54 +270,6 @@ public class SearchModel implements HasTaskListener, HasHandlers {
         }
     }
 
-//    private void terminate(final QueryKey queryKey) {
-//        if (queryKey != null) {
-//            resultStoreModel.terminate();
-//        }
-//
-////        final DestroySearchRequest request = DestroySearchRequest
-////                .builder()
-////                .queryKey(queryKey)
-////                .dashboardUuid(dashboardUuid)
-////                .componentId(componentId)
-////                .build();
-//        restFactory
-//                .builder()
-//                .forBoolean()
-////                .onSuccess(response -> {
-////                    if (!response) {
-////                        Console.log("Unable to destroy search: " + request);
-////                    }
-////                })
-////                .call(DASHBOARD_RESOURCE)
-////                .destroy(request);
-//    }
-
-
-//    private void destroy(final QueryKey queryKey) {
-//        if (queryKey != null) {
-//            resultStoreModel.destroy();
-//        }
-//
-////        final DestroySearchRequest request = DestroySearchRequest
-////                .builder()
-////                .queryKey(queryKey)
-////                .dashboardUuid(dashboardUuid)
-////                .componentId(componentId)
-////                .build();
-//        restFactory
-//                .builder()
-//                .forBoolean()
-////                .onSuccess(response -> {
-////                    if (!response) {
-////                        Console.log("Unable to destroy search: " + request);
-////                    }
-////                })
-////                .call(DASHBOARD_RESOURCE)
-////                .destroy(request);
-//    }
-
-
     private void deleteStore(final String node, final QueryKey queryKey, final DestroyReason destroyReason) {
         if (queryKey != null) {
             resultStoreModel.destroy(node, queryKey, destroyReason, (ok) ->
@@ -342,16 +284,19 @@ public class SearchModel implements HasTaskListener, HasHandlers {
         }
     }
 
-    private void poll(Fetch fetch, final boolean storeHistory) {
+    private void poll(final Fetch initialFetch, final boolean storeHistory) {
         final QueryKey queryKey = currentQueryKey;
         final Search search = currentSearch;
         if (search != null && polling) {
             final List<ComponentResultRequest> requests = new ArrayList<>();
-            for (final Entry<String, ResultComponent> entry : componentMap.entrySet()) {
+            for (final Entry<String, ResultComponent> entry : resultComponents.entrySet()) {
                 final ResultComponent resultComponent = entry.getValue();
 
+                final Fetch fetch;
                 if (resultComponent.isPaused()) {
                     fetch = Fetch.NONE;
+                } else {
+                    fetch = initialFetch;
                 }
 
                 final ComponentResultRequest componentResultRequest = resultComponent.getResultRequest(fetch);
@@ -371,6 +316,8 @@ public class SearchModel implements HasTaskListener, HasHandlers {
                     .create(DASHBOARD_RESOURCE)
                     .method(res -> res.search(currentNode, request))
                     .onSuccess(response -> {
+//                        GWT.log(response.toString());
+
                         if (search == currentSearch) {
                             currentQueryKey = response.getQueryKey();
                             currentNode = response.getNode();
@@ -389,6 +336,8 @@ public class SearchModel implements HasTaskListener, HasHandlers {
                         }
                     })
                     .onFailure(throwable -> {
+//                        GWT.log(throwable.getMessage());
+
                         try {
                             if (search == currentSearch) {
                                 setErrors(Collections.singletonList(throwable.toString()));
@@ -413,8 +362,8 @@ public class SearchModel implements HasTaskListener, HasHandlers {
      * @return A result component map.
      */
     private Map<String, ComponentSettings> createComponentSettingsMap() {
-        if (!componentMap.isEmpty()) {
-            return componentMap.entrySet()
+        if (!resultComponents.isEmpty()) {
+            return resultComponents.entrySet()
                     .stream()
                     .collect(Collectors.toMap(
                             Entry::getKey,
@@ -435,7 +384,7 @@ public class SearchModel implements HasTaskListener, HasHandlers {
         // Give results to the right components.
         if (response.getResults() != null) {
             for (final Result componentResult : response.getResults()) {
-                final ResultComponent resultComponent = componentMap.get(componentResult.getComponentId());
+                final ResultComponent resultComponent = resultComponents.get(componentResult.getComponentId());
                 if (resultComponent != null) {
                     resultComponent.setData(componentResult);
                 }
@@ -446,7 +395,7 @@ public class SearchModel implements HasTaskListener, HasHandlers {
         if (response.isComplete()) {
             // Stop the spinner from spinning and tell components that they
             // no longer want data.
-            componentMap.values().forEach(ResultComponent::endSearch);
+            resultComponents.values().forEach(ResultComponent::endSearch);
         }
 
         setErrors(response.getErrors());
@@ -499,12 +448,12 @@ public class SearchModel implements HasTaskListener, HasHandlers {
             }
         }
 
-        if (search == null || componentMap.size() == 0) {
+        if (search == null || resultComponents.size() == 0) {
             return null;
         }
 
         final List<ComponentResultRequest> requests = new ArrayList<>();
-        for (final Entry<String, ResultComponent> entry : componentMap.entrySet()) {
+        for (final Entry<String, ResultComponent> entry : resultComponents.entrySet()) {
             final ResultComponent resultComponent = entry.getValue();
             final ComponentResultRequest componentResultRequest = resultComponent.createDownloadQueryRequest();
             requests.add(componentResultRequest);
@@ -554,16 +503,16 @@ public class SearchModel implements HasTaskListener, HasHandlers {
 
     public void addComponent(final String componentId, final ResultComponent resultComponent) {
         // Create and assign a new map here to prevent concurrent modification exceptions.
-        final Map<String, ResultComponent> componentMap = new HashMap<>(this.componentMap);
+        final Map<String, ResultComponent> componentMap = new HashMap<>(this.resultComponents);
         componentMap.put(componentId, resultComponent);
-        this.componentMap = componentMap;
+        this.resultComponents = componentMap;
     }
 
     public void removeComponent(final String componentId) {
         // Create and assign a new map here to prevent concurrent modification exceptions.
-        final Map<String, ResultComponent> componentMap = new HashMap<>(this.componentMap);
+        final Map<String, ResultComponent> componentMap = new HashMap<>(this.resultComponents);
         componentMap.remove(componentId);
-        this.componentMap = componentMap;
+        this.resultComponents = componentMap;
     }
 
     public void addSearchStateListener(final SearchStateListener listener) {

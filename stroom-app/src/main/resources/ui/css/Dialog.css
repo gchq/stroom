@@ -55,6 +55,11 @@
     gap: 5px;
 }
 
+.dialog-spinner {
+    width: 22px;
+    height: 22px;
+}
+
 .dialog-titleText {
     color: var(--text-color);
     cursor: default;

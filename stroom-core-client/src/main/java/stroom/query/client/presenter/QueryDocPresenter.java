@@ -86,7 +86,15 @@ public class QueryDocPresenter
 
             final DocumentEditPresenter<?, QueryDoc> presenter = queryDocDocumentEditTabProvider.getPresenter();
             if (presenter instanceof QueryDocEditPresenter) {
-                ((QueryDocEditPresenter) presenter).startStop();
+                ((QueryDocEditPresenter) presenter).start();
+            }
+            return true;
+        } else if (Action.CLOSE == action
+                && Objects.equals(getSelectedTab().getType(), QUERY.getType())) {
+
+            final DocumentEditPresenter<?, QueryDoc> presenter = queryDocDocumentEditTabProvider.getPresenter();
+            if (presenter instanceof QueryDocEditPresenter) {
+                ((QueryDocEditPresenter) presenter).stop();
             }
             return true;
         } else {

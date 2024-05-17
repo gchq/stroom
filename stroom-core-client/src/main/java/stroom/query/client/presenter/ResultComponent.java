@@ -21,7 +21,7 @@ import stroom.query.api.v2.Result;
 
 import java.util.Set;
 
-public interface ResultConsumer {
+public interface ResultComponent {
 
 //    ComponentSettings getSettings();
 
@@ -40,4 +40,6 @@ public interface ResultConsumer {
     void endSearch();
 
     void setData(Result componentResult);
+
+    void setQueryModel(QueryModel queryModel);
 }

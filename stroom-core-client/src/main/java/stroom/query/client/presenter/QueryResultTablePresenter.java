@@ -28,7 +28,6 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.client.presenter.QueryResultTablePresenter.QueryResultTableView;
 import stroom.query.client.presenter.TableRow.Cell;
 import stroom.util.shared.Expander;
-import stroom.widget.util.client.ExpanderEvent;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -54,7 +53,7 @@ import java.util.Set;
 
 public class QueryResultTablePresenter
         extends MyPresenterWidget<QueryResultTableView>
-        implements ResultConsumer {
+        implements ResultComponent {
 
     private int expanderColumnWidth;
     private final com.google.gwt.user.cellview.client.Column<TableRow, Expander> expanderColumn;
@@ -63,8 +62,11 @@ public class QueryResultTablePresenter
     private final MyDataGrid<TableRow> dataGrid;
     private final MultiSelectionModelImpl<TableRow> selectionModel;
     private final DataGridSelectionEventManager<TableRow> selectionEventManager;
+
+    private QueryModel currentSearchModel;
     private boolean ignoreRangeChange;
     private boolean pause;
+    private int currentRequestCount;
 
     private OffsetRange requestedRange = OffsetRange.ZERO_100;
     private Set<String> openGroups = null;
@@ -97,7 +99,7 @@ public class QueryResultTablePresenter
         };
         expanderColumn.setFieldUpdater((index, result, value) -> {
             toggleOpenGroup(result.getGroupKey());
-            ExpanderEvent.fire(this, result.getGroupKey());
+            refresh();
         });
 
         pagerView.getRefreshButton().setAllowPause(true);
@@ -168,7 +170,25 @@ public class QueryResultTablePresenter
     }
 
     private void refresh() {
-        RefreshRequestEvent.fire(this);
+        if (currentSearchModel != null) {
+            currentRequestCount++;
+            pagerView.getRefreshButton().setRefreshing(true);
+            pagerView.getRefreshButton().setPaused(pause && currentRequestCount == 0);
+            currentSearchModel.refresh(QueryModel.TABLE_COMPONENT_ID, result -> {
+                try {
+                    if (result != null) {
+                        setDataInternal(result);
+                    }
+                } catch (final Exception e) {
+                    GWT.log(e.getMessage());
+                }
+                currentRequestCount--;
+                pagerView.getRefreshButton().setPaused(pause && currentRequestCount == 0);
+                pagerView.getRefreshButton().setRefreshing(currentSearchModel.isSearching());
+            });
+        } else {
+            RefreshRequestEvent.fire(this);
+        }
     }
 
 //    @Override
@@ -495,12 +515,13 @@ public class QueryResultTablePresenter
         return addHandler(RefreshRequestEvent.getType(), handler);
     }
 
-    public HandlerRegistration addExpanderHandler(final ExpanderEvent.Handler handler) {
-        return addHandler(ExpanderEvent.getType(), handler);
-    }
-
     public MultiSelectionModelImpl<TableRow> getSelectionModel() {
         return selectionModel;
+    }
+
+    @Override
+    public void setQueryModel(final QueryModel queryModel) {
+        this.currentSearchModel = queryModel;
     }
 
 

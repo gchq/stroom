@@ -8,7 +8,9 @@
         <g:FlowPanel styleName="dialog-background">
             <g:FlowPanel styleName="dialog-titleBar">
                 <g:Label ui:field="titleText" styleName="dialog-titleText">Caption</g:Label>
-                <spinner:SpinnerLarge ui:field="spinner" />
+                <g:SimplePanel styleName="dialog-spinner">
+                    <spinner:SpinnerLarge ui:field="spinner"/>
+                </g:SimplePanel>
             </g:FlowPanel>
             <g:SimplePanel ui:field="content" styleName="dialog-body"/>
         </g:FlowPanel>

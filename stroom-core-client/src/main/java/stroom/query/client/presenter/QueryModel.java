@@ -43,6 +43,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class QueryModel implements HasTaskListener, HasHandlers {
 
@@ -59,8 +60,6 @@ public class QueryModel implements HasTaskListener, HasHandlers {
     private final ResultStoreModel resultStoreModel;
     private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
 
-    private final ResultConsumer tablePresenter;
-
     private String currentNode;
     private QueryKey currentQueryKey;
     private QueryContext currentQueryContext;
@@ -72,21 +71,28 @@ public class QueryModel implements HasTaskListener, HasHandlers {
     private final List<SearchStateListener> searchStateListeners = new ArrayList<>();
     private final List<SearchErrorListener> errorListeners = new ArrayList<>();
     private final List<TokenErrorListener> tokenErrorListeners = new ArrayList<>();
-    private final Map<String, ResultConsumer> resultConsumers = new HashMap<>();
+    private final Map<String, ResultComponent> resultComponents = new HashMap<>();
+
+    private final ResultComponent tablePresenter;
+    private final ResultComponent visPresenter;
 
     public QueryModel(final EventBus eventBus,
                       final RestFactory restFactory,
                       final DateTimeSettingsFactory dateTimeSettingsFactory,
                       final ResultStoreModel resultStoreModel,
-                      final ResultConsumer tablePresenter,
-                      final ResultConsumer visPresenter) {
+                      final ResultComponent tablePresenter,
+                      final ResultComponent visPresenter) {
         this.eventBus = eventBus;
         this.restFactory = restFactory;
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
         this.resultStoreModel = resultStoreModel;
         this.tablePresenter = tablePresenter;
-        resultConsumers.put(TABLE_COMPONENT_ID, tablePresenter);
-        resultConsumers.put(VIS_COMPONENT_ID, visPresenter);
+        this.visPresenter = visPresenter;
+        tablePresenter.setQueryModel(this);
+        visPresenter.setQueryModel(this);
+
+        resultComponents.put(TABLE_COMPONENT_ID, tablePresenter);
+        resultComponents.put(VIS_COMPONENT_ID, visPresenter);
     }
 
     public void init(final String queryUuid) {
@@ -105,7 +111,7 @@ public class QueryModel implements HasTaskListener, HasHandlers {
 
         // Stop the spinner from spinning and tell components that they no
         // longer want data.
-        resultConsumers.values().forEach(ResultConsumer::endSearch);
+        resultComponents.values().forEach(ResultComponent::endSearch);
 
         // Stop polling.
         polling = false;
@@ -127,43 +133,12 @@ public class QueryModel implements HasTaskListener, HasHandlers {
 
         // Stop the spinner from spinning and tell components that they no
         // longer want data.
-        resultConsumers.values().forEach(ResultConsumer::endSearch);
+        resultComponents.values().forEach(ResultComponent::endSearch);
 
         // Stop polling.
         polling = false;
         currentSearch = null;
     }
-
-    private void deleteStore(final String node, final QueryKey queryKey, final DestroyReason destroyReason) {
-        if (queryKey != null) {
-            resultStoreModel.destroy(node, queryKey, destroyReason, (ok) ->
-                    GWT.log("Destroyed store " + queryKey), taskListener);
-        }
-    }
-
-    private void terminate(final String node, final QueryKey queryKey) {
-        if (queryKey != null) {
-            resultStoreModel.terminate(node, queryKey, (ok) ->
-                    GWT.log("Terminate search " + queryKey), taskListener);
-        }
-    }
-
-//
-////    public void destroy() {
-////        if (currentQueryKey != null) {
-////            destroy(currentQueryKey);
-////            currentQueryKey = null;
-////        }
-////    }
-//
-//    /**
-//     * Destroy the previous search and ready all components for a new search to
-//     * begin.
-//     */
-//    public void reset() {
-//        // Stop previous search.
-//        stop();
-//    }
 
     /**
      * Begin executing a new search using the supplied query expression.
@@ -217,8 +192,8 @@ public class QueryModel implements HasTaskListener, HasHandlers {
 
             // Reset all result components and tell them that search is
             // starting.
-            resultConsumers.values().forEach(ResultConsumer::reset);
-            resultConsumers.values().forEach(ResultConsumer::startSearch);
+            resultComponents.values().forEach(ResultComponent::reset);
+            resultComponents.values().forEach(ResultComponent::startSearch);
 
             // Start polling.
             polling = true;
@@ -230,36 +205,38 @@ public class QueryModel implements HasTaskListener, HasHandlers {
     /**
      * Refresh the search data for the specified component.
      */
-    public void refresh(final String componentId) {
+    public void refresh(final String componentId,
+                        final Consumer<Result> resultConsumer) {
         final QueryKey queryKey = currentQueryKey;
-        final ResultConsumer resultConsumer = resultConsumers.get(componentId);
-        if (resultConsumer != null && queryKey != null) {
+        final ResultComponent resultComponent = resultComponents.get(componentId);
+        if (resultComponent != null && queryKey != null) {
             // Tell the refreshing component that it should want data.
-            resultConsumer.startSearch();
+            resultComponent.startSearch();
             final QuerySearchRequest request = currentSearch
                     .copy()
                     .queryKey(queryKey)
                     .storeHistory(false)
-                    .openGroups(resultConsumer.getOpenGroups())
-                    .requestedRange(resultConsumer.getRequestedRange())
+                    .openGroups(resultComponent.getOpenGroups())
+                    .requestedRange(resultComponent.getRequestedRange())
                     .build();
 
             restFactory
                     .create(QUERY_RESOURCE)
                     .method(res -> res.search(currentNode, request))
                     .onSuccess(response -> {
+                        Result result = null;
                         try {
                             if (response != null && response.getResults() != null) {
                                 for (final Result componentResult : response.getResults()) {
                                     if (componentId.equals(componentResult.getComponentId())) {
-                                        resultConsumer.setData(componentResult);
-                                        resultConsumer.endSearch();
+                                        result = componentResult;
                                     }
                                 }
                             }
                         } catch (final RuntimeException e) {
                             GWT.log(e.getMessage());
                         }
+                        resultConsumer.accept(result);
                     })
                     .onFailure(throwable -> {
                         try {
@@ -269,42 +246,31 @@ public class QueryModel implements HasTaskListener, HasHandlers {
                         } catch (final RuntimeException e) {
                             GWT.log(e.getMessage());
                         }
-                        resultConsumer.setData(null);
+                        resultConsumer.accept(null);
                     })
                     .taskListener(taskListener)
                     .exec();
         }
     }
 
-//    private void destroy(final QueryKey queryKey) {
-//        final DestroyQueryRequest request = DestroyQueryRequest
-//                .builder()
-//                .queryKey(queryKey)
-//                .queryDocUuid(queryUuid)
-//                .componentId(componentId)
-//                .build();
-//        restFactory
-//                .builder()
-//                .forBoolean()
-//                .onSuccess(response -> {
-//                    if (!response) {
-//                        Console.log("Unable to destroy search: " + request);
-//                    }
-//                })
-//                .call(QUERY_RESOURCE)
-//                .destroy(request);
-//    }
+    private void deleteStore(final String node, final QueryKey queryKey, final DestroyReason destroyReason) {
+        if (queryKey != null) {
+            resultStoreModel.destroy(node, queryKey, destroyReason, (ok) ->
+                    GWT.log("Destroyed store " + queryKey), taskListener);
+        }
+    }
+
+    private void terminate(final String node, final QueryKey queryKey) {
+        if (queryKey != null) {
+            resultStoreModel.terminate(node, queryKey, (ok) ->
+                    GWT.log("Terminate search " + queryKey), taskListener);
+        }
+    }
 
     private void poll(final boolean storeHistory) {
         final QueryKey queryKey = currentQueryKey;
         final QuerySearchRequest search = currentSearch;
         if (search != null && polling) {
-//            final List<ComponentResultRequest> requests = new ArrayList<>();
-//            for (final Entry<String, ResultConsumer> entry : componentMap.entrySet()) {
-//                final ResultConsumer resultComponent = entry.getValue();
-//                final ComponentResultRequest componentResultRequest = resultComponent.getResultRequest(false);
-//                requests.add(componentResultRequest);
-//            }
             final QuerySearchRequest request = currentSearch
                     .copy()
                     .queryKey(queryKey)
@@ -313,22 +279,11 @@ public class QueryModel implements HasTaskListener, HasHandlers {
                     .requestedRange(tablePresenter.getRequestedRange())
                     .build();
 
-//            QuerySearchRequest
-//                    .builder()
-//                    .queryKey(queryKey)
-//                    .search(search)
-//                    .componentResultRequests(requests)
-//                    .dateTimeSettings(dateTimeSettingsFactory.getDateTimeSettings())
-//                    .dashboardUuid(dashboardUuid)
-//                    .componentId(componentId)
-//                    .storeHistory(storeHistory)
-//                    .build();
-
             restFactory
                     .create(QUERY_RESOURCE)
                     .method(res -> res.search(currentNode, request))
                     .onSuccess(response -> {
-                        GWT.log(response.toString());
+//                        GWT.log(response.toString());
 
                         if (search == currentSearch) {
                             currentQueryKey = response.getQueryKey();
@@ -348,7 +303,7 @@ public class QueryModel implements HasTaskListener, HasHandlers {
                         }
                     })
                     .onFailure(throwable -> {
-                        GWT.log(throwable.getMessage());
+//                        GWT.log(throwable.getMessage());
 
                         try {
                             if (search == currentSearch) {
@@ -368,25 +323,6 @@ public class QueryModel implements HasTaskListener, HasHandlers {
         }
     }
 
-//    /**
-//     * Creates a result component map for all components.
-//     *
-//     * @return A result component map.
-//     */
-//    private Map<String, ComponentSettings> createComponentSettingsMap() {
-//        if (componentMap.size() > 0) {
-//            final Map<String, ComponentSettings> resultComponentMap = new HashMap<>();
-//            for (final Entry<String, ResultConsumer> entry : componentMap.entrySet()) {
-//                final String componentId = entry.getKey();
-//                final ResultConsumer resultComponent = entry.getValue();
-//                final ComponentSettings componentSettings = resultComponent.getSettings();
-//                resultComponentMap.put(componentId, componentSettings);
-//            }
-//            return resultComponentMap;
-//        }
-//        return null;
-//    }
-
     /**
      * On receiving a search result from the server update all interested
      * components with new data.
@@ -397,10 +333,10 @@ public class QueryModel implements HasTaskListener, HasHandlers {
         // Give results to the right components.
         if (response.getResults() != null) {
             for (final Result componentResult : response.getResults()) {
-                final ResultConsumer resultConsumer =
-                        resultConsumers.get(componentResult.getComponentId());
-                if (resultConsumer != null) {
-                    resultConsumer.setData(componentResult);
+                final ResultComponent resultComponent =
+                        resultComponents.get(componentResult.getComponentId());
+                if (resultComponent != null) {
+                    resultComponent.setData(componentResult);
                 }
             }
         }
@@ -409,7 +345,7 @@ public class QueryModel implements HasTaskListener, HasHandlers {
         if (response.isComplete()) {
             // Stop the spinner from spinning and tell components that they
             // no longer want data.
-            resultConsumers.values().forEach(ResultConsumer::endSearch);
+            resultComponents.values().forEach(ResultComponent::endSearch);
         }
 
         setErrors(response.getErrors());

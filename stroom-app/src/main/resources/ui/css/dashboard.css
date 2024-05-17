@@ -501,11 +501,15 @@
 .dashboardVis-refresh {
 	position: absolute;
 	right: 9px;
-	top: 33px;
+	top: 27px;
 	z-index: 5;
 	width: 18px;
 	height: 18px;
 	visibility: hidden;
+}
+
+.DashboardViewImpl-content .dashboardVis-refresh {
+	top: 35px;
 }
 
 .dashboardVis-messageOuter {

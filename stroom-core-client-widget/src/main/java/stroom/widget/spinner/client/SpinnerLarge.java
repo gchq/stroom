@@ -19,7 +19,9 @@ package stroom.widget.spinner.client;
 import stroom.task.client.TaskListener;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -28,9 +30,18 @@ public class SpinnerLarge extends Composite implements TaskListener {
     private static final Binder uiBinder = GWT.create(Binder.class);
 
     private int taskCount;
+    private boolean soft;
+    private boolean visible = true;
+    private final Timer hideTimer;
 
     public SpinnerLarge() {
         initWidget(uiBinder.createAndBindUi(this));
+        hideTimer = new Timer() {
+            @Override
+            public void run() {
+                SpinnerLarge.super.setVisible(false);
+            }
+        };
     }
 
     @Override
@@ -48,6 +59,25 @@ public class SpinnerLarge extends Composite implements TaskListener {
         }
 
         setVisible(taskCount > 0);
+    }
+
+    @Override
+    public void setVisible(final boolean visible) {
+        if (this.visible != visible) {
+            this.visible = visible;
+            hideTimer.cancel();
+            if (visible) {
+                super.setVisible(visible);
+                Scheduler.get().scheduleDeferred(() -> addStyleName("spinner__visible"));
+            } else {
+                removeStyleName("spinner__visible");
+                hideTimer.schedule(500);
+            }
+        }
+    }
+
+    public void setSoft(final boolean soft) {
+//        this.soft = soft;
     }
 
     interface Binder extends UiBinder<Widget, SpinnerLarge> {

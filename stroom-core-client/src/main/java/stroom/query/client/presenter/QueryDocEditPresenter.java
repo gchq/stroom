@@ -327,8 +327,12 @@ public class QueryDocEditPresenter
         super.onClose();
     }
 
-    void startStop() {
-        queryEditPresenter.startStop();
+    void start() {
+        queryEditPresenter.start();
+    }
+
+    void stop() {
+        queryEditPresenter.stop();
     }
 
     @Override

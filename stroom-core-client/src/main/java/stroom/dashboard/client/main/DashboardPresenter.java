@@ -70,15 +70,11 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.ElementUtil;
-import stroom.widget.util.client.KeyBinding;
-import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.Rect;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -218,7 +214,7 @@ public class DashboardPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> start()));
+        registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> toggleStart()));
         registerHandler(queryToolbarPresenter.addTimeRangeChangeHandler(e -> {
             setDirty(true);
             start();
@@ -238,30 +234,6 @@ public class DashboardPresenter
                 onConstraints();
             }
         }));
-        for (final Component component : components.getComponents()) {
-            if (component instanceof AbstractComponentPresenter<?>) {
-                final AbstractComponentPresenter presenter = (AbstractComponentPresenter) component;
-                presenter.getView().asWidget().addDomHandler(e -> {
-                    final Action action = KeyBinding.test(e.getNativeEvent());
-                    GWT.log("presenter: " + presenter.getClass().getName()
-                            + " seen event: " + e.getNativeKeyCode() + " action: " + action);
-                    if (Action.OK == action) {
-                        start();
-                    } else if (Action.CLOSE == action) {
-                        start();
-                    }
-                }, KeyDownEvent.getType());
-            }
-        }
-        registerHandler(layoutPresenter.asWidget().addDomHandler(e -> {
-            final Action action = KeyBinding.test(e.getNativeEvent());
-            GWT.log("seen event: " + e.getNativeKeyCode() + " action: " + action);
-            if (Action.OK == action) {
-                start();
-            } else if (Action.CLOSE == action) {
-                start();
-            }
-        }, KeyDownEvent.getType()));
     }
 
     @Override
@@ -799,25 +771,31 @@ public class DashboardPresenter
         }
     }
 
-    void start() {
-        // Get a sub list of components that can be queried.
-        final List<Queryable> queryableComponents = getQueryableComponents();
-        final boolean combinedMode = getCombinedSearchState();
-
-        if (combinedMode) {
-            for (final Queryable queryable : getQueryableComponents()) {
-                queryable.stop();
-            }
+    void toggleStart() {
+        final boolean searching = getCombinedSearchState();
+        if (searching) {
+            stop();
         } else {
-            // If we have some queryable components then make sure we get query info for them.
-            if (!queryableComponents.isEmpty()) {
-                queryInfo.prompt(() -> {
-                    for (final Queryable queryable : queryableComponents) {
-                        queryable.setDashboardContext(this);
-                        queryable.start();
-                    }
-                }, this);
-            }
+            start();
+        }
+    }
+
+    void start() {
+        // If we have some queryable components then make sure we get query info for them.
+        final List<Queryable> queryableComponents = getQueryableComponents();
+        if (!queryableComponents.isEmpty()) {
+            queryInfo.prompt(() -> {
+                for (final Queryable queryable : queryableComponents) {
+                    queryable.setDashboardContext(this);
+                    queryable.start();
+                }
+            }, this);
+        }
+    }
+
+    void stop() {
+        for (final Queryable queryable : getQueryableComponents()) {
+            queryable.stop();
         }
     }
 

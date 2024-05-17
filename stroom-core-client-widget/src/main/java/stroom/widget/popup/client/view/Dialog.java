@@ -60,7 +60,6 @@ public class Dialog extends AbstractPopupPanel implements TaskListener {
     private int dragStartY;
     private int windowWidth;
     private HandlerRegistration resizeHandlerRegistration;
-    private int taskCount;
 
     /**
      * Creates an empty dialog box. It should not be shown until its child
@@ -68,7 +67,8 @@ public class Dialog extends AbstractPopupPanel implements TaskListener {
      */
     public Dialog(final DialogActionUiHandlers dialogEventHandler) {
         this(dialogEventHandler, false);
-        setSpinnerVisible(false);
+        spinner.setSoft(true);
+        spinner.setVisible(false);
     }
 
     /**
@@ -258,27 +258,12 @@ public class Dialog extends AbstractPopupPanel implements TaskListener {
 
     @Override
     public void incrementTaskCount() {
-        taskCount++;
-        setSpinnerVisible(taskCount > 0);
+        spinner.incrementTaskCount();
     }
 
     @Override
     public void decrementTaskCount() {
-        taskCount--;
-
-        if (taskCount < 0) {
-            GWT.log("Negative task count");
-        }
-
-        setSpinnerVisible(taskCount > 0);
-    }
-
-    private void setSpinnerVisible(final boolean visible) {
-        if (visible) {
-            spinner.removeStyleName("spinner__hidden");
-        } else {
-            spinner.addStyleName("spinner__hidden");
-        }
+        spinner.decrementTaskCount();
     }
 
     public interface Binder extends UiBinder<Widget, Dialog> {

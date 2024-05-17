@@ -18,6 +18,10 @@ public class RefreshButton
 
     private final SvgButton button;
     private int taskCount;
+    private boolean allowPause;
+    private boolean paused;
+    private boolean refreshing;
+    private boolean refreshState;
 
     public RefreshButton() {
         final SimplePanel refreshInner = new SimplePanel();
@@ -26,11 +30,11 @@ public class RefreshButton
         final SimplePanel refreshOuter = new SimplePanel(refreshInner);
         refreshOuter.setStyleName("refresh-outer");
 
-        final SimplePanel spinnerInner = new SimplePanel();
-        spinnerInner.setStyleName("spinner-inner");
-        spinnerInner.getElement().setInnerHTML(SvgImage.SPINNER_SPINNER.getSvg());
-        final SimplePanel spinnerOuter = new SimplePanel(spinnerInner);
-        spinnerOuter.setStyleName("spinner-outer");
+        final SimplePanel circleInner = new SimplePanel();
+        circleInner.setStyleName("circle-inner");
+        circleInner.getElement().setInnerHTML(SvgImage.SPINNER_CIRCLE.getSvg());
+        final SimplePanel circleOuter = new SimplePanel(circleInner);
+        circleOuter.setStyleName("circle-outer");
 
         final SimplePanel spinningInner = new SimplePanel();
         spinningInner.setStyleName("spinning-inner");
@@ -47,12 +51,12 @@ public class RefreshButton
         final FlowPanel layout = new FlowPanel();
         layout.setStyleName("background");
         layout.add(refreshOuter);
-        layout.add(spinnerOuter);
+        layout.add(circleOuter);
         layout.add(spinningOuter);
         layout.add(pauseOuter);
 
         button = new SvgButton();
-        button.addStyleName("RefreshButton SpinnerSmall");
+        button.addStyleName("RefreshButton");
         button.setTitle("Refresh");
         button.setEnabled(true);
 
@@ -63,22 +67,24 @@ public class RefreshButton
     }
 
     public void setRefreshing(final boolean refreshing) {
-        if (refreshing) {
-            button.addStyleName("refreshing");
-        } else {
-            button.removeStyleName("refreshing");
-        }
+        this.refreshing = refreshing;
+        updateRefreshState();
     }
 
     public void setAllowPause(final boolean allowPause) {
+        this.allowPause = allowPause;
         if (allowPause) {
+            setEnabled(false);
             button.addStyleName("allowPause");
         } else {
             button.removeStyleName("allowPause");
         }
+
+        update();
     }
 
     public void setPaused(final boolean paused) {
+        this.paused = paused;
         if (paused) {
             button.setTitle("Resume Update");
             button.addStyleName("paused");
@@ -86,6 +92,8 @@ public class RefreshButton
             button.setTitle("Pause Update");
             button.removeStyleName("paused");
         }
+
+        update();
     }
 
     public void setEnabled(final boolean enabled) {
@@ -99,7 +107,7 @@ public class RefreshButton
     @Override
     public void incrementTaskCount() {
         taskCount++;
-        setRefreshing(taskCount > 0);
+        updateRefreshState();
     }
 
     @Override
@@ -110,6 +118,25 @@ public class RefreshButton
             GWT.log("Negative task count");
         }
 
-        setRefreshing(taskCount > 0);
+        updateRefreshState();
+    }
+
+    public void updateRefreshState() {
+        final boolean refreshState = refreshing || taskCount > 0;
+        if (refreshState != this.refreshState) {
+            this.refreshState = refreshState;
+            if (refreshState) {
+                button.addStyleName("refreshing");
+            } else {
+                button.removeStyleName("refreshing");
+            }
+            update();
+        }
+    }
+
+    private void update() {
+        if (allowPause && !paused) {
+            setEnabled(refreshState);
+        }
     }
 }

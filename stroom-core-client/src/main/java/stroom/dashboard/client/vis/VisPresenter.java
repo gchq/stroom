@@ -382,10 +382,11 @@ public class VisPresenter
                 }
 
                 // Put a new function in the cache if there isn't one already.
-                final VisFunction visFunction = visFunctionCache.get(getVisSettings().getVisualisation());
+                final DocRef visualisation = getVisSettings().getVisualisation();
+                final VisFunction visFunction = visFunctionCache.get(visualisation);
                 if (visFunction == null) {
                     // Create a new function and put it into the cache.
-                    final VisFunction function = visFunctionCache.create(getVisSettings().getVisualisation());
+                    final VisFunction function = visFunctionCache.create(visualisation);
 
                     // Add a handler to act when the function has been loaded.
                     if (currentFunction != null) {
@@ -395,7 +396,7 @@ public class VisPresenter
                     function.addStatusHandler(this);
 
                     // Load the visualisation.
-                    loadVisualisation(function, getVisSettings().getVisualisation());
+                    loadVisualisation(function, visualisation);
 
                 } else {
                     if (currentFunction != visFunction) {

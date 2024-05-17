@@ -58,11 +58,27 @@ import java.util.Set;
 
 public class QueryResultVisPresenter
         extends MyPresenterWidget<QueryResultVisView>
-        implements StatusHandler, ResultConsumer {
+        implements StatusHandler, ResultComponent {
 
     private static final ScriptResource SCRIPT_RESOURCE = GWT.create(ScriptResource.class);
     private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);
     private static final long UPDATE_INTERVAL = 2000;
+
+
+    private static final JavaScriptObject EMPTY_DATA;
+
+    static {
+        final JSONObject dataObject = JSONUtil.getObject(JSONUtil.parse(
+                "{" +
+                        "\"values\": []," +
+                        "\"min\": []," +
+                        "\"max\": []," +
+                        "\"sum\": []," +
+                        "\"types\": []," +
+                        "\"sortDirections\": []" +
+                        "}"));
+        EMPTY_DATA = dataObject.getJavaScriptObject();
+    }
 
     private final VisFunctionCache visFunctionCache;
     private final ScriptCache scriptCache;
@@ -108,17 +124,6 @@ public class QueryResultVisPresenter
         this.context = new JSONObject().getJavaScriptObject();
     }
 
-//    @Override
-//    public void onPause() {
-//        if (pause) {
-//            this.pause = false;
-//            refresh();
-//        } else {
-//            this.pause = true;
-//        }
-//        getView().setPaused(this.pause);
-//    }
-//
 //    @Override
 //    public void onSelection(final List<Map<String, String>> selection) {
 //        if (!Objects.equals(currentSelection, selection)) {
@@ -172,7 +177,7 @@ public class QueryResultVisPresenter
 
 //    @Override
     public void onRemove() {
-//        super.onRemove();
+        onUnbind();
         RootPanel.get().remove(visFrame);
     }
 
@@ -274,7 +279,7 @@ public class QueryResultVisPresenter
     public void startSearch() {
         nextUpdate = 0;
         currentSettings = null;
-        currentData = null;
+        currentData = EMPTY_DATA;
         lastData = null;
 
         if (!searching) {
@@ -306,9 +311,10 @@ public class QueryResultVisPresenter
     }
 
     private void refresh() {
-        currentRequestCount++;
-        getView().getRefreshButton().setPaused(pause && currentRequestCount == 0);
-        getView().getRefreshButton().setRefreshing(true);
+
+//        currentRequestCount++;
+//        getView().getRefreshButton().setPaused(pause && currentRequestCount == 0);
+//        getView().getRefreshButton().setRefreshing(true);
 //        currentSearchModel.refresh(getComponentConfig().getId(), result -> {
 //            try {
 //                if (result != null) {
@@ -321,10 +327,30 @@ public class QueryResultVisPresenter
 //            getView().setPaused(pause && currentRequestCount == 0);
 //            getView().setRefreshing(currentSearchModel.isSearching());
 //        });
+
+        currentRequestCount++;
+        getView().getRefreshButton().setPaused(pause && currentRequestCount == 0);
+        getView().getRefreshButton().setRefreshing(true);
+        currentSearchModel.refresh(QueryModel.VIS_COMPONENT_ID, result -> {
+            try {
+                if (result != null) {
+                    setDataInternal(result);
+                }
+            } catch (final Exception e) {
+                GWT.log(e.getMessage());
+            }
+            currentRequestCount--;
+            getView().getRefreshButton().setPaused(pause && currentRequestCount == 0);
+            getView().getRefreshButton().setRefreshing(currentSearchModel.isSearching());
+        });
     }
 
     void clear() {
-        setDataInternal(null);
+        currentData = EMPTY_DATA;
+        currentError = null;
+        update();
+
+//        setDataInternal(null);
     }
 
     @Override
@@ -390,7 +416,7 @@ public class QueryResultVisPresenter
     }
 
     private JavaScriptObject getJSONData(final QLVisResult visResult) {
-        JavaScriptObject data = null;
+        JavaScriptObject data = EMPTY_DATA;
 
         // Turn JSON result text into an object.
         final JSONObject dataObject = JSONUtil.getObject(JSONUtil.parse(visResult.getJsonData()));
@@ -462,19 +488,18 @@ public class QueryResultVisPresenter
                     }
                 })
                 .onFailure(caught -> failure(function, caught.getMessage()))
-                .taskListener(this)
+                .taskListener(getView().getRefreshButton())
                 .exec();
     }
 
     private void loadScripts(final VisFunction function, final DocRef scriptRef) {
         function.setStatus(LoadStatus.LOADING_SCRIPT);
-
         restFactory
                 .create(SCRIPT_RESOURCE)
                 .method(res -> res.fetchLinkedScripts(
                         new FetchLinkedScriptRequest(scriptRef, scriptCache.getLoadedScripts())))
                 .onSuccess(result -> startInjectingScripts(result, function))
-                .taskListener(this)
+                .taskListener(getView().getRefreshButton())
                 .exec();
     }
 
@@ -495,10 +520,8 @@ public class QueryResultVisPresenter
                         visFrame.setVisType(function.getFunctionName(), getClassName(currentPreferences.getTheme()));
                     }
 
-                    if (currentData != null) {
-                        update();
-                        currentError = null;
-                    }
+                    currentError = null;
+                    update();
 
                 } catch (final RuntimeException e) {
                     currentError = e.getMessage();
@@ -506,8 +529,10 @@ public class QueryResultVisPresenter
             } else if (LoadStatus.FAILURE.equals(function.getStatus())) {
                 // Try and clear the current visualisation.
                 try {
-                    // getView().clear();
+                    currentData = EMPTY_DATA;
                     currentError = null;
+
+                    update();
                 } catch (final RuntimeException e) {
                     // Ignore.
                 }
@@ -560,13 +585,6 @@ public class QueryResultVisPresenter
                     case LOADED:
                         if (currentError != null) {
                             getView().showMessage(currentError);
-                        } else if (currentData == null) {
-                            if (searching) {
-                                getView().hideMessage();
-                                //getView().showMessage("Waiting for data...");
-                            } else {
-                                getView().showMessage("No data");
-                            }
                         } else {
                             getView().hideMessage();
                         }
@@ -733,6 +751,12 @@ public class QueryResultVisPresenter
 //    public List<Map<String, String>> getSelection() {
 //        return currentSelection;
 //    }
+
+
+    @Override
+    public void setQueryModel(final QueryModel queryModel) {
+        this.currentSearchModel = queryModel;
+    }
 
     public interface QueryResultVisView extends View, RequiresResize {
 

@@ -1,13 +1,20 @@
-.SpinnerSmall {
+.RefreshButton {
     position: relative;
     width: 22px;
     height: 22px;
 }
 
-.refresh-outer,
-.spinner-outer,
-.spinning-outer,
-.pause-outer {
+.RefreshButton .refresh-inner svg,
+.RefreshButton .circle-inner svg,
+.RefreshButton .spinning-inner svg,
+.RefreshButton .pause-inner svg {
+    color: var(--icon-button__color);
+}
+
+.RefreshButton .refresh-outer,
+.RefreshButton .circle-outer,
+.RefreshButton .spinning-outer,
+.RefreshButton .pause-outer {
     position: absolute;
     top: 0;
     left: 0;
@@ -20,54 +27,63 @@
     visibility: hidden;
 }
 
-.refresh-inner,
-.spinner-inner,
-.spinning-inner,
-.pause-inner {
+.RefreshButton .refresh-inner,
+.RefreshButton .circle-inner,
+.RefreshButton .spinning-inner,
+.RefreshButton .pause-inner {
     display: flex;
     align-items: center;
     height: 100%;
 }
 
-.refresh-inner svg,
-.spinner-inner svg,
-.spinning-inner svg,
-.pause-inner svg {
+.RefreshButton .refresh-inner svg,
+.RefreshButton .circle-inner svg,
+.RefreshButton .spinning-inner svg,
+.RefreshButton .pause-inner svg {
     width: 18px;
     height: 18px;
-    color: var(--navigation-icon-button__color);
 }
 
-.refreshing .spinning-inner svg {
+.RefreshButton.refreshing .spinning-inner svg {
     -webkit-animation: spinner-border .75s linear infinite;
     animation: spinner-border .75s linear infinite;
 }
 
-.paused {
+.RefreshButton.paused {
     animation: pulse-animation 2s infinite;
 }
 
-.refreshing .spinning-outer,
-.refreshing.allowPause .pause-outer,
-.paused .spinner-outer,
-.paused .pause-outer,
-.refresh-outer {
-    visibility: visible;
-}
-
-.refreshing .refresh-outer,
-.paused .refresh-outer,
-.paused .spinning-outer {
+.RefreshButton.refreshing .refresh-outer,
+.RefreshButton.refreshing.allowPause .circle-outer,
+.RefreshButton.paused .refresh-outer,
+.RefreshButton.paused.allowPause .spinning-outer,
+.RefreshButton.allowPause .refresh-outer,
+.RefreshButton.paused.allowPause .refresh-outer {
     visibility: hidden;
 }
 
-
-.RefreshButton {
+.RefreshButton.refreshing .spinning-outer,
+.RefreshButton.refreshing.allowPause .pause-outer,
+.RefreshButton.paused .circle-outer,
+.RefreshButton.paused .pause-outer,
+.RefreshButton .refresh-outer,
+.RefreshButton.allowPause .circle-outer,
+.RefreshButton.paused.allowPause .circle-outer {
+    visibility: visible;
 }
 
-.RefreshButton .refresh-inner svg,
-.RefreshButton .spinner-inner svg,
-.RefreshButton .spinning-inner svg,
-.RefreshButton .pause-inner svg {
-    color: var(--icon-button__color);
+@keyframes pulse-animation {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes spinner-border {
+  to { transform: rotate(360deg); }
 }
