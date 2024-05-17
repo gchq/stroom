@@ -17,9 +17,11 @@
 
 package stroom.importexport.impl;
 
+import stroom.importexport.impl.ContentPackImportConfig.UserType;
 import stroom.importexport.shared.ImportSettings;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
+import stroom.security.shared.User;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
@@ -108,7 +110,9 @@ class TestContentPackZipImport {
         Mockito.when(contentPackImportConfig.isEnabled())
                 .thenReturn(true);
         Mockito.when(contentPackImportConfig.getImportAsSubjectId())
-                .thenReturn("jbloggs");
+                .thenReturn(User.ADMINISTRATORS_GROUP_SUBJECT_ID);
+        Mockito.when(contentPackImportConfig.getImportAsType())
+                .thenReturn(UserType.GROUP);
     }
 
     private void deleteTestFiles() throws IOException {
@@ -116,7 +120,6 @@ class TestContentPackZipImport {
         Files.deleteIfExists(testPack2);
         Files.deleteIfExists(testPack3);
     }
-
 
     @Test
     void testStartup_disabled() throws IOException {
