@@ -112,7 +112,7 @@ public class UserCache implements Clearable, EntityEvent.Handler {
         if (NullSafe.isBlankString(name)) {
             return Optional.empty();
         } else {
-            final CacheKey cacheKey = CacheKey.user(name);
+            final CacheKey cacheKey = CacheKey.forUser(name);
             Optional<User> optUser = cacheBySubjectId.get(cacheKey);
             if (optUser.isEmpty()) {
                 optUser = getOrCreateUser(name);
@@ -131,7 +131,7 @@ public class UserCache implements Clearable, EntityEvent.Handler {
         if (NullSafe.isBlankString(name)) {
             return Optional.empty();
         } else {
-            return cacheBySubjectId.get(CacheKey.user(name));
+            return cacheBySubjectId.get(CacheKey.forUser(name));
         }
     }
 
@@ -155,7 +155,7 @@ public class UserCache implements Clearable, EntityEvent.Handler {
             return Optional.empty();
         } else {
             return cacheByDisplayName.get(displayName)
-                    .or(() -> cacheBySubjectId.get(CacheKey.user(displayName)));
+                    .or(() -> cacheBySubjectId.get(CacheKey.forUser(displayName)));
         }
     }
 
@@ -202,8 +202,8 @@ public class UserCache implements Clearable, EntityEvent.Handler {
 
         if (subjectId != null) {
             // Don't know if it is a user or a group so invalidate both
-            cacheBySubjectId.invalidate(CacheKey.user(subjectId));
-            cacheBySubjectId.invalidate(CacheKey.group(subjectId));
+            cacheBySubjectId.invalidate(CacheKey.forUser(subjectId));
+            cacheBySubjectId.invalidate(CacheKey.forGroup(subjectId));
         } else {
             cacheBySubjectId.invalidateEntries((cacheKey, optUser) -> {
                 final User user = optUser.orElse(null);
@@ -239,11 +239,11 @@ public class UserCache implements Clearable, EntityEvent.Handler {
 
     private record CacheKey(String subjectId, boolean isGroup) {
 
-        static CacheKey user(String subjectId) {
+        static CacheKey forUser(String subjectId) {
             return new CacheKey(subjectId, false);
         }
 
-        static CacheKey group(String subjectId) {
+        static CacheKey forGroup(String subjectId) {
             return new CacheKey(subjectId, true);
         }
     }
