@@ -16,6 +16,7 @@
 
 package stroom.widget.tab.client.presenter;
 
+import stroom.task.client.HasTaskListener;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
 
 import com.google.inject.Inject;

@@ -178,6 +178,7 @@ public class ManageGlobalPropertyListPresenter
                                 ManageGlobalPropertyListPresenter.this,
                                 caught.getMessage(),
                                 null))
+                .taskListener(getView())
                 .exec();
     }
 
@@ -194,7 +195,8 @@ public class ManageGlobalPropertyListPresenter
                 error ->
                         showError(
                                 error.getException(),
-                                "Error getting list of all nodes. Only properties for one node will be shown"));
+                                "Error getting list of all nodes. Only properties for one node will be shown"),
+                getView());
     }
 
     private void refreshPropertiesForNode(final String nodeName) {
@@ -227,6 +229,7 @@ public class ManageGlobalPropertyListPresenter
                     // unless another node has already kicked it off
                     updateChildMapsTimer.update();
                 })
+                .taskListener(getView())
                 .exec();
     }
 

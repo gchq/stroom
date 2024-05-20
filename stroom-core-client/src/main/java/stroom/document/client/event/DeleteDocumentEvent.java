@@ -18,6 +18,7 @@
 package stroom.document.client.event;
 
 import stroom.docref.DocRef;
+import stroom.task.client.TaskListener;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -31,26 +32,31 @@ public class DeleteDocumentEvent extends GwtEvent<DeleteDocumentEvent.Handler> {
     private final List<DocRef> docRefs;
     private final boolean confirm;
     private final ResultCallback callback;
+    private final TaskListener taskListener;
 
     private DeleteDocumentEvent(final List<DocRef> docRefs,
                                 final boolean confirm,
-                                final ResultCallback callback) {
+                                final ResultCallback callback,
+                                final TaskListener taskListener) {
         this.docRefs = docRefs;
         this.confirm = confirm;
         this.callback = callback;
-    }
-
-    public static void fire(final HasHandlers handlers,
-                            final List<DocRef> docRefs,
-                            final boolean confirm) {
-        handlers.fireEvent(new DeleteDocumentEvent(docRefs, confirm, null));
+        this.taskListener = taskListener;
     }
 
     public static void fire(final HasHandlers handlers,
                             final List<DocRef> docRefs,
                             final boolean confirm,
-                            final ResultCallback callback) {
-        handlers.fireEvent(new DeleteDocumentEvent(docRefs, confirm, callback));
+                            final TaskListener taskListener) {
+        handlers.fireEvent(new DeleteDocumentEvent(docRefs, confirm, null, taskListener));
+    }
+
+    public static void fire(final HasHandlers handlers,
+                            final List<DocRef> docRefs,
+                            final boolean confirm,
+                            final ResultCallback callback,
+                            final TaskListener taskListener) {
+        handlers.fireEvent(new DeleteDocumentEvent(docRefs, confirm, callback, taskListener));
     }
 
     public static Type<Handler> getType() {
@@ -80,6 +86,10 @@ public class DeleteDocumentEvent extends GwtEvent<DeleteDocumentEvent.Handler> {
 
     public ResultCallback getCallback() {
         return callback;
+    }
+
+    public TaskListener getTaskListener() {
+        return taskListener;
     }
 
     public interface Handler extends EventHandler {

@@ -125,6 +125,7 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
                     .create(KAFKA_CONFIG_RESOURCE)
                     .method(res -> res.download(docRef))
                     .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
+                    .taskListener(this)
                     .exec();
         }));
     }

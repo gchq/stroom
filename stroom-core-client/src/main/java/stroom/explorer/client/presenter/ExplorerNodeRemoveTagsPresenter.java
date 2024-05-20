@@ -18,10 +18,11 @@
 package stroom.explorer.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.RefreshDocumentEvent;
+import stroom.explorer.client.event.ExplorerTaskListener;
 import stroom.explorer.client.event.ShowRemoveNodeTagsDialogEvent;
 import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter.ExplorerNodeRemoveTagsProxy;
 import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter.ExplorerNodeRemoveTagsView;
@@ -29,7 +30,6 @@ import stroom.explorer.shared.AddRemoveTagsRequest;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.util.shared.GwtNullSafe;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -60,8 +60,7 @@ import java.util.stream.Collectors;
 public class ExplorerNodeRemoveTagsPresenter
         extends MyPresenter<ExplorerNodeRemoveTagsView, ExplorerNodeRemoveTagsProxy>
         implements ShowRemoveNodeTagsDialogEvent.Handler,
-        HidePopupRequestEvent.Handler,
-        HidePopupEvent.Handler {
+        HidePopupRequestEvent.Handler {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
@@ -98,7 +97,13 @@ public class ExplorerNodeRemoveTagsPresenter
                         getView().setData(docRefs, nodetags);
                         forceReveal();
                     })
-                    .onFailure(this::handleFailure)
+                    .onFailure(t -> {
+                        AlertEvent.fireError(
+                                ExplorerNodeRemoveTagsPresenter.this,
+                                t.getMessage(),
+                                null);
+                    })
+                    .taskListener(new ExplorerTaskListener(this))
                     .exec();
         }
     }
@@ -117,22 +122,21 @@ public class ExplorerNodeRemoveTagsPresenter
                 .caption(caption)
                 .onShow(e -> getView().focus())
                 .onHideRequest(this)
-                .onHide(this)
                 .fire();
     }
 
     @Override
-    public void onHideRequest(final HidePopupRequestEvent event) {
-        if (event.isOk()) {
+    public void onHideRequest(final HidePopupRequestEvent e) {
+        if (e.isOk()) {
             final Set<String> removeTags = getView().getRemoveTags();
 
             if (GwtNullSafe.hasItems(removeTags)) {
-                removeTagsFromNodes(event, removeTags);
+                removeTagsFromNodes(e, removeTags);
             } else {
-                event.hide();
+                e.hide();
             }
         } else {
-            event.hide();
+            e.hide();
         }
     }
 
@@ -149,21 +153,11 @@ public class ExplorerNodeRemoveTagsPresenter
                                     ExplorerNodeRemoveTagsPresenter.this, docRef));
                     event.hide();
                 })
-                .onFailure(this::handleFailure)
+                .onFailure(RestErrorHandler.forPopup(this, event))
+                .taskListener(this)
                 .exec();
     }
 
-    @Override
-    public void onHide(final HidePopupEvent e) {
-
-    }
-
-    private void handleFailure(final RestError t) {
-        AlertEvent.fireError(
-                ExplorerNodeRemoveTagsPresenter.this,
-                t.getMessage(),
-                null);
-    }
 
     private boolean isSingleDocRef() {
         return GwtNullSafe.size(explorerNodes) == 1;
@@ -184,7 +178,6 @@ public class ExplorerNodeRemoveTagsPresenter
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
-
 
     // --------------------------------------------------------------------------------
 

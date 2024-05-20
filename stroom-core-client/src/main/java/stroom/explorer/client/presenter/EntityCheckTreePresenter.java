@@ -26,7 +26,6 @@ import stroom.explorer.shared.NodeFlag;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -41,11 +40,10 @@ public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreeP
 
     @Inject
     public EntityCheckTreePresenter(final EntityCheckTreeView view,
-                                    final RestFactory restFactory,
-                                    final EventBus eventBus) {
+                                    final RestFactory restFactory) {
         super(new SimpleEventBus(), view);
 
-        explorerTree = new ExplorerTickBoxTree(restFactory);
+        explorerTree = new ExplorerTickBoxTree(restFactory, this);
 
         view.setCellTree(explorerTree);
     }

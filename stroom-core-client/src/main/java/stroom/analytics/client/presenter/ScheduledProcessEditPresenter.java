@@ -14,6 +14,7 @@ import stroom.job.shared.ScheduleRestriction;
 import stroom.node.client.NodeManager;
 import stroom.schedule.client.SchedulePopup;
 import stroom.widget.datepicker.client.DateTimePopup;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -73,6 +74,7 @@ public class ScheduledProcessEditPresenter
                     scheduleReferenceTimeConsumer.accept(new ScheduleReferenceTime(referenceTime,
                             lastExecuted));
                 })
+                .taskListener(this)
                 .exec());
 
         nodeManager.listAllNodes(
@@ -85,7 +87,8 @@ public class ScheduledProcessEditPresenter
                         .fireError(this,
                                 "Error",
                                 throwable.getMessage(),
-                                null));
+                                null),
+                this);
     }
 
     @Override
@@ -115,7 +118,7 @@ public class ScheduledProcessEditPresenter
                         write(written -> {
                             consumer.accept(written);
                             e.hide();
-                        });
+                        }, e);
                     } else {
                         e.hide();
                     }
@@ -132,15 +135,18 @@ public class ScheduledProcessEditPresenter
         getView().getScheduleBox().setValue(executionSchedule.getSchedule());
     }
 
-    public void write(final Consumer<ExecutionSchedule> consumer) {
+    public void write(final Consumer<ExecutionSchedule> consumer,
+                      final HidePopupRequestEvent event) {
         getView().getScheduleBox().validate(scheduledTimes -> {
-            if (scheduledTimes.isError()) {
-                AlertEvent.fireWarn(this, scheduledTimes.getError(), null);
+            if (scheduledTimes == null) {
+                event.reset();
+            } else if (scheduledTimes.isError()) {
+                AlertEvent.fireWarn(this, scheduledTimes.getError(), event::reset);
             } else {
                 if (!getView().getStartTime().isValid()) {
-                    AlertEvent.fireWarn(this, "Invalid start time", null);
+                    AlertEvent.fireWarn(this, "Invalid start time", event::reset);
                 } else if (!getView().getEndTime().isValid()) {
-                    AlertEvent.fireWarn(this, "Invalid end time", null);
+                    AlertEvent.fireWarn(this, "Invalid end time", event::reset);
                 } else {
                     final ScheduleBounds scheduleBounds = new ScheduleBounds(
                             getView().getStartTime().getValue(),

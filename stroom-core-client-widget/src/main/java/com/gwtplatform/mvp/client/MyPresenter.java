@@ -16,6 +16,10 @@
 
 package com.gwtplatform.mvp.client;
 
+import stroom.task.client.HasTaskListener;
+import stroom.task.client.TaskListener;
+import stroom.task.client.TaskListenerImpl;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.web.bindery.event.shared.Event;
@@ -24,29 +28,16 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 
-public abstract class MyPresenter<T_VIEW extends View, T_PROXY extends Proxy<?>> extends Presenter<T_VIEW, T_PROXY>
-        implements Layer {
+public abstract class MyPresenter<T_VIEW extends View, T_PROXY extends Proxy<?>>
+        extends Presenter<T_VIEW, T_PROXY>
+        implements Layer, TaskListener, HasTaskListener {
 
-//    private double opacity;
+    private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
     private boolean firstReveal = true;
 
     public MyPresenter(final EventBus eventBus, final T_VIEW view, final T_PROXY proxy) {
         super(eventBus, view, proxy);
     }
-
-//    @Override
-//    public double getOpacity() {
-//        return opacity;
-//    }
-//
-//    /**************
-//     * Start Layer
-//     **************/
-//    @Override
-//    public void setOpacity(final double opacity) {
-//        this.opacity = opacity;
-//        getWidget().getElement().getStyle().setOpacity(opacity);
-//    }
 
     @Override
     public void setLayerVisible(final boolean fade, final boolean visible) {
@@ -55,7 +46,6 @@ public abstract class MyPresenter<T_VIEW extends View, T_PROXY extends Proxy<?>>
 
     @Override
     public void addLayer(final LayerContainer tabContentView) {
-//        setOpacity(opacity);
         tabContentView.add(getWidget());
     }
 
@@ -71,10 +61,6 @@ public abstract class MyPresenter<T_VIEW extends View, T_PROXY extends Proxy<?>>
             ((RequiresResize) getWidget()).onResize();
         }
     }
-
-    //*************
-    // End Layer
-    //*************
 
     /**
      * Only called the first time the widget is revealed.
@@ -100,5 +86,20 @@ public abstract class MyPresenter<T_VIEW extends View, T_PROXY extends Proxy<?>>
 
     protected final <H extends EventHandler> void addRegisteredHandlerToSource(final Type<H> type, final H handler) {
         registerHandler(addHandlerToSource(type, handler));
+    }
+
+    @Override
+    public synchronized void setTaskListener(final TaskListener taskListener) {
+        this.taskListener.setTaskListener(taskListener);
+    }
+
+    @Override
+    public synchronized void incrementTaskCount() {
+        taskListener.incrementTaskCount();
+    }
+
+    @Override
+    public synchronized void decrementTaskCount() {
+        taskListener.decrementTaskCount();
     }
 }

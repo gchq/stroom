@@ -31,7 +31,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class SettingsPresenter extends MyPresenterWidget<LinkTabsLayoutView> implements Focus {
+public class SettingsPresenter
+        extends MyPresenterWidget<LinkTabsLayoutView>
+        implements Focus {
 
     private final Map<TabData, Layer> tabViewMap = new HashMap<>();
     private final Map<TabData, ComponentDataModifier> modifiers = new HashMap<>();
@@ -65,6 +67,7 @@ public class SettingsPresenter extends MyPresenterWidget<LinkTabsLayoutView> imp
 
         if (layer instanceof ComponentDataModifier) {
             final ComponentDataModifier componentDataModifier = (ComponentDataModifier) layer;
+            componentDataModifier.setTaskListener(this);
             modifiers.put(tab, componentDataModifier);
         }
 

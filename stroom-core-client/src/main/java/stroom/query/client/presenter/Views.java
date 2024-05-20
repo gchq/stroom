@@ -1,6 +1,5 @@
 package stroom.query.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.view.shared.ViewResource;
@@ -11,7 +10,6 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
-import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -34,26 +32,26 @@ public class Views implements HasHandlers {
         this.restFactory = restFactory;
     }
 
-    public void fetchViews(final Consumer<List<DocRef>> consumer) {
-        // Need to allow for available data sources changing, so use a TTL
-        if (views != null && System.currentTimeMillis() < nextUpdateTimeEpochMs) {
-            consumer.accept(views);
-        } else {
-            restFactory
-                    .create(VIEW_RESOURCE)
-                    .method(ViewResource::list)
-                    .onSuccess(result -> {
-                        views = result;
-                        consumer.accept(result);
-                        nextUpdateTimeEpochMs = System.currentTimeMillis() + VIEWS_TIME_TO_LIVE_MS;
-                    })
-                    .onFailure(throwable -> AlertEvent.fireError(
-                            this,
-                            throwable.getMessage(),
-                            null))
-                    .exec();
-        }
-    }
+//    public void fetchViews(final Consumer<List<DocRef>> consumer) {
+//        // Need to allow for available data sources changing, so use a TTL
+//        if (views != null && System.currentTimeMillis() < nextUpdateTimeEpochMs) {
+//            consumer.accept(views);
+//        } else {
+//            restFactory
+//                    .create(VIEW_RESOURCE)
+//                    .method(ViewResource::list)
+//                    .onSuccess(result -> {
+//                        views = result;
+//                        consumer.accept(result);
+//                        nextUpdateTimeEpochMs = System.currentTimeMillis() + VIEWS_TIME_TO_LIVE_MS;
+//                    })
+//                    .onFailure(throwable -> AlertEvent.fireError(
+//                            this,
+//                            throwable.getMessage(),
+//                            null))
+//                    .exec();
+//        }
+//    }
 
     @Override
     public void fireEvent(final GwtEvent<?> event) {

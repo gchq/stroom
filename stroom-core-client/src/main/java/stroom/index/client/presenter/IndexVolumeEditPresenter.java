@@ -19,6 +19,7 @@ package stroom.index.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.index.client.presenter.IndexVolumeEditPresenter.IndexVolumeEditView;
 import stroom.index.shared.IndexVolume;
@@ -26,8 +27,9 @@ import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.index.shared.IndexVolumeResource;
 import stroom.item.client.SelectionBox;
 import stroom.node.client.NodeManager;
+import stroom.task.client.TaskListener;
 import stroom.util.shared.ModelStringUtil;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -62,7 +64,10 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
         this.nodeManager = nodeManager;
     }
 
-    void show(final IndexVolume volume, final String caption, final Consumer<IndexVolume> consumer) {
+    void show(final IndexVolume volume,
+              final String caption,
+              final Consumer<IndexVolume> consumer,
+              final TaskListener taskListener) {
         nodeManager.listAllNodes(
                 nodeNames -> {
                     read(nodeNames, volume);
@@ -73,33 +78,39 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
                             .popupSize(popupSize)
                             .caption(caption)
                             .onShow(e -> getView().focus())
-                            .onHideRequest(event -> {
-                                if (event.isOk()) {
+                            .onHideRequest(e -> {
+                                if (e.isOk()) {
                                     try {
                                         write();
                                         if (volume.getId() != null) {
-                                            doWithVolumeValidation(volume, () -> updateVolume(consumer, volume));
+                                            doWithVolumeValidation(volume, () ->
+                                                            updateVolume(consumer, volume, e, taskListener),
+                                                    e, taskListener);
                                         } else {
-                                            doWithVolumeValidation(volume, () -> createIndexVolume(consumer, volume));
+                                            doWithVolumeValidation(volume, () ->
+                                                            createIndexVolume(consumer, volume, e, taskListener),
+                                                    e, taskListener);
                                         }
 
-                                    } catch (final RuntimeException e) {
-                                        AlertEvent.fireError(IndexVolumeEditPresenter.this, e.getMessage(), null);
+                                    } catch (final RuntimeException ex) {
+                                        AlertEvent.fireError(IndexVolumeEditPresenter.this,
+                                                ex.getMessage(),
+                                                e::reset);
                                     }
                                 } else {
-                                    consumer.accept(null);
+                                    e.hide();
                                 }
                             })
                             .fire();
                 },
-                throwable -> {
-                    AlertEvent.fireError(IndexVolumeEditPresenter.this, throwable.getMessage(), null);
-                    consumer.accept(null);
-                });
+                throwable -> AlertEvent.fireError(IndexVolumeEditPresenter.this, throwable.getMessage(), null),
+                taskListener);
     }
 
     private void doWithVolumeValidation(final IndexVolume volume,
-                                        final Runnable work) {
+                                        final Runnable work,
+                                        final HidePopupRequestEvent event,
+                                        final TaskListener taskListener) {
         restFactory
                 .create(INDEX_VOLUME_RESOURCE)
                 .method(res -> res.validate(volume))
@@ -123,34 +134,46 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
                         AlertEvent.fireError(
                                 IndexVolumeEditPresenter.this,
                                 validationResult.getMessage(),
-                                null);
+                                event::reset);
                     }
                 })
                 .onFailure(throwable -> {
-                    AlertEvent.fireError(IndexVolumeEditPresenter.this, throwable.getMessage(), null);
+                    AlertEvent.fireError(IndexVolumeEditPresenter.this, throwable.getMessage(), event::reset);
                 })
+                .taskListener(taskListener)
                 .exec();
     }
 
-    private void createIndexVolume(final Consumer<IndexVolume> savedVolumeConsumer, final IndexVolume volume) {
+    private void createIndexVolume(final Consumer<IndexVolume> savedVolumeConsumer,
+                                   final IndexVolume volume,
+                                   final HidePopupRequestEvent event,
+                                   final TaskListener taskListener) {
         restFactory
                 .create(INDEX_VOLUME_RESOURCE)
                 .method(res -> res.create(volume))
-                .onSuccess(savedVolumeConsumer)
+                .onSuccess(r -> {
+                    savedVolumeConsumer.accept(r);
+                    event.hide();
+                })
+                .onFailure(RestErrorHandler.forPopup(this, event))
+                .taskListener(taskListener)
                 .exec();
     }
 
     private void updateVolume(final Consumer<IndexVolume> consumer,
-                              final IndexVolume volume) {
+                              final IndexVolume volume,
+                              final HidePopupRequestEvent event,
+                              final TaskListener taskListener) {
         restFactory
                 .create(INDEX_VOLUME_RESOURCE)
                 .method(res -> res.update(volume.getId(), volume))
-                .onSuccess(consumer)
+                .onSuccess(r -> {
+                    consumer.accept(r);
+                    event.hide();
+                })
+                .onFailure(RestErrorHandler.forPopup(this, event))
+                .taskListener(taskListener)
                 .exec();
-    }
-
-    void hide() {
-        HidePopupEvent.builder(this).fire();
     }
 
     private void read(final List<String> nodeNames, final IndexVolume volume) {

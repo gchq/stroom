@@ -18,7 +18,7 @@
 package stroom.feed.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -29,6 +29,7 @@ import stroom.feed.client.presenter.FeedPresenter;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedResource;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.task.client.TaskListener;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -66,12 +67,14 @@ public class FeedPlugin extends DocumentPlugin<FeedDoc> {
     @Override
     public void load(final DocRef docRef,
                      final Consumer<FeedDoc> resultConsumer,
-                     final Consumer<RestError> errorConsumer) {
+                     final RestErrorHandler errorHandler,
+                     final TaskListener taskListener) {
         restFactory
                 .create(FEED_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
+                .onFailure(errorHandler)
+                .taskListener(taskListener)
                 .exec();
     }
 
@@ -79,12 +82,14 @@ public class FeedPlugin extends DocumentPlugin<FeedDoc> {
     public void save(final DocRef docRef,
                      final FeedDoc document,
                      final Consumer<FeedDoc> resultConsumer,
-                     final Consumer<RestError> errorConsumer) {
+                     final RestErrorHandler errorHandler,
+                     final TaskListener taskListener) {
         restFactory
                 .create(FEED_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
+                .onFailure(errorHandler)
+                .taskListener(taskListener)
                 .exec();
     }
 

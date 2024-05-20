@@ -19,6 +19,7 @@ package stroom.annotation.client;
 import stroom.annotation.client.ChangeStatusPresenter.ChangeStatusView;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.SetStatusRequest;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -38,7 +39,8 @@ import com.gwtplatform.mvp.client.View;
 import java.util.List;
 import java.util.Objects;
 
-public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
+public class ChangeStatusPresenter
+        extends MyPresenterWidget<ChangeStatusView>
         implements ChangeStatusUiHandlers {
 
     private final RestFactory restFactory;
@@ -77,6 +79,7 @@ public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
                             changeStatus(values.get(0));
                         }
                     })
+                    .taskListener(this)
                     .exec();
         }
 
@@ -92,10 +95,16 @@ public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
                         restFactory
                                 .create(annotationResource)
                                 .method(res -> res.setStatus(request))
-                                .onSuccess(values -> GWT.log("Updated " + values + " annotations"))
+                                .onSuccess(values -> {
+                                    GWT.log("Updated " + values + " annotations");
+                                    e.hide();
+                                })
+                                .onFailure(RestErrorHandler.forPopup(this, e))
+                                .taskListener(this)
                                 .exec();
+                    } else {
+                        e.hide();
                     }
-                    e.hide();
                 })
                 .fire();
     }
@@ -116,6 +125,7 @@ public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
                     .create(annotationResource)
                     .method(res -> res.getStatus(filter))
                     .onSuccess(consumer)
+                    .taskListener(this)
                     .exec();
         });
         statusPresenter.clearFilter();

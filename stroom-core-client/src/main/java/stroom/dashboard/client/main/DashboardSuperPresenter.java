@@ -82,6 +82,10 @@ public class DashboardSuperPresenter
                 && Objects.equals(getSelectedTab().getType(), DASHBOARD.getType())) {
             dashboardPresenter.start();
             return true;
+        } else if (Action.CLOSE == action
+                && Objects.equals(getSelectedTab().getType(), DASHBOARD.getType())) {
+            dashboardPresenter.stop();
+            return true;
 //        } else if (Action.DOCUMENTATION == action
 //                && Objects.equals(getSelectedTab().getType(), DASHBOARD.getType())) {
 //            selectTab(DOCUMENTATION);

@@ -53,9 +53,19 @@ public class CloseContent extends Composite implements DialogButtons {
         close.setFocus(true);
     }
 
+    @Override
+    public void onDialogAction(final DialogAction action) {
+        setEnabled(false);
+        close.setLoading(true);
+        uiHandlers.hideRequest(new HideRequest(action, () -> {
+            setEnabled(true);
+            close.setLoading(false);
+        }));
+    }
+
     @UiHandler("close")
     public void onCloseClick(final ClickEvent event) {
-        uiHandlers.hideRequest(new HideRequest(false, false));
+        onDialogAction(DialogAction.CLOSE);
     }
 
     @Override

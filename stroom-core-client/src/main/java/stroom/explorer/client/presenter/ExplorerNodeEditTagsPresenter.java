@@ -19,9 +19,11 @@ package stroom.explorer.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.RefreshDocumentEvent;
+import stroom.explorer.client.event.ExplorerTaskListener;
 import stroom.explorer.client.event.ShowEditNodeTagsDialogEvent;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsProxy;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsView;
@@ -29,7 +31,6 @@ import stroom.explorer.shared.AddRemoveTagsRequest;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.util.shared.GwtNullSafe;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -61,8 +62,7 @@ import java.util.stream.Collectors;
 public class ExplorerNodeEditTagsPresenter
         extends MyPresenter<ExplorerNodeEditTagsView, ExplorerNodeEditTagsProxy>
         implements ShowEditNodeTagsDialogEvent.Handler,
-        HidePopupRequestEvent.Handler,
-        HidePopupEvent.Handler {
+        HidePopupRequestEvent.Handler {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
@@ -105,6 +105,7 @@ public class ExplorerNodeEditTagsPresenter
                                         forceReveal();
                                     })
                                     .onFailure(this::handleFailure)
+                                    .taskListener(new ExplorerTaskListener(this))
                                     .exec();
                         } else {
                             // Adding to multiple so don't need to know what tags the nodes have
@@ -113,6 +114,7 @@ public class ExplorerNodeEditTagsPresenter
                         }
                     })
                     .onFailure(this::handleFailure)
+                    .taskListener(new ExplorerTaskListener(this))
                     .exec();
 
         }
@@ -143,30 +145,29 @@ public class ExplorerNodeEditTagsPresenter
                 .caption(caption)
                 .onShow(e -> getView().focus())
                 .onHideRequest(this)
-                .onHide(this)
                 .fire();
     }
 
     @Override
-    public void onHideRequest(final HidePopupRequestEvent event) {
-        if (event.isOk()) {
+    public void onHideRequest(final HidePopupRequestEvent e) {
+        if (e.isOk()) {
             final Set<String> editedTags = getView().getNodeTags();
 
             if (isSingleDocRef()) {
                 if (!Objects.equals(getSingleNode().getTags(), editedTags)) {
-                    updateTagsOnNode(event, editedTags);
+                    updateTagsOnNode(e, editedTags);
                 } else {
-                    event.hide();
+                    e.hide();
                 }
             } else {
                 if (GwtNullSafe.hasItems(editedTags)) {
-                    addTagsToNodes(event, editedTags);
+                    addTagsToNodes(e, editedTags);
                 } else {
-                    event.hide();
+                    e.hide();
                 }
             }
         } else {
-            event.hide();
+            e.hide();
         }
     }
 
@@ -182,7 +183,8 @@ public class ExplorerNodeEditTagsPresenter
                                     ExplorerNodeEditTagsPresenter.this, docRef));
                     event.hide();
                 })
-                .onFailure(this::handleFailure)
+                .onFailure(RestErrorHandler.forPopup(this, event))
+                .taskListener(this)
                 .exec();
     }
 
@@ -200,13 +202,9 @@ public class ExplorerNodeEditTagsPresenter
                             explorerNode.getDocRef());
                     event.hide();
                 })
-                .onFailure(this::handleFailure)
+                .onFailure(RestErrorHandler.forPopup(this, event))
+                .taskListener(this)
                 .exec();
-    }
-
-    @Override
-    public void onHide(final HidePopupEvent e) {
-
     }
 
     private void handleFailure(final RestError t) {
@@ -235,7 +233,6 @@ public class ExplorerNodeEditTagsPresenter
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
-
 
     // --------------------------------------------------------------------------------
 

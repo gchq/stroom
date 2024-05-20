@@ -73,10 +73,12 @@ public class TermEditor extends Composite {
     private boolean editing;
     private ExpressionUiHandlers uiHandlers;
 
-    private final AsyncSuggestOracle suggestOracle = new AsyncSuggestOracle();
+    private final AsyncSuggestOracle suggestOracle;
     private FieldSelectionListModel fieldSelectionListModel;
 
     public TermEditor(final DocSelectionBoxPresenter docSelectionBoxPresenter) {
+        suggestOracle = new AsyncSuggestOracle(docSelectionBoxPresenter);
+
         this.docSelectionBoxPresenter = docSelectionBoxPresenter;
         if (docSelectionBoxPresenter != null) {
             docRefWidget = docSelectionBoxPresenter.getWidget();

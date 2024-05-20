@@ -35,7 +35,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.HasDocumentRead;
@@ -118,12 +118,13 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             @Override
             protected void exec(final Range range,
                                 final Consumer<ProcessorListRowResultPage> dataConsumer,
-                                final Consumer<RestError> errorConsumer) {
+                                final RestErrorHandler errorHandler) {
                 restFactory
                         .create(PROCESSOR_FILTER_RESOURCE)
                         .method(res -> res.find(request))
                         .onSuccess(dataConsumer)
-                        .onFailure(errorConsumer)
+                        .onFailure(errorHandler)
+                        .taskListener(view)
                         .exec();
             }
 
@@ -144,6 +145,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                             AlertEvent.fireError(this, res.getMessage(), null);
                             consumer.accept(key);
                         })
+                        .taskListener(getView())
                         .exec();
             }
         };
@@ -158,6 +160,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                             AlertEvent.fireError(this, res.getMessage(), null);
                             consumer.accept(key);
                         })
+                        .taskListener(getView())
                         .exec();
             }
         };
@@ -172,6 +175,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                             AlertEvent.fireError(this, res.getMessage(), null);
                             consumer.accept(key);
                         })
+                        .taskListener(getView())
                         .exec();
             }
         };
@@ -186,6 +190,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                             AlertEvent.fireError(this, res.getMessage(), null);
                             consumer.accept(key);
                         })
+                        .taskListener(getView())
                         .exec();
             }
         };

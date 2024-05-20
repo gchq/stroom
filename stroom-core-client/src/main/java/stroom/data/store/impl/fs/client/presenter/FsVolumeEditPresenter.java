@@ -24,11 +24,12 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.data.store.impl.fs.shared.FsVolumeResource;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.ModelStringUtil;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -44,7 +45,8 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.function.Consumer;
 
-public class FsVolumeEditPresenter extends MyPresenterWidget<FsVolumeEditView> {
+public class FsVolumeEditPresenter
+        extends MyPresenterWidget<FsVolumeEditView> {
 
     private static final FsVolumeResource FS_VOLUME_RESOURCE = GWT.create(FsVolumeResource.class);
 
@@ -73,80 +75,87 @@ public class FsVolumeEditPresenter extends MyPresenterWidget<FsVolumeEditView> {
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption(title)
-                .onShow(event -> getView().focus())
-                .onHideRequest(event -> {
-                    if (event.isOk()) {
+                .onShow(e -> getView().focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
                         write();
                         try {
                             if (volume.getId() == null) {
-                                doWithVolumeValidation(volume, () -> createVolume(consumer, volume));
+                                doWithVolumeValidation(volume, () -> createVolume(consumer, volume, e), e);
                             } else {
-                                doWithVolumeValidation(volume, () -> updateVolume(consumer, volume));
+                                doWithVolumeValidation(volume, () -> updateVolume(consumer, volume, e), e);
                             }
-
-                        } catch (final RuntimeException e) {
-                            AlertEvent.fireError(FsVolumeEditPresenter.this, e.getMessage(), null);
+                        } catch (final RuntimeException ex) {
+                            AlertEvent.fireError(FsVolumeEditPresenter.this, ex.getMessage(), e::reset);
                         }
                     } else {
                         consumer.accept(null);
+                        e.hide();
                     }
                 })
                 .fire();
     }
 
     private void doWithVolumeValidation(final FsVolume volume,
-                                        final Runnable work) {
+                                        final Runnable work,
+                                        final HidePopupRequestEvent event) {
         restFactory
                 .create(FS_VOLUME_RESOURCE)
                 .method(res -> res.validate(volume))
                 .onSuccess(validationResult -> {
                     if (validationResult.isOk()) {
-                        if (work != null) {
-                            work.run();
-                        }
+                        work.run();
                     } else if (validationResult.isWarning()) {
                         ConfirmEvent.fireWarn(
                                 FsVolumeEditPresenter.this,
                                 validationResult.getMessage(),
                                 confirmOk -> {
                                     if (confirmOk) {
-                                        if (work != null) {
-                                            work.run();
-                                        }
+                                        work.run();
+                                    } else {
+                                        event.reset();
                                     }
                                 });
                     } else {
                         AlertEvent.fireError(
                                 FsVolumeEditPresenter.this,
                                 validationResult.getMessage(),
-                                null);
+                                event::reset);
                     }
                 })
-                .onFailure(throwable -> {
-                    AlertEvent.fireError(FsVolumeEditPresenter.this, throwable.getMessage(), null);
-                })
+                .onFailure(RestErrorHandler.forPopup(this, event))
+                .taskListener(this)
                 .exec();
     }
 
-    private void updateVolume(final Consumer<FsVolume> consumer, final FsVolume volume) {
+    private void updateVolume(final Consumer<FsVolume> consumer,
+                              final FsVolume volume,
+                              final HidePopupRequestEvent event) {
         restFactory
                 .create(FS_VOLUME_RESOURCE)
                 .method(res -> res.update(volume.getId(), volume))
-                .onSuccess(consumer)
+                .onSuccess(r -> {
+                    consumer.accept(r);
+                    event.hide();
+                })
+                .onFailure(RestErrorHandler.forPopup(this, event))
+                .taskListener(this)
                 .exec();
     }
 
-    private void createVolume(final Consumer<FsVolume> consumer, final FsVolume volume) {
+    private void createVolume(final Consumer<FsVolume> consumer,
+                              final FsVolume volume,
+                              final HidePopupRequestEvent event) {
         restFactory
                 .create(FS_VOLUME_RESOURCE)
                 .method(res -> res.create(volume))
-                .onSuccess(consumer)
+                .onSuccess(r -> {
+                    consumer.accept(r);
+                    event.hide();
+                })
+                .onFailure(RestErrorHandler.forPopup(this, event))
+                .taskListener(this)
                 .exec();
-    }
-
-    void hide() {
-        HidePopupEvent.builder(this)
-                .fire();
     }
 
     private void read(final FsVolume volume) {

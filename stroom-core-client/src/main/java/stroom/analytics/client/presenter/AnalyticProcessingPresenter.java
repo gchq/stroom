@@ -31,6 +31,7 @@ import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.HasChangeDataHandlers;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.task.client.TaskListener;
 import stroom.ui.config.client.UiConfigCache;
 
 import com.google.inject.Inject;
@@ -97,32 +98,36 @@ public class AnalyticProcessingPresenter
 
     @Override
     protected void onRead(final DocRef docRef, final AnalyticRuleDoc analyticRuleDoc, final boolean readOnly) {
-        uiConfigCache.get().onSuccess(extendedUiConfig -> {
-            if (analyticRuleDoc.getErrorFeed() == null) {
-                errorFeedPresenter.setSelectedEntityReference(
-                        extendedUiConfig.getAnalyticUiDefaultConfig().getDefaultErrorFeed());
-            } else {
-                errorFeedPresenter.setSelectedEntityReference(
-                        analyticRuleDoc.getErrorFeed());
+        uiConfigCache.get(extendedUiConfig -> {
+            if (extendedUiConfig != null) {
+                if (analyticRuleDoc.getErrorFeed() == null) {
+                    errorFeedPresenter.setSelectedEntityReference(
+                            extendedUiConfig.getAnalyticUiDefaultConfig().getDefaultErrorFeed());
+                } else {
+                    errorFeedPresenter.setSelectedEntityReference(
+                            analyticRuleDoc.getErrorFeed());
+                }
+
+                final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
+                final AnalyticProcessType analyticProcessType = analyticRuleDoc.getAnalyticProcessType() == null
+                        ? AnalyticProcessType.SCHEDULED_QUERY
+                        : analyticRuleDoc.getAnalyticProcessType();
+                setProcessType(analyticProcessType);
+
+                if (AnalyticProcessType.SCHEDULED_QUERY.equals(analyticProcessType)) {
+                    scheduledProcessingPresenter
+                            .read(docRef);
+                } else if (AnalyticProcessType.STREAMING.equals(analyticProcessType)) {
+                    streamingProcessingPresenter
+                            .update(getEntity(), isReadOnly(), analyticRuleDoc.getQuery());
+                } else if (analyticProcessConfig instanceof TableBuilderAnalyticProcessConfig) {
+                    final TableBuilderAnalyticProcessConfig ac =
+                            (TableBuilderAnalyticProcessConfig) analyticProcessConfig;
+                    tableBuilderProcessingPresenter.read(docRef, ac);
+
+                }
             }
-
-            final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
-            final AnalyticProcessType analyticProcessType = analyticRuleDoc.getAnalyticProcessType() == null
-                    ? AnalyticProcessType.SCHEDULED_QUERY
-                    : analyticRuleDoc.getAnalyticProcessType();
-            setProcessType(analyticProcessType);
-
-            if (AnalyticProcessType.SCHEDULED_QUERY.equals(analyticProcessType)) {
-                scheduledProcessingPresenter.read(docRef);
-            } else if (AnalyticProcessType.STREAMING.equals(analyticProcessType)) {
-                streamingProcessingPresenter.update(getEntity(), isReadOnly(), analyticRuleDoc.getQuery());
-            } else if (analyticProcessConfig instanceof TableBuilderAnalyticProcessConfig) {
-                final TableBuilderAnalyticProcessConfig ac =
-                        (TableBuilderAnalyticProcessConfig) analyticProcessConfig;
-                tableBuilderProcessingPresenter.read(docRef, ac);
-
-            }
-        });
+        }, this);
     }
 
     private void setProcessType(final AnalyticProcessType analyticProcessType) {
@@ -171,6 +176,14 @@ public class AnalyticProcessingPresenter
     @Override
     public void onDirty() {
         setDirty(true);
+    }
+
+    @Override
+    public void setTaskListener(final TaskListener taskListener) {
+        super.setTaskListener(taskListener);
+        this.scheduledProcessingPresenter.setTaskListener(taskListener);
+        this.tableBuilderProcessingPresenter.setTaskListener(taskListener);
+        this.streamingProcessingPresenter.setTaskListener(taskListener);
     }
 
     public interface AnalyticProcessingView extends View, HasUiHandlers<AnalyticProcessingUiHandlers> {

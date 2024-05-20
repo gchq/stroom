@@ -191,6 +191,8 @@ public class FieldListPresenter extends DocumentEditPresenter<PagerView, Receive
                     refresh();
                     e.hide();
                     DirtyEvent.fire(FieldListPresenter.this, true);
+                } else {
+                    e.reset();
                 }
             } else {
                 e.hide();
@@ -216,6 +218,8 @@ public class FieldListPresenter extends DocumentEditPresenter<PagerView, Receive
                         refresh();
                         e.hide();
                         DirtyEvent.fire(FieldListPresenter.this, true);
+                    } else {
+                        e.reset();
                     }
                 } else {
                     e.hide();

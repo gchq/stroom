@@ -37,6 +37,7 @@ import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.client.view.QueryResultTabsView;
+import stroom.task.client.TaskListener;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Indicators;
@@ -46,8 +47,6 @@ import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -109,7 +108,7 @@ public class QueryEditPresenter
         this.linkTabsLayoutView = linkTabsLayoutView;
         this.queryInfo = queryInfo;
 
-        final ResultConsumer resultConsumer = new ResultConsumer() {
+        final ResultComponent resultConsumer = new ResultComponent() {
             boolean start;
             boolean hasData;
 
@@ -151,7 +150,6 @@ public class QueryEditPresenter
                     if (!start) {
                         createNewVis();
                         currentVisPresenter.startSearch();
-                        currentVisPresenter.reset();
                         start = true;
                     }
 
@@ -173,10 +171,16 @@ public class QueryEditPresenter
                     }
                 }
             }
+
+            @Override
+            public void setQueryModel(final QueryModel queryModel) {
+
+            }
         };
 
 
         queryModel = new QueryModel(
+                eventBus,
                 restFactory,
                 dateTimeSettingsFactory,
                 resultStoreModel,
@@ -244,6 +248,8 @@ public class QueryEditPresenter
     private void createNewVis() {
         destroyCurrentVis();
         currentVisPresenter = visPresenterProvider.get();
+        currentVisPresenter.setQueryModel(queryModel);
+        currentVisPresenter.setTaskListener(this);
         if (VISUALISATION.equals(linkTabsLayoutView.getTabBar().getSelectedTab())) {
             linkTabsLayoutView.getLayerContainer().show(currentVisPresenter);
         }
@@ -268,19 +274,8 @@ public class QueryEditPresenter
             queryHelpPresenter.setQuery(editorPresenter.getText());
             setDirty(true);
         }));
-        registerHandler(editorPresenter.getView().asWidget().addDomHandler(e -> {
-            if (KeyCodes.KEY_ENTER == e.getNativeKeyCode() &&
-                    (e.isShiftKeyDown() || e.isControlKeyDown())) {
-                e.preventDefault();
-                run(true, true);
-            } else if (KeyCodes.KEY_ESCAPE == e.getNativeKeyCode() &&
-                    (e.isShiftKeyDown() || e.isControlKeyDown())) {
-                e.preventDefault();
-                stop();
-            }
-        }, KeyDownEvent.getType()));
         registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));
-        registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> startStop()));
+        registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> toggleStart()));
         registerHandler(queryToolbarPresenter.addTimeRangeChangeHandler(e -> {
             run(true, true);
             setDirty(true);
@@ -327,7 +322,7 @@ public class QueryEditPresenter
         destroyCurrentVis();
     }
 
-    void startStop() {
+    void toggleStart() {
         if (queryModel.isSearching()) {
             queryModel.stop();
         } else {
@@ -335,7 +330,14 @@ public class QueryEditPresenter
         }
     }
 
-    private void stop() {
+    void start() {
+        if (queryModel.isSearching()) {
+            queryModel.stop();
+        }
+        run(true, true);
+    }
+
+    void stop() {
         queryModel.stop();
     }
 
@@ -343,7 +345,7 @@ public class QueryEditPresenter
                      final boolean storeHistory) {
         // No point running the search if there is no query
         if (!GwtNullSafe.isBlankString(editorPresenter.getText())) {
-            queryInfo.prompt(() -> run(incremental, storeHistory, Function.identity()));
+            queryInfo.prompt(() -> run(incremental, storeHistory, Function.identity()), this);
         }
     }
 
@@ -407,7 +409,13 @@ public class QueryEditPresenter
     }
 
     public void setSourceType(final SourceType sourceType) {
-        this.queryModel.setSourceType(sourceType);
+        queryModel.setSourceType(sourceType);
+    }
+
+    @Override
+    public void setTaskListener(final TaskListener taskListener) {
+        queryModel.setTaskListener(taskListener);
+        queryHelpPresenter.setTaskListener(taskListener);
     }
 
 

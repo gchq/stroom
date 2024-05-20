@@ -17,11 +17,13 @@
 package stroom.data.grid.client;
 
 import stroom.data.pager.client.Pager;
+import stroom.data.pager.client.RefreshButton;
 import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.AbstractHasData;
@@ -45,6 +47,8 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
     ButtonPanel buttonPanel;
     @UiField
     SimplePanel listContainer;
+
+    private int taskCount;
 
     private final Widget widget;
 
@@ -83,15 +87,30 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
     }
 
     @Override
-    public void setRefreshing(final boolean refreshing) {
-        if (pager != null) {
-            pager.setRefreshing(refreshing);
-        }
+    public RefreshButton getRefreshButton() {
+        return pager.getRefreshButton();
     }
 
     @Override
     public void setPagerVisible(final boolean visible) {
         pagerContainer.setVisible(visible);
+    }
+
+    @Override
+    public void incrementTaskCount() {
+        taskCount++;
+        pager.getRefreshButton().setRefreshing(taskCount > 0);
+    }
+
+    @Override
+    public void decrementTaskCount() {
+        taskCount--;
+
+        if (taskCount < 0) {
+            GWT.log("Negative task count");
+        }
+
+        pager.getRefreshButton().setRefreshing(taskCount > 0);
     }
 
     public interface Binder extends UiBinder<Widget, PagerViewImpl> {

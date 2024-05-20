@@ -16,6 +16,7 @@
 
 package stroom.query.client.presenter;
 
+import stroom.dispatch.client.QuietTaskListener;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.shared.QueryResource;
 
@@ -45,6 +46,7 @@ public class TimeZones {
                 .create(QUERY_RESOURCE)
                 .method(QueryResource::fetchTimeZones)
                 .onSuccess(result -> ids = result)
+                .taskListener(new QuietTaskListener())
                 .exec();
     }
 

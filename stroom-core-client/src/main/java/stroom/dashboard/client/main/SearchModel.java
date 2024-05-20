@@ -39,8 +39,14 @@ import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
+import stroom.task.client.HasTaskListener;
+import stroom.task.client.TaskListener;
+import stroom.task.client.TaskListenerImpl;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,17 +57,19 @@ import java.util.Map.Entry;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class SearchModel {
+public class SearchModel implements HasTaskListener, HasHandlers {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
 
+    private final EventBus eventBus;
     private final RestFactory restFactory;
     private final IndexLoader indexLoader;
     private String dashboardUuid;
     private String componentId;
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
     private final ResultStoreModel resultStoreModel;
-    private Map<String, ResultComponent> componentMap = new HashMap<>();
+    private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
+    private Map<String, ResultComponent> resultComponents = new HashMap<>();
     private DashboardSearchResponse currentResponse;
     private String currentNode;
     private QueryKey currentQueryKey;
@@ -72,10 +80,12 @@ public class SearchModel {
     private final List<SearchStateListener> searchStateListeners = new ArrayList<>();
     private final List<SearchErrorListener> errorListeners = new ArrayList<>();
 
-    public SearchModel(final RestFactory restFactory,
+    public SearchModel(final EventBus eventBus,
+                       final RestFactory restFactory,
                        final IndexLoader indexLoader,
                        final DateTimeSettingsFactory dateTimeSettingsFactory,
                        final ResultStoreModel resultStoreModel) {
+        this.eventBus = eventBus;
         this.restFactory = restFactory;
         this.indexLoader = indexLoader;
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
@@ -100,9 +110,7 @@ public class SearchModel {
 
         // Stop the spinner from spinning and tell components that they no
         // longer want data.
-        for (final ResultComponent resultComponent : componentMap.values()) {
-            resultComponent.endSearch();
-        }
+        resultComponents.values().forEach(ResultComponent::endSearch);
 
         // Stop polling.
         polling = false;
@@ -124,9 +132,7 @@ public class SearchModel {
 
         // Stop the spinner from spinning and tell components that they no
         // longer want data.
-        for (final ResultComponent resultComponent : componentMap.values()) {
-            resultComponent.endSearch();
-        }
+        resultComponents.values().forEach(ResultComponent::endSearch);
 
         // Stop polling.
         polling = false;
@@ -135,8 +141,6 @@ public class SearchModel {
 
     /**
      * Begin executing a new search using the supplied query expression.
-     *
-     * @param expression The expression to search with.
      */
     public void startNewSearch(final ExpressionOperator expression,
                                final List<Param> params,
@@ -183,11 +187,8 @@ public class SearchModel {
 
                 // Reset all result components and tell them that search is
                 // starting.
-                for (final Entry<String, ResultComponent> entry : componentMap.entrySet()) {
-                    final ResultComponent resultComponent = entry.getValue();
-                    resultComponent.reset();
-                    resultComponent.startSearch();
-                }
+                resultComponents.values().forEach(ResultComponent::reset);
+                resultComponents.values().forEach(ResultComponent::startSearch);
 
                 // Start polling.
                 polling = true;
@@ -201,7 +202,7 @@ public class SearchModel {
      */
     public void refresh(final String componentId, final Consumer<Result> resultConsumer) {
         final QueryKey queryKey = currentQueryKey;
-        final ResultComponent resultComponent = componentMap.get(componentId);
+        final ResultComponent resultComponent = resultComponents.get(componentId);
         if (resultComponent != null && queryKey != null) {
             final Map<String, ComponentSettings> resultComponentMap = createComponentSettingsMap();
             if (resultComponentMap != null) {
@@ -240,7 +241,6 @@ public class SearchModel {
                             .onSuccess(response -> {
                                 Result result = null;
                                 try {
-
                                     if (response != null && response.getResults() != null) {
                                         for (final Result componentResult : response.getResults()) {
                                             if (componentId.equals(componentResult.getComponentId())) {
@@ -263,84 +263,40 @@ public class SearchModel {
                                 }
                                 resultConsumer.accept(null);
                             })
+                            .taskListener(taskListener)
                             .exec();
                 }
             }
         }
     }
 
-//    private void terminate(final QueryKey queryKey) {
-//        if (queryKey != null) {
-//            resultStoreModel.terminate();
-//        }
-//
-////        final DestroySearchRequest request = DestroySearchRequest
-////                .builder()
-////                .queryKey(queryKey)
-////                .dashboardUuid(dashboardUuid)
-////                .componentId(componentId)
-////                .build();
-//        restFactory
-//                .builder()
-//                .forBoolean()
-////                .onSuccess(response -> {
-////                    if (!response) {
-////                        Console.log("Unable to destroy search: " + request);
-////                    }
-////                })
-////                .call(DASHBOARD_RESOURCE)
-////                .destroy(request);
-//    }
-
-
-//    private void destroy(final QueryKey queryKey) {
-//        if (queryKey != null) {
-//            resultStoreModel.destroy();
-//        }
-//
-////        final DestroySearchRequest request = DestroySearchRequest
-////                .builder()
-////                .queryKey(queryKey)
-////                .dashboardUuid(dashboardUuid)
-////                .componentId(componentId)
-////                .build();
-//        restFactory
-//                .builder()
-//                .forBoolean()
-////                .onSuccess(response -> {
-////                    if (!response) {
-////                        Console.log("Unable to destroy search: " + request);
-////                    }
-////                })
-////                .call(DASHBOARD_RESOURCE)
-////                .destroy(request);
-//    }
-
-
     private void deleteStore(final String node, final QueryKey queryKey, final DestroyReason destroyReason) {
         if (queryKey != null) {
             resultStoreModel.destroy(node, queryKey, destroyReason, (ok) ->
-                    GWT.log("Destroyed store " + queryKey));
+                    GWT.log("Destroyed store " + queryKey), taskListener);
         }
     }
 
     private void terminate(final String node, final QueryKey queryKey) {
         if (queryKey != null) {
             resultStoreModel.terminate(node, queryKey, (ok) ->
-                    GWT.log("Terminate search " + queryKey));
+                    GWT.log("Terminate search " + queryKey), taskListener);
         }
     }
 
-    private void poll(Fetch fetch, final boolean storeHistory) {
+    private void poll(final Fetch initialFetch, final boolean storeHistory) {
         final QueryKey queryKey = currentQueryKey;
         final Search search = currentSearch;
         if (search != null && polling) {
             final List<ComponentResultRequest> requests = new ArrayList<>();
-            for (final Entry<String, ResultComponent> entry : componentMap.entrySet()) {
+            for (final Entry<String, ResultComponent> entry : resultComponents.entrySet()) {
                 final ResultComponent resultComponent = entry.getValue();
 
+                final Fetch fetch;
                 if (resultComponent.isPaused()) {
                     fetch = Fetch.NONE;
+                } else {
+                    fetch = initialFetch;
                 }
 
                 final ComponentResultRequest componentResultRequest = resultComponent.getResultRequest(fetch);
@@ -360,6 +316,8 @@ public class SearchModel {
                     .create(DASHBOARD_RESOURCE)
                     .method(res -> res.search(currentNode, request))
                     .onSuccess(response -> {
+//                        GWT.log(response.toString());
+
                         if (search == currentSearch) {
                             currentQueryKey = response.getQueryKey();
                             currentNode = response.getNode();
@@ -378,6 +336,8 @@ public class SearchModel {
                         }
                     })
                     .onFailure(throwable -> {
+//                        GWT.log(throwable.getMessage());
+
                         try {
                             if (search == currentSearch) {
                                 setErrors(Collections.singletonList(throwable.toString()));
@@ -391,6 +351,7 @@ public class SearchModel {
                             poll(Fetch.CHANGES, false);
                         }
                     })
+                    .taskListener(taskListener)
                     .exec();
         }
     }
@@ -401,8 +362,8 @@ public class SearchModel {
      * @return A result component map.
      */
     private Map<String, ComponentSettings> createComponentSettingsMap() {
-        if (!componentMap.isEmpty()) {
-            return componentMap.entrySet()
+        if (!resultComponents.isEmpty()) {
+            return resultComponents.entrySet()
                     .stream()
                     .collect(Collectors.toMap(
                             Entry::getKey,
@@ -423,7 +384,7 @@ public class SearchModel {
         // Give results to the right components.
         if (response.getResults() != null) {
             for (final Result componentResult : response.getResults()) {
-                final ResultComponent resultComponent = componentMap.get(componentResult.getComponentId());
+                final ResultComponent resultComponent = resultComponents.get(componentResult.getComponentId());
                 if (resultComponent != null) {
                     resultComponent.setData(componentResult);
                 }
@@ -434,7 +395,7 @@ public class SearchModel {
         if (response.isComplete()) {
             // Stop the spinner from spinning and tell components that they
             // no longer want data.
-            componentMap.values().forEach(ResultComponent::endSearch);
+            resultComponents.values().forEach(ResultComponent::endSearch);
         }
 
         setErrors(response.getErrors());
@@ -487,12 +448,12 @@ public class SearchModel {
             }
         }
 
-        if (search == null || componentMap.size() == 0) {
+        if (search == null || resultComponents.size() == 0) {
             return null;
         }
 
         final List<ComponentResultRequest> requests = new ArrayList<>();
-        for (final Entry<String, ResultComponent> entry : componentMap.entrySet()) {
+        for (final Entry<String, ResultComponent> entry : resultComponents.entrySet()) {
             final ResultComponent resultComponent = entry.getValue();
             final ComponentResultRequest componentResultRequest = resultComponent.createDownloadQueryRequest();
             requests.add(componentResultRequest);
@@ -542,16 +503,16 @@ public class SearchModel {
 
     public void addComponent(final String componentId, final ResultComponent resultComponent) {
         // Create and assign a new map here to prevent concurrent modification exceptions.
-        final Map<String, ResultComponent> componentMap = new HashMap<>(this.componentMap);
+        final Map<String, ResultComponent> componentMap = new HashMap<>(this.resultComponents);
         componentMap.put(componentId, resultComponent);
-        this.componentMap = componentMap;
+        this.resultComponents = componentMap;
     }
 
     public void removeComponent(final String componentId) {
         // Create and assign a new map here to prevent concurrent modification exceptions.
-        final Map<String, ResultComponent> componentMap = new HashMap<>(this.componentMap);
+        final Map<String, ResultComponent> componentMap = new HashMap<>(this.resultComponents);
         componentMap.remove(componentId);
-        this.componentMap = componentMap;
+        this.resultComponents = componentMap;
     }
 
     public void addSearchStateListener(final SearchStateListener listener) {
@@ -572,5 +533,15 @@ public class SearchModel {
 
     public void setResultStoreInfo(final ResultStoreInfo resultStoreInfo) {
 
+    }
+
+    @Override
+    public void setTaskListener(final TaskListener taskListener) {
+        this.taskListener.setTaskListener(taskListener);
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> gwtEvent) {
+        eventBus.fireEvent(gwtEvent);
     }
 }

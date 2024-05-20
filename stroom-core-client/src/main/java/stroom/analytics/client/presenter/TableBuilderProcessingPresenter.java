@@ -39,6 +39,7 @@ public class TableBuilderProcessingPresenter
 
     private final DateTimeFormatter dateTimeFormatter;
     private final RestFactory restFactory;
+    private final NodeManager nodeManager;
 
     private DocRef ruleDocRef;
 
@@ -51,7 +52,11 @@ public class TableBuilderProcessingPresenter
         super(eventBus, view);
         this.dateTimeFormatter = dateTimeFormatter;
         this.restFactory = restFactory;
+        this.nodeManager = nodeManager;
+    }
 
+    public void read(final DocRef ruleDocRef,
+                     final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
         nodeManager.listAllNodes(
                 list -> {
                     if (list != null && list.size() > 0) {
@@ -62,11 +67,9 @@ public class TableBuilderProcessingPresenter
                         .fireError(this,
                                 "Error",
                                 throwable.getMessage(),
-                                null));
-    }
+                                null),
+                this);
 
-    public void read(final DocRef ruleDocRef,
-                     final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
         this.ruleDocRef = ruleDocRef;
         getView().setEnabled(tableBuilderAnalyticProcessConfig.isEnabled());
         getView().setNode(tableBuilderAnalyticProcessConfig.getNode());
@@ -104,6 +107,7 @@ public class TableBuilderProcessingPresenter
                         final SafeHtml safeHtml = getInfo(result);
                         getView().setInfo(safeHtml);
                     })
+                    .taskListener(this)
                     .exec();
         }
     }

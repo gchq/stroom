@@ -33,7 +33,7 @@ import stroom.data.shared.DataResource;
 import stroom.data.table.client.Refreshable;
 import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.ExportFileCompleteUtil;
-import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionPopup;
@@ -147,14 +147,15 @@ public abstract class AbstractMetaListPresenter
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<MetaRow>> dataConsumer,
-                                final Consumer<RestError> errorConsumer) {
+                                final RestErrorHandler errorHandler) {
                 if (criteria.getExpression() != null) {
                     CriteriaUtil.setRange(criteria, range);
                     restFactory
                             .create(META_RESOURCE)
                             .method(res -> res.findMetaRow(criteria))
                             .onSuccess(dataConsumer)
-                            .onFailure(errorConsumer)
+                            .onFailure(errorHandler)
+                            .taskListener(view)
                             .exec();
                 } else {
                     dataConsumer.accept(new ResultPage<>(Collections.emptyList()));
@@ -618,7 +619,8 @@ public abstract class AbstractMetaListPresenter
                 AbstractMetaListPresenter.this,
                 MetaFields.getAllFields(),
                 expression,
-                consumer);
+                consumer,
+                getView());
     }
 
     private void choosePipeline(final Consumer<DocRef> consumer) {
@@ -676,6 +678,7 @@ public abstract class AbstractMetaListPresenter
                                             ? "s"
                                             : ""),
                                     this::refresh))
+                    .taskListener(getView())
                     .exec();
         };
     }
@@ -685,6 +688,7 @@ public abstract class AbstractMetaListPresenter
                 .create(DATA_RESOURCE)
                 .method(res -> res.download(criteria))
                 .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
+                .taskListener(getView())
                 .exec();
     }
 
@@ -717,6 +721,7 @@ public abstract class AbstractMetaListPresenter
                         AlertEvent.fireInfo(this, "Created processor filter", null);
                     }
                 })
+                .taskListener(getView())
                 .exec();
 
     }
@@ -792,6 +797,7 @@ public abstract class AbstractMetaListPresenter
                         }
                     }
                 })
+                .taskListener(getView())
                 .exec();
 
     }

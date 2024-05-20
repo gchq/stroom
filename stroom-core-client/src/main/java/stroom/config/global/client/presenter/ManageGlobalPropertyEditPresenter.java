@@ -17,6 +17,7 @@
 
 package stroom.config.global.client.presenter;
 
+import stroom.alert.client.event.AlertCallback;
 import stroom.alert.client.event.AlertEvent;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.GlobalConfigResource;
@@ -228,7 +229,8 @@ public final class ManageGlobalPropertyEditPresenter
                 .onSuccess(configProperty ->
                         show(configProperty, hideRunnable))
                 .onFailure(error ->
-                        showError(error, "Error fetching property " + propertyName))
+                        showError(error, "Error fetching property " + propertyName, null))
+                .taskListener(this)
                 .exec();
     }
 
@@ -265,7 +267,8 @@ public final class ManageGlobalPropertyEditPresenter
         unreachableNodes.clear();
         nodeManager.listEnabledNodes(
                 nodeNames -> nodeNames.forEach(this::refreshYamlOverrideForNode),
-                throwable -> showError(throwable, "Error getting list of all nodes"));
+                throwable -> showError(throwable, "Error getting list of all nodes", null),
+                this);
     }
 
     private void updateEffectiveValueForNode(final String nodeName,
@@ -327,6 +330,7 @@ public final class ManageGlobalPropertyEditPresenter
 //                    updateEffectiveValueForNode(nodeName, ERROR_VALUE);
                     delayedUpdate.update();
                 })
+                .taskListener(this)
                 .exec();
     }
 
@@ -355,7 +359,7 @@ public final class ManageGlobalPropertyEditPresenter
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        write(true, e);
+                        write(e);
                     } else {
                         e.hide();
                     }
@@ -446,7 +450,7 @@ public final class ManageGlobalPropertyEditPresenter
         getView().setEditable(getEntity().isEditable());
     }
 
-    private void write(final boolean hideOnSave, final HidePopupRequestEvent event) {
+    private void write(final HidePopupRequestEvent event) {
         refreshValuesOnChange();
 
         ConfigProperty configPropertyToSave = getEntity();
@@ -459,14 +463,14 @@ public final class ManageGlobalPropertyEditPresenter
                     .method(res -> res.create(configPropertyToSave))
                     .onSuccess(savedConfigProperty -> {
                         setEntity(savedConfigProperty);
-                        if (hideOnSave) {
-                            event.hide();
-                            // Refresh client properties in case they were affected by this change.
-                            clientPropertyCache.refresh();
-                        }
+                        event.hide();
+                        // Refresh client properties in case they were affected by this change.
+                        clientPropertyCache.refresh(result -> {
+                        }, this);
                     })
                     .onFailure(throwable ->
-                            showError(throwable, "Error creating property"))
+                            showError(throwable, "Error creating property", event::reset))
+                    .taskListener(this)
                     .exec();
         } else {
             restFactory
@@ -474,24 +478,24 @@ public final class ManageGlobalPropertyEditPresenter
                     .method(res -> res.update(configPropertyToSave.getName().toString(), configPropertyToSave))
                     .onSuccess(savedConfigProperty -> {
                         setEntity(savedConfigProperty);
-                        if (hideOnSave) {
-                            event.hide();
-                            // Refresh client properties in case they were affected by this change.
-                            clientPropertyCache.refresh();
-                        }
+                        event.hide();
+                        // Refresh client properties in case they were affected by this change.
+                        clientPropertyCache.refresh(result -> {
+                        }, this);
                     })
                     .onFailure(throwable ->
-                            showError(throwable, "Error updating property"))
+                            showError(throwable, "Error updating property", event::reset))
+                    .taskListener(this)
                     .exec();
         }
     }
 
-    private void showError(final RestError error, final String message) {
+    private void showError(final RestError error, final String message, final AlertCallback callback) {
         AlertEvent.fireError(
                 ManageGlobalPropertyEditPresenter.this,
                 message + " - " + error.getMessage(),
                 null,
-                null);
+                callback);
     }
 
     private void refreshValuesOnChange() {
@@ -534,23 +538,20 @@ public final class ManageGlobalPropertyEditPresenter
     }
 
     private void showHelp(final String anchor) {
-        clientPropertyCache.get()
-                .onSuccess(result -> {
-                    final String helpUrl = result.getHelpUrlProperties();
-                    if (helpUrl != null && helpUrl.trim().length() > 0) {
-                        String url = helpUrl + formatAnchor(anchor);
-                        Window.open(url, "_blank", "");
-                    } else {
-                        AlertEvent.fireError(
-                                ManageGlobalPropertyEditPresenter.this,
-                                "Help is not configured!",
-                                null);
-                    }
-                })
-                .onFailure(caught -> AlertEvent.fireError(
-                        ManageGlobalPropertyEditPresenter.this,
-                        caught.getMessage(),
-                        null));
+        clientPropertyCache.get(result -> {
+            if (result != null) {
+                final String helpUrl = result.getHelpUrlProperties();
+                if (helpUrl != null && helpUrl.trim().length() > 0) {
+                    String url = helpUrl + formatAnchor(anchor);
+                    Window.open(url, "_blank", "");
+                } else {
+                    AlertEvent.fireError(
+                            ManageGlobalPropertyEditPresenter.this,
+                            "Help is not configured!",
+                            null);
+                }
+            }
+        }, this);
     }
 
     protected String formatAnchor(String name) {

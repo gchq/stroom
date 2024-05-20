@@ -71,12 +71,15 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
         pipelineSelectionPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 
         // Filter the pipeline picker by tags, if configured
-        uiConfigCache.get().onSuccess(extendedUiConfig ->
+        uiConfigCache.get(extendedUiConfig -> {
+            if (extendedUiConfig != null) {
                 GwtNullSafe.consume(
                         extendedUiConfig.getQuery(),
                         QueryConfig::getViewPipelineSelectorIncludedTags,
                         ExplorerTreeFilter::createTagQuickFilterInput,
-                        pipelineSelectionPresenter::setQuickFilter));
+                        pipelineSelectionPresenter::setQuickFilter);
+            }
+        }, this);
     }
 
     @Override

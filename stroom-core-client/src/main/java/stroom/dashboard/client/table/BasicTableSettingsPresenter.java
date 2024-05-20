@@ -61,12 +61,15 @@ public class BasicTableSettingsPresenter
         view.setPipelineView(pipelinePresenter.getView());
 
         // Filter the pipeline picker by tags, if configured
-        uiConfigCache.get().onSuccess(extendedUiConfig ->
+        uiConfigCache.get(extendedUiConfig -> {
+            if (extendedUiConfig != null) {
                 GwtNullSafe.consume(
                         extendedUiConfig.getQuery(),
                         QueryConfig::getDashboardPipelineSelectorIncludedTags,
                         ExplorerTreeFilter::createTagQuickFilterInput,
-                        pipelinePresenter::setQuickFilter));
+                        pipelinePresenter::setQuickFilter);
+            }
+        }, this);
 
         view.setUiHandlers(this);
     }
@@ -241,7 +244,6 @@ public class BasicTableSettingsPresenter
 
         return list;
     }
-
 
     // --------------------------------------------------------------------------------
 

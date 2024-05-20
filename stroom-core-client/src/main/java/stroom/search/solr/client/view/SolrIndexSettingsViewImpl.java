@@ -202,6 +202,11 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
         }
     }
 
+    @Override
+    public void setTestingConnection(final boolean testing) {
+        testConnection.setLoading(testing);
+    }
+
     @UiHandler("collection")
     public void onCollectionKeyDown(final KeyDownEvent event) {
         fireChange();

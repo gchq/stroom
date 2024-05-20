@@ -29,7 +29,8 @@ import java.util.List;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 
-public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
+public class LinkedEventPresenter
+        extends MyPresenterWidget<LinkedEventView> {
 
     private final MyDataGrid<EventId> dataGrid;
     private final MultiSelectionModelImpl<EventId> selectionModel;
@@ -100,6 +101,7 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
                         .create(annotationResource)
                         .method(res -> res.link(new EventLink(annotation.getId(), eventId)))
                         .onSuccess(this::setData)
+                        .taskListener(this)
                         .exec();
             }
         })));
@@ -122,6 +124,7 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
                         .create(annotationResource)
                         .method(res -> res.unlink(new EventLink(annotation.getId(), selected)))
                         .onSuccess(this::setData)
+                        .taskListener(this)
                         .exec();
             }
         }));
@@ -137,6 +140,7 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
                 .create(annotationResource)
                 .method(res -> res.getLinkedEvents(annotation.getId()))
                 .onSuccess(this::show)
+                .taskListener(this)
                 .exec();
     }
 

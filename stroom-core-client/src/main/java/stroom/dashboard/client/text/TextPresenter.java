@@ -44,6 +44,7 @@ import stroom.query.api.v2.Column;
 import stroom.query.client.presenter.TableRow;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.task.client.TaskListener;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.EqualsUtil;
@@ -196,7 +197,7 @@ public class TextPresenter
                 if (link != null) {
                     final Hyperlink hyperlink = Hyperlink.create(link);
                     if (hyperlink != null) {
-                        HyperlinkEvent.fire(TextPresenter.this, hyperlink);
+                        HyperlinkEvent.fire(TextPresenter.this, hyperlink, getView());
                     }
                 }
             }, ClickEvent.getType());
@@ -621,6 +622,7 @@ public class TextPresenter
                                     }
                                 }
                             })
+                            .taskListener(getView())
                             .exec();
                 }
             };
@@ -729,7 +731,7 @@ public class TextPresenter
     // --------------------------------------------------------------------------------
 
 
-    public interface TextView extends View, HasUiHandlers<TextUiHandlers> {
+    public interface TextView extends View, HasUiHandlers<TextUiHandlers>, TaskListener {
 
         void setContent(View view);
 

@@ -15,6 +15,7 @@ import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.task.client.TaskListener;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SourceConfig;
 import stroom.util.shared.Count;
@@ -400,13 +401,11 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
     }
 
     private void doWithConfig(final Consumer<SourceConfig> action) {
-        uiConfigCache.get()
-                .onSuccess(uiConfig ->
-                        action.accept(uiConfig.getSource()))
-                .onFailure(caught -> AlertEvent.fireError(
-                        SourcePresenter.this,
-                        caught.getMessage(),
-                        null));
+        uiConfigCache.get(uiConfig -> {
+            if (uiConfig != null) {
+                action.accept(uiConfig.getSource());
+            }
+        }, getView());
     }
 
     private void fetchSource(final SourceLocation sourceLocation) {
@@ -427,6 +426,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
                         SourcePresenter.this,
                         caught.getMessage(),
                         null))
+                .taskListener(getView())
                 .exec();
     }
 
@@ -871,7 +871,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
     // ===================================================================
 
 
-    public interface SourceView extends View {
+    public interface SourceView extends View, TaskListener {
 
         void setProgressView(final View view);
 

@@ -21,6 +21,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.SuggestionsResource;
+import stroom.task.client.TaskListener;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
@@ -43,6 +44,11 @@ public class AsyncSuggestOracle extends SuggestOracle {
     private DocRef dataSource;
     private QueryField field;
     private Timer requestTimer;
+    private final TaskListener taskListener;
+
+    public AsyncSuggestOracle(final TaskListener taskListener) {
+        this.taskListener = taskListener;
+    }
 
     public void setRestFactory(final RestFactory restFactory) {
         this.restFactory = restFactory;
@@ -95,6 +101,7 @@ public class AsyncSuggestOracle extends SuggestOracle {
 
                                     returnSuggestions(request, callback, result.getList());
                                 })
+                                .taskListener(taskListener)
                                 .exec();
                     }
                 }

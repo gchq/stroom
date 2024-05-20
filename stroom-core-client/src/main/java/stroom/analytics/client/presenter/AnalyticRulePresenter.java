@@ -45,7 +45,7 @@ public class AnalyticRulePresenter
     @Inject
     public AnalyticRulePresenter(final EventBus eventBus,
                                  final LinkTabPanelView view,
-                                 final Provider<AnalyticQueryEditPresenter> analyticQueryEditPresenterProvider,
+                                 final AnalyticQueryEditPresenter analyticQueryEditPresenter,
                                  final Provider<NotificationListPresenter> notificationPresenterProvider,
                                  final Provider<AnalyticProcessingPresenter> processPresenterProvider,
                                  final Provider<AnalyticDataShardsPresenter> analyticDataShardsPresenterProvider,
@@ -57,7 +57,7 @@ public class AnalyticRulePresenter
         analyticProcessingPresenter.addChangeDataHandler(e ->
                 setRuleType(analyticProcessingPresenter.getView().getProcessingType()));
 
-        addTab(QUERY, new DocumentEditTabProvider<>(analyticQueryEditPresenterProvider::get));
+        addTab(QUERY, new DocumentEditTabProvider<>(() -> analyticQueryEditPresenter));
         addTab(NOTIFICATIONS, new DocumentEditTabProvider<>(notificationPresenterProvider::get));
         addTab(EXECUTION, new DocumentEditTabProvider<>(() -> analyticProcessingPresenter));
         addTab(SHARDS, new DocumentEditTabProvider<>(analyticDataShardsPresenterProvider::get));

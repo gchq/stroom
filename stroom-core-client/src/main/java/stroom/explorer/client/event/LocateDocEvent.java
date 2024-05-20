@@ -31,7 +31,8 @@ public class LocateDocEvent extends GwtEvent<LocateDocEvent.Handler> {
         this.docRef = docRef;
     }
 
-    public static void fire(final HasHandlers source, final DocRef docRef) {
+    public static void fire(final HasHandlers source,
+                            final DocRef docRef) {
         source.fireEvent(new LocateDocEvent(docRef));
     }
 

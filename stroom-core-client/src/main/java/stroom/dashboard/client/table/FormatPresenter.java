@@ -81,7 +81,6 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
                             columnChangeConsumer.accept(column, column.copy().format(newFormat).build());
                         }
                     }
-
                     e.hide();
                 })
                 .fire();

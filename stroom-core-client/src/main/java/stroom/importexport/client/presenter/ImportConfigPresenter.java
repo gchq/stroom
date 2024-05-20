@@ -26,9 +26,7 @@ import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportSettings;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.StringUtil;
-import stroom.widget.popup.client.event.DisablePopupEvent;
-import stroom.widget.popup.client.event.EnablePopupEvent;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -53,6 +51,7 @@ public class ImportConfigPresenter
     private static final ContentResource CONTENT_RESOURCE = GWT.create(ContentResource.class);
 
     private final RestFactory restFactory;
+    private HidePopupRequestEvent currentHidePopupRequestEvent;
 
     @Inject
     public ImportConfigPresenter(final EventBus eventBus, final ImportConfigView view, final ImportProxy proxy,
@@ -85,12 +84,12 @@ public class ImportConfigPresenter
                                 warning("The import package contains nothing that can be imported into " +
                                         "this version of Stroom.");
                             } else {
-                                HidePopupEvent.builder(ImportConfigPresenter.this).fire();
-                                enableButtons();
+                                currentHidePopupRequestEvent.hide();
                                 ImportConfigConfirmEvent.fire(ImportConfigPresenter.this, response);
                             }
                         })
                         .onFailure(caught -> error(caught.getMessage()))
+                        .taskListener(ImportConfigPresenter.this)
                         .exec();
             }
 
@@ -105,7 +104,6 @@ public class ImportConfigPresenter
     }
 
     private void show() {
-        EnablePopupEvent.builder(this).fire();
         final PopupSize popupSize = PopupSize.resizableX();
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
@@ -113,38 +111,28 @@ public class ImportConfigPresenter
                 .caption("Import")
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
+                    currentHidePopupRequestEvent = e;
                     if (e.isOk()) {
-                        // Disable popup buttons as we are submitting.
-                        disableButtons();
                         final String filename = getView().getFilename();
                         if (!StringUtil.isBlank(filename)) {
                             getView().getForm().submit();
                         } else {
                             error("You must select a file to import.");
-                            enableButtons();
+                            e.reset();
                         }
                     } else {
                         e.hide();
-                        enableButtons();
                     }
                 })
                 .fire();
     }
 
     private void warning(final String message) {
-        AlertEvent.fireWarn(this, message, this::enableButtons);
+        AlertEvent.fireWarn(this, message, currentHidePopupRequestEvent::reset);
     }
 
     private void error(final String message) {
-        AlertEvent.fireError(this, message, this::enableButtons);
-    }
-
-    private void disableButtons() {
-        DisablePopupEvent.builder(this).fire();
-    }
-
-    private void enableButtons() {
-        EnablePopupEvent.builder(this).fire();
+        AlertEvent.fireError(this, message, currentHidePopupRequestEvent::reset);
     }
 
     @ProxyEvent

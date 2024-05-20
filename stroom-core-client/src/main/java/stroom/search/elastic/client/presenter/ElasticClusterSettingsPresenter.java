@@ -47,8 +47,7 @@ public class ElasticClusterSettingsPresenter
     public ElasticClusterSettingsPresenter(
             final EventBus eventBus,
             final ElasticClusterSettingsView view,
-            final RestFactory restFactory
-    ) {
+            final RestFactory restFactory) {
         super(eventBus, view);
 
         this.restFactory = restFactory;
@@ -78,6 +77,7 @@ public class ElasticClusterSettingsPresenter
                         AlertEvent.fireError(this, "Connection Failure", result.getMessage(), null);
                     }
                 })
+                .taskListener(this)
                 .exec();
     }
 
