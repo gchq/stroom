@@ -3,13 +3,12 @@ package stroom.analytics.impl;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.lmdb2.LmdbEnvDir;
 import stroom.lmdb2.LmdbEnvDirFactory;
-import stroom.query.common.v2.AnalyticResultStoreConfig;
+import stroom.query.common.v2.DuplicateCheckStoreConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,16 +22,14 @@ public class DuplicateCheckDirs {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DuplicateCheckDirs.class);
 
-    private static final String DIR = "duplicate-check";
-
     private final LmdbEnvDirFactory lmdbEnvDirFactory;
-    private final AnalyticResultStoreConfig analyticResultStoreConfig;
+    private final DuplicateCheckStoreConfig duplicateCheckStoreConfig;
 
     @Inject
     public DuplicateCheckDirs(final LmdbEnvDirFactory lmdbEnvDirFactory,
-                              final AnalyticResultStoreConfig analyticResultStoreConfig) {
+                              final DuplicateCheckStoreConfig duplicateCheckStoreConfig) {
         this.lmdbEnvDirFactory = lmdbEnvDirFactory;
-        this.analyticResultStoreConfig = analyticResultStoreConfig;
+        this.duplicateCheckStoreConfig = duplicateCheckStoreConfig;
     }
 
     public LmdbEnvDir getDir(final AnalyticRuleDoc analyticRuleDoc) {
@@ -42,8 +39,8 @@ public class DuplicateCheckDirs {
     public LmdbEnvDir getDir(final String analyticRuleUUID) {
         return lmdbEnvDirFactory
                 .builder()
-                .config(analyticResultStoreConfig.getLmdbConfig())
-                .subDir(DIR + File.separator + analyticRuleUUID)
+                .config(duplicateCheckStoreConfig.getLmdbConfig())
+                .subDir(analyticRuleUUID)
                 .build();
     }
 
@@ -57,8 +54,7 @@ public class DuplicateCheckDirs {
         try {
             final Path dir = lmdbEnvDirFactory
                     .builder()
-                    .config(analyticResultStoreConfig.getLmdbConfig())
-                    .subDir(DIR)
+                    .config(duplicateCheckStoreConfig.getLmdbConfig())
                     .build()
                     .getEnvDir();
             if (Files.isDirectory(dir)) {

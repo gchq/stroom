@@ -33,6 +33,12 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
+    duplicateCheckStore:
+      lmdb:
+        localDir: "lmdb/duplicate_check"
+        maxReaders: 10
+        maxStoreSize: "10G"
+        readAheadEnabled: true
     emailConfig:
       fromAddress: "noreply@stroom"
       fromName: "Stroom Analytics"
@@ -44,7 +50,7 @@ appConfig:
         username: null
     resultStore:
       lmdb:
-        localDir: "analytic_store"
+        localDir: "lmdb/analytic_store"
         maxReaders: 10
         maxStoreSize: "10G"
         readAheadEnabled: true

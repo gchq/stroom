@@ -5,6 +5,7 @@ import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.query.common.v2.AnalyticResultStoreConfig;
+import stroom.query.common.v2.DuplicateCheckStoreConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.BootStrapConfig;
@@ -26,6 +27,8 @@ public class AnalyticsConfig extends AbstractConfig implements IsStroomConfig, H
     private final String timezone;
     @JsonPropertyDescription("Configuration for the data store used for analytics.")
     private final AnalyticResultStoreConfig resultStoreConfig;
+    @JsonPropertyDescription("Configuration for the data store used for duplicate checks.")
+    private final DuplicateCheckStoreConfig duplicateCheckStore;
     @JsonPropertyDescription("Email service configuration.")
     private final EmailConfig emailConfig;
     @JsonPropertyDescription("Configuration for caching streaming analytics.")
@@ -35,6 +38,7 @@ public class AnalyticsConfig extends AbstractConfig implements IsStroomConfig, H
         dbConfig = new AnalyticsDbConfig();
         timezone = "UTC";
         resultStoreConfig = new AnalyticResultStoreConfig();
+        duplicateCheckStore = new DuplicateCheckStoreConfig();
         emailConfig = new EmailConfig();
         streamingAnalyticCache = CacheConfig.builder()
                 .maximumSize(1000L)
@@ -47,11 +51,13 @@ public class AnalyticsConfig extends AbstractConfig implements IsStroomConfig, H
     public AnalyticsConfig(@JsonProperty("db") final AnalyticsDbConfig dbConfig,
                            @JsonProperty("timezone") final String timezone,
                            @JsonProperty("resultStore") final AnalyticResultStoreConfig resultStoreConfig,
+                           @JsonProperty("duplicateCheckStore") final DuplicateCheckStoreConfig duplicateCheckStore,
                            @JsonProperty("emailConfig") final EmailConfig emailConfig,
                            @JsonProperty("streamingAnalyticCache") final CacheConfig streamingAnalyticCache) {
         this.dbConfig = dbConfig;
         this.timezone = timezone;
         this.resultStoreConfig = resultStoreConfig;
+        this.duplicateCheckStore = duplicateCheckStore;
         this.emailConfig = emailConfig;
         this.streamingAnalyticCache = streamingAnalyticCache;
     }
@@ -70,6 +76,11 @@ public class AnalyticsConfig extends AbstractConfig implements IsStroomConfig, H
     @JsonProperty("resultStore")
     public AnalyticResultStoreConfig getResultStoreConfig() {
         return resultStoreConfig;
+    }
+
+    @JsonProperty("duplicateCheckStore")
+    public DuplicateCheckStoreConfig getDuplicateCheckStore() {
+        return duplicateCheckStore;
     }
 
     @JsonProperty("emailConfig")

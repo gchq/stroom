@@ -7,8 +7,8 @@ import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.LmdbEnvDir;
 import stroom.lmdb2.WriteTxn;
 import stroom.query.api.v2.Row;
-import stroom.query.common.v2.AnalyticResultStoreConfig;
 import stroom.query.common.v2.CompiledColumns;
+import stroom.query.common.v2.DuplicateCheckStoreConfig;
 import stroom.query.common.v2.LmdbKV;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -26,15 +26,15 @@ public class DuplicateCheckFactoryImpl2 implements DuplicateCheckFactory {
 
     private final DuplicateCheckDirs duplicateCheckDirs;
     private final ByteBufferFactory byteBufferFactory;
-    private final AnalyticResultStoreConfig analyticResultStoreConfig;
+    private final DuplicateCheckStoreConfig analyticResultStoreConfig;
 
     @Inject
     public DuplicateCheckFactoryImpl2(final DuplicateCheckDirs duplicateCheckDirs,
                                       final ByteBufferFactory byteBufferFactory,
-                                      final AnalyticResultStoreConfig analyticResultStoreConfig) {
+                                      final DuplicateCheckStoreConfig duplicateCheckStoreConfig) {
         this.duplicateCheckDirs = duplicateCheckDirs;
         this.byteBufferFactory = byteBufferFactory;
-        this.analyticResultStoreConfig = analyticResultStoreConfig;
+        this.analyticResultStoreConfig = duplicateCheckStoreConfig;
     }
 
     @Override
@@ -63,7 +63,7 @@ public class DuplicateCheckFactoryImpl2 implements DuplicateCheckFactory {
 
         public DuplicateCheckImpl(final DuplicateCheckDirs duplicateCheckDirs,
                                   final ByteBufferFactory byteBufferFactory,
-                                  final AnalyticResultStoreConfig analyticResultStoreConfig,
+                                  final DuplicateCheckStoreConfig duplicateCheckStoreConfig,
                                   final AnalyticRuleDoc analyticRuleDoc,
                                   final CompiledColumns compiledColumns) {
             this.duplicateKeyFactory = new DuplicateKeyFactory2(
@@ -72,7 +72,7 @@ public class DuplicateCheckFactoryImpl2 implements DuplicateCheckFactory {
             final LmdbEnvDir lmdbEnvDir = duplicateCheckDirs.getDir(analyticRuleDoc);
             this.lmdbEnv = LmdbEnv
                     .builder()
-                    .config(analyticResultStoreConfig.getLmdbConfig())
+                    .config(duplicateCheckStoreConfig.getLmdbConfig())
                     .lmdbEnvDir(lmdbEnvDir)
                     .maxDbs(1)
                     .maxReaders(1)
