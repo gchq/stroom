@@ -1027,6 +1027,30 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testForEach() {
+        final AtomicInteger counter = new AtomicInteger(0);
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Iterable<?>>() {
+                })
+                .withOutputType(int.class)
+                .withTestFunction(testCase -> {
+                    NullSafe.forEach(testCase.getInput(), item -> {
+                        counter.incrementAndGet();
+                    });
+                    return counter.get();
+                })
+                .withSimpleEqualityAssertion()
+                .withBeforeTestCaseAction(() -> counter.set(0))
+                .addCase(null, 0)
+                .addCase(Collections.emptyList(), 0)
+                .addCase(Set.of(1, 2, 3), 3)
+                .addCase(List.of("1", "2", "3"), 3)
+                .build();
+    }
+
+
+    @TestFactory
     Stream<DynamicTest> testStream_array() {
         final AtomicInteger counter = new AtomicInteger(0);
         return TestUtil.buildDynamicTestStream()

@@ -414,6 +414,14 @@ public class NullSafe {
         }
     }
 
+    public static <T> void forEach(final Iterable<T> iterable, final Consumer<? super T> consumer) {
+        if (iterable != null && consumer != null) {
+            for (final T item : iterable) {
+                consumer.accept(item);
+            }
+        }
+    }
+
     /**
      * Returns the passed list if it is non-null else returns an empty list.
      */
