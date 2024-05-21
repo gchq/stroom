@@ -27,6 +27,7 @@ import org.junit.jupiter.api.TestFactory;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -1046,6 +1047,8 @@ class TestNullSafe {
                 .addCase(Collections.emptyList(), 0)
                 .addCase(Set.of(1, 2, 3), 3)
                 .addCase(List.of("1", "2", "3"), 3)
+                .addCase(Arrays.asList(null, "2", null), 1)
+                .addCase(Arrays.asList(null, null, null), 0)
                 .build();
     }
 

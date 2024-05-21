@@ -362,14 +362,15 @@ public class DocumentPluginEventManager extends Plugin {
                     delete(event.getDocRefs(), result -> handleDeleteResult(result, event.getCallback()));
 
             if (event.getConfirm()) {
-                ConfirmEvent.fire(
-                        DocumentPluginEventManager.this,
-                        "Are you sure you want to delete this item?",
-                        ok -> {
-                            if (ok) {
-                                action.run();
-                            }
-                        });
+                final int cnt = GwtNullSafe.size(event.getDocRefs());
+                final String msg = GwtNullSafe.size(event.getDocRefs()) > 1
+                        ? "Are you sure you want to delete these " + cnt + " items?"
+                        : "Are you sure you want to delete this item?";
+                ConfirmEvent.fire(DocumentPluginEventManager.this, msg, ok -> {
+                    if (ok) {
+                        action.run();
+                    }
+                });
             } else {
                 action.run();
             }
@@ -952,9 +953,9 @@ public class DocumentPluginEventManager extends Plugin {
                 false);
 
         // Actions allowed based on permissions of selection
-        final boolean allowRead = readableItems.size() > 0;
-        final boolean allowUpdate = updatableItems.size() > 0;
-        final boolean allowDelete = deletableItems.size() > 0;
+        final boolean allowRead = !readableItems.isEmpty();
+        final boolean allowUpdate = !updatableItems.isEmpty();
+        final boolean allowDelete = !deletableItems.isEmpty();
         final boolean isInfoEnabled = singleSelection & allowRead;
         final boolean isRemoveTagsEnabled = updatableItems.size() > 1;
 

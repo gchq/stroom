@@ -112,6 +112,10 @@ public class MoveDocumentPresenter
                 .fire();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface MoveDocumentView extends View {
 
         void setFolderView(View view);
@@ -120,6 +124,10 @@ public class MoveDocumentPresenter
 
         void setPermissionInheritance(PermissionInheritance permissionInheritance);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     @ProxyCodeSplit
     public interface MoveDocumentProxy extends Proxy<MoveDocumentPresenter> {

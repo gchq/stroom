@@ -414,16 +414,22 @@ public class NullSafe {
         }
     }
 
+    /**
+     * Equivalent to {@link Iterable#forEach(Consumer)}, except consumer is only called for each non-null
+     * item in the iterable. If iterable or consumer are null it is a no-op.
+     */
     public static <T> void forEach(final Iterable<T> iterable, final Consumer<? super T> consumer) {
         if (iterable != null && consumer != null) {
             for (final T item : iterable) {
-                consumer.accept(item);
+                if (item != null) {
+                    consumer.accept(item);
+                }
             }
         }
     }
 
     /**
-     * Returns the passed list if it is non-null else returns an empty list.
+     * Returns the passed list if it is non-null else returns an immutable empty list.
      */
     public static <L extends List<T>, T> List<T> list(final L list) {
         return list != null
@@ -448,7 +454,6 @@ public class NullSafe {
      * @return A non-null list of items. List should be assumed to be immutable.
      */
     @SafeVarargs
-    @SuppressWarnings("varargs")
     public static <T> List<T> asList(final T... items) {
         return items == null || items.length == 0
                 ? Collections.emptyList()
@@ -461,6 +466,7 @@ public class NullSafe {
      *
      * @return A non-null unmodifiable set of items.
      */
+    @SafeVarargs
     public static <T> Set<T> asSet(final T... items) {
         return items == null || items.length == 0
                 ? Collections.emptySet()
