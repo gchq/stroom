@@ -59,16 +59,16 @@ WORKDIR /stroom
 EXPOSE 8080
 EXPOSE 8081
 
-# Create Docker volume for Stroom's analytic rule result stores
-VOLUME /stroom/analytic_store/
-
 # A Bind mount volume RO to the container for config files.
 VOLUME /stroom/config/
 
 # Create Docker volume for the content_pack_import dir as this will be mutated on 
 VOLUME /stroom/content_pack_import/
 
-# lmdb_library mouted as tmpfs not a managed volume
+# Create Docker volume for use by any lmdb data stores.
+VOLUME /stroom/lmdb/
+
+# lmdb_library muted as tmpfs not a managed volume
 
 # Create Docker volume for SLF4J output
 VOLUME /stroom/logs/
@@ -110,10 +110,10 @@ RUN \
     addgroup -g 1000 -S stroom && \
     adduser -u 1000 -S -s /bin/false -D -G stroom stroom && \
     mkdir -p /stroom && \
-    mkdir -p /stroom/analytic_store && \
     mkdir -p /stroom/config && \
     mkdir -p /stroom/config_fallback && \
     mkdir -p /stroom/content_pack_import && \
+    mkdir -p /stroom/lmdb && \
     mkdir -p /stroom/lmdb_library && \
     mkdir -p /stroom/logs/access && \
     mkdir -p /stroom/logs/app && \

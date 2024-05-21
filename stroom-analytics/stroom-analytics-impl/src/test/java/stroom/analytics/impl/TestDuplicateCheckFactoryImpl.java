@@ -31,8 +31,8 @@ import stroom.lmdb.LmdbLibraryConfig;
 import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.Row;
-import stroom.query.common.v2.AnalyticResultStoreConfig;
 import stroom.query.common.v2.CompiledColumns;
+import stroom.query.common.v2.DuplicateCheckStoreConfig;
 import stroom.query.language.functions.FieldIndex;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
@@ -125,7 +125,7 @@ class TestDuplicateCheckFactoryImpl {
                 lmdbEnvDirFactory,
                 () -> executorService,
                 byteBufferFactory,
-                new AnalyticResultStoreConfig());
+                new DuplicateCheckStoreConfig());
     }
 
     private DuplicateCheck createDuplicateCheck(final DuplicateCheckFactoryImpl duplicateCheckFactory,

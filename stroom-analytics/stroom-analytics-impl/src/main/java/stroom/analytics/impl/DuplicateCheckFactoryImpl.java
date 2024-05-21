@@ -8,8 +8,8 @@ import stroom.lmdb2.LmdbEnvDir;
 import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.lmdb2.WriteTxn;
 import stroom.query.api.v2.Row;
-import stroom.query.common.v2.AnalyticResultStoreConfig;
 import stroom.query.common.v2.CompiledColumns;
+import stroom.query.common.v2.DuplicateCheckStoreConfig;
 import stroom.query.common.v2.LmdbKV;
 import stroom.query.common.v2.TransferState;
 import stroom.util.logging.LambdaLogger;
@@ -51,15 +51,14 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
     public DuplicateCheckFactoryImpl(final LmdbEnvDirFactory lmdbEnvDirFactory,
                                      final Provider<Executor> executorProvider,
                                      final ByteBufferFactory byteBufferFactory,
-                                     final AnalyticResultStoreConfig analyticResultStoreConfig) {
+                                     final DuplicateCheckStoreConfig duplicateCheckStoreConfig) {
         final LmdbEnvDir lmdbEnvDir = lmdbEnvDirFactory
                 .builder()
-                .config(analyticResultStoreConfig.getLmdbConfig())
-                .subDir("duplicate-check")
+                .config(duplicateCheckStoreConfig.getLmdbConfig())
                 .build();
         this.lmdbEnv = LmdbEnv
                 .builder()
-                .config(analyticResultStoreConfig.getLmdbConfig())
+                .config(duplicateCheckStoreConfig.getLmdbConfig())
                 .lmdbEnvDir(lmdbEnvDir)
                 .maxDbs(1)
                 .maxReaders(1)
