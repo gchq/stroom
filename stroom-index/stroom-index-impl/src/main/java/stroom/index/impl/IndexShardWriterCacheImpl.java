@@ -113,13 +113,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
     @Override
     public IndexShardWriter getOrOpenWriter(final long indexShardId) {
-        return cache.get(indexShardId, (k) -> {
-            final IndexShardWriter indexShardWriter = open(k);
-            if (indexShardWriter == null) {
-                throw new IndexException("Unable to create writer for " + indexShardId);
-            }
-            return indexShardWriter;
-        });
+        return cache.get(indexShardId, this::open);
     }
 
     /**
@@ -136,8 +130,9 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     }
 
     private IndexShardWriter openWriter(final long indexShardId) {
+        LOGGER.debug(() -> "Opening " + indexShardId);
+
         return securityContext.asProcessingUserResult(() -> {
-            IndexShardWriter indexShardWriter = null;
             final Optional<IndexShard> optional = indexShardDao.fetch(indexShardId);
             if (optional.isEmpty()) {
                 throw new IndexException("Unable to find index shard with id = " + indexShardId);
@@ -150,46 +145,50 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
             // Mark the index shard as opening.
             final boolean isNew = IndexShardStatus.NEW.equals(indexShard.getStatus());
-            LOGGER.debug(() -> "Opening " + indexShardId);
-            if (indexShardDao.setStatus(indexShardId, IndexShardStatus.OPENING)) {
-                try {
-                    final LuceneVersion luceneVersion = LuceneVersionUtil
-                            .getLuceneVersion(indexShard.getIndexVersion());
-                    final LuceneProvider luceneProvider = luceneProviderFactory.get(luceneVersion);
-                    final IndexShardWriter writer = luceneProvider.createIndexShardWriter(
-                            indexShard,
-                            luceneIndexDoc.getMaxDocsPerShard());
-
-                    // We have opened the index so update the DB object.
-                    if (indexShardDao.setStatus(indexShardId, IndexShardStatus.OPEN)) {
-                        // Output some debug.
-                        LOGGER.debug(() ->
-                                "Opened " + indexShardId + " in " +
-                                        (System.currentTimeMillis() - writer.getCreationTime()) + "ms");
-                    }
-
-                    indexShardWriter = writer;
-
-                } catch (final RuntimeException e) {
-                    if (isNew) {
-                        LOGGER.error(() -> "Deleting new index shard because (" + e + ")", e);
-                    } else {
-                        LOGGER.error(() -> "Error opening index shard " + indexShardId, e);
-                    }
+            try {
+                if (!indexShardDao.setStatus(indexShardId, IndexShardStatus.OPENING)) {
+                    throw new IndexException("Unable to set index shard status to OPENING");
                 }
-            }
 
-            if (indexShardWriter == null) {
+                final LuceneVersion luceneVersion = LuceneVersionUtil
+                        .getLuceneVersion(indexShard.getIndexVersion());
+                final LuceneProvider luceneProvider = luceneProviderFactory.get(luceneVersion);
+                final IndexShardWriter writer = luceneProvider.createIndexShardWriter(
+                        indexShard,
+                        luceneIndexDoc.getMaxDocsPerShard());
+
+                // We have opened the index so update the DB object.
+                if (indexShardDao.setStatus(indexShardId, IndexShardStatus.OPEN)) {
+                    // Output some debug.
+                    LOGGER.debug(() ->
+                            "Opened " + indexShardId + " in " +
+                                    (System.currentTimeMillis() - writer.getCreationTime()) + "ms");
+                }
+
+                return writer;
+
+            } catch (final RuntimeException e) {
                 if (isNew) {
-                    // If this was a new shard then delete it immediately.
-                    indexShardDao.logicalDelete(indexShardId);
-                } else {
-                    // Something went wrong so set the shard state back to closed.
-                    indexShardDao.reset(indexShardId);
-                }
-            }
+                    try {
+                        // If this was a new shard then delete it immediately.
+                        LOGGER.error(() -> "Deleting new index shard because (" + e + ")", e);
+                        indexShardDao.logicalDelete(indexShardId);
+                    } catch (final RuntimeException e2) {
+                        LOGGER.error(() -> "Unable to delete new index shard (" + e2.getMessage() + ")", e2);
+                    }
 
-            return indexShardWriter;
+                } else {
+                    try {
+                        // Something went wrong so set the shard state back to closed.
+                        LOGGER.error(() -> "Error opening index shard " + indexShardId, e);
+                        indexShardDao.reset(indexShardId);
+                    } catch (final RuntimeException e2) {
+                        LOGGER.error(() -> "Unable to reset index shard (" + e2.getMessage() + ")", e2);
+                    }
+                }
+
+                throw e;
+            }
         });
     }
 

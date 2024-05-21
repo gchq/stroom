@@ -226,7 +226,7 @@ public class ActiveShardsCacheImpl implements ActiveShardsCache {
                         LOGGER.debug(e::getMessage, e);
                     }
                 }
-            } catch (final IndexException e) {
+            } catch (final RuntimeException e) {
                 if (throwException) {
                     LOGGER.error(e::getMessage, e);
                     throw e;
