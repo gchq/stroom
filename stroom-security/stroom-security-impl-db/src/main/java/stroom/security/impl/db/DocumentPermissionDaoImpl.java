@@ -4,7 +4,9 @@ import stroom.db.util.JooqUtil;
 import stroom.security.impl.BasicDocPermissions;
 import stroom.security.impl.DocumentPermissionDao;
 import stroom.security.impl.UserDocumentPermissions;
+import stroom.security.impl.db.jooq.tables.records.DocPermissionRecord;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.NullSafe;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -12,18 +14,25 @@ import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static stroom.security.impl.db.jooq.tables.DocPermission.DOC_PERMISSION;
 
 public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocumentPermissionDaoImpl.class);
+    // Max number of items to have in a sql IN (...) clause. The limit on the IN list size is governed by
+    // max_allowed_packet, which has a default of 4MB. 1000 allows us 4KB per item, so we should be well within
+    // the limit.
+    static final int IN_LIST_LIMIT = 1_000;
 
     private final SecurityDbConnProvider securityDbConnProvider;
 
@@ -112,13 +121,15 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
     public void addPermission(final String docRefUuid,
                               final String userUuid,
                               final String permission) {
-        JooqUtil.context(securityDbConnProvider, context -> context
-                .insertInto(DOC_PERMISSION)
-                .set(DOC_PERMISSION.DOC_UUID, docRefUuid)
-                .set(DOC_PERMISSION.USER_UUID, userUuid)
-                .set(DOC_PERMISSION.PERMISSION, permission)
-                .onDuplicateKeyIgnore()
-                .execute());
+
+        final DocPermissionRecord rec = DOC_PERMISSION.newRecord();
+        rec.setDocUuid(docRefUuid);
+        rec.setUserUuid(userUuid);
+        rec.setPermission(permission);
+
+        // Don't complain if we insert a perm record that we already have.
+        JooqUtil.context(securityDbConnProvider, context ->
+                JooqUtil.tryCreate(context, rec));
     }
 
     @Override
@@ -162,12 +173,49 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
     }
 
     @Override
-    public void clearDocumentPermissions(final String docRefUuid) {
+    public void clearDocumentPermissionsForDoc(final String docRefUuid) {
         JooqUtil.context(securityDbConnProvider, context -> context
                 .deleteFrom(DOC_PERMISSION)
                 .where(DOC_PERMISSION.DOC_UUID.equal(docRefUuid))
                 .execute()
         );
+    }
+
+    @Override
+    public void clearDocumentPermissionsForDocs(final Set<String> docRefUuids) {
+        clearDocumentPermissionsForDocs(docRefUuids, IN_LIST_LIMIT);
+    }
+
+    // Pkg private to aid testing with a smaller batch size
+    void clearDocumentPermissionsForDocs(final Set<String> docRefUuids,
+                                         final int batchSize) {
+        if (NullSafe.hasItems(docRefUuids)) {
+            LOGGER.debug(() -> LogUtil.message("Deleting permission records for {} proc filter UUIDs",
+                    docRefUuids.size()));
+            final List<String> workingList = new ArrayList<>(docRefUuids);
+            final AtomicInteger totalCnt = new AtomicInteger();
+            JooqUtil.transaction(securityDbConnProvider, txnContext -> {
+                while (!workingList.isEmpty()) {
+                    // The in clause has limits so do a batch at a time. A view on workingList
+                    final List<String> subListView = workingList.subList(
+                            0,
+                            Math.min(workingList.size(), batchSize));
+                    if (!subListView.isEmpty()) {
+                        final int cnt = txnContext.deleteFrom(DOC_PERMISSION)
+                                .where(DOC_PERMISSION.DOC_UUID.in(subListView))
+                                .execute();
+                        totalCnt.addAndGet(cnt);
+                        LOGGER.debug(() -> LogUtil.message(
+                                "Deleted {} doc_permission records for a batch of {} doc UUIDs",
+                                cnt, subListView.size()));
+                        // Now clear limitedListView which clears the items from workingList
+                        subListView.clear();
+                    }
+                }
+            });
+            LOGGER.debug(() -> LogUtil.message("Deleted a total of {} doc_permission records for {} doc UUIDs",
+                    totalCnt, docRefUuids.size()));
+        }
     }
 
     @Override
@@ -214,7 +262,7 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
 
         if (!didSucceed) {
             throw new RuntimeException(LogUtil.message("Error setting owner of document {} to user/group {} " +
-                            "after 10 tries", docRefUuid, ownerUuid));
+                    "after 10 tries", docRefUuid, ownerUuid));
         }
     }
 }

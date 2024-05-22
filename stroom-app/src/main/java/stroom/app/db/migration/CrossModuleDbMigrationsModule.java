@@ -12,6 +12,8 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import org.flywaydb.core.api.migration.JavaMigration;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.sql.DataSource;
@@ -39,9 +41,8 @@ public class CrossModuleDbMigrationsModule
         // the same DB/host. Java migrations must inject the dbConnProvider for each
         // module that they want to deal with, accepting that
         // Order doesn't matter here, but you are going to sort them aren't you.
-        GuiceUtil.buildMultiBinder(binder(), AbstractCrossModuleJavaDbMigration.class);
-//                .addBinding(V07_04_00_005__Vol_Grp_Name_to_UUID.class);
-
+        GuiceUtil.buildMultiBinder(binder(), AbstractCrossModuleJavaDbMigration.class)
+                .addBinding(V07_04_00_005__Orphaned_Doc_Perms.class);
     }
 
     @Override
@@ -87,6 +88,13 @@ public class CrossModuleDbMigrationsModule
                 getFlyWayTableName(),
                 getModuleName());
         return true;
+    }
+
+    /**
+     * This gets overridden for testing to allow the test migration to be added in.
+     */
+    protected List<Class<? extends AbstractCrossModuleJavaDbMigration>> getAdditionalMigrations() {
+        return Collections.emptyList();
     }
 
 

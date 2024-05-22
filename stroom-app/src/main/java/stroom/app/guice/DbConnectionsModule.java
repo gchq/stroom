@@ -2,6 +2,7 @@ package stroom.app.guice;
 
 import stroom.app.db.migration.CrossModuleDbConnProvider;
 import stroom.app.db.migration.CrossModuleDbMigrationsModule;
+import stroom.util.NullSafe;
 
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
@@ -38,10 +39,17 @@ public class DbConnectionsModule extends AbstractModule {
         install(new stroom.statistics.impl.sql.SQLStatisticsDbModule());
 
         // Special DB module for running cross-module java migrations
-        install(new CrossModuleDbMigrationsModule());
+        NullSafe.consume(getCrossModuleDbMigrationsModule(), this::install);
 
         // This ensures all DB migrations get run as part of the guice bindings set up
         bind(DbMigrations.class).asEagerSingleton();
+    }
+
+    /**
+     * Subclasses can override this to provide a modified cross-module module for testing
+     */
+    protected CrossModuleDbMigrationsModule getCrossModuleDbMigrationsModule() {
+        return new CrossModuleDbMigrationsModule();
     }
 
 

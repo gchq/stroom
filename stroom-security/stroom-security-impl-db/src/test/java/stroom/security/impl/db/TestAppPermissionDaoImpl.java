@@ -17,7 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class AppPermissionDaoImplTest {
+class TestAppPermissionDaoImpl {
 
     private static UserDao userDao;
     private static AppPermissionDao appPermissionDao;

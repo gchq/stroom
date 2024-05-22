@@ -197,6 +197,15 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         clearDocumentPermissions(docUuid, DocumentPermissionNames.DELETE);
     }
 
+    @Override
+    public void deleteDocumentPermissions(final Set<String> docUuids) {
+        if (NullSafe.hasItems(docUuids)) {
+            documentPermissionDao.clearDocumentPermissionsForDocs(docUuids);
+            docUuids.forEach(docUuid ->
+                    ClearDocumentPermissionsEvent.fire(permissionChangeEventBus, docUuid));
+        }
+    }
+
     private void clearDocumentPermissions(final String docUuid, final String requireDocPermission) {
         // Get the current user.
         final UserIdentity userIdentity = securityContext.getUserIdentity();
@@ -204,7 +213,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         // If no user is present then don't clear permissions.
         if (userIdentity != null) {
             if (securityContext.hasDocumentPermission(docUuid, requireDocPermission)) {
-                documentPermissionDao.clearDocumentPermissions(docUuid);
+                documentPermissionDao.clearDocumentPermissionsForDoc(docUuid);
             }
         }
         ClearDocumentPermissionsEvent.fire(permissionChangeEventBus, docUuid);

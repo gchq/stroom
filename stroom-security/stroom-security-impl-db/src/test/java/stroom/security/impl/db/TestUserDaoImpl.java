@@ -19,7 +19,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class UserDaoImplTest {
+class TestUserDaoImpl {
 
     private static UserDao userDao;
 

@@ -20,6 +20,8 @@ public interface DocumentPermissionService {
      */
     void deleteDocumentPermissions(String docUuid);
 
+    void deleteDocumentPermissions(Set<String> docUuids);
+
     void addDocumentPermissions(DocRef sourceDocRef,
                                 DocRef documentDocRef,
                                 boolean owner);
