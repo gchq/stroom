@@ -1,6 +1,19 @@
 package stroom.widget.util.client;
 
+import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.dashboard.shared.DashboardDoc;
+import stroom.dictionary.shared.DictionaryDoc;
+import stroom.documentation.shared.DocumentationDoc;
+import stroom.explorer.shared.ExplorerConstants;
+import stroom.feed.shared.FeedDoc;
+import stroom.index.shared.LuceneIndexDoc;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.TextConverterDoc;
+import stroom.pipeline.shared.XsltDoc;
+import stroom.query.shared.QueryDoc;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.util.shared.GwtNullSafe;
+import stroom.view.shared.ViewDoc;
 
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
@@ -16,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class KeyBinding {
@@ -29,6 +43,7 @@ public class KeyBinding {
     private static final Map<Shortcut, KeySequence> KEY_SEQUENCES_BY_SECOND_KEY = new HashMap<>();
     private static final Map<KeySequence, Action> KEY_SEQUENCE_TO_ACTION_MAP = new HashMap<>();
     private static final Map<Action, KeySequence> ACTION_TO_KEY_SEQUENCE_MAP = new HashMap<>();
+    private static final Map<String, Action> DOC_TYPE_TO_ACTION_MAP = new HashMap<>();
 
     private static final int GOTO_FIRST_KEY = KeyCodes.KEY_G;
     private static final int CREATE_DOC_FIRST_KEY = KeyCodes.KEY_C;
@@ -116,12 +131,35 @@ public class KeyBinding {
         addCreateDocKeySequence(Action.CREATE_VIEW, KeyCodes.KEY_V);
         addCreateDocKeySequence(Action.CREATE_XSLT, KeyCodes.KEY_X);
 
+        // Map doc types to the create actions, so we can get the action for a doc
+        DOC_TYPE_TO_ACTION_MAP.put(ElasticIndexDoc.DOCUMENT_TYPE, Action.CREATE_ELASTIC_INDEX);
+        DOC_TYPE_TO_ACTION_MAP.put(DashboardDoc.DOCUMENT_TYPE, Action.CREATE_DASHBOARD);
+        DOC_TYPE_TO_ACTION_MAP.put(FeedDoc.DOCUMENT_TYPE, Action.CREATE_FEED);
+        DOC_TYPE_TO_ACTION_MAP.put(ExplorerConstants.FOLDER, Action.CREATE_FOLDER);
+        DOC_TYPE_TO_ACTION_MAP.put(DictionaryDoc.DOCUMENT_TYPE, Action.CREATE_DICTIONARY);
+        DOC_TYPE_TO_ACTION_MAP.put(LuceneIndexDoc.DOCUMENT_TYPE, Action.CREATE_LUCENE_INDEX);
+        DOC_TYPE_TO_ACTION_MAP.put(DocumentationDoc.DOCUMENT_TYPE, Action.CREATE_DOCUMENTATION);
+        DOC_TYPE_TO_ACTION_MAP.put(PipelineDoc.DOCUMENT_TYPE, Action.CREATE_PIPELINE);
+        DOC_TYPE_TO_ACTION_MAP.put(QueryDoc.DOCUMENT_TYPE, Action.CREATE_QUERY);
+        DOC_TYPE_TO_ACTION_MAP.put(AnalyticRuleDoc.DOCUMENT_TYPE, Action.CREATE_ANALYTIC_RULE);
+        DOC_TYPE_TO_ACTION_MAP.put(TextConverterDoc.DOCUMENT_TYPE, Action.CREATE_TEXT_CONVERTER);
+        DOC_TYPE_TO_ACTION_MAP.put(ViewDoc.DOCUMENT_TYPE, Action.CREATE_VIEW);
+        DOC_TYPE_TO_ACTION_MAP.put(XsltDoc.DOCUMENT_TYPE, Action.CREATE_XSLT);
+
 //        addKeySequence(Action.DOCUMENTATION, SUB_TAB_FIRST_KEY, KeyCodes.KEY_D);
 //        addKeySequence(Action.SETTINGS, SUB_TAB_FIRST_KEY, KeyCodes.KEY_S);
     }
 
     public static void addCommand(final Action action, final Command command) {
         COMMANDS.put(action, command);
+    }
+
+    public static Optional<Action> getCreateActionByType(final String documentType) {
+        if (GwtNullSafe.isBlankString(documentType)) {
+            return Optional.empty();
+        } else {
+            return Optional.ofNullable(DOC_TYPE_TO_ACTION_MAP.get(documentType));
+        }
     }
 
     public static String getShortcut(final Action action) {
@@ -304,16 +342,16 @@ public class KeyBinding {
     private static void logKey(final NativeEvent e) {
         final List<String> keys = new ArrayList<>();
         if (e.getShiftKey()) {
-            keys.add("shift");
+            keys.add("Shift");
         }
         if (e.getCtrlKey()) {
-            keys.add("ctrl");
+            keys.add("Ctrl");
         }
         if (e.getAltKey()) {
-            keys.add("alt");
+            keys.add("Alt");
         }
         if (e.getMetaKey()) {
-            keys.add("meta");
+            keys.add("Meta");
         }
         keys.add(KeyBinding.keyCodeToString(e.getKeyCode()));
 //        GWT.log(e.getType()
@@ -457,35 +495,35 @@ public class KeyBinding {
         //noinspection EnhancedSwitchMigration // cos GWT
         switch (keyCode) {
             case KeyCodes.KEY_LEFT:
-                return "left-arrow";
+                return "Left-Arrow";
             case KeyCodes.KEY_RIGHT:
-                return "right-arrow";
+                return "Right-Arrow";
             case KeyCodes.KEY_UP:
-                return "up-arrow";
+                return "Up-Arrow";
             case KeyCodes.KEY_DOWN:
-                return "down-arrow";
+                return "Down-Arrow";
             case KeyCodes.KEY_SPACE:
-                return "space";
+                return "Space";
             case KeyCodes.KEY_CTRL:
-                return "ctrl";
+                return "Ctrl";
             case KeyCodes.KEY_ALT:
-                return "alt";
+                return "Alt";
             case KeyCodes.KEY_SHIFT:
-                return "shift";
+                return "Shift";
             case KeyCodes.KEY_TAB:
-                return "tab";
+                return "Tab";
             case KeyCodes.KEY_ESCAPE:
-                return "esc";
+                return "Esc";
             case KeyCodes.KEY_ENTER:
-                return "enter";
+                return "Enter";
             case KeyCodes.KEY_MAC_ENTER:
-                return "mac-enter";
+                return "Mac-Enter";
             case KeyCodes.KEY_BACKSPACE:
-                return "backspace";
+                return "Backspace";
             case KeyCodes.KEY_DELETE:
-                return "delete";
+                return "Delete";
             case KeyCodes.KEY_INSERT:
-                return "insert";
+                return "Insert";
             case KeyCodes.KEY_F1:
                 return "F1";
             case KeyCodes.KEY_F2:
@@ -507,13 +545,13 @@ public class KeyBinding {
             case KeyCodes.KEY_F10:
                 return "F10";
             case KeyCodes.KEY_END:
-                return "end";
+                return "End";
             case KeyCodes.KEY_HOME:
-                return "home";
+                return "Home";
             case KeyCodes.KEY_PAGEUP:
-                return "pageup";
+                return "Pageup";
             case KeyCodes.KEY_PAGEDOWN:
-                return "pagedown";
+                return "Pagedown";
             default:
                 return String.valueOf(((char) keyCode)).toLowerCase();
         }
@@ -713,16 +751,16 @@ public class KeyBinding {
         public String toString() {
             final List<String> keysPressed = new ArrayList<>();
             if (ctrl) {
-                keysPressed.add("ctrl");
+                keysPressed.add("Ctrl");
             }
             if (alt) {
-                keysPressed.add("alt");
+                keysPressed.add("Alt");
             }
             if (shift) {
-                keysPressed.add("shift");
+                keysPressed.add("Shift");
             }
             if (meta) {
-                keysPressed.add("meta");
+                keysPressed.add("Meta");
             }
             keysPressed.add(keyCodeToString(keyCode));
             return java.lang.String.join("+", keysPressed);
