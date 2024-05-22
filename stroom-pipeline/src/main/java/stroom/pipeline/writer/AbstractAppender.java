@@ -26,6 +26,7 @@ import stroom.util.shared.Severity;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 
 public abstract class AbstractAppender extends AbstractDestinationProvider implements Destination {
 
@@ -33,7 +34,7 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
 
     private final ErrorReceiverProxy errorReceiverProxy;
 
-    private OutputStream outputStream;
+    private Output output;
     private byte[] header;
     private byte[] footer;
     private boolean writtenHeader;
@@ -48,27 +49,16 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
 
     @Override
     public void endProcessing() {
-        writeFooter();
-        endEntry();
-        closeCurrentOutputStream();
+        writeFooter(true);
         super.endProcessing();
     }
 
     @Override
     public void endStream() {
         if (splitAggregatedStreams) {
-            writeFooter();
-            endEntry();
+            writeFooter(false);
         }
         super.endStream();
-    }
-
-    protected void startEntry() {
-
-    }
-
-    protected void endEntry() {
-        closeCurrentOutputStream();
     }
 
     @Override
@@ -88,27 +78,24 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
 
         if (splitRecords) {
             if (getCurrentOutputSize() > 0) {
-                writeFooter();
-                endEntry();
+                writeFooter(false);
             }
         } else {
             final Long sizeBytes = getSizeBytes();
             if (sizeBytes > 0 && getCurrentOutputSize() >= sizeBytes) {
-                writeFooter();
-                endEntry();
-                closeCurrentOutputStream();
+                writeFooter(true);
             }
         }
     }
 
     void closeCurrentOutputStream() {
-        if (outputStream != null) {
+        if (output != null) {
             try {
-                outputStream.close();
+                output.close();
             } catch (final IOException e) {
                 error(e.getMessage(), e);
             }
-            outputStream = null;
+            output = null;
         }
     }
 
@@ -122,64 +109,89 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
         this.header = header;
         this.footer = footer;
 
-        if (outputStream == null) {
-            outputStream = createOutputStream();
+        if (output == null) {
+            output = createOutput();
         }
-
-        startEntry();
 
         // If we haven't written yet then create the output stream and
         // write a header if we have one.
         writeHeader();
 
-        return outputStream;
+        return output.getOutputStream();
+    }
+
+    Output getOutput() {
+        return output;
     }
 
     /**
      * Method to allow subclasses to insert segment markers between records.
      */
-    void insertSegmentMarker() throws IOException {
+    private void insertSegmentMarker() throws IOException {
+        output.insertSegmentMarker();
     }
 
     void writeHeader() throws IOException {
         if (!writtenHeader) {
-            if (outputStream != null && header != null && header.length > 0) {
-                try {
-                    // Write the header.
-                    write(header);
-                } catch (final IOException e) {
-                    error(e.getMessage(), e);
+            if (output != null) {
+                // If we are writing to a zip then start a new zip entry before writing the header.
+                if (output.isZip()) {
+                    output.startZipEntry();
                 }
-            }
 
-            // Insert a segment marker before we write the next record regardless of whether the header has actually
-            // been written. This is because we always make an allowance for the existence of a header in a segmented
-            // stream when viewing data.
-            insertSegmentMarker();
+                if (header != null && header.length > 0) {
+                    try {
+                        // Write the header.
+                        output.write(header);
+                    } catch (final IOException e) {
+                        error(e.getMessage(), e);
+                    }
+                }
+
+                // Insert a segment marker before we write the next record regardless of whether the header has actually
+                // been written. This is because we always make an allowance for the existence of a header in a
+                // segmented stream when viewing data.
+                insertSegmentMarker();
+            }
 
             writtenHeader = true;
         }
     }
 
-    void writeFooter() {
+    void writeFooter(final boolean roll) {
         if (writtenHeader) {
-            if (outputStream != null && footer != null && footer.length > 0) {
+            if (output != null) {
+                if (footer != null && footer.length > 0) {
+                    try {
+                        // Write the footer.
+                        output.write(footer);
+                    } catch (final IOException e) {
+                        error(e.getMessage(), e);
+                    }
+                }
+
                 try {
-                    // Write the footer.
-                    write(footer);
+                    if (output.isZip()) {
+                        output.endZipEntry();
+                        if (roll) {
+                            closeCurrentOutputStream();
+                        }
+                    } else {
+                        closeCurrentOutputStream();
+                    }
                 } catch (final IOException e) {
                     error(e.getMessage(), e);
+                    throw new UncheckedIOException(e);
+                } catch (final RuntimeException e) {
+                    error(e.getMessage(), e);
+                    throw e;
                 }
             }
             writtenHeader = false;
         }
     }
 
-    private void write(final byte[] bytes) throws IOException {
-        outputStream.write(bytes, 0, bytes.length);
-    }
-
-    protected abstract OutputStream createOutputStream() throws IOException;
+    protected abstract Output createOutput() throws IOException;
 
     protected void error(final String message) {
         error(message, null);
@@ -206,7 +218,12 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
         throw ProcessException.create(message);
     }
 
-    abstract long getCurrentOutputSize();
+    long getCurrentOutputSize() {
+        if (output == null) {
+            return 0L;
+        }
+        return output.getCurrentOutputSize();
+    }
 
     private Long getSizeBytes() {
         if (sizeBytes == null) {

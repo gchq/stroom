@@ -16,7 +16,7 @@
 
 package stroom.pipeline.destination;
 
-import stroom.pipeline.writer.OutputStreamSupport;
+import stroom.pipeline.writer.OutputFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.scheduler.Trigger;
@@ -78,10 +78,10 @@ public class RollingFileDestination extends RollingDestination {
         this.file = file;
         this.filePermissions = filePermissions;
 
-        final OutputStreamSupport outputStreamSupport =
-                new OutputStreamSupport(null);
-        outputStreamSupport.setUseCompression(useCompression);
-        outputStreamSupport.setCompressionMethod(compressionMethod);
+        final OutputFactory outputFactory =
+                new OutputFactory(null);
+        outputFactory.setUseCompression(useCompression);
+        outputFactory.setCompressionMethod(compressionMethod);
 
         // Make sure we can create this path.
         try {
@@ -92,13 +92,13 @@ public class RollingFileDestination extends RollingDestination {
                 // file exists that has actually just been rolled.
                 LOGGER.warn("File exists for key={} so rolling immediately", key);
 
-                setOutputStream(outputStreamSupport.createOutputStream(createInnerOutputStream()));
+                setOutput(outputFactory.create(createInnerOutputStream()));
 
                 // Roll the file.
                 roll();
 
             } else {
-                setOutputStream(outputStreamSupport.createOutputStream(createInnerOutputStream()));
+                setOutput(outputFactory.create(createInnerOutputStream()));
             }
         } catch (final IOException | RuntimeException e) {
             try {

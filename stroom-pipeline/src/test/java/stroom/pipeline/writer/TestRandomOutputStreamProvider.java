@@ -42,9 +42,9 @@ class TestRandomOutputStreamProvider extends StroomUnitTest {
         boolean found3 = false;
 
         for (int i = 0; i < 1000; i++) {
-            final OutputStream outputStream = provider.createOutputStream();
-            final LockedOutputStream lockedOutputStream = (LockedOutputStream) outputStream;
-            final Path file = lockedOutputStream.lockFile;
+            final Output output = provider.createOutput();
+            final LockedOutput lockedOutput = (LockedOutput) output;
+            final Path file = lockedOutput.lockFile;
             final String path = FileUtil.getCanonicalPath(file);
 
             if (path.contains("/t1/")) {

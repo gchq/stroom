@@ -52,14 +52,14 @@ class TestFileAppender extends StroomUnitTest {
         final OutputStream outputStream = provider
                 .getOutputStream(header, footer);
         outputStream.write(data);
+        final LockedOutput lockedOutput = (LockedOutput) provider.getOutput();
         provider.endProcessing();
 
-        final LockedOutputStream lockedOutputStream = (LockedOutputStream) outputStream;
-        assertThat(Files.exists(lockedOutputStream.lockFile)).isFalse();
-        assertThat(Files.exists(lockedOutputStream.outFile)).isTrue();
+        assertThat(Files.exists(lockedOutput.lockFile)).isFalse();
+        assertThat(Files.exists(lockedOutput.outFile)).isTrue();
 
         try (final ZipArchiveInputStream zipArchiveInputStream = new ZipArchiveInputStream(Files.newInputStream(
-                lockedOutputStream.outFile))) {
+                lockedOutput.outFile))) {
             final ZipArchiveEntry entry1 = zipArchiveInputStream.getNextZipEntry();
             assertThat(entry1).isNotNull();
             assertThat(entry1.getName()).isEqualTo("001.dat");
@@ -89,15 +89,15 @@ class TestFileAppender extends StroomUnitTest {
         final OutputStream outputStream = provider
                 .getOutputStream(header, footer);
         outputStream.write(data);
+        final LockedOutput lockedOutput = (LockedOutput) provider.getOutput();
         provider.endProcessing();
 
-        final LockedOutputStream lockedOutputStream = (LockedOutputStream) outputStream;
-        assertThat(Files.exists(lockedOutputStream.lockFile)).isFalse();
-        assertThat(Files.exists(lockedOutputStream.outFile)).isTrue();
+        assertThat(Files.exists(lockedOutput.lockFile)).isFalse();
+        assertThat(Files.exists(lockedOutput.outFile)).isTrue();
 
         try (final InputStream inputStream =
                 new CompressorStreamFactory().createCompressorInputStream("gz",
-                        Files.newInputStream(lockedOutputStream.outFile))) {
+                        Files.newInputStream(lockedOutput.outFile))) {
             final byte[] bytes = inputStream.readAllBytes();
             assertThat(new String(bytes, StandardCharsets.UTF_8)).isEqualTo("header__data__footer");
         }

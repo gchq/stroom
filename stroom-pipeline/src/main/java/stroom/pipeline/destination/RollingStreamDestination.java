@@ -20,7 +20,7 @@ import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.meta.shared.MetaFields;
-import stroom.util.io.ByteCountOutputStream;
+import stroom.pipeline.writer.BasicOutput;
 import stroom.util.scheduler.Trigger;
 
 import java.io.IOException;
@@ -53,7 +53,7 @@ public class RollingStreamDestination extends RollingDestination {
         this.segmentOutput = key.isSegmentOutput();
 
         segmentOutputStream = streamTarget.next().get();
-        setOutputStream(new ByteCountOutputStream(segmentOutputStream));
+        setOutput(new BasicOutput(segmentOutputStream));
     }
 
     @Override

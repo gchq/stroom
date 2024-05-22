@@ -35,8 +35,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -67,7 +65,7 @@ public class FileAppender extends AbstractAppender {
     private static final String LOCK_EXTENSION = ".lock";
 
     private final PathCreator pathCreator;
-    private final OutputStreamSupport outputStreamSupport;
+    private final OutputFactory outputFactory;
     private String[] outputPaths;
     private String filePermissions;
 
@@ -77,11 +75,11 @@ public class FileAppender extends AbstractAppender {
                         final PathCreator pathCreator) {
         super(errorReceiverProxy);
         this.pathCreator = pathCreator;
-        outputStreamSupport = new OutputStreamSupport(metaDataHolder);
+        outputFactory = new OutputFactory(metaDataHolder);
     }
 
     @Override
-    protected OutputStream createOutputStream() throws IOException {
+    protected Output createOutput() throws IOException {
         try {
             if (outputPaths == null || outputPaths.length == 0) {
                 throw new IOException("No output paths have been set");
@@ -131,46 +129,14 @@ public class FileAppender extends AbstractAppender {
             LOGGER.trace("Creating output stream for path {}", path);
 
             // Get a writer for the new lock file.
-            final OutputStream outputStream = outputStreamSupport
-                    .createOutputStream(new BufferedOutputStream(Files.newOutputStream(lockFile)));
+            final Output output = outputFactory
+                    .create(new BufferedOutputStream(Files.newOutputStream(lockFile)));
 
-            return new LockedOutputStream(outputStream, lockFile, file, permissions);
+            return new LockedOutput(output, lockFile, file, permissions);
 
         } catch (final RuntimeException e) {
             error(e.getMessage(), e);
             throw new IOException(e.getMessage(), e);
-        }
-    }
-
-    @Override
-    protected void startEntry() {
-        try {
-            if (outputStreamSupport.isZip()) {
-                outputStreamSupport.startZipEntry();
-            }
-        } catch (final IOException e) {
-            error(e.getMessage(), e);
-            throw new UncheckedIOException(e);
-        } catch (final RuntimeException e) {
-            error(e.getMessage(), e);
-            throw e;
-        }
-    }
-
-    @Override
-    protected void endEntry() {
-        try {
-            if (outputStreamSupport.isZip()) {
-                outputStreamSupport.endZipEntry();
-            } else {
-                closeCurrentOutputStream();
-            }
-        } catch (final IOException e) {
-            error(e.getMessage(), e);
-            throw new UncheckedIOException(e);
-        } catch (final RuntimeException e) {
-            error(e.getMessage(), e);
-            throw e;
         }
     }
 
@@ -188,11 +154,6 @@ public class FileAppender extends AbstractAppender {
             LOGGER.debug("Invalid file permissions format: '" + filePermissions + "'");
             return null;
         }
-    }
-
-    @Override
-    long getCurrentOutputSize() {
-        return outputStreamSupport.getCurrentOutputSize();
     }
 
     /**
@@ -235,7 +196,7 @@ public class FileAppender extends AbstractAppender {
             defaultValue = "false",
             displayPriority = 5)
     public void setUseCompression(final boolean useCompression) {
-        outputStreamSupport.setUseCompression(useCompression);
+        outputFactory.setUseCompression(useCompression);
     }
 
     @PipelineProperty(
@@ -245,7 +206,7 @@ public class FileAppender extends AbstractAppender {
             displayPriority = 6)
     public void setCompressionMethod(final String compressionMethod) {
         try {
-            outputStreamSupport.setCompressionMethod(compressionMethod);
+            outputFactory.setCompressionMethod(compressionMethod);
         } catch (final RuntimeException e) {
             error(e.getMessage(), e);
             throw e;

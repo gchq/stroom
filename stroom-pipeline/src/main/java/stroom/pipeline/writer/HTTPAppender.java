@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FilterOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -73,7 +72,7 @@ public class HTTPAppender extends AbstractAppender {
     private Set<String> metaKeySet = getMetaKeySet("guid,feed,system,environment,remotehost,remoteaddress");
 
     private HttpURLConnection connection;
-    private final OutputStreamSupport outputStreamSupport;
+    private final OutputFactory outputStreamSupport;
     private long startTimeMs;
 
     private boolean useJvmSslConfig = true;
@@ -95,43 +94,11 @@ public class HTTPAppender extends AbstractAppender {
         super(errorReceiverProxy);
         this.metaDataHolder = metaDataHolder;
         this.pathCreator = pathCreator;
-        this.outputStreamSupport = new OutputStreamSupport(metaDataHolder);
+        this.outputStreamSupport = new OutputFactory(metaDataHolder);
     }
 
     @Override
-    protected void startEntry() {
-        try {
-            if (outputStreamSupport.isZip()) {
-                outputStreamSupport.startZipEntry();
-            }
-        } catch (final IOException e) {
-            error(e.getMessage(), e);
-            throw new UncheckedIOException(e);
-        } catch (final RuntimeException e) {
-            error(e.getMessage(), e);
-            throw e;
-        }
-    }
-
-    @Override
-    protected void endEntry() {
-        try {
-            if (outputStreamSupport.isZip()) {
-                outputStreamSupport.endZipEntry();
-            } else {
-                closeCurrentOutputStream();
-            }
-        } catch (final IOException e) {
-            error(e.getMessage(), e);
-            throw new UncheckedIOException(e);
-        } catch (final RuntimeException e) {
-            error(e.getMessage(), e);
-            throw e;
-        }
-    }
-
-    @Override
-    protected OutputStream createOutputStream() throws IOException {
+    protected Output createOutput() {
         try {
             final AttributeMap sendHeader;
             if (httpHeadersIncludeStreamMetaData) {
@@ -196,7 +163,7 @@ public class HTTPAppender extends AbstractAppender {
             }
             connection.connect();
 
-            return outputStreamSupport.createOutputStream(new FilterOutputStream(connection.getOutputStream()) {
+            return outputStreamSupport.create(new FilterOutputStream(connection.getOutputStream()) {
                 @Override
                 public void close() throws IOException {
                     super.close();
@@ -238,7 +205,7 @@ public class HTTPAppender extends AbstractAppender {
                 LOGGER.debug(e::getMessage, e);
                 throw e;
             } finally {
-                long bytes = outputStreamSupport.getCurrentOutputSize();
+                long bytes = getCurrentOutputSize();
                 final long duration = System.currentTimeMillis() - startTimeMs;
                 final AttributeMap attributeMap = metaDataHolder.getMetaData();
                 log(SEND_LOG, attributeMap, "SEND", forwardUrl, responseCode, bytes, duration);
@@ -282,11 +249,6 @@ public class HTTPAppender extends AbstractAppender {
         }
 
         return Arrays.stream(csv.toLowerCase().split(",")).collect(Collectors.toSet());
-    }
-
-    @Override
-    long getCurrentOutputSize() {
-        return outputStreamSupport.getCurrentOutputSize();
     }
 
     @Override

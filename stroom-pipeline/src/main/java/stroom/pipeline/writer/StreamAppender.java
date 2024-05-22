@@ -49,7 +49,6 @@ import com.google.common.base.Strings;
 import jakarta.inject.Inject;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 @ConfigurableElement(
         type = "StreamAppender",
@@ -77,7 +76,6 @@ public class StreamAppender extends AbstractAppender {
     private String streamType;
     private boolean segmentOutput = true;
     private Target streamTarget;
-    private WrappedSegmentOutputStream wrappedSegmentOutputStream;
     private long count;
     private String volumeGroup;
 
@@ -104,7 +102,7 @@ public class StreamAppender extends AbstractAppender {
     }
 
     @Override
-    protected OutputStream createOutputStream() {
+    protected Output createOutput() {
         final Meta parentMeta = metaHolder.getMeta();
 
         String feed = null;
@@ -163,35 +161,23 @@ public class StreamAppender extends AbstractAppender {
                 .getVolumeGroupName(feed, streamType, volumeGroup);
         streamTarget = streamStore.openTarget(metaProperties, volumeGroupName);
 
-        wrappedSegmentOutputStream = new WrappedSegmentOutputStream(streamTarget.next().get()) {
-            @Override
-            public void close() throws IOException {
-                super.flush();
-                super.close();
-                StreamAppender.this.close();
-            }
-        };
+        final WrappedSegmentOutputStream wrappedSegmentOutputStream =
+                new WrappedSegmentOutputStream(streamTarget.next().get()) {
+                    @Override
+                    public void close() throws IOException {
+                        super.flush();
+                        super.close();
+                        StreamAppender.this.close();
+                    }
+                };
 
-        return wrappedSegmentOutputStream;
+        return new StreamOutput(wrappedSegmentOutputStream, segmentOutput);
     }
 
     @Override
     public Destination borrowDestination() throws IOException {
         count++;
         return super.borrowDestination();
-    }
-
-    /**
-     * Insert segment markers after the header and after every record.
-     */
-    void insertSegmentMarker() throws IOException {
-        // Add a segment marker to the output stream if we are segmenting.
-        if (segmentOutput) {
-            if (wrappedSegmentOutputStream != null) {
-                //This can happen if stream type isn't set due to incorrect / incomplete configuration
-                wrappedSegmentOutputStream.addSegment();
-            }
-        }
     }
 
     private void close() {
@@ -242,14 +228,6 @@ public class StreamAppender extends AbstractAppender {
                 throw e;
             }
         }
-    }
-
-    @Override
-    long getCurrentOutputSize() {
-        if (wrappedSegmentOutputStream != null) {
-            return wrappedSegmentOutputStream.getPosition();
-        }
-        return 0;
     }
 
     @PipelinePropertyDocRef(types = FeedDoc.DOCUMENT_TYPE)
