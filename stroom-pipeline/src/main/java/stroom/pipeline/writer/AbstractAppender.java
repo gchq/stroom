@@ -18,6 +18,9 @@ package stroom.pipeline.writer;
 
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.ProcessException;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
 
@@ -25,6 +28,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 public abstract class AbstractAppender extends AbstractDestinationProvider implements Destination {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractAppender.class);
 
     private final ErrorReceiverProxy errorReceiverProxy;
 
@@ -176,8 +181,29 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
 
     protected abstract OutputStream createOutputStream() throws IOException;
 
+    protected void error(final String message) {
+        error(message, null);
+    }
+
     protected void error(final String message, final Exception e) {
-        errorReceiverProxy.log(Severity.ERROR, null, getElementId(), message, e);
+        if (errorReceiverProxy != null) {
+            errorReceiverProxy.log(Severity.ERROR, null, getElementId(), message, e);
+        } else {
+            LOGGER.error(message, e);
+        }
+    }
+
+    protected void fatal(final String message) {
+        fatal(message, null);
+    }
+
+    protected void fatal(final String message, final Exception e) {
+        if (errorReceiverProxy != null) {
+            errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), message, e);
+        } else {
+            LOGGER.error(message, e);
+        }
+        throw ProcessException.create(message);
     }
 
     abstract long getCurrentOutputSize();

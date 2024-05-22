@@ -29,7 +29,6 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
@@ -45,12 +44,9 @@ import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.Severity;
 
 import com.google.common.base.Strings;
 import jakarta.inject.Inject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -67,8 +63,6 @@ import java.io.OutputStream;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = SvgImage.PIPELINE_STREAM)
 public class StreamAppender extends AbstractAppender {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(StreamAppender.class);
 
     private final ErrorReceiverProxy errorReceiverProxy;
     private final Store streamStore;
@@ -229,7 +223,6 @@ public class StreamAppender extends AbstractAppender {
                     streamTarget.close();
                 } catch (final IOException | RuntimeException e) {
                     try {
-                        LOGGER.error(e.getMessage(), e);
                         // Log the error.
                         fatal(e.getMessage());
                     } finally {
@@ -311,10 +304,5 @@ public class StreamAppender extends AbstractAppender {
             displayPriority = 7)
     public void setVolumeGroup(final String volumeGroup) {
         this.volumeGroup = volumeGroup;
-    }
-
-    private void fatal(final String message) {
-        errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), message, null);
-        throw ProcessException.create(message);
     }
 }
