@@ -195,16 +195,15 @@ public class KeyBinding {
             if (Element.is(eventTarget)) {
                 final Element element = Element.as(eventTarget);
                 final String tagName = element.getTagName();
-//                final String className = GwtNullSafe.string(element.getClassName());
-//                final String type = element.getAttribute("type");
-//                GWT.log("className: " + className + " tagName: " + element.getTagName() + " type: " + type);
                 // TODO this is really clunky. Need to create our own textbox and text area
                 //  components so that we can control the key events
                 shouldCheck = !isTextBox(element, tagName)
                         && !"TEXTAREA".equalsIgnoreCase(tagName);
-//                        && !className.contains("gwt-TextBox")
-//                        && !className.contains("gwt-TextArea")
-//                        && !className.contains("ace_text-input");
+
+//                final String className = GwtNullSafe.string(element.getClassName());
+//                final String type = element.getAttribute("type");
+//                GWT.log("className: " + className + " tagName: " + element.getTagName()
+//                        + " type: " + type + " shouldCheck: " + shouldCheck);
             } else {
                 shouldCheck = true;
             }
@@ -216,13 +215,18 @@ public class KeyBinding {
     }
 
     private static boolean isTextBox(final Element element, final String tagName) {
-        return "INPUT".equalsIgnoreCase(tagName)
-                && GwtNullSafe.test(element.getAttribute("type"), type ->
-                "text".equalsIgnoreCase(type)
-                        || "password".equalsIgnoreCase(type)
-                        || "search".equalsIgnoreCase(type)
-                        || "number".equalsIgnoreCase(type)
-                        || "url".equalsIgnoreCase(type));
+        return "INPUT".equalsIgnoreCase(tagName) && isTextualInputType(element);
+    }
+
+    private static boolean isTextualInputType(final Element element) {
+        // These are the type of input element that we want to stop
+        final String type = element.getAttribute("type");
+        return GwtNullSafe.isBlankString(type)
+                || "text".equalsIgnoreCase(type)
+                || "password".equalsIgnoreCase(type)
+                || "search".equalsIgnoreCase(type)
+                || "number".equalsIgnoreCase(type)
+                || "url".equalsIgnoreCase(type);
     }
 
     private static Action testKeyDownEvent(final NativeEvent e,
