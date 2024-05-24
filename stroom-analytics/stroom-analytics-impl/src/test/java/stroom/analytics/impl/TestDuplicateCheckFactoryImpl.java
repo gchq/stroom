@@ -134,6 +134,8 @@ class TestDuplicateCheckFactoryImpl {
                 .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
                 .notifications(createNotificationConfig())
                 .errorFeed(new DocRef("Feed", "error"))
+                .rememberNotifications(true)
+                .ignoreDuplicateNotifications(true)
                 .build();
 
         final Column column = Column

@@ -139,7 +139,6 @@ export interface AnalyticProcessConfig {
 }
 
 export interface AnalyticRuleDoc {
-  allowDuplicateNotifications?: boolean;
   analyticNotificationConfig?: NotificationConfig;
   analyticProcessConfig?: AnalyticProcessConfig;
   analyticProcessType?: "STREAMING" | "TABLE_BUILDER" | "SCHEDULED_QUERY";
@@ -151,11 +150,13 @@ export interface AnalyticRuleDoc {
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   errorFeed?: DocRef;
+  ignoreDuplicateNotifications?: boolean;
   languageVersion?: "STROOM_QL_VERSION_0_1" | "SIGMA";
   name?: string;
   notifications?: NotificationConfig[];
   parameters?: Param[];
   query?: string;
+  rememberNotifications?: boolean;
   timeRange?: TimeRange;
   type?: string;
 
@@ -875,6 +876,11 @@ export interface DefaultLocation {
 
   /** @format int32 */
   lineNo?: number;
+}
+
+export interface DeleteDuplicateCheckRequest {
+  analyticDocUuid?: string;
+  rows?: DuplicateCheckRow[];
 }
 
 export interface Dependency {
@@ -1953,6 +1959,14 @@ export interface FindDataRetentionImpactCriteria {
   /** A logical addOperator term in a query expression tree */
   expression?: ExpressionOperator;
   pageRequest?: PageRequest;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+}
+
+export interface FindDuplicateCheckCriteria {
+  analyticDocUuid?: string;
+  pageRequest?: PageRequest;
+  quickFilterInput?: string;
   sort?: string;
   sortList?: CriteriaFieldSort[];
 }
@@ -7913,20 +7927,34 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags DuplicateCheck
+     * @name DeleteDuplicateCheckRows
+     * @summary Delete duplicate check rows
+     * @request DELETE:/duplicateCheck/v1/delete
+     * @secure
+     */
+    deleteDuplicateCheckRows: (data: DeleteDuplicateCheckRequest, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/duplicateCheck/v1/delete`,
+        method: "DELETE",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags DuplicateCheck
      * @name FindDuplicateCheckRows
      * @summary Find the duplicate check data for the current analytic
      * @request POST:/duplicateCheck/v1/find
      * @secure
      */
-    findDuplicateCheckRows: (
-      data: FindAnalyticDataShardCriteria,
-      query?: { nodeName?: string },
-      params: RequestParams = {},
-    ) =>
+    findDuplicateCheckRows: (data: FindDuplicateCheckCriteria, params: RequestParams = {}) =>
       this.request<any, ResultPageDuplicateCheckRow>({
         path: `/duplicateCheck/v1/find`,
         method: "POST",
-        query: query,
         body: data,
         secure: true,
         type: ContentType.Json,
