@@ -38,7 +38,6 @@ import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -46,71 +45,65 @@ import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Deprecated
 class TestDuplicateCheckFactoryImpl {
 
     private Path tempDir;
-    private ExecutorService executorService;
 
     @BeforeEach
     void setup(@TempDir final Path tempDir) {
         this.tempDir = tempDir;
-        executorService = Executors.newCachedThreadPool();
-    }
-
-    @AfterEach
-    void after() {
-        executorService.shutdown();
     }
 
     @Test
     void test() {
-        final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
-        final DuplicateCheck duplicateCheck = createDuplicateCheck(duplicateCheckFactory, "test");
         final Row row = new Row("test", List.of("test"), 0, "", "");
-        assertThat(duplicateCheck.check(row)).isTrue();
-        for (int i = 0; i < 10; i++) {
-            assertThat(duplicateCheck.check(row)).isFalse();
+        final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
+        try (final DuplicateCheck duplicateCheck = createDuplicateCheck(duplicateCheckFactory, "test")) {
+            assertThat(duplicateCheck.check(row)).isTrue();
+            for (int i = 0; i < 10; i++) {
+                assertThat(duplicateCheck.check(row)).isFalse();
+            }
         }
     }
 
     @Test
     void testReload() {
-        final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
-        final DuplicateCheck duplicateCheck = createDuplicateCheck(duplicateCheckFactory, "test");
         final Row row = new Row("test", List.of("test"), 0, "", "");
-        assertThat(duplicateCheck.check(row)).isTrue();
-        for (int i = 0; i < 10; i++) {
-            assertThat(duplicateCheck.check(row)).isFalse();
+        final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
+        try (final DuplicateCheck duplicateCheck = createDuplicateCheck(duplicateCheckFactory, "test")) {
+            assertThat(duplicateCheck.check(row)).isTrue();
+            for (int i = 0; i < 10; i++) {
+                assertThat(duplicateCheck.check(row)).isFalse();
+            }
         }
-        duplicateCheckFactory.close();
 
-        final DuplicateCheckFactoryImpl duplicateCheckFactory2 = createDuplicateCheckFactory();
-        final DuplicateCheck duplicateCheck2 = createDuplicateCheck(duplicateCheckFactory2, "test");
-        for (int i = 0; i < 10; i++) {
-            assertThat(duplicateCheck2.check(row)).isFalse();
+        try (final DuplicateCheck duplicateCheck2 = createDuplicateCheck(duplicateCheckFactory, "test")) {
+            for (int i = 0; i < 10; i++) {
+                assertThat(duplicateCheck2.check(row)).isFalse();
+            }
         }
     }
 
     @Test
     void testDifferentAnalytic() {
-        final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
-        final DuplicateCheck duplicateCheck1 = createDuplicateCheck(duplicateCheckFactory, "test1");
         final Row row = new Row("test", List.of("test"), 0, "", "");
-        assertThat(duplicateCheck1.check(row)).isTrue();
-        for (int i = 0; i < 10; i++) {
-            assertThat(duplicateCheck1.check(row)).isFalse();
+        final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
+        try (final DuplicateCheck duplicateCheck1 = createDuplicateCheck(duplicateCheckFactory, "test1")) {
+            assertThat(duplicateCheck1.check(row)).isTrue();
+            for (int i = 0; i < 10; i++) {
+                assertThat(duplicateCheck1.check(row)).isFalse();
+            }
         }
 
-        final DuplicateCheck duplicateCheck2 = createDuplicateCheck(duplicateCheckFactory, "test2");
-        assertThat(duplicateCheck2.check(row)).isTrue();
-        for (int i = 0; i < 10; i++) {
-            assertThat(duplicateCheck2.check(row)).isFalse();
+        try (final DuplicateCheck duplicateCheck2 = createDuplicateCheck(duplicateCheckFactory, "test2")) {
+            assertThat(duplicateCheck2.check(row)).isTrue();
+            for (int i = 0; i < 10; i++) {
+                assertThat(duplicateCheck2.check(row)).isFalse();
+            }
         }
     }
 
@@ -121,11 +114,15 @@ class TestDuplicateCheckFactoryImpl {
         final LmdbEnvDirFactory lmdbEnvDirFactory = new LmdbEnvDirFactory(
                 new LmdbLibrary(pathCreator, tempDirProvider, () -> lmdbLibraryConfig), pathCreator);
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        return new DuplicateCheckFactoryImpl(
+        final DuplicateCheckDirs duplicateCheckDirs = new DuplicateCheckDirs(
                 lmdbEnvDirFactory,
-                () -> executorService,
-                byteBufferFactory,
                 new DuplicateCheckStoreConfig());
+        return new DuplicateCheckFactoryImpl(
+                duplicateCheckDirs,
+                byteBufferFactory,
+                new DuplicateCheckStoreConfig(),
+                new DuplicateCheckRowSerde(byteBufferFactory),
+                Executors::newCachedThreadPool);
     }
 
     private DuplicateCheck createDuplicateCheck(final DuplicateCheckFactoryImpl duplicateCheckFactory,
@@ -137,6 +134,8 @@ class TestDuplicateCheckFactoryImpl {
                 .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
                 .notifications(createNotificationConfig())
                 .errorFeed(new DocRef("Feed", "error"))
+                .rememberNotifications(true)
+                .ignoreDuplicateNotifications(true)
                 .build();
 
         final Column column = Column

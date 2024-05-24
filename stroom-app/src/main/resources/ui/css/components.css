@@ -1595,6 +1595,10 @@ button.main-menu svg {
     overflow: hidden;
 }
 
+.form-control-background {
+  background-color: var(--control__background-color);
+}
+
 .form-control {
   background-color: var(--control__background-color);
   border-color: var(--control__border-color);
@@ -2199,4 +2203,9 @@ button.main-menu svg {
 
 .AnalyticEmailDestinationViewImpl #analyticEmailDestinationBodyTemplate .EditorViewImpl {
     min-height: 300px;
+}
+
+.ScheduledProcessingViewImpl,
+.DuplicateManagementViewImpl {
+    border-top: 1px solid var(--splitter__background-color);
 }

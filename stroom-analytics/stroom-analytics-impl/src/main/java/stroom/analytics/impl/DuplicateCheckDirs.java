@@ -32,10 +32,6 @@ public class DuplicateCheckDirs {
         this.duplicateCheckStoreConfig = duplicateCheckStoreConfig;
     }
 
-    public LmdbEnvDir getDir(final AnalyticRuleDoc analyticRuleDoc) {
-        return getDir(analyticRuleDoc.getUuid());
-    }
-
     public LmdbEnvDir getDir(final String analyticRuleUUID) {
         return lmdbEnvDirFactory
                 .builder()

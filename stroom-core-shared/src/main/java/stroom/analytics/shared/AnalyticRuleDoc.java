@@ -16,7 +16,6 @@
 
 package stroom.analytics.shared;
 
-import stroom.analytics.shared.StreamingAnalyticProcessConfig.Builder;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
@@ -69,6 +68,10 @@ public class AnalyticRuleDoc extends Doc {
     private final List<NotificationConfig> notifications;
     @JsonProperty
     private final DocRef errorFeed;
+    @JsonProperty
+    private final boolean rememberNotifications;
+    @JsonProperty
+    private final boolean ignoreDuplicateNotifications;
 
     public AnalyticRuleDoc() {
         description = null;
@@ -81,6 +84,8 @@ public class AnalyticRuleDoc extends Doc {
         analyticNotificationConfig = null;
         notifications = new ArrayList<>();
         errorFeed = null;
+        rememberNotifications = false;
+        ignoreDuplicateNotifications = false;
     }
 
     @SuppressWarnings("checkstyle:linelength")
@@ -102,7 +107,9 @@ public class AnalyticRuleDoc extends Doc {
                            @JsonProperty("analyticProcessConfig") final AnalyticProcessConfig analyticProcessConfig,
                            @Deprecated @JsonProperty("analyticNotificationConfig") final NotificationConfig analyticNotificationConfig,
                            @JsonProperty("notifications") final List<NotificationConfig> notifications,
-                           @JsonProperty("errorFeed") final DocRef errorFeed) {
+                           @JsonProperty("errorFeed") final DocRef errorFeed,
+                           @JsonProperty("rememberNotifications") final boolean rememberNotifications,
+                           @JsonProperty("ignoreDuplicateNotifications") final boolean ignoreDuplicateNotifications) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.languageVersion = languageVersion;
@@ -120,6 +127,8 @@ public class AnalyticRuleDoc extends Doc {
             this.notifications.add(analyticNotificationConfig);
         }
         this.errorFeed = errorFeed;
+        this.rememberNotifications = rememberNotifications;
+        this.ignoreDuplicateNotifications = ignoreDuplicateNotifications;
     }
 
     /**
@@ -184,6 +193,14 @@ public class AnalyticRuleDoc extends Doc {
         return errorFeed;
     }
 
+    public boolean isRememberNotifications() {
+        return rememberNotifications;
+    }
+
+    public boolean isIgnoreDuplicateNotifications() {
+        return ignoreDuplicateNotifications;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -195,15 +212,19 @@ public class AnalyticRuleDoc extends Doc {
         if (!super.equals(o)) {
             return false;
         }
-        final AnalyticRuleDoc doc = (AnalyticRuleDoc) o;
-        return Objects.equals(description,
-                doc.description) && languageVersion == doc.languageVersion && Objects.equals(parameters,
-                doc.parameters) && Objects.equals(timeRange, doc.timeRange) && Objects.equals(query,
-                doc.query) && analyticProcessType == doc.analyticProcessType && Objects.equals(
-                analyticProcessConfig,
-                doc.analyticProcessConfig) && Objects.equals(analyticNotificationConfig,
-                doc.analyticNotificationConfig) && Objects.equals(notifications,
-                doc.notifications) && Objects.equals(errorFeed, doc.errorFeed);
+        final AnalyticRuleDoc that = (AnalyticRuleDoc) o;
+        return rememberNotifications == that.rememberNotifications &&
+                ignoreDuplicateNotifications == that.ignoreDuplicateNotifications &&
+                Objects.equals(description, that.description) &&
+                languageVersion == that.languageVersion &&
+                Objects.equals(parameters, that.parameters) &&
+                Objects.equals(timeRange, that.timeRange) &&
+                Objects.equals(query, that.query) &&
+                analyticProcessType == that.analyticProcessType &&
+                Objects.equals(analyticProcessConfig, that.analyticProcessConfig) &&
+                Objects.equals(analyticNotificationConfig, that.analyticNotificationConfig) &&
+                Objects.equals(notifications, that.notifications) &&
+                Objects.equals(errorFeed, that.errorFeed);
     }
 
     @Override
@@ -218,7 +239,9 @@ public class AnalyticRuleDoc extends Doc {
                 analyticProcessConfig,
                 analyticNotificationConfig,
                 notifications,
-                errorFeed);
+                errorFeed,
+                rememberNotifications,
+                ignoreDuplicateNotifications);
     }
 
     @Override
@@ -234,6 +257,8 @@ public class AnalyticRuleDoc extends Doc {
                 ", analyticNotificationConfig=" + analyticNotificationConfig +
                 ", notifications=" + notifications +
                 ", errorFeed=" + errorFeed +
+                ", rememberNotifications=" + rememberNotifications +
+                ", ignoreDuplicateNotifications=" + ignoreDuplicateNotifications +
                 '}';
     }
 
@@ -256,6 +281,8 @@ public class AnalyticRuleDoc extends Doc {
         private AnalyticProcessConfig analyticProcessConfig;
         private List<NotificationConfig> notifications = new ArrayList<>();
         private DocRef errorFeed;
+        private boolean rememberNotifications;
+        private boolean ignoreDuplicateNotifications;
 
         public Builder() {
         }
@@ -271,6 +298,8 @@ public class AnalyticRuleDoc extends Doc {
             this.analyticProcessConfig = doc.analyticProcessConfig;
             this.notifications = new ArrayList<>(doc.notifications);
             this.errorFeed = doc.errorFeed;
+            this.rememberNotifications = doc.rememberNotifications;
+            this.ignoreDuplicateNotifications = doc.ignoreDuplicateNotifications;
         }
 
         public Builder description(final String description) {
@@ -318,6 +347,16 @@ public class AnalyticRuleDoc extends Doc {
             return this;
         }
 
+        public Builder rememberNotifications(final boolean rememberNotifications) {
+            this.rememberNotifications = rememberNotifications;
+            return this;
+        }
+
+        public Builder ignoreDuplicateNotifications(final boolean ignoreDuplicateNotifications) {
+            this.ignoreDuplicateNotifications = ignoreDuplicateNotifications;
+            return this;
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -343,7 +382,9 @@ public class AnalyticRuleDoc extends Doc {
                     analyticProcessConfig,
                     null,
                     notifications,
-                    errorFeed);
+                    errorFeed,
+                    rememberNotifications,
+                    ignoreDuplicateNotifications);
         }
     }
 }
