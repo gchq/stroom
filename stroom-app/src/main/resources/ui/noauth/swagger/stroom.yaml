@@ -5061,7 +5061,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResultPageCompletionValue'
+                $ref: '#/components/schemas/ResultPageCompletionItem'
           description: default response
       summary: Fetch completions for the query
       tags:
@@ -8075,8 +8075,10 @@ components:
           $ref: '#/components/schemas/Sort'
       required:
       - expression
-    CompletionValue:
+    CompletionItem:
       type: object
+      discriminator:
+        propertyName: type
       properties:
         caption:
           type: string
@@ -8087,8 +8089,26 @@ components:
           format: int32
         tooltip:
           type: string
-        value:
+        type:
           type: string
+      required:
+      - type
+    CompletionSnippet:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/CompletionItem'
+      - type: object
+        properties:
+          snippet:
+            type: string
+    CompletionValue:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/CompletionItem'
+      - type: object
+        properties:
+          value:
+            type: string
     CompletionsRequest:
       type: object
       properties:
@@ -13573,7 +13593,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AnalyticDataShard'
-    ResultPageCompletionValue:
+    ResultPageCompletionItem:
       type: object
       description: A page of results.
       properties:
@@ -13582,7 +13602,7 @@ components:
         values:
           type: array
           items:
-            $ref: '#/components/schemas/CompletionValue'
+            $ref: '#/components/schemas/CompletionItem'
     ResultPageCustomRollUpMask:
       type: object
       description: A page of results.

@@ -16,10 +16,8 @@
 
 package stroom.pipeline.destination;
 
-import stroom.util.io.ByteCountOutputStream;
+import stroom.pipeline.writer.OutputFactory;
 import stroom.util.io.FileUtil;
-import stroom.util.io.GZipByteCountOutputStream;
-import stroom.util.io.GZipOutputStream;
 import stroom.util.io.PathCreator;
 import stroom.util.scheduler.Trigger;
 
@@ -30,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -52,11 +51,6 @@ public class RollingFileDestination extends RollingDestination {
     private final Path file;
 
     /**
-     * Whether to apply GZIP compression to output files
-     */
-    private final boolean useCompression;
-
-    /**
      * Optional file permissions to apply to finished files
      */
     private final Set<PosixFilePermission> filePermissions;
@@ -72,6 +66,7 @@ public class RollingFileDestination extends RollingDestination {
                                   final Path dir,
                                   final Path file,
                                   final boolean useCompression,
+                                  final String compressionMethod,
                                   final Set<PosixFilePermission> filePermissions
     ) throws IOException {
         super(key, frequencyTrigger, cronTrigger, rollSize, creationTime);
@@ -79,12 +74,14 @@ public class RollingFileDestination extends RollingDestination {
         this.pathCreator = pathCreator;
         this.fileName = fileName;
         this.rolledFileName = rolledFileName;
-
         this.dir = dir;
         this.file = file;
-
-        this.useCompression = useCompression;
         this.filePermissions = filePermissions;
+
+        final OutputFactory outputFactory =
+                new OutputFactory(null);
+        outputFactory.setUseCompression(useCompression);
+        outputFactory.setCompressionMethod(compressionMethod);
 
         // Make sure we can create this path.
         try {
@@ -94,35 +91,36 @@ public class RollingFileDestination extends RollingDestination {
                 // I have a feeling that the OS might sometimes report that a
                 // file exists that has actually just been rolled.
                 LOGGER.warn("File exists for key={} so rolling immediately", key);
-                setOutputStream(createOutputStream(file));
+
+                setOutput(outputFactory.create(createInnerOutputStream()));
 
                 // Roll the file.
                 roll();
 
             } else {
-                setOutputStream(createOutputStream(file));
+                setOutput(outputFactory.create(createInnerOutputStream()));
             }
-        } catch (final IOException e) {
+        } catch (final IOException | RuntimeException e) {
             try {
                 close();
             } catch (final IOException t) {
                 LOGGER.error("Unable to close the output stream.");
+                throw new IOException(e);
             }
-            throw e;
         }
     }
 
-    private ByteCountOutputStream createOutputStream(final Path file) throws IOException {
-        OutputStream fileOutputStream = Files.newOutputStream(
-                file,
-                StandardOpenOption.CREATE,
-                StandardOpenOption.WRITE,
-                StandardOpenOption.APPEND);
+    private OutputStream createInnerOutputStream() {
+        try {
+            OutputStream fileOutputStream = Files.newOutputStream(
+                    file,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.WRITE,
+                    StandardOpenOption.APPEND);
 
-        if (useCompression) {
-            return new GZipByteCountOutputStream(new GZipOutputStream(fileOutputStream));
-        } else {
-            return new ByteCountOutputStream(new BufferedOutputStream(fileOutputStream));
+            return new BufferedOutputStream(fileOutputStream);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -194,7 +192,7 @@ public class RollingFileDestination extends RollingDestination {
                 // If we didn't succeed in renaming the file to a failed file
                 // then try and delete the file.
                 if (!success) {
-                    // Try to delete the file so we can continue to create a
+                    // Try to delete the file, so we can continue to create a
                     // destination.
                     if (LOGGER.isDebugEnabled()) {
                         LOGGER.debug("Deleting file '{}'", getFullPath(file));

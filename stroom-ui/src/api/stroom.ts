@@ -489,15 +489,19 @@ export interface Column {
   sort?: Sort;
 }
 
-export interface CompletionValue {
+export interface CompletionItem {
   caption?: string;
   meta?: string;
 
   /** @format int32 */
   score?: number;
   tooltip?: string;
-  value?: string;
+  type: string;
 }
+
+export type CompletionSnippet = CompletionItem & { snippet?: string };
+
+export type CompletionValue = CompletionItem & { value?: string };
 
 export interface CompletionsRequest {
   /** @format int32 */
@@ -4284,10 +4288,10 @@ export interface ResultPageAnalyticDataShard {
 /**
  * A page of results.
  */
-export interface ResultPageCompletionValue {
+export interface ResultPageCompletionItem {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
-  values?: CompletionValue[];
+  values?: CompletionItem[];
 }
 
 /**
@@ -6962,7 +6966,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request GET:/authentication/v1/noauth/logout
      * @secure
      */
-    logout: (query: { post_logout_redirect_uri: string; state: string }, params: RequestParams = {}) =>
+    logout: (query: { post_logout_redirect_uri: string }, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/authentication/v1/noauth/logout`,
         method: "GET",
@@ -10567,7 +10571,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     fetchCompletions: (data: CompletionsRequest, params: RequestParams = {}) =>
-      this.request<any, ResultPageCompletionValue>({
+      this.request<any, ResultPageCompletionItem>({
         path: `/query/v1/fetchCompletions`,
         method: "POST",
         body: data,
