@@ -3073,21 +3073,44 @@
         "tags" : [ "Documentation (v1)" ]
       }
     },
-    "/duplicateCheck/v1/find" : {
-      "post" : {
-        "operationId" : "findDuplicateCheckRows",
-        "parameters" : [ {
-          "in" : "query",
-          "name" : "nodeName",
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
+    "/duplicateCheck/v1/delete" : {
+      "delete" : {
+        "operationId" : "deleteDuplicateCheckRows",
         "requestBody" : {
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/FindAnalyticDataShardCriteria"
+                "$ref" : "#/components/schemas/DeleteDuplicateCheckRequest"
+              }
+            }
+          },
+          "description" : "criteria",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Delete duplicate check rows",
+        "tags" : [ "DuplicateCheck" ]
+      }
+    },
+    "/duplicateCheck/v1/find" : {
+      "post" : {
+        "operationId" : "findDuplicateCheckRows",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FindDuplicateCheckCriteria"
               }
             }
           },
@@ -10964,9 +10987,6 @@
       "AnalyticRuleDoc" : {
         "type" : "object",
         "properties" : {
-          "allowDuplicateNotifications" : {
-            "type" : "boolean"
-          },
           "analyticNotificationConfig" : {
             "$ref" : "#/components/schemas/NotificationConfig"
           },
@@ -10990,6 +11010,9 @@
           "errorFeed" : {
             "$ref" : "#/components/schemas/DocRef"
           },
+          "ignoreDuplicateNotifications" : {
+            "type" : "boolean"
+          },
           "languageVersion" : {
             "type" : "string",
             "enum" : [ "STROOM_QL_VERSION_0_1", "SIGMA" ]
@@ -11011,6 +11034,9 @@
           },
           "query" : {
             "type" : "string"
+          },
+          "rememberNotifications" : {
+            "type" : "boolean"
           },
           "timeRange" : {
             "$ref" : "#/components/schemas/TimeRange"
@@ -12654,6 +12680,20 @@
           }
         }
       },
+      "DeleteDuplicateCheckRequest" : {
+        "type" : "object",
+        "properties" : {
+          "analyticDocUuid" : {
+            "type" : "string"
+          },
+          "rows" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DuplicateCheckRow"
+            }
+          }
+        }
+      },
       "Dependency" : {
         "type" : "object",
         "properties" : {
@@ -14213,6 +14253,30 @@
           },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          }
+        }
+      },
+      "FindDuplicateCheckCriteria" : {
+        "type" : "object",
+        "properties" : {
+          "analyticDocUuid" : {
+            "type" : "string"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "quickFilterInput" : {
+            "type" : "string"
           },
           "sort" : {
             "type" : "string",
