@@ -28,6 +28,8 @@ import stroom.analytics.client.presenter.AnalyticProcessingPresenter.AnalyticPro
 import stroom.analytics.client.presenter.AnalyticRulePresenter;
 import stroom.analytics.client.presenter.AnalyticStreamDestinationPresenter;
 import stroom.analytics.client.presenter.AnalyticStreamDestinationPresenter.AnalyticStreamDestinationView;
+import stroom.analytics.client.presenter.DuplicateManagementPresenter;
+import stroom.analytics.client.presenter.DuplicateManagementPresenter.DuplicateManagementView;
 import stroom.analytics.client.presenter.ScheduledProcessEditPresenter;
 import stroom.analytics.client.presenter.ScheduledProcessEditView;
 import stroom.analytics.client.presenter.ScheduledProcessingPresenter;
@@ -41,6 +43,7 @@ import stroom.analytics.client.view.AnalyticEmailDestinationViewImpl;
 import stroom.analytics.client.view.AnalyticNotificationEditViewImpl;
 import stroom.analytics.client.view.AnalyticProcessingViewImpl;
 import stroom.analytics.client.view.AnalyticStreamDestinationViewImpl;
+import stroom.analytics.client.view.DuplicateManagementViewImpl;
 import stroom.analytics.client.view.ScheduledProcessEditViewImpl;
 import stroom.analytics.client.view.ScheduledProcessingViewImpl;
 import stroom.analytics.client.view.StreamingProcessingViewImpl;
@@ -82,5 +85,8 @@ public class AnalyticsModule extends PluginModule {
         bindPresenterWidget(ScheduledProcessingPresenter.class,
                 ScheduledProcessingView.class,
                 ScheduledProcessingViewImpl.class);
+        bindPresenterWidget(DuplicateManagementPresenter.class,
+                DuplicateManagementView.class,
+                DuplicateManagementViewImpl.class);
     }
 }

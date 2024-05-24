@@ -13,7 +13,7 @@
         <g:MySplitLayoutPanel styleName="dock-max">
             <g:north size="200">
                 <g:SimplePanel ui:field="resultContainer"
-                               styleName="max form-control-border"/>
+                               styleName="max form-control-border form-control-background"/>
             </g:north>
             <g:center>
                 <g:SimplePanel ui:field="textContainer" styleName="max form-control-border"/>

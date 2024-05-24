@@ -3073,6 +3073,43 @@
         "tags" : [ "Documentation (v1)" ]
       }
     },
+    "/duplicateCheck/v1/find" : {
+      "post" : {
+        "operationId" : "findDuplicateCheckRows",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "nodeName",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FindAnalyticDataShardCriteria"
+              }
+            }
+          },
+          "description" : "criteria",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageDuplicateCheckRow"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find the duplicate check data for the current analytic",
+        "tags" : [ "DuplicateCheck" ]
+      }
+    },
     "/elasticCluster/v1/testCluster" : {
       "post" : {
         "operationId" : "testElasticCluster",
@@ -7378,7 +7415,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ResultPageCompletionValue"
+                  "$ref" : "#/components/schemas/ResultPageCompletionItem"
                 }
               }
             },
@@ -10927,6 +10964,9 @@
       "AnalyticRuleDoc" : {
         "type" : "object",
         "properties" : {
+          "allowDuplicateNotifications" : {
+            "type" : "boolean"
+          },
           "analyticNotificationConfig" : {
             "$ref" : "#/components/schemas/NotificationConfig"
           },
@@ -11755,8 +11795,11 @@
         },
         "required" : [ "expression" ]
       },
-      "CompletionValue" : {
+      "CompletionItem" : {
         "type" : "object",
+        "discriminator" : {
+          "propertyName" : "type"
+        },
         "properties" : {
           "caption" : {
             "type" : "string"
@@ -11771,10 +11814,37 @@
           "tooltip" : {
             "type" : "string"
           },
-          "value" : {
+          "type" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "type" ]
+      },
+      "CompletionSnippet" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/CompletionItem"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "snippet" : {
+              "type" : "string"
+            }
+          }
+        } ]
+      },
+      "CompletionValue" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/CompletionItem"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "value" : {
+              "type" : "string"
+            }
+          }
+        } ]
       },
       "CompletionsRequest" : {
         "type" : "object",
@@ -12925,6 +12995,17 @@
           },
           "searchRequest" : {
             "$ref" : "#/components/schemas/DashboardSearchRequest"
+          }
+        }
+      },
+      "DuplicateCheckRow" : {
+        "type" : "object",
+        "properties" : {
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
           }
         }
       },
@@ -17648,7 +17729,7 @@
           }
         }
       },
-      "ResultPageCompletionValue" : {
+      "ResultPageCompletionItem" : {
         "type" : "object",
         "description" : "A page of results.",
         "properties" : {
@@ -17658,7 +17739,7 @@
           "values" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/CompletionValue"
+              "$ref" : "#/components/schemas/CompletionItem"
             }
           }
         }
@@ -17719,6 +17800,21 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/Dependency"
+            }
+          }
+        }
+      },
+      "ResultPageDuplicateCheckRow" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DuplicateCheckRow"
             }
           }
         }

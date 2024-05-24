@@ -2112,6 +2112,31 @@ paths:
       summary: Update a documentation doc
       tags:
       - Documentation (v1)
+  /duplicateCheck/v1/find:
+    post:
+      operationId: findDuplicateCheckRows
+      parameters:
+      - in: query
+        name: nodeName
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindAnalyticDataShardCriteria'
+        description: criteria
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPageDuplicateCheckRow'
+          description: default response
+      summary: Find the duplicate check data for the current analytic
+      tags:
+      - DuplicateCheck
   /elasticCluster/v1/testCluster:
     post:
       operationId: testElasticCluster
@@ -5061,7 +5086,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResultPageCompletionValue'
+                $ref: '#/components/schemas/ResultPageCompletionItem'
           description: default response
       summary: Fetch completions for the query
       tags:
@@ -7504,6 +7529,8 @@ components:
     AnalyticRuleDoc:
       type: object
       properties:
+        allowDuplicateNotifications:
+          type: boolean
         analyticNotificationConfig:
           $ref: '#/components/schemas/NotificationConfig'
         analyticProcessConfig:
@@ -8075,8 +8102,10 @@ components:
           $ref: '#/components/schemas/Sort'
       required:
       - expression
-    CompletionValue:
+    CompletionItem:
       type: object
+      discriminator:
+        propertyName: type
       properties:
         caption:
           type: string
@@ -8087,8 +8116,26 @@ components:
           format: int32
         tooltip:
           type: string
-        value:
+        type:
           type: string
+      required:
+      - type
+    CompletionSnippet:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/CompletionItem'
+      - type: object
+        properties:
+          snippet:
+            type: string
+    CompletionValue:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/CompletionItem'
+      - type: object
+        properties:
+          value:
+            type: string
     CompletionsRequest:
       type: object
       properties:
@@ -9113,6 +9160,13 @@ components:
           type: boolean
         searchRequest:
           $ref: '#/components/schemas/DashboardSearchRequest'
+    DuplicateCheckRow:
+      type: object
+      properties:
+        values:
+          type: array
+          items:
+            type: string
     ElasticClusterDoc:
       type: object
       properties:
@@ -13573,7 +13627,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AnalyticDataShard'
-    ResultPageCompletionValue:
+    ResultPageCompletionItem:
       type: object
       description: A page of results.
       properties:
@@ -13582,7 +13636,7 @@ components:
         values:
           type: array
           items:
-            $ref: '#/components/schemas/CompletionValue'
+            $ref: '#/components/schemas/CompletionItem'
     ResultPageCustomRollUpMask:
       type: object
       description: A page of results.
@@ -13623,6 +13677,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Dependency'
+    ResultPageDuplicateCheckRow:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/DuplicateCheckRow'
     ResultPageExecutionHistory:
       type: object
       description: A page of results.
