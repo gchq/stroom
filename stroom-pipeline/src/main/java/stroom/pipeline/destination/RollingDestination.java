@@ -16,7 +16,7 @@
 
 package stroom.pipeline.destination;
 
-import stroom.util.io.ByteCountOutputStream;
+import stroom.pipeline.writer.Output;
 import stroom.util.scheduler.Trigger;
 
 import org.slf4j.Logger;
@@ -49,7 +49,7 @@ public abstract class RollingDestination implements Destination {
 
     private volatile boolean rolled;
 
-    private ByteCountOutputStream outputStream;
+    private Output output;
 
     protected RollingDestination(final Object key,
                                  final Trigger frequencyTrigger,
@@ -89,12 +89,12 @@ public abstract class RollingDestination implements Destination {
         return key;
     }
 
-    protected void setOutputStream(final ByteCountOutputStream outputStream) {
-        this.outputStream = outputStream;
+    protected void setOutput(final Output output) {
+        this.output = output;
     }
 
     @Override
-    public final OutputStream getByteArrayOutputStream() throws IOException {
+    public final OutputStream getOutputStream() throws IOException {
         return getOutputStream(null, null);
     }
 
@@ -111,7 +111,7 @@ public abstract class RollingDestination implements Destination {
 
         // If we haven't written yet then create the output stream and
         // write a header if we have one.
-        if (header != null && header.length > 0 && outputStream != null && !outputStream.getHasBytesWritten()) {
+        if (header != null && header.length > 0 && output != null && !output.getHasBytesWritten()) {
             // Write the header.
             write(header);
         }
@@ -120,7 +120,7 @@ public abstract class RollingDestination implements Destination {
 
         throwFirstAsIOExceptions(exceptions);
 
-        return outputStream;
+        return output.getOutputStream();
     }
 
     /**
@@ -169,7 +169,7 @@ public abstract class RollingDestination implements Destination {
 
     private boolean shouldRoll(final Instant currentTime) {
         return (oldestAllowed != null && currentTime.isAfter(oldestAllowed)) ||
-                outputStream.getCount() > rollSize;
+                output.getCurrentOutputSize() > rollSize;
     }
 
     protected final void roll() throws IOException {
@@ -180,7 +180,7 @@ public abstract class RollingDestination implements Destination {
         beforeRoll(exceptions::add);
 
         // If we have written any data then write a footer if we have one.
-        if (footer != null && footer.length > 0 && outputStream != null && outputStream.getCount() > 0) {
+        if (footer != null && footer.length > 0 && output != null && output.getCurrentOutputSize() > 0) {
             // Write the footer.
             try {
                 write(footer);
@@ -202,21 +202,21 @@ public abstract class RollingDestination implements Destination {
     }
 
     private void write(final byte[] bytes) throws IOException {
-        outputStream.write(bytes, 0, bytes.length);
+        output.write(bytes);
     }
 
     private void flush() throws IOException {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Flushing: {}", getKey());
         }
-        outputStream.flush();
+        output.getOutputStream().flush();
     }
 
     protected void close() throws IOException {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Closing: {}", getKey());
         }
-        outputStream.close();
+        output.close();
     }
 
     @Override

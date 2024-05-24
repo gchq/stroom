@@ -115,7 +115,7 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
     protected abstract Object getKey() throws IOException;
 
     protected void setFrequency(final String frequency) {
-        if (frequency == null || frequency.trim().length() == 0) {
+        if (frequency == null || frequency.isBlank()) {
             this.frequencyTrigger = null;
         } else {
             try {
@@ -127,7 +127,7 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
     }
 
     protected void setSchedule(final String expression) {
-        if (expression == null || expression.trim().length() == 0) {
+        if (expression == null || expression.isBlank()) {
             this.cronTrigger = null;
         } else {
             try {
@@ -139,7 +139,7 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
     }
 
     protected void setRollSize(final String rollSize) {
-        if (rollSize != null && rollSize.trim().length() > 0) {
+        if (rollSize != null && !rollSize.isBlank()) {
             try {
                 final Long value = ModelStringUtil.parseIECByteSizeString(rollSize);
                 if (value == null) {

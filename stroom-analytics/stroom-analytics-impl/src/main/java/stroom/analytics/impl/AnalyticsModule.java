@@ -62,10 +62,11 @@ public class AnalyticsModule extends AbstractModule {
         RestResourcesBinder.create(binder())
                 .bind(AnalyticProcessResourceImpl.class)
                 .bind(AnalyticDataShardResourceImpl.class)
+                .bind(DuplicateCheckResourceImpl.class)
                 .bind(ExecutionScheduleResourceImpl.class);
 
         bind(AnalyticsService.class).to(AnalyticsServiceImpl.class);
-        bind(DuplicateCheckFactory.class).to(DuplicateCheckFactoryImpl2.class);
+        bind(DuplicateCheckFactory.class).to(DuplicateCheckFactoryImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(StreamingAnalyticCache.class);

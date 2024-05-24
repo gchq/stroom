@@ -25,10 +25,13 @@ import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.svg.shared.SvgImage;
+import stroom.util.NullSafe;
+import stroom.util.io.CompressionUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 
 import jakarta.inject.Inject;
+import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,8 +74,8 @@ public class RollingFileAppender extends AbstractRollingAppender {
     private String fileNamePattern;
     private String rolledFileNamePattern;
     private boolean useCompression;
+    private String compressionMethod = CompressorStreamFactory.GZIP;
     private String filePermissions;
-
     private String dir;
     private String fileName;
     private String rolledFileName;
@@ -126,6 +129,7 @@ public class RollingFileAppender extends AbstractRollingAppender {
                 parentDir,
                 file,
                 useCompression,
+                compressionMethod,
                 permissions
         );
     }
@@ -195,11 +199,11 @@ public class RollingFileAppender extends AbstractRollingAppender {
             throw ProcessException.create("No output paths have been specified");
         }
 
-        if (fileNamePattern == null || fileNamePattern.length() == 0) {
+        if (fileNamePattern == null || fileNamePattern.isEmpty()) {
             throw ProcessException.create("No file name has been specified");
         }
 
-        if (rolledFileNamePattern == null || rolledFileNamePattern.length() == 0) {
+        if (rolledFileNamePattern == null || rolledFileNamePattern.isEmpty()) {
             throw ProcessException.create("No rolled file name has been specified");
         }
 
@@ -258,8 +262,24 @@ public class RollingFileAppender extends AbstractRollingAppender {
         this.useCompression = useCompression;
     }
 
-    @PipelineProperty(description = "Set file system permissions of finished files (example: 'rwxr--r--')",
+    @PipelineProperty(
+            description = "Compression method to apply, if compression is enabled. Supported values: " +
+                    CompressionUtil.SUPPORTED_COMPRESSORS + ".",
+            defaultValue = CompressorStreamFactory.GZIP,
             displayPriority = 8)
+    public void setCompressionMethod(final String compressionMethod) {
+        if (!NullSafe.isBlankString(compressionMethod)) {
+            if (CompressionUtil.isSupportedCompressor(compressionMethod)) {
+                this.compressionMethod = compressionMethod;
+            } else {
+                String errorMsg = "Unsupported compression method: " + compressionMethod;
+                throw ProcessException.create(errorMsg);
+            }
+        }
+    }
+
+    @PipelineProperty(description = "Set file system permissions of finished files (example: 'rwxr--r--')",
+            displayPriority = 10)
     public void setFilePermissions(final String filePermissions) {
         this.filePermissions = filePermissions;
     }

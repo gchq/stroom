@@ -490,6 +490,7 @@ public class DocumentPluginEventManager extends Plugin {
             menuItems.add(createSaveAllMenuItem(8));
             menuItems.add(new Separator(9));
             menuItems.add(createLocateMenuItem(10, event.getTabData()));
+            menuItems.add(addToFavouritesMenuItem(11, event.getTabData()));
 
             ShowMenuEvent
                     .builder()
@@ -884,9 +885,8 @@ public class DocumentPluginEventManager extends Plugin {
         if (singleSelection && primarySelection != null) {
             // Add 'New' menu item.
             final ExplorerNodePermissions documentPermissions = documentPermissionMap.get(primarySelection);
-            children = createNewMenuItems(primarySelection, documentPermissions,
-                    documentTypes);
-            enabled = children.size() > 0;
+            children = createNewMenuItems(primarySelection, documentPermissions, documentTypes);
+            enabled = !children.isEmpty();
         }
 
         final Item newItem = new IconParentMenuItem.Builder()
@@ -974,6 +974,7 @@ public class DocumentPluginEventManager extends Plugin {
                 .text(documentType.getDisplayType())
                 .command(() ->
                         fireShowCreateDocumentDialogEvent(documentType, explorerNode))
+                .action(KeyBinding.getCreateActionByType(documentType.getType()).orElse(null))
                 .build();
     }
 
@@ -1130,12 +1131,28 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.LOCATE)
-                .text("Locate In Explorer")
+                .text("Locate in Explorer")
                 .action(Action.LOCATE)
                 .enabled(selectedDoc != null)
                 .command(() -> {
                     if (selectedDoc != null) {
                         LocateDocEvent.fire(DocumentPluginEventManager.this, selectedDoc);
+                    }
+                })
+                .build();
+    }
+
+    private MenuItem addToFavouritesMenuItem(final int priority, final TabData selectedTab) {
+        final DocRef selectedDoc = getSelectedDoc(selectedTab);
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgImage.FAVOURITES)
+                .text("Add to Favourites")
+                .enabled(selectedDoc != null)
+                .command(() -> {
+                    if (selectedDoc != null) {
+                        SetDocumentAsFavouriteEvent.fire(
+                                DocumentPluginEventManager.this, selectedDoc, true);
                     }
                 })
                 .build();

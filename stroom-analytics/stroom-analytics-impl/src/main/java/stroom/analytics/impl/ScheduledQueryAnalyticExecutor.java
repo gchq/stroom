@@ -171,7 +171,7 @@ public class ScheduledQueryAnalyticExecutor {
             final String ruleIdentity = AnalyticUtil.getAnalyticRuleIdentity(analytic);
             try {
                 final String ownerUuid = securityContext.getDocumentOwnerUuid(analytic.asDocRef());
-                final UserIdentity userIdentity = securityContext.createIdentityByUserUuid(ownerUuid);
+                final UserIdentity userIdentity = securityContext.getIdentityByUserUuid(ownerUuid);
                 securityContext.asUser(userIdentity, () ->
                         process(
                                 ruleIdentity,

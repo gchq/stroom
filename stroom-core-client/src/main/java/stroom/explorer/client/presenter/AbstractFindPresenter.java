@@ -92,50 +92,63 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
             protected void exec(final Range range,
                                 final Consumer<ResultPage<FindResult>> dataConsumer,
                                 final RestErrorHandler errorHandler) {
-                final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
-                updateFilter(explorerTreeFilterBuilder);
-                final ExplorerTreeFilter filter = explorerTreeFilterBuilder.build();
-                final boolean filterChange = !Objects.equals(lastFilter, filter);
-                lastFilter = filter;
+                try {
+                    GWT.log("AbstractFindPresenter - exec()");
+                    final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
+                    updateFilter(explorerTreeFilterBuilder);
+                    final ExplorerTreeFilter filter = explorerTreeFilterBuilder.build();
+                    final boolean filterChange = !Objects.equals(lastFilter, filter);
+                    lastFilter = filter;
 
-                currentQuery = new FindRequest(
-                        pageRequest,
-                        currentQuery.getSortList(),
-                        filter);
+                    currentQuery = new FindRequest(
+                            pageRequest,
+                            currentQuery.getSortList(),
+                            filter);
 
-                if ((filter.getRecentItems() == null && GwtNullSafe.isBlankString(filter.getNameFilter())) ||
-                        (filter.getRecentItems() != null && filter.getRecentItems().size() == 0)) {
-                    final ResultPage<FindResult> resultPage = ResultPage.empty();
-                    if (resultPage.getPageStart() != cellTable.getPageStart()) {
-                        cellTable.setPageStart(resultPage.getPageStart());
-                    }
-                    dataConsumer.accept(resultPage);
-                    selectionModel.clear();
-                    resetFocus();
+                    if ((filter.getRecentItems() == null && GwtNullSafe.isBlankString(filter.getNameFilter())) ||
+                            (filter.getRecentItems() != null && filter.getRecentItems().size() == 0)) {
+                        GWT.log("AbstractFindPresenter - empty data()");
+                        final ResultPage<FindResult> resultPage = ResultPage.empty();
+                        if (resultPage.getPageStart() != cellTable.getPageStart()) {
+                            cellTable.setPageStart(resultPage.getPageStart());
+                        }
+                        dataConsumer.accept(resultPage);
+                        selectionModel.clear();
+                        resetFocus();
 
-                } else {
-                    restFactory
-                            .create(EXPLORER_RESOURCE)
-                            .method(res -> res.find(currentQuery))
-                            .onSuccess(resultPage -> {
-                                if (resultPage.getPageStart() != cellTable.getPageStart()) {
-                                    cellTable.setPageStart(resultPage.getPageStart());
-                                }
-                                dataConsumer.accept(resultPage);
+                    } else {
+                        restFactory
+                                .create(EXPLORER_RESOURCE)
+                                .method(res -> res.find(currentQuery))
+                                .onSuccess(resultPage -> {
+                                    try {
+                                        GWT.log("AbstractFindPresenter - onSuccess()");
+                                        if (resultPage.getPageStart() != cellTable.getPageStart()) {
+                                            cellTable.setPageStart(resultPage.getPageStart());
+                                        }
+                                        GWT.log("AbstractFindPresenter - dataConsumer.accept()");
+                                        dataConsumer.accept(resultPage);
 
-                                if (filterChange) {
-                                    if (resultPage.size() > 0) {
-                                        selectionModel.setSelected(resultPage.getValues().get(0));
-                                    } else {
-                                        selectionModel.clear();
+                                        if (filterChange) {
+                                            if (resultPage.size() > 0) {
+                                                selectionModel.setSelected(resultPage.getValues().get(0));
+                                            } else {
+                                                selectionModel.clear();
+                                            }
+                                        }
+
+                                        GWT.log("AbstractFindPresenter - resetFocus()");
+                                        resetFocus();
+                                    } catch (final Exception e) {
+                                        GWT.log("Error in onSuccess");
                                     }
-                                }
-
-                                resetFocus();
-                            })
-                            .onFailure(errorHandler)
-                            .taskListener(pagerView)
-                            .exec();
+                                })
+                                .onFailure(errorHandler)
+                                .taskListener(pagerView)
+                                .exec();
+                    }
+                } catch (final Exception e) {
+                    GWT.log("Error in exec");
                 }
             }
         };

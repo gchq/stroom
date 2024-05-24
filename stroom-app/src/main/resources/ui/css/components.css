@@ -2231,3 +2231,8 @@ button.main-menu svg {
 .AnalyticEmailDestinationViewImpl #analyticEmailDestinationBodyTemplate .EditorViewImpl {
     min-height: 300px;
 }
+
+.ScheduledProcessingViewImpl,
+.DuplicateManagementViewImpl {
+    border-top: 1px solid var(--splitter__background-color);
+}

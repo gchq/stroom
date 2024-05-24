@@ -5,7 +5,6 @@ import stroom.widget.help.client.HelpButton;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -150,7 +149,7 @@ public class FormGroup extends Composite implements HasWidgets {
 
     @Override
     public void add(final Widget widget) {
-        GWT.log("Adding widget " + widget.getClass().getName());
+//        GWT.log("Adding widget " + widget.getClass().getName());
 
         if (widget instanceof HelpHTML) {
             addHelpHtml((HelpHTML) widget);

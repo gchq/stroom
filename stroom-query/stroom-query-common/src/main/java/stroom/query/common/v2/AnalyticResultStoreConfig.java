@@ -18,7 +18,7 @@ public class AnalyticResultStoreConfig extends AbstractResultStoreConfig impleme
                 1000,
                 10_000,
                 500_000,
-                ResultStoreLmdbConfig.builder().localDir("analytic_store").build());
+                ResultStoreLmdbConfig.builder().localDir("lmdb/analytic_store").build());
     }
 
     @JsonCreator

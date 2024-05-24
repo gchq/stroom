@@ -955,6 +955,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     @Override
     public void reset() {
+        selectionModel.clear(true);
+
         final long length = Math.max(1, tableResultRequest.getRequestedRange().getLength());
 
         // Reset the data grid paging.
