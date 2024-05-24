@@ -225,6 +225,8 @@ public class QueryResultTablePresenter
 
     @Override
     public void reset() {
+        selectionModel.clear(true);
+
         final long length = Math.max(1, requestedRange.getLength());
 
         // Reset the data grid paging.
