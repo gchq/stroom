@@ -17,8 +17,11 @@ public class RecentItems {
     public void add(final TabData tabData) {
         if (tabData instanceof DocumentTabData) {
             final DocumentTabData documentTabData = (DocumentTabData) tabData;
-            recentItems.remove(documentTabData.getDocRef());
-            recentItems.add(0, documentTabData.getDocRef());
+            final DocRef docRef = documentTabData.getDocRef();
+            if (docRef != null) {
+                recentItems.remove(docRef);
+                recentItems.add(0, docRef);
+            }
         }
     }
 

@@ -9,6 +9,7 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
@@ -36,19 +37,23 @@ public class RecentItemsPresenter
     @ProxyEvent
     @Override
     public void onShowRecentItems(final ShowRecentItemsEvent event) {
-        if (!showing) {
-            showing = true;
-            focusText = true;
-            refresh();
-            final PopupSize popupSize = PopupSize.resizable(800, 600);
-            ShowPopupEvent.builder(this)
-                    .popupType(PopupType.CLOSE_DIALOG)
-                    .popupSize(popupSize)
-                    .caption("Recent Items")
-                    .onShow(e -> getView().focus())
-                    .onHideRequest(HidePopupRequestEvent::hide)
-                    .onHide(e -> showing = false)
-                    .fire();
+        try {
+            if (!showing) {
+                showing = true;
+                focusText = true;
+                refresh();
+                final PopupSize popupSize = PopupSize.resizable(800, 600);
+                ShowPopupEvent.builder(this)
+                        .popupType(PopupType.CLOSE_DIALOG)
+                        .popupSize(popupSize)
+                        .caption("Recent Items")
+                        .onShow(e -> getView().focus())
+                        .onHideRequest(HidePopupRequestEvent::hide)
+                        .onHide(e -> showing = false)
+                        .fire();
+            }
+        } catch (final RuntimeException e) {
+            GWT.log("Error in onShowRecentItems" + e.getMessage());
         }
     }
 

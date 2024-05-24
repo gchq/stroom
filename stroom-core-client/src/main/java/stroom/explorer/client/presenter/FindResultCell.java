@@ -16,6 +16,7 @@
 
 package stroom.explorer.client.presenter;
 
+import stroom.docref.DocRef;
 import stroom.explorer.shared.FindResult;
 import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
@@ -42,37 +43,42 @@ public class FindResultCell extends AbstractCell<FindResult> {
 
     @Override
     public void render(final Context context, final FindResult value, final SafeHtmlBuilder sb) {
-        if (value != null) {
-            final SafeHtmlBuilder row = new SafeHtmlBuilder();
-            final SafeHtmlBuilder main = new SafeHtmlBuilder();
-            final SafeHtmlBuilder sub = new SafeHtmlBuilder();
+        try {
+            if (value != null && value.getDocRef() != null) {
+                final DocRef docRef = value.getDocRef();
+                final SafeHtmlBuilder row = new SafeHtmlBuilder();
+                final SafeHtmlBuilder main = new SafeHtmlBuilder();
+                final SafeHtmlBuilder sub = new SafeHtmlBuilder();
 
-            // Add icon
-            if (value.getIcon() != null) {
-                main.append(SvgImageUtil.toSafeHtml(
-                        value.getDocRef().getType(),
-                        value.getIcon(),
-                        getCellClassName() + "-icon",
-                        "svgIcon"));
+                // Add icon
+                if (value.getIcon() != null) {
+                    main.append(SvgImageUtil.toSafeHtml(
+                            docRef.getType(),
+                            value.getIcon(),
+                            getCellClassName() + "-icon",
+                            "svgIcon"));
+                }
+
+                // Add name
+                main.append(template.div(getCellClassName() + "-name",
+                        SafeHtmlUtil.from(docRef.getName())));
+
+                row.append(template.div(getCellClassName() + "-main", main.toSafeHtml()));
+
+                // Add path
+                sub.append(template.div(getCellClassName() + "-path",
+                        SafeHtmlUtil.from(value.getPath())));
+
+                // Add uuid
+                sub.append(template.div(getCellClassName() + "-uuid",
+                        SafeHtmlUtil.from(docRef.getUuid())));
+
+                row.append(template.div(getCellClassName() + "-sub", sub.toSafeHtml()));
+
+                sb.append(template.div(getCellClassName() + "-row", row.toSafeHtml()));
             }
-
-            // Add name
-            main.append(template.div(getCellClassName() + "-name",
-                    SafeHtmlUtil.from(value.getDocRef().getName())));
-
-            row.append(template.div(getCellClassName() + "-main", main.toSafeHtml()));
-
-            // Add path
-            sub.append(template.div(getCellClassName() + "-path",
-                    SafeHtmlUtil.from(value.getPath())));
-
-            // Add uuid
-            sub.append(template.div(getCellClassName() + "-uuid",
-                    SafeHtmlUtil.from(value.getDocRef().getUuid())));
-
-            row.append(template.div(getCellClassName() + "-sub", sub.toSafeHtml()));
-
-            sb.append(template.div(getCellClassName() + "-row", row.toSafeHtml()));
+        } catch (final Exception e) {
+            GWT.log("Error in FindResultCell");
         }
     }
 
