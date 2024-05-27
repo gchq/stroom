@@ -15,7 +15,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 ## [v7.4-beta.15] - 2024-05-27
 
-* Issue **#4263** : Fix HTTPAppender compression error and add additional compression algorithums.
+* Issue **#4263** : Fix HTTPAppender compression error and add additional compression algorithms.
 
 
 ## [v7.4-beta.14] - 2024-05-24
