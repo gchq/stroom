@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.4-beta.15] - 2024-05-27
+
+* Issue **#4263** : Fix HTTPAppender compression error and add additional compression algorithums.
+
+
 ## [v7.4-beta.14] - 2024-05-24
 
 * Issue **#4078** : Support BZIP2 compression and make compression level configurable for FileAppender and RollingFileAppender.
@@ -589,7 +594,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.14...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.15...HEAD
+[v7.4-beta.15]: https://github.com/gchq/stroom/compare/v7.4-beta.14...v7.4-beta.15
 [v7.4-beta.14]: https://github.com/gchq/stroom/compare/v7.4-beta.13...v7.4-beta.14
 [v7.4-beta.13]: https://github.com/gchq/stroom/compare/v7.4-beta.12...v7.4-beta.13
 [v7.4-beta.12]: https://github.com/gchq/stroom/compare/v7.4-beta.11...v7.4-beta.12
