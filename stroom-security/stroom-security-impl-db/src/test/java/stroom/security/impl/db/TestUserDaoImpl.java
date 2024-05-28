@@ -7,8 +7,8 @@ import stroom.security.shared.User;
 import stroom.util.AuditUtil;
 
 import com.google.inject.Guice;
-import com.google.inject.Inject;
 import com.google.inject.Injector;
+import jakarta.inject.Inject;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static stroom.security.impl.db.jooq.Tables.STROOM_USER;
 import static stroom.security.impl.db.jooq.Tables.STROOM_USER_GROUP;
 
-class UserDaoImplTest {
+class TestUserDaoImpl {
 
     @Inject
     private UserDao userDao;
@@ -35,7 +35,7 @@ class UserDaoImplTest {
     private SecurityDbConnProvider securityDbConnProvider;
 
     @BeforeEach
-    void beforeAll() {
+    void beforeEach() {
         final Injector injector = Guice.createInjector(
                 new SecurityDbModule(),
                 new SecurityDaoModule(),
@@ -207,12 +207,13 @@ class UserDaoImplTest {
     @Test
     void getBySubjectId_foundMultiple() {
 
-        final User user = createUser("foo", false);
-        final User grp = createUser("foo", true);
+        createUser("foo", false);
+        createUser("foo", true);
 
-        Assertions.assertThatThrownBy(() -> {
-                    userDao.getBySubjectId("foo");
-                }).isInstanceOf(RuntimeException.class)
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            userDao.getBySubjectId("foo");
+                        }).isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Found more than one user/group");
     }
 
