@@ -150,13 +150,13 @@ export interface AnalyticRuleDoc {
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   errorFeed?: DocRef;
-  ignoreDuplicateNotifications?: boolean;
   languageVersion?: "STROOM_QL_VERSION_0_1" | "SIGMA";
   name?: string;
   notifications?: NotificationConfig[];
   parameters?: Param[];
   query?: string;
   rememberNotifications?: boolean;
+  suppressDuplicateNotifications?: boolean;
   timeRange?: TimeRange;
   type?: string;
 
@@ -1229,6 +1229,13 @@ export interface DownloadSearchResultsRequest {
 
 export interface DuplicateCheckRow {
   values?: string[];
+}
+
+export interface DuplicateCheckRows {
+  columnNames?: string[];
+
+  /** A page of results. */
+  resultPage?: ResultPageDuplicateCheckRow;
 }
 
 export interface ElasticClusterDoc {
@@ -7929,13 +7936,13 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @tags DuplicateCheck
      * @name DeleteDuplicateCheckRows
      * @summary Delete duplicate check rows
-     * @request DELETE:/duplicateCheck/v1/delete
+     * @request POST:/duplicateCheck/v1/delete
      * @secure
      */
     deleteDuplicateCheckRows: (data: DeleteDuplicateCheckRequest, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/duplicateCheck/v1/delete`,
-        method: "DELETE",
+        method: "POST",
         body: data,
         secure: true,
         type: ContentType.Json,
@@ -7952,7 +7959,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     findDuplicateCheckRows: (data: FindDuplicateCheckCriteria, params: RequestParams = {}) =>
-      this.request<any, ResultPageDuplicateCheckRow>({
+      this.request<any, DuplicateCheckRows>({
         path: `/duplicateCheck/v1/find`,
         method: "POST",
         body: data,
