@@ -2,7 +2,6 @@ package stroom.docstore.api;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docref.HasFindDocsByContent;
 import stroom.docref.HasFindDocsByName;
 import stroom.docstore.shared.Doc;
 import stroom.importexport.shared.ImportSettings;
@@ -16,7 +15,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public interface Store<D extends Doc>
-        extends DocumentActionHandler<D>, HasFindDocsByName, HasFindDocsByContent {
+        extends DocumentActionHandler<D>, HasFindDocsByName, ContentIndexable {
     ////////////////////////////////////////////////////////////////////////
     // START OF ExplorerActionHandler
     ////////////////////////////////////////////////////////////////////////

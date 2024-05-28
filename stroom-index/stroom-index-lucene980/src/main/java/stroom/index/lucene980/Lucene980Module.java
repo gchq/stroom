@@ -16,19 +16,45 @@
 
 package stroom.index.lucene980;
 
+import stroom.docstore.api.ContentIndex;
 import stroom.index.impl.LuceneProvider;
+import stroom.job.api.ScheduledJobsBinder;
 import stroom.search.extraction.MemoryIndex;
+import stroom.util.RunnableWrapper;
+import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 
 import com.google.inject.AbstractModule;
+import jakarta.inject.Inject;
 
 public class Lucene980Module extends AbstractModule {
 
     @Override
     protected void configure() {
         bind(MemoryIndex.class).to(stroom.index.lucene980.Lucene980MemoryIndex.class);
+        bind(ContentIndex.class).to(ContentIndexImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
+                .addBinding(ContentIndexImpl.class);
 
         // Bind this provider.
         GuiceUtil.buildMultiBinder(binder(), LuceneProvider.class).addBinding(Lucene980Provider.class);
+
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(IndexContent.class, builder -> builder
+                        .name("Index Content")
+                        .description("Index Stroom content to improve content find performance.")
+                        .managed(true)
+                        .enabled(false)
+                        .advanced(true)
+                        .frequencySchedule("1m"));
+    }
+
+    private static class IndexContent extends RunnableWrapper {
+
+        @Inject
+        IndexContent(final ContentIndexImpl contentIndex) {
+            super(contentIndex::reindex);
+        }
     }
 }

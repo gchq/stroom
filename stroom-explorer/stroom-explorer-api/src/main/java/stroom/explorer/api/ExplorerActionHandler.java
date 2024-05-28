@@ -19,7 +19,6 @@ package stroom.explorer.api;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docref.HasFindDocsByContent;
 import stroom.docref.HasFindDocsByName;
 import stroom.util.shared.HasDependencies;
 
@@ -32,7 +31,7 @@ import java.util.Set;
 // TODO could move HasFindDocsByName/HasFindDocsByContent into DocumentActionHandler
 //  as they are not specific to docs in the explorer
 public interface ExplorerActionHandler
-        extends HasDocumentType, HasDependencies, HasFindDocsByName, HasFindDocsByContent {
+        extends HasDocumentType, HasDependencies, HasFindDocsByName {
 
     /**
      * Called to create a new item in this document store.
