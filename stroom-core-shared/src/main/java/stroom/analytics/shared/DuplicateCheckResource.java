@@ -24,7 +24,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -49,7 +48,7 @@ public interface DuplicateCheckResource extends RestResource, DirectRestService 
     ResultPage<DuplicateCheckRow> find(@Parameter(description = "criteria", required = true)
                                        FindDuplicateCheckCriteria criteria);
 
-    @DELETE
+    @POST
     @Path(DELETE_SUB_PATH)
     @Operation(
             summary = "Delete duplicate check rows",

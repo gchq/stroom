@@ -48,7 +48,7 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
     public DuplicateCheck create(final AnalyticRuleDoc analyticRuleDoc,
                                  final CompiledColumns compiledColumns) {
         if (!analyticRuleDoc.isRememberNotifications() &&
-                !analyticRuleDoc.isIgnoreDuplicateNotifications()) {
+                !analyticRuleDoc.isSuppressDuplicateNotifications()) {
             return new DuplicateCheck() {
                 @Override
                 public boolean check(final Row row) {
@@ -70,7 +70,7 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
             public boolean check(final Row row) {
                 final DuplicateCheckRow duplicateCheckRow = duplicateCheckRowFactory.createDuplicateCheckRow(row);
                 final boolean success = store.tryInsert(duplicateCheckRow);
-                if (analyticRuleDoc.isIgnoreDuplicateNotifications()) {
+                if (analyticRuleDoc.isSuppressDuplicateNotifications()) {
                     return success;
                 } else {
                     return true;

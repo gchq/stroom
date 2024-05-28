@@ -39,7 +39,7 @@ public class DuplicateManagementViewImpl
     @UiField
     CustomCheckBox rememberNotifications;
     @UiField
-    CustomCheckBox ignoreDuplicateNotifications;
+    CustomCheckBox suppressDuplicateNotifications;
     @UiField
     SimplePanel list;
 
@@ -64,13 +64,13 @@ public class DuplicateManagementViewImpl
     }
 
     @Override
-    public void setIgnoreDuplicateNotifications(final boolean ignoreDuplicateNotifications) {
-        this.ignoreDuplicateNotifications.setValue(ignoreDuplicateNotifications);
+    public void setSuppressDuplicateNotifications(final boolean suppressDuplicateNotifications) {
+        this.suppressDuplicateNotifications.setValue(suppressDuplicateNotifications);
     }
 
     @Override
-    public boolean isIgnoreDuplicateNotifications() {
-        return ignoreDuplicateNotifications.getValue();
+    public boolean isSuppressDuplicateNotifications() {
+        return suppressDuplicateNotifications.getValue();
     }
 
     @Override
@@ -83,8 +83,8 @@ public class DuplicateManagementViewImpl
         getUiHandlers().onDirty();
     }
 
-    @UiHandler("ignoreDuplicateNotifications")
-    public void onIgnoreDuplicateNotifications(final ValueChangeEvent<Boolean> event) {
+    @UiHandler("suppressDuplicateNotifications")
+    public void onSuppressDuplicateNotifications(final ValueChangeEvent<Boolean> event) {
         getUiHandlers().onDirty();
     }
 
