@@ -146,7 +146,9 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public Optional<User> getBySubjectId(final String subjectId) {
-        // TODO the plan is to change user table so subject_id is fully unique
+        // TODO the plan is to change user table so subject_id is fully unique,
+        //  i.e. a group is uniquely identified by a uuid which goes in the subjectId col
+        //  and the friendly group name goes in the displayName col,
         //  so once this is done this can be returned to the commented code
 //        return JooqUtil.contextResult(securityDbConnProvider, context -> context
 //                        .select()
@@ -165,9 +167,9 @@ public class UserDaoImpl implements UserDao {
                 .toList();
         if (users.size() > 1) {
             throw new RuntimeException(LogUtil.message(
-                    "Found more than one user ({}) with subject ID: '{}'", users.size(), subjectId));
+                    "Found more than one user/group ({}) with subject ID: '{}'", users.size(), subjectId));
         }
-        return Optional.ofNullable(users.getFirst());
+        return users.stream().findFirst();
     }
 
     @Override

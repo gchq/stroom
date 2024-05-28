@@ -1,13 +1,17 @@
 package stroom.security.impl.db;
 
+import stroom.db.util.JooqUtil;
 import stroom.security.impl.TestModule;
 import stroom.security.impl.UserDao;
 import stroom.security.shared.User;
 import stroom.util.AuditUtil;
 
 import com.google.inject.Guice;
+import com.google.inject.Inject;
 import com.google.inject.Injector;
-import org.junit.jupiter.api.BeforeAll;
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -18,18 +22,34 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static stroom.security.impl.db.jooq.Tables.STROOM_USER;
+import static stroom.security.impl.db.jooq.Tables.STROOM_USER_GROUP;
 
 class UserDaoImplTest {
 
-    private static UserDao userDao;
+    @Inject
+    private UserDao userDao;
+    @Inject
+    private Injector injector;
+    @Inject
+    private SecurityDbConnProvider securityDbConnProvider;
 
-    @BeforeAll
-    static void beforeAll() {
-        Injector injector = Guice.createInjector(
+    @BeforeEach
+    void beforeAll() {
+        final Injector injector = Guice.createInjector(
                 new SecurityDbModule(),
                 new SecurityDaoModule(),
                 new TestModule());
-        userDao = injector.getInstance(UserDao.class);
+
+        injector.injectMembers(this);
+    }
+
+    @AfterEach
+    void tearDown() {
+        JooqUtil.context(securityDbConnProvider, context -> {
+            JooqUtil.deleteAll(context, STROOM_USER_GROUP);
+            JooqUtil.deleteAll(context, STROOM_USER);
+        });
     }
 
     @Test
@@ -128,16 +148,16 @@ class UserDaoImplTest {
         // Given
         final List<String> userNames = IntStream.range(0, 3)
                 .mapToObj(i -> String.format("SomePerson_%s", UUID.randomUUID()))
-                .collect(Collectors.toList());
+                .toList();
         final List<String> groupNames = IntStream.range(0, 3)
                 .mapToObj(i -> String.format("SomeGroup_%s", UUID.randomUUID()))
-                .collect(Collectors.toList());
+                .toList();
         final String userNameToTest = userNames.get(0);
 
         // When
         final List<User> users = userNames.stream()
                 .map(name -> createUser(name, false))
-                .collect(Collectors.toList());
+                .toList();
         final User userToTest = users.stream()
                 .filter(u -> userNameToTest.equals(u.getSubjectId()))
                 .findFirst()
@@ -146,13 +166,54 @@ class UserDaoImplTest {
                 .map(name -> createUser(name, true))
                 .peek(g -> users.forEach(
                         u -> userDao.addUserToGroup(u.getUuid(), g.getUuid())))
-                .collect(Collectors.toList());
+                .toList();
         final List<User> groupsForUserToTest = userDao.findGroupsForUser(userToTest.getUuid(), null);
 
         // Then
         groupNames.forEach(groupName -> assertThat(groupsForUserToTest.stream()
                 .anyMatch(g -> groupName.equals(g.getSubjectId())))
                 .isTrue());
+    }
+
+    @Test
+    void getBySubjectId_notFound() {
+
+        final Optional<User> optUser = userDao.getBySubjectId("foo");
+
+        assertThat(optUser)
+                .isEmpty();
+    }
+
+    @Test
+    void getBySubjectId_foundOne_user() {
+
+        final User user = createUser("foo", false);
+        final Optional<User> optUser = userDao.getBySubjectId("foo");
+
+        assertThat(optUser)
+                .contains(user);
+    }
+
+    @Test
+    void getBySubjectId_foundOne_group() {
+
+        final User grp = createUser("grp4", true);
+        final Optional<User> optUser = userDao.getBySubjectId("grp4");
+
+        assertThat(optUser)
+                .contains(grp);
+    }
+
+    @Test
+    void getBySubjectId_foundMultiple() {
+
+        final User user = createUser("foo", false);
+        final User grp = createUser("foo", true);
+
+        Assertions.assertThatThrownBy(() -> {
+                    userDao.getBySubjectId("foo");
+                }).isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Found more than one user/group");
     }
 
     private User createUser(final String name, boolean group) {
