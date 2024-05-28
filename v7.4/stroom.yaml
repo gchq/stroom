@@ -2113,7 +2113,7 @@ paths:
       tags:
       - Documentation (v1)
   /duplicateCheck/v1/delete:
-    delete:
+    post:
       operationId: deleteDuplicateCheckRows
       requestBody:
         content:
@@ -2147,7 +2147,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResultPageDuplicateCheckRow'
+                $ref: '#/components/schemas/DuplicateCheckRows'
           description: default response
       summary: Find the duplicate check data for the current analytic
       tags:
@@ -7563,8 +7563,6 @@ components:
           type: string
         errorFeed:
           $ref: '#/components/schemas/DocRef'
-        ignoreDuplicateNotifications:
-          type: boolean
         languageVersion:
           type: string
           enum:
@@ -7583,6 +7581,8 @@ components:
         query:
           type: string
         rememberNotifications:
+          type: boolean
+        suppressDuplicateNotifications:
           type: boolean
         timeRange:
           $ref: '#/components/schemas/TimeRange'
@@ -9193,6 +9193,15 @@ components:
           type: array
           items:
             type: string
+    DuplicateCheckRows:
+      type: object
+      properties:
+        columnNames:
+          type: array
+          items:
+            type: string
+        resultPage:
+          $ref: '#/components/schemas/ResultPageDuplicateCheckRow'
     ElasticClusterDoc:
       type: object
       properties:
