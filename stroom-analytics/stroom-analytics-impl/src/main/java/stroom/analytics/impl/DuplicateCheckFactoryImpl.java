@@ -3,12 +3,12 @@ package stroom.analytics.impl;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.DeleteDuplicateCheckRequest;
 import stroom.analytics.shared.DuplicateCheckRow;
+import stroom.analytics.shared.DuplicateCheckRows;
 import stroom.analytics.shared.FindDuplicateCheckCriteria;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.query.api.v2.Row;
 import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.DuplicateCheckStoreConfig;
-import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -48,7 +48,7 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
     public DuplicateCheck create(final AnalyticRuleDoc analyticRuleDoc,
                                  final CompiledColumns compiledColumns) {
         if (!analyticRuleDoc.isRememberNotifications() &&
-                !analyticRuleDoc.isIgnoreDuplicateNotifications()) {
+                !analyticRuleDoc.isSuppressDuplicateNotifications()) {
             return new DuplicateCheck() {
                 @Override
                 public boolean check(final Row row) {
@@ -64,13 +64,14 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
 
         final DuplicateCheckStore store = pool.borrow(analyticRuleDoc.getUuid());
         final DuplicateCheckRowFactory duplicateCheckRowFactory = new DuplicateCheckRowFactory(compiledColumns);
+        store.writeColumnNames(duplicateCheckRowFactory.getColumnNames());
 
         return new DuplicateCheck() {
             @Override
             public boolean check(final Row row) {
                 final DuplicateCheckRow duplicateCheckRow = duplicateCheckRowFactory.createDuplicateCheckRow(row);
                 final boolean success = store.tryInsert(duplicateCheckRow);
-                if (analyticRuleDoc.isIgnoreDuplicateNotifications()) {
+                if (analyticRuleDoc.isSuppressDuplicateNotifications()) {
                     return success;
                 } else {
                     return true;
@@ -84,7 +85,7 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
         };
     }
 
-    public synchronized ResultPage<DuplicateCheckRow> fetchData(final FindDuplicateCheckCriteria criteria) {
+    public synchronized DuplicateCheckRows fetchData(final FindDuplicateCheckCriteria criteria) {
         return pool.use(criteria.getAnalyticDocUuid(), store -> store.fetchData(criteria));
     }
 

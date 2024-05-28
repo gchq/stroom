@@ -8,8 +8,8 @@
             <form:FormGroup identity="rememberNotifications" label="Remember Notifications">
                 <tickbox:CustomCheckBox ui:field="rememberNotifications"/>
             </form:FormGroup>
-            <form:FormGroup identity="ignoreDuplicateNotifications" label="Ignore Duplicate Notifications">
-                <tickbox:CustomCheckBox ui:field="ignoreDuplicateNotifications"/>
+            <form:FormGroup identity="suppressDuplicateNotifications" label="Suppress Duplicate Notifications">
+                <tickbox:CustomCheckBox ui:field="suppressDuplicateNotifications"/>
             </form:FormGroup>
         </g:FlowPanel>
         <g:SimplePanel ui:field="list" styleName="DuplicateManagementViewImpl dock-max dashboard-panel overflow-hidden"/>

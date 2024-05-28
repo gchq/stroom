@@ -52,7 +52,7 @@ public class DuplicateManagementPresenter
     @Override
     protected void onRead(final DocRef docRef, final AnalyticRuleDoc document, final boolean readOnly) {
         getView().setRememberNotifications(document.isRememberNotifications());
-        getView().setIgnoreDuplicateNotifications(document.isIgnoreDuplicateNotifications());
+        getView().setSuppressDuplicateNotifications(document.isSuppressDuplicateNotifications());
         duplicateManagementListPresenter.read(docRef);
     }
 
@@ -61,7 +61,7 @@ public class DuplicateManagementPresenter
         return document
                 .copy()
                 .rememberNotifications(getView().isRememberNotifications())
-                .ignoreDuplicateNotifications(getView().isIgnoreDuplicateNotifications())
+                .suppressDuplicateNotifications(getView().isSuppressDuplicateNotifications())
                 .build();
     }
 
@@ -71,9 +71,9 @@ public class DuplicateManagementPresenter
 
         boolean isRememberNotifications();
 
-        void setIgnoreDuplicateNotifications(boolean ignoreDuplicateNotifications);
+        void setSuppressDuplicateNotifications(boolean suppressDuplicateNotifications);
 
-        boolean isIgnoreDuplicateNotifications();
+        boolean isSuppressDuplicateNotifications();
 
         void setListView(View view);
     }

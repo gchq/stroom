@@ -135,7 +135,7 @@ class TestDuplicateCheckFactoryImpl {
                 .notifications(createNotificationConfig())
                 .errorFeed(new DocRef("Feed", "error"))
                 .rememberNotifications(true)
-                .ignoreDuplicateNotifications(true)
+                .suppressDuplicateNotifications(true)
                 .build();
 
         final Column column = Column

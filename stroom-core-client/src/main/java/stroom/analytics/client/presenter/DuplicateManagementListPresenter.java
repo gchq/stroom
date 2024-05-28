@@ -22,7 +22,6 @@ import stroom.analytics.shared.DeleteDuplicateCheckRequest;
 import stroom.analytics.shared.DuplicateCheckResource;
 import stroom.analytics.shared.DuplicateCheckRow;
 import stroom.analytics.shared.FindDuplicateCheckCriteria;
-import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
@@ -89,10 +88,8 @@ public class DuplicateManagementListPresenter
                             .create(DUPLICATE_CHECK_RESOURCE)
                             .method(res -> res.find(criteria))
                             .onSuccess(result -> {
-                                if (result.size() > 0) {
-                                    updateColumns(result.getFirst());
-                                }
-                                dataConsumer.accept(result);
+                                updateColumns(result.getColumnNames());
+                                dataConsumer.accept(result.getResultPage());
                             })
                             .exec();
                 }
@@ -100,13 +97,14 @@ public class DuplicateManagementListPresenter
         };
     }
 
-    private void updateColumns(final DuplicateCheckRow sample) {
-        if (sample.getValues().size() != columns.size()) {
+    private void updateColumns(final List<String> columnNames) {
+        if (columnNames.size() != columns.size()) {
             columns.forEach(dataGrid::removeColumn);
             columns.clear();
 
-            for (int i = 0; i < sample.getValues().size(); i++) {
+            for (int i = 0; i < columnNames.size(); i++) {
                 final int pos = i;
+                final String columnName = columnNames.get(pos);
                 final Column<DuplicateCheckRow, String> column = new Column<DuplicateCheckRow, String>(new TextCell()) {
                     @Override
                     public String getValue(final DuplicateCheckRow duplicateCheckRow) {
@@ -118,7 +116,7 @@ public class DuplicateManagementListPresenter
                         return null;
                     }
                 };
-                dataGrid.addResizableColumn(column, "Value " + (pos + 1), ColumnSizeConstants.BIG_COL);
+                dataGrid.addResizableColumn(column, columnName, 200);
                 columns.add(column);
             }
 
