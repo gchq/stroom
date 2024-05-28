@@ -1,10 +1,8 @@
 package stroom.security.impl.db;
 
-import stroom.db.util.JooqUtil;
 import stroom.security.impl.AppPermissionDao;
 import stroom.security.impl.TestModule;
 import stroom.security.impl.UserDao;
-import stroom.security.impl.db.jooq.Tables;
 import stroom.security.shared.User;
 import stroom.util.AuditUtil;
 
@@ -45,11 +43,7 @@ class TestAppPermissionDaoImpl {
 
     @AfterEach
     void tearDown() {
-        JooqUtil.context(securityDbConnProvider, context -> {
-            JooqUtil.deleteAll(context, Tables.STROOM_USER_GROUP);
-            JooqUtil.deleteAll(context, Tables.APP_PERMISSION);
-            JooqUtil.deleteAll(context, Tables.STROOM_USER);
-        });
+        SecurityTestUtil.teardown(securityDbConnProvider);
     }
 
     @Test

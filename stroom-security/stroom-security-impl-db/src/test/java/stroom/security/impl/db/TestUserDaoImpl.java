@@ -1,6 +1,5 @@
 package stroom.security.impl.db;
 
-import stroom.db.util.JooqUtil;
 import stroom.security.impl.TestModule;
 import stroom.security.impl.UserDao;
 import stroom.security.shared.User;
@@ -22,8 +21,6 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static stroom.security.impl.db.jooq.Tables.STROOM_USER;
-import static stroom.security.impl.db.jooq.Tables.STROOM_USER_GROUP;
 
 class TestUserDaoImpl {
 
@@ -46,10 +43,7 @@ class TestUserDaoImpl {
 
     @AfterEach
     void tearDown() {
-        JooqUtil.context(securityDbConnProvider, context -> {
-            JooqUtil.deleteAll(context, STROOM_USER_GROUP);
-            JooqUtil.deleteAll(context, STROOM_USER);
-        });
+        SecurityTestUtil.teardown(securityDbConnProvider);
     }
 
     @Test

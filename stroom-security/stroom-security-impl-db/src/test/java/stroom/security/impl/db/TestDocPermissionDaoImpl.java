@@ -1,12 +1,10 @@
 package stroom.security.impl.db;
 
-import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
 import stroom.security.impl.BasicDocPermissions;
 import stroom.security.impl.DocumentPermissionDao;
 import stroom.security.impl.TestModule;
 import stroom.security.impl.UserDao;
-import stroom.security.impl.db.jooq.Tables;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.User;
 import stroom.util.AuditUtil;
@@ -25,7 +23,6 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static stroom.security.impl.db.jooq.Tables.STROOM_USER;
 
 class TestDocPermissionDaoImpl {
 
@@ -52,10 +49,7 @@ class TestDocPermissionDaoImpl {
 
     @AfterEach
     void tearDown() {
-        JooqUtil.context(securityDbConnProvider, context -> {
-            JooqUtil.deleteAll(context, Tables.DOC_PERMISSION);
-            JooqUtil.deleteAll(context, STROOM_USER);
-        });
+        SecurityTestUtil.teardown(securityDbConnProvider);
     }
 
     @Test
