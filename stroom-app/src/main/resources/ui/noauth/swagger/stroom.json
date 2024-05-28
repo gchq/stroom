@@ -3074,7 +3074,7 @@
       }
     },
     "/duplicateCheck/v1/delete" : {
-      "delete" : {
+      "post" : {
         "operationId" : "deleteDuplicateCheckRows",
         "requestBody" : {
           "content" : {
@@ -3122,7 +3122,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ResultPageDuplicateCheckRow"
+                  "$ref" : "#/components/schemas/DuplicateCheckRows"
                 }
               }
             },
@@ -11010,9 +11010,6 @@
           "errorFeed" : {
             "$ref" : "#/components/schemas/DocRef"
           },
-          "ignoreDuplicateNotifications" : {
-            "type" : "boolean"
-          },
           "languageVersion" : {
             "type" : "string",
             "enum" : [ "STROOM_QL_VERSION_0_1", "SIGMA" ]
@@ -11036,6 +11033,9 @@
             "type" : "string"
           },
           "rememberNotifications" : {
+            "type" : "boolean"
+          },
+          "suppressDuplicateNotifications" : {
             "type" : "boolean"
           },
           "timeRange" : {
@@ -13046,6 +13046,20 @@
             "items" : {
               "type" : "string"
             }
+          }
+        }
+      },
+      "DuplicateCheckRows" : {
+        "type" : "object",
+        "properties" : {
+          "columnNames" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "resultPage" : {
+            "$ref" : "#/components/schemas/ResultPageDuplicateCheckRow"
           }
         }
       },
