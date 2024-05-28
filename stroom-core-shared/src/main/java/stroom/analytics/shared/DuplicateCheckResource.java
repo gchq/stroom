@@ -18,7 +18,6 @@ package stroom.analytics.shared;
 
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
-import stroom.util.shared.ResultPage;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -45,8 +44,8 @@ public interface DuplicateCheckResource extends RestResource, DirectRestService 
     @Operation(
             summary = "Find the duplicate check data for the current analytic",
             operationId = "findDuplicateCheckRows")
-    ResultPage<DuplicateCheckRow> find(@Parameter(description = "criteria", required = true)
-                                       FindDuplicateCheckCriteria criteria);
+    DuplicateCheckRows find(@Parameter(description = "criteria", required = true)
+                            FindDuplicateCheckCriteria criteria);
 
     @POST
     @Path(DELETE_SUB_PATH)

@@ -18,7 +18,7 @@ package stroom.analytics.impl;
 
 import stroom.analytics.shared.DeleteDuplicateCheckRequest;
 import stroom.analytics.shared.DuplicateCheckResource;
-import stroom.analytics.shared.DuplicateCheckRow;
+import stroom.analytics.shared.DuplicateCheckRows;
 import stroom.analytics.shared.FindDuplicateCheckCriteria;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
@@ -38,6 +38,8 @@ import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+
+import java.util.Collections;
 
 @AutoLogged(OperationType.UNLOGGED)
 class DuplicateCheckResourceImpl implements DuplicateCheckResource {
@@ -59,11 +61,11 @@ class DuplicateCheckResourceImpl implements DuplicateCheckResource {
     }
 
     @Override
-    public ResultPage<DuplicateCheckRow> find(final FindDuplicateCheckCriteria criteria) {
+    public DuplicateCheckRows find(final FindDuplicateCheckCriteria criteria) {
         final DuplicateCheckService duplicateCheckService = duplicateCheckServiceProvider.get();
         final String node = duplicateCheckService.getNodeName(criteria.getAnalyticDocUuid());
         if (node == null) {
-            return ResultPage.empty();
+            return new DuplicateCheckRows(Collections.emptyList(), ResultPage.empty());
         }
 
         // If this is the node that was contacted then just resolve it locally
@@ -86,7 +88,7 @@ class DuplicateCheckResourceImpl implements DuplicateCheckResource {
                     throw new WebApplicationException(response);
                 }
 
-                return response.readEntity(ResultPage.class);
+                return response.readEntity(DuplicateCheckRows.class);
             } catch (final Throwable e) {
                 throw NodeCallUtil.handleExceptionsOnNodeCall(node, url, e);
             }
