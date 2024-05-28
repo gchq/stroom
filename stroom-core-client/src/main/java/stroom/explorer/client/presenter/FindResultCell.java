@@ -43,42 +43,38 @@ public class FindResultCell extends AbstractCell<FindResult> {
 
     @Override
     public void render(final Context context, final FindResult value, final SafeHtmlBuilder sb) {
-        try {
-            if (value != null && value.getDocRef() != null) {
-                final DocRef docRef = value.getDocRef();
-                final SafeHtmlBuilder row = new SafeHtmlBuilder();
-                final SafeHtmlBuilder main = new SafeHtmlBuilder();
-                final SafeHtmlBuilder sub = new SafeHtmlBuilder();
+        if (value != null && value.getDocRef() != null) {
+            final DocRef docRef = value.getDocRef();
+            final SafeHtmlBuilder row = new SafeHtmlBuilder();
+            final SafeHtmlBuilder main = new SafeHtmlBuilder();
+            final SafeHtmlBuilder sub = new SafeHtmlBuilder();
 
-                // Add icon
-                if (value.getIcon() != null) {
-                    main.append(SvgImageUtil.toSafeHtml(
-                            docRef.getType(),
-                            value.getIcon(),
-                            getCellClassName() + "-icon",
-                            "svgIcon"));
-                }
-
-                // Add name
-                main.append(template.div(getCellClassName() + "-name",
-                        SafeHtmlUtil.from(docRef.getName())));
-
-                row.append(template.div(getCellClassName() + "-main", main.toSafeHtml()));
-
-                // Add path
-                sub.append(template.div(getCellClassName() + "-path",
-                        SafeHtmlUtil.from(value.getPath())));
-
-                // Add uuid
-                sub.append(template.div(getCellClassName() + "-uuid",
-                        SafeHtmlUtil.from(docRef.getUuid())));
-
-                row.append(template.div(getCellClassName() + "-sub", sub.toSafeHtml()));
-
-                sb.append(template.div(getCellClassName() + "-row", row.toSafeHtml()));
+            // Add icon
+            if (value.getIcon() != null) {
+                main.append(SvgImageUtil.toSafeHtml(
+                        docRef.getType(),
+                        value.getIcon(),
+                        getCellClassName() + "-icon",
+                        "svgIcon"));
             }
-        } catch (final Exception e) {
-            GWT.log("Error in FindResultCell");
+
+            // Add name
+            main.append(template.div(getCellClassName() + "-name",
+                    SafeHtmlUtil.from(docRef.getName())));
+
+            row.append(template.div(getCellClassName() + "-main", main.toSafeHtml()));
+
+            // Add path
+            sub.append(template.div(getCellClassName() + "-path",
+                    SafeHtmlUtil.from(value.getPath())));
+
+            // Add uuid
+            sub.append(template.div(getCellClassName() + "-uuid",
+                    SafeHtmlUtil.from(docRef.getUuid())));
+
+            row.append(template.div(getCellClassName() + "-sub", sub.toSafeHtml()));
+
+            sb.append(template.div(getCellClassName() + "-row", row.toSafeHtml()));
         }
     }
 
