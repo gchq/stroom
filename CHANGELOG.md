@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.4-beta.16] - 2024-05-28
+
+* Issue **#4298** : Improve duplicate management.
+
+* Issue **#4299** : Fix exception when creating a user using the `manageUsers` CLI command.
+
+
 ## [v7.4-beta.15] - 2024-05-27
 
 * Issue **#4263** : Fix HTTPAppender compression error and add additional compression algorithms.
@@ -594,7 +601,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.15...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.16...HEAD
+[v7.4-beta.16]: https://github.com/gchq/stroom/compare/v7.4-beta.15...v7.4-beta.16
 [v7.4-beta.15]: https://github.com/gchq/stroom/compare/v7.4-beta.14...v7.4-beta.15
 [v7.4-beta.14]: https://github.com/gchq/stroom/compare/v7.4-beta.13...v7.4-beta.14
 [v7.4-beta.13]: https://github.com/gchq/stroom/compare/v7.4-beta.12...v7.4-beta.13
