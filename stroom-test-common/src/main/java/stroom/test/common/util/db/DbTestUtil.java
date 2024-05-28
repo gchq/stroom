@@ -441,7 +441,7 @@ public class DbTestUtil {
             getDbConfigThreadLocal(isSharedDatabase).set(testDbConfig);
         } else {
             LOGGER.info(LogUtil.inBoxOnNewLine("Reusing shared database: {}, on thread: {}",
-                    getDbNameThreadLocal(true),
+                    getDbNameThreadLocal(true).get(),
                     Thread.currentThread().getName()));
         }
 
@@ -745,6 +745,7 @@ public class DbTestUtil {
 
         executeStatementsWithNoConstraints(connection, deleteStatements);
     }
+
 
     private static void executeStatementsWithNoConstraints(final Connection connection,
                                                            final List<String> statements) {
