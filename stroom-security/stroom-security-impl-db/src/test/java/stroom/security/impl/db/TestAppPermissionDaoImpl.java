@@ -7,8 +7,10 @@ import stroom.security.shared.User;
 import stroom.util.AuditUtil;
 
 import com.google.inject.Guice;
+import com.google.inject.Inject;
 import com.google.inject.Injector;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Set;
@@ -17,23 +19,31 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class AppPermissionDaoImplTest {
-
-    private static UserDao userDao;
-    private static AppPermissionDao appPermissionDao;
+class TestAppPermissionDaoImpl {
 
     private static final String PERMISSION_NAME_1 = "REBOOT_THE_MATRIX";
     private static final String PERMISSION_NAME_2 = "USE_THE_FANCY_TOWELS";
 
-    @BeforeAll
-    static void beforeAll() {
-        Injector injector = Guice.createInjector(
+    @Inject
+    private UserDao userDao;
+    @Inject
+    private AppPermissionDao appPermissionDao;
+    @Inject
+    private SecurityDbConnProvider securityDbConnProvider;
+
+    @BeforeEach
+    void beforeEach() {
+        final Injector injector = Guice.createInjector(
                 new SecurityDbModule(),
                 new SecurityDaoModule(),
                 new TestModule());
 
-        userDao = injector.getInstance(UserDao.class);
-        appPermissionDao = injector.getInstance(AppPermissionDao.class);
+        injector.injectMembers(this);
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityTestUtil.teardown(securityDbConnProvider);
     }
 
     @Test
@@ -42,7 +52,8 @@ class AppPermissionDaoImplTest {
         final String userUuid = UUID.randomUUID().toString();
 
         // When
-        assertThrows(SecurityException.class, () -> appPermissionDao.addPermission(userUuid, PERMISSION_NAME_1));
+        assertThrows(SecurityException.class, () ->
+                appPermissionDao.addPermission(userUuid, PERMISSION_NAME_1));
     }
 
     @Test

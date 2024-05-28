@@ -11,7 +11,9 @@ import stroom.util.AuditUtil;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.junit.jupiter.api.BeforeAll;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -22,24 +24,32 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class DocPermissionDaoImplTest {
-
-    private static UserDao userDao;
-    private static DocumentPermissionDao documentPermissionDao;
+class TestDocPermissionDaoImpl {
 
     private static final String PERMISSION_READ = "READ";
     private static final String PERMISSION_USE = "USE";
     private static final String PERMISSION_UPDATE = "UPDATE";
 
-    @BeforeAll
-    static void beforeAll() {
-        Injector injector = Guice.createInjector(
+    @Inject
+    private UserDao userDao;
+    @Inject
+    private DocumentPermissionDao documentPermissionDao;
+    @Inject
+    private SecurityDbConnProvider securityDbConnProvider;
+
+    @BeforeEach
+    void beforeEach() {
+        final Injector injector = Guice.createInjector(
                 new SecurityDbModule(),
                 new SecurityDaoModule(),
                 new TestModule());
 
-        userDao = injector.getInstance(UserDao.class);
-        documentPermissionDao = injector.getInstance(DocumentPermissionDao.class);
+        injector.injectMembers(this);
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityTestUtil.teardown(securityDbConnProvider);
     }
 
     @Test
