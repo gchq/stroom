@@ -9,6 +9,7 @@ import stroom.util.exception.ThrowingConsumer;
 import stroom.util.exception.ThrowingFunction;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -61,9 +62,28 @@ public class TestV07_04_00_005 extends AbstractCrossModuleMigrationTest {
         assertTableCountAfterMigration(docStoreDbConnProvider, "doc", 2);
         assertTableCountAfterMigration(explorerDbConnProvider, "explorer_node", 4);
         assertTableCountAfterMigration(securityDbConnProvider, "stroom_user", 2);
-        // 4 docs get purged with 3 perms each
-        final int expDocPermCntAfter = expDocPermCntBefore - (4 * 3);
+        // 2 docs each with 2 users, get purged with 3 perms each
+        final int purgedDocCnt = 2 * 2 * 3;
+        final int expDocPermCntAfter = expDocPermCntBefore - purgedDocCnt;
         assertTableCountAfterMigration(securityDbConnProvider, "doc_permission", expDocPermCntAfter);
+
+        // Make sure the right amount of recs have gone in the backup table
+        assertTableCountAfterMigration(
+                securityDbConnProvider, V07_04_00_005__Orphaned_Doc_Perms.BACKUP_TBL_NAME, purgedDocCnt);
+
+        // Make sure the orphaned docs are not their anymore
+        assertThat(getCount(securityDbConnProvider, """
+                select count(*)
+                from doc_permission
+                where doc_uuid like 'unknown_uuid_%'"""))
+                .isEqualTo(0);
+
+        // Make sure the orphaned docs are in the backup table
+        assertThat(getCount(securityDbConnProvider, LogUtil.message("""
+                select count(*)
+                from {}
+                where doc_uuid like 'unknown_uuid_%'""", V07_04_00_005__Orphaned_Doc_Perms.BACKUP_TBL_NAME)))
+                .isEqualTo(12);
     }
 
     private static void assertTableCountBeforeMigration(final String tableName, final int expected) {
@@ -78,6 +98,17 @@ public class TestV07_04_00_005 extends AbstractCrossModuleMigrationTest {
         final int cnt = DbUtil.countEntity(dataSource, tableName);
         LOGGER.info("Table count for {}: {}", tableName, cnt);
         assertThat(cnt).isEqualTo(expected);
+    }
+
+    private int getCount(final DataSource dataSource, final String sql) {
+        return DbUtil.getWithPreparedStatement(dataSource, sql, ThrowingFunction.unchecked(preparedStatement -> {
+            final ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                return resultSet.getInt(1);
+            } else {
+                throw new RuntimeException("No data found");
+            }
+        }));
     }
 
     @Override

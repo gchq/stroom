@@ -38,7 +38,7 @@ public class V07_04_00_005__Orphaned_Doc_Perms extends AbstractCrossModuleJavaDb
     // Mutable so we can test with a diff value
     static int BATCH_SIZE = 1_000;
 
-    private static final String BACKUP_TBL_NAME = "doc_permission_backup_V07_04_00_005";
+    static final String BACKUP_TBL_NAME = "doc_permission_backup_V07_04_00_005";
 
     private final SecurityDbConnProvider securityDbConnProvider;
     private final ProcessorDbConnProvider processorDbConnProvider;
