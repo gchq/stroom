@@ -321,7 +321,7 @@ public final class JooqUtil {
     public static <R extends UpdatableRecord<R>, T> R tryCreate(final DataSource dataSource,
                                                                 final R record,
                                                                 final TableField<R, T> keyField) {
-        return tryCreate(dataSource, record, keyField, null, null);
+        return tryCreate(dataSource, record, keyField, null, null, null);
     }
 
     /**
@@ -331,7 +331,7 @@ public final class JooqUtil {
                                                                 final R record,
                                                                 final TableField<R, T> keyField,
                                                                 final Consumer<R> onCreateAction) {
-        return tryCreate(dataSource, record, keyField, null, onCreateAction);
+        return tryCreate(dataSource, record, keyField, null, null, onCreateAction);
     }
 
     /**
@@ -341,7 +341,7 @@ public final class JooqUtil {
                                                                      final R record,
                                                                      final TableField<R, T1> keyField1,
                                                                      final TableField<R, T2> keyField2) {
-        return tryCreate(dataSource, record, keyField1, keyField2, null);
+        return tryCreate(dataSource, record, keyField1, keyField2, null, null);
     }
 
     /**
@@ -352,7 +352,7 @@ public final class JooqUtil {
                                                                          final TableField<R, T1> keyField1,
                                                                          final TableField<R, T2> keyField2,
                                                                          final Consumer<R> onCreateAction) {
-        return tryCreate(dataSource, record, keyField1, keyField2, onCreateAction);
+        return tryCreate(dataSource, record, keyField1, keyField2, null, onCreateAction);
     }
 
     /**
@@ -383,7 +383,8 @@ public final class JooqUtil {
      * Tries to insert record into the database. If it doesn't already exist it will insert the
      * record and return the record updated with any auto-generated columns (e.g. ID).
      * If it already exists then the unique key violation will be swallowed and the keyField arguments
-     * will be used to retrieve the existing record for return.
+     * will be used to retrieve the existing record for return. The keyField arguments are one to three columns
+     * that make up a unique key.
      * </p>
      * <p>
      * If you don't need the persisted state from the database then use
@@ -428,7 +429,8 @@ public final class JooqUtil {
                     conditionList.add(keyField3.eq(record.get(keyField3)));
                 }
                 if (conditionList.isEmpty()) {
-                    throw new RuntimeException("No key fields supplied");
+                    throw new RuntimeException("You must supplied at least one key field so the persisted record can " +
+                            "be retrieved.");
                 }
 
                 final Table<R> table = record.getTable();
