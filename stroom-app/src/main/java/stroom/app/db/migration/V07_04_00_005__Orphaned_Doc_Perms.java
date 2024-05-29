@@ -78,55 +78,57 @@ public class V07_04_00_005__Orphaned_Doc_Perms extends AbstractCrossModuleJavaDb
         // This tbl may be 100s of thousands of rows (hopefully a lot less after aggregation) so do it batch wise.
         // We can't just do all this in one bit of sql as we can't be sure each module is in the same DB as they are
         // logically separate.
-        DbUtil.doWithPreparedStatement(securityDbConnProvider, """
-                select v.doc_uuid, v.max_id, v.perm_cnt
-                from (
-                    select doc_uuid, max(id) max_id, count(*) perm_cnt
-                    from doc_permission
-                    where doc_uuid != '0'
-                    group by doc_uuid
-                    order by max_id) v
-                where v.max_id > ?
-                limit ?;
-                """, ThrowingConsumer.unchecked(prepStmt -> {
+        DbUtil.doWithPreparedStatement(
+                securityDbConnProvider,
+                """
+                        select v.doc_uuid, v.max_id, v.perm_cnt
+                        from (
+                            select doc_uuid, max(id) max_id, count(*) perm_cnt
+                            from doc_permission
+                            where doc_uuid != '0'
+                            group by doc_uuid
+                            order by max_id) v
+                        where v.max_id > ?
+                        limit ?;
+                        """,
+                ThrowingConsumer.unchecked(prepStmt -> {
+                    long lastMaxId = -1;
+                    while (true) {
+                        prepStmt.setLong(1, lastMaxId);
+                        prepStmt.setLong(2, BATCH_SIZE);
+                        int rowsFoundInBatch = 0;
+                        final Set<String> orphanedDocUuids = new HashSet<>();
+                        try (ResultSet resultSet = prepStmt.executeQuery()) {
+                            while (resultSet.next()) {
+                                rowsFoundInBatch++;
+                                final String docUuid = resultSet.getString("doc_uuid");
+                                // Use maxId to control where the batch starts from next time
+                                final long maxId = resultSet.getLong("max_id");
+                                final long permCnt = resultSet.getLong("perm_cnt");
+                                lastMaxId = Math.max(lastMaxId, maxId);
 
-            long lastMaxId = -1;
-            while (true) {
-                prepStmt.setLong(1, lastMaxId);
-                prepStmt.setLong(2, BATCH_SIZE);
-                int rowsFoundInBatch = 0;
-                final Set<String> orphanedDocUuids = new HashSet<>();
-                try (ResultSet resultSet = prepStmt.executeQuery()) {
-                    while (resultSet.next()) {
-                        rowsFoundInBatch++;
-                        final String docUuid = resultSet.getString("doc_uuid");
-                        // Use maxId to control where the batch starts from next time
-                        final long maxId = resultSet.getLong("max_id");
-                        final long permCnt = resultSet.getLong("perm_cnt");
-                        lastMaxId = Math.max(lastMaxId, maxId);
-
-                        if (!validDocUuids.contains(docUuid)) {
-                            // doc uuid does not exist as a folder/doc/procFilter/System, so it is orphaned
-                            totalOrphanedDocCnt.incrementAndGet();
-                            orphanedDocUuids.add(docUuid);
-                            LOGGER.info("Found {} orphaned doc_permission records for doc '{}' with " +
-                                            "max doc_permission ID {}",
-                                    permCnt, docUuid, maxId);
+                                if (!validDocUuids.contains(docUuid)) {
+                                    // doc uuid does not exist as a folder/doc/procFilter/System, so it is orphaned
+                                    totalOrphanedDocCnt.incrementAndGet();
+                                    orphanedDocUuids.add(docUuid);
+                                    LOGGER.info("Found {} orphaned doc_permission records for doc '{}' with " +
+                                                    "max doc_permission ID {}",
+                                            permCnt, docUuid, maxId);
+                                }
+                            }
                         }
-                    }
-                }
-                if (rowsFoundInBatch == 0) {
-                    // Found nothing so have reached the end
-                    break;
-                }
-                LOGGER.info("Batch summary - total docs: {}, orphaned docs: {}, cumulative orphaned docs: {}, " +
-                                "max doc_permission ID: {}",
-                        rowsFoundInBatch, orphanedDocUuids.size(), totalOrphanedDocCnt, lastMaxId);
+                        if (rowsFoundInBatch == 0) {
+                            // Found nothing so have reached the end
+                            break;
+                        }
+                        LOGGER.info("Batch summary - total docs: {}, orphaned docs: {}, " +
+                                        "cumulative orphaned docs: {}, max doc_permission ID: {}",
+                                rowsFoundInBatch, orphanedDocUuids.size(), totalOrphanedDocCnt, lastMaxId);
 
-                final int deleteCount = deleteOrphanedDocs(orphanedDocUuids);
-                totalDeleteCount.addAndGet(deleteCount);
-            }
-        }));
+                        final int deleteCount = deleteOrphanedDocs(orphanedDocUuids);
+                        totalDeleteCount.addAndGet(deleteCount);
+                    }
+                }));
 
         LOGGER.info("Completed purge of {} orphaned document permissions for {} orphaned docs in {}. " +
                         "All purged data has been copied to table '{}'",
