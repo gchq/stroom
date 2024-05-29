@@ -7,6 +7,10 @@ import org.flywaydb.core.api.MigrationVersion;
 import org.flywaydb.core.api.migration.Context;
 import org.flywaydb.core.api.migration.JavaMigration;
 
+/**
+ * Superclass for classes that act as a FlyWay {@link JavaMigration} to set up test data
+ * prior to a migration in order to test that migration.
+ */
 public abstract class AbstractCrossModuleMigrationTestData implements JavaMigration {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(
@@ -14,10 +18,12 @@ public abstract class AbstractCrossModuleMigrationTestData implements JavaMigrat
 
     private final MigrationVersion targetVersion;
     private final MigrationVersion testDataVersion;
+    private final TestState testState;
 
     protected AbstractCrossModuleMigrationTestData(final TestState testState) {
-        targetVersion = testState.targetVersion();
-        testDataVersion = testState.testDataVersion();
+        this.testState = testState;
+        this.targetVersion = testState.targetVersion();
+        this.testDataVersion = testState.testDataVersion();
     }
 
     /**
@@ -30,7 +36,11 @@ public abstract class AbstractCrossModuleMigrationTestData implements JavaMigrat
 
     @Override
     public void migrate(final Context context) throws Exception {
-        LOGGER.info("Setting up test data for migration " + targetVersion.getVersion());
+        LOGGER.info("Setting up test data for migration {} ({}) using test {} and test data {}",
+                targetVersion.getVersion(),
+                testState.targetClass().getName(),
+                testState.testClass().getName(),
+                testState.testDataClass().getName());
         setupTestData();
         LOGGER.info("Completed test data setup");
     }
@@ -42,7 +52,7 @@ public abstract class AbstractCrossModuleMigrationTestData implements JavaMigrat
 
     @Override
     public String getDescription() {
-        return "Test data (" + testDataVersion.getVersion() + ") for migration " + targetVersion.getVersion();
+        return "Test data for migration " + targetVersion.getVersion() + " (" + testState.testClass().getName() + ")";
     }
 
     @Override

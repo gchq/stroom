@@ -31,6 +31,16 @@ public class TestV07_04_00_005 extends AbstractCrossModuleMigrationTest {
         V07_04_00_005__Orphaned_Doc_Perms.BATCH_SIZE = 2;
     }
 
+    @Override
+    public Class<? extends AbstractCrossModuleMigrationTestData> getTestDataClass() {
+        return TestData.class;
+    }
+
+    @Override
+    Class<? extends AbstractCrossModuleJavaDbMigration> getTargetClass() {
+        return V07_04_00_005__Orphaned_Doc_Perms.class;
+    }
+
     @Test
     void test() {
         // By this point the database will have been migrated up to the target version
@@ -109,11 +119,6 @@ public class TestV07_04_00_005 extends AbstractCrossModuleMigrationTest {
                 throw new RuntimeException("No data found");
             }
         }));
-    }
-
-    @Override
-    public Class<? extends AbstractCrossModuleMigrationTestData> getTestDataClass() {
-        return TestData.class;
     }
 
 

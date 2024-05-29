@@ -58,6 +58,11 @@ public abstract class AbstractCrossModuleMigrationTest {
     abstract Class<? extends AbstractCrossModuleMigrationTestData> getTestDataClass();
 
     /**
+     * @return The migration class that this test is testing.
+     */
+    abstract Class<? extends AbstractCrossModuleJavaDbMigration> getTargetClass();
+
+    /**
      * Get an instance of a datasource for use when asserting database state after the migration has
      * been run.
      */
@@ -77,7 +82,12 @@ public abstract class AbstractCrossModuleMigrationTest {
                     protected void configure() {
                         // Bind the test state so the migration get at it
                         bind(TestState.class)
-                                .toInstance(new TestState(targetVersion, testDataVersion));
+                                .toInstance(new TestState(
+                                        targetVersion,
+                                        testDataVersion,
+                                        getTestDataClass(),
+                                        AbstractCrossModuleMigrationTest.this.getClass(),
+                                        getTargetClass()));
                     }
                 });
     }
@@ -117,9 +127,9 @@ public abstract class AbstractCrossModuleMigrationTest {
      * This is version of the migration under test
      */
     protected MigrationVersion getTargetVersion() {
-        final String versionUnderTest = this.getClass()
+        final String versionUnderTest = getTargetClass()
                 .getSimpleName()
-                .replaceAll("^TestV", "")
+                .replaceAll("^V", "")
                 .replaceAll("__.*$", "");
 
         final MigrationVersion targetVersion = MigrationVersion.fromVersion(versionUnderTest);
