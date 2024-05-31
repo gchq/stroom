@@ -47,6 +47,7 @@ public class KeyBinding {
 
     private static final int GOTO_FIRST_KEY = KeyCodes.KEY_G;
     private static final int CREATE_DOC_FIRST_KEY = KeyCodes.KEY_C;
+    private static final int EXECUTE_FIRST_KEY = KeyCodes.KEY_E;
     private static final int SUB_TAB_FIRST_KEY = KeyCodes.KEY_T;
 
     private static final int KEY_SEQUENCE_TIMER_DELAY = 1_000;
@@ -130,6 +131,19 @@ public class KeyBinding {
         addCreateDocKeySequence(Action.CREATE_TEXT_CONVERTER, KeyCodes.KEY_T);
         addCreateDocKeySequence(Action.CREATE_VIEW, KeyCodes.KEY_V);
         addCreateDocKeySequence(Action.CREATE_XSLT, KeyCodes.KEY_X);
+
+        addExecuteKeySequence(Action.EXECUTE_ADD_TO_FAVOURITES, KeyCodes.KEY_F);
+        addExecuteKeySequence(Action.EXECUTE_INFO, KeyCodes.KEY_I);
+        addExecuteKeySequence(Action.EXECUTE_EDIT_TAGS, KeyCodes.KEY_T);
+        addExecuteKeySequence(Action.EXECUTE_COPY, KeyCodes.KEY_C);
+        addExecuteKeySequence(Action.EXECUTE_COPY_AS_NAME, KeyCodes.KEY_N);
+        addExecuteKeySequence(Action.EXECUTE_COPY_AS_UUID, KeyCodes.KEY_U);
+        addExecuteKeySequence(Action.EXECUTE_COPY_AS_LINK, KeyCodes.KEY_L);
+        addExecuteKeySequence(Action.EXECUTE_MOVE, KeyCodes.KEY_M);
+        addExecuteKeySequence(Action.EXECUTE_RENAME, KeyCodes.KEY_R);
+        addExecuteKeySequence(Action.EXECUTE_DEPENDENCIES, KeyCodes.KEY_D);
+        addExecuteKeySequence(Action.EXECUTE_DEPENDANTS, KeyCodes.KEY_A);
+        addExecuteKeySequence(Action.EXECUTE_PERMS, KeyCodes.KEY_P);
 
         // Map doc types to the create actions, so we can get the action for a doc
         DOC_TYPE_TO_ACTION_MAP.put(ElasticIndexDoc.DOCUMENT_TYPE, Action.CREATE_ELASTIC_INDEX);
@@ -470,6 +484,14 @@ public class KeyBinding {
                 Shortcut.unmodifiedKey(keyCode2));
     }
 
+    static void addExecuteKeySequence(final Action action,
+                                      final int keyCode2) {
+        addKeySequence(
+                action,
+                Shortcut.unmodifiedKey(EXECUTE_FIRST_KEY),
+                Shortcut.unmodifiedKey(keyCode2));
+    }
+
     static void addKeySequence(final Action action,
                                final int keyCode1,
                                final int keyCode2) {
@@ -656,6 +678,19 @@ public class KeyBinding {
         CREATE_TEXT_CONVERTER, // T
         CREATE_VIEW, // V
         CREATE_XSLT, // X
+
+        EXECUTE_ADD_TO_FAVOURITES, // F
+        EXECUTE_INFO, // I
+        EXECUTE_EDIT_TAGS, // T
+        EXECUTE_COPY, // C
+        EXECUTE_COPY_AS_NAME, // N
+        EXECUTE_COPY_AS_UUID, // U
+        EXECUTE_COPY_AS_LINK, // L
+        EXECUTE_MOVE, // M
+        EXECUTE_RENAME, // R
+        EXECUTE_DEPENDENCIES, // D
+        EXECUTE_DEPENDANTS, // A
+        EXECUTE_PERMS, // P
     }
 
 

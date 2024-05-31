@@ -32,6 +32,7 @@ import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.explorer.client.event.CreateNewDocumentEvent;
+import stroom.explorer.client.event.ExecuteOnDocumentEvent;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.FocusExplorerFilterEvent;
@@ -216,33 +217,45 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
                 FocusExplorerFilterEvent.fire(this));
         KeyBinding.addCommand(Action.GOTO_EXPLORER_TREE, () ->
                 FocusExplorerTreeEvent.fire(this));
+
         // Binds for creating a document of a given type
-        KeyBinding.addCommand(Action.CREATE_ELASTIC_INDEX, () ->
-                CreateNewDocumentEvent.fire(this, ElasticIndexDoc.DOCUMENT_TYPE));
-        KeyBinding.addCommand(Action.CREATE_DASHBOARD, () ->
-                CreateNewDocumentEvent.fire(this, DashboardDoc.DOCUMENT_TYPE));
-        KeyBinding.addCommand(Action.CREATE_FEED, () ->
-                CreateNewDocumentEvent.fire(this, FeedDoc.DOCUMENT_TYPE));
-        KeyBinding.addCommand(Action.CREATE_FOLDER, () ->
-                CreateNewDocumentEvent.fire(this, ExplorerConstants.FOLDER));
-        KeyBinding.addCommand(Action.CREATE_DICTIONARY, () ->
-                CreateNewDocumentEvent.fire(this, DictionaryDoc.DOCUMENT_TYPE));
-        KeyBinding.addCommand(Action.CREATE_LUCENE_INDEX, () ->
-                CreateNewDocumentEvent.fire(this, LuceneIndexDoc.DOCUMENT_TYPE));
-        KeyBinding.addCommand(Action.CREATE_DOCUMENTATION, () ->
-                CreateNewDocumentEvent.fire(this, DocumentationDoc.DOCUMENT_TYPE));
-        KeyBinding.addCommand(Action.CREATE_PIPELINE, () ->
-                CreateNewDocumentEvent.fire(this, PipelineDoc.DOCUMENT_TYPE));
-        KeyBinding.addCommand(Action.CREATE_QUERY, () ->
-                CreateNewDocumentEvent.fire(this, QueryDoc.DOCUMENT_TYPE));
-        KeyBinding.addCommand(Action.CREATE_ANALYTIC_RULE, () ->
-                CreateNewDocumentEvent.fire(this, AnalyticRuleDoc.DOCUMENT_TYPE));
-        KeyBinding.addCommand(Action.CREATE_TEXT_CONVERTER, () ->
-                CreateNewDocumentEvent.fire(this, TextConverterDoc.DOCUMENT_TYPE));
-        KeyBinding.addCommand(Action.CREATE_VIEW, () ->
-                CreateNewDocumentEvent.fire(this, ViewDoc.DOCUMENT_TYPE));
-        KeyBinding.addCommand(Action.CREATE_XSLT, () ->
-                CreateNewDocumentEvent.fire(this, XsltDoc.DOCUMENT_TYPE));
+        bindCreateDocAction(Action.CREATE_ELASTIC_INDEX, ElasticIndexDoc.DOCUMENT_TYPE);
+        bindCreateDocAction(Action.CREATE_DASHBOARD, DashboardDoc.DOCUMENT_TYPE);
+        bindCreateDocAction(Action.CREATE_FEED, FeedDoc.DOCUMENT_TYPE);
+        bindCreateDocAction(Action.CREATE_FOLDER, ExplorerConstants.FOLDER);
+        bindCreateDocAction(Action.CREATE_DICTIONARY, DictionaryDoc.DOCUMENT_TYPE);
+        bindCreateDocAction(Action.CREATE_LUCENE_INDEX, LuceneIndexDoc.DOCUMENT_TYPE);
+        bindCreateDocAction(Action.CREATE_DOCUMENTATION, DocumentationDoc.DOCUMENT_TYPE);
+        bindCreateDocAction(Action.CREATE_PIPELINE, PipelineDoc.DOCUMENT_TYPE);
+        bindCreateDocAction(Action.CREATE_QUERY, QueryDoc.DOCUMENT_TYPE);
+        bindCreateDocAction(Action.CREATE_ANALYTIC_RULE, AnalyticRuleDoc.DOCUMENT_TYPE);
+        bindCreateDocAction(Action.CREATE_TEXT_CONVERTER, TextConverterDoc.DOCUMENT_TYPE);
+        bindCreateDocAction(Action.CREATE_VIEW, ViewDoc.DOCUMENT_TYPE);
+        bindCreateDocAction(Action.CREATE_XSLT, XsltDoc.DOCUMENT_TYPE);
+
+        // Binds for executing something on the selected doc
+        bindExecuteOnDocAction(Action.EXECUTE_ADD_TO_FAVOURITES);
+        bindExecuteOnDocAction(Action.EXECUTE_INFO);
+        bindExecuteOnDocAction(Action.EXECUTE_EDIT_TAGS);
+        bindExecuteOnDocAction(Action.EXECUTE_COPY);
+        bindExecuteOnDocAction(Action.EXECUTE_COPY_AS_NAME);
+        bindExecuteOnDocAction(Action.EXECUTE_COPY_AS_UUID);
+        bindExecuteOnDocAction(Action.EXECUTE_COPY_AS_LINK);
+        bindExecuteOnDocAction(Action.EXECUTE_MOVE);
+        bindExecuteOnDocAction(Action.EXECUTE_RENAME);
+        bindExecuteOnDocAction(Action.EXECUTE_DEPENDENCIES);
+        bindExecuteOnDocAction(Action.EXECUTE_DEPENDANTS);
+        bindExecuteOnDocAction(Action.EXECUTE_PERMS);
+    }
+
+    private void bindCreateDocAction(final Action action, final String type) {
+        KeyBinding.addCommand(action, () ->
+                CreateNewDocumentEvent.fire(this, type));
+    }
+
+    private void bindExecuteOnDocAction(final Action action) {
+        KeyBinding.addCommand(action, () ->
+                ExecuteOnDocumentEvent.fire(this, action));
     }
 
     @Override

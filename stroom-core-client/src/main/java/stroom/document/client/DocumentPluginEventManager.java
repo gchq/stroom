@@ -46,6 +46,7 @@ import stroom.document.client.event.ShowPermissionsDialogEvent;
 import stroom.document.client.event.ShowRenameDocumentDialogEvent;
 import stroom.document.client.event.WriteDocumentEvent;
 import stroom.explorer.client.event.CreateNewDocumentEvent;
+import stroom.explorer.client.event.ExecuteOnDocumentEvent;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
@@ -444,6 +445,29 @@ public class DocumentPluginEventManager extends Plugin {
                             });
                         });
                     }
+                });
+            }
+        }));
+
+        // Handle key binds for executing an action on the selected doc.
+        // Only works if one doc is selected
+        registerHandler(getEventBus().addHandler(ExecuteOnDocumentEvent.getType(), event -> {
+            final List<ExplorerNode> selectedItems = getSelectedItems();
+            if (selectedItems.size() == 1) {
+                final ExplorerNode explorerNode = selectedItems.get(0);
+                fetchPermissions(selectedItems, documentPermissions -> {
+                    final ExplorerNodePermissions permissions = documentPermissions.get(explorerNode);
+                    final Action action = event.getAction();
+
+                    if (action == Action.EXECUTE_RENAME) {
+                        if (permissions.hasDocumentPermission(DocumentPermissionNames.UPDATE)) {
+                            rename();
+                            GwtNullSafe.consume(documentTypes.getDocumentType(type), documentType -> {
+                                fireShowCreateDocumentDialogEvent(documentType, explorerNode);
+                            });
+                        }
+                    }
+
                 });
             }
         }));
@@ -1170,9 +1194,16 @@ public class DocumentPluginEventManager extends Plugin {
                 ? () -> ShowEditNodeTagsDialogEvent.fire(DocumentPluginEventManager.this, explorerNodes)
                 : null;
 
-        final String text = GwtNullSafe.size(explorerNodes) > 1
-                ? "Add Tags"
-                : "Edit Tags";
+        final String text;
+        final Action action;
+        if (GwtNullSafe.size(explorerNodes) > 1) {
+            text = "Add Tags";
+            // No binds for multiple docs
+            action = null;
+        } else {
+            text = "Edit Tags";
+            action = Action.EXECUTE_EDIT_TAGS;
+        }
 
         return new IconMenuItem.Builder()
                 .priority(priority)
@@ -1180,6 +1211,7 @@ public class DocumentPluginEventManager extends Plugin {
                 .text(text)
                 .enabled(enabled && explorerNodes != null)
                 .command(command)
+                .action(action)
                 .build();
     }
 
@@ -1213,6 +1245,7 @@ public class DocumentPluginEventManager extends Plugin {
                 .icon(SvgImage.SHARE)
                 .text("Copy Link to Clipboard")
                 .command(() -> ClipboardUtil.copy(docUrl))
+                .action(Action.EXECUTE_COPY_AS_LINK)
                 .build();
     }
 
@@ -1347,6 +1380,7 @@ public class DocumentPluginEventManager extends Plugin {
                 .text("Rename")
                 .enabled(enabled)
                 .command(command)
+                .action(Action.EXECUTE_RENAME)
                 .build();
     }
 
