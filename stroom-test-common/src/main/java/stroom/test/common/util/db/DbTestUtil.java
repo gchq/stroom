@@ -326,6 +326,8 @@ public class DbTestUtil {
                     statement.executeUpdate("DROP DATABASE IF EXISTS `" + dbName + "`;");
                     DB_NAMES_IN_USE.remove(dbName);
                     getDbNameThreadLocal(isSharedDatabase).remove();
+                    // Clear out the config so a new DB gets built next time if required on this thread
+                    getDbConfigThreadLocal(isSharedDatabase).remove();
                 }
             } catch (final SQLException e) {
                 throw new RuntimeException(e.getMessage(), e);
@@ -363,11 +365,8 @@ public class DbTestUtil {
         AbstractDbConfig testDbConfig = getDbConfigThreadLocal(isSharedDatabase).get();
         if (testDbConfig == null || !isSharedDatabase) {
             // Create a merged config using the common db config as a base.
-            ConnectionConfig connectionConfig;
-            ConnectionConfig rootConnectionConfig;
-
-            connectionConfig = createConnectionConfig(dbConfig);
-            rootConnectionConfig = createRootConnectionConfig(connectionConfig);
+            final ConnectionConfig connectionConfig = createConnectionConfig(dbConfig);
+            final ConnectionConfig rootConnectionConfig = createRootConnectionConfig(connectionConfig);
 
             // Create new db.
             final Properties connectionProps = new Properties();
