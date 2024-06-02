@@ -83,7 +83,6 @@ import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.Expander;
-import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -122,6 +121,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class TablePresenter extends AbstractComponentPresenter<TableView>
         implements HasDirtyHandlers, ResultComponent, HasSelection, TableUiHandlers {
 
+    public static final String TAB_TYPE = "table-component";
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     public static final ComponentType TYPE = new ComponentType(1, "table", "Table", ComponentUse.PANEL);
     private static final Version CURRENT_MODEL_VERSION = new Version(6, 1, 26);
@@ -408,15 +408,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                                 downloadPresenter.isSample(),
                                                 downloadPresenter.getPercent());
                                 restFactory
-                                        .builder()
-                                        .forType(ResourceGeneration.class)
+                                        .create(DASHBOARD_RESOURCE)
+                                        .method(res -> res.downloadSearchResults(
+                                                currentSearchModel.getCurrentNode(),
+                                                downloadSearchResultsRequest))
                                         .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager,
                                                 null,
                                                 result))
-                                        .call(DASHBOARD_RESOURCE)
-                                        .downloadSearchResults(
-                                                currentSearchModel.getCurrentNode(),
-                                                downloadSearchResultsRequest);
+                                        .exec();
                             }
 
                             e.hide();
@@ -855,7 +854,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     @Override
-    public ComponentType getType() {
+    public ComponentType getComponentType() {
         return TYPE;
     }
 
@@ -954,6 +953,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     @Override
     public void reset() {
+        selectionModel.clear(true);
+
         final long length = Math.max(1, tableResultRequest.getRequestedRange().getLength());
 
         // Reset the data grid paging.
@@ -1052,6 +1053,15 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     public SearchModel getCurrentSearchModel() {
         return currentSearchModel;
     }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface TableView extends View, HasUiHandlers<TableUiHandlers> {
 

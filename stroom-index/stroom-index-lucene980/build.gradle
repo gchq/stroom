@@ -24,6 +24,7 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation project(path: ":stroom-index:lucene980-shaded", configuration: 'shadow') // Use shadow JAR
+    implementation libs.jackson_annotations
     implementation libs.guice
     implementation libs.slf4j_api
     implementation libs.vavr

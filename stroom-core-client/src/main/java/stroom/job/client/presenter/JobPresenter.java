@@ -27,6 +27,7 @@ import com.gwtplatform.mvp.client.View;
 
 public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> {
 
+    public static final String TAB_TYPE = "Jobs";
     public static final String JOB_LIST = "JOB_LIST";
     public static final String JOB_NODE_LIST = "JOB_NODE_LIST";
     private final JobListPresenter jobListPresenter;
@@ -69,6 +70,15 @@ public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> {
     public String getLabel() {
         return "Jobs";
     }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface JobView extends View {
 

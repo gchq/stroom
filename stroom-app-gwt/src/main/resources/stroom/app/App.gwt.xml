@@ -26,6 +26,7 @@
 
     <inherits name='stroom.Stroom'/>
     <inherits name='stroom.core.Core'/>
+    <inherits name='stroom.event.Event' />
     <inherits name='stroom.task.Task'/>
     <inherits name='stroom.main.Main'/>
     <inherits name='stroom.widget.popup.Popup'/>
@@ -40,6 +41,7 @@
     <inherits name="stroom.widget.contextmenu.ContextMenu"/>
     <inherits name="stroom.widget.tab.Tab"/>
     <inherits name="stroom.widget.customdatebox.CustomDateBox"/>
+    <inherits name="stroom.widget.datepicker.DatePicker"/>
 
     <inherits name="stroom.widget.debug.Debug" />
     <inherits name="stroom.widget.dropdowntree.DropDownTree" />
@@ -48,6 +50,7 @@
     <inherits name="stroom.widget.menu.Menu" />
     <inherits name="stroom.widget.button.Button" />
     <inherits name="stroom.widget.form.Form" />
+    <inherits name="stroom.widget.help.Help" />
     <inherits name="stroom.widget.popup.Popup" />
     <inherits name="stroom.widget.progress.Progress" />
     <inherits name="stroom.widget.tickbox.TickBox" />
@@ -119,6 +122,7 @@
     <inherits name="stroom.help.Help" />
     <inherits name="stroom.importexport.ImportExport" />
     <inherits name="stroom.job.Job" />
+    <inherits name="stroom.schedule.Schedule" />
     <inherits name="stroom.monitoring.Monitoring" />
     <inherits name="stroom.index.Index"/>
     <inherits name="stroom.analytics.Analytics" />

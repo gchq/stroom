@@ -69,6 +69,13 @@ public class ExplorerNodePermissions {
         return createPermissions.contains(type.getType());
     }
 
+    public boolean hasCreatePermission(final String type) {
+        if (admin) {
+            return true;
+        }
+        return createPermissions.contains(type);
+    }
+
     public boolean hasDocumentPermission(final String permission) {
         if (admin) {
             return true;

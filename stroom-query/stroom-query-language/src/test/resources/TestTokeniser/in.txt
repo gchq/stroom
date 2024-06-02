@@ -204,3 +204,23 @@ from View
 // eval MaxD=max(parseDuration('PT10M'))
 where EventTime < now() - 2dx
 select StreamId, EventId, Feed
+-----
+from 'Test Index'
+where 'my.name' = '"foo bar"'
+eval UserId =
+select UserId
+-----
+from 'Test Index'
+where EventTime > 2023-05-05T00:00:00.000Z and  (Field = 'blah' or Field = 'blip')
+eval idx1 = indexOf(UserId, 'user1')
+eval idx2 = indexOf(UserId, 'user')
+eval test = if(and(idx1 >= 0, idx2 >= 0), 1, 0)
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status, UserId as "User Id", test
+-----
+from 'Test Index'
+where EventTime > 2023-05-05T00:00:00.000Z and  (Field = 'blah' or Field = 'blip')
+eval idx1 = indexOf(UserId, 'user1')
+eval idx2 = indexOf(UserId, 'user')
+eval bool = and(idx1 >= 0, idx2 >= 0)
+eval test = if(bool, 1, 0)
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status, UserId as "User Id", test

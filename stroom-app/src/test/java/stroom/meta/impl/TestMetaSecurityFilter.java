@@ -23,7 +23,6 @@ import stroom.app.uri.UriFactoryModule;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.index.VolumeTestConfigModule;
-import stroom.index.mock.MockIndexShardWriterExecutorModule;
 import stroom.meta.api.MetaSecurityFilter;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
@@ -60,7 +59,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
-@IncludeModule(MockIndexShardWriterExecutorModule.class)
 class TestMetaSecurityFilter extends StroomIntegrationTest {
 
     private static final String TEST_USER = "test_user";
@@ -93,7 +91,7 @@ class TestMetaSecurityFilter extends StroomIntegrationTest {
             documentPermissionService.addPermission(docref2.getUuid(), user.getUuid(), DocumentPermissionNames.USE);
             documentPermissionService.addPermission(docref3.getUuid(), user.getUuid(), DocumentPermissionNames.READ);
 
-            securityContext.asUser(securityContext.createIdentity(user.getSubjectId()), () -> {
+            securityContext.asUser(securityContext.getOrCreateUserIdentity(user.getSubjectId()), () -> {
                 final Optional<ExpressionOperator> useExpression = metaSecurityFilter.getExpression(
                         DocumentPermissionNames.USE,
                         FEED_FIELDS);

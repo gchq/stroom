@@ -1,6 +1,5 @@
 package stroom.security.impl.db;
 
-import stroom.db.util.JooqUtil;
 import stroom.security.impl.HashedApiKeyParts;
 import stroom.security.impl.TestModule;
 import stroom.security.impl.UserDao;
@@ -38,7 +37,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static stroom.security.impl.db.jooq.Tables.API_KEY;
 
 class TestApiKeyDaoImpl {
 
@@ -61,7 +59,7 @@ class TestApiKeyDaoImpl {
     @Inject
     private UserDao userDao;
     @Inject
-    private SecurityDbConnProvider dbConnProvider;
+    private SecurityDbConnProvider securityDbConnProvider;
 
     private SecureRandom secureRandom = new SecureRandom();
 
@@ -79,7 +77,7 @@ class TestApiKeyDaoImpl {
 //    private List<ApiKey>
 
     @BeforeEach
-    void beforeAll() {
+    void beforeEach() {
         final Injector injector = Guice.createInjector(
                 new SecurityDaoModule(),
                 new SecurityDbModule(),
@@ -97,11 +95,7 @@ class TestApiKeyDaoImpl {
 
     @AfterEach
     void tearDown() {
-        JooqUtil.context(dbConnProvider, context -> {
-            JooqUtil.deleteAll(context, API_KEY);
-        });
-        UUID_TO_SUBJECT_ID_MAP.keySet()
-                .forEach(userDao::delete);
+        SecurityTestUtil.teardown(securityDbConnProvider);
     }
 
     @Test

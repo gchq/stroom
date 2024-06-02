@@ -18,7 +18,6 @@ package stroom.activity.client;
 
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 
 import com.google.gwt.core.client.GWT;
@@ -56,28 +55,28 @@ public class CurrentActivity implements HasHandlers {
         if (fetched) {
             consumer.accept(currentActivity);
         } else {
-            final Rest<Activity> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(ACTIVITY_RESOURCE)
+                    .method(ActivityResource::getCurrentActivity)
                     .onSuccess(a -> {
                         currentActivity = a;
                         fetched = true;
                         consumer.accept(a);
                     })
-                    .call(ACTIVITY_RESOURCE)
-                    .getCurrentActivity();
+                    .exec();
         }
     }
 
     public void setActivity(final Activity activity) {
-        final Rest<Activity> rest = restFactory.create();
-        rest
+        restFactory
+                .create(ACTIVITY_RESOURCE)
+                .method(res -> res.setCurrentActivity(activity))
                 .onSuccess(a -> {
                     currentActivity = a;
                     fetched = true;
                     ActivityChangedEvent.fire(this, a);
                 })
-                .call(ACTIVITY_RESOURCE)
-                .setCurrentActivity(activity);
+                .exec();
     }
 
     public void showInitialActivityChooser(final Consumer<Activity> consumer) {

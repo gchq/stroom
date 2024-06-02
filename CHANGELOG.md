@@ -13,12 +13,221 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
-## [v7.3-beta.14] - 2024-03-20
+## [v7.4-beta.16] - 2024-05-28
+
+* Issue **#4298** : Improve duplicate management.
+
+* Issue **#4299** : Fix exception when creating a user using the `manageUsers` CLI command.
+
+
+## [v7.4-beta.15] - 2024-05-27
+
+* Issue **#4263** : Fix HTTPAppender compression error and add additional compression algorithms.
+
+
+## [v7.4-beta.14] - 2024-05-24
+
+* Issue **#4078** : Support BZIP2 compression and make compression level configurable for FileAppender and RollingFileAppender.
+
+* Issue **#4257** : Stop new dashboards showing params input by default.
+
+* Issue **#4275** : Fix NPE.
+
+* Issue **#4262** : Change the content auto import feature to allow setting the user/group that will own the content on import. Previously content was imported as the 'admin' user, but this user may not exist in all environments. Setting of the user/group is done with the following config properties `stroom.contentPackImport.importAsSubjectId` (the unique identifier for the user/group) and `stroom.contentPackImport.importAsType` (`USER` or `GROUP`).
+
+* Issue **#4279** : Improve index shard writer cache error handling.
+
+* Issue **#4280** : Separate LMDB data directories.
+
+* Issue **#4263** : Fix HTTPAppender compression error and add additional compression algorithms.
+
+* Issue **#4286** : Fix Stroom key bindings incorrectly triggering in the Ace editor find text input field.
+
+* Issue **#4287** : Add create document key sequences to explorer context menu.
+
+* Change the styling of the key binds in the menus.
+
+* Add `Add Current Item to Favourites` to Main Navigation menu and `Add to Favourites` to the top level tab context menu. Both menu items add the currently open document to the user's favourites list. Operation is idempotent.
+
+* Issue **#4289** : Make analytic duplicate checking optional and allow duplicates to be viewed/deleted from store.
+
+* Issue **#4281** : Add debug for recent items issue.
+
+* Issue **#4292** : Reset table selection on dashboard query.
+
+
+## [v7.4-beta.13] - 2024-05-15
+
+* Issue **#4256** : Change field types from `Long` to `Date` or `Duration` for various data sources. See GitHub issue for full details.
+
+* Issue **#4266** : Add types `Direct Buffers Used` and `Mapped Buffers Used` to the `Memory` internal statistic. These report the bytes used by off-heap direct/mapped byte buffers. Direct buffers are used heavily in search and reference data.
+
+* Issue **#4270** : Fix key binds like `ct` triggering when in a query term value edit field.
+
+* Issue **#4272** : Fix function and structure editor snippets not working in Query and column expression editors.
+
+
+## [v7.4-beta.12] - 2024-05-15
+
+* Issue **#4268** : Fix NPE affecting querying.
+
+
+## [v7.4-beta.11] - 2024-05-15
+
+* Issue **#4267** : Fix logout resource for internal IdP.
+
+* Issue **#4268** : Fix NPE affecting querying.
+
+
+## [v7.4-beta.10] - 2024-05-15
+
+* Issue **#4258** : Stop logging unnecessary error when shard deleted.
+
+* Issue **#4260** : Add debug for deduplication checks.
+
+
+## [v7.4-beta.9] - 2024-05-15
+
+* Issue **#4264** : Stop workers requesting 0 tasks from the master node.
+
+
+## [v7.4-beta.8] - 2024-05-02
+
+* Issue **#4253** : Prevent `CancellationException` being seen when user stops query.
+
+
+## [v7.4-beta.7] - 2024-05-01
+
+* Add key binds for creating documents.
+
+* Improve error message when you don't have permission to create an item in a folder. Now included the folder name.
+
+* Replace _group_ with _folder_ on Create/Move/Copy document dialogues.
+
+* Add `/stroom/analytic_store/` as a docker managed volume.
+
+* Issue **#4250** : Fix LMDB segfault.
+
+* Issue **#4238** : Force focus on properties quick filter.
+
+* Issue **#4246** : Inherit time range when creating rule from query.
+
+* Issue **#4247** : Fix notification UUID.
+
+
+## [v7.4-beta.6] - 2024-04-29
+
+* Issue **#4240** : Fix creation of new shards when non-full shards already exist for a partition.
+
+
+## [v7.4-beta.5] - 2024-04-26
+
+* Issue **#4232** : Enforce save before creating rule executors.
+
+* Issue **#4234** : Add change handler for streaming rule cache.
+
+* Issue **#4235** : Fix RefreshAfterWrite cache setting display to be a duration.
+
+
+## [v7.4-beta.4] - 2024-04-25
+
+* Issue **#4188** : Allow multiple analytic notifications.
+
+* Issue **#4224** : Fix editor Format command for Text converter entities. Also fix editor Format command for Script entities (i.e. JS/JSON).
+
+* Issue **#4228** : Fix right alignment of column headers.
+
+* Issue **#4230** : Fix step location delimiter.
+
+
+## [v7.4-beta.3] - 2024-04-24
+
+* Fix tag filter in Edit Tags dialog not being in-sync with filter input.
+
+* Issue **#4221** : Remove `id` column from `index_field` and change the primary key to be `(fk_index_field_source_id, name)`. Add retry logic and existing field check when adding fields to mitigate against deadlocks.
+
+* Issue **#4218** : Fix index shard state transition.
+
+* Issue **#4220** : Fix index shard creation.
+
+* Issue **#4217** : Suppress expected shard write errors.
+
+* Issue **#4215** : Fix NPE during context lookup with no context data loaded.
+
+* Issue **#4214** : Fix index shard writer errors.
+
+* Issue **#4203** : Fix event capture getting stuck on buttons.
+
+* Issue **#4204** : Make `indexOf()` and `lastIndexOf()` return `-1` when not found.
+
+* Issue **#4205** : Add `contains()` function.
+
+* Issue **#4209** : Support `and()` function in `eval`.
+
+* Issue **#4212** : Fix shards stuck in opening state.
+
+
+## [v7.4-beta.2] - 2024-04-10
+
+* Issue **#4161** : Fix cron schedule time UI.
+
+* Issue **#4160** : Fix date time picker.
+
+* Add the `ctrl+enter` key bind to dashboards to start/stop the query. Make the `ctrl+enter` key bind work on any part of the screen for Queries.
+
+* Add various 'Goto' type sequential key binds, e.g. `gt` for 'Goto Server Tasks'.
+
+* Change the Documentation tab to default to edit mode if the user has write permission and there is currently no documentation.
+
+* Add `ctrl+/` and `/` key binds for focusing on the explorer tree and current tab quick filters respectively.
+
+* Create a 'Copy As' explorer tree context menu sub-menu containing 'Copy (Name|UUID|Link) to Clipboard'.
+
+* Issue **#4184** : Add API specification link to help menu.
+
+* Issue **#4167** : Add templating of email subject and body in scheduled query rules. Template language is a sub-set of Jinja templating.
+
+* Issue **#4039** : Make tick boxes in conditional formatting table clickable.
+
+* Add help buttons to edit conditional rule dialog and add F1 keybind for opening help.
+
+* Issue **#4119** : Set stepping location from a popup and not inline editor.
+
+* Issue **#4187** : Fix scheduled executor stop behaviour.
+
+* Rename DB migration script from `V07_03_00_001__job_node.sql` to `V07_04_00_005__job_node.sql`. If you are deploying this version onto an existing 7.4 version then you will need to run the following sql `delete from job_schema_history where version = '07.03.00.001';`.
+
+* Issue **#4172** : Fix NPE when running an empty sQL query.
+
+* Issue **#4168** : Increase width of Id column on Annotations Linked Events dialog. Also increase size of dialog and the width of the left hand split pane.
+
+* Issue **#3998** : Clear visualisations when no data is returned rather than showing `no data`.
+
+* Issue **#4179** : Add text input control to dashboards.
+
+* Issue **#4151** : Prevent runaway creation of index shards when there are file system problems.
+
+* Issue **#4035** : Fix nasty error when changing permissions of a pipeline filter.
+
+* Issue **#4142** : Index shards now cope with field changes.
+
+* Issue **#4183** : Fix processor filter edit.
+
+* Issue **#4190** : Make MapDataStore sort and trim settings configurable.
+
+* Issue **#4192** : Fix NPE when selecting Info context menu item for any folder.
+
+* Issue **#4178** : Change the Info popup so that you can click Info for another entity and it will just update the popup content without hiding it.
+
+* Issue **#4196** : Fix warning message when the byte buffer pool hits its threshold.
+
+* Issue **#4175** : Fix `Batch module not found` error when sending emails.
+
+* Issue **#4199** : Fix internal statistics error when a pipeline is owned by a user with limited privileges.
+
+* Issue **#4195** : Fix SQL deadlock with dynamic index fields.
 
 * Issue **#4169** : Fix index field `Positions` setting not being passed through to Lucene resulting in corrupt shards.
-
-
-## [v7.3-beta.13] - 2024-03-18
 
 * Issue **#4051** : Fix search extraction for Elastic indexes.
 
@@ -28,12 +237,18 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#4093** : Fix value type for stored values.
 
-
-## [v7.3-beta.12] - 2024-03-11
-
 * Issue **#4152** : Fix date time formatter always showing `Z` when it should show actual timezone.
 
 * Issue **#4150** : StroomQL `vis as` keyword replaced with `show` plus added validation to parameters.
+
+
+## [v7.4-beta.1] - 2024-03-12
+
+* Issue **#3749** : Replace Stroom simple cron scheduler with standard compliant Quartz cron scheduler.
+
+* Issue **#4041** : Improve date picker.
+
+* Issue **#4131** : Make Stroom's standard date parsing more lenient to accept various forms of ISO 8601 zoned date times, e.g. with varying number of fractional second digits, no fractional seconds, no seconds, different offset forms ('+02', '+0200', '+02:00', etc.). Normalise `EffectiveTime` and `ReceivedTime` header values so the dates are in Stroom's standard format.
 
 
 ## [v7.3-beta.11] - 2024-03-01
@@ -386,18 +601,21 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.14...HEAD
-[v7.3-beta.14]: https://github.com/gchq/stroom/compare/v7.3-beta.13...v7.3-beta.14
-[v7.3-beta.13]: https://github.com/gchq/stroom/compare/v7.3-beta.12...v7.3-beta.13
-[v7.3-beta.12]: https://github.com/gchq/stroom/compare/v7.3-beta.11...v7.3-beta.12
-[v7.3-beta.11]: https://github.com/gchq/stroom/compare/v7.3-beta.10...v7.3-beta.11
-[v7.3-beta.10]: https://github.com/gchq/stroom/compare/v7.3-beta.9...v7.3-beta.10
-[v7.3-beta.9]: https://github.com/gchq/stroom/compare/v7.3-beta.8...v7.3-beta.9
-[v7.3-beta.8]: https://github.com/gchq/stroom/compare/v7.3-beta.7...v7.3-beta.8
-[v7.3-beta.7]: https://github.com/gchq/stroom/compare/v7.3-beta.6...v7.3-beta.7
-[v7.3-beta.6]: https://github.com/gchq/stroom/compare/v7.3-beta.5...v7.3-beta.6
-[v7.3-beta.5]: https://github.com/gchq/stroom/compare/v7.3-beta.4...v7.3-beta.5
-[v7.3-beta.4]: https://github.com/gchq/stroom/compare/v7.2.8...v7.3-beta.4
-[v7.3-beta.3]: https://github.com/gchq/stroom/compare/v7.3-beta.2...v7.3-beta.3
-[v7.3-beta.2]: https://github.com/gchq/stroom/compare/v7.3-beta.1...v7.3-beta.2
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.16...HEAD
+[v7.4-beta.16]: https://github.com/gchq/stroom/compare/v7.4-beta.15...v7.4-beta.16
+[v7.4-beta.15]: https://github.com/gchq/stroom/compare/v7.4-beta.14...v7.4-beta.15
+[v7.4-beta.14]: https://github.com/gchq/stroom/compare/v7.4-beta.13...v7.4-beta.14
+[v7.4-beta.13]: https://github.com/gchq/stroom/compare/v7.4-beta.12...v7.4-beta.13
+[v7.4-beta.12]: https://github.com/gchq/stroom/compare/v7.4-beta.11...v7.4-beta.12
+[v7.4-beta.11]: https://github.com/gchq/stroom/compare/v7.4-beta.10...v7.4-beta.11
+[v7.4-beta.10]: https://github.com/gchq/stroom/compare/v7.4-beta.9...v7.4-beta.10
+[v7.4-beta.9]: https://github.com/gchq/stroom/compare/v7.4-beta.8...v7.4-beta.9
+[v7.4-beta.8]: https://github.com/gchq/stroom/compare/v7.4-beta.7...v7.4-beta.8
+[v7.4-beta.7]: https://github.com/gchq/stroom/compare/v7.4-beta.6...v7.4-beta.7
+[v7.4-beta.6]: https://github.com/gchq/stroom/compare/v7.4-beta.5...v7.4-beta.6
+[v7.4-beta.5]: https://github.com/gchq/stroom/compare/v7.4-beta.4...v7.4-beta.5
+[v7.4-beta.4]: https://github.com/gchq/stroom/compare/v7.4-beta.3...v7.4-beta.4
+[v7.4-beta.3]: https://github.com/gchq/stroom/compare/v7.4-beta.2...v7.4-beta.3
+[v7.4-beta.2]: https://github.com/gchq/stroom/compare/v7.4-beta.1...v7.4-beta.2
+[v7.4-beta.1]: https://github.com/gchq/stroom/compare/v7.3-beta.11...v7.4-beta.1
 [v7.2.2]: https://github.com/gchq/stroom/compare/v7.2.1...v7.2.2

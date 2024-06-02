@@ -6,8 +6,6 @@ import stroom.util.RunnableWrapper;
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
 
-import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
-
 public class FsVolumeJobsModule extends AbstractModule {
     @Override
     protected void configure() {
@@ -17,7 +15,7 @@ public class FsVolumeJobsModule extends AbstractModule {
                 .bindJobTo(FileVolumeStatus.class, builder -> builder
                         .name("File System Volume Status")
                         .description("Update the usage status of file system volumes")
-                        .schedule(PERIODIC, "5m"));
+                        .frequencySchedule("5m"));
     }
 
     private static class FileVolumeStatus extends RunnableWrapper {

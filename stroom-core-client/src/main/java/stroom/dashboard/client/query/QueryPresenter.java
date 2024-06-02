@@ -38,7 +38,6 @@ import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dispatch.client.ExportFileCompleteUtil;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -47,7 +46,6 @@ import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.Limits;
-import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.DestroyReason;
@@ -75,7 +73,6 @@ import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.ResourceGeneration;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -101,12 +98,9 @@ import java.util.stream.Collectors;
 
 public class QueryPresenter
         extends AbstractComponentPresenter<QueryPresenter.QueryView>
-        implements
-        HasDirtyHandlers,
-        Queryable,
-        SearchStateListener,
-        SearchErrorListener {
+        implements HasDirtyHandlers, Queryable, SearchStateListener, SearchErrorListener {
 
+    public static final String TAB_TYPE = "query-component";
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     private static final ResultStoreResource RESULT_STORE_RESOURCE = GWT.create(ResultStoreResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
@@ -573,8 +567,9 @@ public class QueryPresenter
                 .queryData(queryData)
                 .priority(1)
                 .build();
-        final Rest<ProcessorFilter> rest = restFactory.create();
-        rest
+        restFactory
+                .create(PROCESSOR_FILTER_RESOURCE)
+                .method(res -> res.create(request))
                 .onSuccess(streamProcessorFilter -> {
                     if (streamProcessorFilter != null) {
                         CreateProcessorEvent.fire(QueryPresenter.this, streamProcessorFilter);
@@ -582,8 +577,7 @@ public class QueryPresenter
                         AlertEvent.fireInfo(this, "Created batch processor", null);
                     }
                 })
-                .call(PROCESSOR_FILTER_RESOURCE)
-                .create(request);
+                .exec();
     }
 
     private void showWarnings() {
@@ -773,16 +767,17 @@ public class QueryPresenter
 
             } else if (getQuerySettings().getLastQueryKey() != null) {
                 // See if the result store exists before we try and resume a query.
-                final Rest<Boolean> rest = restFactory.create();
-                rest
+                restFactory
+                        .create(RESULT_STORE_RESOURCE)
+                        .method(res -> res.exists(getQuerySettings().getLastQueryNode(),
+                                getQuerySettings().getLastQueryKey()))
                         .onSuccess(result -> {
                             if (result != null && result) {
                                 // Resume search if we have a stored query key.
                                 resume(getQuerySettings().getLastQueryNode(), getQuerySettings().getLastQueryKey());
                             }
                         })
-                        .call(RESULT_STORE_RESOURCE)
-                        .exists(getQuerySettings().getLastQueryNode(), getQuerySettings().getLastQueryKey());
+                        .exec();
             }
         }
     }
@@ -794,7 +789,7 @@ public class QueryPresenter
     }
 
     @Override
-    public ComponentType getType() {
+    public ComponentType getComponentType() {
         return TYPE;
     }
 
@@ -927,12 +922,12 @@ public class QueryPresenter
                     dashboardContext.getParams(),
                     dashboardContext.getTimeRange());
 
-            final Rest<ResourceGeneration> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(DASHBOARD_RESOURCE)
+                    .method(res -> res.downloadQuery(searchRequest))
                     .onSuccess(result ->
                             ExportFileCompleteUtil.onSuccess(locationManager, null, result))
-                    .call(DASHBOARD_RESOURCE)
-                    .downloadQuery(searchRequest);
+                    .exec();
         }
     }
 
@@ -942,6 +937,10 @@ public class QueryPresenter
                 : 0);
     }
 
+    @Override
+    public String getType() {
+        return TAB_TYPE;
+    }
 
     // --------------------------------------------------------------------------------
 

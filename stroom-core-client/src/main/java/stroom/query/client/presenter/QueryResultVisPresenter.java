@@ -17,7 +17,6 @@
 package stroom.query.client.presenter;
 
 import stroom.dashboard.client.vis.VisFrame;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
@@ -36,7 +35,6 @@ import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 import stroom.visualisation.client.presenter.VisFunction.StatusHandler;
 import stroom.visualisation.client.presenter.VisFunctionCache;
-import stroom.visualisation.shared.VisualisationDoc;
 import stroom.visualisation.shared.VisualisationResource;
 
 import com.google.gwt.core.client.GWT;
@@ -415,8 +413,9 @@ public class QueryResultVisPresenter
     private void loadVisualisation(final VisFunction function, final DocRef visualisationDocRef) {
         function.setStatus(LoadStatus.LOADING_ENTITY);
 
-        final Rest<VisualisationDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .create(VISUALISATION_RESOURCE)
+                .method(res -> res.fetch(visualisationDocRef.getUuid()))
                 .onSuccess(result -> {
                     if (result != null) {
                         // Get all possible settings for this visualisation.
@@ -451,18 +450,18 @@ public class QueryResultVisPresenter
                     }
                 })
                 .onFailure(caught -> failure(function, caught.getMessage()))
-                .call(VISUALISATION_RESOURCE)
-                .fetch(visualisationDocRef.getUuid());
+                .exec();
     }
 
     private void loadScripts(final VisFunction function, final DocRef scriptRef) {
         function.setStatus(LoadStatus.LOADING_SCRIPT);
 
-        final Rest<List<ScriptDoc>> rest = restFactory.create();
-        rest
+        restFactory
+                .create(SCRIPT_RESOURCE)
+                .method(res -> res.fetchLinkedScripts(
+                        new FetchLinkedScriptRequest(scriptRef, scriptCache.getLoadedScripts())))
                 .onSuccess(result -> startInjectingScripts(result, function))
-                .call(SCRIPT_RESOURCE)
-                .fetchLinkedScripts(new FetchLinkedScriptRequest(scriptRef, scriptCache.getLoadedScripts()));
+                .exec();
     }
 
     private void startInjectingScripts(final List<ScriptDoc> scripts, final VisFunction function) {

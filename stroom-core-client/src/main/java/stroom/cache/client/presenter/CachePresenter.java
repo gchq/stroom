@@ -26,6 +26,7 @@ import com.gwtplatform.mvp.client.View;
 
 public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView> {
 
+    public static final String TAB_TYPE = "Caches";
     public static final String LIST = "LIST";
     public static final String NODE_LIST = "NODE_LIST";
 
@@ -74,6 +75,14 @@ public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView
     public String getLabel() {
         return "Caches";
     }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
+    }
+
+    // --------------------------------------------------------------------------------
+
 
     public interface CacheView extends View {
 

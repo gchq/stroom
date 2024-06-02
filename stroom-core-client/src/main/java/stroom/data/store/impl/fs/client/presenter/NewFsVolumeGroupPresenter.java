@@ -18,12 +18,9 @@
 package stroom.data.store.impl.fs.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.NameDocumentView;
-import stroom.util.shared.ResultPage;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -80,8 +77,9 @@ public class NewFsVolumeGroupPresenter
                         "You must provide a name",
                         null);
             } else {
-                final Rest<ResultPage<FsVolumeGroup>> rest = restFactory.create();
-                rest
+                restFactory
+                        .create(FS_VOLUME_GROUP_RESOURCE)
+                        .method(res -> res.fetchByName(name))
                         .onSuccess(result -> {
                             if (result != null) {
                                 AlertEvent.fireError(
@@ -94,8 +92,7 @@ public class NewFsVolumeGroupPresenter
                                 consumer.accept(name);
                             }
                         })
-                        .call(FS_VOLUME_GROUP_RESOURCE)
-                        .fetchByName(name);
+                        .exec();
             }
         } else {
             consumer.accept(null);

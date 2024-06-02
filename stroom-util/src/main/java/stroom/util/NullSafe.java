@@ -47,6 +47,30 @@ public class NullSafe {
     }
 
     /**
+     * Test if the properties (accessed using the same getter for both) of two
+     * objects of the same class are equal in a null safe way.
+     *
+     * @return True if val1 and val2 are both null or if the results of applying {@code getter}
+     * to va1 and val2 are equal.
+     */
+    public static <T, R> boolean equalProperties(final T val1,
+                                                 final T val2,
+                                                 final Function<T, R> getter) {
+        if (val1 == null && val2 == null) {
+            return true;
+        } else if (val1 != null && val2 == null) {
+            return false;
+        } else if (val1 == null) {
+            return false;
+        } else {
+            Objects.requireNonNull(getter);
+            final R result1 = getter.apply(val1);
+            final R result2 = getter.apply(val2);
+            return Objects.equals(result1, result2);
+        }
+    }
+
+    /**
      * @return True if all values in the array are null or the array itself is null
      */
     public static <T> boolean allNull(final T... vals) {
@@ -149,6 +173,15 @@ public class NullSafe {
         return str != null && !str.isBlank()
                 ? str
                 : other;
+    }
+
+    /**
+     * @return str if it is non-null and non-blank, else return the value supplied by otherSupplier
+     */
+    public static String nonBlankStringElseGet(final String str, final Supplier<String> otherSupplier) {
+        return str != null && !str.isBlank()
+                ? str
+                : Objects.requireNonNull(otherSupplier).get();
     }
 
     /**

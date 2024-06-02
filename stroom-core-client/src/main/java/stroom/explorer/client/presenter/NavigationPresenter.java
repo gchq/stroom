@@ -21,14 +21,21 @@ import stroom.activity.client.ActivityChangedEvent;
 import stroom.activity.client.CurrentActivity;
 import stroom.activity.shared.Activity.ActivityDetails;
 import stroom.activity.shared.Activity.Prop;
+import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.core.client.MenuKeys;
+import stroom.dashboard.shared.DashboardDoc;
+import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.OpenDocumentEvent;
+import stroom.documentation.shared.DocumentationDoc;
+import stroom.explorer.client.event.CreateNewDocumentEvent;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
+import stroom.explorer.client.event.FocusExplorerFilterEvent;
+import stroom.explorer.client.event.FocusExplorerTreeEvent;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
 import stroom.explorer.client.event.LocateDocEvent;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
@@ -38,13 +45,22 @@ import stroom.explorer.client.presenter.NavigationPresenter.NavigationProxy;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.feed.shared.FeedDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.main.client.event.ShowMainEvent;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.TextConverterDoc;
+import stroom.pipeline.shared.XsltDoc;
+import stroom.query.shared.QueryDoc;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
+import stroom.util.shared.GwtNullSafe;
+import stroom.view.shared.ViewDoc;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
@@ -52,8 +68,9 @@ import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.KeyBinding.Action;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.client.ui.Button;
@@ -76,7 +93,9 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         implements NavigationUiHandlers,
         RefreshExplorerTreeEvent.Handler,
         HighlightExplorerNodeEvent.Handler,
-        ShowMainEvent.Handler {
+        ShowMainEvent.Handler,
+        FocusExplorerFilterEvent.Handler,
+        FocusExplorerTreeEvent.Handler {
 
     private final DocumentTypeCache documentTypeCache;
     private final TypeFilterPresenter typeFilterPresenter;
@@ -192,6 +211,38 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
             }
             showAlertsBtn.setVisible(uiConfig.isDependencyWarningsEnabled());
         });
+
+        KeyBinding.addCommand(Action.FOCUS_EXPLORER_FILTER, () ->
+                FocusExplorerFilterEvent.fire(this));
+        KeyBinding.addCommand(Action.GOTO_EXPLORER_TREE, () ->
+                FocusExplorerTreeEvent.fire(this));
+        // Binds for creating a document of a given type
+        KeyBinding.addCommand(Action.CREATE_ELASTIC_INDEX, () ->
+                CreateNewDocumentEvent.fire(this, ElasticIndexDoc.DOCUMENT_TYPE));
+        KeyBinding.addCommand(Action.CREATE_DASHBOARD, () ->
+                CreateNewDocumentEvent.fire(this, DashboardDoc.DOCUMENT_TYPE));
+        KeyBinding.addCommand(Action.CREATE_FEED, () ->
+                CreateNewDocumentEvent.fire(this, FeedDoc.DOCUMENT_TYPE));
+        KeyBinding.addCommand(Action.CREATE_FOLDER, () ->
+                CreateNewDocumentEvent.fire(this, ExplorerConstants.FOLDER));
+        KeyBinding.addCommand(Action.CREATE_DICTIONARY, () ->
+                CreateNewDocumentEvent.fire(this, DictionaryDoc.DOCUMENT_TYPE));
+        KeyBinding.addCommand(Action.CREATE_LUCENE_INDEX, () ->
+                CreateNewDocumentEvent.fire(this, LuceneIndexDoc.DOCUMENT_TYPE));
+        KeyBinding.addCommand(Action.CREATE_DOCUMENTATION, () ->
+                CreateNewDocumentEvent.fire(this, DocumentationDoc.DOCUMENT_TYPE));
+        KeyBinding.addCommand(Action.CREATE_PIPELINE, () ->
+                CreateNewDocumentEvent.fire(this, PipelineDoc.DOCUMENT_TYPE));
+        KeyBinding.addCommand(Action.CREATE_QUERY, () ->
+                CreateNewDocumentEvent.fire(this, QueryDoc.DOCUMENT_TYPE));
+        KeyBinding.addCommand(Action.CREATE_ANALYTIC_RULE, () ->
+                CreateNewDocumentEvent.fire(this, AnalyticRuleDoc.DOCUMENT_TYPE));
+        KeyBinding.addCommand(Action.CREATE_TEXT_CONVERTER, () ->
+                CreateNewDocumentEvent.fire(this, TextConverterDoc.DOCUMENT_TYPE));
+        KeyBinding.addCommand(Action.CREATE_VIEW, () ->
+                CreateNewDocumentEvent.fire(this, ViewDoc.DOCUMENT_TYPE));
+        KeyBinding.addCommand(Action.CREATE_XSLT, () ->
+                CreateNewDocumentEvent.fire(this, XsltDoc.DOCUMENT_TYPE));
     }
 
     @Override
@@ -202,6 +253,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e -> {
             selectedDoc = null;
             if (e.getTabData() instanceof DocumentTabData) {
+                @SuppressWarnings("PatternVariableCanBeUsed") // cos GWT
                 final DocumentTabData documentTabData = (DocumentTabData) e.getTabData();
                 selectedDoc = documentTabData.getDocRef();
             }
@@ -234,6 +286,11 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         // Register for highlight events.
         registerHandler(getEventBus().addHandler(HighlightExplorerNodeEvent.getType(), this));
 
+        // Register for events to focus the explorer tree filter
+        registerHandler(getEventBus().addHandler(FocusExplorerFilterEvent.getType(), this));
+
+        registerHandler(getEventBus().addHandler(FocusExplorerTreeEvent.getType(), this));
+
 //        explorerTree.addChangeHandler(fetchExplorerNodeResult -> {
 //            final boolean treeHasNodeInfo = GwtNullSafe.stream(fetchExplorerNodeResult.getRootNodes())
 //                    .anyMatch(ExplorerNode::hasNodeInfo);
@@ -249,7 +306,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
                     explorerTree.getSelectionModel(),
                     event.getSelectionType()));
             final ExplorerNode selectedNode = explorerTree.getSelectionModel().getSelected();
-            final boolean enabled = explorerTree.getSelectionModel().getSelectedItems().size() > 0 &&
+            final boolean enabled = GwtNullSafe.hasItems(explorerTree.getSelectionModel().getSelectedItems()) &&
                     !ExplorerConstants.isFavouritesNode(selectedNode) &&
                     !ExplorerConstants.isSystemNode(selectedNode);
             add.setEnabled(enabled);
@@ -292,7 +349,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
     }
 
     public void deleteItem() {
-        if (explorerTree.getSelectionModel().getSelectedItems().size() > 0) {
+        if (GwtNullSafe.hasItems(explorerTree.getSelectionModel().getSelectedItems())) {
             ExplorerTreeDeleteEvent.fire(this);
         }
     }
@@ -330,7 +387,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         // Tell all plugins to add new menu items.
         BeforeRevealMenubarEvent.fire(this, menuItems);
         final List<Item> items = menuItems.getMenuItems(MenuKeys.MAIN_MENU);
-        if (items != null && items.size() > 0) {
+        if (GwtNullSafe.hasItems(items)) {
             ShowMenuEvent
                     .builder()
                     .items(items)
@@ -381,7 +438,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
 
     @Override
     public void onRefresh(final RefreshExplorerTreeEvent event) {
-        GWT.log("onRefresh " + event);
+//        GWT.log("onRefresh " + event);
         explorerTree.getTreeModel().refresh();
     }
 
@@ -394,6 +451,16 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         explorerTree.getTreeModel().refresh();
         getView().setNavigationWidget(explorerTree);
         RevealContentEvent.fire(this, MainPresenter.EXPLORER, this);
+    }
+
+    @Override
+    public void onFocusExplorerFilter(final FocusExplorerFilterEvent event) {
+        getView().focusQuickFilter();
+    }
+
+    @Override
+    public void onFocusExplorerTree(final FocusExplorerTreeEvent event) {
+        explorerTree.focus();
     }
 
     @ProxyCodeSplit
@@ -412,5 +479,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         void setNavigationWidget(Widget widget);
 
         void setActivityWidget(Widget widget);
+
+        void focusQuickFilter();
     }
 }

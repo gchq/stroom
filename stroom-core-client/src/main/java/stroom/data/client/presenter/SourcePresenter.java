@@ -5,7 +5,6 @@ import stroom.data.client.presenter.SourcePresenter.SourceView;
 import stroom.data.shared.DataResource;
 import stroom.data.shared.DataType;
 import stroom.data.shared.StreamTypeNames;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataRequest;
@@ -420,16 +419,15 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
             request.setDisplayMode(FetchDataRequest.DisplayMode.TEXT);
         }
 
-        final Rest<AbstractFetchDataResult> rest = restFactory.create();
-
-        rest
+        restFactory
+                .create(DATA_RESOURCE)
+                .method(res -> res.fetch(request))
                 .onSuccess(this::handleResponse)
                 .onFailure(caught -> AlertEvent.fireError(
                         SourcePresenter.this,
                         caught.getMessage(),
                         null))
-                .call(DATA_RESOURCE)
-                .fetch(request);
+                .exec();
     }
 
     private void handleResponse(final AbstractFetchDataResult result) {

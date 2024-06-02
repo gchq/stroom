@@ -60,12 +60,17 @@ public class AnalyticQueryEditPresenter
 
     @Override
     public void onRead(final DocRef docRef, final AnalyticRuleDoc entity, final boolean readOnly) {
+        queryEditPresenter.setTimeRange(entity.getTimeRange());
         queryEditPresenter.setQuery(docRef, entity.getQuery(), readOnly);
     }
 
     @Override
     protected AnalyticRuleDoc onWrite(final AnalyticRuleDoc entity) {
-        return entity.copy().query(queryEditPresenter.getQuery()).build();
+        return entity
+                .copy()
+                .timeRange(queryEditPresenter.getTimeRange())
+                .query(queryEditPresenter.getQuery())
+                .build();
     }
 
     @Override

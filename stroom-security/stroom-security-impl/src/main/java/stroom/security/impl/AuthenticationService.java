@@ -20,6 +20,7 @@ import stroom.security.openid.api.IdpType;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.util.AuditUtil;
+import stroom.util.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -31,12 +32,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+import static stroom.security.shared.User.ADMINISTRATORS_GROUP_SUBJECT_ID;
+
 @Singleton
 public class AuthenticationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationService.class);
 
-    private static final String ADMINISTRATORS_GROUP_SUBJECT_ID = "Administrators";
     private static final int GET_USER_ATTEMPTS = 2;
 
     private final UserDao userDao;
@@ -54,7 +56,7 @@ public class AuthenticationService {
     }
 
     User getOrCreateUser(final String subjectId) {
-        if (subjectId == null || subjectId.trim().length() == 0) {
+        if (NullSafe.isBlankString(subjectId)) {
             return null;
         }
 
@@ -126,17 +128,21 @@ public class AuthenticationService {
     }
 
     public Optional<User> getUser(final String subjectId) {
+        return getUser(subjectId, false);
+    }
+
+    public Optional<User> getUser(final String subjectId, final boolean isGroup) {
         Optional<User> optUser;
 
         try {
-            optUser = userDao.getBySubjectId(subjectId, false);
-            if (optUser.isEmpty() && shouldCreateAdminUser(subjectId)) {
+            optUser = userDao.getBySubjectId(subjectId, isGroup);
+            if (optUser.isEmpty() && shouldCreateAdminUser(subjectId, isGroup)) {
 
                 // TODO @AT Probably should be an explicit command to create this to avoid the accidental
                 //   running of stroom in UseInternal mode which then leaves admin/admin open
                 // Using our internal identity provider so ensure the admin user is present
                 // Can't do this for 3rd party IDPs as we don't know what the user name is
-                optUser = Optional.of(createOrRefreshUser(User.ADMIN_SUBJECT_ID));
+                optUser = Optional.of(createOrRefreshUser(User.ADMIN_USER_SUBJECT_ID));
             }
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
@@ -146,8 +152,9 @@ public class AuthenticationService {
         return optUser;
     }
 
-    private boolean shouldCreateAdminUser(final String subjectId) {
-        return User.ADMIN_SUBJECT_ID.equals(subjectId)
+    private boolean shouldCreateAdminUser(final String subjectId, final boolean isGroup) {
+        return !isGroup
+                && User.ADMIN_USER_SUBJECT_ID.equals(subjectId)
                 && (
                 IdpType.INTERNAL_IDP.equals(openIdConfigProvider.get().getIdentityProviderType())
                         || IdpType.TEST_CREDENTIALS.equals(openIdConfigProvider.get().getIdentityProviderType()));
@@ -173,7 +180,7 @@ public class AuthenticationService {
                     final User userRef = create(subjectId, isGroup);
 
                     // Creating the admin user so create its group too
-                    if (shouldCreateAdminUser(subjectId)) {
+                    if (shouldCreateAdminUser(subjectId, isGroup)) {
                         try {
                             User userGroup = createOrRefreshAdminUserGroup(ADMINISTRATORS_GROUP_SUBJECT_ID);
                             userDao.addUserToGroup(userRef.getUuid(), userGroup.getUuid());

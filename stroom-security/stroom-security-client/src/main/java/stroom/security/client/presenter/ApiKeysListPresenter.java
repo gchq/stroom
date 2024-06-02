@@ -13,7 +13,7 @@ import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
@@ -109,10 +109,10 @@ public class ApiKeysListPresenter
             @Override
             protected void exec(final Range range,
                                 final Consumer<ApiKeyResultPage> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
+                                final Consumer<RestError> errorConsumer) {
                 ApiKeysListPresenter.this.range = range;
                 ApiKeysListPresenter.this.dataConsumer = dataConsumer;
-                fetchData(range, dataConsumer, throwableConsumer);
+                fetchData(range, dataConsumer, errorConsumer);
             }
         };
         dataProvider.addDataDisplay(dataGrid);
@@ -188,9 +188,9 @@ public class ApiKeysListPresenter
             refresh();
         };
 
-        final Consumer<Throwable> onFailure = throwable -> {
+        final Consumer<RestError> onFailure = restError -> {
             // Something went wrong so refresh the data.
-            AlertEvent.fireError(this, throwable.getMessage(), null);
+            AlertEvent.fireError(this, restError.getMessage(), null);
             refresh();
         };
 
@@ -208,14 +208,14 @@ public class ApiKeysListPresenter
             ConfirmEvent.fire(this, msg, ok -> {
 //                GWT.log("id: " + id);
                 if (ok) {
-                    final Rest<Boolean> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .create(API_KEY_RESOURCE)
+                            .method(res -> res.delete(id))
                             .onSuccess(unused -> {
                                 onSuccess.run();
                             })
                             .onFailure(onFailure)
-                            .call(API_KEY_RESOURCE)
-                            .delete(id);
+                            .exec();
                 }
             });
         } else if (cnt > 1) {
@@ -224,14 +224,14 @@ public class ApiKeysListPresenter
                     "and it will not be possible to re-create them.";
             ConfirmEvent.fire(this, msg, ok -> {
                 if (ok) {
-                    final Rest<Integer> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .create(API_KEY_RESOURCE)
+                            .method(res -> res.deleteBatch(selection.getSet()))
                             .onSuccess(count -> {
                                 onSuccess.run();
                             })
                             .onFailure(onFailure)
-                            .call(API_KEY_RESOURCE)
-                            .deleteBatch(selection.getSet());
+                            .exec();
                 }
             });
         }
@@ -309,10 +309,10 @@ public class ApiKeysListPresenter
 
     private void fetchData(final Range range,
                            final Consumer<ApiKeyResultPage> dataConsumer,
-                           final Consumer<Throwable> throwableConsumer) {
-
-        final Rest<ApiKeyResultPage> rest = restFactory.create();
-        rest
+                           final Consumer<RestError> errorConsumer) {
+        restFactory
+                .create(API_KEY_RESOURCE)
+                .method(res -> res.find(criteria))
                 .onSuccess(response -> {
                     apiKeys.clear();
                     response.stream()
@@ -336,8 +336,7 @@ public class ApiKeysListPresenter
                             "Error fetching API Keys: " + throwable.getMessage(),
                             null);
                 })
-                .call(API_KEY_RESOURCE)
-                .find(criteria);
+                .exec();
     }
 
     public void setQuickFilter(final String userInput) {

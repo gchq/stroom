@@ -305,6 +305,8 @@ public class ElasticSearchTaskHandler {
                         }
 
                         if (fieldValue instanceof Long) {
+                            // TODO Need to handle date fields as ValDate, assuming they come in as longs,
+                            //  but we need the field type from somewhere
                             values[insertAt] = ValLong.create((Long) fieldValue);
                         } else if (fieldValue instanceof Integer) {
                             values[insertAt] = ValInteger.create((Integer) fieldValue);

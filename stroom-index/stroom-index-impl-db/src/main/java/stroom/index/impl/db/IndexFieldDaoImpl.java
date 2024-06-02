@@ -21,26 +21,38 @@ import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.FindIndexFieldCriteria;
 import stroom.datasource.api.v2.IndexField;
 import stroom.db.util.JooqUtil;
+import stroom.db.util.StringMatchConditionUtil;
 import stroom.docref.DocRef;
-import stroom.docref.StringMatch;
 import stroom.index.impl.IndexFieldDao;
 import stroom.index.shared.IndexFieldImpl;
+import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.StringUtil;
 
 import jakarta.inject.Inject;
 import org.jooq.Condition;
-import org.jooq.Field;
-import org.jooq.impl.DSL;
+import org.jooq.DSLContext;
+import org.jooq.exception.DataAccessException;
 
+import java.sql.SQLTransactionRollbackException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static stroom.index.impl.db.jooq.tables.IndexField.INDEX_FIELD;
 import static stroom.index.impl.db.jooq.tables.IndexFieldSource.INDEX_FIELD_SOURCE;
 
 public class IndexFieldDaoImpl implements IndexFieldDao {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexFieldDaoImpl.class);
+    public static final int MAX_DEADLOCK_RETRY_ATTEMPTS = 20;
 
     private final IndexDbConnProvider queryDatasourceDbConnProvider;
 
@@ -49,72 +61,148 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
         this.queryDatasourceDbConnProvider = queryDatasourceDbConnProvider;
     }
 
-    private int getOrCreateFieldSource(final DocRef docRef) {
-        Optional<Integer> optional = getFieldSource(docRef);
-        if (optional.isEmpty()) {
-            createFieldSource(docRef);
-            optional = getFieldSource(docRef);
+    private void ensureFieldSource(final DocRef docRef) {
+        JooqUtil.context(queryDatasourceDbConnProvider, context -> {
+            Optional<Integer> optional = getFieldSource(context, docRef, false);
+            if (optional.isEmpty()) {
+                createFieldSource(context, docRef);
+            }
+        });
+    }
+
+    private Optional<Integer> getFieldSource(final DocRef docRef,
+                                             final boolean lockFieldSource) {
+
+        return JooqUtil.contextResult(queryDatasourceDbConnProvider, context ->
+                getFieldSource(context, docRef, lockFieldSource));
+    }
+
+    private Optional<Integer> getFieldSource(final DSLContext context,
+                                             final DocRef docRef,
+                                             final boolean lockFieldSource) {
+        var c = context
+                .select(INDEX_FIELD_SOURCE.ID)
+                .from(INDEX_FIELD_SOURCE)
+                .where(INDEX_FIELD_SOURCE.TYPE.eq(docRef.getType()))
+                .and(INDEX_FIELD_SOURCE.UUID.eq(docRef.getUuid()));
+
+        if (lockFieldSource) {
+            return c.forUpdate()
+                    .fetchOptional(INDEX_FIELD_SOURCE.ID);
+        } else {
+            return c.fetchOptional(INDEX_FIELD_SOURCE.ID);
         }
-        return optional.orElseThrow();
     }
 
-    private Optional<Integer> getFieldSource(final DocRef docRef) {
-        return JooqUtil
-                .contextResult(queryDatasourceDbConnProvider, context -> context
-                        .select(INDEX_FIELD_SOURCE.ID)
-                        .from(INDEX_FIELD_SOURCE)
-                        .where(INDEX_FIELD_SOURCE.TYPE.eq(docRef.getType()))
-                        .and(INDEX_FIELD_SOURCE.UUID.eq(docRef.getUuid()))
-                        .fetchOptional(INDEX_FIELD_SOURCE.ID));
-    }
-
-    private void createFieldSource(final DocRef docRef) {
-        JooqUtil.context(queryDatasourceDbConnProvider, context -> context
+    private void createFieldSource(final DSLContext context, final DocRef docRef) {
+        // TODO Consider using JooqUtil.tryCreate() as onDuplicateKeyIgnore will
+        //  ignore any error, not just dup keys
+        context
                 .insertInto(INDEX_FIELD_SOURCE)
                 .set(INDEX_FIELD_SOURCE.TYPE, docRef.getType())
                 .set(INDEX_FIELD_SOURCE.UUID, docRef.getUuid())
                 .set(INDEX_FIELD_SOURCE.NAME, docRef.getName())
                 .onDuplicateKeyIgnore()
-                .execute());
+                .returningResult(INDEX_FIELD_SOURCE.ID)
+                .execute();
     }
 
     @Override
     public void addFields(final DocRef docRef, final Collection<IndexField> fields) {
-        final int fieldSourceId = getOrCreateFieldSource(docRef);
-        JooqUtil.context(queryDatasourceDbConnProvider, context -> {
-            var c = context.insertInto(INDEX_FIELD,
-                    INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID,
-                    INDEX_FIELD.TYPE,
-                    INDEX_FIELD.NAME,
-                    INDEX_FIELD.ANALYZER,
-                    INDEX_FIELD.INDEXED,
-                    INDEX_FIELD.STORED,
-                    INDEX_FIELD.TERM_POSITIONS,
-                    INDEX_FIELD.CASE_SENSITIVE);
-            for (final IndexField field : fields) {
-                c = c.values(fieldSourceId,
-                        (byte) field.getFldType().getIndex(),
-                        field.getFldName(),
-                        field.getAnalyzerType().getDisplayValue(),
-                        field.isIndexed(),
-                        field.isStored(),
-                        field.isTermPositions(),
-                        field.isCaseSensitive());
+        if (NullSafe.hasItems(fields)) {
+            // Do this outside the txn so other threads can see it asap
+            ensureFieldSource(docRef);
+
+            boolean success = false;
+            AtomicInteger attempt = new AtomicInteger(0);
+
+            while (!success) {
+                if (attempt.incrementAndGet() > MAX_DEADLOCK_RETRY_ATTEMPTS) {
+                    throw new RuntimeException(LogUtil.message("Gave up retrying {} upsert after {} attempts",
+                            INDEX_FIELD.getName(), attempt.get()));
+                }
+
+                try {
+                    JooqUtil.transaction(queryDatasourceDbConnProvider, txnContext -> {
+                        // Get a record lock on the field source, so we are the only thread
+                        // that can mutate the index fields for that source, else we can get a deadlock.
+                        final int fieldSourceId = getFieldSource(txnContext, docRef, true)
+                                .orElseThrow(() -> new RuntimeException("No field source found for " + docRef));
+
+                        // Establish which fields are already there, so we don't need to touch them.
+                        // This will reduce the number of records/gaps locked so hopefully reduce the risk
+                        // of deadlocks.
+                        final Set<String> existingFieldNames = new HashSet<>(txnContext.select(INDEX_FIELD.NAME)
+                                .from(INDEX_FIELD)
+                                .where(INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID.eq(fieldSourceId))
+                                .fetch(INDEX_FIELD.NAME));
+
+                        // Insert any new fields under lock
+                        var c = txnContext.insertInto(INDEX_FIELD,
+                                INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID,
+                                INDEX_FIELD.TYPE,
+                                INDEX_FIELD.NAME,
+                                INDEX_FIELD.ANALYZER,
+                                INDEX_FIELD.INDEXED,
+                                INDEX_FIELD.STORED,
+                                INDEX_FIELD.TERM_POSITIONS,
+                                INDEX_FIELD.CASE_SENSITIVE);
+
+                        int fieldCount = 0;
+                        for (final IndexField field : fields) {
+                            if (!existingFieldNames.contains(field.getFldName())) {
+                                c = c.values(
+                                        fieldSourceId,
+                                        (byte) field.getFldType().getIndex(),
+                                        field.getFldName(),
+                                        field.getAnalyzerType().getDisplayValue(),
+                                        field.isIndexed(),
+                                        field.isStored(),
+                                        field.isTermPositions(),
+                                        field.isCaseSensitive());
+                                fieldCount++;
+                            }
+                        }
+                        LOGGER.debug("{} fields to upsert on {}", fieldCount, docRef);
+                        if (fieldCount > 0) {
+                            // The update part doesn't update anything, intentiaonally
+                            c.onDuplicateKeyUpdate()
+                                    .set(INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID, fieldSourceId)
+                                    .execute();
+                        }
+                    });
+                    success = true;
+                } catch (Exception e) {
+                    // Deadlocks are likely as the upsert will create gap locks in the ID idx which has
+                    // fields from different indexes all mixed in together.
+                    if (e instanceof DataAccessException
+                            && e.getCause() instanceof SQLTransactionRollbackException sqlTxnRollbackEx
+                            && NullSafe.containsIgnoringCase(sqlTxnRollbackEx.getMessage(), "deadlock")) {
+                        LOGGER.warn(() -> LogUtil.message(
+                                "Deadlock trying to upsert {} {} into {}. Attempt: {}. Will retry. " +
+                                        "Enable DEBUG for full stacktrace.",
+                                fields.size(),
+                                StringUtil.plural("field", fields.size()),
+                                INDEX_FIELD.getName(),
+                                attempt.get()));
+                        LOGGER.debug(e.getMessage(), e);
+                    } else {
+                        throw new RuntimeException(e);
+                    }
+                }
             }
-            c.onDuplicateKeyUpdate()
-                    .set(INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID, fieldSourceId)
-                    .execute();
-        });
+        }
     }
 
     @Override
     public ResultPage<IndexField> findFields(final FindIndexFieldCriteria criteria) {
-        final Optional<Integer> optional = getFieldSource(criteria.getDataSourceRef());
+        final Optional<Integer> optional = getFieldSource(criteria.getDataSourceRef(), false);
+
         if (optional.isEmpty()) {
             return ResultPage.createCriterialBasedList(Collections.emptyList(), criteria);
         }
 
-        final Condition condition = getStringMatchCondition(
+        final Condition condition = StringMatchConditionUtil.getCondition(
                 INDEX_FIELD.NAME,
                 criteria.getStringMatch());
         final int offset = JooqUtil.getOffset(criteria.getPageRequest());
@@ -159,59 +247,5 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                 });
         return ResultPage.createCriterialBasedList(fieldInfoList, criteria);
     }
-
-    private Condition getStringMatchCondition(final Field<String> field,
-                                              final StringMatch stringMatch) {
-        Condition condition = DSL.trueCondition();
-        if (stringMatch != null) {
-            switch (stringMatch.getMatchType()) {
-                case ANY -> condition = DSL.trueCondition();
-                case NULL -> condition = field.isNull();
-                case NON_NULL -> condition = field.isNotNull();
-                case BLANK -> condition = field.likeRegex("^[[:space:]]*$");
-                case EMPTY -> condition = field.eq("");
-                case NULL_OR_BLANK -> condition = field.isNull().or(field.likeRegex(
-                        "^[[:space:]]*$"));
-                case NULL_OR_EMPTY -> condition = field.isNull().or(field.eq(
-                        ""));
-                case CONTAINS -> {
-                    if (stringMatch.isCaseSensitive()) {
-                        condition = field.contains(stringMatch.getPattern());
-                    } else {
-                        condition = field.containsIgnoreCase(stringMatch.getPattern());
-                    }
-                }
-                case EQUALS -> {
-                    if (stringMatch.isCaseSensitive()) {
-                        condition = field.equal(stringMatch.getPattern());
-                    } else {
-                        condition = field.equalIgnoreCase(stringMatch.getPattern());
-                    }
-                }
-                case NOT_EQUALS -> {
-                    if (stringMatch.isCaseSensitive()) {
-                        condition = field.notEqual(stringMatch.getPattern());
-                    } else {
-                        condition = field.notEqualIgnoreCase(stringMatch.getPattern());
-                    }
-                }
-                case STARTS_WITH -> {
-                    if (stringMatch.isCaseSensitive()) {
-                        condition = field.startsWith(stringMatch.getPattern());
-                    } else {
-                        condition = field.startsWithIgnoreCase(stringMatch.getPattern());
-                    }
-                }
-                case ENDS_WITH -> {
-                    if (stringMatch.isCaseSensitive()) {
-                        condition = field.endsWith(stringMatch.getPattern());
-                    } else {
-                        condition = field.endsWithIgnoreCase(stringMatch.getPattern());
-                    }
-                }
-                case REGEX -> condition = field.likeRegex(stringMatch.getPattern());
-            }
-        }
-        return condition;
-    }
 }
+

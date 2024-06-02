@@ -25,12 +25,10 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionDeleteSummaryRequest;
-import stroom.data.retention.shared.DataRetentionDeleteSummaryResponse;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.DataRetentionRulesResource;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.datasource.api.v2.QueryField;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionOperator;
@@ -164,8 +162,9 @@ public class DataRetentionImpactPresenter
         // Get the summary data from the rest service, this could
         // take a looooong time
         // Need to assign it to a variable for the generics typing
-        final Rest<DataRetentionDeleteSummaryResponse> rest = restFactory.create();
-        rest
+        restFactory
+                .create(RETENTION_RULES_RESOURCE)
+                .method(res -> res.getRetentionDeletionSummary(request))
                 .onSuccess(response -> {
                     // check we are expecting the results
                     if (isQueryRunning && currentQueryId.equals(response.getQueryId())) {
@@ -184,19 +183,19 @@ public class DataRetentionImpactPresenter
                         refreshVisibleData();
                     }
                 })
-                .onFailure(throwable -> {
+                .onFailure(error -> {
                     isQueryRunning = false;
                     updateButtonStates();
-                    AlertEvent.fireErrorFromException(this, throwable, null);
+                    AlertEvent.fireErrorFromException(this, error.getException(), null);
                 })
-                .call(RETENTION_RULES_RESOURCE)
-                .getRetentionDeletionSummary(request);
+                .exec();
     }
 
     private void cancelQuery() {
         if (currentQueryId != null) {
-            final Rest<Boolean> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(RETENTION_RULES_RESOURCE)
+                    .method(res -> res.cancelQuery(currentQueryId))
                     .onSuccess(success -> {
                         isQueryRunning = false;
                         clearTable();
@@ -204,14 +203,13 @@ public class DataRetentionImpactPresenter
                         updateButtonStates();
 //                        GWT.log("Cancel finished (success)");
                     })
-                    .onFailure(throwable -> {
+                    .onFailure(error -> {
                         // Have to assume it is still running
                         isQueryRunning = true;
                         updateButtonStates();
-                        AlertEvent.fireErrorFromException(this, throwable, null);
+                        AlertEvent.fireErrorFromException(this, error.getException(), null);
                     })
-                    .call(RETENTION_RULES_RESOURCE)
-                    .cancelQuery(currentQueryId);
+                    .exec();
         }
     }
 

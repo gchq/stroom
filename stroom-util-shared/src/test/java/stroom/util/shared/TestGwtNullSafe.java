@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -100,6 +101,38 @@ class TestGwtNullSafe {
                 Level2::getNonNullLevel3,
                 nonNullLevel1.getNonNullLevel2().getNonNullLevel3()))
                 .isTrue();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testEqualProperties() {
+        final AtomicReference<String> val1 = new AtomicReference<>("foo");
+        final AtomicReference<String> val1b = new AtomicReference<>("foo");
+        final AtomicReference<String> val2 = new AtomicReference<>("bar");
+        final AtomicReference<String> valNull = new AtomicReference<>(null);
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(
+                        new TypeLiteral<Tuple2<
+                                AtomicReference<String>,
+                                AtomicReference<String>>>() {
+                        })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    final AtomicReference<String> v1 = testCase.getInput()._1;
+                    final AtomicReference<String> v2 = testCase.getInput()._2;
+                    return GwtNullSafe.equalProperties(v1, v2, AtomicReference::get);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(null, null), true)
+                .addCase(Tuple.of(val1, null), false)
+                .addCase(Tuple.of(null, val1), false)
+                .addCase(Tuple.of(val1, val2), false)
+                .addCase(Tuple.of(val1, valNull), false)
+                .addCase(Tuple.of(valNull, val2), false)
+                .addCase(Tuple.of(valNull, valNull), true)
+                .addCase(Tuple.of(val1, val1), true)
+                .addCase(Tuple.of(val1, val1b), true)
+                .build();
     }
 
     @TestFactory
@@ -677,6 +710,25 @@ class TestGwtNullSafe {
                 .addCase("\n", false)
                 .addCase("\t", false)
                 .addCase("foo", false)
+                .addCase(" foo ", false)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testIsNonEmptyString() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase ->
+                        GwtNullSafe.isNonEmptyString(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, false)
+                .addCase("", false)
+                .addCase(" ", true)
+                .addCase("\n", true)
+                .addCase("\t", true)
+                .addCase("foo", true)
+                .addCase(" foo ", true)
                 .build();
     }
 
@@ -694,6 +746,25 @@ class TestGwtNullSafe {
                 .addCase("\n", true)
                 .addCase("\t", true)
                 .addCase("foo", false)
+                .addCase(" foo ", false)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testIsNonBlankString() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase ->
+                        GwtNullSafe.isNonBlankString(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, false)
+                .addCase("", false)
+                .addCase(" ", false)
+                .addCase("\n", false)
+                .addCase("\t", false)
+                .addCase("foo", true)
+                .addCase(" foo ", true)
                 .build();
     }
 
@@ -738,7 +809,6 @@ class TestGwtNullSafe {
                 .withInputType(String.class)
                 .withOutputType(boolean.class)
                 .withTestFunction(testCase -> {
-
                     final AtomicBoolean wasConsumed = new AtomicBoolean(false);
                     GwtNullSafe.consumeNonBlankString(testCase.getInput(), str -> {
                         wasConsumed.set(true);
@@ -754,6 +824,58 @@ class TestGwtNullSafe {
                 .addCase("\n", false)
                 .addCase("\t", false)
                 .addCase("foo", true)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testConsumeNonBlankString_noTrim() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    final AtomicBoolean wasConsumed = new AtomicBoolean(false);
+                    GwtNullSafe.consumeNonBlankString(testCase.getInput(), false, str -> {
+                        wasConsumed.set(true);
+                        assertThat(str)
+                                .isEqualTo(testCase.getInput());
+                    });
+                    return wasConsumed.get();
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(null, false)
+                .addCase("", false)
+                .addCase(" ", false)
+                .addCase("\n", false)
+                .addCase("\t", false)
+                .addCase("foo", true)
+                .addCase(" foo", true)
+                .addCase("foo ", true)
+                .addCase(" foo ", true)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testConsumeNonBlankString_trim() {
+        final String notConsumedStr = "NOT_CONSUMED";
+        final AtomicReference<String> consumedStrRef = new AtomicReference<>();
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(String.class)
+                .withTestFunction(testCase -> {
+                    GwtNullSafe.consumeNonBlankString(testCase.getInput(), true, consumedStrRef::set);
+                    return consumedStrRef.get();
+                })
+                .withSimpleEqualityAssertion()
+                .withBeforeTestCaseAction(() ->
+                        consumedStrRef.set(notConsumedStr))
+                .addCase(null, notConsumedStr)
+                .addCase("", notConsumedStr)
+                .addCase(" ", notConsumedStr)
+                .addCase("\n", notConsumedStr)
+                .addCase("\t", notConsumedStr)
+                .addCase("foo", "foo")
+                .addCase(" foo", "foo")
+                .addCase("foo ", "foo")
+                .addCase(" foo ", "foo")
                 .build();
     }
 
@@ -1227,7 +1349,9 @@ class TestGwtNullSafe {
         }
     }
 
+
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
     private static class Level1 {
 
@@ -1283,6 +1407,10 @@ class TestGwtNullSafe {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class Level2 {
 
         private final long id;
@@ -1331,6 +1459,10 @@ class TestGwtNullSafe {
             return Objects.hash(id, nullLevel3, nonNullLevel3, level);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class Level3 {
 
@@ -1381,6 +1513,10 @@ class TestGwtNullSafe {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class Level4 {
 
         private final long id;
@@ -1430,6 +1566,10 @@ class TestGwtNullSafe {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class Level5 {
 
         private final long id;
@@ -1466,6 +1606,10 @@ class TestGwtNullSafe {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class ListWrapper {
 
         private final List<Integer> nullList = null;
@@ -1484,6 +1628,10 @@ class TestGwtNullSafe {
             return nonNullNonEmptyList;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class MapWrapper {
 
@@ -1506,6 +1654,10 @@ class TestGwtNullSafe {
             return nonNullNonEmptyMap;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class StringWrapper {
 

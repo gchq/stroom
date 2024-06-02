@@ -17,7 +17,7 @@
 package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.table.FormatPresenter.FormatView;
-import stroom.expression.api.TimeZone.Use;
+import stroom.expression.api.UserTimeZone.Use;
 import stroom.item.client.SelectionBox;
 import stroom.query.api.v2.Format.Type;
 import stroom.widget.form.client.FormGroup;

@@ -499,7 +499,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testIndexOf4() {
         compute("substring(${val1}, indexOf(${val1}, 'q'), stringLength(${val1}))",
                 Val.of("aa-bb"),
-                out -> assertThat(out.type().isError()).isTrue());
+                out -> assertThat(out.toString()).isEqualTo(""));
     }
 
     @Test
@@ -527,7 +527,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testLastIndexOf4() {
         compute("substring(${val1}, lastIndexOf(${val1}, 'q'), stringLength(${val1}))",
                 Val.of("aa-bb"),
-                out -> assertThat(out.type().isError()).isTrue());
+                out -> assertThat(out.toString()).isEqualTo(""));
     }
 
     @Test

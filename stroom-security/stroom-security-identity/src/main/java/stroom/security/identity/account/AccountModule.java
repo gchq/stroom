@@ -27,8 +27,6 @@ import stroom.util.guice.RestResourcesBinder;
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
 
-import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
-
 public final class AccountModule extends AbstractModule {
 
     @Override
@@ -54,7 +52,7 @@ public final class AccountModule extends AbstractModule {
                 .bindJobTo(AccountMaintenance.class, jobBuilder -> jobBuilder
                         .name("Account Maintenance")
                         .description("Maintain user accounts such as disabling unused ones.")
-                        .schedule(PERIODIC, "1d"));
+                        .frequencySchedule("1d"));
     }
 
     private static class AccountMaintenance extends RunnableWrapper {

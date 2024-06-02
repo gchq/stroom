@@ -66,7 +66,7 @@ public interface Serializer<T> {
      * @param pooledByteBufferOutputStream The {@link PooledByteBufferOutputStream} to serialize the object to.
      * @param object                       The object to be serialised.
      * @return The serialised form of the object, flipped and ready for reading. This buffer should
-     * be used instead of calling {@link PooledByteBufferOutputStream#getPooledByteBuffer()} in case
+     * be used instead of calling {@link PooledByteBufferOutputStream#getByteBuffer()} in case
      * the implementation chooses not to use the passed {@link PooledByteBufferOutputStream}.
      * The returned {@link ByteBuffer} may be a pooled one so ensure that the close method
      * of pooledByteBufferOutputStream is called once byteBuffer is no longer needed.

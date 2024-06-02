@@ -65,7 +65,10 @@ VOLUME /stroom/config/
 # Create Docker volume for the content_pack_import dir as this will be mutated on 
 VOLUME /stroom/content_pack_import/
 
-# lmdb_library mouted as tmpfs not a managed volume
+# Create Docker volume for use by any lmdb data stores.
+VOLUME /stroom/lmdb/
+
+# lmdb_library muted as tmpfs not a managed volume
 
 # Create Docker volume for SLF4J output
 VOLUME /stroom/logs/
@@ -110,6 +113,7 @@ RUN \
     mkdir -p /stroom/config && \
     mkdir -p /stroom/config_fallback && \
     mkdir -p /stroom/content_pack_import && \
+    mkdir -p /stroom/lmdb && \
     mkdir -p /stroom/lmdb_library && \
     mkdir -p /stroom/logs/access && \
     mkdir -p /stroom/logs/app && \

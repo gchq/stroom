@@ -17,13 +17,10 @@
 package stroom.security.client;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.event.LogoutEvent;
 import stroom.security.shared.AppPermissionResource;
 import stroom.security.shared.SessionResource;
-import stroom.security.shared.UrlResponse;
-import stroom.security.shared.UserAndPermissions;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 
@@ -59,8 +56,9 @@ public class LoginManager implements HasHandlers {
     public void fetchUserAndPermissions() {
         // When we start the application we will try and auto login using a client certificates.
         TaskStartEvent.fire(this, "Fetching permissions...");
-        final Rest<UserAndPermissions> rest = restFactory.create();
-        rest
+        restFactory
+                .create(APP_PERMISSION_RESOURCE)
+                .method(AppPermissionResource::getUserAndPermissions)
                 .onSuccess(userAndPermissions -> {
                     if (userAndPermissions != null) {
                         currentUser.setUserAndPermissions(userAndPermissions);
@@ -73,17 +71,18 @@ public class LoginManager implements HasHandlers {
                     AlertEvent.fireInfo(LoginManager.this, throwable.getMessage(), this::logout);
                     TaskEndEvent.fire(LoginManager.this);
                 })
-                .call(APP_PERMISSION_RESOURCE).getUserAndPermissions();
+                .exec();
     }
 
     private void logout() {
         // Tell the server we want to logout and the server will provide a logout URL.
-        final Rest<UrlResponse> rest = restFactory.create();
-        rest
+        restFactory
+                .create(STROOM_SESSION_RESOURCE)
+                .method(res -> res.logout(getLocation()))
                 .onSuccess(response -> setLocation(response.getUrl()))
-                .onFailure(throwable -> AlertEvent.fireErrorFromException(LoginManager.this, throwable, null))
-                .call(STROOM_SESSION_RESOURCE)
-                .logout(getLocation());
+                .onFailure(restError -> AlertEvent
+                        .fireErrorFromException(LoginManager.this, restError.getException(), null))
+                .exec();
     }
 
     @Override

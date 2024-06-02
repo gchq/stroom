@@ -36,27 +36,34 @@ import javax.inject.Provider;
 public class AnalyticRulePresenter
         extends DocumentEditTabPresenter<LinkTabPanelView, AnalyticRuleDoc> {
 
-    private static final TabData NOTIFICATION = new TabDataImpl("Notification");
-    private static final TabData PROCESSING = new TabDataImpl("Processing");
+    private static final TabData QUERY = new TabDataImpl("Query");
+    private static final TabData NOTIFICATIONS = new TabDataImpl("Notifications");
+    private static final TabData EXECUTION = new TabDataImpl("Execution");
     private static final TabData SHARDS = new TabDataImpl("Shards");
+    private static final TabData DUPLICATE_MANAGEMENT = new TabDataImpl("Duplicate Management");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
 
     @Inject
     public AnalyticRulePresenter(final EventBus eventBus,
                                  final LinkTabPanelView view,
-                                 final Provider<AnalyticNotificationPresenter> notificationPresenterProvider,
+                                 final Provider<AnalyticQueryEditPresenter> analyticQueryEditPresenterProvider,
+                                 final Provider<NotificationListPresenter> notificationPresenterProvider,
                                  final Provider<AnalyticProcessingPresenter> processPresenterProvider,
                                  final Provider<AnalyticDataShardsPresenter> analyticDataShardsPresenterProvider,
+                                 final Provider<DuplicateManagementPresenter> duplicateManagementPresenterProvider,
                                  final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
         super(eventBus, view);
 
         final AnalyticProcessingPresenter analyticProcessingPresenter = processPresenterProvider.get();
+        analyticProcessingPresenter.setDocumentEditPresenter(this);
         analyticProcessingPresenter.addChangeDataHandler(e ->
                 setRuleType(analyticProcessingPresenter.getView().getProcessingType()));
 
-        addTab(PROCESSING, new DocumentEditTabProvider<>(() -> analyticProcessingPresenter));
-        addTab(NOTIFICATION, new DocumentEditTabProvider<>(notificationPresenterProvider::get));
+        addTab(QUERY, new DocumentEditTabProvider<>(analyticQueryEditPresenterProvider::get));
+        addTab(NOTIFICATIONS, new DocumentEditTabProvider<>(notificationPresenterProvider::get));
+        addTab(EXECUTION, new DocumentEditTabProvider<>(() -> analyticProcessingPresenter));
         addTab(SHARDS, new DocumentEditTabProvider<>(analyticDataShardsPresenterProvider::get));
+        addTab(DUPLICATE_MANAGEMENT, new DocumentEditTabProvider<>(duplicateManagementPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<AnalyticRuleDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
@@ -73,7 +80,7 @@ public class AnalyticRulePresenter
                 return document.copy().description(presenter.getText()).build();
             }
         });
-        selectTab(PROCESSING);
+        selectTab(QUERY);
     }
 
     @Override
@@ -84,6 +91,7 @@ public class AnalyticRulePresenter
 
     private void setRuleType(final AnalyticProcessType analyticProcessType) {
         setTabHidden(SHARDS, analyticProcessType != AnalyticProcessType.TABLE_BUILDER);
+        setTabHidden(DUPLICATE_MANAGEMENT, analyticProcessType != AnalyticProcessType.SCHEDULED_QUERY);
     }
 
     @Override

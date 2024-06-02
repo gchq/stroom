@@ -22,7 +22,6 @@ import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.Search;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.DestroyReason;
@@ -50,6 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class SearchModel {
 
@@ -234,8 +234,9 @@ public class SearchModel {
                             .dateTimeSettings(dateTimeSettingsFactory.getDateTimeSettings())
                             .build();
 
-                    final Rest<DashboardSearchResponse> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .create(DASHBOARD_RESOURCE)
+                            .method(res -> res.search(currentNode, request))
                             .onSuccess(response -> {
                                 Result result = null;
                                 try {
@@ -262,8 +263,7 @@ public class SearchModel {
                                 }
                                 resultConsumer.accept(null);
                             })
-                            .call(DASHBOARD_RESOURCE)
-                            .search(currentNode, request);
+                            .exec();
                 }
             }
         }
@@ -280,8 +280,9 @@ public class SearchModel {
 ////                .dashboardUuid(dashboardUuid)
 ////                .componentId(componentId)
 ////                .build();
-////        final Rest<Boolean> rest = restFactory.create();
-////        rest
+//        restFactory
+//                .builder()
+//                .forBoolean()
 ////                .onSuccess(response -> {
 ////                    if (!response) {
 ////                        Console.log("Unable to destroy search: " + request);
@@ -303,8 +304,9 @@ public class SearchModel {
 ////                .dashboardUuid(dashboardUuid)
 ////                .componentId(componentId)
 ////                .build();
-////        final Rest<Boolean> rest = restFactory.create();
-////        rest
+//        restFactory
+//                .builder()
+//                .forBoolean()
 ////                .onSuccess(response -> {
 ////                    if (!response) {
 ////                        Console.log("Unable to destroy search: " + request);
@@ -354,8 +356,9 @@ public class SearchModel {
                     .storeHistory(storeHistory)
                     .build();
 
-            final Rest<DashboardSearchResponse> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(DASHBOARD_RESOURCE)
+                    .method(res -> res.search(currentNode, request))
                     .onSuccess(response -> {
                         if (search == currentSearch) {
                             currentQueryKey = response.getQueryKey();
@@ -388,8 +391,7 @@ public class SearchModel {
                             poll(Fetch.CHANGES, false);
                         }
                     })
-                    .call(DASHBOARD_RESOURCE)
-                    .search(currentNode, request);
+                    .exec();
         }
     }
 
@@ -399,15 +401,12 @@ public class SearchModel {
      * @return A result component map.
      */
     private Map<String, ComponentSettings> createComponentSettingsMap() {
-        if (componentMap.size() > 0) {
-            final Map<String, ComponentSettings> resultComponentMap = new HashMap<>();
-            for (final Entry<String, ResultComponent> entry : componentMap.entrySet()) {
-                final String componentId = entry.getKey();
-                final ResultComponent resultComponent = entry.getValue();
-                final ComponentSettings componentSettings = resultComponent.getSettings();
-                resultComponentMap.put(componentId, componentSettings);
-            }
-            return resultComponentMap;
+        if (!componentMap.isEmpty()) {
+            return componentMap.entrySet()
+                    .stream()
+                    .collect(Collectors.toMap(
+                            Entry::getKey,
+                            entry -> entry.getValue().getSettings()));
         }
         return null;
     }

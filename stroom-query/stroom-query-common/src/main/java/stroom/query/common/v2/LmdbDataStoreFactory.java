@@ -1,10 +1,11 @@
 package stroom.query.common.v2;
 
+import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.expression.api.ExpressionContext;
 import stroom.lmdb.LmdbConfig;
-import stroom.lmdb.LmdbEnv;
-import stroom.lmdb.LmdbEnvFactory;
-import stroom.lmdb.LmdbEnvFactory.SimpleEnvBuilder;
+import stroom.lmdb2.LmdbEnv;
+import stroom.lmdb2.LmdbEnvDir;
+import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
@@ -38,19 +39,25 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbDataStoreFactory.class);
 
-    private final LmdbEnvFactory lmdbEnvFactory;
+    private final LmdbEnvDirFactory lmdbEnvDirFactory;
     private final Provider<SearchResultStoreConfig> resultStoreConfigProvider;
     private final Provider<Executor> executorProvider;
     private final Path searchResultStoreDir;
+    private final MapDataStoreFactory mapDataStoreFactory;
+    private final ByteBufferFactory bufferFactory;
 
     @Inject
-    public LmdbDataStoreFactory(final LmdbEnvFactory lmdbEnvFactory,
+    public LmdbDataStoreFactory(final LmdbEnvDirFactory lmdbEnvDirFactory,
                                 final Provider<SearchResultStoreConfig> resultStoreConfigProvider,
                                 final PathCreator pathCreator,
-                                final Provider<Executor> executorProvider) {
-        this.lmdbEnvFactory = lmdbEnvFactory;
+                                final Provider<Executor> executorProvider,
+                                final MapDataStoreFactory mapDataStoreFactory,
+                                final ByteBufferFactory bufferFactory) {
+        this.lmdbEnvDirFactory = lmdbEnvDirFactory;
         this.resultStoreConfigProvider = resultStoreConfigProvider;
         this.executorProvider = executorProvider;
+        this.mapDataStoreFactory = mapDataStoreFactory;
+        this.bufferFactory = bufferFactory;
 
         // This config prop requires restart, so we can hold on to it
         this.searchResultStoreDir = getLocalDir(resultStoreConfigProvider.get(), pathCreator);
@@ -77,24 +84,31 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                 throw new RuntimeException("MapDataStore cannot produce payloads");
             }
 
-            return new MapDataStore(
-                    new Serialisers(resultStoreConfig),
-                    componentId,
-                    tableSettings,
+            return mapDataStoreFactory.create(
                     expressionContext,
+                    searchRequestSource,
+                    queryKey, componentId,
+                    tableSettings,
                     fieldIndex,
                     paramMap,
                     dataStoreSettings,
                     errorConsumer);
+
         } else {
             final String subDirectory = queryKey + "_" + componentId + "_" + UUID.randomUUID();
-            final SimpleEnvBuilder lmdbEnvBuilder = lmdbEnvFactory
-                    .builder(resultStoreConfig.getLmdbConfig())
-                    .withSubDirectory(subDirectory);
+            final LmdbEnvDir lmdbEnvDir = lmdbEnvDirFactory
+                    .builder()
+                    .config(resultStoreConfig.getLmdbConfig())
+                    .subDir(subDirectory)
+                    .build();
+
+            final LmdbEnv.Builder lmdbEnvBuilder = LmdbEnv
+                    .builder()
+                    .config(resultStoreConfig.getLmdbConfig())
+                    .lmdbEnvDir(lmdbEnvDir);
 
             return new LmdbDataStore(
                     searchRequestSource,
-                    new Serialisers(resultStoreConfig),
                     lmdbEnvBuilder,
                     resultStoreConfig,
                     queryKey,
@@ -105,7 +119,8 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                     paramMap,
                     dataStoreSettings,
                     executorProvider,
-                    errorConsumer);
+                    errorConsumer,
+                    bufferFactory);
         }
     }
 
@@ -153,7 +168,7 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                                                      final BasicFileAttributes attrs) {
                         if (Files.isRegularFile(file)) {
                             totalSizeBytes.add(attrs.size());
-                            if (LmdbEnv.isLmdbDataFile(file)) {
+                            if (LmdbEnvDir.isLmdbDataFile(file)) {
                                 storeCount.increment();
                             }
                         }

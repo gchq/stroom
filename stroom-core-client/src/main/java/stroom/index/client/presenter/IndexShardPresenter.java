@@ -29,7 +29,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
@@ -433,14 +433,14 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, Lucene
                     @Override
                     protected void exec(final Range range,
                                         final Consumer<ResultPage<IndexShard>> dataConsumer,
-                                        final Consumer<Throwable> throwableConsumer) {
+                                        final Consumer<RestError> errorConsumer) {
                         CriteriaUtil.setRange(queryCriteria, range);
-                        final Rest<ResultPage<IndexShard>> rest = restFactory.create();
-                        rest
+                        restFactory
+                                .create(INDEX_RESOURCE)
+                                .method(res -> res.find(queryCriteria))
                                 .onSuccess(dataConsumer)
-                                .onFailure(throwableConsumer)
-                                .call(INDEX_RESOURCE)
-                                .find(queryCriteria);
+                                .onFailure(errorConsumer)
+                                .exec();
                     }
 
                     @Override
@@ -541,11 +541,11 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, Lucene
     private void doFlush() {
         delayedUpdate.reset();
         nodeManager.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
-            final Rest<Long> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(INDEX_RESOURCE)
+                    .method(res -> res.flushIndexShards(nodeName, selectionCriteria))
                     .onSuccess(result -> delayedUpdate.update())
-                    .call(INDEX_RESOURCE)
-                    .flushIndexShards(nodeName, selectionCriteria);
+                    .exec();
         }), throwable -> {
         });
 
@@ -557,11 +557,11 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, Lucene
     private void doDelete() {
         delayedUpdate.reset();
         nodeManager.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
-            final Rest<Long> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(INDEX_RESOURCE)
+                    .method(res -> res.deleteIndexShards(nodeName, selectionCriteria))
                     .onSuccess(result -> delayedUpdate.update())
-                    .call(INDEX_RESOURCE)
-                    .deleteIndexShards(nodeName, selectionCriteria);
+                    .exec();
         }), throwable -> {
         });
 

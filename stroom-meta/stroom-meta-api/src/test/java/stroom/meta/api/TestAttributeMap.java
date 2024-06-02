@@ -3,7 +3,6 @@ package stroom.meta.api;
 import stroom.test.common.TestUtil;
 
 import io.vavr.Tuple;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
@@ -11,6 +10,8 @@ import org.junit.jupiter.api.TestFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -208,7 +209,7 @@ class TestAttributeMap {
                 "FOO", "123",
                 "BAR", "456"));
 
-        Assertions.assertThat(attributeMap1)
+        assertThat(attributeMap1)
                 .isEqualTo(attributeMap2);
     }
 
@@ -223,7 +224,7 @@ class TestAttributeMap {
                 "FOO", "123",
                 "BAR", "456"));
 
-        Assertions.assertThat(attributeMap1)
+        assertThat(attributeMap1)
                 .isNotEqualTo(attributeMap2);
     }
 
@@ -239,7 +240,7 @@ class TestAttributeMap {
                 "bar", "VALUE2"));
 
         // Value cases not same
-        Assertions.assertThat(attributeMap1)
+        assertThat(attributeMap1)
                 .isNotEqualTo(attributeMap2);
     }
 
@@ -330,33 +331,118 @@ class TestAttributeMap {
     void testPut() {
         final AttributeMap attributeMap1 = new AttributeMap();
 
-        Assertions.assertThat(attributeMap1)
+        assertThat(attributeMap1)
                 .isEmpty();
 
         attributeMap1.put("foo", "value1a");
-        Assertions.assertThat(attributeMap1)
+        assertThat(attributeMap1)
                 .hasSize(1);
-        Assertions.assertThat(attributeMap1.get("Foo"))
+        assertThat(attributeMap1.get("Foo"))
                 .isEqualTo("value1a");
 
         attributeMap1.put("FOO", "value1b"); // 'same' key, new val
-        Assertions.assertThat(attributeMap1)
+        assertThat(attributeMap1)
                 .hasSize(1);
-        Assertions.assertThat(attributeMap1.get("Foo"))
+        assertThat(attributeMap1.get("Foo"))
                 .isEqualTo("value1b");
 
         attributeMap1.put("bar", "value2a");
-        Assertions.assertThat(attributeMap1)
+        assertThat(attributeMap1)
                 .hasSize(2);
-        Assertions.assertThat(attributeMap1.get("BAR"))
+        assertThat(attributeMap1.get("BAR"))
                 .isEqualTo("value2a");
+    }
+
+    @Test
+    void testPut_withDateNormalisation() {
+        final AttributeMap attributeMap1 = new AttributeMap();
+        final String dateStrIn = "2010-01-01T23:59:59.123456+00:00";
+        final String dateStrOut = "2010-01-01T23:59:59.123Z";
+
+        for (final String key : StandardHeaderArguments.DATE_HEADER_KEYS) {
+            attributeMap1.clear();
+            assertThat(attributeMap1)
+                    .isEmpty();
+
+            attributeMap1.put(key, dateStrIn);
+
+            assertThat(attributeMap1)
+                    .hasSize(1);
+
+            assertThat(attributeMap1.get(key))
+                    .isEqualTo(dateStrOut);
+        }
+    }
+
+    @Test
+    void testPutDateTime1() {
+        final AttributeMap attributeMap1 = new AttributeMap();
+        final String dateStrIn = "2010-01-01T23:59:59.123456+00:00";
+        final String dateStrOut = "2010-01-01T23:59:59.123Z";
+        final long epochMs = Instant.parse(dateStrIn).toEpochMilli();
+        final String key = "foo";
+
+        assertThat(attributeMap1)
+                .isEmpty();
+
+        attributeMap1.putDateTime(key, epochMs);
+
+        assertThat(attributeMap1)
+                .hasSize(1);
+
+        assertThat(attributeMap1.get(key))
+                .isEqualTo(dateStrOut);
+    }
+
+    @Test
+    void testPutDateTime2() {
+        final AttributeMap attributeMap1 = new AttributeMap();
+        final String dateStrIn = "2010-01-01T23:59:59.123456+00:00";
+        final String dateStrOut = "2010-01-01T23:59:59.123Z";
+        final Instant instant = Instant.parse(dateStrIn);
+        final String key = "foo";
+
+        assertThat(attributeMap1)
+                .isEmpty();
+
+        attributeMap1.putDateTime(key, instant);
+
+        assertThat(attributeMap1)
+                .hasSize(1);
+
+        assertThat(attributeMap1.get(key))
+                .isEqualTo(dateStrOut);
+    }
+
+    @Test
+    void testPutCurrentDateTime() {
+        final AttributeMap attributeMap1 = new AttributeMap();
+        final String dateStrIn = "2010-01-01T23:59:59.123456+00:00";
+        final String dateStrOut = "2010-01-01T23:59:59.123Z";
+        final String key = "foo";
+
+        assertThat(attributeMap1)
+                .isEmpty();
+
+        final Instant now = Instant.now();
+        attributeMap1.putCurrentDateTime(key);
+
+        assertThat(attributeMap1)
+                .hasSize(1);
+
+        final String val = attributeMap1.get(key);
+        assertThat(val)
+                .isNotNull();
+        final Instant instant = Instant.parse(val);
+        assertThat(Duration.between(now, instant))
+                .isLessThan(Duration.ofMillis(100));
     }
 
     @Test
     void testComputeIfAbsent1() {
 
         final AttributeMap attributeMap1 = new AttributeMap();
-        Assertions.assertThat(attributeMap1)
+        assertThat(attributeMap1)
                 .isEmpty();
         final AtomicInteger callCount = new AtomicInteger();
 
@@ -365,9 +451,9 @@ class TestAttributeMap {
             return "value(" + k + ")";
         });
 
-        Assertions.assertThat(computedVal)
+        assertThat(computedVal)
                 .isEqualTo("value(foo)");
-        Assertions.assertThat(callCount)
+        assertThat(callCount)
                 .hasValue(1);
     }
 
@@ -376,7 +462,7 @@ class TestAttributeMap {
 
         final AttributeMap attributeMap1 = new AttributeMap();
         attributeMap1.put("foo", "value(initial)");
-        Assertions.assertThat(attributeMap1)
+        assertThat(attributeMap1)
                 .hasSize(1);
         final AtomicInteger callCount = new AtomicInteger();
 
@@ -385,9 +471,9 @@ class TestAttributeMap {
             return "value(" + k + ")";
         });
 
-        Assertions.assertThat(computedVal)
+        assertThat(computedVal)
                 .isEqualTo("value(initial)");
-        Assertions.assertThat(callCount)
+        assertThat(callCount)
                 .hasValue(0);
     }
 }

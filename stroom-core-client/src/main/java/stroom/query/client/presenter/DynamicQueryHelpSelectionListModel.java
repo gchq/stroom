@@ -77,8 +77,9 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
         if (!request.equals(lastRequest)) {
             lastRequest = request;
 
-            restFactory.builder()
-                    .forResultPageOf(QueryHelpRow.class)
+            restFactory
+                    .create(QUERY_RESOURCE)
+                    .method(res -> res.fetchQueryHelpItems(request))
                     .onSuccess(response -> {
                         // Only update if the request is still current.
                         if (request == lastRequest) {
@@ -105,8 +106,7 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
                             consumer.accept(resultPage);
                         }
                     })
-                    .call(QUERY_RESOURCE)
-                    .fetchQueryHelpItems(request);
+                    .exec();
         }
     }
 

@@ -34,7 +34,9 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class ExpressionTreeViewImpl extends ViewWithUiHandlers<ExpressionUiHandlers> implements ExpressionTreeView {
+public class ExpressionTreeViewImpl
+        extends ViewWithUiHandlers<ExpressionUiHandlers>
+        implements ExpressionTreeView {
 
     private final ExpressionTreePanel treePanel;
     private final DraggableTreePanel<Item> layoutPanel;

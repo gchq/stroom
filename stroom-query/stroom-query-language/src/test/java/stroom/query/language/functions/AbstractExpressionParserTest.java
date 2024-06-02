@@ -1,11 +1,13 @@
 package stroom.query.language.functions;
 
 import stroom.expression.api.ExpressionContext;
-import stroom.query.language.functions.ref.MyByteBufferInput;
-import stroom.query.language.functions.ref.MyByteBufferOutput;
+import stroom.query.language.functions.ref.KryoDataReader;
+import stroom.query.language.functions.ref.KryoDataWriter;
 import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
 
+import com.esotericsoftware.kryo.io.ByteBufferInput;
+import com.esotericsoftware.kryo.unsafe.UnsafeByteBufferOutput;
 import org.assertj.core.data.Offset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,12 +37,12 @@ public class AbstractExpressionParserTest {
         return () -> new ChildData() {
             @Override
             public StoredValues first() {
-                return values.get(0);
+                return values.getFirst();
             }
 
             @Override
             public StoredValues last() {
-                return values.get(values.size() - 1);
+                return values.getLast();
             }
 
             @Override
@@ -89,18 +91,19 @@ public class AbstractExpressionParserTest {
                                    final StoredValues storedValues) {
         final Val val = generator.eval(storedValues, null);
 
-        ByteBuffer buffer;
-        try (final MyByteBufferOutput output = new MyByteBufferOutput(1024, -1)) {
-            valueReferenceIndex.write(storedValues, output);
-            output.flush();
+        final ByteBuffer buffer;
+        try (final UnsafeByteBufferOutput output = new UnsafeByteBufferOutput(1024, -1)) {
+            try (final KryoDataWriter writer = new KryoDataWriter(output)) {
+                valueReferenceIndex.write(storedValues, writer);
+            }
             buffer = output.getByteBuffer();
-            buffer.flip();
-            print(buffer);
         }
+        buffer.flip();
+        print(buffer);
 
         StoredValues newStoredValues;
-        try (final MyByteBufferInput input = new MyByteBufferInput(buffer)) {
-            newStoredValues = valueReferenceIndex.read(input);
+        try (final KryoDataReader reader = new KryoDataReader(new ByteBufferInput(buffer))) {
+            newStoredValues = valueReferenceIndex.read(reader);
         }
 
         final Val newVal = generator.eval(newStoredValues, null);

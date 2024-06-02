@@ -21,25 +21,31 @@ import stroom.analytics.client.presenter.AnalyticDataShardsPresenter;
 import stroom.analytics.client.presenter.AnalyticDataShardsPresenter.AnalyticDataShardsView;
 import stroom.analytics.client.presenter.AnalyticEmailDestinationPresenter;
 import stroom.analytics.client.presenter.AnalyticEmailDestinationPresenter.AnalyticEmailDestinationView;
-import stroom.analytics.client.presenter.AnalyticNotificationPresenter;
-import stroom.analytics.client.presenter.AnalyticNotificationPresenter.AnalyticNotificationView;
+import stroom.analytics.client.presenter.AnalyticNotificationEditPresenter;
+import stroom.analytics.client.presenter.AnalyticNotificationEditPresenter.AnalyticNotificationEditView;
 import stroom.analytics.client.presenter.AnalyticProcessingPresenter;
 import stroom.analytics.client.presenter.AnalyticProcessingPresenter.AnalyticProcessingView;
 import stroom.analytics.client.presenter.AnalyticRulePresenter;
 import stroom.analytics.client.presenter.AnalyticStreamDestinationPresenter;
 import stroom.analytics.client.presenter.AnalyticStreamDestinationPresenter.AnalyticStreamDestinationView;
-import stroom.analytics.client.presenter.ScheduledQueryProcessingPresenter;
-import stroom.analytics.client.presenter.ScheduledQueryProcessingPresenter.ScheduledQueryProcessingView;
+import stroom.analytics.client.presenter.DuplicateManagementPresenter;
+import stroom.analytics.client.presenter.DuplicateManagementPresenter.DuplicateManagementView;
+import stroom.analytics.client.presenter.ScheduledProcessEditPresenter;
+import stroom.analytics.client.presenter.ScheduledProcessEditView;
+import stroom.analytics.client.presenter.ScheduledProcessingPresenter;
+import stroom.analytics.client.presenter.ScheduledProcessingPresenter.ScheduledProcessingView;
 import stroom.analytics.client.presenter.StreamingProcessingPresenter;
 import stroom.analytics.client.presenter.StreamingProcessingPresenter.StreamingProcessingView;
 import stroom.analytics.client.presenter.TableBuilderProcessingPresenter;
 import stroom.analytics.client.presenter.TableBuilderProcessingPresenter.TableBuilderProcessingView;
 import stroom.analytics.client.view.AnalyticDataShardsViewImpl;
 import stroom.analytics.client.view.AnalyticEmailDestinationViewImpl;
-import stroom.analytics.client.view.AnalyticNotificationViewImpl;
+import stroom.analytics.client.view.AnalyticNotificationEditViewImpl;
 import stroom.analytics.client.view.AnalyticProcessingViewImpl;
 import stroom.analytics.client.view.AnalyticStreamDestinationViewImpl;
-import stroom.analytics.client.view.ScheduledQueryProcessingViewImpl;
+import stroom.analytics.client.view.DuplicateManagementViewImpl;
+import stroom.analytics.client.view.ScheduledProcessEditViewImpl;
+import stroom.analytics.client.view.ScheduledProcessingViewImpl;
 import stroom.analytics.client.view.StreamingProcessingViewImpl;
 import stroom.analytics.client.view.TableBuilderProcessingViewImpl;
 import stroom.core.client.gin.PluginModule;
@@ -55,9 +61,9 @@ public class AnalyticsModule extends PluginModule {
         bindPresenterWidget(AnalyticProcessingPresenter.class,
                 AnalyticProcessingView.class,
                 AnalyticProcessingViewImpl.class);
-        bindPresenterWidget(AnalyticNotificationPresenter.class,
-                AnalyticNotificationView.class,
-                AnalyticNotificationViewImpl.class);
+        bindPresenterWidget(AnalyticNotificationEditPresenter.class,
+                AnalyticNotificationEditView.class,
+                AnalyticNotificationEditViewImpl.class);
         bindPresenterWidget(AnalyticEmailDestinationPresenter.class,
                 AnalyticEmailDestinationView.class,
                 AnalyticEmailDestinationViewImpl.class);
@@ -67,14 +73,20 @@ public class AnalyticsModule extends PluginModule {
         bindPresenterWidget(AnalyticDataShardsPresenter.class,
                 AnalyticDataShardsView.class,
                 AnalyticDataShardsViewImpl.class);
-        bindPresenterWidget(ScheduledQueryProcessingPresenter.class,
-                ScheduledQueryProcessingView.class,
-                ScheduledQueryProcessingViewImpl.class);
+        bindPresenterWidget(ScheduledProcessEditPresenter.class,
+                ScheduledProcessEditView.class,
+                ScheduledProcessEditViewImpl.class);
         bindPresenterWidget(TableBuilderProcessingPresenter.class,
                 TableBuilderProcessingView.class,
                 TableBuilderProcessingViewImpl.class);
         bindPresenterWidget(StreamingProcessingPresenter.class,
                 StreamingProcessingView.class,
                 StreamingProcessingViewImpl.class);
+        bindPresenterWidget(ScheduledProcessingPresenter.class,
+                ScheduledProcessingView.class,
+                ScheduledProcessingViewImpl.class);
+        bindPresenterWidget(DuplicateManagementPresenter.class,
+                DuplicateManagementView.class,
+                DuplicateManagementViewImpl.class);
     }
 }

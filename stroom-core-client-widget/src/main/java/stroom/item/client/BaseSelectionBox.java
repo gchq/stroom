@@ -28,7 +28,6 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     private T value;
     private SelectionPopup<T, I> popup;
     private boolean allowTextEntry;
-    private String previousText;
 
     private final EventBinder eventBinder = new EventBinder() {
         @Override
@@ -36,17 +35,13 @@ public class BaseSelectionBox<T, I extends SelectionItem>
             registerHandler(textBox.addClickHandler(event -> onTextBoxClick()));
             registerHandler(svgIconBox.addClickHandler(event -> showPopup()));
             registerHandler(textBox.addKeyDownHandler(event -> {
-                previousText = textBox.getText();
                 int keyCode = event.getNativeKeyCode();
                 if (KeyCodes.KEY_ENTER == keyCode) {
                     showPopup();
                 }
             }));
-            registerHandler(textBox.addKeyUpHandler(event -> {
-                if (!Objects.equals(previousText, textBox.getText())) {
-                    ValueChangeEvent.fire(BaseSelectionBox.this, value);
-                }
-            }));
+            registerHandler(textBox.addValueChangeHandler(event ->
+                    ValueChangeEvent.fire(BaseSelectionBox.this, value)));
         }
     };
 

@@ -104,14 +104,14 @@ public final class ClientDateUtil {
         if (ms == null) {
             return "";
         }
-        return nativeToDateString(ms.doubleValue());
+        return MomentJs.nativeToDateString(ms.doubleValue());
     }
 
     public static String toISOString(final Long ms) {
         if (ms == null) {
             return "";
         }
-        return nativeToISOString(ms.doubleValue());
+        return MomentJs.nativeToISOString(ms.doubleValue());
     }
 
     /**
@@ -121,7 +121,7 @@ public final class ClientDateUtil {
         Long millis = null;
         if (string != null && string.trim().length() > 0) {
             try {
-                double res = nativeFromISOString(string.trim());
+                double res = MomentJs.nativeFromISOString(string.trim());
                 if (res > 0) {
                     millis = (long) res;
                 }
@@ -206,7 +206,7 @@ public final class ClientDateUtil {
                 && format != null
                 && format.trim().length() > 0) {
             try {
-                double res = nativeFromCustomFormatString(string.trim(), format.trim());
+                double res = MomentJs.nativeFromCustomFormatString(string.trim(), format.trim());
                 if (res > 0) {
                     millis = (long) res;
                 }
@@ -217,59 +217,4 @@ public final class ClientDateUtil {
 
         return millis;
     }
-
-    /**
-     * Checks if a date is a valid date after parsing it from a string.
-     * If the date string has no time zone in it then it will be treated as
-     * local time.
-     */
-    public static boolean isValid(final String string) {
-        if (string == null || string.trim().length() == 0) {
-            return false;
-        }
-        return nativeIsValid(string);
-    }
-
-    private static native String nativeToDateString(final double ms)/*-{
-       var moment = $wnd.moment(ms);
-       return moment.format('YYYY-MM-DD');
-    }-*/;
-
-    private static native String nativeToISOString(final double ms)/*-{
-       var moment = $wnd.moment(ms);
-       return moment.toISOString();
-    }-*/;
-
-    /**
-     * moment(str) returns the date/time in local time. If the date string has no
-     * timezone information it is assumed to be local time.
-     * See https://momentjs.com/docs/#/parsing/utc/
-     */
-    private static native double nativeFromISOString(final String date)/*-{
-        if ($wnd.moment(date).isValid()) {
-           var moment = $wnd.moment(date);
-           var date = moment.toDate();
-           return date.getTime();
-        }
-        return -1;
-    }-*/;
-
-    /**
-     * moment(date, format) returns the date/time in local time. If the date string has no*
-     * timezone information it is assumed to be local time.
-     * See https://momentjs.com/docs/#/parsing/utc/
-     */
-    private static native double nativeFromCustomFormatString(final String date,
-                                                              final String format)/*-{
-        if ($wnd.moment(date, format).isValid()) {
-           var moment = $wnd.moment(date, format);
-           var date = moment.toDate();
-           return date.getTime();
-        }
-        return -1;
-    }-*/;
-
-    private static native boolean nativeIsValid(final String date)/*-{
-        return $wnd.moment(date).isValid();
-    }-*/;
 }

@@ -121,6 +121,15 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
         this.activityPanel.setWidget(widget);
     }
 
+    @Override
+    public void focusQuickFilter() {
+        nameFilter.focus();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Binder extends UiBinder<Widget, NavigationViewImpl> {
 
     }

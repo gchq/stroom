@@ -20,7 +20,6 @@ package stroom.pipeline.stepping.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.ClassificationUiHandlers;
 import stroom.data.client.presenter.SourcePresenter;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
@@ -99,7 +98,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     private final PipelineTreePresenter pipelineTreePresenter;
     private final SourcePresenter sourcePresenter;
     private final Provider<ElementPresenter> elementPresenterProvider;
-    private final StepLocationPresenter stepLocationPresenter;
+    private final StepLocationLinkPresenter stepLocationLinkPresenter;
     private final StepControlPresenter stepControlPresenter;
     private final SteppingFilterPresenter steppingFilterPresenter;
     private final RestFactory restFactory;
@@ -126,7 +125,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                              final RestFactory restFactory,
                              final SourcePresenter sourcePresenter,
                              final Provider<ElementPresenter> elementPresenterProvider,
-                             final StepLocationPresenter stepLocationPresenter,
+                             final StepLocationLinkPresenter stepLocationLinkPresenter,
                              final StepControlPresenter stepControlPresenter,
                              final SteppingFilterPresenter steppingFilterPresenter) {
         super(eventBus, view);
@@ -135,11 +134,11 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         this.pipelineTreePresenter = pipelineTreePresenter;
         this.sourcePresenter = sourcePresenter;
         this.elementPresenterProvider = elementPresenterProvider;
-        this.stepLocationPresenter = stepLocationPresenter;
+        this.stepLocationLinkPresenter = stepLocationLinkPresenter;
         this.stepControlPresenter = stepControlPresenter;
         this.steppingFilterPresenter = steppingFilterPresenter;
 
-        view.addWidgetRight(stepLocationPresenter.getView().asWidget());
+        view.addWidgetRight(stepLocationLinkPresenter.getView().asWidget());
         view.addWidgetRight(stepControlPresenter.getView().asWidget());
         view.setTreeView(pipelineTreePresenter.getView());
 
@@ -190,7 +189,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                     final PipelineElement selectedElement = getSelectedPipeElement();
                     onSelect(selectedElement);
                 }));
-        registerHandler(stepLocationPresenter.addStepControlHandler(event ->
+        registerHandler(stepLocationLinkPresenter.addStepControlHandler(event ->
                 step(event.getStepType(), event.getStepLocation())));
         registerHandler(stepControlPresenter.addStepControlHandler(event ->
                 step(event.getStepType(), event.getStepLocation())));
@@ -529,8 +528,9 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         request.setChildStreamType(childStreamType);
 
         // Load the pipeline.
-        final Rest<List<PipelineData>> rest = restFactory.create();
-        rest
+        restFactory
+                .create(PIPELINE_RESOURCE)
+                .method(res -> res.fetchPipelineData(pipeline))
                 .onSuccess(result -> {
                     final PipelineData pipelineData = result.get(result.size() - 1);
                     final List<PipelineData> baseStack = new ArrayList<>(result.size() - 1);
@@ -561,8 +561,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                                 stepLocation.getRecordIndex()));
                     }
                 })
-                .call(PIPELINE_RESOURCE)
-                .fetchPipelineData(pipeline);
+                .exec();
     }
 
     public void save() {
@@ -602,15 +601,15 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
             request.setStepType(stepType);
 
-            final Rest<SteppingResult> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(STEPPING_RESOURCE)
+                    .method(res -> res.step(request))
                     .onSuccess(this::readResult)
-                    .onFailure(caught -> {
-                        AlertEvent.fireErrorFromException(SteppingPresenter.this, caught, null);
+                    .onFailure(restError -> {
+                        AlertEvent.fireErrorFromException(SteppingPresenter.this, restError.getException(), null);
                         busyTranslating = false;
                     })
-                    .call(STEPPING_RESOURCE)
-                    .step(request);
+                    .exec();
         }
     }
 
@@ -715,7 +714,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                 // record that was found and update the request with the new
                 // position ready for the next step.
                 request.setStepLocation(result.getStepLocation());
-                stepLocationPresenter.setStepLocation(result.getStepLocation());
+                stepLocationLinkPresenter.setStepLocation(result.getStepLocation());
             }
 
             // Sync step filters.

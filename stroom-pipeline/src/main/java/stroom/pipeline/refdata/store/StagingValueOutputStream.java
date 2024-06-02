@@ -93,10 +93,6 @@ public class StagingValueOutputStream
         }
     }
 
-    public void release() {
-        pooledByteBufferOutputStream.release();
-    }
-
     public void clear() {
         pooledByteBufferOutputStream.clear();
         writeMetaDataPadding();
@@ -169,7 +165,7 @@ public class StagingValueOutputStream
     public ByteBuffer getFullByteBuffer() {
         if (fullBuffer == null) {
             checkTypeIdSet();
-            fullBuffer = pooledByteBufferOutputStream.getPooledByteBuffer().getByteBuffer();
+            fullBuffer = pooledByteBufferOutputStream.getByteBuffer();
             // Hash just the value part of the buffer
             final int valueLength = fullBuffer.remaining() - META_LENGTH;
             try {

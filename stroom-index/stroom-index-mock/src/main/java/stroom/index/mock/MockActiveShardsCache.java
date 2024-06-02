@@ -3,7 +3,8 @@ package stroom.index.mock;
 import stroom.docref.DocRef;
 import stroom.index.impl.ActiveShardsCache;
 import stroom.index.impl.ActiveShardsCacheImpl.ActiveShards;
-import stroom.index.impl.IndexShardService;
+import stroom.index.impl.IndexShardCreator;
+import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.LuceneIndexDocCache;
 import stroom.index.shared.IndexException;
@@ -18,18 +19,21 @@ public class MockActiveShardsCache implements ActiveShardsCache {
 
     private final NodeInfo nodeInfo;
     private final IndexShardWriterCache indexShardWriterCache;
-    private final IndexShardService indexShardService;
+    private final IndexShardDao indexShardDao;
+    private final IndexShardCreator indexShardCreator;
     private final LuceneIndexDocCache luceneIndexDocCache;
 
     private final Map<IndexShardKey, ActiveShards> map = new ConcurrentHashMap<>();
 
     public MockActiveShardsCache(final NodeInfo nodeInfo,
                                  final IndexShardWriterCache indexShardWriterCache,
-                                 final IndexShardService indexShardService,
+                                 final IndexShardDao indexShardDao,
+                                 final IndexShardCreator indexShardCreator,
                                  final LuceneIndexDocCache luceneIndexDocCache) {
         this.nodeInfo = nodeInfo;
         this.indexShardWriterCache = indexShardWriterCache;
-        this.indexShardService = indexShardService;
+        this.indexShardDao = indexShardDao;
+        this.indexShardCreator = indexShardCreator;
         this.luceneIndexDocCache = luceneIndexDocCache;
     }
 
@@ -46,7 +50,8 @@ public class MockActiveShardsCache implements ActiveShardsCache {
             return new ActiveShards(
                     nodeInfo,
                     indexShardWriterCache,
-                    indexShardService,
+                    indexShardDao,
+                    indexShardCreator,
                     luceneIndexDoc.getShardsPerPartition(),
                     luceneIndexDoc.getMaxDocsPerShard(),
                     indexShardKey);

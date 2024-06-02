@@ -19,7 +19,6 @@ package stroom.annotation.client;
 import stroom.annotation.client.ChangeStatusPresenter.ChangeStatusView;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.SetStatusRequest;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -70,12 +69,15 @@ public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
     public void show(final List<Long> annotationIdList) {
         if (currentStatus == null) {
             final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-            final Rest<List<String>> rest = restFactory.create();
-            rest.onSuccess(values -> {
-                if (currentStatus == null && values != null && values.size() > 0) {
-                    changeStatus(values.get(0));
-                }
-            }).call(annotationResource).getStatus(null);
+            restFactory
+                    .create(annotationResource)
+                    .method(res -> res.getStatus(null))
+                    .onSuccess(values -> {
+                        if (currentStatus == null && values != null && values.size() > 0) {
+                            changeStatus(values.get(0));
+                        }
+                    })
+                    .exec();
         }
 
         ShowPopupEvent.builder(this)
@@ -86,12 +88,12 @@ public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-                        final Rest<Integer> rest = restFactory.create();
-
                         final SetStatusRequest request = new SetStatusRequest(annotationIdList, currentStatus);
-                        rest.onSuccess(values -> GWT.log("Updated " + values + " annotations"))
-                                .call(annotationResource)
-                                .setStatus(request);
+                        restFactory
+                                .create(annotationResource)
+                                .method(res -> res.setStatus(request))
+                                .onSuccess(values -> GWT.log("Updated " + values + " annotations"))
+                                .exec();
                     }
                     e.hide();
                 })
@@ -110,8 +112,11 @@ public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
     public void showStatusChooser(final Element element) {
         statusPresenter.setDataSupplier((filter, consumer) -> {
             final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-            final Rest<List<String>> rest = restFactory.create();
-            rest.onSuccess(consumer).call(annotationResource).getStatus(filter);
+            restFactory
+                    .create(annotationResource)
+                    .method(res -> res.getStatus(filter))
+                    .onSuccess(consumer)
+                    .exec();
         });
         statusPresenter.clearFilter();
         statusPresenter.setSelected(currentStatus);

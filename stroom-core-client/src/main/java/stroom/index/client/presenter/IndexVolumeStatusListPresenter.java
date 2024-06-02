@@ -22,7 +22,7 @@ import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolume;
@@ -212,19 +212,19 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<IndexVolume>> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
+                                final Consumer<RestError> errorConsumer) {
                 CriteriaUtil.setRange(criteria, range);
-                final Rest<ResultPage<IndexVolume>> rest = restFactory.create();
-                rest
+                restFactory
+                        .create(INDEX_VOLUME_RESOURCE)
+                        .method(res -> res.find(criteria))
                         .onSuccess(result -> {
                             dataConsumer.accept(result);
                             if (consumer != null) {
                                 consumer.accept(result);
                             }
                         })
-                        .onFailure(throwableConsumer)
-                        .call(INDEX_VOLUME_RESOURCE)
-                        .find(criteria);
+                        .onFailure(errorConsumer)
+                        .exec();
             }
         };
         dataProvider.addDataDisplay(dataGrid);

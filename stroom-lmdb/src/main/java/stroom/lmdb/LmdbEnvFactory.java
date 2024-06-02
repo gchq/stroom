@@ -2,13 +2,11 @@ package stroom.lmdb;
 
 import stroom.util.io.ByteSize;
 import stroom.util.io.PathCreator;
-import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.lmdbjava.Env;
 import org.lmdbjava.Env.Builder;
@@ -16,37 +14,29 @@ import org.lmdbjava.EnvFlags;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 
 @Singleton // The LMDB lib is dealt with statically by LMDB java so only want to initialise it once
 public class LmdbEnvFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbEnvFactory.class);
-    private static volatile boolean HAS_LIBRARY_BEEN_CONFIGURED = false;
 
     private final PathCreator pathCreator;
-    private final TempDirProvider tempDirProvider;
 
     @Inject
     public LmdbEnvFactory(final PathCreator pathCreator,
-                          final TempDirProvider tempDirProvider,
-                          final Provider<LmdbLibraryConfig> lmdbLibraryConfigProvider) {
+                          final LmdbLibrary lmdbLib) {
         this.pathCreator = pathCreator;
-        this.tempDirProvider = tempDirProvider;
 
         // Library config is done via java system props and is static code in LMDBJava so
         // only want to do it once
-        if (!HAS_LIBRARY_BEEN_CONFIGURED) {
-            configureLibraryUnderLock(lmdbLibraryConfigProvider.get());
-        }
+        lmdbLib.init();
     }
 
     /**
@@ -54,10 +44,7 @@ public class LmdbEnvFactory {
      * For a fully custom builder use one of the other builder methods.
      */
     public SimpleEnvBuilder builder(final LmdbConfig lmdbConfig) {
-        return new SimpleEnvBuilder(
-                pathCreator,
-                tempDirProvider,
-                lmdbConfig);
+        return new SimpleEnvBuilder(pathCreator, lmdbConfig);
     }
 
     /**
@@ -67,146 +54,14 @@ public class LmdbEnvFactory {
      *            a dedicated subDir for each env.
      */
     public CustomEnvBuilder builder(final Path dir) {
-        return new CustomEnvBuilder(
-                pathCreator,
-                tempDirProvider,
-                dir);
+        return new CustomEnvBuilder(dir);
     }
-
-    /**
-     * @param dir The path where the environment will be located on the filesystem,
-     *            which can include the '~' character and system properties (e.g.
-     *            '/${stroom.hom}/ref_data') which will be substituted.
-     *            Should be local disk and not shared storage.
-     */
-    public CustomEnvBuilder builder(final String dir) {
-        return new CustomEnvBuilder(
-                pathCreator,
-                tempDirProvider,
-                pathCreator.toAppPath(dir));
-    }
-
-    private void initLmdbLibrary(final LmdbLibraryConfig lmdbLibraryConfig) {
-    }
-
-    /**
-     * Relies on this class being a singleton
-     */
-    private synchronized void configureLibraryUnderLock(final LmdbLibraryConfig lmdbLibraryConfig) {
-        if (!HAS_LIBRARY_BEEN_CONFIGURED) {
-            LOGGER.info("Configuring LMDB system library");
-
-            final Path lmdbSystemLibraryPath = Optional.ofNullable(lmdbLibraryConfig.getProvidedSystemLibraryPath())
-                    .map(pathCreator::toAppPath)
-                    .orElse(null);
-
-            if (lmdbSystemLibraryPath != null) {
-                if (!Files.isReadable(lmdbSystemLibraryPath)) {
-                    throw new RuntimeException("Unable to read LMDB system library at " +
-                            lmdbSystemLibraryPath.toAbsolutePath().normalize());
-                }
-                // jakarta.validation should ensure the path is valid if set
-                final String lmdbNativeLibProp = LmdbLibraryConfig.LMDB_NATIVE_LIB_PROP;
-                System.setProperty(lmdbNativeLibProp, lmdbSystemLibraryPath.toAbsolutePath().normalize().toString());
-                LOGGER.info("Using provided LMDB system library file. Setting prop {} to '{}'",
-                        lmdbNativeLibProp, lmdbSystemLibraryPath);
-            } else {
-                final Path systemLibraryExtractDir = getLibraryExtractDir(lmdbLibraryConfig);
-
-                // LMDB extracts the lib on boot to a unique temp file and should delete on JVM exit,
-                // but just in case clear out any old ones.
-                cleanUpExtractDir(systemLibraryExtractDir);
-
-                // Set the location to extract the bundled LMDB binary to
-                final String lmdbExtractDirProp = LmdbLibraryConfig.LMDB_EXTRACT_DIR_PROP;
-                System.setProperty(
-                        lmdbExtractDirProp,
-                        systemLibraryExtractDir.toAbsolutePath().normalize().toString());
-                LOGGER.info("Bundled LMDB system library binary will be extracted. Setting prop {} to '{}'",
-                        lmdbExtractDirProp, systemLibraryExtractDir);
-                HAS_LIBRARY_BEEN_CONFIGURED = true;
-            }
-        } else {
-            LOGGER.debug("Another thread beat us to it");
-        }
-    }
-
-    private Path getLibraryExtractDir(final LmdbLibraryConfig lmdbLibraryConfig) {
-        String extractDirStr = lmdbLibraryConfig.getSystemLibraryExtractDir();
-
-        final String extractDirPropName = lmdbLibraryConfig.getFullPathStr(LmdbLibraryConfig.EXTRACT_DIR_PROP_NAME);
-
-        Path extractDir;
-        if (extractDirStr == null) {
-            LOGGER.warn("LMDB system library extract dir is not set ({}), falling back to temporary directory {}.",
-                    extractDirPropName,
-                    tempDirProvider.get());
-
-            extractDir = tempDirProvider.get();
-            Objects.requireNonNull(extractDir, "Temp dir is not set");
-            extractDir = extractDir.resolve(LmdbLibraryConfig.DEFAULT_LIBRARY_EXTRACT_SUB_DIR_NAME);
-        } else {
-            extractDir = pathCreator.toAppPath(extractDirStr);
-        }
-
-        try {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Ensuring directory {} exists (from configuration property {})",
-                        extractDir.toAbsolutePath(),
-                        extractDirPropName);
-            }
-            Files.createDirectories(extractDir);
-        } catch (IOException e) {
-            throw new RuntimeException(
-                    LogUtil.message("Error ensuring directory {} exists (from configuration property {})",
-                            extractDir.toAbsolutePath(),
-                            extractDirPropName), e);
-        }
-
-        if (!Files.isReadable(extractDir)) {
-            throw new RuntimeException(
-                    LogUtil.message("Directory {} (from configuration property {}) is not readable",
-                            extractDir.toAbsolutePath(),
-                            extractDirPropName));
-        }
-
-        if (!Files.isWritable(extractDir)) {
-            throw new RuntimeException(
-                    LogUtil.message("Directory {} (from configuration property {}) is not writable",
-                            extractDir.toAbsolutePath(),
-                            extractDirPropName));
-        }
-
-        return extractDir;
-    }
-
-    private void cleanUpExtractDir(final Path extractDir) {
-        try (final DirectoryStream<Path> directoryStream = Files.newDirectoryStream(
-                extractDir, "lmdbjava-native-library-*.so")) {
-
-            for (final Path redundantLibraryFilePath : directoryStream) {
-                LOGGER.info("Deleting redundant LMDB library file "
-                        + redundantLibraryFilePath.toAbsolutePath().normalize());
-                try {
-                    Files.deleteIfExists(redundantLibraryFilePath);
-                } catch (IOException e) {
-                    LOGGER.error("Unable to delete file " + extractDir.toAbsolutePath().normalize(), e);
-                    // swallow error as these old files don't matter really
-                }
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Error listing contents of " + extractDir.toAbsolutePath().normalize());
-        }
-    }
-
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
     abstract static class AbstractEnvBuilder {
 
-        private final PathCreator pathCreator;
-        private final TempDirProvider tempDirProvider;
         private final Path localDir;
         private final Set<EnvFlags> envFlags = EnumSet.noneOf(EnvFlags.class);
 
@@ -219,12 +74,8 @@ public class LmdbEnvFactory {
         protected String name = null;
 
         private AbstractEnvBuilder(final PathCreator pathCreator,
-                                   final TempDirProvider tempDirProvider,
                                    final LmdbConfig lmdbConfig) {
-            this(
-                    pathCreator,
-                    tempDirProvider,
-                    getLocalDirAsPath(pathCreator, lmdbConfig));
+            this(getLocalDirAsPath(pathCreator, lmdbConfig));
 
             this.maxReaders = lmdbConfig.getMaxReaders();
             this.maxStoreSize = lmdbConfig.getMaxStoreSize();
@@ -232,11 +83,7 @@ public class LmdbEnvFactory {
             this.isReaderBlockedByWriter = lmdbConfig.isReaderBlockedByWriter();
         }
 
-        private AbstractEnvBuilder(final PathCreator pathCreator,
-                                   final TempDirProvider tempDirProvider,
-                                   final Path localDir) {
-            this.pathCreator = pathCreator;
-            this.tempDirProvider = tempDirProvider;
+        private AbstractEnvBuilder(final Path localDir) {
             this.localDir = localDir;
         }
 
@@ -372,10 +219,8 @@ public class LmdbEnvFactory {
      */
     public static class CustomEnvBuilder extends AbstractEnvBuilder {
 
-        private CustomEnvBuilder(final PathCreator pathCreator,
-                                 final TempDirProvider tempDirProvider,
-                                 final Path dir) {
-            super(pathCreator, tempDirProvider, dir);
+        private CustomEnvBuilder(final Path dir) {
+            super(dir);
         }
 
         @Override
@@ -445,9 +290,8 @@ public class LmdbEnvFactory {
     public static class SimpleEnvBuilder extends AbstractEnvBuilder {
 
         private SimpleEnvBuilder(final PathCreator pathCreator,
-                                 final TempDirProvider tempDirProvider,
                                  final LmdbConfig lmdbConfig) {
-            super(pathCreator, tempDirProvider, lmdbConfig);
+            super(pathCreator, lmdbConfig);
         }
 
         @Override

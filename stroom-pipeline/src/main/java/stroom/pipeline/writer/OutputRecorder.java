@@ -90,7 +90,7 @@ public class OutputRecorder extends AbstractDestinationProvider implements Recor
         private byte[] footer;
 
         @Override
-        public OutputStream getByteArrayOutputStream() {
+        public OutputStream getOutputStream() {
             return outputStream;
         }
 

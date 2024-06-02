@@ -19,12 +19,10 @@ package stroom.dashboard.client.query;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.dashboard.shared.StoredQueryResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.ResultPage;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -101,8 +99,9 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
         criteria.setFavourite(false);
         criteria.setPageRequest(new PageRequest(0, 100));
 
-        final Rest<ResultPage<StoredQuery>> rest = restFactory.create();
-        rest
+        restFactory
+                .create(STORED_QUERY_RESOURCE)
+                .method(res -> res.find(criteria))
                 .onSuccess(result -> {
                     selectionModel.clear();
 
@@ -142,8 +141,7 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
                                 .fire();
                     }
                 })
-                .call(STORED_QUERY_RESOURCE)
-                .find(criteria);
+                .exec();
     }
 
     @Override

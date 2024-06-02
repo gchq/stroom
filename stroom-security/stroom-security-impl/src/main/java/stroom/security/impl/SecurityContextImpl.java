@@ -82,7 +82,7 @@ class SecurityContextImpl implements SecurityContext {
     }
 
     @Override
-    public UserIdentity createIdentity(final String subjectId) {
+    public UserIdentity getOrCreateUserIdentity(final String subjectId) {
         Objects.requireNonNull(subjectId, "Null subjectId provided");
         // Inject as provider to avoid circular dep issues
         return userCacheProvider.get().getOrCreate(subjectId)
@@ -91,7 +91,23 @@ class SecurityContextImpl implements SecurityContext {
     }
 
     @Override
-    public UserIdentity createIdentityByUserUuid(final String userUuid) {
+    public UserIdentity getIdentityBySubjectId(final String subjectId, final boolean isGroup) {
+        // TODO this method can probably go when we make subject fully unique
+        //  Added temporarily to enable content import to run as groups or users.
+        Objects.requireNonNull(subjectId, "Null user uuid provided");
+        // Inject as provider to avoid circular dep issues
+        return userCacheProvider.get().get(subjectId, isGroup)
+                .map(BasicUserIdentity::new)
+                .orElseThrow(() -> new AuthenticationException(LogUtil.message(
+                        "Unable to find {} with uuid: {}",
+                        (isGroup
+                                ? "group"
+                                : "user"),
+                        subjectId)));
+    }
+
+    @Override
+    public UserIdentity getIdentityByUserUuid(final String userUuid) {
         Objects.requireNonNull(userUuid, "Null user uuid provided");
         // Inject as provider to avoid circular dep issues
         return userCacheProvider.get().getByUuid(userUuid)
@@ -366,7 +382,7 @@ class SecurityContextImpl implements SecurityContext {
      */
     @Override
     public <T> T asAdminUserResult(final Supplier<T> supplier) {
-        return asUserResult(createIdentity(User.ADMIN_SUBJECT_ID), supplier);
+        return asUserResult(getOrCreateUserIdentity(User.ADMIN_USER_SUBJECT_ID), supplier);
     }
 
     /**
@@ -374,7 +390,7 @@ class SecurityContextImpl implements SecurityContext {
      */
     @Override
     public void asAdminUser(final Runnable runnable) {
-        asUser(createIdentity(User.ADMIN_SUBJECT_ID), runnable);
+        asUser(getOrCreateUserIdentity(User.ADMIN_USER_SUBJECT_ID), runnable);
     }
 
     /**

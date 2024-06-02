@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
@@ -114,7 +115,7 @@ public class RollingDestinations {
         boolean rolled = true;
         try {
             // Try and roll the destination.
-            rolled = dest.tryFlushAndRoll(false, System.currentTimeMillis());
+            rolled = dest.tryFlushAndRoll(false, Instant.now());
 
         } finally {
             // If we rolled the destination then remove it and unlock it.
@@ -154,7 +155,7 @@ public class RollingDestinations {
     private void rollAll(final boolean force) {
         LOGGER.debug("rollAll()");
 
-        final long currentTime = System.currentTimeMillis();
+        final Instant currentTime = Instant.now();
         currentDestinations.forEach(1, (key, destination) -> {
             // We have to do this here as foreach runs multiple threads so each thread needs to run as proc user
             securityContext.asProcessingUser(() -> {

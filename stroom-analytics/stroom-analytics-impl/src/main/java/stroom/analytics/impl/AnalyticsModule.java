@@ -16,6 +16,7 @@
 
 package stroom.analytics.impl;
 
+import stroom.analytics.api.AnalyticsService;
 import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.explorer.api.HasDataSourceDocRefs;
 import stroom.job.api.ScheduledJobsBinder;
@@ -25,13 +26,13 @@ import stroom.query.common.v2.HasResultStoreInfo;
 import stroom.query.common.v2.SearchProvider;
 import stroom.search.impl.NodeSearchTaskHandlerProvider;
 import stroom.util.RunnableWrapper;
+import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
+import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
-
-import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class AnalyticsModule extends AbstractModule {
 
@@ -41,26 +42,36 @@ public class AnalyticsModule extends AbstractModule {
                 .bindJobTo(TableBuilderAnalyticExecutorRunnable.class, builder -> builder
                         .name("Analytic Executor: Table Builder")
                         .description("Run table building analytics periodically")
-                        .schedule(PERIODIC, "10m")
+                        .frequencySchedule("10m")
                         .enabled(false)
                         .advanced(true))
 //                .bindJobTo(StreamingAnalyticExecutorRunnable.class, builder -> builder
 //                        .name("Analytic Executor: Streaming")
 //                        .description("Run streaming analytics periodically")
-//                        .schedule(PERIODIC, "1m")
+//                        .periodicSchedule("1m")
 //                        .enabled(false)
 //                        .advanced(true))
                 .bindJobTo(ScheduledAnalyticExecutorRunnable.class, builder -> builder
                         .name("Analytic Executor: Scheduled Query")
                         .description("Run scheduled index query analytics periodically")
-                        .schedule(PERIODIC, "10m")
+                        .frequencySchedule("10m")
                         .enabled(false)
                         .advanced(true));
         GuiceUtil.buildMultiBinder(binder(), HasResultStoreInfo.class).addBinding(AnalyticDataStores.class);
 
         RestResourcesBinder.create(binder())
                 .bind(AnalyticProcessResourceImpl.class)
-                .bind(AnalyticDataShardResourceImpl.class);
+                .bind(AnalyticDataShardResourceImpl.class)
+                .bind(DuplicateCheckResourceImpl.class)
+                .bind(ExecutionScheduleResourceImpl.class);
+
+        bind(AnalyticsService.class).to(AnalyticsServiceImpl.class);
+        bind(DuplicateCheckFactory.class).to(DuplicateCheckFactoryImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class)
+                .addBinding(StreamingAnalyticCache.class);
+        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
+                .addBinding(StreamingAnalyticCache.class);
 
         // Live federated search provision.
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)

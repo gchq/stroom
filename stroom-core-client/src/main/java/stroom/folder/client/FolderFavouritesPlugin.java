@@ -27,6 +27,8 @@ import com.google.web.bindery.event.shared.EventBus;
 
 public class FolderFavouritesPlugin extends Plugin implements TabData {
 
+    public static final String TAB_TYPE = "Favourites";
+
     @Inject
     public FolderFavouritesPlugin(final EventBus eventBus) {
         super(eventBus);
@@ -45,5 +47,10 @@ public class FolderFavouritesPlugin extends Plugin implements TabData {
     @Override
     public boolean isCloseable() {
         return true;
+    }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
     }
 }

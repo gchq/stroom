@@ -21,7 +21,7 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.expression.api.TimeZone;
+import stroom.expression.api.UserTimeZone;
 import stroom.preferences.client.TimePreferencesPresenter.TimePreferencesView;
 import stroom.ui.config.shared.UserPreferences;
 
@@ -52,7 +52,7 @@ public final class TimePreferencesPresenter
 
     public void read(final UserPreferences userPreferences) {
         getView().setPattern(userPreferences.getDateTimePattern());
-        final TimeZone timeZone = userPreferences.getTimeZone();
+        final UserTimeZone timeZone = userPreferences.getTimeZone();
         if (timeZone != null) {
             getView().setTimeZoneUse(timeZone.getUse());
             getView().setTimeZoneId(timeZone.getId());
@@ -62,7 +62,7 @@ public final class TimePreferencesPresenter
     }
 
     public void write(final UserPreferences.Builder builder) {
-        final TimeZone timeZone = TimeZone.builder()
+        final UserTimeZone timeZone = UserTimeZone.builder()
                 .use(getView().getTimeZoneUse())
                 .id(getView().getTimeZoneId())
                 .offsetHours(getView().getTimeZoneOffsetHours())
@@ -84,9 +84,9 @@ public final class TimePreferencesPresenter
 
         void setPattern(String pattern);
 
-        TimeZone.Use getTimeZoneUse();
+        UserTimeZone.Use getTimeZoneUse();
 
-        void setTimeZoneUse(TimeZone.Use use);
+        void setTimeZoneUse(UserTimeZone.Use use);
 
         String getTimeZoneId();
 

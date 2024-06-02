@@ -1,6 +1,6 @@
 package stroom.search.impl;
 
-import stroom.index.impl.IndexShardService;
+import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.TimePartitionFactory;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -27,14 +27,14 @@ import java.util.Map;
 public class NodeSearchTaskCreator implements NodeTaskCreator {
 
     private final IndexStore indexStore;
-    private final IndexShardService indexShardService;
+    private final IndexShardDao indexShardDao;
     private final TimePartitionFactory timePartitionFactory = new TimePartitionFactory();
 
     @Inject
     public NodeSearchTaskCreator(final IndexStore indexStore,
-                                 final IndexShardService indexShardService) {
+                                 final IndexShardDao indexShardDao) {
         this.indexStore = indexStore;
-        this.indexShardService = indexShardService;
+        this.indexShardDao = indexShardDao;
     }
 
     @Override
@@ -56,7 +56,7 @@ public class NodeSearchTaskCreator implements NodeTaskCreator {
         findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_PARTITION, true, false);
         findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_ID, true, false);
 
-        final ResultPage<IndexShard> indexShards = indexShardService.find(findIndexShardCriteria);
+        final ResultPage<IndexShard> indexShards = indexShardDao.find(findIndexShardCriteria);
 
         // Build a map of nodes that will deal with each set of shards.
         final Map<String, List<Long>> shardMap = new HashMap<>();

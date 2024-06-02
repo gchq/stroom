@@ -21,10 +21,8 @@ import stroom.cell.tickbox.client.TickBoxCell.Appearance;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.table.client.MyCellTable;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.security.shared.Changes;
 import stroom.security.shared.DocumentPermissionNames;
@@ -202,20 +200,17 @@ public class PermissionsListPresenter
     }
 
     private void refreshDocTypeIcons() {
-
         // Hold map of doc type icons keyed on type to save constructing for each row
-        final Rest<DocumentTypes> rest = restFactory.create();
-        rest
-                .onSuccess(documentTypes -> {
-                    typeToSvgMap = documentTypes
-                            .getTypes()
-                            .stream()
-                            .collect(Collectors.toMap(
-                                    DocumentType::getType,
-                                    DocumentType::getIcon));
-                })
-                .call(EXPLORER_RESOURCE)
-                .fetchDocumentTypes();
+        restFactory
+                .create(EXPLORER_RESOURCE)
+                .method(ExplorerResource::fetchDocumentTypes)
+                .onSuccess(documentTypes -> typeToSvgMap = documentTypes
+                        .getTypes()
+                        .stream()
+                        .collect(Collectors.toMap(
+                                DocumentType::getType,
+                                DocumentType::getIcon)))
+                .exec();
     }
 
     public void addPermission(final String userUuid, final String permission) {

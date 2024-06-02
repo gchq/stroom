@@ -1,6 +1,6 @@
 package stroom.query.api.v2;
 
-import stroom.expression.api.TimeZone;
+import stroom.expression.api.UserTimeZone;
 
 import org.junit.jupiter.api.Test;
 
@@ -12,14 +12,14 @@ class DateTimeFormatBuilderTest {
         final String pattern = "DAY MONTH YEAR";
 
         final String timeZoneId = "someId";
-        final TimeZone.Use use = TimeZone.Use.LOCAL;
+        final UserTimeZone.Use use = UserTimeZone.Use.LOCAL;
         final Integer offsetHours = 3;
         final Integer offsetMinutes = 5;
 
         final DateTimeFormatSettings dateTimeFormat = DateTimeFormatSettings
                 .builder()
                 .pattern(pattern)
-                .timeZone(TimeZone
+                .timeZone(UserTimeZone
                         .builder()
                         .id(timeZoneId)
                         .use(use)

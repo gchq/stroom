@@ -17,7 +17,6 @@
 
 package stroom.index.client.presenter;
 
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
@@ -33,7 +32,6 @@ import stroom.index.shared.LuceneIndexDoc.PartitionBy;
 import stroom.item.client.SelectionBox;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.shared.ResultPage;
 
 import com.google.gwt.core.shared.GWT;
 import com.google.inject.Inject;
@@ -116,8 +114,9 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
     }
 
     private void updateGroupList(final String selected) {
-        final Rest<ResultPage<IndexVolumeGroup>> rest = restFactory.create();
-        rest
+        restFactory
+                .create(INDEX_VOLUME_GROUP_RESOURCE)
+                .method(res -> res.find(new ExpressionCriteria()))
                 .onSuccess(result -> {
                     final List<String> volumeGroupNames = result
                             .getValues()
@@ -133,8 +132,7 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
                         listBox.setValue(selected);
                     }
                 })
-                .call(INDEX_VOLUME_GROUP_RESOURCE)
-                .find(new ExpressionCriteria());
+                .exec();
     }
 
     public interface IndexSettingsView extends View, ReadOnlyChangeHandler, HasUiHandlers<IndexSettingsUiHandlers> {

@@ -33,7 +33,6 @@ import stroom.widget.customdatebox.client.MyDateBox;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.InputEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.ui.Composite;
@@ -426,12 +425,12 @@ public class TermEditor extends Composite {
         registerHandler(dateFrom.addKeyDownHandler(keyDownHandler));
         registerHandler(dateTo.addKeyDownHandler(keyDownHandler));
 
-        registerHandler(value.addDomHandler(e -> fireDirty(), InputEvent.getType()));
-        registerHandler(valueFrom.addDomHandler(e -> fireDirty(), InputEvent.getType()));
-        registerHandler(valueTo.addDomHandler(e -> fireDirty(), InputEvent.getType()));
-        registerHandler(date.addDomHandler(e -> fireDirty(), InputEvent.getType()));
-        registerHandler(dateFrom.addDomHandler(e -> fireDirty(), InputEvent.getType()));
-        registerHandler(dateTo.addDomHandler(e -> fireDirty(), InputEvent.getType()));
+        registerHandler(value.addValueChangeHandler(e -> fireDirty()));
+        registerHandler(valueFrom.addValueChangeHandler(e -> fireDirty()));
+        registerHandler(valueTo.addValueChangeHandler(e -> fireDirty()));
+        registerHandler(date.addValueChangeHandler(e -> fireDirty()));
+        registerHandler(dateFrom.addValueChangeHandler(e -> fireDirty()));
+        registerHandler(dateTo.addValueChangeHandler(e -> fireDirty()));
 
         registerHandler(date.addValueChangeHandler(event -> fireDirty()));
         registerHandler(dateFrom.addValueChangeHandler(event -> fireDirty()));

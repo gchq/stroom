@@ -1,15 +1,19 @@
 package stroom.query.common.v2;
 
+import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ref.DataReader;
 import stroom.query.language.functions.ref.ErrorConsumer;
+import stroom.query.language.functions.ref.KryoDataReader;
 import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
 
+import com.esotericsoftware.kryo.io.ByteBufferInput;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -32,10 +36,12 @@ public class TestValueSerialisation {
         final CompiledDepths compiledDepths = new CompiledDepths(compiledColumnArray, false);
         KeyFactoryConfigImpl keyFactoryConfig =
                 new KeyFactoryConfigImpl(SourceType.DASHBOARD_UI, compiledColumnArray, compiledDepths);
-        final Serialisers serialisers = new Serialisers(new SearchResultStoreConfig());
+        final ByteBufferFactory byteBufferFactory = new ByteBufferFactory();
+        final DataWriterFactory writerFactory =
+                new DataWriterFactory(errorConsumer, 1000);
         final KeyFactory keyFactory = KeyFactoryFactory.create(keyFactoryConfig, compiledDepths);
         final LmdbRowValueFactory lmdbRowValueFactory =
-                new LmdbRowValueFactory(valueReferenceIndex, serialisers.getOutputFactory(), errorConsumer);
+                new LmdbRowValueFactory(byteBufferFactory, valueReferenceIndex, writerFactory);
         final long timeMs = System.currentTimeMillis();
         final StoredValues storedValues = valueReferenceIndex.createStoredValues();
         compiledColumnArray[0].getGenerator().set(Val.of(ValLong.create(1L)), storedValues);
@@ -45,7 +51,13 @@ public class TestValueSerialisation {
         final Key key = parentKey.resolve(timeMs, uniqueId);
         final ByteBuffer rowValue = lmdbRowValueFactory.create(storedValues);
 
-        final StoredValues readStoredValues = valueReferenceIndex.read(rowValue);
+        final StoredValues readStoredValues;
+        try (final DataReader reader =
+                new KryoDataReader(new ByteBufferInput(rowValue))) {
+            readStoredValues = valueReferenceIndex.read(reader);
+        }
         Assertions.assertThat(readStoredValues).isEqualTo(storedValues);
+
+        byteBufferFactory.release(rowValue);
     }
 }

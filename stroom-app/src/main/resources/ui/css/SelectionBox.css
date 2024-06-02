@@ -31,21 +31,28 @@
 .svgIconBox input {
     height: 100%;
     width: 100%;
-    padding-right: 22px;
+    padding-right: 26px;
     min-width: 200px;
 }
 
-.svgIconBox-icon {
+.svgIconBox-icon-outer {
     position: absolute;
-    top: 50%;
-    right: 6px;
-    height: 16px;
-    width: 16px;
+    top: 0;
+    right: 0px;
+    height: 100%;
+    width: 26px;
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    cursor: pointer;
 }
 
-.svgIconBox-icon svg {
-    position: absolute;
-    top: -50%;
+.svgIconBox-icon-inner {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    cursor: pointer;
 }
 
 .SelectionPopup .gwt-ListBox {

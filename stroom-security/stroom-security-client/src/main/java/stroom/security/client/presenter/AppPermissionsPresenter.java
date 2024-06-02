@@ -21,7 +21,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermissionResource;
@@ -86,14 +85,14 @@ public class AppPermissionsPresenter extends
 
         } else {
             // Fetch permissions and populate table.
-            final Rest<UserAndPermissions> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(APP_PERMISSION_RESOURCE)
+                    .method(res -> res.fetchUserAppPermissions(relatedUser))
                     .onSuccess(userAppPermissions -> {
                         AppPermissionsPresenter.this.userAppPermissions = userAppPermissions;
                         updateAllPermissions();
                     })
-                    .call(APP_PERMISSION_RESOURCE)
-                    .fetchUserAppPermissions(relatedUser);
+                    .exec();
         }
     }
 
@@ -103,8 +102,9 @@ public class AppPermissionsPresenter extends
             dataGrid.setRowCount(allPermissions.size(), true);
 
         } else {
-            final Rest<List<String>> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(APP_PERMISSION_RESOURCE)
+                    .method(AppPermissionResource::fetchAllPermissions)
                     .onSuccess(allPermissions -> {
                         Collections.sort(allPermissions);
                         this.allPermissions = allPermissions;
@@ -112,8 +112,7 @@ public class AppPermissionsPresenter extends
                         dataGrid.setRowData(0, allPermissions);
                         dataGrid.setRowCount(allPermissions.size(), true);
                     })
-                    .call(APP_PERMISSION_RESOURCE)
-                    .fetchAllPermissions();
+                    .exec();
         }
     }
 
@@ -147,11 +146,11 @@ public class AppPermissionsPresenter extends
                     request.getChangedAppPermissions().remove(permission);
                 }
 
-                final Rest<Boolean> rest = restFactory.create();
-                rest
+                restFactory
+                        .create(APP_PERMISSION_RESOURCE)
+                        .method(res -> res.changeUser(request))
                         .onSuccess(result -> refresh())
-                        .call(APP_PERMISSION_RESOURCE)
-                        .changeUser(request);
+                        .exec();
             });
         }
 

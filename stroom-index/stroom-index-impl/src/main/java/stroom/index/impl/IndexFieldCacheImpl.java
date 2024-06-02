@@ -22,7 +22,7 @@ import stroom.cache.api.LoadingStroomCache;
 import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
 import stroom.query.common.v2.IndexFieldCache;
-import stroom.query.common.v2.IndexFieldProvider;
+import stroom.query.common.v2.IndexFieldProviders;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.logging.LogUtil;
@@ -33,29 +33,24 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 @Singleton
 public class IndexFieldCacheImpl implements IndexFieldCache, Clearable {
 
     private static final String CACHE_NAME = "Index Field Cache";
 
-    private final Map<String, IndexFieldProvider> providers = new HashMap<>();
+    private final IndexFieldProviders indexFieldProviders;
     private final LoadingStroomCache<Key, IndexField> cache;
     private final SecurityContext securityContext;
 
     @Inject
     IndexFieldCacheImpl(final CacheManager cacheManager,
                         final Provider<IndexConfig> indexConfigProvider,
-                        final Set<IndexFieldProvider> indexFieldProviders,
+                        final IndexFieldProviders indexFieldProviders,
                         final SecurityContext securityContext) {
+        this.indexFieldProviders = indexFieldProviders;
         this.securityContext = securityContext;
-        for (final IndexFieldProvider provider : indexFieldProviders) {
-            providers.put(provider.getType(), provider);
-        }
         cache = cacheManager.createLoadingCache(
                 CACHE_NAME,
                 () -> indexConfigProvider.get().getIndexFieldCache(),
@@ -63,14 +58,8 @@ public class IndexFieldCacheImpl implements IndexFieldCache, Clearable {
     }
 
     private IndexField create(final Key key) {
-        return securityContext.asProcessingUserResult(() -> {
-            final IndexFieldProvider provider = providers.get(key.docRef.getType());
-            if (provider == null) {
-                throw new NullPointerException("No provider can be found for: " + key.docRef.getType());
-            }
-
-            return provider.getIndexField(key.docRef, key.fieldName);
-        });
+        return securityContext.asProcessingUserResult(() ->
+                indexFieldProviders.getIndexField(key.docRef, key.fieldName));
     }
 
     @Override

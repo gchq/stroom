@@ -152,7 +152,8 @@ class TestRestResources {
                                             .append("\n");
                                 });
                     });
-            LOGGER.info("Methods:\n{}", stringBuilder.toString());
+//            LOGGER.info("Methods:\n{}", stringBuilder);
+            System.out.println(stringBuilder);
         }
     }
 
@@ -509,7 +510,7 @@ class TestRestResources {
     private boolean hasJaxRsAnnotation(final Class<?> clazz, final Method method, final boolean checkInterfaces) {
         boolean thisMethodHasJaxRs = Arrays.stream(method.getAnnotations())
                 .anyMatch(annotation ->
-                        annotation.annotationType().getPackageName().equals("javax.ws.rs"));
+                        annotation.annotationType().getPackageName().equals("jakarta.ws.rs"));
         if (!checkInterfaces) {
             return thisMethodHasJaxRs;
         } else {

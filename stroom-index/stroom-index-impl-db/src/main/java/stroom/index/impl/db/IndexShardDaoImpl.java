@@ -25,11 +25,14 @@ import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValInteger;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
 import stroom.util.shared.ResultPage;
@@ -62,6 +65,8 @@ import static stroom.index.impl.db.jooq.tables.IndexVolume.INDEX_VOLUME;
 
 @Singleton // holding all the volume selectors
 class IndexShardDaoImpl implements IndexShardDao {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardDaoImpl.class);
 
     private static final Function<Record, IndexShard> RECORD_TO_INDEX_SHARD_MAPPER = record -> {
         final IndexShard indexShard = new IndexShard();
@@ -295,17 +300,44 @@ class IndexShardDaoImpl implements IndexShardDao {
                     .or(INDEX_SHARD.STATUS.eq(IndexShardStatus.NEW.getPrimitiveValue()));
             case OPEN -> INDEX_SHARD.STATUS.eq(IndexShardStatus.OPENING.getPrimitiveValue());
             case CLOSING -> INDEX_SHARD.STATUS.eq(IndexShardStatus.OPEN.getPrimitiveValue());
-            case CLOSED -> INDEX_SHARD.STATUS.eq(IndexShardStatus.CLOSING.getPrimitiveValue());
+            case CLOSED -> INDEX_SHARD.STATUS.eq(IndexShardStatus.OPENING.getPrimitiveValue())
+                    .or(INDEX_SHARD.STATUS.eq(IndexShardStatus.CLOSING.getPrimitiveValue()));
             case DELETED -> DSL.trueCondition();
             case CORRUPT -> INDEX_SHARD.STATUS.ne(IndexShardStatus.DELETED.getPrimitiveValue());
         };
 
-        return JooqUtil.contextResult(indexDbConnProvider, context -> context
+        final boolean didUpdate = JooqUtil.contextResult(indexDbConnProvider, context -> context
                 .update(INDEX_SHARD)
                 .set(INDEX_SHARD.STATUS, status.getPrimitiveValue())
                 .where(INDEX_SHARD.ID.eq(id))
                 .and(currentStateCondition)
                 .execute()) > 0;
+
+        LOGGER.debug("Setting shard status to {} for shard id {}, didUpdate: {}", status, id, didUpdate);
+
+        return didUpdate;
+    }
+
+    @Override
+    public void logicalDelete(final Long id) {
+        JooqUtil.context(indexDbConnProvider, context -> context
+                .update(INDEX_SHARD)
+                .set(INDEX_SHARD.STATUS, IndexShardStatus.DELETED.getPrimitiveValue())
+                .where(INDEX_SHARD.ID.eq(id))
+                .execute());
+    }
+
+    @Override
+    public void reset(final Long id) {
+        JooqUtil.context(indexDbConnProvider, context -> context
+                .update(INDEX_SHARD)
+                .set(INDEX_SHARD.STATUS, IndexShardStatus.CLOSED.getPrimitiveValue())
+                .where(INDEX_SHARD.ID.eq(id))
+                .and(INDEX_SHARD.STATUS.eq(IndexShardStatus.OPENING.getPrimitiveValue())
+                        .or(INDEX_SHARD.STATUS.eq(IndexShardStatus.OPEN.getPrimitiveValue()))
+                        .or(INDEX_SHARD.STATUS.eq(IndexShardStatus.CLOSING.getPrimitiveValue()))
+                )
+                .execute());
     }
 
     @Override
@@ -358,7 +390,7 @@ class IndexShardDaoImpl implements IndexShardDao {
             valueMapper.map(IndexShardFields.FIELD_DOC_COUNT, INDEX_SHARD.DOCUMENT_COUNT, ValInteger::create);
             valueMapper.map(IndexShardFields.FIELD_FILE_SIZE, INDEX_SHARD.FILE_SIZE, ValLong::create);
             valueMapper.map(IndexShardFields.FIELD_STATUS, INDEX_SHARD.STATUS, this::getStatus);
-            valueMapper.map(IndexShardFields.FIELD_LAST_COMMIT, INDEX_SHARD.COMMIT_MS, ValLong::create);
+            valueMapper.map(IndexShardFields.FIELD_LAST_COMMIT, INDEX_SHARD.COMMIT_MS, ValDate::create);
             valueMapper.map(IndexShardFields.FIELD_VOLUME_PATH, INDEX_VOLUME.PATH, ValString::create);
             valueMapper.map(IndexShardFields.FIELD_VOLUME_GROUP, INDEX_VOLUME_GROUP.NAME, ValString::create);
         }

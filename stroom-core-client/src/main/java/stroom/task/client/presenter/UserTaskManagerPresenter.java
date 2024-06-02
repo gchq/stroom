@@ -17,7 +17,6 @@
 package stroom.task.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeManager;
 import stroom.task.client.event.OpenTaskManagerEvent;
@@ -28,7 +27,6 @@ import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskId;
 import stroom.task.shared.TaskProgress;
-import stroom.task.shared.TaskProgressResponse;
 import stroom.task.shared.TaskResource;
 import stroom.task.shared.TerminateTaskProgressRequest;
 import stroom.util.client.DelayedUpdate;
@@ -136,8 +134,9 @@ public class UserTaskManagerPresenter
         for (final String nodeName : nodeNames) {
             if (!refreshing.contains(nodeName)) {
                 refreshing.add(nodeName);
-                final Rest<TaskProgressResponse> rest = restFactory.create();
-                rest
+                restFactory
+                        .create(TASK_RESOURCE)
+                        .method(res -> res.userTasks(nodeName))
                         .onSuccess(response -> {
                             responseMap.put(nodeName, response.getValues());
                             delayedUpdate.update();
@@ -148,8 +147,7 @@ public class UserTaskManagerPresenter
                             delayedUpdate.update();
                             refreshing.remove(nodeName);
                         })
-                        .call(TASK_RESOURCE)
-                        .userTasks(nodeName);
+                        .exec();
             }
         }
     }
@@ -215,10 +213,10 @@ public class UserTaskManagerPresenter
             final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
             findTaskCriteria.addId(taskProgress.getId());
             final TerminateTaskProgressRequest request = new TerminateTaskProgressRequest(findTaskCriteria);
-            final Rest<Boolean> rest = restFactory.create();
-            rest
-                    .call(TASK_RESOURCE)
-                    .terminate(taskProgress.getNodeName(), request);
+            restFactory
+                    .create(TASK_RESOURCE)
+                    .method(res -> res.terminate(taskProgress.getNodeName(), request))
+                    .exec();
         });
     }
 

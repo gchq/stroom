@@ -17,7 +17,6 @@
 package stroom.security.client.presenter;
 
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.FilterUsersRequest;
@@ -125,8 +124,6 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
     }
 
     private void filterUsers(final List<User> users) {
-        final Rest<List<UserName>> rest = restFactory.create();
-
         // Convert our users to a simpler object to avoid sending a lot of rich
         // objects over the network when all we need is to filter on the username
         final List<UserName> allSimpleUsers = users != null
@@ -136,7 +133,9 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
                 : Collections.emptyList();
 
         if (!allSimpleUsers.isEmpty()) {
-            rest
+            restFactory
+                    .create(DOC_PERMISSION_RESOURCE)
+                    .method(res -> res.filterUsers(new FilterUsersRequest(allSimpleUsers, filter)))
                     .onSuccess(filteredSimpleUsers -> {
                         // Map the users back again
                         final List<User> filteredUsers = filteredSimpleUsers.stream()
@@ -144,8 +143,7 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
                                 .collect(Collectors.toList());
                         updateGrid(filteredUsers);
                     })
-                    .call(DOC_PERMISSION_RESOURCE)
-                    .filterUsers(new FilterUsersRequest(allSimpleUsers, filter));
+                    .exec();
         } else {
             updateGrid(Collections.emptyList());
         }

@@ -73,7 +73,7 @@ public class StagingRefDataValueSerde
                     pooledByteBufferOutputStream, refDataValue);
 
             pooledByteBufferOutputStream.write(refDataValueBuffer);
-            return pooledByteBufferOutputStream.getPooledByteBuffer().getByteBuffer();
+            return pooledByteBufferOutputStream.getByteBuffer();
         } catch (IOException e) {
             throw new RuntimeException(LogUtil.message("Unable to write value {} to output stream: {}",
                     stagingRefDataValue, e.getMessage()), e);

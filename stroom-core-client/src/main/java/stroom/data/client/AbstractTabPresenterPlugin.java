@@ -23,6 +23,7 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.core.client.ContentManager;
 import stroom.core.client.event.CloseContentEvent;
 import stroom.core.client.presenter.Plugin;
+import stroom.dispatch.client.RestError;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 
@@ -125,7 +126,7 @@ public abstract class AbstractTabPresenterPlugin<K, T extends ContentTabPresente
                            final T tabPresenter,
                            final CloseContentEvent.Handler closeHandler) {
 
-        final Consumer<Throwable> errorConsumer = caught -> {
+        final Consumer<RestError> errorConsumer = caught -> {
             AlertEvent.fireError(
                     AbstractTabPresenterPlugin.this,
                     "Unable to load " + getName() + " (" + presenterKey + ")",

@@ -1,8 +1,5 @@
 package stroom.query.language.functions.ref;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,21 +28,21 @@ public class StringListReference implements ValueReference<List<String>> {
     }
 
     @Override
-    public void read(final StoredValues storedValues, final Input input) {
-        final int length = input.readInt();
+    public void read(final StoredValues storedValues, final DataReader reader) {
+        final int length = reader.readInt();
         List<String> list = new ArrayList<>(length);
         for (int i = 0; i < length; i++) {
-            list.add(input.readString());
+            list.add(reader.readString());
         }
         set(storedValues, list);
     }
 
     @Override
-    public void write(final StoredValues storedValues, final Output output) {
+    public void write(final StoredValues storedValues, final DataWriter writer) {
         List<String> list = get(storedValues);
-        output.writeInt(list.size());
+        writer.writeInt(list.size());
         for (final String string : list) {
-            output.writeString(string);
+            writer.writeString(string);
         }
     }
 

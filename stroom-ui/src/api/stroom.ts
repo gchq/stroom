@@ -134,37 +134,12 @@ export interface AnalyticDataShard {
   size?: number;
 }
 
-export interface AnalyticNotificationConfig {
-  destination?: AnalyticNotificationDestination;
-  destinationType?: "STREAM" | "EMAIL";
-  limitNotifications?: boolean;
-
-  /** @format int32 */
-  maxNotifications?: number;
-  resumeAfter?: SimpleDuration;
-}
-
-export interface AnalyticNotificationDestination {
-  type: string;
-}
-
-export type AnalyticNotificationEmailDestination = AnalyticNotificationDestination & {
-  bcc?: string;
-  cc?: string;
-  to?: string;
-};
-
-export type AnalyticNotificationStreamDestination = AnalyticNotificationDestination & {
-  destinationFeed?: DocRef;
-  useSourceFeedIfPossible?: boolean;
-};
-
 export interface AnalyticProcessConfig {
   type: string;
 }
 
 export interface AnalyticRuleDoc {
-  analyticNotificationConfig?: AnalyticNotificationConfig;
+  analyticNotificationConfig?: NotificationConfig;
   analyticProcessConfig?: AnalyticProcessConfig;
   analyticProcessType?: "STREAMING" | "TABLE_BUILDER" | "SCHEDULED_QUERY";
 
@@ -172,9 +147,17 @@ export interface AnalyticRuleDoc {
   createTimeMs?: number;
   createUser?: string;
   description?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  errorFeed?: DocRef;
   languageVersion?: "STROOM_QL_VERSION_0_1" | "SIGMA";
   name?: string;
+  notifications?: NotificationConfig[];
+  parameters?: Param[];
   query?: string;
+  rememberNotifications?: boolean;
+  suppressDuplicateNotifications?: boolean;
+  timeRange?: TimeRange;
   type?: string;
 
   /** @format int64 */
@@ -195,12 +178,15 @@ export interface AnalyticTrackerData {
 }
 
 export interface AnalyticUiDefaultConfig {
+  defaultBodyTemplate?: string;
+
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   defaultDestinationFeed?: DocRef;
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   defaultErrorFeed?: DocRef;
   defaultNode?: string;
+  defaultSubjectTemplate?: string;
 }
 
 export interface Annotation {
@@ -505,15 +491,19 @@ export interface Column {
   sort?: Sort;
 }
 
-export interface CompletionValue {
+export interface CompletionItem {
   caption?: string;
   meta?: string;
 
   /** @format int32 */
   score?: number;
   tooltip?: string;
-  value?: string;
+  type: string;
 }
+
+export type CompletionSnippet = CompletionItem & { snippet?: string };
+
+export type CompletionValue = CompletionItem & { value?: string };
 
 export interface CompletionsRequest {
   /** @format int32 */
@@ -856,7 +846,7 @@ export interface DataRetentionRules {
  */
 export type DateTimeFormatSettings = FormatSettings & {
   pattern?: string;
-  timeZone?: TimeZone;
+  timeZone?: UserTimeZone;
   usePreferences?: boolean;
 };
 
@@ -877,7 +867,7 @@ export interface DateTimeSettings {
   referenceTime: number;
 
   /** The timezone to apply to a date time value */
-  timeZone?: TimeZone;
+  timeZone?: UserTimeZone;
 }
 
 export interface DefaultLocation {
@@ -886,6 +876,11 @@ export interface DefaultLocation {
 
   /** @format int32 */
   lineNo?: number;
+}
+
+export interface DeleteDuplicateCheckRequest {
+  analyticDocUuid?: string;
+  rows?: DuplicateCheckRow[];
 }
 
 export interface Dependency {
@@ -1016,6 +1011,7 @@ export interface DocumentType {
     | "AUTO_REFRESH"
     | "BACKWARD"
     | "BORDERED_CIRCLE"
+    | "CALENDAR"
     | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
@@ -1231,6 +1227,17 @@ export interface DownloadSearchResultsRequest {
   searchRequest?: DashboardSearchRequest;
 }
 
+export interface DuplicateCheckRow {
+  values?: string[];
+}
+
+export interface DuplicateCheckRows {
+  columnNames?: string[];
+
+  /** A page of results. */
+  resultPage?: ResultPageDuplicateCheckRow;
+}
+
 export interface ElasticClusterDoc {
   connection?: ElasticConnectionConfig;
 
@@ -1398,6 +1405,64 @@ export interface EventRef {
   streamId?: number;
 }
 
+export interface ExecutionHistory {
+  /** @format int64 */
+  effectiveExecutionTimeMs?: number;
+  executionSchedule?: ExecutionSchedule;
+
+  /** @format int64 */
+  executionTimeMs?: number;
+
+  /** @format int64 */
+  id?: number;
+  message?: string;
+  status?: string;
+}
+
+export interface ExecutionHistoryRequest {
+  executionSchedule?: ExecutionSchedule;
+  pageRequest?: PageRequest;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+}
+
+export interface ExecutionSchedule {
+  contiguous?: boolean;
+  enabled?: boolean;
+
+  /** @format int32 */
+  id?: number;
+  name?: string;
+  nodeName?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  owningDoc?: DocRef;
+  schedule?: Schedule;
+  scheduleBounds?: ScheduleBounds;
+}
+
+export interface ExecutionScheduleRequest {
+  enabled?: boolean;
+  nodeName?: StringMatch;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  ownerDocRef?: DocRef;
+  pageRequest?: PageRequest;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+}
+
+export interface ExecutionTracker {
+  /** @format int64 */
+  actualExecutionTimeMs?: number;
+
+  /** @format int64 */
+  lastEffectiveExecutionTimeMs?: number;
+
+  /** @format int64 */
+  nextEffectiveExecutionTimeMs?: number;
+}
+
 export interface Expander {
   /** @format int32 */
   depth?: number;
@@ -1424,6 +1489,7 @@ export interface ExplorerNode {
     | "AUTO_REFRESH"
     | "BACKWARD"
     | "BORDERED_CIRCLE"
+    | "CALENDAR"
     | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
@@ -1904,6 +1970,14 @@ export interface FindDataRetentionImpactCriteria {
   sortList?: CriteriaFieldSort[];
 }
 
+export interface FindDuplicateCheckCriteria {
+  analyticDocUuid?: string;
+  pageRequest?: PageRequest;
+  quickFilterInput?: string;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+}
+
 export interface FindElementDocRequest {
   feedName?: string;
   pipelineElement?: PipelineElement;
@@ -1951,6 +2025,7 @@ export interface FindInContentResult {
     | "AUTO_REFRESH"
     | "BACKWARD"
     | "BORDERED_CIRCLE"
+    | "CALENDAR"
     | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
@@ -2182,6 +2257,7 @@ export interface FindResult {
     | "AUTO_REFRESH"
     | "BACKWARD"
     | "BORDERED_CIRCLE"
+    | "CALENDAR"
     | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
@@ -2541,14 +2617,11 @@ export interface GetPipelineForMetaRequest {
 }
 
 export interface GetScheduledTimesRequest {
-  jobType?: "UNKNOWN" | "CRON" | "FREQUENCY" | "DISTRIBUTED";
-
-  /** @format int64 */
-  lastExecutedTime?: number;
-  schedule?: string;
+  schedule?: Schedule;
 
   /** @format int64 */
   scheduleReferenceTime?: number;
+  scheduleRestriction?: ScheduleRestriction;
 }
 
 export interface GlobalConfigCriteria {
@@ -3056,6 +3129,34 @@ export interface NodeStatusResult {
   node?: Node;
 }
 
+export interface NotificationConfig {
+  destination?: NotificationDestination;
+  destinationType?: "STREAM" | "EMAIL";
+  limitNotifications?: boolean;
+
+  /** @format int32 */
+  maxNotifications?: number;
+  resumeAfter?: SimpleDuration;
+  uuid?: string;
+}
+
+export interface NotificationDestination {
+  type: string;
+}
+
+export type NotificationEmailDestination = NotificationDestination & {
+  bcc?: string;
+  bodyTemplate?: string;
+  cc?: string;
+  subjectTemplate?: string;
+  to?: string;
+};
+
+export type NotificationStreamDestination = NotificationDestination & {
+  destinationFeed?: DocRef;
+  useSourceFeedIfPossible?: boolean;
+};
+
 /**
  * The definition of a format to apply to numeric data
  */
@@ -3211,6 +3312,7 @@ export interface PipelineElementType {
     | "AUTO_REFRESH"
     | "BACKWARD"
     | "BORDERED_CIRCLE"
+    | "CALENDAR"
     | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
@@ -3739,6 +3841,7 @@ export interface QueryDoc {
   description?: string;
   name?: string;
   query?: string;
+  timeRange?: TimeRange;
   type?: string;
 
   /** @format int64 */
@@ -3836,6 +3939,7 @@ export interface QueryHelpRow {
     | "AUTO_REFRESH"
     | "BACKWARD"
     | "BORDERED_CIRCLE"
+    | "CALENDAR"
     | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
@@ -4213,10 +4317,10 @@ export interface ResultPageAnalyticDataShard {
 /**
  * A page of results.
  */
-export interface ResultPageCompletionValue {
+export interface ResultPageCompletionItem {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
-  values?: CompletionValue[];
+  values?: CompletionItem[];
 }
 
 /**
@@ -4253,6 +4357,33 @@ export interface ResultPageDependency {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: Dependency[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageDuplicateCheckRow {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: DuplicateCheckRow[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageExecutionHistory {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: ExecutionHistory[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageExecutionSchedule {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: ExecutionSchedule[];
 }
 
 /**
@@ -4526,6 +4657,25 @@ export interface SavePipelineXmlRequest {
   xml?: string;
 }
 
+export interface Schedule {
+  expression?: string;
+  type?: "INSTANT" | "CRON" | "FREQUENCY";
+}
+
+export interface ScheduleBounds {
+  /** @format int64 */
+  endTimeMs?: number;
+
+  /** @format int64 */
+  startTimeMs?: number;
+}
+
+export interface ScheduleRestriction {
+  allowHour?: boolean;
+  allowMinute?: boolean;
+  allowSecond?: boolean;
+}
+
 export type ScheduledQueryAnalyticProcessConfig = AnalyticProcessConfig & {
   enabled?: boolean;
   errorFeed?: DocRef;
@@ -4537,14 +4687,17 @@ export type ScheduledQueryAnalyticProcessConfig = AnalyticProcessConfig & {
 };
 
 export type ScheduledQueryAnalyticTrackerData = AnalyticTrackerData & {
-  lastExecutionTimeMs?: number;
-  lastWindowEndTimeMs?: number;
-  lastWindowStartTimeMs?: number;
+  actualExecutionTimeMs?: number;
+  lastEffectiveExecutionTimeMs?: number;
+  nextEffectiveExecutionTimeMs?: number;
 };
 
 export interface ScheduledTimes {
-  lastExecutedTime?: string;
-  nextScheduledTime?: string;
+  error?: string;
+
+  /** @format int64 */
+  nextScheduledTimeMs?: number;
+  schedule?: Schedule;
 }
 
 export interface ScriptDoc {
@@ -5076,6 +5229,10 @@ export interface StringMatchLocation {
   offset?: number;
 }
 
+export interface StringWrapper {
+  string?: string;
+}
+
 export interface StroomStatsStoreDoc {
   config?: StroomStatsStoreEntityData;
 
@@ -5340,34 +5497,6 @@ export interface TimeRange {
   to?: string;
 }
 
-/**
- * The timezone to apply to a date time value
- */
-export interface TimeZone {
-  /**
-   * The id of the time zone, conforming to java.time.ZoneId
-   * @example GMT
-   */
-  id?: string;
-
-  /**
-   * The number of hours this timezone is offset from UTC
-   * @format int32
-   * @example -1
-   */
-  offsetHours?: number;
-
-  /**
-   * The number of minutes this timezone is offset from UTC
-   * @format int32
-   * @example -30
-   */
-  offsetMinutes?: number;
-
-  /** How the time zone will be specified, e.g. from provided client 'Local' time, 'UTC', a recognised timezone 'Id' or an 'Offset' from UTC in hours and minutes. */
-  use: "Local" | "UTC" | "Id" | "Offset";
-}
-
 export interface TokenError {
   from?: DefaultLocation;
   text?: string;
@@ -5503,7 +5632,35 @@ export interface UserPreferences {
   theme?: string;
 
   /** The timezone to apply to a date time value */
-  timeZone?: TimeZone;
+  timeZone?: UserTimeZone;
+}
+
+/**
+ * The timezone to apply to a date time value
+ */
+export interface UserTimeZone {
+  /**
+   * The id of the time zone, conforming to java.time.ZoneId
+   * @example GMT
+   */
+  id?: string;
+
+  /**
+   * The number of hours this timezone is offset from UTC
+   * @format int32
+   * @example -1
+   */
+  offsetHours?: number;
+
+  /**
+   * The number of minutes this timezone is offset from UTC
+   * @format int32
+   * @example -30
+   */
+  offsetMinutes?: number;
+
+  /** How the time zone will be specified, e.g. from provided client 'Local' time, 'UTC', a recognised timezone 'Id' or an 'Offset' from UTC in hours and minutes. */
+  use: "Local" | "UTC" | "Id" | "Offset";
 }
 
 export interface ValidateExpressionRequest {
@@ -6221,6 +6378,44 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Queries
+     * @name TestEmailTemplates
+     * @summary Tests the email subject/body templates using an example detection event.
+     * @request POST:/analyticRule/v1/sendTestEmail
+     * @secure
+     */
+    testEmailTemplates: (data: NotificationEmailDestination, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/analyticRule/v1/sendTestEmail`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name TestTemplate
+     * @summary Tests the email template using an example detection event.
+     * @request POST:/analyticRule/v1/testTemplate
+     * @secure
+     */
+    testTemplate: (data: StringWrapper, params: RequestParams = {}) =>
+      this.request<any, StringWrapper>({
+        path: `/analyticRule/v1/testTemplate`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
      * @name FetchAnalyticRule
      * @summary Fetch an analytic rule doc by its UUID
      * @request GET:/analyticRule/v1/{uuid}
@@ -6809,7 +7004,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request GET:/authentication/v1/noauth/logout
      * @secure
      */
-    logout: (query: { post_logout_redirect_uri: string; state: string }, params: RequestParams = {}) =>
+    logout: (query: { post_logout_redirect_uri: string }, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/authentication/v1/noauth/logout`,
         method: "GET",
@@ -7737,6 +7932,45 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         ...params,
       }),
   };
+  duplicateCheck = {
+    /**
+     * No description
+     *
+     * @tags DuplicateCheck
+     * @name DeleteDuplicateCheckRows
+     * @summary Delete duplicate check rows
+     * @request POST:/duplicateCheck/v1/delete
+     * @secure
+     */
+    deleteDuplicateCheckRows: (data: DeleteDuplicateCheckRequest, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/duplicateCheck/v1/delete`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags DuplicateCheck
+     * @name FindDuplicateCheckRows
+     * @summary Find the duplicate check data for the current analytic
+     * @request POST:/duplicateCheck/v1/find
+     * @secure
+     */
+    findDuplicateCheckRows: (data: FindDuplicateCheckCriteria, params: RequestParams = {}) =>
+      this.request<any, DuplicateCheckRows>({
+        path: `/duplicateCheck/v1/find`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
   elasticCluster = {
     /**
      * No description
@@ -7863,6 +8097,121 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       this.request<any, boolean>({
         path: `/entityEvent/v1/${nodeName}`,
         method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
+  executionSchedule = {
+    /**
+     * No description
+     *
+     * @tags ExecutionSchedule
+     * @name CreateExecutionSchedule
+     * @summary Create Execution Schedule
+     * @request POST:/executionSchedule/v1/createExecutionSchedule
+     * @secure
+     */
+    createExecutionSchedule: (data: ExecutionSchedule, params: RequestParams = {}) =>
+      this.request<any, ExecutionSchedule>({
+        path: `/executionSchedule/v1/createExecutionSchedule`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags ExecutionSchedule
+     * @name DeleteExecutionSchedule
+     * @summary Delete Execution Schedule
+     * @request POST:/executionSchedule/v1/deleteExecutionSchedule
+     * @secure
+     */
+    deleteExecutionSchedule: (data: ExecutionSchedule, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/executionSchedule/v1/deleteExecutionSchedule`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags ExecutionSchedule
+     * @name FetchExecutionHistory
+     * @summary Fetch execution history
+     * @request POST:/executionSchedule/v1/fetchExecutionHistory
+     * @secure
+     */
+    fetchExecutionHistory: (data: ExecutionHistoryRequest, params: RequestParams = {}) =>
+      this.request<any, ResultPageExecutionHistory>({
+        path: `/executionSchedule/v1/fetchExecutionHistory`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags ExecutionSchedule
+     * @name FetchExecutionSchedule
+     * @summary Fetch execution schedule
+     * @request POST:/executionSchedule/v1/fetchExecutionSchedule
+     * @secure
+     */
+    fetchExecutionSchedule: (data: ExecutionScheduleRequest, params: RequestParams = {}) =>
+      this.request<any, ResultPageExecutionSchedule>({
+        path: `/executionSchedule/v1/fetchExecutionSchedule`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags ExecutionSchedule
+     * @name FetchTracker
+     * @summary Fetch execution tracker
+     * @request POST:/executionSchedule/v1/fetchTracker
+     * @secure
+     */
+    fetchTracker: (data: ExecutionSchedule, params: RequestParams = {}) =>
+      this.request<any, ExecutionTracker>({
+        path: `/executionSchedule/v1/fetchTracker`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags ExecutionSchedule
+     * @name UpdateExecutionSchedule
+     * @summary Update Execution Schedule
+     * @request POST:/executionSchedule/v1/updateExecutionSchedule
+     * @secure
+     */
+    updateExecutionSchedule: (data: ExecutionSchedule, params: RequestParams = {}) =>
+      this.request<any, ExecutionSchedule>({
+        path: `/executionSchedule/v1/updateExecutionSchedule`,
+        method: "POST",
         body: data,
         secure: true,
         type: ContentType.Json,
@@ -9122,7 +9471,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request PUT:/jobNode/v1/{id}/schedule
      * @secure
      */
-    setJobNodeSchedule: (id: number, data: string, params: RequestParams = {}) =>
+    setJobNodeSchedule: (id: number, data: Schedule, params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/jobNode/v1/${id}/schedule`,
         method: "PUT",
@@ -10299,7 +10648,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     fetchCompletions: (data: CompletionsRequest, params: RequestParams = {}) =>
-      this.request<any, ResultPageCompletionValue>({
+      this.request<any, ResultPageCompletionItem>({
         path: `/query/v1/fetchCompletions`,
         method: "POST",
         body: data,

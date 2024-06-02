@@ -16,6 +16,7 @@
 
 package stroom.explorer.client.presenter;
 
+import stroom.docref.DocRef;
 import stroom.explorer.shared.FindResult;
 import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
@@ -42,7 +43,8 @@ public class FindResultCell extends AbstractCell<FindResult> {
 
     @Override
     public void render(final Context context, final FindResult value, final SafeHtmlBuilder sb) {
-        if (value != null) {
+        if (value != null && value.getDocRef() != null) {
+            final DocRef docRef = value.getDocRef();
             final SafeHtmlBuilder row = new SafeHtmlBuilder();
             final SafeHtmlBuilder main = new SafeHtmlBuilder();
             final SafeHtmlBuilder sub = new SafeHtmlBuilder();
@@ -50,7 +52,7 @@ public class FindResultCell extends AbstractCell<FindResult> {
             // Add icon
             if (value.getIcon() != null) {
                 main.append(SvgImageUtil.toSafeHtml(
-                        value.getDocRef().getType(),
+                        docRef.getType(),
                         value.getIcon(),
                         getCellClassName() + "-icon",
                         "svgIcon"));
@@ -58,7 +60,7 @@ public class FindResultCell extends AbstractCell<FindResult> {
 
             // Add name
             main.append(template.div(getCellClassName() + "-name",
-                    SafeHtmlUtil.from(value.getDocRef().getName())));
+                    SafeHtmlUtil.from(docRef.getName())));
 
             row.append(template.div(getCellClassName() + "-main", main.toSafeHtml()));
 
@@ -68,7 +70,7 @@ public class FindResultCell extends AbstractCell<FindResult> {
 
             // Add uuid
             sub.append(template.div(getCellClassName() + "-uuid",
-                    SafeHtmlUtil.from(value.getDocRef().getUuid())));
+                    SafeHtmlUtil.from(docRef.getUuid())));
 
             row.append(template.div(getCellClassName() + "-sub", sub.toSafeHtml()));
 

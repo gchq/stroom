@@ -33,7 +33,6 @@ import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dashboard.shared.VisResultRequest;
 import stroom.datasource.api.v2.QueryField;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
@@ -52,7 +51,6 @@ import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 import stroom.visualisation.client.presenter.VisFunction.StatusHandler;
 import stroom.visualisation.client.presenter.VisFunctionCache;
-import stroom.visualisation.shared.VisualisationDoc;
 import stroom.visualisation.shared.VisualisationResource;
 
 import com.google.gwt.core.client.GWT;
@@ -76,9 +74,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisView>
+public class VisPresenter
+        extends AbstractComponentPresenter<VisPresenter.VisView>
         implements ResultComponent, StatusHandler, SelectionUiHandlers, HasSelection, VisUiHandlers {
 
+    public static final String TAB_TYPE = "vis-component";
     private static final ScriptResource SCRIPT_RESOURCE = GWT.create(ScriptResource.class);
     private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);
 
@@ -458,8 +458,9 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     private void loadVisualisation(final VisFunction function, final DocRef visualisationDocRef) {
         function.setStatus(LoadStatus.LOADING_ENTITY);
 
-        final Rest<VisualisationDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .create(VISUALISATION_RESOURCE)
+                .method(res -> res.fetch(visualisationDocRef.getUuid()))
                 .onSuccess(result -> {
                     if (result != null) {
                         // Get all possible settings for this visualisation.
@@ -494,18 +495,17 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
                     }
                 })
                 .onFailure(caught -> failure(function, caught.getMessage()))
-                .call(VISUALISATION_RESOURCE)
-                .fetch(visualisationDocRef.getUuid());
+                .exec();
     }
 
     private void loadScripts(final VisFunction function, final DocRef scriptRef) {
         function.setStatus(LoadStatus.LOADING_SCRIPT);
-
-        final Rest<List<ScriptDoc>> rest = restFactory.create();
-        rest
+        restFactory
+                .create(SCRIPT_RESOURCE)
+                .method(res -> res.fetchLinkedScripts(
+                        new FetchLinkedScriptRequest(scriptRef, scriptCache.getLoadedScripts())))
                 .onSuccess(result -> startInjectingScripts(result, function))
-                .call(SCRIPT_RESOURCE)
-                .fetchLinkedScripts(new FetchLinkedScriptRequest(scriptRef, scriptCache.getLoadedScripts()));
+                .exec();
     }
 
     private void startInjectingScripts(final List<ScriptDoc> scripts, final VisFunction function) {
@@ -645,7 +645,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     }
 
     @Override
-    public ComponentType getType() {
+    public ComponentType getComponentType() {
         return TYPE;
     }
 
@@ -744,6 +744,15 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     public List<Map<String, String>> getSelection() {
         return currentSelection;
     }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface VisView extends View, RequiresResize, HasUiHandlers<VisUiHandlers> {
 

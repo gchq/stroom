@@ -16,6 +16,7 @@
 
 package stroom.widget.popup.client.view;
 
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -23,8 +24,6 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupSupport;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.popup.client.presenter.Position;
-import stroom.widget.popup.client.presenter.PositionUtil;
 import stroom.widget.popup.client.presenter.Size;
 
 import com.google.gwt.core.client.Scheduler;
@@ -37,7 +36,6 @@ import java.util.List;
 
 public class PopupSupportImpl implements PopupSupport {
 
-    private static final int POPUP_SHADOW_WIDTH = 9;
     private Popup popup;
     private String caption;
     private Boolean modal;
@@ -48,7 +46,9 @@ public class PopupSupportImpl implements PopupSupport {
     private List<Element> autoHidePartners;
     private DialogButtons dialogButtons;
 
-    public PopupSupportImpl(final View view, final String caption, final Boolean modal,
+    public PopupSupportImpl(final View view,
+                            final String caption,
+                            final Boolean modal,
                             final Element... autoHidePartners) {
         setView(view);
         setCaption(caption);
@@ -88,79 +88,94 @@ public class PopupSupportImpl implements PopupSupport {
             popup = createPopup(popupType, popupSize, uiHandlers);
         }
         final PopupPanel popupPanel = (PopupPanel) popup;
-        // Hide the popup because we are going to position it before making it
-        // visible.
-        popupPanel.setVisible(false);
-        popupPanel.setModal(false);
-
-        // Way to set popups to be modal using glass.
-        if (modal != null) {
-            popupPanel.setGlassEnabled(modal);
-        }
 
         // Add auto hide partners.
-        if (autoHidePartners != null && autoHidePartners.size() > 0) {
-            for (final Element element : autoHidePartners) {
-                popupPanel.addAutoHidePartner(element);
-            }
+        for (final Element element : GwtNullSafe.list(autoHidePartners)) {
+            popupPanel.addAutoHidePartner(element);
         }
 
-        // Attach the popup to the DOM.
-        CurrentFocus.push();
-        popupPanel.show();
-        // Defer the command to position and make visible because we need the
-        // popup to size first.
-        Scheduler.get().scheduleDeferred(() -> {
-            if (popup != null) {
-                // Now get the popup size.
-                final int w = popupPanel.getOffsetWidth();
-                final int h = popupPanel.getOffsetHeight();
+        final String uniqueId = createUniqueId(event);
 
-                // Set the popup size.
-                int newWidth = w;
-                int newHeight = h;
-                if (popupSize != null) {
-                    newWidth = getSize(newWidth, popupSize.getWidth());
-                    newHeight = getSize(newHeight, popupSize.getHeight());
-                }
-                if (newWidth != w) {
-                    popupPanel.setWidth(newWidth + "px");
-                }
-                if (newHeight != h) {
-                    popupPanel.setHeight(newHeight + "px");
-                }
-
-                if (popupPosition == null) {
-                    // Center the popup in the client window.
-                    final Position position = PositionUtil.center(newWidth, newHeight);
-                    popup.setPopupPosition((int) position.getLeft(), (int) position.getTop());
-
-                } else {
-                    // Position the popup so it is as close as possible to
-                    // the required location but is all on screen.
-                    int shadowWidth = 0;
-                    if (popupType != PopupType.POPUP) {
-                        shadowWidth = POPUP_SHADOW_WIDTH;
+        PopupUtil.showPopup(
+                uniqueId,
+                popup,
+                GwtNullSafe.isTrue(modal),
+                popupPosition,
+                popupSize,
+                popupType,
+                () -> {
+                    // Tell the handler that the popup is visible.
+                    if (event.getShowHandler() != null) {
+                        Scheduler.get().scheduleDeferred(() ->
+                                event.getShowHandler().onShow(event));
+                    } else if (dialogButtons != null) {
+                        // If no custom handler is specified then focus the buttons
+                        Scheduler.get().scheduleDeferred(() -> dialogButtons.focus());
                     }
+                });
+    }
 
-                    final Position position = PositionUtil.getPosition(shadowWidth, popupPosition, newWidth, newHeight);
-                    popup.setPopupPosition((int) position.getLeft(), (int) position.getTop());
-                }
+//    @Override
+//    public void show(final ShowPopupEvent event) {
+//        final PopupType popupType = event.getPopupType();
+//        final PopupPosition popupPosition = event.getPopupPosition();
+//        final PopupSize popupSize = event.getPopupSize();
+//        hideRequestHandler = event.getHideRequestHandler();
+//        hideHandler = event.getHideHandler();
+//
+//        if (popup == null) {
+//            final HideRequestUiHandlers uiHandlers = new DefaultHideRequestUiHandlers(event.getPresenterWidget());
+//            popup = createPopup(popupType, popupSize, uiHandlers);
+//        }
+//
+//        // Add auto hide partners.
+//        final PopupPanel popupPanel = (PopupPanel) popup;
+//        for (final Element element : GwtNullSafe.list(autoHidePartners)) {
+//            popupPanel.addAutoHidePartner(element);
+//        }
+//
+//        final String uniqueId = createUniqueId(event);
+//
+//        PopupUtil.showPopup(
+//                uniqueId,
+//                popup,
+//                GwtNullSafe.isTrue(modal),
+//                popupPosition,
+//                popupSize,
+//                popupType,
+//                () -> {
+//                    if (event.getShowHandler() != null) {
+//                        event.getShowHandler().onShow(event);
+//                    } else if (dialogButtons != null) {
+//                        // If no custom handler is specified then focus the buttons
+//                        dialogButtons.focus();
+//                    }
+//                });
+//    }
 
-                // Make the popup visible.
-                popupPanel.setVisible(true);
-                popupPanel.getElement().getStyle().setOpacity(1);
+    private String createUniqueId(final ShowPopupEvent event) {
+//        GWT.log("popupPosition: " + event.getPopupPosition());
 
-                // Tell the handler that the popup is visible.
-                if (event.getShowHandler() != null) {
-                    Scheduler.get().scheduleDeferred(() ->
-                            event.getShowHandler().onShow(event));
-                } else if (dialogButtons != null) {
-                    // If no custom handler is specified then focus the buttons
-                    Scheduler.get().scheduleDeferred(() -> dialogButtons.focus());
-                }
-            }
-        });
+        // Create an id to uniquely identify the show popup call, in this case
+        // the presenter that launched it and the position rect of that presenter.
+        // The position is to support context menus where multiple popups are spawned
+        // from the same presenter
+        final String className = GwtNullSafe.getOrElse(
+                event.getPresenterWidget(),
+                Object::getClass,
+                Class::getName,
+                "UNKNOWN_CLASS");
+        final String position = GwtNullSafe.get(
+                event.getPopupPosition(),
+                PopupPosition::getRelativeRect,
+                rect ->
+                        rect.getTop() + "_" +
+                                rect.getLeft() + "_" +
+                                rect.getBottom() + "_" +
+                                rect.getRight());
+        final String id = className + "__" + position;
+//        GWT.log("id: " + id);
+        return id;
     }
 
     private int getSize(final int current, Size size) {

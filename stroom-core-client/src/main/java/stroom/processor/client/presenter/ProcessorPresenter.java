@@ -36,7 +36,6 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.security.shared.DocPermissionResource;
 import stroom.svg.client.SvgPresets;
-import stroom.util.shared.UserName;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -49,6 +48,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.Objects;
+import java.util.function.Supplier;
 
 public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.ProcessorView>
         implements HasDocumentRead<Object> {
@@ -76,6 +76,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     private boolean isAdmin;
 
     private ExpressionOperator defaultExpression;
+    private Supplier<Boolean> editInterceptor = () -> true;
 
     @Inject
     public ProcessorPresenter(final EventBus eventBus,
@@ -286,8 +287,8 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                 final ProcessorFilter filter = processorFilterRow.getProcessorFilter();
 
                 restFactory
-                        .builder()
-                        .forType(ProcessorFilter.class)
+                        .create(PROCESSOR_FILTER_RESOURCE)
+                        .method(res -> res.fetch(filter.getId()))
                         .onSuccess(loadedFilter -> {
                             if (loadedFilter == null) {
                                 AlertEvent.fireError(
@@ -298,8 +299,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                                 edit(loadedFilter, null, processorFilterRow.getOwnerDisplayName());
                             }
                         })
-                        .call(PROCESSOR_FILTER_RESOURCE)
-                        .fetch(filter.getId());
+                        .exec();
             }
         }
     }
@@ -307,28 +307,30 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     private void edit(final ProcessorFilter filter,
                       final ExpressionOperator defaultExpression,
                       final String ownerDisplayName) {
-        if (filter == null && ProcessorType.STREAMING_ANALYTIC.equals(processorType)) {
-            processorEditPresenterProvider.get()
-                    .show(processorType,
-                            docRef,
-                            null,
-                            defaultExpression,
-                            System.currentTimeMillis(),
-                            null,
-                            result -> {
-                                if (result != null) {
-                                    // The owner can't be changed in the editor
-                                    refresh(result, ownerDisplayName);
-                                }
-                            });
-        } else {
-            processorEditPresenterProvider.get()
-                    .show(processorType, docRef, filter, null, result -> {
-                        if (result != null) {
-                            // The owner can't be changed in the editor
-                            refresh(result, ownerDisplayName);
-                        }
-                    });
+        if (editInterceptor.get()) {
+            if (filter == null && ProcessorType.STREAMING_ANALYTIC.equals(processorType)) {
+                processorEditPresenterProvider.get()
+                        .show(processorType,
+                                docRef,
+                                null,
+                                defaultExpression,
+                                System.currentTimeMillis(),
+                                null,
+                                result -> {
+                                    if (result != null) {
+                                        // The owner can't be changed in the editor
+                                        refresh(result, ownerDisplayName);
+                                    }
+                                });
+            } else {
+                processorEditPresenterProvider.get()
+                        .show(processorType, docRef, filter, null, result -> {
+                            if (result != null) {
+                                // The owner can't be changed in the editor
+                                refresh(result, ownerDisplayName);
+                            }
+                        });
+            }
         }
     }
 
@@ -338,11 +340,10 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
             ConfirmEvent.fire(this, "Are you sure you want to delete this filter?", result -> {
                 if (result) {
                     restFactory
-                            .builder()
-                            .forType(Boolean.class)
+                            .create(PROCESSOR_FILTER_RESOURCE)
+                            .method(res -> res.delete(processorFilterRow.getProcessorFilter().getId()))
                             .onSuccess(res -> processorListPresenter.refresh())
-                            .call(PROCESSOR_FILTER_RESOURCE)
-                            .delete(processorFilterRow.getProcessorFilter().getId());
+                            .exec();
                 }
             });
         }
@@ -364,8 +365,8 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     public void refresh(final ProcessorFilter processorFilter) {
         Objects.requireNonNull(processorFilter);
         restFactory
-                .builder()
-                .forListOf(UserName.class)
+                .create(DOC_PERMISSION_RESOURCE)
+                .method(res -> res.getDocumentOwners(processorFilter.getUuid()))
                 .onSuccess(owners -> {
                     String ownerDisplayName;
                     if (owners == null || owners.size() == 0) {
@@ -377,8 +378,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                     }
                     refresh(processorFilter, ownerDisplayName);
                 })
-                .call(DOC_PERMISSION_RESOURCE)
-                .getDocumentOwners(processorFilter.getUuid());
+                .exec();
     }
 
     public void refresh(final ProcessorFilter processorFilter, final String ownerDisplayName) {
@@ -394,6 +394,10 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
 
     public void setDefaultExpression(final ExpressionOperator defaultExpression) {
         this.defaultExpression = defaultExpression;
+    }
+
+    public void setEditInterceptor(final Supplier<Boolean> editInterceptor) {
+        this.editInterceptor = editInterceptor;
     }
 
     // --------------------------------------------------------------------------------

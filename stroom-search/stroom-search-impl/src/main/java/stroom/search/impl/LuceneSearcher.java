@@ -1,8 +1,8 @@
 package stroom.search.impl;
 
 import stroom.datasource.api.v2.IndexField;
+import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexShardSearchConfig;
-import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.LuceneProviderFactory;
 import stroom.index.impl.LuceneShardSearcher;
@@ -30,6 +30,7 @@ import jakarta.inject.Inject;
 
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -46,7 +47,7 @@ public class LuceneSearcher {
     private final IndexStore indexStore;
     private final ExecutorProvider executorProvider;
     private final IndexShardSearchConfig indexShardSearchConfig;
-    private final IndexShardService indexShardService;
+    private final IndexShardDao indexShardDao;
     private final LuceneProviderFactory luceneProviderFactory;
     private final IndexFieldCache indexFieldCache;
     private final TaskContextFactory taskContextFactory;
@@ -58,14 +59,14 @@ public class LuceneSearcher {
     LuceneSearcher(final IndexStore indexStore,
                    final ExecutorProvider executorProvider,
                    final IndexShardSearchConfig indexShardSearchConfig,
-                   final IndexShardService indexShardService,
+                   final IndexShardDao indexShardDao,
                    final LuceneProviderFactory luceneProviderFactory,
                    final IndexFieldCache indexFieldCache,
                    final TaskContextFactory taskContextFactory) {
         this.indexStore = indexStore;
         this.executorProvider = executorProvider;
         this.indexShardSearchConfig = indexShardSearchConfig;
-        this.indexShardService = indexShardService;
+        this.indexShardDao = indexShardDao;
         this.luceneProviderFactory = luceneProviderFactory;
         this.indexFieldCache = indexFieldCache;
         this.taskContextFactory = taskContextFactory;
@@ -131,12 +132,14 @@ public class LuceneSearcher {
                                             taskContext.info(() -> "Waiting for index shard...");
                                             final Long shardId = shardIdQueue.next();
                                             if (shardId != null) {
-                                                final IndexShard indexShard = indexShardService.loadById(shardId);
-                                                if (indexShard == null) {
+                                                final Optional<IndexShard> optionalIndexShard = indexShardDao.fetch(
+                                                        shardId);
+                                                if (optionalIndexShard.isEmpty()) {
                                                     throw new SearchException("Unable to find index shard with id = " +
                                                             shardId);
                                                 }
 
+                                                final IndexShard indexShard = optionalIndexShard.get();
                                                 final LuceneVersion luceneVersion = LuceneVersionUtil
                                                         .getLuceneVersion(indexShard.getIndexVersion());
                                                 final LuceneShardSearcher luceneShardSearcher = searcherMap

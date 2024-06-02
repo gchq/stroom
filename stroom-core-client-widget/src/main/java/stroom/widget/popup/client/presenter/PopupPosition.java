@@ -18,6 +18,8 @@ package stroom.widget.popup.client.presenter;
 
 import stroom.widget.util.client.Rect;
 
+import java.util.Objects;
+
 public class PopupPosition {
 
     private final Rect relativeRect;
@@ -41,6 +43,27 @@ public class PopupPosition {
     public PopupLocation getPopupLocation() {
         return popupLocation;
     }
+
+    @Override
+    public boolean equals(final Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (object == null || getClass() != object.getClass()) {
+            return false;
+        }
+        final PopupPosition that = (PopupPosition) object;
+        return Objects.equals(relativeRect, that.relativeRect) && popupLocation == that.popupLocation;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(relativeRect, popupLocation);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public enum PopupLocation {
         LEFT,

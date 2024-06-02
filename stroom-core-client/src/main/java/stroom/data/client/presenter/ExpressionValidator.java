@@ -1,7 +1,6 @@
 package stroom.data.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.MetaExpressionUtil;
@@ -57,8 +56,12 @@ public class ExpressionValidator {
                 // Standard expression that needs no validation, so save on the rest call
                 consumer.accept(expression);
             } else {
-                restFactory.builder()
-                        .forType(ValidateExpressionResult.class)
+                restFactory
+                        .create(EXPRESSION_RESOURCE)
+                        .method(res -> res.validate(new ValidateExpressionRequest(
+                                expression,
+                                fields,
+                                dateTimeSettingsFactory.getDateTimeSettings())))
                         .onSuccess(result -> {
                             if (result.isOk()) {
                                 validatedExpression = expression;
@@ -75,11 +78,7 @@ public class ExpressionValidator {
                                     hasHandlers, throwable.getMessage(), null);
                             expressionValidationMessage = throwable.getMessage();
                         })
-                        .call(EXPRESSION_RESOURCE)
-                        .validate(new ValidateExpressionRequest(
-                                expression,
-                                fields,
-                                dateTimeSettingsFactory.getDateTimeSettings()));
+                        .exec();
             }
         }
     }

@@ -23,7 +23,6 @@ import stroom.data.shared.DataInfoSection;
 import stroom.data.shared.DataResource;
 import stroom.data.shared.DataType;
 import stroom.data.shared.StreamTypeNames;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.HtmlPresenter;
 import stroom.meta.shared.Meta;
@@ -461,9 +460,9 @@ public class DataPresenter
 
     public void fetchData(final SourceLocation sourceLocation) {
         // We know the location but not what type of data we are fetching so first get the meta
-
-        final Rest<Meta> rest = restFactory.create();
-        rest
+        restFactory
+                .create(META_RESOURCE)
+                .method(res -> res.fetch(sourceLocation.getMetaId()))
                 .onSuccess(meta -> {
                     fetchData(meta, sourceLocation, false);
                 })
@@ -474,8 +473,7 @@ public class DataPresenter
                             null,
                             Collections.singletonList(caught.getMessage()));
                 })
-                .call(META_RESOURCE)
-                .fetch(sourceLocation.getMetaId());
+                .exec();
     }
 
     public void fetchData(final Meta meta) {
@@ -572,8 +570,11 @@ public class DataPresenter
 
                 final Long currentMetaId = getCurrentMetaId();
                 if (currentMetaId != null && currentMetaId >= 0) {
-                    restFactory.builder()
-                            .forSetOf(String.class)
+                    restFactory
+                            .create(DATA_RESOURCE)
+                            .method(res -> res.getChildStreamTypes(
+                                    currentSourceLocation.getMetaId(),
+                                    currentSourceLocation.getPartIndex()))
                             .onSuccess(availableChildStreamTypes -> {
 //                                GWT.log("Received available child stream types " + availableChildStreamTypes);
                                 currentAvailableStreamTypes = availableChildStreamTypes;
@@ -581,10 +582,7 @@ public class DataPresenter
                             })
                             .onFailure(caught ->
                                     itemNavigatorPresenter.setRefreshing(false))
-                            .call(DATA_RESOURCE)
-                            .getChildStreamTypes(
-                                    currentSourceLocation.getMetaId(),
-                                    currentSourceLocation.getPartIndex());
+                            .exec();
                 } else {
                     showInvalidStreamErrorMsg();
                     itemNavigatorPresenter.setRefreshing(false);
@@ -749,8 +747,9 @@ public class DataPresenter
                         final FetchDataRequest request = actionQueue.get(actionQueue.size() - 1);
                         actionQueue.clear();
 
-                        final Rest<AbstractFetchDataResult> rest = restFactory.create();
-                        rest
+                        restFactory
+                                .create(DATA_RESOURCE)
+                                .method(res -> res.fetch(request))
                                 .onSuccess(result -> {
                                     // If we are queueing more actions then don't
                                     // update the text.
@@ -761,8 +760,7 @@ public class DataPresenter
                                 })
                                 .onFailure(caught ->
                                         itemNavigatorPresenter.setRefreshing(false))
-                                .call(DATA_RESOURCE)
-                                .fetch(request);
+                                .exec();
                     }
                 }
             };
@@ -1116,11 +1114,11 @@ public class DataPresenter
 
     private void fetchMetaInfoData(final Long metaId) {
         if (metaId != null) {
-            restFactory.builder()
-                    .forListOf(DataInfoSection.class)
+            restFactory
+                    .create(DATA_RESOURCE)
+                    .method(res -> res.viewInfo(metaId))
                     .onSuccess(this::handleMetaInfoResult)
-                    .call(DATA_RESOURCE)
-                    .viewInfo(metaId);
+                    .exec();
         }
     }
 

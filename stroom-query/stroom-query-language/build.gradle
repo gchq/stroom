@@ -14,6 +14,7 @@ dependencies {
     implementation libs.slf4j_api
     implementation libs.vavr
 
+    testImplementation project(':stroom-bytebuffer')
     testImplementation project(':stroom-test-common')
 
     testImplementation libs.assertj_core

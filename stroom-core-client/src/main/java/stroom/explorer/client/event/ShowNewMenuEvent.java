@@ -66,6 +66,10 @@ public class ShowNewMenuEvent extends GwtEvent<ShowNewMenuEvent.Handler> {
         return popupPosition;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Handler extends EventHandler {
 
         void onShow(ShowNewMenuEvent event);

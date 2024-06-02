@@ -18,13 +18,11 @@ package stroom.importexport.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.AbstractSubmitCompleteHandler;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.importexport.client.event.ImportConfigConfirmEvent;
 import stroom.importexport.client.event.ImportConfigEvent;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.ImportConfigRequest;
-import stroom.importexport.shared.ImportConfigResponse;
 import stroom.importexport.shared.ImportSettings;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.StringUtil;
@@ -62,7 +60,7 @@ public class ImportConfigPresenter
         super(eventBus, view, proxy);
         this.restFactory = restFactory;
 
-        view.getForm().setAction(restFactory.getImportFileURL());
+        view.getForm().setAction(ImportUtil.getImportFileURL());
         view.getForm().setEncoding(FormPanel.ENCODING_MULTIPART);
         view.getForm().setMethod(FormPanel.METHOD_POST);
     }
@@ -77,8 +75,11 @@ public class ImportConfigPresenter
 
             @Override
             protected void onSuccess(final ResourceKey resourceKey) {
-                final Rest<ImportConfigResponse> rest = restFactory.create();
-                rest
+                restFactory
+                        .create(CONTENT_RESOURCE)
+                        .method(res -> res.importContent(new ImportConfigRequest(resourceKey,
+                                ImportSettings.createConfirmation(),
+                                new ArrayList<>())))
                         .onSuccess(response -> {
                             if (response.getConfirmList().isEmpty()) {
                                 warning("The import package contains nothing that can be imported into " +
@@ -90,10 +91,7 @@ public class ImportConfigPresenter
                             }
                         })
                         .onFailure(caught -> error(caught.getMessage()))
-                        .call(CONTENT_RESOURCE)
-                        .importContent(new ImportConfigRequest(resourceKey,
-                                ImportSettings.createConfirmation(),
-                                new ArrayList<>()));
+                        .exec();
             }
 
             @Override

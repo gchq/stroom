@@ -18,12 +18,9 @@
 package stroom.index.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.NameDocumentView;
-import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
-import stroom.util.shared.ResultPage;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -80,8 +77,9 @@ public class NewIndexVolumeGroupPresenter
                         "You must provide a name",
                         null);
             } else {
-                final Rest<ResultPage<IndexVolumeGroup>> rest = restFactory.create();
-                rest
+                restFactory
+                        .create(INDEX_VOLUME_GROUP_RESOURCE)
+                        .method(res -> res.fetchByName(name))
                         .onSuccess(result -> {
                             if (result != null) {
                                 AlertEvent.fireError(
@@ -94,8 +92,7 @@ public class NewIndexVolumeGroupPresenter
                                 consumer.accept(name);
                             }
                         })
-                        .call(INDEX_VOLUME_GROUP_RESOURCE)
-                        .fetchByName(name);
+                        .exec();
             }
         } else {
             consumer.accept(null);

@@ -11,7 +11,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class SvgIconBox extends FlowPanel {
 
-    private SimplePanel icon;
+    private SimplePanel outer;
 
     public SvgIconBox() {
         setStyleName("svgIconBox");
@@ -20,14 +20,17 @@ public class SvgIconBox extends FlowPanel {
     public void setWidget(final Widget widget, final SvgImage svgImage) {
         this.add(widget);
 
-        icon = new SimplePanel();
-        icon.getElement().setInnerHTML(svgImage.getSvg());
-        icon.getElement().setClassName("svgIconBox-icon icon-colour__grey svgIcon " + svgImage.getClassName());
+        final SimplePanel inner = new SimplePanel();
+        inner.getElement().setInnerHTML(svgImage.getSvg());
+        inner.getElement().setClassName("svgIconBox-icon-inner icon-colour__grey svgIcon " + svgImage.getClassName());
 
-        this.add(icon);
+        outer = new SimplePanel(inner);
+        outer.getElement().setClassName("svgIconBox-icon-outer");
+
+        this.add(outer);
     }
 
     public HandlerRegistration addClickHandler(ClickHandler handler) {
-        return icon.addDomHandler(handler, ClickEvent.getType());
+        return outer.addDomHandler(handler, ClickEvent.getType());
     }
 }

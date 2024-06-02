@@ -254,7 +254,7 @@
                     ANNOTATION_DEF, RECORD_DEF"/>
 
       <!-- Stroom allow _ in Test... class names -->
-      <property name="format" value="^([A-Z][a-zA-Z0-9]*|Test[A-Z][a-zA-Z0-9_]*)$"/>
+      <property name="format" value="^([A-Z][a-zA-Z0-9]*|Test[A-Z][a-zA-Z0-9_]*|V[0-9]+_[0-9a-zA-Z_]+)$"/>
 
       <message key="name.invalidPattern"
              value="Type name ''{0}'' must match pattern ''{1}''."/>

@@ -23,7 +23,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.DbStatusResource;
@@ -43,6 +43,8 @@ import java.util.function.Consumer;
 
 public class DatabaseTablesMonitoringPresenter
         extends ContentTabPresenter<PagerView> {
+
+    public static final String TAB_TYPE = "DatabaseTables";
 
     private static final DbStatusResource DB_STATUS_RESOURCE = GWT.create(DbStatusResource.class);
 
@@ -105,14 +107,14 @@ public class DatabaseTablesMonitoringPresenter
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<DBTableStatus>> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
+                                final Consumer<RestError> errorConsumer) {
                 CriteriaUtil.setRange(criteria, range);
-                final Rest<ResultPage<DBTableStatus>> rest = restFactory.create();
-                rest
+                restFactory
+                        .create(DB_STATUS_RESOURCE)
+                        .method(res -> res.findSystemTableStatus(criteria))
                         .onSuccess(dataConsumer)
-                        .onFailure(throwableConsumer)
-                        .call(DB_STATUS_RESOURCE)
-                        .findSystemTableStatus(criteria);
+                        .onFailure(errorConsumer)
+                        .exec();
             }
         };
         dataProvider.addDataDisplay(dataGrid);
@@ -141,5 +143,10 @@ public class DatabaseTablesMonitoringPresenter
     @Override
     public String getLabel() {
         return "Database Tables";
+    }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
     }
 }

@@ -18,7 +18,7 @@
 package stroom.analytics.client.presenter;
 
 import stroom.analytics.client.presenter.AnalyticStreamDestinationPresenter.AnalyticStreamDestinationView;
-import stroom.analytics.shared.AnalyticNotificationStreamDestination;
+import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.DirtyUiHandlers;
@@ -58,15 +58,15 @@ public class AnalyticStreamDestinationPresenter
         registerHandler(feedPresenter.addDataSelectionHandler(e -> onDirty()));
     }
 
-    public void read(final AnalyticNotificationStreamDestination streamDestination) {
+    public void read(final NotificationStreamDestination streamDestination) {
         if (streamDestination != null) {
             getView().setUseSourceFeedIfPossible(streamDestination.isUseSourceFeedIfPossible());
             feedPresenter.setSelectedEntityReference(streamDestination.getDestinationFeed());
         }
     }
 
-    public AnalyticNotificationStreamDestination write() {
-        return new AnalyticNotificationStreamDestination(
+    public NotificationStreamDestination write() {
+        return new NotificationStreamDestination(
                 feedPresenter.getSelectedEntityReference(),
                 getView().isUseSourceFeedIfPossible());
     }

@@ -20,7 +20,6 @@ package stroom.pipeline.stepping.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.ClassificationUiHandlers;
 import stroom.data.client.presenter.ClassificationWrapperView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
@@ -135,8 +134,9 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
                             .pipelineName(pipelineName)
                             .build();
 
-                    final Rest<DocRef> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .create(STEPPING_RESOURCE)
+                            .method(res -> res.findElementDoc(findElementDocRequest))
                             .onSuccess(result -> loadEntityRef(result, future))
                             .onFailure(caught -> {
                                 dirtyCode = false;
@@ -144,8 +144,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
                                 clearAllIndicators();
                                 future.setResult(false);
                             })
-                            .call(STEPPING_RESOURCE)
-                            .findElementDoc(findElementDocRequest);
+                            .exec();
 
                     loading = true;
                 } catch (final RuntimeException e) {

@@ -34,6 +34,7 @@ public abstract class NodeToolsPlugin extends Plugin {
                            final ClientSecurityContext securityContext) {
         super(eventBus);
         this.securityContext = securityContext;
+
     }
 
     @Override

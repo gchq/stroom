@@ -48,6 +48,7 @@ public class SearchResponseCreator {
     private final SizesProvider sizesProvider;
     private final ResultStore store;
     private final ExpressionContext expressionContext;
+    private final MapDataStoreFactory mapDataStoreFactory;
 
     private final Map<String, ResultCreator> cachedResultCreators = new HashMap<>();
 
@@ -56,10 +57,12 @@ public class SearchResponseCreator {
      */
     public SearchResponseCreator(final SizesProvider sizesProvider,
                                  final ResultStore store,
-                                 final ExpressionContext expressionContext) {
+                                 final ExpressionContext expressionContext,
+                                 final MapDataStoreFactory mapDataStoreFactory) {
         this.sizesProvider = sizesProvider;
         this.store = Objects.requireNonNull(store);
         this.expressionContext = expressionContext;
+        this.mapDataStoreFactory = mapDataStoreFactory;
     }
 
     /**
@@ -158,7 +161,7 @@ public class SearchResponseCreator {
             final List<Result> res = LOGGER.logDurationIfTraceEnabled(() ->
                     getResults(searchRequest, resultCreatorMap), "Getting results");
             LOGGER.debug(() -> "Returning new SearchResponse with results: " +
-                    (res.size() == 0
+                    (res.isEmpty()
                             ? "null"
                             : res.size()) +
                     ", complete: " +
@@ -168,7 +171,7 @@ public class SearchResponseCreator {
 
             List<Result> results = res;
 
-            if (results.size() == 0) {
+            if (results.isEmpty()) {
                 results = null;
             }
 
@@ -271,7 +274,6 @@ public class SearchResponseCreator {
             if (dataStore != null) {
                 try {
                     final ResultCreator resultCreator = getDefaultResultCreator(
-                            dataStore.getSerialisers(),
                             searchRequest,
                             componentId,
                             expressionContext,
@@ -286,8 +288,7 @@ public class SearchResponseCreator {
         return map;
     }
 
-    private ResultCreator getDefaultResultCreator(final Serialisers serialisers,
-                                                  final SearchRequest searchRequest,
+    private ResultCreator getDefaultResultCreator(final SearchRequest searchRequest,
                                                   final String componentId,
                                                   final ExpressionContext expressionContext,
                                                   final ResultRequest resultRequest,
@@ -303,7 +304,7 @@ public class SearchResponseCreator {
 
                 } else if (ResultStyle.VIS.equals(resultRequest.getResultStyle())) {
                     final FlatResultCreator flatResultCreator = new FlatResultCreator(
-                            new MapDataStoreFactory(() -> serialisers),
+                            mapDataStoreFactory,
                             searchRequest,
                             componentId,
                             expressionContext,
@@ -316,7 +317,7 @@ public class SearchResponseCreator {
 
                 } else if (ResultStyle.QL_VIS.equals(resultRequest.getResultStyle())) {
                     final FlatResultCreator flatResultCreator = new FlatResultCreator(
-                            new MapDataStoreFactory(() -> serialisers),
+                            mapDataStoreFactory,
                             searchRequest,
                             componentId,
                             expressionContext,
@@ -327,12 +328,12 @@ public class SearchResponseCreator {
                             cacheLastResult);
                     resultCreator = new QLVisResultCreator(flatResultCreator, resultRequest
                             .getMappings()
-                            .get(resultRequest.getMappings().size() - 1)
+                            .getLast()
                             .getVisSettings());
 
                 } else {
                     resultCreator = new FlatResultCreator(
-                            new MapDataStoreFactory(() -> serialisers),
+                            mapDataStoreFactory,
                             searchRequest,
                             componentId,
                             expressionContext,

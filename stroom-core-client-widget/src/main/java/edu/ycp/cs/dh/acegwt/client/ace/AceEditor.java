@@ -79,7 +79,7 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
             throw new RuntimeException("Trying to use editor before startEditor has been called.");
         }
         return getIdNative();
-	}
+    }
 
     /**
      * Get the editor's ID
@@ -875,6 +875,8 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 	}-*/;
 
     public native void beautify() /*-{
+        // Relies on ace/beautify/beautify.js from https://cdnjs.com/libraries/js-beautify
+
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 
 		var source = editor.getSession().getValue();
@@ -971,6 +973,16 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
     public native void setFirstLineNumber(int lineNumber) /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 		editor.setOption("firstLineNumber", lineNumber);
+	}-*/;
+
+    /**
+     * Set the maximum number of lines
+     *
+     * @param maxLines the maximum number of lines in the editor
+     */
+    public native void setMaxLines(int maxLines) /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		editor.setOption("maxLines", maxLines);
 	}-*/;
 
     /**

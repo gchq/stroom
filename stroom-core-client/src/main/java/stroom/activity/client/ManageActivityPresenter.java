@@ -21,11 +21,9 @@ import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityResource;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.UrlParameters;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.shared.filter.FilterFieldDefinition;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.popup.client.event.DisablePopupEvent;
@@ -47,7 +45,6 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -166,9 +163,9 @@ public class ManageActivityPresenter
     private void updateQuickFilterTooltipContentSupplier() {
         uiConfigCache.get().onSuccess(uiConfig -> {
             final String helpUrl = uiConfig.getHelpUrlQuickFilter();
-            final Rest<List<FilterFieldDefinition>> rest = restFactory.create();
-            // Separate to aid type inference
-            rest
+            restFactory
+                    .create(ACTIVITY_RESOURCE)
+                    .method(ActivityResource::listFieldDefinitions)
                     .onSuccess(fieldDefinitions -> {
                         quickFilterTooltipSupplier = () -> QuickFilterTooltipUtil.createTooltip(
                                 "Choose Activity Quick Filter",
@@ -181,8 +178,7 @@ public class ManageActivityPresenter
                                 "Choose Activity Quick Filter",
                                 helpUrl);
                     })
-                    .call(ACTIVITY_RESOURCE)
-                    .listFieldDefinitions();
+                    .exec();
         });
     }
 
@@ -243,11 +239,11 @@ public class ManageActivityPresenter
         final Activity e = getSelected();
         if (e != null) {
             // Load the activity.
-            final Rest<Activity> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(ACTIVITY_RESOURCE)
+                    .method(res -> res.fetch(e.getId()))
                     .onSuccess(this::onEdit)
-                    .call(ACTIVITY_RESOURCE)
-                    .fetch(e.getId());
+                    .exec();
         }
     }
 
@@ -272,15 +268,15 @@ public class ManageActivityPresenter
                     result -> {
                         if (result) {
                             // Delete the activity
-                            final Rest<Boolean> rest = restFactory.create();
-                            rest
+                            restFactory
+                                    .create(ACTIVITY_RESOURCE)
+                                    .method(res -> res.delete(entity.getId()))
                                     .onSuccess(success -> {
                                         listPresenter.refresh();
                                         listPresenter.getSelectionModel().clear();
                                         updateQuickFilterTooltipContentSupplier();
                                     })
-                                    .call(ACTIVITY_RESOURCE)
-                                    .delete(entity.getId());
+                                    .exec();
                         }
                     });
         }

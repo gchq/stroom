@@ -11,15 +11,19 @@ import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
@@ -33,7 +37,8 @@ public class ActiveShardsCacheImpl implements ActiveShardsCache {
 
     private final NodeInfo nodeInfo;
     private final IndexShardWriterCache indexShardWriterCache;
-    private final IndexShardService indexShardService;
+    private final IndexShardDao indexShardDao;
+    private final IndexShardCreator indexShardCreator;
     private final LuceneIndexDocCache luceneIndexDocCache;
     private final SecurityContext securityContext;
 
@@ -43,14 +48,16 @@ public class ActiveShardsCacheImpl implements ActiveShardsCache {
     @Inject
     ActiveShardsCacheImpl(final IndexShardWriterCache indexShardWriterCache,
                           final NodeInfo nodeInfo,
-                          final IndexShardService indexShardService,
+                          final IndexShardDao indexShardDao,
+                          final IndexShardCreator indexShardCreator,
                           final LuceneIndexDocCache luceneIndexDocCache,
                           final CacheManager cacheManager,
                           final Provider<IndexWriterConfig> indexWriterConfigProvider,
                           final SecurityContext securityContext) {
         this.indexShardWriterCache = indexShardWriterCache;
         this.nodeInfo = nodeInfo;
-        this.indexShardService = indexShardService;
+        this.indexShardDao = indexShardDao;
+        this.indexShardCreator = indexShardCreator;
         this.luceneIndexDocCache = luceneIndexDocCache;
         this.securityContext = securityContext;
 
@@ -74,23 +81,41 @@ public class ActiveShardsCacheImpl implements ActiveShardsCache {
                 throw new IndexException("Unable to find index with UUID: " + indexShardKey.getIndexUuid());
             }
 
+            LOGGER.debug("Creating ActiveShards for node: {}, indexShardKey: {}", nodeInfo, indexShardKey);
             return new ActiveShards(
                     nodeInfo,
                     indexShardWriterCache,
-                    indexShardService,
+                    indexShardDao,
+                    indexShardCreator,
                     luceneIndexDoc.getShardsPerPartition(),
                     luceneIndexDoc.getMaxDocsPerShard(),
                     indexShardKey);
         });
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class ActiveShards {
 
-        private static final int MAX_ATTEMPTS = 10000;
+        private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ActiveShards.class);
+
+        // All shards are CLOSED on boot, but if this cache is cleared or items age off
+        // then we may shards in other states.
+        private static final EnumSet<IndexShardStatus> REQUIRED_SHARD_STATES = EnumSet.of(
+                IndexShardStatus.NEW,
+                IndexShardStatus.OPEN,
+                IndexShardStatus.OPENING,
+                IndexShardStatus.CLOSED,
+                IndexShardStatus.CLOSING);
+
+        private static final int MAX_ATTEMPTS = 10_000;
 
         private final NodeInfo nodeInfo;
         private final IndexShardWriterCache indexShardWriterCache;
-        private final IndexShardService indexShardService;
+        private final IndexShardDao indexShardDao;
+        private final IndexShardCreator indexShardCreator;
         private final IndexShardKey indexShardKey;
         private final ReentrantLock lock = new ReentrantLock();
         private final Integer shardsPerPartition;
@@ -100,13 +125,15 @@ public class ActiveShardsCacheImpl implements ActiveShardsCache {
 
         public ActiveShards(final NodeInfo nodeInfo,
                             final IndexShardWriterCache indexShardWriterCache,
-                            final IndexShardService indexShardService,
+                            final IndexShardDao indexShardDao,
+                            final IndexShardCreator indexShardCreator,
                             final Integer shardsPerPartition,
                             final Integer maxDocsPerShard,
                             final IndexShardKey indexShardKey) {
             this.nodeInfo = nodeInfo;
             this.indexShardWriterCache = indexShardWriterCache;
-            this.indexShardService = indexShardService;
+            this.indexShardDao = indexShardDao;
+            this.indexShardCreator = indexShardCreator;
             this.shardsPerPartition = shardsPerPartition;
             this.maxDocsPerShard = maxDocsPerShard;
             this.indexShardKey = indexShardKey;
@@ -122,6 +149,7 @@ public class ActiveShardsCacheImpl implements ActiveShardsCache {
 
             // Attempt under lock if we failed to add.
             if (!success) {
+                LOGGER.debug("Trying again under lock");
                 // If we failed then try under lock to make sure we get a new writer.
                 addDocumentUnderLock(document);
             }
@@ -178,29 +206,41 @@ public class ActiveShardsCacheImpl implements ActiveShardsCache {
         private boolean addDocument(final IndexDocument document,
                                     final IndexShard indexShard,
                                     final boolean throwException) {
-            final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriter(indexShard.getId());
             try {
-                indexShardWriter.addDocument(document);
-                return true;
+                final IndexShardWriter indexShardWriter = indexShardWriterCache.getOrOpenWriter(indexShard.getId());
+                try {
+                    indexShardWriter.addDocument(document);
+                    return true;
 
-            } catch (final ShardFullException e) {
-                removeActiveShard(indexShard);
-                indexShardWriterCache.close(indexShardWriter);
+                } catch (final IndexException | UncheckedIOException e) {
+                    LOGGER.trace(e::getMessage, e);
 
-            } catch (final IndexException | IllegalArgumentException e) {
-                LOGGER.trace(e::getMessage, e);
+                    removeActiveShard(indexShard);
+                    indexShardWriterCache.close(indexShardWriter);
 
-            } catch (final RuntimeException e) {
-                LOGGER.error(e::getMessage, e);
-                if (throwException) {
-                    throw e;
+                } catch (final RuntimeException e) {
+                    if (throwException) {
+                        LOGGER.error(e::getMessage, e);
+                        throw e;
+                    } else {
+                        LOGGER.debug(e::getMessage, e);
+                    }
                 }
+            } catch (final RuntimeException e) {
+                if (throwException) {
+                    LOGGER.error(e::getMessage, e);
+                    throw e;
+                } else {
+                    LOGGER.debug(e::getMessage, e);
+                }
+                removeActiveShard(indexShard);
             }
             return false;
         }
 
         private List<IndexShard> getIndexShards() {
             List<IndexShard> indexShards = this.indexShards;
+
             if (indexShards.size() < shardsPerPartition) {
                 indexShards = ensureShards();
             }
@@ -208,6 +248,8 @@ public class ActiveShardsCacheImpl implements ActiveShardsCache {
         }
 
         private synchronized List<IndexShard> ensureShards() {
+            LOGGER.debug(() -> LogUtil.message(
+                    "ensureShards, indexShards size before: {}", NullSafe.size(indexShards)));
             List<IndexShard> list = indexShards;
             if (list.size() < shardsPerPartition) {
                 list = new ArrayList<>(list);
@@ -216,16 +258,23 @@ public class ActiveShardsCacheImpl implements ActiveShardsCache {
                 }
             }
             indexShards = list;
+            LOGGER.debug(() -> LogUtil.message(
+                    "ensureShards, indexShards size after: {}", NullSafe.size(indexShards)));
             return list;
         }
 
         private synchronized void addActiveShard(final IndexShardKey indexShardKey) {
+            LOGGER.debug("Adding shard for key {}", indexShardKey);
             final IndexShard indexShard = createNewShard(indexShardKey);
-            indexShards.add(indexShard);
+            final List<IndexShard> list = new ArrayList<>(indexShards);
+            list.add(indexShard);
+            indexShards = list;
         }
 
         private synchronized void removeActiveShard(final IndexShard indexShard) {
-            indexShards.remove(indexShard);
+            final List<IndexShard> list = new ArrayList<>(indexShards);
+            list.remove(indexShard);
+            indexShards = list;
         }
 
         /**
@@ -239,14 +288,25 @@ public class ActiveShardsCacheImpl implements ActiveShardsCache {
             criteria.getPartition().setString(indexShardKey.getPartition().getLabel());
 
             final List<IndexShard> indexShards = new ArrayList<>();
-            final ResultPage<IndexShard> indexShardResultPage = indexShardService.find(criteria);
+            final ResultPage<IndexShard> indexShardResultPage = indexShardDao.find(criteria);
+            LOGGER.debug(() -> LogUtil.message(
+                    "getExistingShards(), found {} un-filtered shards, maxDocsPerShard: {}",
+                    NullSafe.getOrElse(indexShardResultPage, ResultPage::size, 0),
+                    maxDocsPerShard));
             for (final IndexShard indexShard : indexShardResultPage.getValues()) {
-                // Look for non deleted, non full, non corrupt index shards.
-                if (IndexShardStatus.CLOSED.equals(indexShard.getStatus()) &&
-                        indexShard.getDocumentCount() < maxDocsPerShard) {
+                // Look for non deleted, non-full, non-corrupt index shards.
+                final IndexShardStatus status = indexShard.getStatus();
+                if (status != null
+                        && REQUIRED_SHARD_STATES.contains(status)
+                        && indexShard.getDocumentCount() < maxDocsPerShard) {
                     indexShards.add(indexShard);
+                } else {
+                    LOGGER.debug(() -> LogUtil.message("Ignoring shard {} with status: {}, docCount: {}",
+                            indexShard.getId(), status, indexShard.getDocumentCount()));
                 }
             }
+            LOGGER.debug(() -> LogUtil.message(
+                    "getExistingShards(), indexShards size: {}", NullSafe.size(indexShards)));
             return indexShards;
         }
 
@@ -254,7 +314,9 @@ public class ActiveShardsCacheImpl implements ActiveShardsCache {
          * Creates a new index shard writer for the specified key and opens a writer for it.
          */
         private IndexShard createNewShard(final IndexShardKey indexShardKey) {
-            return indexShardService.createIndexShard(indexShardKey, nodeInfo.getThisNodeName());
+            final String thisNodeName = nodeInfo.getThisNodeName();
+            LOGGER.debug("Creating shard for key {} on {}", indexShardKey, thisNodeName);
+            return indexShardCreator.createIndexShard(indexShardKey, thisNodeName);
         }
     }
 }

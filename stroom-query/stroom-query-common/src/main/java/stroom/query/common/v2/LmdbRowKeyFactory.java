@@ -6,16 +6,16 @@ import stroom.query.language.functions.ref.StoredValues;
 import org.lmdbjava.KeyRange;
 
 import java.nio.ByteBuffer;
+import java.util.function.Consumer;
 
 public interface LmdbRowKeyFactory {
 
     /**
      * Create an LMDB row key.
      *
-     * @param depth           The nesting depth of the key.
-     * @param parentGroupHash The hash of the parent group.
-     * @param groupHash       The hash of the current group.
-     * @param timeMs          The time if needed.
+     * @param depth        The nesting depth of the key.
+     * @param parentRowKey The buffer for the parent row key.
+     * @param storedValues The stored values.
      * @return A new LMDB row key.
      */
     ByteBuffer create(int depth,
@@ -50,18 +50,20 @@ public interface LmdbRowKeyFactory {
      * Create a key range to filter rows to find the children of the supplied parent key.
      *
      * @param parentKey The parent key to create the child key range for.
+     * @param consumer  A consumer that will receive the child key.
      * @return A key range to filter rows to find the children of the supplied parent key.
      */
-    KeyRange<ByteBuffer> createChildKeyRange(Key parentKey);
+    void createChildKeyRange(Key parentKey, Consumer<KeyRange<ByteBuffer>> consumer);
 
     /**
      * Create a key range to filter rows to find the children of the supplied parent key that also filters by time.
      *
      * @param parentKey  The parent key to create the child key range for.
      * @param timeFilter The time filter to apply to the key range.
-     * @return A key range to filter rows to find the children of the supplied parent key that also filters by time.
+     * @param consumer   Consumer for the key range to filter rows to find the children of the supplied parent key that
+     *                   also filters by time.
      */
-    KeyRange<ByteBuffer> createChildKeyRange(Key parentKey, TimeFilter timeFilter);
+    void createChildKeyRange(Key parentKey, TimeFilter timeFilter, Consumer<KeyRange<ByteBuffer>> consumer);
 
     Key createKey(Key parentKey, StoredValues storedValues, ByteBuffer keyBuffer);
 }

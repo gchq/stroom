@@ -18,7 +18,6 @@ package stroom.documentation.client.presenter;
 
 import stroom.core.client.LocationManager;
 import stroom.dispatch.client.ExportFileCompleteUtil;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
@@ -28,7 +27,6 @@ import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.svg.client.SvgPresets;
-import stroom.util.shared.ResourceGeneration;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.SvgButton;
 import stroom.widget.tab.client.presenter.TabData;
@@ -91,11 +89,11 @@ public class DocumentationPresenter extends DocumentEditTabPresenter<LinkTabPane
     protected void onBind() {
         super.onBind();
         registerHandler(downloadButton.addClickHandler(clickEvent -> {
-            final Rest<ResourceGeneration> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(DOCUMENTATION_RESOURCE)
+                    .method(res -> res.download(docRef))
                     .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
-                    .call(DOCUMENTATION_RESOURCE)
-                    .download(docRef);
+                    .exec();
         }));
     }
 

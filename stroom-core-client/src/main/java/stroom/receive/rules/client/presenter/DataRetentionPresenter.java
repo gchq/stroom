@@ -46,9 +46,11 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Provider;
 
-public class DataRetentionPresenter extends ContentTabPresenter<DataRetentionPresenter.DataRetentionView>
+public class DataRetentionPresenter
+        extends ContentTabPresenter<DataRetentionPresenter.DataRetentionView>
         implements HasDirtyHandlers, CloseContentEvent.Handler {
 
+    public static final String TAB_TYPE = "DataRetentionRules";
     private static final TabData RULES_TAB = new TabDataImpl("Rules");
     private static final TabData IMPACT_SUMMARY_TAB = new TabDataImpl("Impact Summary");
     private static final String TAB_LABEL = "Data Retention";
@@ -225,6 +227,15 @@ public class DataRetentionPresenter extends ContentTabPresenter<DataRetentionPre
             unbind();
         }
     }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface DataRetentionView extends LinkTabsLayoutView {
 

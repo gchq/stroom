@@ -30,6 +30,7 @@ import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.FieldInfoResultPageBuilder;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValInteger;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
@@ -1069,7 +1070,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         return switch (field.getFldType()) {
             case TEXT -> ValString.create((String) object);
             case INTEGER -> ValInteger.create((Integer) object);
-            case LONG, ID, DATE -> ValLong.create((long) object);
+            case LONG, ID -> ValLong.create((long) object);
+            case DATE -> ValDate.create((long) object);
             case DOC_REF -> getPipelineNameAsVal((DocRef) object);
             default -> throw new RuntimeException("Unexpected field type " + field.getFldType());
         };

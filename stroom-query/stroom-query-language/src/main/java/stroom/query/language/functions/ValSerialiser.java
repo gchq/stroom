@@ -1,9 +1,8 @@
 package stroom.query.language.functions;
 
+import stroom.query.language.functions.ref.DataReader;
+import stroom.query.language.functions.ref.DataWriter;
 import stroom.util.logging.LogUtil;
-
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -52,43 +51,43 @@ public final class ValSerialiser {
                 (output, value) -> output.writeLong(value.toLong()));
     }
 
-    public static Val read(final Input input) {
-        final int id = input.readByte();
+    public static Val read(final DataReader reader) {
+        final int id = reader.readByte();
         final Serialiser serialiser = SERIALISERS[id];
-        return serialiser.reader.apply(input);
+        return serialiser.reader.apply(reader);
     }
 
-    public static void write(final Output output, final Val val) {
+    public static void write(final DataWriter writer, final Val val) {
         final byte id = val.type().getId();
-        output.writeByte(id);
+        writer.writeByte(id);
         final Serialiser serialiser = SERIALISERS[id];
         Objects.requireNonNull(serialiser, () -> LogUtil.message("No serialiser found for val type: {}, id: {}",
                 val.type(), id));
 
-        serialiser.writer.accept(output, val);
+        serialiser.writer.accept(writer, val);
     }
 
-    public static Val[] readArray(final Input input) {
+    public static Val[] readArray(final DataReader reader) {
         Val[] values = Val.empty();
 
-        final int valueCount = input.readByteUnsigned();
+        final int valueCount = reader.readByteUnsigned();
         if (valueCount > 0) {
             values = new Val[valueCount];
             for (int i = 0; i < valueCount; i++) {
-                values[i] = read(input);
+                values[i] = read(reader);
             }
         }
 
         return values;
     }
 
-    public static void writeArray(final Output output, final Val[] values) {
+    public static void writeArray(final DataWriter writer, final Val[] values) {
         if (values.length > 255) {
             throw new RuntimeException("You can only write a maximum of " + 255 + " values");
         }
-        output.writeByte(values.length);
+        writer.writeByteUnsigned(values.length);
         for (final Val val : values) {
-            write(output, val);
+            write(writer, val);
         }
     }
 
@@ -108,11 +107,11 @@ public final class ValSerialiser {
      */
     static class Serialiser {
 
-        final Function<Input, Val> reader;
-        final BiConsumer<Output, Val> writer;
+        final Function<DataReader, Val> reader;
+        final BiConsumer<DataWriter, Val> writer;
 
-        public Serialiser(final Function<Input, Val> reader,
-                          final BiConsumer<Output, Val> writer) {
+        public Serialiser(final Function<DataReader, Val> reader,
+                          final BiConsumer<DataWriter, Val> writer) {
             this.reader = reader;
             this.writer = writer;
         }

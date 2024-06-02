@@ -19,13 +19,11 @@ package stroom.index.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.index.client.presenter.IndexVolumeEditPresenter.IndexVolumeEditView;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.index.shared.IndexVolumeResource;
-import stroom.index.shared.ValidationResult;
 import stroom.item.client.SelectionBox;
 import stroom.node.client.NodeManager;
 import stroom.util.shared.ModelStringUtil;
@@ -102,9 +100,9 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
 
     private void doWithVolumeValidation(final IndexVolume volume,
                                         final Runnable work) {
-
-        final Rest<ValidationResult> rest = restFactory.create();
-        rest
+        restFactory
+                .create(INDEX_VOLUME_RESOURCE)
+                .method(res -> res.validate(volume))
                 .onSuccess(validationResult -> {
                     if (validationResult.isOk()) {
                         if (work != null) {
@@ -131,25 +129,24 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
                 .onFailure(throwable -> {
                     AlertEvent.fireError(IndexVolumeEditPresenter.this, throwable.getMessage(), null);
                 })
-                .call(INDEX_VOLUME_RESOURCE)
-                .validate(volume);
+                .exec();
     }
 
     private void createIndexVolume(final Consumer<IndexVolume> savedVolumeConsumer, final IndexVolume volume) {
-        final Rest<IndexVolume> rest = restFactory.create();
-        rest
+        restFactory
+                .create(INDEX_VOLUME_RESOURCE)
+                .method(res -> res.create(volume))
                 .onSuccess(savedVolumeConsumer)
-                .call(INDEX_VOLUME_RESOURCE)
-                .create(volume);
+                .exec();
     }
 
     private void updateVolume(final Consumer<IndexVolume> consumer,
                               final IndexVolume volume) {
-        final Rest<IndexVolume> rest = restFactory.create();
-        rest
+        restFactory
+                .create(INDEX_VOLUME_RESOURCE)
+                .method(res -> res.update(volume.getId(), volume))
                 .onSuccess(consumer)
-                .call(INDEX_VOLUME_RESOURCE)
-                .update(volume.getId(), volume);
+                .exec();
     }
 
     void hide() {

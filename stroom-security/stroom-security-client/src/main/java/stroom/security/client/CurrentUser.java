@@ -19,7 +19,6 @@ package stroom.security.client;
 import stroom.activity.client.CurrentActivity;
 import stroom.activity.client.SplashPresenter;
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.api.Future;
@@ -122,12 +121,13 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
         // Set the default behaviour of the future to show an error.
         future.onFailure(throwable -> AlertEvent.fireErrorFromException(CurrentUser.this, throwable, null));
 
-        final Rest<Boolean> rest = restFactory.create();
-        rest
+        restFactory
+                .create(DOC_PERMISSION_RESOURCE)
+                .method(res ->
+                        res.checkDocumentPermission(new CheckDocumentPermissionRequest(documentUuid, permission)))
                 .onSuccess(future::setResult)
-                .onFailure(future::setThrowable)
-                .call(DOC_PERMISSION_RESOURCE)
-                .checkDocumentPermission(new CheckDocumentPermissionRequest(documentUuid, permission));
+                .onFailure(restError -> future.setThrowable(restError.getException()))
+                .exec();
 
         return future;
     }

@@ -73,9 +73,13 @@ public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
                 if (action != null) {
                     switch (action) {
                         case CLOSE:
+                            // Cancel the event so ancestors don't also handle it
+                            event.cancel();
                             onCloseAction();
                             break;
                         case OK:
+                            // Cancel the event so ancestors don't also handle it
+                            event.cancel();
                             onOkAction();
                             break;
                     }
@@ -85,8 +89,10 @@ public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
     }
 
     protected void onCloseAction() {
+
     }
 
     protected void onOkAction() {
+
     }
 }

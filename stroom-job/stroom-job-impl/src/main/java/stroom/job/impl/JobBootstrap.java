@@ -113,17 +113,17 @@ public class JobBootstrap {
                     newJobNode.setNodeName(nodeName);
                     newJobNode.setEnabled(scheduledJob.isEnabled());
 
-                    switch (scheduledJob.getSchedule().getScheduleType()) {
+                    switch (scheduledJob.getSchedule().getType()) {
                         case CRON:
                             newJobNode.setJobType(JobType.CRON);
                             break;
-                        case PERIODIC:
+                        case FREQUENCY:
                             newJobNode.setJobType(JobType.FREQUENCY);
                             break;
                         default:
                             throw new RuntimeException("Unknown ScheduleType!");
                     }
-                    newJobNode.setSchedule(scheduledJob.getSchedule().getSchedule());
+                    newJobNode.setSchedule(scheduledJob.getSchedule().getExpression());
 
                     // Add the job node to the DB if it isn't there already.
                     JobNode jobNode = localJobNodeMap.get(scheduledJob.getName());

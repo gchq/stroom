@@ -2,10 +2,8 @@ package stroom.processor.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.datasource.api.v2.QueryField;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.meta.shared.MetaFields;
@@ -34,7 +32,6 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView> {
 
@@ -176,8 +173,12 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                                     final ExpressionOperator expression,
                                     final Runnable onSuccess) {
 
-        restFactory.builder()
-                .forType(ValidateExpressionResult.class)
+        restFactory
+                .create(EXPRESSION_RESOURCE)
+                .method(res -> res.validate(new ValidateExpressionRequest(
+                        expression,
+                        fields,
+                        dateTimeSettingsFactory.getDateTimeSettings())))
                 .onSuccess(result -> {
                     if (result.isOk()) {
                         onSuccess.run();
@@ -188,11 +189,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                 .onFailure(throwable -> {
                     AlertEvent.fireError(ProcessorEditPresenter.this, throwable.getMessage(), null);
                 })
-                .call(EXPRESSION_RESOURCE)
-                .validate(new ValidateExpressionRequest(
-                        expression,
-                        fields,
-                        dateTimeSettingsFactory.getDateTimeSettings()));
+                .exec();
     }
 
     private void hide(final ProcessorFilter result) {
@@ -270,8 +267,11 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
             filter.setMinMetaCreateTimeMs(minMetaCreateTimeMs);
             filter.setMaxMetaCreateTimeMs(maxMetaCreateTimeMs);
 
-            final Rest<ProcessorFilter> rest = restFactory.create();
-            rest.onSuccess(this::hide).call(PROCESSOR_FILTER_RESOURCE).update(filter.getId(), filter);
+            restFactory
+                    .create(PROCESSOR_FILTER_RESOURCE)
+                    .method(res -> res.update(filter.getId(), filter))
+                    .onSuccess(this::hide)
+                    .exec();
 
         } else {
             // Now create the processor filter using the find stream criteria.
@@ -285,8 +285,11 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                     .minMetaCreateTimeMs(minMetaCreateTimeMs)
                     .maxMetaCreateTimeMs(maxMetaCreateTimeMs)
                     .build();
-            final Rest<ProcessorFilter> rest = restFactory.create();
-            rest.onSuccess(this::hide).call(PROCESSOR_FILTER_RESOURCE).create(request);
+            restFactory
+                    .create(PROCESSOR_FILTER_RESOURCE)
+                    .method(res -> res.create(request))
+                    .onSuccess(this::hide)
+                    .exec();
         }
     }
 

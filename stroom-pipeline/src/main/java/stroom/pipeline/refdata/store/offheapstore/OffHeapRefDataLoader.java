@@ -775,7 +775,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         // release our pooled buffers back to the pool
         pooledByteBuffers.forEach(pooledByteBuffer -> {
             try {
-                pooledByteBuffer.release();
+                pooledByteBuffer.close();
             } catch (Exception e) {
                 LOGGER.error("Error releasing pooled buffer: {}", e.getMessage(), e);
             }

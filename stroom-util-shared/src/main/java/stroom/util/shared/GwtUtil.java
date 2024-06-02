@@ -43,4 +43,17 @@ public class GwtUtil {
             return map;
         }
     }
+
+    public static String appendStyles(final String existing, final String... styles) {
+        String str = GwtNullSafe.string(existing).trim();
+        if (styles != null && styles.length > 0) {
+            if (!str.isEmpty()) {
+                str += " ";
+            }
+            str = str + GwtNullSafe.stream(styles)
+                    .map(String::trim)
+                    .collect(Collectors.joining(" "));
+        }
+        return str;
+    }
 }

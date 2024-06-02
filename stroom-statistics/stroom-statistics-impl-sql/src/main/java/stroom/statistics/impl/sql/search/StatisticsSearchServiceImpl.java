@@ -2,7 +2,9 @@ package stroom.statistics.impl.sql.search;
 
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValDouble;
+import stroom.query.language.functions.ValDuration;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
@@ -253,7 +255,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                     final String fieldName = entry.getKey();
                     final ValueExtractor extractor;
                     if (fieldName.equals(StatisticStoreDoc.FIELD_NAME_DATE_TIME)) {
-                        extractor = buildLongValueExtractor(SQLStatisticNames.TIME_MS, idx);
+                        extractor = buildDateValueExtractor(SQLStatisticNames.TIME_MS, idx);
                     } else if (fieldName.equals(StatisticStoreDoc.FIELD_NAME_COUNT)) {
                         extractor = buildLongValueExtractor(SQLStatisticNames.COUNT, idx);
                     } else if (fieldName.equals(StatisticStoreDoc.FIELD_NAME_PRECISION_MS)) {
@@ -331,7 +333,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
             } catch (SQLException e) {
                 throw new RuntimeException("Error extracting precision field", e);
             }
-            arr[idx] = ValLong.create(precisionMs);
+            arr[idx] = ValDuration.create(precisionMs);
         };
         return extractor;
     }
@@ -366,6 +368,11 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                 arr[fieldIndex] = getResultSetLong(rs, columnName);
     }
 
+    private ValueExtractor buildDateValueExtractor(final String columnName, final int fieldIndex) {
+        return (rs, arr, cache) ->
+                arr[fieldIndex] = getResultSetDateMs(rs, columnName);
+    }
+
     private ValueExtractor buildTagFieldValueExtractor(final String fieldName, final int fieldIndex) {
         return (rs, arr, cache) -> {
             Val value = cache.get(fieldName);
@@ -381,6 +388,14 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     private Val getResultSetLong(final ResultSet resultSet, final String column) {
         try {
             return ValLong.create(resultSet.getLong(column));
+        } catch (SQLException e) {
+            throw new RuntimeException(String.format("Error extracting field %s", column), e);
+        }
+    }
+
+    private Val getResultSetDateMs(final ResultSet resultSet, final String column) {
+        try {
+            return ValDate.create(resultSet.getLong(column));
         } catch (SQLException e) {
             throw new RuntimeException(String.format("Error extracting field %s", column), e);
         }

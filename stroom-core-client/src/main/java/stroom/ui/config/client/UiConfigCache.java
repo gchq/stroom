@@ -17,7 +17,6 @@
 package stroom.ui.config.client;
 
 import stroom.config.global.shared.GlobalConfigResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.ui.config.shared.ExtendedUiConfig;
@@ -75,15 +74,15 @@ public class UiConfigCache implements HasHandlers {
 
     public Future<ExtendedUiConfig> refresh() {
         final FutureImpl<ExtendedUiConfig> future = new FutureImpl<>();
-        final Rest<ExtendedUiConfig> rest = restFactory.create();
-        rest
+        restFactory
+                .create(CONFIG_RESOURCE)
+                .method(GlobalConfigResource::fetchExtendedUiConfig)
                 .onSuccess(result -> {
                     clientProperties = result;
                     future.setResult(result);
                     PropertyChangeEvent.fire(UiConfigCache.this, result);
-                }).onFailure(future::setThrowable)
-                .call(CONFIG_RESOURCE)
-                .fetchExtendedUiConfig();
+                }).onFailure(error -> future.setThrowable(error.getException()))
+                .exec();
         return future;
     }
 
