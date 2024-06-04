@@ -11,6 +11,9 @@ import java.util.Objects;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DocContentMatch {
 
+    private static final int SAMPLE_LENGTH_BEFORE = 40;
+    private static final int SAMPLE_LENGTH_AFTER = 200;
+
     @JsonProperty
     private final DocRef docRef;
     @JsonProperty
@@ -29,6 +32,52 @@ public class DocContentMatch {
         this.extension = extension;
         this.location = location;
         this.sample = sample;
+    }
+
+    public static DocContentMatch create(final DocRef docRef,
+                                         final String extension,
+                                         final String text,
+                                         final StringMatchLocation location) {
+        final char[] chars = text.toCharArray();
+        final int min = Math.max(0, location.getOffset() - SAMPLE_LENGTH_BEFORE);
+        int sampleStart = location.getOffset();
+        // Go back to get a sample from the same line.
+        for (; sampleStart >= min; sampleStart--) {
+            char c = chars[sampleStart];
+            if (c == '\n') {
+                break;
+            }
+        }
+        sampleStart = Math.max(0, sampleStart);
+
+        // Trim leading whitespace.
+        for (; sampleStart < location.getOffset(); sampleStart++) {
+            char c = chars[sampleStart];
+            if (!Character.isWhitespace(c)) {
+                break;
+            }
+        }
+        int sampleEnd = location.getOffset();
+        int max = Math.min(text.length(), location.getOffset() + SAMPLE_LENGTH_AFTER);
+        for (; sampleEnd < max; sampleEnd++) {
+            char c = chars[sampleEnd];
+            if (c == '\n') {
+                break;
+            }
+        }
+        sampleEnd = Math.min(text.length(), sampleEnd);
+
+        final String sample = text.substring(sampleStart, sampleEnd);
+        final StringMatchLocation match = new StringMatchLocation(
+                location.getOffset() - sampleStart,
+                location.getLength());
+        return DocContentMatch
+                .builder()
+                .docRef(docRef)
+                .extension(extension)
+                .location(match)
+                .sample(sample)
+                .build();
     }
 
     public DocRef getDocRef() {

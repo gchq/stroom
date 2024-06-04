@@ -19,6 +19,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.cluster.task.impl.ClusterTaskModule());
         install(new stroom.config.global.impl.ConfigProvidersModule());
         install(new stroom.config.global.impl.GlobalConfigModule());
+        install(new stroom.contentindex.ContentIndexModule());
         install(new stroom.core.dataprocess.PipelineStreamTaskModule());
         install(new stroom.core.db.DbStatusModule());
         install(new stroom.core.entity.event.EntityEventModule());

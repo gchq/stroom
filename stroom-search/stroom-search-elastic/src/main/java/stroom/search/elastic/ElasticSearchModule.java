@@ -17,6 +17,7 @@
 package stroom.search.elastic;
 
 import stroom.datasource.api.v2.DataSourceProvider;
+import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
@@ -74,6 +75,8 @@ public class ElasticSearchModule extends AbstractModule {
                 .addBinding(ElasticClusterStoreImpl.class);
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(ElasticClusterStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
+                .addBinding(ElasticClusterStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(ElasticClusterDoc.DOCUMENT_TYPE, ElasticClusterStoreImpl.class);
@@ -88,6 +91,8 @@ public class ElasticSearchModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
                 .addBinding(ElasticIndexStoreImpl.class);
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(ElasticIndexStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
                 .addBinding(ElasticIndexStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())

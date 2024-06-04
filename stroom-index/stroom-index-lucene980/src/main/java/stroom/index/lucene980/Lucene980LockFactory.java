@@ -21,7 +21,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import org.apache.lucene980.store.LockFactory;
 
-final class Lucene980LockFactory {
+public final class Lucene980LockFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Lucene980LockFactory.class);
     private static final LockFactory INSTANCE = new ShardLockFactory();

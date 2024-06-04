@@ -1,10 +1,7 @@
 package stroom.explorer.impl;
 
-import stroom.docref.DocContentHighlights;
-import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docref.StringMatch;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.shared.DocumentType;
@@ -126,18 +123,6 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
     public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
         throw new PermissionException(securityContext.getUserIdentityForAudit(),
                 "You cannot perform findByNames on the System node handler");
-    }
-
-    @Override
-    public List<DocContentMatch> findByContent(final StringMatch filter) {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public DocContentHighlights fetchHighlights(final DocRef docRef,
-                                                final String extension,
-                                                final StringMatch filter) {
-        return null;
     }
 
     @Override

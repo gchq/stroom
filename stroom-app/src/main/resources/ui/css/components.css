@@ -1941,6 +1941,10 @@ button.main-menu svg {
     color: var(--control__text-color);
 }
 
+.FindCellTable {
+    table-layout: fixed;
+}
+
 .findCell {
 }
 
@@ -1965,15 +1969,20 @@ button.main-menu svg {
 .findCell-sample {
     display: flex;
     flex-grow: 1;
-    white-space: nowrap;
     overflow: hidden;
+    white-space: pre;
+}
+
+.findCell-highlight {
+	background-color: yellow;
+	color: black;
 }
 
 .findCell-name {
     display: flex;
     flex-grow: 0;
     align-items: end;
-    white-space: nowrap;
+    white-space: pre;
     color: var(--navigation__text-color);
 }
 

@@ -20,11 +20,9 @@ package stroom.index;
 
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexFields;
-import stroom.index.impl.IndexSerialiser;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
-import stroom.legacy.impex_6_1.LegacyIndexDeserialiser;
 import stroom.legacy.impex_6_1.LegacyXmlSerialiser;
 import stroom.legacy.impex_6_1.MappingUtil;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -41,10 +39,6 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
 
     @Inject
     private IndexStore indexStore;
-    @Inject
-    private IndexSerialiser indexSerialiser;
-    @Inject
-    private LegacyIndexDeserialiser legacyIndexDeserialiser;
 
     private DocRef testIndex;
     private DocRef refIndex;
@@ -83,51 +77,53 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
                 .filter(docRef ->
                         docRef.getName().equals("Test index"))
                 .findFirst()
-                .get());
+                .orElseThrow());
 
         assertThat(index).isNotNull();
         assertThat(index.getName()).isEqualTo("Test index");
 
-        final String xml = "" +
-                "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n" +
-                "<fields>\n" +
-                "   <field>\n" +
-                "      <analyzerType>KEYWORD</analyzerType>\n" +
-                "      <caseSensitive>false</caseSensitive>\n" +
-                "      <fieldName>StreamId</fieldName>\n" +
-                "      <fieldType>ID</fieldType>\n" +
-                "      <indexed>true</indexed>\n" +
-                "      <stored>true</stored>\n" +
-                "      <termPositions>false</termPositions>\n" +
-                "   </field>\n" +
-                "   <field>\n" +
-                "      <analyzerType>KEYWORD</analyzerType>\n" +
-                "      <caseSensitive>false</caseSensitive>\n" +
-                "      <fieldName>EventId</fieldName>\n" +
-                "      <fieldType>ID</fieldType>\n" +
-                "      <indexed>true</indexed>\n" +
-                "      <stored>true</stored>\n" +
-                "      <termPositions>false</termPositions>\n" +
-                "   </field>\n" +
-                "   <field>\n" +
-                "      <analyzerType>ALPHA_NUMERIC</analyzerType>\n" +
-                "      <caseSensitive>false</caseSensitive>\n" +
-                "      <fieldName>TimeCreated</fieldName>\n" +
-                "      <fieldType>DATE_FIELD</fieldType>\n" +
-                "      <indexed>true</indexed>\n" +
-                "      <stored>false</stored>\n" +
-                "      <termPositions>false</termPositions>\n" +
-                "   </field>\n" +
-                "   <field>\n" +
-                "      <analyzerType>ALPHA_NUMERIC</analyzerType>\n" +
-                "      <caseSensitive>false</caseSensitive>\n" +
-                "      <fieldName>User</fieldName>\n" +
-                "      <fieldType>FIELD</fieldType>\n" +
-                "      <indexed>true</indexed>\n" +
-                "      <stored>false</stored>\n" +
-                "      <termPositions>false</termPositions>\n" +
-                "   </field>\n" +
-                "</fields>\n";
+        final String xml =
+                """
+                        <?xml version="1.1" encoding="UTF-8"?>
+                        <fields>
+                           <field>
+                              <analyzerType>KEYWORD</analyzerType>
+                              <caseSensitive>false</caseSensitive>
+                              <fieldName>StreamId</fieldName>
+                              <fieldType>ID</fieldType>
+                              <indexed>true</indexed>
+                              <stored>true</stored>
+                              <termPositions>false</termPositions>
+                           </field>
+                           <field>
+                              <analyzerType>KEYWORD</analyzerType>
+                              <caseSensitive>false</caseSensitive>
+                              <fieldName>EventId</fieldName>
+                              <fieldType>ID</fieldType>
+                              <indexed>true</indexed>
+                              <stored>true</stored>
+                              <termPositions>false</termPositions>
+                           </field>
+                           <field>
+                              <analyzerType>ALPHA_NUMERIC</analyzerType>
+                              <caseSensitive>false</caseSensitive>
+                              <fieldName>TimeCreated</fieldName>
+                              <fieldType>DATE_FIELD</fieldType>
+                              <indexed>true</indexed>
+                              <stored>false</stored>
+                              <termPositions>false</termPositions>
+                           </field>
+                           <field>
+                              <analyzerType>ALPHA_NUMERIC</analyzerType>
+                              <caseSensitive>false</caseSensitive>
+                              <fieldName>User</fieldName>
+                              <fieldType>FIELD</fieldType>
+                              <indexed>true</indexed>
+                              <stored>false</stored>
+                              <termPositions>false</termPositions>
+                           </field>
+                        </fields>
+                        """;
         final List<LuceneIndexField> indexFields = MappingUtil.map(
                 LegacyXmlSerialiser.getIndexFieldsFromLegacyXml(xml));
         assertThat(index.getFields()).isEqualTo(indexFields);

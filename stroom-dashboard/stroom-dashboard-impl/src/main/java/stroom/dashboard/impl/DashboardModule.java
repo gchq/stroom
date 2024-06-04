@@ -17,6 +17,7 @@
 package stroom.dashboard.impl;
 
 import stroom.dashboard.shared.DashboardDoc;
+import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
@@ -36,8 +37,9 @@ public class DashboardModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
                 .addBinding(DashboardStoreImpl.class);
-
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(DashboardStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
                 .addBinding(DashboardStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())

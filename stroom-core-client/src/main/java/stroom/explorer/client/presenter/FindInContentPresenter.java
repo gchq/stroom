@@ -101,6 +101,7 @@ public class FindInContentPresenter
                 }
             }
         };
+        cellTable.addStyleName("FindCellTable");
 
         selectionModel = new MultiSelectionModelImpl<>(cellTable);
         SelectionEventManager<FindInContentResult> selectionEventManager = new SelectionEventManager<>(
