@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.5-beta.1] - 2024-06-04
+
+* Issue **#3989** : Improve pause behaviour in dashboards and general presentation of `busy` state throughout UI.
+
+* Issue **#2111** : Add index assistance to find content feature.
+
+
 ## [v7.4-beta.16] - 2024-05-28
 
 * Issue **#4298** : Improve duplicate management.
@@ -601,7 +608,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.16...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-beta.1...HEAD
+[v7.5-beta.1]: https://github.com/gchq/stroom/compare/v7.4-beta.16...v7.5-beta.1
 [v7.4-beta.16]: https://github.com/gchq/stroom/compare/v7.4-beta.15...v7.4-beta.16
 [v7.4-beta.15]: https://github.com/gchq/stroom/compare/v7.4-beta.14...v7.4-beta.15
 [v7.4-beta.14]: https://github.com/gchq/stroom/compare/v7.4-beta.13...v7.4-beta.14
