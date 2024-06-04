@@ -16,6 +16,7 @@
 
 package stroom.explorer.client.presenter;
 
+import stroom.docref.DocContentMatch;
 import stroom.explorer.shared.FindInContentResult;
 import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
@@ -43,6 +44,7 @@ public class FindInContentResultCell extends AbstractCell<FindInContentResult> {
     @Override
     public void render(final Context context, final FindInContentResult value, final SafeHtmlBuilder sb) {
         if (value != null) {
+            final DocContentMatch match = value.getDocContentMatch();
             final SafeHtmlBuilder row = new SafeHtmlBuilder();
             final SafeHtmlBuilder main = new SafeHtmlBuilder();
             final SafeHtmlBuilder sub = new SafeHtmlBuilder();
@@ -50,19 +52,39 @@ public class FindInContentResultCell extends AbstractCell<FindInContentResult> {
             // Add icon
             if (value.getIcon() != null) {
                 main.append(SvgImageUtil.toSafeHtml(
-                        value.getDocContentMatch().getDocRef().getType(),
+                        match.getDocRef().getType(),
                         value.getIcon(),
                         getCellClassName() + "-icon",
                         "svgIcon"));
             }
 
             // Add sample
+            final String sample = match.getSample();
+            final int start = Math.max(
+                    match.getLocation().getOffset(),
+                    0);
+            final int end = Math.min(
+                    match.getLocation().getOffset() + match.getLocation().getLength(),
+                    sample.length());
+            final String sampleBefore = sample.substring(0, start)
+                    .replaceAll("\n", " ");
+            final String highlight = sample.substring(start, end)
+                    .replaceAll("\n", " ");
+            final String sampleAfter = sample.substring(Math.min(end, sample.length()))
+                    .replaceAll("\n", " ");
+            SafeHtmlBuilder sampleHtml = new SafeHtmlBuilder();
+            sampleHtml.append(template.div(getCellClassName() + "-sample-before",
+                    SafeHtmlUtil.from(sampleBefore)));
+            sampleHtml.append(template.div(getCellClassName() + "-highlight",
+                    SafeHtmlUtil.from(highlight)));
+            sampleHtml.append(template.div(getCellClassName() + "-sample-after",
+                    SafeHtmlUtil.from(sampleAfter)));
             main.append(template.div(getCellClassName() + "-sample",
-                    SafeHtmlUtil.from(value.getDocContentMatch().getSample())));
+                    sampleHtml.toSafeHtml()));
 
             // Add name
             main.append(template.div(getCellClassName() + "-name",
-                    SafeHtmlUtil.from(value.getDocContentMatch().getDocRef().getName())));
+                    SafeHtmlUtil.from(match.getDocRef().getName())));
 
             row.append(template.div(getCellClassName() + "-main", main.toSafeHtml()));
 
@@ -72,7 +94,7 @@ public class FindInContentResultCell extends AbstractCell<FindInContentResult> {
 
             // Add uuid
             sub.append(template.div(getCellClassName() + "-uuid",
-                    SafeHtmlUtil.from(value.getDocContentMatch().getDocRef().getUuid())));
+                    SafeHtmlUtil.from(match.getDocRef().getUuid())));
 
             row.append(template.div(getCellClassName() + "-sub", sub.toSafeHtml()));
 

@@ -74,6 +74,7 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
                 }
             }
         };
+        cellTable.addStyleName("FindCellTable");
 
         selectionModel = new MultiSelectionModelImpl<>(cellTable);
         SelectionEventManager<FindResult> selectionEventManager = new SelectionEventManager<>(

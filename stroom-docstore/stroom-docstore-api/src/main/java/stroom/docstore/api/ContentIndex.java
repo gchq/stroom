@@ -11,4 +11,6 @@ public interface ContentIndex {
     ResultPage<DocContentMatch> findInContent(FindInContentRequest request);
 
     DocContentHighlights fetchHighlights(FetchHighlightsRequest request);
+
+    void reindex();
 }
