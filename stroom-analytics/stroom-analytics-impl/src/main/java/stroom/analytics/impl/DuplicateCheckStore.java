@@ -2,12 +2,15 @@ package stroom.analytics.impl;
 
 import stroom.analytics.shared.DeleteDuplicateCheckRequest;
 import stroom.analytics.shared.DuplicateCheckRow;
+import stroom.analytics.shared.DuplicateCheckRows;
 import stroom.analytics.shared.FindDuplicateCheckCriteria;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.impl6.ByteBufferPoolOutput;
 import stroom.lmdb2.LmdbDb;
 import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.LmdbEnvDir;
 import stroom.lmdb2.LmdbWriter;
+import stroom.lmdb2.ReadTxn;
 import stroom.lmdb2.WriteTxn;
 import stroom.query.common.v2.DuplicateCheckStoreConfig;
 import stroom.query.common.v2.LmdbKV;
@@ -16,6 +19,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.unsafe.UnsafeByteBufferInput;
 import jakarta.inject.Provider;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.DbiFlags;
@@ -32,10 +37,19 @@ class DuplicateCheckStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DuplicateCheckStore.class);
 
+    private static final int DB_STATE_KEY_LENGTH = 1;
+    public static final ByteBuffer DB_STATE_KEY = ByteBuffer.allocateDirect(DB_STATE_KEY_LENGTH);
+
+    static {
+        DB_STATE_KEY.put((byte) -1);
+        DB_STATE_KEY.flip();
+    }
+
     private final ByteBufferFactory byteBufferFactory;
     private final DuplicateCheckRowSerde duplicateCheckRowSerde;
     private final LmdbEnv lmdbEnv;
     private final LmdbDb db;
+    private final LmdbDb columnNamesDb;
     private final LmdbWriter writer;
     private final int maxPutsBeforeCommit = 100;
     private long uncommittedCount = 0;
@@ -53,13 +67,20 @@ class DuplicateCheckStore {
                 .builder()
                 .config(duplicateCheckStoreConfig.getLmdbConfig())
                 .lmdbEnvDir(lmdbEnvDir)
-                .maxDbs(1)
+                .maxDbs(2)
                 .maxReaders(1)
                 .addEnvFlag(EnvFlags.MDB_NOTLS)
                 .build();
 
         this.db = lmdbEnv.openDb("duplicate-check", DbiFlags.MDB_CREATE, DbiFlags.MDB_DUPSORT);
+        this.columnNamesDb = lmdbEnv.openDb("column-names", DbiFlags.MDB_CREATE);
         writer = new LmdbWriter(executorProvider, lmdbEnv);
+    }
+
+    synchronized void writeColumnNames(final List<String> columnNames) {
+        writer.write(writeTxn -> {
+            writeColumnNames(writeTxn, columnNames);
+        });
     }
 
     synchronized boolean tryInsert(final DuplicateCheckRow duplicateCheckRow) {
@@ -133,11 +154,13 @@ class DuplicateCheckStore {
         }
     }
 
-    public synchronized ResultPage<DuplicateCheckRow> fetchData(final FindDuplicateCheckCriteria criteria) {
+    public synchronized DuplicateCheckRows fetchData(final FindDuplicateCheckCriteria criteria) {
         final List<DuplicateCheckRow> results = new ArrayList<>();
+        final List<String> columnNames = new ArrayList<>();
 
         lmdbEnv.read(txn -> {
             final PageRequest pageRequest = criteria.getPageRequest();
+            readColumnNames(txn, columnNames);
             db.iterate(txn, cursorIterable -> {
                 long count = 0;
 
@@ -155,7 +178,31 @@ class DuplicateCheckStore {
             });
         });
 
-        return ResultPage.createCriterialBasedList(results, criteria);
+        final ResultPage<DuplicateCheckRow> resultPage = ResultPage.createCriterialBasedList(results, criteria);
+        return new DuplicateCheckRows(columnNames, resultPage);
+    }
+
+    private void writeColumnNames(final WriteTxn txn, final List<String> columnNames) {
+        final ByteBuffer byteBuffer;
+        try (final ByteBufferPoolOutput output =
+                new ByteBufferPoolOutput(byteBufferFactory, 128, -1)) {
+            columnNames.forEach(output::writeString);
+            output.flush();
+            byteBuffer = output.getByteBuffer();
+            byteBuffer.flip();
+        }
+        columnNamesDb.put(txn, DB_STATE_KEY.duplicate(), byteBuffer);
+    }
+
+    private void readColumnNames(final ReadTxn txn, final List<String> columnNames) {
+        final ByteBuffer state = columnNamesDb.get(txn, DB_STATE_KEY);
+        if (state != null) {
+            try (final Input input = new UnsafeByteBufferInput(state)) {
+                while (!input.end()) {
+                    columnNames.add(input.readString());
+                }
+            }
+        }
     }
 
     public boolean delete(final DeleteDuplicateCheckRequest request,

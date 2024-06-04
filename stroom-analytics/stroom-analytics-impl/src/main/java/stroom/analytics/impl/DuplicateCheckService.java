@@ -20,6 +20,7 @@ import stroom.analytics.rule.impl.AnalyticRuleStore;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.DeleteDuplicateCheckRequest;
 import stroom.analytics.shared.DuplicateCheckRow;
+import stroom.analytics.shared.DuplicateCheckRows;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.analytics.shared.FindDuplicateCheckCriteria;
@@ -83,7 +84,7 @@ class DuplicateCheckService {
         return nodeName;
     }
 
-    public ResultPage<DuplicateCheckRow> find(final FindDuplicateCheckCriteria criteria) {
+    public DuplicateCheckRows find(final FindDuplicateCheckCriteria criteria) {
         return duplicateCheckFactory.fetchData(criteria);
     }
 

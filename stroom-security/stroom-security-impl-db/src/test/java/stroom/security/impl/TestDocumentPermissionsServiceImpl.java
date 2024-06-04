@@ -19,6 +19,8 @@ package stroom.security.impl;
 
 
 import stroom.docref.DocRef;
+import stroom.security.impl.db.SecurityDbConnProvider;
+import stroom.security.impl.db.SecurityTestUtil;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
@@ -26,7 +28,9 @@ import stroom.test.common.util.test.FileSystemTestUtil;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.junit.jupiter.api.BeforeAll;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,19 +47,31 @@ class TestDocumentPermissionsServiceImpl {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDocumentPermissionsServiceImpl.class);
 
-    private static UserService userService;
-    private static DocumentPermissionServiceImpl documentPermissionService;
-    private static UserGroupsCache userGroupsCache;
-    private static UserDocumentPermissionsCache userDocumentPermissionsCache;
+    @Inject
+    private UserService userService;
+    @Inject
+    private DocumentPermissionServiceImpl documentPermissionService;
+    @Inject
+    private UserGroupsCache userGroupsCache;
+    @Inject
+    private UserDocumentPermissionsCache userDocumentPermissionsCache;
+    @Inject
+    private SecurityDbConnProvider securityDbConnProvider;
 
-    @BeforeAll
-    static void beforeAll() {
+    @BeforeEach
+    void beforeEach() {
         final Injector injector = Guice.createInjector(new TestModule());
 
-        userService = injector.getInstance(UserService.class);
-        documentPermissionService = injector.getInstance(DocumentPermissionServiceImpl.class);
-        userGroupsCache = injector.getInstance(UserGroupsCache.class);
-        userDocumentPermissionsCache = injector.getInstance(UserDocumentPermissionsCache.class);
+        injector.injectMembers(this);
+//        userService = injector.getInstance(UserService.class);
+//        documentPermissionService = injector.getInstance(DocumentPermissionServiceImpl.class);
+//        userGroupsCache = injector.getInstance(UserGroupsCache.class);
+//        userDocumentPermissionsCache = injector.getInstance(UserDocumentPermissionsCache.class);
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityTestUtil.teardown(securityDbConnProvider);
     }
 
     @Test

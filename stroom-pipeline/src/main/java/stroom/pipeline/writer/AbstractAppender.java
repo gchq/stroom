@@ -88,17 +88,6 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
         }
     }
 
-    void closeCurrentOutputStream() {
-        if (output != null) {
-            try {
-                output.close();
-            } catch (final IOException e) {
-                error(e.getMessage(), e);
-            }
-            output = null;
-        }
-    }
-
     @Override
     public final OutputStream getOutputStream() throws IOException {
         return getOutputStream(null, null);
@@ -159,35 +148,46 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
     }
 
     void writeFooter(final boolean roll) {
-        if (writtenHeader) {
-            if (output != null) {
-                if (footer != null && footer.length > 0) {
-                    try {
+        if (output != null) {
+            if (writtenHeader) {
+                try {
+                    if (footer != null && footer.length > 0) {
                         // Write the footer.
                         output.write(footer);
-                    } catch (final IOException e) {
-                        error(e.getMessage(), e);
-                    }
-                }
-
-                try {
-                    if (output.isZip()) {
-                        output.endZipEntry();
-                        if (roll) {
-                            closeCurrentOutputStream();
-                        }
-                    } else {
-                        closeCurrentOutputStream();
                     }
                 } catch (final IOException e) {
                     error(e.getMessage(), e);
-                    throw new UncheckedIOException(e);
-                } catch (final RuntimeException e) {
-                    error(e.getMessage(), e);
-                    throw e;
+                } finally {
+                    writtenHeader = false;
                 }
             }
-            writtenHeader = false;
+
+            try {
+                if (output.isZip()) {
+                    output.endZipEntry();
+                    if (roll) {
+                        closeCurrentOutputStream();
+                    }
+                } else {
+                    closeCurrentOutputStream();
+                }
+            } catch (final IOException e) {
+                error(e.getMessage(), e);
+                throw new UncheckedIOException(e);
+            } catch (final RuntimeException e) {
+                error(e.getMessage(), e);
+                throw e;
+            }
+        }
+    }
+
+    private void closeCurrentOutputStream() {
+        try {
+            output.close();
+        } catch (final IOException e) {
+            error(e.getMessage(), e);
+        } finally {
+            output = null;
         }
     }
 

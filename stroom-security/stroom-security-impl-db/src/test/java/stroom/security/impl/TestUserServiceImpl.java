@@ -17,12 +17,16 @@
 package stroom.security.impl;
 
 
+import stroom.security.impl.db.SecurityDbConnProvider;
+import stroom.security.impl.db.SecurityTestUtil;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.junit.jupiter.api.BeforeAll;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -35,12 +39,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestUserServiceImpl {
 
-    private static UserService userService;
+    @Inject
+    private UserService userService;
+    @Inject
+    private SecurityDbConnProvider securityDbConnProvider;
 
-    @BeforeAll
-    static void beforeAll() {
+    @BeforeEach
+    void beforeEach() {
         final Injector injector = Guice.createInjector(new TestModule());
-        userService = injector.getInstance(UserService.class);
+        injector.injectMembers(this);
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityTestUtil.teardown(securityDbConnProvider);
     }
 
     @Test

@@ -2,6 +2,7 @@ package stroom.analytics.impl;
 
 import stroom.analytics.shared.DuplicateCheckRow;
 import stroom.query.api.v2.Row;
+import stroom.query.common.v2.CompiledColumn;
 import stroom.query.common.v2.CompiledColumns;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -15,17 +16,34 @@ class DuplicateCheckRowFactory {
 
     private final boolean grouped;
     private final List<Integer> groupIndexes;
+    private final List<String> columnNames;
 
     public DuplicateCheckRowFactory(final CompiledColumns compiledColumns) {
+        final List<String> allColumnNames = new ArrayList<>();
+        final List<String> groupedColumnNames = new ArrayList<>();
+
         groupIndexes = new ArrayList<>(compiledColumns.getCompiledColumns().length);
         boolean grouped = false;
         for (int i = 0; i < compiledColumns.getCompiledColumns().length; i++) {
-            if (compiledColumns.getCompiledColumns()[i].getGroupDepth() >= 0) {
+            final CompiledColumn compiledColumn = compiledColumns.getCompiledColumns()[i];
+            allColumnNames.add(compiledColumn.getColumn().getName());
+            if (compiledColumn.getGroupDepth() >= 0) {
+                groupedColumnNames.add(compiledColumn.getColumn().getName());
                 groupIndexes.add(i);
                 grouped = true;
             }
         }
         this.grouped = grouped;
+
+        if (grouped) {
+            this.columnNames = groupedColumnNames;
+        } else {
+            this.columnNames = allColumnNames;
+        }
+    }
+
+    public List<String> getColumnNames() {
+        return columnNames;
     }
 
     public DuplicateCheckRow createDuplicateCheckRow(final Row row) {

@@ -300,7 +300,7 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
                         outputStream.flush();
 
                         // If the output stream is a piped output stream then we
-                        // must close it or it will block other up stream
+                        // must close it or it will block other upstream
                         // processors.
                         if (outputStream instanceof PipedOutputStream) {
                             outputStream.close();
@@ -354,7 +354,7 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
                         writer.flush();
 
                         // If the writer is a piped writer then we must close it
-                        // or it will block other up stream processors.
+                        // or it will block other upstream processors.
                         if (writer instanceof PipedWriter) {
                             writer.close();
                         }

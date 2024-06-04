@@ -55,7 +55,7 @@ class DuplicateCheckRowSerde {
     public DuplicateCheckRow createDuplicateCheckRow(final ByteBuffer valBuffer) {
         final List<String> values = new ArrayList<>();
         try (final Input input = new ByteBufferInput(valBuffer)) {
-            if (!input.end()) {
+            while (!input.end()) {
                 final String value = input.readString();
                 values.add(value);
             }
