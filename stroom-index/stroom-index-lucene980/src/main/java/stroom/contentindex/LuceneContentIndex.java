@@ -48,7 +48,6 @@ import org.apache.lucene980.search.IndexSearcher;
 import org.apache.lucene980.search.Query;
 import org.apache.lucene980.search.RegexpQuery;
 import org.apache.lucene980.search.ScoreDoc;
-import org.apache.lucene980.search.TermQuery;
 import org.apache.lucene980.search.WildcardQuery;
 import org.apache.lucene980.store.Directory;
 import org.apache.lucene980.store.NIOFSDirectory;
@@ -204,7 +203,8 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
 
             final String field = getField(request.getFilter());
             final Query query = getQuery(field, request.getFilter());
-//            final ContentHighlighter highlighter = new LuceneContentHighlighter(query, request.getFilter().isCaseSensitive());
+//            final ContentHighlighter highlighter =
+//            new LuceneContentHighlighter(query, request.getFilter().isCaseSensitive());
             final ContentHighlighter highlighter = new BasicContentHighlighter(request.getFilter());
             long total = 0;
             try (final DirectoryReader directoryReader = DirectoryReader.open(directory)) {
@@ -292,8 +292,9 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
 
                 try {
                     final String field = getField(request.getFilter());
-                    final Query query = getQuery(field, request.getFilter());
-                    //            final ContentHighlighter highlighter = new LuceneContentHighlighter(query, request.getFilter().isCaseSensitive());
+                    //            final Query query = getQuery(field, request.getFilter());
+                    //            final ContentHighlighter highlighter =
+                    //            new LuceneContentHighlighter(query, request.getFilter().isCaseSensitive());
                     final ContentHighlighter highlighter = new BasicContentHighlighter(request.getFilter());
                     final List<StringMatchLocation> matchList = highlighter.getHighlights(field, text, 100);
                     if (!matchList.isEmpty()) {

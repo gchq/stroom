@@ -29,37 +29,28 @@ public class LuceneContentHighlighter implements ContentHighlighter {
 
     public static final int DEFAULT_MAX_CHARS_TO_ANALYZE = 50 * 1024;
 
-    private final int maxDocCharsToAnalyze = DEFAULT_MAX_CHARS_TO_ANALYZE;
-
-    private final Query query;
-
-    // Uses HTML &lt;B&gt;&lt;/B&gt; tag to highlight the searched terms
-    private final Formatter formatter;
-
     // It scores text fragments by the number of unique query terms found
     // Basically the matching score in layman terms
     private final QueryScorer scorer;
-
-    // Used to markup highlighted terms found in the best sections of a text
-    private final Highlighter highlighter;
 
     // It breaks text up into same-size texts but does not split up spans
     private final Fragmenter fragmenter;
     private final Analyzer analyzer;
 
     public LuceneContentHighlighter(final Query query, final boolean caseSensitive) {
-        this.query = query;
 
 
         // Uses HTML &lt;B&gt;&lt;/B&gt; tag to highlight the searched terms
-        formatter = new SimpleHTMLFormatter();
+        // Uses HTML &lt;B&gt;&lt;/B&gt; tag to highlight the searched terms
+        Formatter formatter = new SimpleHTMLFormatter();
 
         // It scores text fragments by the number of unique query terms found
         // Basically the matching score in layman terms
         scorer = new QueryScorer(query);
 
         // Used to markup highlighted terms found in the best sections of a text
-        highlighter = new Highlighter(formatter, scorer);
+        // Used to markup highlighted terms found in the best sections of a text
+        Highlighter highlighter = new Highlighter(formatter, scorer);
 
         // It breaks text up into same-size texts but does not split up spans
         fragmenter = new SimpleSpanFragmenter(scorer, 10);
@@ -129,6 +120,7 @@ public class LuceneContentHighlighter implements ContentHighlighter {
         CharTermAttribute termAtt = tokenStream.addAttribute(CharTermAttribute.class);
         OffsetAttribute offsetAtt = tokenStream.addAttribute(OffsetAttribute.class);
         TextFragImpl currentFrag = new TextFragImpl(newText, newText.length(), fragCount);
+        int maxDocCharsToAnalyze = DEFAULT_MAX_CHARS_TO_ANALYZE;
         fragmentScorer.setMaxDocCharsToAnalyze(maxDocCharsToAnalyze);
         TokenStream newStream = fragmentScorer.init(tokenStream);
         if (newStream != null) {
@@ -276,14 +268,11 @@ public class LuceneContentHighlighter implements ContentHighlighter {
 
 
         } finally {
-            if (tokenStream != null) {
-                try {
-                    tokenStream.end();
-                    tokenStream.close();
-                } catch (
-                        @SuppressWarnings("unused")
-                        Exception e) {
-                }
+            try {
+                tokenStream.end();
+                tokenStream.close();
+            } catch (final Exception e) {
+                LOGGER.error(e::getMessage, e);
             }
         }
 

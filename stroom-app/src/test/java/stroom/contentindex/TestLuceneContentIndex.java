@@ -30,6 +30,7 @@ public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
     private XsltDoc xsltDoc;
     private DocRef docRef;
 
+    @SuppressWarnings("checkstyle:linelength")
     @BeforeEach
     void setup() {
         docRef = xsltStore.createDocument("Test");
@@ -44,7 +45,7 @@ public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
                             <xsl:apply-templates/>
                         </referenceData>
                     </xsl:template>
-                                
+
                     <xsl:template match="record">
                         <reference>
                             <map>FILENO_TO_LOCATION_MAP</map>
@@ -72,8 +73,8 @@ public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
         assertThat(highlights.getText()).isEqualTo(xsltDoc.getData());
         assertThat(highlights.getHighlights().size()).isEqualTo(4);
         assertThat(xsltDoc.getData().substring(highlights.getHighlights().getFirst().getOffset(),
-                highlights.getHighlights().getFirst().getOffset() + highlights.getHighlights().getFirst().getLength())).isEqualTo(
-                "Location");
+                highlights.getHighlights().getFirst().getOffset() +
+                        highlights.getHighlights().getFirst().getLength())).isEqualTo("Location");
     }
 
     @Test
@@ -82,8 +83,8 @@ public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
         assertThat(highlights.getText()).isEqualTo(xsltDoc.getData());
         assertThat(highlights.getHighlights().size()).isEqualTo(1);
         assertThat(xsltDoc.getData().substring(highlights.getHighlights().getFirst().getOffset(),
-                highlights.getHighlights().getFirst().getOffset() + highlights.getHighlights().getFirst().getLength())).isEqualTo(
-                "LOCATION");
+                highlights.getHighlights().getFirst().getOffset() +
+                        highlights.getHighlights().getFirst().getLength())).isEqualTo("LOCATION");
     }
 
     @Test
@@ -92,8 +93,8 @@ public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
         assertThat(highlights.getText()).isEqualTo(xsltDoc.getData());
         assertThat(highlights.getHighlights().size()).isEqualTo(4);
         assertThat(xsltDoc.getData().substring(highlights.getHighlights().getFirst().getOffset(),
-                highlights.getHighlights().getFirst().getOffset() + highlights.getHighlights().getFirst().getLength())).isEqualTo(
-                "tion");
+                highlights.getHighlights().getFirst().getOffset() +
+                        highlights.getHighlights().getFirst().getLength())).isEqualTo("tion");
     }
 
     @Test
@@ -102,8 +103,8 @@ public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
         assertThat(highlights.getText()).isEqualTo(xsltDoc.getData());
         assertThat(highlights.getHighlights().size()).isEqualTo(1);
         assertThat(xsltDoc.getData().substring(highlights.getHighlights().getFirst().getOffset(),
-                highlights.getHighlights().getFirst().getOffset() + highlights.getHighlights().getFirst().getLength())).isEqualTo(
-                "TION");
+                highlights.getHighlights().getFirst().getOffset() +
+                        highlights.getHighlights().getFirst().getLength())).isEqualTo("TION");
     }
 
     private DocContentHighlights test(final StringMatch stringMatch) {

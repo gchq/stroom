@@ -1,10 +1,13 @@
 package stroom.index.impl;
 
+import stroom.util.config.annotations.RequiresRestart;
+import stroom.util.config.annotations.RequiresRestart.RestartScope;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
@@ -24,6 +27,8 @@ public class ContentIndexConfig extends AbstractConfig implements IsStroomConfig
     }
 
     @JsonProperty("enabled")
+    @JsonPropertyDescription("Enable or disable fast content index for UI nodes.")
+    @RequiresRestart(RestartScope.UI)
     public boolean isEnabled() {
         return enabled;
     }
