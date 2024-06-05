@@ -18,10 +18,14 @@ package stroom.pipeline.xml.converter.ds3;
 
 import stroom.pipeline.xml.converter.ds3.ref.VarMap;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
 public class RegexFactory extends ExpressionFactory {
+
     private final Pattern pattern;
 
     public RegexFactory(final NodeFactory parent, final String id, final String pattern) {
@@ -55,6 +59,42 @@ public class RegexFactory extends ExpressionFactory {
             sb.append("\"");
         }
         setAttributes(sb.toString());
+    }
+
+    static List<String> decodeFlags(final int flags) {
+        if (flags == 0) {
+            return Collections.emptyList();
+        }
+
+        final List<String> list = new ArrayList<>();
+        if ((flags & Pattern.UNIX_LINES) != 0) {
+            list.add("Unix Lines");
+        }
+        if ((flags & Pattern.CASE_INSENSITIVE) != 0) {
+            list.add("Case Insensitive");
+        }
+        if ((flags & Pattern.COMMENTS) != 0) {
+            list.add("Comments");
+        }
+        if ((flags & Pattern.MULTILINE) != 0) {
+            list.add("Multiline");
+        }
+        if ((flags & Pattern.LITERAL) != 0) {
+            list.add("Literal");
+        }
+        if ((flags & Pattern.DOTALL) != 0) {
+            list.add("Dotall");
+        }
+        if ((flags & Pattern.UNICODE_CASE) != 0) {
+            list.add("Unicode-aware case folding");
+        }
+        if ((flags & Pattern.CANON_EQ) != 0) {
+            list.add("Canonical Equivalence");
+        }
+        if ((flags & Pattern.UNICODE_CHARACTER_CLASS) != 0) {
+            list.add("Unicode character class");
+        }
+        return list;
     }
 
     public Pattern getPattern() {
