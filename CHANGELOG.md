@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.4.1] - 2024-06-05
+
+* Issue **#4307** : Fix stuck search.
+
+
 ## [v7.4.0] - 2024-06-05
 
 * Issue **#4303** : Change DSParser to catch and handle StackOverflowError as an ERROR and with a better message.
@@ -608,7 +613,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4.0...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4.1...HEAD
+[v7.4.1]: https://github.com/gchq/stroom/compare/v7.4.0...v7.4.1
 [v7.4.0]: https://github.com/gchq/stroom/compare/v7.4-beta.16...v7.4.0
 [v7.4-beta.16]: https://github.com/gchq/stroom/compare/v7.4-beta.15...v7.4-beta.16
 [v7.4-beta.15]: https://github.com/gchq/stroom/compare/v7.4-beta.14...v7.4-beta.15
