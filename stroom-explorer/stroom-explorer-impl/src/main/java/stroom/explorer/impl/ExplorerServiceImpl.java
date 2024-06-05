@@ -581,7 +581,18 @@ class ExplorerServiceImpl
             boolean foundFilterMatch = false;
             final Set<ExplorerNodeKey> openNodes = new HashSet<>();
 
-            final List<ExplorerNode> children = treeModelIn.getChildren(parent);
+            List<ExplorerNode> children = treeModelIn.getChildren(parent);
+
+            // If set, only include specified roots
+            if (children != null
+                    && parent == null
+                    && NullSafe.hasItems(filter.getIncludedRootTypes())) {
+                children = children.stream()
+                        .filter(child ->
+                                filter.getIncludedRootTypes().contains(child.getType()))
+                        .toList();
+            }
+
             if (children != null) {
                 // Add all children if the name filter has changed or the parent item is open.
                 final boolean addAllChildren = (filter.isNameFilterChange() && filter.getNameFilter() != null)
@@ -1464,8 +1475,6 @@ class ExplorerServiceImpl
             if (recentItemsMode) {
                 final Map<DocRef, FindResult> resultMap = results
                         .stream()
-                        .filter(findResult ->
-                                !ExplorerConstants.FAVOURITES_NODE.getName().equals(findResult.getPath()))
                         .collect(Collectors.toMap(FindResult::getDocRef, Function.identity()));
                 final List<FindResult> recentItems = request
                         .getFilter().getRecentItems()
@@ -1497,8 +1506,8 @@ class ExplorerServiceImpl
             for (final ExplorerNode node : nodes) {
                 if (node.hasNodeFlag(NodeFlag.FILTER_MATCH) &&
                         node.getDocRef() != null &&
-                        !Objects.equals(ExplorerConstants.SYSTEM, node.getType()) &&
-                        !Objects.equals(ExplorerConstants.FAVOURITES, node.getType())) {
+                        !ExplorerConstants.isRootNode(node)) {
+
                     results.add(new FindResult(
                             node.getDocRef(),
                             parent,

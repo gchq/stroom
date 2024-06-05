@@ -51,6 +51,18 @@ public final class ExplorerConstants {
     }
 
     /**
+     * @return True if node is non-null and one of the root nodes
+     */
+    public static boolean isRootNode(final ExplorerNode node) {
+        if (node == null) {
+            return false;
+        } else {
+            return Objects.equals(SYSTEM_NODE, node)
+                    || Objects.equals(FAVOURITES_NODE, node);
+        }
+    }
+
+    /**
      * Tests whether a node is a folder
      */
     public static boolean isFolder(final ExplorerNode node) {
