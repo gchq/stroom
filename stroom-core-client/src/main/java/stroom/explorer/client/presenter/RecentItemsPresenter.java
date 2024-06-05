@@ -4,6 +4,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.event.ShowRecentItemsEvent;
 import stroom.explorer.client.presenter.RecentItemsPresenter.RecentItemsProxy;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -55,6 +56,8 @@ public class RecentItemsPresenter
     @Override
     protected void updateFilter(final ExplorerTreeFilterBuilder explorerTreeFilterBuilder) {
         explorerTreeFilterBuilder.setRecentItems(recentItems.getRecentItems());
+        // Don't want favourites in the recent items as they are effectively duplicates
+        explorerTreeFilterBuilder.setIncludedRootTypes(ExplorerConstants.SYSTEM);
         explorerTreeFilterBuilder.setNameFilter(explorerTreeFilterBuilder.build().getNameFilter(), true);
     }
 
