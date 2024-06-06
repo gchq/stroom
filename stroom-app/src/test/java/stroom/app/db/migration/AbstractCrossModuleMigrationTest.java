@@ -72,6 +72,10 @@ public abstract class AbstractCrossModuleMigrationTest {
 
     @BeforeEach
     void beforeEach() {
+        // Ensure we work with an empty DB, so we migrate from a clean slate.
+        // This thread may have run migrations for other tests.
+        LOGGER.info("beforeEach() - Dropping DB");
+        DbTestUtil.dropThreadTestDatabase(true);
 
         LOGGER.info("Running all migrations up to and including {}, using test data {}",
                 targetVersion, testDataVersion);
@@ -91,13 +95,13 @@ public abstract class AbstractCrossModuleMigrationTest {
                                         getTargetClass()));
                     }
                 });
-
-        // Ensure we work with an empty DB
-        DbTestUtil.dropThreadTestDatabase(true);
     }
 
     @AfterEach
     void afterEach() {
+        // Drop the db as it contains migration classes that have run (i.e. the
+        // TestData ones) but won't be visible to flyway in other tests.
+        LOGGER.info("afterEach() - Dropping DB");
         DbTestUtil.dropThreadTestDatabase(true);
     }
 

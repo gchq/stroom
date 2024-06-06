@@ -8,6 +8,7 @@ import stroom.db.util.DataSourceKey;
 import stroom.db.util.DbUrl;
 import stroom.db.util.HikariUtil;
 import stroom.util.ConsoleColour;
+import stroom.util.NullSafe;
 import stroom.util.db.ForceLegacyMigration;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -303,6 +304,11 @@ public class DbTestUtil {
     public static void dropThreadTestDatabase(final boolean isSharedDatabase) {
         final String dbName = getDbNameThreadLocal(isSharedDatabase).get();
 
+        LOGGER.info("dropThreadTestDatabase - isSharedDatabase: {}, testDbConfig: {}, dbName: {}",
+                isSharedDatabase,
+                NullSafe.get(getDbConfigThreadLocal(isSharedDatabase), ThreadLocal::get, Objects::toIdentityString),
+                dbName);
+
         if (dbName != null) {
             final ConnectionConfig connectionConfig = createConnectionConfig(new CommonDbConfig());
             final ConnectionConfig rootConnectionConfig = createRootConnectionConfig(connectionConfig);
@@ -361,9 +367,15 @@ public class DbTestUtil {
             return new HikariDataSource(hikariConfig);
         }
 
+
         // See if we have a local data source.
         AbstractDbConfig testDbConfig = getDbConfigThreadLocal(isSharedDatabase).get();
         String dbName = getDbNameThreadLocal(isSharedDatabase).get();
+
+        LOGGER.info("createDataSource - isSharedDatabase: {}, testDbConfig: {}, dbName: {}",
+                isSharedDatabase,
+                NullSafe.get(testDbConfig, Objects::toIdentityString),
+                dbName);
         if (testDbConfig == null || dbName == null || !isSharedDatabase) {
             // Create a merged config using the common db config as a base.
             final ConnectionConfig connectionConfig = createConnectionConfig(dbConfig);
