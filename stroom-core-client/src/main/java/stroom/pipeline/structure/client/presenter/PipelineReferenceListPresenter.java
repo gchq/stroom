@@ -34,6 +34,7 @@ import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
+import stroom.state.shared.StateDoc;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -305,10 +306,12 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
                     if (pipelineReference.getPipeline() == null) {
                         AlertEvent.fireError(PipelineReferenceListPresenter.this,
                                 "You must specify a pipeline to use.", e::reset);
-                    } else if (pipelineReference.getFeed() == null) {
+                    } else if (!StateDoc.DOCUMENT_TYPE.equals(pipelineReference.getPipeline().getType()) &&
+                            pipelineReference.getFeed() == null) {
                         AlertEvent.fireError(PipelineReferenceListPresenter.this, "You must specify a feed to use.",
                                 e::reset);
-                    } else if (pipelineReference.getStreamType() == null) {
+                    } else if (!StateDoc.DOCUMENT_TYPE.equals(pipelineReference.getPipeline().getType()) &&
+                            pipelineReference.getStreamType() == null) {
                         AlertEvent.fireError(PipelineReferenceListPresenter.this,
                                 "You must specify a stream type to use.", e::reset);
                     } else {

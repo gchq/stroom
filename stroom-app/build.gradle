@@ -176,6 +176,8 @@ dependencies {
     implementation project(':stroom-security:stroom-security-openid-api')
     implementation project(':stroom-servicediscovery:stroom-servicediscovery-api')
     implementation project(':stroom-servicediscovery:stroom-servicediscovery-impl')
+    implementation project(':stroom-state:stroom-state-api')
+    implementation project(':stroom-state:stroom-state-impl')
     implementation project(':stroom-statistics:stroom-statistics-api')
     implementation project(':stroom-statistics:stroom-statistics-impl')
     implementation project(':stroom-statistics:stroom-statistics-impl-hbase')
@@ -220,6 +222,11 @@ dependencies {
     implementation libs.logback_classic
     implementation libs.mysql_connector_java
     implementation libs.restygwt
+
+    implementation libs.scylladb_driver_core
+    implementation libs.scylladb_query_builder
+    implementation libs.scylladb_driver_mapper
+
     implementation libs.slf4j_api
     implementation libs.ws_rs_api
 

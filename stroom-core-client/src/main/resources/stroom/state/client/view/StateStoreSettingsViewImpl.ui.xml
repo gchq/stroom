@@ -1,0 +1,35 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="scyllaDBConnection" label="ScyllaDB Connection">
+            <g:SimplePanel ui:field="scyllaDBConnection"/>
+        </form:FormGroup>
+<!--        <form:FormGroup identity="elasticIndexSettingsIndexNameOrPattern" label="Index Name Or Pattern">-->
+<!--            <g:TextBox ui:field="indexName" width="400px"/>-->
+<!--        </form:FormGroup>-->
+<!--        <form:FormGroup identity="elasticIndexSettingsSearchSlices" label="Search Slices">-->
+<!--            <valuespinner:ValueSpinner ui:field="searchSlices" width="80px"/>-->
+<!--        </form:FormGroup>-->
+<!--        <form:FormGroup identity="elasticIndexSettingsSearchScrollSize" label="Search Scroll Size">-->
+<!--            <valuespinner:ValueSpinner ui:field="searchScrollSize" width="80px"/>-->
+<!--        </form:FormGroup>-->
+<!--        <form:FormGroup identity="elasticIndexSettingsTimeField" label="Main Date Field">-->
+<!--            <g:TextBox ui:field="timeField" width="200px"/>-->
+<!--        </form:FormGroup>-->
+<!--        <form:FormGroup identity="elasticIndexSettingsDefaultExtractionPipeline" label="Default Extraction Pipeline">-->
+<!--            <g:SimplePanel ui:field="defaultExtractionPipeline"/>-->
+<!--        </form:FormGroup>-->
+
+<!--        <b:Button ui:field="testConnection" text="Test Connection" width="200px" addStyleNames="allow-focus"/>-->
+
+<!--        <form:FormGroup identity="elasticIndexSettingsRetentionExpression"-->
+<!--                        label="Data Retention Expression (matching data will be deleted)"-->
+<!--                        addStyleNames="default-min-sizes flex-grow-1">-->
+<!--            <g:SimplePanel ui:field="retentionExpressionPanel" styleName="dock-max"/>-->
+<!--        </form:FormGroup>-->
+    </g:FlowPanel>
+</ui:UiBinder> 

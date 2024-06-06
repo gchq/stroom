@@ -136,6 +136,7 @@ ext.versions = [
         kafka             : '3.6.0',
         okhttp            : '4.12.0',
         poi               : '5.2.4',
+        scylladb         : '4.17.0.1',
         simple_java_mail  : '8.8.0',
         swagger           : '2.2.18',
         unirest           : '1.4.9',
@@ -292,6 +293,11 @@ ext.libs = [
         quartz                              : "org.quartz-scheduler:quartz:2.5.0-rc1",
         restygwt                            : "org.fusesource.restygwt:restygwt:2.2.7",
         saxon_he                            : "net.sf.saxon:Saxon-HE:9.9.1-8",
+
+        scylladb_driver_core                : "com.scylladb:java-driver-core:${versions.scylladb}",
+        scylladb_query_builder              : "com.scylladb:java-driver-query-builder:${versions.scylladb}",
+        scylladb_driver_mapper              : "com.scylladb:java-driver-mapper-runtime:${versions.scylladb}",
+
         simple_java_mail                    : "org.simplejavamail:simple-java-mail:${versions.simple_java_mail}",
         simple_java_mail_batch_module       : "org.simplejavamail:batch-module:${versions.simple_java_mail}",
         slf4j_api                           : "org.slf4j:slf4j-api", // version controlled by dropwizard-dependencies

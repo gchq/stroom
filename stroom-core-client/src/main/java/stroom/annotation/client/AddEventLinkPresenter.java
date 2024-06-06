@@ -19,7 +19,7 @@ package stroom.annotation.client;
 import stroom.alert.client.event.AlertEvent;
 import stroom.annotation.client.AddEventLinkPresenter.AddEventLinkView;
 import stroom.annotation.shared.EventId;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -93,7 +93,7 @@ public class AddEventLinkPresenter extends MyPresenterWidget<AddEventLinkView> {
     }
 
     private void hide() {
-        HidePopupEvent.builder(this).fire();
+        HidePopupRequestEvent.builder(this).fire();
     }
 
     public String getName() {

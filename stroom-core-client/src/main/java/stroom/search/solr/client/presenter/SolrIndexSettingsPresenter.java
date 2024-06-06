@@ -88,7 +88,7 @@ public class SolrIndexSettingsPresenter
     }
 
     @Override
-    public void onTestConnection() {
+    public void onTestConnection(final TaskListener taskListener) {
         getView().setTestingConnection(true);
         final SolrIndexDoc index = onWrite(new SolrIndexDoc());
         restFactory
@@ -104,7 +104,7 @@ public class SolrIndexSettingsPresenter
                     }
                 })
                 .onFailure(new DefaultErrorHandler(this, () -> getView().setTestingConnection(false)))
-                .taskListener(this)
+                .taskListener(taskListener)
                 .exec();
     }
 

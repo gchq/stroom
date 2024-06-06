@@ -15,7 +15,7 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -194,7 +194,7 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
     }
 
     private void hide() {
-        HidePopupEvent.builder(this).fire();
+        HidePopupRequestEvent.builder(this).fire();
     }
 
     @Override

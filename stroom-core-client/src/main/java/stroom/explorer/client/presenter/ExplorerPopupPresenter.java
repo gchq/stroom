@@ -31,7 +31,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupUiHandlers;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -162,7 +162,7 @@ public class ExplorerPopupPresenter
             } else if (selectionType.isDoubleSelect()) {
                 selectionChangeConsumer.accept(selected);
                 explorerTree.getSelectionModel().setSelected(selected);
-                HidePopupEvent.builder(this).fire();
+                HidePopupRequestEvent.builder(this).fire();
             }
         }
     }

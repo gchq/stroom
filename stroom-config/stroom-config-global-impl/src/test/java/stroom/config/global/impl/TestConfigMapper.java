@@ -45,6 +45,7 @@ import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
+import stroom.state.impl.StateConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.config.PropertyUtil.Prop;
@@ -950,6 +951,7 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_SERVICE_DISCOVERY) final ServiceDiscoveryConfig serviceDiscoveryConfig,
                 @JsonProperty(PROP_NAME_SESSION_COOKIE) final SessionCookieConfig sessionCookieConfig,
                 @JsonProperty(PROP_NAME_SOLR) final SolrConfig solrConfig,
+                @JsonProperty(PROP_NAME_STATE) final StateConfig stateConfig,
                 @JsonProperty(PROP_NAME_STATISTICS) final StatisticsConfig statisticsConfig,
                 @JsonProperty(PROP_NAME_QUERY_HISTORY) final StoredQueryConfig storedQueryConfig,
                 @JsonProperty(PROP_NAME_PATH) final StroomPathConfig pathConfig,
@@ -1008,6 +1010,7 @@ class TestConfigMapper {
                     serviceDiscoveryConfig,
                     sessionCookieConfig,
                     solrConfig,
+                    stateConfig,
                     statisticsConfig,
                     storedQueryConfig,
                     pathConfig,

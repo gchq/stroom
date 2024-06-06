@@ -163,7 +163,7 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     @UiHandler("testConnection")
     public void onTestConnectionClick(final ClickEvent event) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onTestConnection();
+            getUiHandlers().onTestConnection(testConnection);
         }
     }
 

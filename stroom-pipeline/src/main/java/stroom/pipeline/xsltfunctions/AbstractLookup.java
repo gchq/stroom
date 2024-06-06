@@ -27,6 +27,7 @@ import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
 import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory.Factory;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.MetaHolder;
 import stroom.task.api.TaskContext;
@@ -68,17 +69,20 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
     private final MetaHolder metaHolder;
     private final SequenceMakerFactory sequenceMakerFactory;
     private final TaskContextFactory taskContextFactory;
+    private final StateLookup stateLookup;
 
     private long defaultMs = -1;
 
     AbstractLookup(final ReferenceData referenceData,
                    final MetaHolder metaHolder,
                    final SequenceMakerFactory sequenceMakerFactory,
-                   final TaskContextFactory taskContextFactory) {
+                   final TaskContextFactory taskContextFactory,
+                   final StateLookup stateLookup) {
         this.referenceData = referenceData;
         this.metaHolder = metaHolder;
         this.sequenceMakerFactory = sequenceMakerFactory;
         this.taskContextFactory = taskContextFactory;
+        this.stateLookup = stateLookup;
     }
 
     protected SequenceMaker createSequenceMaker(final XPathContext context) {
@@ -228,7 +232,17 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                     Severity.WARNING,
                     "No pipeline references have been added to this XSLT step to perform a lookup");
         } else {
-            result = referenceData.ensureReferenceDataAvailability(pipelineReferences, lookupIdentifier, result);
+            final List<PipelineReference> references = pipelineReferences
+                    .stream()
+                    .filter(pr ->
+                            pr.getPipeline() != null && PipelineDoc.DOCUMENT_TYPE.equals(pr.getPipeline().getType()))
+                    .toList();
+            if (!references.isEmpty()) {
+                result = referenceData.ensureReferenceDataAvailability(references, lookupIdentifier, result);
+            }
+
+            // See if we can get a match from state.
+            result = stateLookup.ensureReferenceDataAvailability(pipelineReferences, lookupIdentifier, result);
         }
         return result;
     }

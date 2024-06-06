@@ -24,7 +24,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.UserResource;
 import stroom.util.shared.UserName;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -106,7 +106,7 @@ public class ChangeAssignedToPresenter
         if (!Objects.equals(currentAssignedTo, selected)) {
             currentAssignedTo = selected;
             getView().setAssignedTo(selected.getUserIdentityForAudit());
-            HidePopupEvent.builder(assignedToPresenter)
+            HidePopupRequestEvent.builder(assignedToPresenter)
                     .fire();
         }
     }

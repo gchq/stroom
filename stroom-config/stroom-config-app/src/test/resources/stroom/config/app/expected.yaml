@@ -924,6 +924,22 @@ appConfig:
     search:
       maxBooleanClauseCount: 1024
       maxStoredDataQueueSize: 1000
+  state:
+    scyllaDbDocCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT10M"
+      maximumSize: 100
+      refreshAfterWrite: null
+    sessionCache:
+      expireAfterAccess: "PT1H"
+      expireAfterWrite: null
+      maximumSize: 10
+      refreshAfterWrite: null
+    stateDocCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT10M"
+      maximumSize: 100
+      refreshAfterWrite: null
   statistics:
     hbase:
       docRefType: "StroomStatsStore"

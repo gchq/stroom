@@ -33,7 +33,7 @@ import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.UserName;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -176,7 +176,7 @@ public class SelectUserPresenter
             selected = selectionModel.getSelected();
             if (event.getSelectionType().isDoubleSelect()) {
                 if (selected != null) {
-                    HidePopupEvent.builder(SelectUserPresenter.this).fire();
+                    HidePopupRequestEvent.builder(SelectUserPresenter.this).fire();
                 }
             }
         }));
@@ -187,7 +187,7 @@ public class SelectUserPresenter
             if (e.isOk()) {
                 selected = newPresenter.getUserName();
                 if (selected != null) {
-                    HidePopupEvent.builder(this).fire();
+                    HidePopupRequestEvent.builder(this).fire();
                 }
             }
             e.hide();
@@ -197,7 +197,7 @@ public class SelectUserPresenter
     private void onAddMultiple() {
         createMultipleUsersPresenter.show(e -> {
             if (e.isOk()) {
-                HidePopupEvent.builder(this).fire();
+                HidePopupRequestEvent.builder(this).fire();
             }
             e.hide();
         });

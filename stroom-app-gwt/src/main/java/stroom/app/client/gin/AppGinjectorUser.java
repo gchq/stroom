@@ -81,6 +81,10 @@ import stroom.search.solr.client.gin.SolrIndexGinjector;
 import stroom.search.solr.client.gin.SolrIndexModule;
 import stroom.security.client.gin.SecurityGinjector;
 import stroom.security.client.gin.SecurityModule;
+import stroom.state.client.gin.ScyllaDbGinjector;
+import stroom.state.client.gin.ScyllaDbModule;
+import stroom.state.client.gin.StateStoreGinjector;
+import stroom.state.client.gin.StateStoreModule;
 import stroom.statistics.impl.hbase.client.gin.StroomStatsStoreGinjector;
 import stroom.statistics.impl.hbase.client.gin.StroomStatsStoreModule;
 import stroom.statistics.impl.sql.client.gin.StatisticsGinjector;
@@ -144,7 +148,9 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         VisualisationModule.class,
         ViewModule.class,
         WelcomeModule.class,
-        XMLSchemaModule.class
+        XMLSchemaModule.class,
+        ScyllaDbModule.class,
+        StateStoreModule.class,
 })
 public interface AppGinjectorUser extends
         AboutGinjector,
@@ -181,7 +187,9 @@ public interface AppGinjectorUser extends
         VisGinjector,
         VisualisationGinjector,
         WelcomeGinjector,
-        XMLSchemaGinjector {
+        XMLSchemaGinjector,
+        ScyllaDbGinjector,
+        StateStoreGinjector {
 
     // Default implementation of standard resources
     EventBus getEventBus();

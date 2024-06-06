@@ -37,7 +37,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.UserName;
 import stroom.widget.button.client.Button;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -265,7 +265,7 @@ public class AnnotationEditPresenter
     }
 
     private void changeStatus(final String selected) {
-        HidePopupEvent.builder(statusPresenter).fire();
+        HidePopupRequestEvent.builder(statusPresenter).fire();
 
         if (hasChanged(currentStatus, selected)) {
             setStatus(selected);
@@ -287,7 +287,7 @@ public class AnnotationEditPresenter
     }
 
     private void changeAssignedTo(final UserName selected) {
-        HidePopupEvent.builder(assignedToPresenter).fire();
+        HidePopupRequestEvent.builder(assignedToPresenter).fire();
 
         if (hasChanged(currentAssignedTo, selected)) {
             setAssignedTo(selected);
@@ -316,7 +316,7 @@ public class AnnotationEditPresenter
     private void changeComment(final String selected) {
         if (selected != null && hasChanged(getView().getComment(), selected)) {
             getView().setComment(getView().getComment() + selected);
-            HidePopupEvent.builder(commentPresenter).fire();
+            HidePopupRequestEvent.builder(commentPresenter).fire();
         }
     }
 
