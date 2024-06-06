@@ -363,7 +363,8 @@ public class DbTestUtil {
 
         // See if we have a local data source.
         AbstractDbConfig testDbConfig = getDbConfigThreadLocal(isSharedDatabase).get();
-        if (testDbConfig == null || !isSharedDatabase) {
+        String dbName = getDbNameThreadLocal(isSharedDatabase).get();
+        if (testDbConfig == null || dbName == null || !isSharedDatabase) {
             // Create a merged config using the common db config as a base.
             final ConnectionConfig connectionConfig = createConnectionConfig(dbConfig);
             final ConnectionConfig rootConnectionConfig = createRootConnectionConfig(connectionConfig);
@@ -376,15 +377,14 @@ public class DbTestUtil {
             LOGGER.debug("Connecting to DB as root connection with URL: {}",
                     rootConnectionConfig.getUrl());
 
-            final String dbName;
-            if (isSharedDatabase) {
-                dbName = Objects.requireNonNullElseGet(
-                        getDbNameThreadLocal(isSharedDatabase).get(),
-                        DbTestUtil::createTestDbName);
-            } else {
+            if (dbName == null || !isSharedDatabase) {
                 dbName = createTestDbName();
+                LOGGER.info("Created new database name '{}'", dbName);
+//                dbName = Objects.requireNonNullElseGet(
+//                        getDbNameThreadLocal(isSharedDatabase).get(),
+//                        DbTestUtil::createTestDbName);
+                getDbNameThreadLocal(isSharedDatabase).set(dbName);
             }
-            getDbNameThreadLocal(isSharedDatabase).set(dbName);
 
             LOGGER.info(LogUtil.inBoxOnNewLine("Creating {} test database: {} for thread: {}",
                     (isSharedDatabase

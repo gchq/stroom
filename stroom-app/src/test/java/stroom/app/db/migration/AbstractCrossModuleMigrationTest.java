@@ -72,8 +72,6 @@ public abstract class AbstractCrossModuleMigrationTest {
 
     @BeforeEach
     void beforeEach() {
-        // Ensure we work with an empty DB
-        DbTestUtil.dropThreadTestDatabase(false);
 
         LOGGER.info("Running all migrations up to and including {}, using test data {}",
                 targetVersion, testDataVersion);
@@ -93,6 +91,9 @@ public abstract class AbstractCrossModuleMigrationTest {
                                         getTargetClass()));
                     }
                 });
+
+        // Ensure we work with an empty DB
+        DbTestUtil.dropThreadTestDatabase(true);
     }
 
     @AfterEach
