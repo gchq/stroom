@@ -21,7 +21,7 @@ import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.SetStatusRequest;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -113,7 +113,7 @@ public class ChangeStatusPresenter
         if (!Objects.equals(currentStatus, selected)) {
             currentStatus = selected;
             getView().setStatus(selected);
-            HidePopupEvent.builder(statusPresenter).fire();
+            HidePopupRequestEvent.builder(statusPresenter).fire();
         }
     }
 

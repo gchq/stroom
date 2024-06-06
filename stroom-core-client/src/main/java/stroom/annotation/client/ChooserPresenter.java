@@ -21,7 +21,7 @@ import stroom.data.table.client.MyCellTable;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.util.client.BasicSelectionEventManager;
 import stroom.widget.util.client.MySingleSelectionModel;
 
@@ -68,7 +68,7 @@ public class ChooserPresenter<T>
             @Override
             protected void onClose(final CellPreviewEvent<T> e) {
                 super.onClose(e);
-                HidePopupEvent.builder(ChooserPresenter.this).autoClose(true).ok(false).fire();
+                HidePopupRequestEvent.builder(ChooserPresenter.this).autoClose(true).ok(false).fire();
             }
 
             @Override
