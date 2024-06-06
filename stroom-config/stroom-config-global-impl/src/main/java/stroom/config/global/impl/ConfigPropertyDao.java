@@ -18,4 +18,6 @@ public interface ConfigPropertyDao extends HasIntCrud<ConfigProperty> {
     Optional<ConfigProperty> fetch(final String propertyName);
 
     Optional<Long> getLatestConfigUpdateTimeMs();
+
+    void ensureTracker(long updateTimeMs);
 }
