@@ -19,6 +19,7 @@ package stroom.annotation.client;
 import stroom.annotation.client.ChangeAssignedToPresenter.ChangeAssignedToView;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.SetAssignedToRequest;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.UserResource;
@@ -41,7 +42,8 @@ import com.gwtplatform.mvp.client.View;
 import java.util.List;
 import java.util.Objects;
 
-public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedToView>
+public class ChangeAssignedToPresenter
+        extends MyPresenterWidget<ChangeAssignedToView>
         implements ChangeAssignedToUiHandlers {
 
     private final RestFactory restFactory;
@@ -86,10 +88,16 @@ public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedT
                         restFactory
                                 .create(annotationResource)
                                 .method(res -> res.setAssignedTo(request))
-                                .onSuccess(values -> GWT.log("Updated " + values + " annotations"))
+                                .onSuccess(values -> {
+                                    GWT.log("Updated " + values + " annotations");
+                                    e.hide();
+                                })
+                                .onFailure(RestErrorHandler.forPopup(this, e))
+                                .taskListener(this)
                                 .exec();
+                    } else {
+                        e.hide();
                     }
-                    e.hide();
                 })
                 .fire();
     }
@@ -116,6 +124,7 @@ public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedT
                     .create(userResource)
                     .method(res -> res.getAssociates(filter))
                     .onSuccess(consumer)
+                    .taskListener(this)
                     .exec();
         });
         assignedToPresenter.clearFilter();

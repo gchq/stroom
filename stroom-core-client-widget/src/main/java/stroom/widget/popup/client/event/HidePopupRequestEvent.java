@@ -26,11 +26,16 @@ public class HidePopupRequestEvent extends GwtEvent<HidePopupRequestEvent.Handle
     private final PresenterWidget<?> presenterWidget;
     private final boolean autoClose;
     private final boolean ok;
+    private final Runnable resetHandler;
 
-    private HidePopupRequestEvent(final PresenterWidget<?> presenterWidget, final boolean autoClose, final boolean ok) {
+    private HidePopupRequestEvent(final PresenterWidget<?> presenterWidget,
+                                  final boolean autoClose,
+                                  final boolean ok,
+                                  final Runnable resetHandler) {
         this.presenterWidget = presenterWidget;
         this.autoClose = autoClose;
         this.ok = ok;
+        this.resetHandler = resetHandler;
     }
 
     public static Builder builder(final PresenterWidget<?> presenterWidget) {
@@ -66,8 +71,20 @@ public class HidePopupRequestEvent extends GwtEvent<HidePopupRequestEvent.Handle
         return ok;
     }
 
+    /**
+     * Call to actually hide the popup if the request is handled and accepted.
+     */
     public void hide() {
         HidePopupEvent.builder(presenterWidget).autoClose(autoClose).ok(ok).fire();
+    }
+
+    /**
+     * Call to reset/cancel the request and re-enable any buttons.
+     */
+    public void reset() {
+        if (resetHandler != null) {
+            resetHandler.run();
+        }
     }
 
 
@@ -89,6 +106,7 @@ public class HidePopupRequestEvent extends GwtEvent<HidePopupRequestEvent.Handle
 
         private boolean autoClose;
         private boolean ok = true;
+        private Runnable cancelHandler;
 
         public Builder(final PresenterWidget<?> presenterWidget) {
             this.presenterWidget = presenterWidget;
@@ -104,11 +122,17 @@ public class HidePopupRequestEvent extends GwtEvent<HidePopupRequestEvent.Handle
             return this;
         }
 
+        public Builder cancelHandler(final Runnable cancelHandler) {
+            this.cancelHandler = cancelHandler;
+            return this;
+        }
+
         public void fire() {
             presenterWidget.fireEvent(new HidePopupRequestEvent(
                     presenterWidget,
                     autoClose,
-                    ok));
+                    ok,
+                    cancelHandler));
         }
     }
 }

@@ -21,7 +21,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -94,14 +94,15 @@ public class ProcessorTaskListPresenter
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<ProcessorTask>> dataConsumer,
-                                final Consumer<RestError> errorConsumer) {
+                                final RestErrorHandler errorHandler) {
                 if (criteria.getExpression() != null) {
                     CriteriaUtil.setRange(criteria, range);
                     restFactory
                             .create(PROCESSOR_TASK_RESOURCE)
                             .method(res -> res.find(criteria))
                             .onSuccess(dataConsumer)
-                            .onFailure(errorConsumer)
+                            .onFailure(errorHandler)
+                            .taskListener(view)
                             .exec();
                 }
             }
@@ -125,6 +126,7 @@ public class ProcessorTaskListPresenter
                                     .orElse(null);
                             showTooltip(popupPosition, row, meta);
                         })
+                        .taskListener(getView())
                         .exec();
             }
         }, "<br/>", ColumnSizeConstants.ICON_COL);

@@ -20,6 +20,7 @@ package stroom.importexport.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.LocationManager;
 import stroom.dispatch.client.ExportFileCompleteUtil;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocumentTypeCache;
@@ -33,8 +34,7 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.DocRefs;
 import stroom.widget.button.client.InlineSvgToggleButton;
-import stroom.widget.popup.client.event.DisablePopupEvent;
-import stroom.widget.popup.client.event.EnablePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -141,22 +141,15 @@ public class ExportConfigPresenter
 
     @Override
     protected void revealInParent() {
-        documentTypeCache.clear();
-        // Set the data for the type filter.
-        documentTypeCache.fetch(typeFilterPresenter::setDocumentTypes);
-
-        treePresenter.setRequiredPermissions(DocumentPermissionNames.READ);
-        treePresenter.refresh();
-
         final PopupSize popupSize = PopupSize.resizable(400, 600, 380, 480);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption("Export")
-                .onShow(e -> getView().focus())
+                .onShow(e -> onShow())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        export();
+                        export(e);
                     } else {
                         e.hide();
                     }
@@ -164,16 +157,27 @@ public class ExportConfigPresenter
                 .fire();
     }
 
-    private void export() {
-        // Disable the popup ok/cancel buttons before we attempt export.
-        DisablePopupEvent.builder(this).fire();
+    private void onShow() {
+        documentTypeCache.clear();
+        // Set the data for the type filter.
+        documentTypeCache.fetch(typeFilterPresenter::setDocumentTypes, this);
+
+        treePresenter.setRequiredPermissions(DocumentPermissionNames.READ);
+        treePresenter.refresh();
+
+        getView().focus();
+    }
+
+    private void export(final HidePopupRequestEvent event) {
+//        // Disable the popup ok/cancel buttons before we attempt export.
+//        DisablePopupEvent.builder(this).fire();
 
         final Set<ExplorerNode> dataItems = treePresenter.getSelectedSet();
         if (dataItems == null || dataItems.size() == 0) {
             // Let the user know that they didn't select anything to export.
-            AlertEvent.fireWarn(this, "No folders have been selected for export", null);
-            // Re-enable buttons on this popup.
-            EnablePopupEvent.builder(this).fire();
+            AlertEvent.fireWarn(this, "No folders have been selected for export", event::reset);
+//            // Re-enable buttons on this popup.
+//            EnablePopupEvent.builder(this).fire();
 
         } else {
             final Set<DocRef> docRefs = new HashSet<>();
@@ -184,8 +188,12 @@ public class ExportConfigPresenter
             restFactory
                     .create(CONTENT_RESOURCE)
                     .method(res -> res.exportContent(new DocRefs(docRefs)))
-                    .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
-                    .onFailure(restError -> ExportFileCompleteUtil.onFailure(this, restError))
+                    .onSuccess(result -> {
+                        ExportFileCompleteUtil.onSuccess(locationManager, this, result);
+                        event.hide();
+                    })
+                    .onFailure(RestErrorHandler.forPopup(this, event))
+                    .taskListener(this)
                     .exec();
         }
     }
@@ -201,7 +209,6 @@ public class ExportConfigPresenter
         final Element target = event.getNativeEvent().getEventTarget().cast();
         typeFilterPresenter.show(target, filterStateConsumer);
     }
-
 
     // --------------------------------------------------------------------------------
 

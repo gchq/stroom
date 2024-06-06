@@ -150,9 +150,30 @@
 }
 
 /* Close button */
+.curveTab .curveTab-close-wrapper {
+    position: relative;
+    width: 22px;
+    height: 22px;
+}
+
+.curveTab .curveTab-spinner {
+    position: absolute;
+}
+
+.curveTab .curveTab-spinner svg {
+    color: var(--curve-tab__svg-color);
+	opacity: 0.8;
+}
+
 .curveTab .curveTab-close {
-    display: flex;
+    position: absolute;
     opacity: 0;
+    top: 2px;
+    left: -1px;
+}
+
+.curveTab:hover .curveTab-spinner {
+	opacity: 0;
 }
 
 .curveTab:hover .curveTab-close {
@@ -1579,20 +1600,30 @@ button.main-menu svg {
     background-color: var(--row__background-color--hovered);
 }
 
-.navigation-header-buttons {
+.navigation-toolbar {
     flex-grow: 0;
     flex-shrink: 0;
     display: flex;
     align-items: center;
     margin: 0.25rem;
     margin-top: 0;
-    justify-content: flex-end;
+}
+
+.navigation-header-buttons {
+    flex-grow: 1;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
 }
 
 .form-control-border {
     border: solid 1px var(--control__border-color);
     border-radius: .25rem;
     overflow: hidden;
+}
+
+.form-control-background {
+  background-color: var(--control__background-color);
 }
 
 .form-control {
@@ -1910,6 +1941,10 @@ button.main-menu svg {
     color: var(--control__text-color);
 }
 
+.FindCellTable {
+    table-layout: fixed;
+}
+
 .findCell {
 }
 
@@ -1934,15 +1969,20 @@ button.main-menu svg {
 .findCell-sample {
     display: flex;
     flex-grow: 1;
-    white-space: nowrap;
     overflow: hidden;
+    white-space: pre;
+}
+
+.findCell-highlight {
+	background-color: yellow;
+	color: black;
 }
 
 .findCell-name {
     display: flex;
     flex-grow: 0;
     align-items: end;
-    white-space: nowrap;
+    white-space: pre;
     color: var(--navigation__text-color);
 }
 
@@ -2199,4 +2239,9 @@ button.main-menu svg {
 
 .AnalyticEmailDestinationViewImpl #analyticEmailDestinationBodyTemplate .EditorViewImpl {
     min-height: 300px;
+}
+
+.ScheduledProcessingViewImpl,
+.DuplicateManagementViewImpl {
+    border-top: 1px solid var(--splitter__background-color);
 }

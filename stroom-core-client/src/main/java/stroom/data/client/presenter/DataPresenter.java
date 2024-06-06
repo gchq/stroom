@@ -16,7 +16,6 @@
 
 package stroom.data.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.SourceTabPlugin;
 import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
 import stroom.data.shared.DataInfoSection;
@@ -36,6 +35,7 @@ import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.task.client.TaskListener;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SourceConfig;
 import stroom.util.shared.Count;
@@ -240,13 +240,11 @@ public class DataPresenter
     }
 
     private void doWithConfig(final Consumer<SourceConfig> action) {
-        uiConfigCache.get()
-                .onSuccess(uiConfig ->
-                        action.accept(uiConfig.getSource()))
-                .onFailure(caught -> AlertEvent.fireError(
-                        DataPresenter.this,
-                        caught.getMessage(),
-                        null));
+        uiConfigCache.get(uiConfig -> {
+            if (uiConfig != null) {
+                action.accept(uiConfig.getSource());
+            }
+        }, dataView);
     }
 
     private void addTab(final TabData tab) {
@@ -473,6 +471,7 @@ public class DataPresenter
                             null,
                             Collections.singletonList(caught.getMessage()));
                 })
+                .taskListener(dataView)
                 .exec();
     }
 
@@ -582,6 +581,7 @@ public class DataPresenter
                             })
                             .onFailure(caught ->
                                     itemNavigatorPresenter.setRefreshing(false))
+                            .taskListener(dataView)
                             .exec();
                 } else {
                     showInvalidStreamErrorMsg();
@@ -760,6 +760,7 @@ public class DataPresenter
                                 })
                                 .onFailure(caught ->
                                         itemNavigatorPresenter.setRefreshing(false))
+                                .taskListener(dataView)
                                 .exec();
                     }
                 }
@@ -1118,6 +1119,7 @@ public class DataPresenter
                     .create(DATA_RESOURCE)
                     .method(res -> res.viewInfo(metaId))
                     .onSuccess(this::handleMetaInfoResult)
+                    .taskListener(dataView)
                     .exec();
         }
     }
@@ -1225,7 +1227,7 @@ public class DataPresenter
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-    public interface DataView extends View, Focus {
+    public interface DataView extends View, Focus, TaskListener {
 
         void addSourceLinkClickHandler(final ClickHandler clickHandler);
 

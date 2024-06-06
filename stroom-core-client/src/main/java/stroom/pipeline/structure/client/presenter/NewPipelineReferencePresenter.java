@@ -47,6 +47,7 @@ public class NewPipelineReferencePresenter
     private final DocSelectionBoxPresenter pipelinePresenter;
     private final DocSelectionBoxPresenter feedPresenter;
     private final RestFactory restFactory;
+    private final UiConfigCache uiConfigCache;
     private final SelectionBox<String> dataTypeWidget;
     private boolean dirty;
     private boolean initialised;
@@ -62,13 +63,7 @@ public class NewPipelineReferencePresenter
         this.pipelinePresenter = pipelinePresenter;
         this.feedPresenter = feedPresenter;
         this.restFactory = restFactory;
-
-        // Filter the pipeline picker by tags, if configured
-        uiConfigCache.get().onSuccess(extendedUiConfig ->
-                GwtNullSafe.consume(
-                        extendedUiConfig.getReferencePipelineSelectorIncludedTags(),
-                        ExplorerTreeFilter::createTagQuickFilterInput,
-                        pipelinePresenter::setQuickFilter));
+        this.uiConfigCache = uiConfigCache;
 
         pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
         pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.USE);
@@ -93,6 +88,16 @@ public class NewPipelineReferencePresenter
     }
 
     public void read(final PipelineReference pipelineReference) {
+        // Filter the pipeline picker by tags, if configured
+        uiConfigCache.get(extendedUiConfig -> {
+            if (extendedUiConfig != null) {
+                GwtNullSafe.consume(
+                        extendedUiConfig.getReferencePipelineSelectorIncludedTags(),
+                        ExplorerTreeFilter::createTagQuickFilterInput,
+                        pipelinePresenter::setQuickFilter);
+            }
+        }, this);
+
         getView().setElement(pipelineReference.getElement());
 
         pipelinePresenter.setSelectedEntityReference(pipelineReference.getPipeline());
@@ -153,6 +158,7 @@ public class NewPipelineReferencePresenter
 
                     initialised = true;
                 })
+                .taskListener(this)
                 .exec();
     }
 

@@ -41,9 +41,6 @@ import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Message;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.Severity;
-import stroom.widget.popup.client.event.DisablePopupEvent;
-import stroom.widget.popup.client.event.EnablePopupEvent;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -75,8 +72,7 @@ import java.util.function.Consumer;
 public class ImportConfigConfirmPresenter extends
         MyPresenter<ImportConfigConfirmPresenter.ImportConfigConfirmView,
                 ImportConfigConfirmPresenter.ImportConfirmProxy>
-        implements ImportConfigConfirmEvent.Handler,
-        HidePopupRequestEvent.Handler {
+        implements ImportConfigConfirmEvent.Handler, HidePopupRequestEvent.Handler {
 
     private static final ContentResource CONTENT_RESOURCE =
             com.google.gwt.core.client.GWT.create(ContentResource.class);
@@ -188,6 +184,7 @@ public class ImportConfigConfirmPresenter extends
                     updateList();
                 })
                 .onFailure(caught -> error(caught.getMessage()))
+                .taskListener(this)
                 .exec();
     }
 
@@ -210,9 +207,6 @@ public class ImportConfigConfirmPresenter extends
 
     @Override
     public void onHideRequest(final HidePopupRequestEvent e) {
-        // Disable the popup ok/cancel buttons before we attempt import.
-        DisablePopupEvent.builder(this).fire();
-
         if (e.isOk()) {
             boolean warnings = false;
             int count = 0;
@@ -228,29 +222,27 @@ public class ImportConfigConfirmPresenter extends
             }
 
             if (count == 0) {
+                // Re-enable popup buttons.
                 AlertEvent.fireWarn(
                         ImportConfigConfirmPresenter.this,
-                        "No items are selected for import", () -> {
-                            // Re-enable popup buttons.
-                            EnablePopupEvent.builder(this).fire();
-                        });
+                        "No items are selected for import", e::reset);
             } else if (warnings) {
                 ConfirmEvent.fireWarn(ImportConfigConfirmPresenter.this,
                         "There are warnings in the items selected.  Are you sure you want to import?.",
                         result -> {
                             if (result) {
-                                importData();
+                                importData(e);
                             } else {
                                 // Re-enable popup buttons.
-                                EnablePopupEvent.builder(this).fire();
+                                e.reset();
                             }
                         });
 
             } else {
-                importData();
+                importData(e);
             }
         } else {
-            abortImport();
+            abortImport(e);
         }
     }
 
@@ -444,7 +436,7 @@ public class ImportConfigConfirmPresenter extends
         dataGrid.addResizableColumn(column, "Destination Path", 300);
     }
 
-    public void abortImport() {
+    public void abortImport(final HidePopupRequestEvent e) {
         // Abort ... use a blank confirm list to perform an import that imports nothing.
         importSettingsBuilder.importMode(ImportMode.ACTION_CONFIRMATION);
         importSettingsBuilder.useImportNames(false);
@@ -458,14 +450,15 @@ public class ImportConfigConfirmPresenter extends
                         new ArrayList<>())))
                 .onSuccess(result2 -> AlertEvent.fireWarn(ImportConfigConfirmPresenter.this,
                         "Import Aborted",
-                        () -> HidePopupEvent.builder(ImportConfigConfirmPresenter.this).ok(false).fire()))
+                        e::hide))
                 .onFailure(caught -> AlertEvent.fireError(ImportConfigConfirmPresenter.this,
                         caught.getMessage(),
-                        () -> HidePopupEvent.builder(ImportConfigConfirmPresenter.this).ok(false).fire()))
+                        e::hide))
+                .taskListener(this)
                 .exec();
     }
 
-    public void importData() {
+    public void importData(final HidePopupRequestEvent e) {
         importSettingsBuilder.importMode(ImportMode.ACTION_CONFIRMATION);
         restFactory
                 .create(CONTENT_RESOURCE)
@@ -476,7 +469,7 @@ public class ImportConfigConfirmPresenter extends
                         AlertEvent.fireInfo(
                                 ImportConfigConfirmPresenter.this,
                                 "Import Complete", () -> {
-                                    HidePopupEvent.builder(ImportConfigConfirmPresenter.this).fire();
+                                    e.hide();
                                     RefreshExplorerTreeEvent.fire(ImportConfigConfirmPresenter.this);
 
                                     // We might have loaded a new visualisation or updated
@@ -484,7 +477,7 @@ public class ImportConfigConfirmPresenter extends
                                     clearCaches();
                                 }))
                 .onFailure(caught -> {
-                    HidePopupEvent.builder(ImportConfigConfirmPresenter.this).fire();
+                    e.hide();
                     // Even if the import was error we should refresh the tree in
                     // case it got part done.
                     RefreshExplorerTreeEvent.fire(ImportConfigConfirmPresenter.this);
@@ -493,6 +486,7 @@ public class ImportConfigConfirmPresenter extends
                     // existing one.
                     clearCaches();
                 })
+                .taskListener(this)
                 .exec();
     }
 

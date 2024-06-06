@@ -3,7 +3,6 @@ package stroom.pipeline.writer;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
@@ -13,19 +12,22 @@ import stroom.pipeline.state.MetaDataHolder;
 import stroom.svg.shared.SvgImage;
 import stroom.util.cert.SSLConfig;
 import stroom.util.cert.SSLUtil;
-import stroom.util.io.ByteCountOutputStream;
+import stroom.util.io.CompressionUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
 
 import jakarta.inject.Inject;
+import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FilterOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,8 +36,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 
@@ -69,17 +69,13 @@ public class HTTPAppender extends AbstractAppender {
     private Long connectionTimeout;
     private Long readTimeout;
     private Long forwardChunkSize;
-    private boolean useCompression = true;
     private Set<String> metaKeySet = getMetaKeySet("guid,feed,system,environment,remotehost,remoteaddress");
 
     private HttpURLConnection connection;
-    private ZipOutputStream zipOutputStream;
-    private ByteCountOutputStream byteCountOutputStream;
+    private final OutputFactory outputStreamSupport;
     private long startTimeMs;
-    private long count;
 
     private boolean useJvmSslConfig = true;
-    //    private final SSLConfig sslConfig = new SSLConfig();
     private final SSLConfig.Builder sslConfigBuilder = SSLConfig.builder();
 
     private String requestMethod = "POST";
@@ -98,38 +94,12 @@ public class HTTPAppender extends AbstractAppender {
         super(errorReceiverProxy);
         this.metaDataHolder = metaDataHolder;
         this.pathCreator = pathCreator;
+        this.outputStreamSupport = new OutputFactory(metaDataHolder);
     }
 
     @Override
-    public Destination borrowDestination() throws IOException {
-        nextEntry();
-        return super.borrowDestination();
-    }
-
-    @Override
-    public void returnDestination(final Destination destination) throws IOException {
-        closeEntry();
-        super.returnDestination(destination);
-    }
-
-    private void addAttributeIfHeaderDefined(final AttributeMap attributeMap, final String headerText) {
-        if (headerText == null || headerText.length() < 3) {
-            return;
-        }
-        if (!headerText.contains(":")) {
-            throw new IllegalArgumentException("Additional Headers must be specified as 'Name: Value', but '"
-                    + headerText + "' supplied.");
-        }
-
-        int delimiterPos = headerText.indexOf(':');
-        attributeMap.put(headerText.substring(0, delimiterPos), headerText.substring(delimiterPos + 1));
-    }
-
-    @Override
-    protected OutputStream createOutputStream() throws IOException {
+    protected Output createOutput() {
         try {
-            OutputStream outputStream;
-
             final AttributeMap sendHeader;
             if (httpHeadersIncludeStreamMetaData) {
                 final AttributeMap attributeMap = metaDataHolder.getMetaData();
@@ -149,11 +119,10 @@ public class HTTPAppender extends AbstractAppender {
 
             LOGGER.info(() -> "createOutputStream() - " + forwardUrl + " Sending request " + sendHeader);
 
-            URL url = new URL(forwardUrl);
+            URL url = URI.create(forwardUrl).toURL();
             connection = (HttpURLConnection) url.openConnection();
 
-            if (connection instanceof HttpsURLConnection) {
-                final HttpsURLConnection httpsURLConnection = (HttpsURLConnection) connection;
+            if (connection instanceof final HttpsURLConnection httpsURLConnection) {
                 final SSLConfig sslConfig = sslConfigBuilder.build();
                 if (!useJvmSslConfig) {
                     LOGGER.info(() -> "Configuring SSLSocketFactory for destination " + forwardUrl);
@@ -179,11 +148,10 @@ public class HTTPAppender extends AbstractAppender {
             connection.setDoOutput(true);
             connection.setDoInput(true);
 
-            if (useCompression) {
+            if (outputStreamSupport.isUseCompression()) {
                 connection.addRequestProperty(StandardHeaderArguments.COMPRESSION,
-                        StandardHeaderArguments.COMPRESSION_ZIP);
+                        outputStreamSupport.getCompressionMethod().toUpperCase());
             }
-
 
             for (Entry<String, String> entry : sendHeader.entrySet()) {
                 connection.addRequestProperty(entry.getKey(), entry.getValue());
@@ -195,59 +163,38 @@ public class HTTPAppender extends AbstractAppender {
             }
             connection.connect();
 
-            if (useCompression) {
-                zipOutputStream = new ZipOutputStream(connection.getOutputStream());
-                outputStream = zipOutputStream;
-                nextEntry();
-            } else {
-                outputStream = connection.getOutputStream();
-            }
-
-            byteCountOutputStream = new ByteCountOutputStream(outputStream) {
+            return outputStreamSupport.create(new FilterOutputStream(connection.getOutputStream()) {
                 @Override
                 public void close() throws IOException {
                     super.close();
                     closeConnection();
                 }
-            };
-
-            return byteCountOutputStream;
-
-        } catch (final IOException | RuntimeException e) {
+            });
+        } catch (final IOException e) {
+            LOGGER.debug(e::getMessage, e);
+            closeConnection();
+            throw new UncheckedIOException(e);
+        } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
             closeConnection();
             throw e;
         }
     }
 
-    @Override
-    long getCurrentOutputSize() {
-        if (byteCountOutputStream == null) {
-            return 0;
+    private void addAttributeIfHeaderDefined(final AttributeMap attributeMap, final String headerText) {
+        if (headerText == null || headerText.length() < 3) {
+            return;
         }
-        return byteCountOutputStream.getCount();
+        if (!headerText.contains(":")) {
+            throw new IllegalArgumentException("Additional Headers must be specified as 'Name: Value', but '"
+                    + headerText + "' supplied.");
+        }
+
+        int delimiterPos = headerText.indexOf(':');
+        attributeMap.put(headerText.substring(0, delimiterPos), headerText.substring(delimiterPos + 1));
     }
 
-    private void nextEntry() throws IOException {
-        if (zipOutputStream != null) {
-            count++;
-            final AttributeMap attributeMap = metaDataHolder.getMetaData();
-            String fileName = attributeMap.get("fileName");
-            if (fileName == null) {
-                fileName = ModelStringUtil.zeroPad(3, String.valueOf(count)) + ".dat";
-            }
-
-            zipOutputStream.putNextEntry(new ZipEntry(fileName));
-        }
-    }
-
-    private void closeEntry() throws IOException {
-        if (zipOutputStream != null) {
-            zipOutputStream.closeEntry();
-        }
-    }
-
-    private void closeConnection() throws IOException {
+    private void closeConnection() {
         int responseCode = -1;
 
         if (connection != null) {
@@ -258,11 +205,7 @@ public class HTTPAppender extends AbstractAppender {
                 LOGGER.debug(e::getMessage, e);
                 throw e;
             } finally {
-                long bytes = 0;
-                if (byteCountOutputStream != null) {
-                    bytes = byteCountOutputStream.getCount();
-                }
-
+                long bytes = getCurrentOutputSize();
                 final long duration = System.currentTimeMillis() - startTimeMs;
                 final AttributeMap attributeMap = metaDataHolder.getMetaData();
                 log(SEND_LOG, attributeMap, "SEND", forwardUrl, responseCode, bytes, duration);
@@ -271,7 +214,6 @@ public class HTTPAppender extends AbstractAppender {
                 connection = null;
             }
         }
-
     }
 
     public void log(final Logger logger,
@@ -281,7 +223,7 @@ public class HTTPAppender extends AbstractAppender {
                     final int responseCode,
                     final long bytes,
                     final long duration) {
-        if (logger.isInfoEnabled() && metaKeySet.size() > 0) {
+        if (logger.isInfoEnabled() && !metaKeySet.isEmpty()) {
             final Map<String, String> filteredMap = attributeMap.entrySet().stream()
                     .filter(entry -> metaKeySet.contains(entry.getKey().toLowerCase()))
                     .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
@@ -302,7 +244,7 @@ public class HTTPAppender extends AbstractAppender {
     }
 
     private Set<String> getMetaKeySet(final String csv) {
-        if (csv == null || csv.length() == 0) {
+        if (csv == null || csv.isEmpty()) {
             return Collections.emptySet();
         }
 
@@ -366,13 +308,27 @@ public class HTTPAppender extends AbstractAppender {
     @PipelineProperty(description = "Should data be compressed when sending", defaultValue = "true",
             displayPriority = 9)
     public void setUseCompression(final boolean useCompression) {
-        this.useCompression = useCompression;
+        outputStreamSupport.setUseCompression(useCompression);
+    }
+
+    @PipelineProperty(
+            description = "Compression method to apply, if compression is enabled. Supported values: " +
+                    CompressionUtil.SUPPORTED_COMPRESSORS + ".",
+            defaultValue = CompressorStreamFactory.GZIP,
+            displayPriority = 10)
+    public void setCompressionMethod(final String compressionMethod) {
+        try {
+            outputStreamSupport.setCompressionMethod(compressionMethod);
+        } catch (final RuntimeException e) {
+            error(e.getMessage(), e);
+            throw e;
+        }
     }
 
     @PipelineProperty(
             description = "Which meta data values will be logged in the send log",
             defaultValue = "guid,feed,system,environment,remotehost,remoteaddress",
-            displayPriority = 10)
+            displayPriority = 11)
     public void setLogMetaKeys(final String string) {
         metaKeySet = getMetaKeySet(string);
     }
@@ -382,98 +338,98 @@ public class HTTPAppender extends AbstractAppender {
             "properties like 'javax.net.ssl.keyStore'." +
             "Set this to false if you are explicitly setting key/trust store properties on this HttpAppender.",
             defaultValue = "true",
-            displayPriority = 11)
+            displayPriority = 12)
     public void setUseJvmSslConfig(final boolean useJvmSslConfig) {
         this.useJvmSslConfig = useJvmSslConfig;
     }
 
     @PipelineProperty(description = "The key store file path on the server",
-            displayPriority = 12)
+            displayPriority = 13)
     public void setKeyStorePath(final String keyStorePath) {
         sslConfigBuilder.withKeyStorePath(keyStorePath);
     }
 
     @PipelineProperty(description = "The key store type",
             defaultValue = "JKS",
-            displayPriority = 13)
+            displayPriority = 14)
     public void setKeyStoreType(final String keyStoreType) {
         sslConfigBuilder.withKeyStoreType(keyStoreType);
     }
 
     @PipelineProperty(description = "The key store password",
-            displayPriority = 14)
+            displayPriority = 15)
     public void setKeyStorePassword(final String keyStorePassword) {
         sslConfigBuilder.withKeyStorePassword(keyStorePassword);
     }
 
     @PipelineProperty(description = "The trust store file path on the server",
-            displayPriority = 15)
+            displayPriority = 16)
     public void setTrustStorePath(final String trustStorePath) {
         sslConfigBuilder.withTrustStorePath(trustStorePath);
     }
 
     @PipelineProperty(description = "The trust store type",
             defaultValue = "JKS",
-            displayPriority = 16)
+            displayPriority = 17)
     public void setTrustStoreType(final String trustStoreType) {
         sslConfigBuilder.withTrustStoreType(trustStoreType);
     }
 
     @PipelineProperty(description = "The trust store password",
-            displayPriority = 17)
+            displayPriority = 18)
     public void setTrustStorePassword(final String trustStorePassword) {
         sslConfigBuilder.withTrustStorePassword(trustStorePassword);
     }
 
     @PipelineProperty(description = "Verify host names",
             defaultValue = "true",
-            displayPriority = 18)
+            displayPriority = 19)
     public void setHostnameVerificationEnabled(final boolean hostnameVerificationEnabled) {
         sslConfigBuilder.withHostnameVerificationEnabled(hostnameVerificationEnabled);
     }
 
     @PipelineProperty(description = "The SSL protocol to use",
             defaultValue = "TLSv1.2",
-            displayPriority = 19)
+            displayPriority = 20)
     public void setSslProtocol(final String sslProtocol) {
         sslConfigBuilder.withSslProtocol(sslProtocol);
     }
 
     @PipelineProperty(description = "The request method, e.g. POST",
             defaultValue = "POST",
-            displayPriority = 20)
+            displayPriority = 21)
     public void setRequestMethod(String requestMethod) {
         this.requestMethod = requestMethod;
     }
 
     @PipelineProperty(description = "The content type",
             defaultValue = "application/json",
-            displayPriority = 21)
+            displayPriority = 22)
     public void setContentType(String contentType) {
         this.contentType = contentType;
     }
 
     @PipelineProperty(description = "Provide stream metadata as HTTP headers",
             defaultValue = "true",
-            displayPriority = 22)
+            displayPriority = 23)
     public void setHttpHeadersIncludeStreamMetaData(final boolean newValue) {
         this.httpHeadersIncludeStreamMetaData = newValue;
     }
 
     @PipelineProperty(description = "Additional HTTP Header 1, format is 'HeaderName: HeaderValue'",
-            displayPriority = 23)
+            displayPriority = 24)
     public void setHttpHeadersUserDefinedHeader1(final String headerText) {
         this.httpHeadersUserDefinedHeader1 = headerText;
     }
 
     @PipelineProperty(description = "Additional HTTP Header 2, format is 'HeaderName: HeaderValue'",
-            displayPriority = 24)
+            displayPriority = 25)
     public void setHttpHeadersUserDefinedHeader2(final String headerText) {
         this.httpHeadersUserDefinedHeader2 = headerText;
     }
 
     @PipelineProperty(description = "Additional HTTP Header 3, format is 'HeaderName: HeaderValue'",
-            displayPriority = 25)
+            displayPriority = 26)
     public void setHttpHeadersUserDefinedHeader3(final String headerText) {
         this.httpHeadersUserDefinedHeader3 = headerText;
     }

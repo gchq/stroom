@@ -245,8 +245,6 @@ include 'stroom-search:stroom-searchable-impl'
 
 // Security
 include 'stroom-security:stroom-security-api'
-include 'stroom-security:stroom-security-client'
-include 'stroom-security:stroom-security-client-api'
 include 'stroom-security:stroom-security-common-impl'
 include 'stroom-security:stroom-security-identity'
 include 'stroom-security:stroom-security-identity-db'

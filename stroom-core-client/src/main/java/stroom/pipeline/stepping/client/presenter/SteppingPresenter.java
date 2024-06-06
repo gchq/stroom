@@ -87,9 +87,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.SteppingView> implements
-        HasDirtyHandlers,
-        ClassificationUiHandlers {
+public class SteppingPresenter
+        extends MyPresenterWidget<SteppingPresenter.SteppingView>
+        implements HasDirtyHandlers, ClassificationUiHandlers {
 
     private static final PipelineResource PIPELINE_RESOURCE = GWT.create(PipelineResource.class);
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
@@ -358,6 +358,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                 final List<PipelineProperty> properties = pipelineModel.getProperties(element);
 
                 final ElementPresenter presenter = elementPresenterProvider.get();
+                presenter.setTaskListener(this);
                 presenter.setElement(element);
                 presenter.setProperties(properties);
                 presenter.setFeedName(meta.getFeedName());
@@ -384,34 +385,32 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         }
     }
 
-    private void refreshEditor(final ElementPresenter elementPresenter, final String elementId) {
-        elementPresenter.load()
-                .onSuccess(result -> {
-                    final SharedStepData stepData = getEffectiveStepData();
-                    if (stepData != null) {
-                        final SharedElementData elementData = stepData.getElementData(elementId);
-                        if (elementData != null) {
-                            final Indicators indicators = elementData.getIndicators();
+    private void refreshEditor(final ElementPresenter elementPresenter,
+                               final String elementId) {
+        elementPresenter.load(result -> {
+            final SharedStepData stepData = getEffectiveStepData();
+            if (stepData != null) {
+                final SharedElementData elementData = stepData.getElementData(elementId);
+                if (elementData != null) {
+                    final Indicators indicators = elementData.getIndicators();
 
-                            // Update the error indicators for all panes
-                            elementPresenter.setIndicators(indicators);
+                    // Update the error indicators for all panes
+                    elementPresenter.setIndicators(indicators);
 
-                            // Update IO data.
-                            refreshEditorIO(elementPresenter, elementData);
+                    // Update IO data.
+                    refreshEditorIO(elementPresenter, elementData);
 
-                            // Update with any errors not specific to an editor pane
+                    // Update with any errors not specific to an editor pane
 //                            refreshGenericErrors(elementPresenter, elementId);
 
-                            updateToggleConsoleBtnVisibility(indicators, elementId);
-                        } else {
-                            clearIndicators(elementPresenter, elementId);
-                        }
-                    } else {
-                        clearIndicators(elementPresenter, elementId);
-                    }
-                })
-                .onFailure(throwable ->
-                        AlertEvent.fireError(this, throwable.getMessage(), null));
+                    updateToggleConsoleBtnVisibility(indicators, elementId);
+                } else {
+                    clearIndicators(elementPresenter, elementId);
+                }
+            } else {
+                clearIndicators(elementPresenter, elementId);
+            }
+        });
     }
 
     private void clearIndicators(final ElementPresenter elementPresenter, final String elementId) {
@@ -561,6 +560,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                                 stepLocation.getRecordIndex()));
                     }
                 })
+                .taskListener(this)
                 .exec();
     }
 
@@ -609,6 +609,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                         AlertEvent.fireErrorFromException(SteppingPresenter.this, restError.getException(), null);
                         busyTranslating = false;
                     })
+                    .taskListener(this)
                     .exec();
         }
     }
@@ -801,7 +802,6 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
-
 
     // --------------------------------------------------------------------------------
 

@@ -3,7 +3,7 @@ package stroom.explorer.client.presenter;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.MyCellTable;
-import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.explorer.client.presenter.AbstractFindPresenter.FindView;
@@ -74,6 +74,7 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
                 }
             }
         };
+        cellTable.addStyleName("FindCellTable");
 
         selectionModel = new MultiSelectionModelImpl<>(cellTable);
         SelectionEventManager<FindResult> selectionEventManager = new SelectionEventManager<>(
@@ -91,7 +92,7 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<FindResult>> dataConsumer,
-                                final Consumer<RestError> errorConsumer) {
+                                final RestErrorHandler errorHandler) {
                 final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
                 updateFilter(explorerTreeFilterBuilder);
                 final ExplorerTreeFilter filter = explorerTreeFilterBuilder.build();
@@ -133,7 +134,8 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
 
                                 resetFocus();
                             })
-                            .onFailure(errorConsumer)
+                            .onFailure(errorHandler)
+                            .taskListener(pagerView)
                             .exec();
                 }
             }

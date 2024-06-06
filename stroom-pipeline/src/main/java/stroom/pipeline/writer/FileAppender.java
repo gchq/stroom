@@ -22,20 +22,19 @@ import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.pipeline.state.MetaDataHolder;
 import stroom.svg.shared.SvgImage;
-import stroom.util.io.ByteCountOutputStream;
+import stroom.util.io.CompressionUtil;
 import stroom.util.io.FileUtil;
-import stroom.util.io.GZipByteCountOutputStream;
-import stroom.util.io.GZipOutputStream;
 import stroom.util.io.PathCreator;
 
 import jakarta.inject.Inject;
+import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -66,20 +65,21 @@ public class FileAppender extends AbstractAppender {
     private static final String LOCK_EXTENSION = ".lock";
 
     private final PathCreator pathCreator;
-    private ByteCountOutputStream byteCountOutputStream;
+    private final OutputFactory outputFactory;
     private String[] outputPaths;
-    private boolean useCompression;
     private String filePermissions;
 
     @Inject
     public FileAppender(final ErrorReceiverProxy errorReceiverProxy,
+                        final MetaDataHolder metaDataHolder,
                         final PathCreator pathCreator) {
         super(errorReceiverProxy);
         this.pathCreator = pathCreator;
+        outputFactory = new OutputFactory(metaDataHolder);
     }
 
     @Override
-    protected OutputStream createOutputStream() throws IOException {
+    protected Output createOutput() throws IOException {
         try {
             if (outputPaths == null || outputPaths.length == 0) {
                 throw new IOException("No output paths have been set");
@@ -129,17 +129,13 @@ public class FileAppender extends AbstractAppender {
             LOGGER.trace("Creating output stream for path {}", path);
 
             // Get a writer for the new lock file.
-            if (useCompression) {
-                byteCountOutputStream =
-                        new GZipByteCountOutputStream(new GZipOutputStream(Files.newOutputStream(lockFile)));
-            } else {
-                byteCountOutputStream =
-                        new ByteCountOutputStream(new BufferedOutputStream(Files.newOutputStream(lockFile)));
-            }
+            final Output output = outputFactory
+                    .create(new BufferedOutputStream(Files.newOutputStream(lockFile)));
 
-            return new LockedOutputStream(byteCountOutputStream, lockFile, file, permissions);
+            return new LockedOutput(output, lockFile, file, permissions);
 
         } catch (final RuntimeException e) {
+            error(e.getMessage(), e);
             throw new IOException(e.getMessage(), e);
         }
     }
@@ -158,14 +154,6 @@ public class FileAppender extends AbstractAppender {
             LOGGER.debug("Invalid file permissions format: '" + filePermissions + "'");
             return null;
         }
-    }
-
-    @Override
-    long getCurrentOutputSize() {
-        if (byteCountOutputStream == null) {
-            return 0;
-        }
-        return byteCountOutputStream.getCount();
     }
 
     /**
@@ -204,15 +192,29 @@ public class FileAppender extends AbstractAppender {
     }
 
     @PipelineProperty(
-            description = "Apply GZIP compression to output files",
+            description = "Apply compression to output files.",
             defaultValue = "false",
             displayPriority = 5)
     public void setUseCompression(final boolean useCompression) {
-        this.useCompression = useCompression;
+        outputFactory.setUseCompression(useCompression);
+    }
+
+    @PipelineProperty(
+            description = "Compression method to apply, if compression is enabled. Supported values: " +
+                    CompressionUtil.SUPPORTED_COMPRESSORS + ".",
+            defaultValue = CompressorStreamFactory.GZIP,
+            displayPriority = 6)
+    public void setCompressionMethod(final String compressionMethod) {
+        try {
+            outputFactory.setCompressionMethod(compressionMethod);
+        } catch (final RuntimeException e) {
+            error(e.getMessage(), e);
+            throw e;
+        }
     }
 
     @PipelineProperty(description = "Set file system permissions of finished files (example: 'rwxr--r--')",
-            displayPriority = 6)
+            displayPriority = 8)
     public void setFilePermissions(final String filePermissions) {
         this.filePermissions = filePermissions;
     }

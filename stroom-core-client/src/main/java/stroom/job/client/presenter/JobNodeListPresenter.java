@@ -28,7 +28,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.job.client.JobTypeCell;
 import stroom.job.shared.FindJobNodeCriteria;
@@ -106,13 +106,14 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<JobNode>> dataConsumer,
-                                final Consumer<RestError> errorConsumer) {
+                                final RestErrorHandler errorHandler) {
                 findJobNodeCriteria.getJobName().setString(jobName);
                 restFactory
                         .create(JOB_NODE_RESOURCE)
                         .method(res -> res.find(findJobNodeCriteria))
                         .onSuccess(dataConsumer)
-                        .onFailure(errorConsumer)
+                        .onFailure(errorHandler)
+                        .taskListener(view)
                         .exec();
             }
 
@@ -131,6 +132,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                                 latestNodeInfo.remove(row);
                                 super.changeData(data);
                             })
+                            .taskListener(getView())
                             .exec();
                 });
                 super.changeData(data);
@@ -164,6 +166,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
             restFactory
                     .create(JOB_NODE_RESOURCE)
                     .call(res -> res.setEnabled(row.getId(), value.toBoolean()))
+                    .taskListener(getView())
                     .exec();
         });
         dataGrid.addColumn(enabledColumn, "Enabled", 80);
@@ -189,22 +192,20 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
 
             @Override
             protected void showHelp(final JobNode row) {
-                clientPropertyCache.get()
-                        .onSuccess(result -> {
-                            final String helpUrl = result.getHelpUrlJobs();
-                            if (helpUrl != null && helpUrl.trim().length() > 0) {
-                                // This is a bit fragile as if the headings change in the docs then the anchors
-                                // won't work
-                                final String url = helpUrl
-                                        + formatAnchor(row.getJob().getName());
-                                Window.open(url, "_blank", "");
-                            } else {
-                                AlertEvent.fireError(JobNodeListPresenter.this, "Help is not configured!", null);
-                            }
-                        })
-                        .onFailure(caught -> AlertEvent.fireError(JobNodeListPresenter.this,
-                                caught.getMessage(),
-                                null));
+                clientPropertyCache.get(result -> {
+                    if (result != null) {
+                        final String helpUrl = result.getHelpUrlJobs();
+                        if (helpUrl != null && helpUrl.trim().length() > 0) {
+                            // This is a bit fragile as if the headings change in the docs then the anchors
+                            // won't work
+                            final String url = helpUrl
+                                    + formatAnchor(row.getJob().getName());
+                            Window.open(url, "_blank", "");
+                        } else {
+                            AlertEvent.fireError(JobNodeListPresenter.this, "Help is not configured!", null);
+                        }
+                    }
+                }, getView());
             }
 
         }, "<br/>", 20);
@@ -285,6 +286,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
             restFactory
                     .create(JOB_NODE_RESOURCE)
                     .call(res -> res.setTaskLimit(row.getId(), value.intValue()))
+                    .taskListener(getView())
                     .exec();
         });
         dataGrid.addColumn(maxColumn, "Max", 62);
@@ -326,6 +328,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                 .method(res -> res.info(row.getJob().getName(), row.getNodeName()))
                 .onSuccess(result -> setSchedule(row, result))
                 .onFailure(throwable -> setSchedule(row, null))
+                .taskListener(getView())
                 .exec();
     }
 
@@ -346,6 +349,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                         .call(res -> res.setSchedule(jobNode.getId(), schedule))
                         .onSuccess(result ->
                                 dataProvider.refresh())
+                        .taskListener(getView())
                         .exec();
             });
         }

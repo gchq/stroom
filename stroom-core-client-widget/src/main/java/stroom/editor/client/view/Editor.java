@@ -50,7 +50,7 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
     private boolean readOnlyDirty;
     private AceEditorMode mode = AceEditorMode.XML;
     private boolean modeDirty = true;
-    private AceEditorTheme theme = AceEditorTheme.CHROME;
+    private AceEditorTheme theme = AceEditorTheme.TOMORROW_NIGHT;
     private boolean themeDirty = true;
     private boolean showGutter = true;
     private boolean showGutterDirty;

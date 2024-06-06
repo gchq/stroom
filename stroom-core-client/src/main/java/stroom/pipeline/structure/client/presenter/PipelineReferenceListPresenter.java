@@ -297,7 +297,6 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
             added.remove(pipelineReference);
 
             final NewPipelineReferencePresenter editor = newPipelineReferencePresenter.get();
-            editor.read(pipelineReference);
 
             final HidePopupRequestEvent.Handler handler = e -> {
                 if (e.isOk()) {
@@ -305,13 +304,13 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
 
                     if (pipelineReference.getPipeline() == null) {
                         AlertEvent.fireError(PipelineReferenceListPresenter.this,
-                                "You must specify a pipeline to use.", null);
+                                "You must specify a pipeline to use.", e::reset);
                     } else if (pipelineReference.getFeed() == null) {
                         AlertEvent.fireError(PipelineReferenceListPresenter.this, "You must specify a feed to use.",
-                                null);
+                                e::reset);
                     } else if (pipelineReference.getStreamType() == null) {
                         AlertEvent.fireError(PipelineReferenceListPresenter.this,
-                                "You must specify a stream type to use.", null);
+                                "You must specify a stream type to use.", e::reset);
                     } else {
                         if (!added.contains(pipelineReference)) {
                             added.add(pipelineReference);
@@ -341,7 +340,10 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
                     .caption(isNew
                             ? "New Pipeline Reference"
                             : "Edit Pipeline Reference")
-                    .onShow(e -> editor.focus())
+                    .onShow(e -> {
+                        editor.read(pipelineReference);
+                        editor.focus();
+                    })
                     .onHideRequest(handler)
                     .fire();
         }
@@ -421,6 +423,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
 
                         setData(references);
                     })
+                    .taskListener(getView())
                     .exec();
         } else {
             setData(references);

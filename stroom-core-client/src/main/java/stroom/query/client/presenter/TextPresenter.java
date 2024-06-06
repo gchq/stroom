@@ -28,6 +28,7 @@ import stroom.pipeline.shared.SourceLocation;
 import stroom.query.api.v2.Column;
 import stroom.query.client.presenter.TextPresenter.TextView;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.task.client.TaskListener;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.TextRange;
 
@@ -173,7 +174,7 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
                 if (link != null) {
                     final Hyperlink hyperlink = Hyperlink.create(link);
                     if (hyperlink != null) {
-                        HyperlinkEvent.fire(TextPresenter.this, hyperlink);
+                        HyperlinkEvent.fire(TextPresenter.this, hyperlink, getView());
                     }
                 }
             }, ClickEvent.getType());
@@ -607,6 +608,7 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
                                     }
                                 }
                             })
+                            .taskListener(getView())
                             .exec();
                 }
             };
@@ -717,7 +719,7 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
 
     }
 
-    public interface TextView extends View, HasUiHandlers<TextUiHandlers> {
+    public interface TextView extends View, HasUiHandlers<TextUiHandlers>, TaskListener {
 
         void setContent(View view);
 

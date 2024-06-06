@@ -73,8 +73,8 @@ public class SubStreamNavigator extends Composite {
     @UiField(provided = true)
     SvgButton lastSegment;
 
-    @UiField(provided = true)
-    SvgButton refresh;
+    @UiField
+    RefreshButton refresh;
 
     private HasSubStreams display;
 
@@ -120,10 +120,6 @@ public class SubStreamNavigator extends Composite {
         setupButton(prevSegment, true, false);
         setupButton(nextSegment, true, false);
         setupButton(lastSegment, true, false);
-
-        refresh = SvgButton.create(SvgPresets.REFRESH_BLUE);
-
-        setupButton(refresh, true, false);
 
     }
 
@@ -374,11 +370,7 @@ public class SubStreamNavigator extends Composite {
     }
 
     public void setRefreshing(final boolean refreshing) {
-        if (refreshing) {
-            refresh.getElement().addClassName("fa-spin");
-        } else {
-            refresh.getElement().removeClassName("fa-spin");
-        }
+        refresh.setRefreshing(refreshing);
     }
 
     public void setClickHandler(final Runnable clickHandler) {

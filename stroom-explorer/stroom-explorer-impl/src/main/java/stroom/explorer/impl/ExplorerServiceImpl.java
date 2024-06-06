@@ -21,6 +21,7 @@ import stroom.collection.api.CollectionService;
 import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
+import stroom.docstore.api.ContentIndex;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.api.ExplorerDecorator;
 import stroom.explorer.api.ExplorerFavService;
@@ -64,7 +65,6 @@ import stroom.util.logging.LogUtil;
 import stroom.util.logging.Metrics;
 import stroom.util.logging.Metrics.LocalMetrics;
 import stroom.util.shared.Clearable;
-import stroom.util.shared.PageRequest;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
@@ -109,6 +109,7 @@ class ExplorerServiceImpl
     private final Provider<ExplorerFavService> explorerFavService;
     private final EntityEventBus entityEventBus;
     private final DocumentPermissionService documentPermissionService;
+    private final ContentIndex contentIndex;
 
     @Inject
     ExplorerServiceImpl(final ExplorerNodeService explorerNodeService,
@@ -119,7 +120,8 @@ class ExplorerServiceImpl
                         final Provider<ExplorerDecorator> explorerDecoratorProvider,
                         final Provider<ExplorerFavService> explorerFavService,
                         final EntityEventBus entityEventBus,
-                        final DocumentPermissionService documentPermissionService) {
+                        final DocumentPermissionService documentPermissionService,
+                        final ContentIndex contentIndex) {
         this.explorerNodeService = explorerNodeService;
         this.explorerTreeModel = explorerTreeModel;
         this.explorerActionHandlers = explorerActionHandlers;
@@ -129,6 +131,7 @@ class ExplorerServiceImpl
         this.explorerFavService = explorerFavService;
         this.entityEventBus = entityEventBus;
         this.documentPermissionService = documentPermissionService;
+        this.contentIndex = contentIndex;
 
         explorerNodeService.ensureRootNodeExists();
     }
@@ -1560,52 +1563,46 @@ class ExplorerServiceImpl
 
     @Override
     public ResultPage<FindInContentResult> findInContent(final FindInContentRequest request) {
+        final ResultPage<DocContentMatch> resultPage = contentIndex.findInContent(request);
         final List<FindInContentResult> list = new ArrayList<>();
-        for (final DocumentType documentType : explorerActionHandlers.getTypes()) {
-            final ExplorerActionHandler explorerActionHandler =
-                    explorerActionHandlers.getHandler(documentType.getType());
-            final List<DocContentMatch> matches = explorerActionHandler.findByContent(request.getFilter());
-            for (final DocContentMatch docContentMatch : matches) {
-                final List<String> parents = new ArrayList<>();
-                parents.add(docContentMatch.getDocRef().getName());
-                final UnmodifiableTreeModel masterTreeModel = explorerTreeModel.getModel();
-                if (masterTreeModel != null) {
-                    ExplorerNode parent = masterTreeModel.getParent(ExplorerNode
-                            .builder()
-                            .docRef(docContentMatch.getDocRef())
-                            .build());
-                    while (parent != null) {
-                        parents.add(parent.getName());
-                        parent = masterTreeModel.getParent(parent);
-                    }
+        for (final DocContentMatch docContentMatch : resultPage.getValues()) {
+            final List<String> parents = new ArrayList<>();
+            parents.add(docContentMatch.getDocRef().getName());
+            final UnmodifiableTreeModel masterTreeModel = explorerTreeModel.getModel();
+            if (masterTreeModel != null) {
+                ExplorerNode parent = masterTreeModel.getParent(ExplorerNode
+                        .builder()
+                        .docRef(docContentMatch.getDocRef())
+                        .build());
+                while (parent != null) {
+                    parents.add(parent.getName());
+                    parent = masterTreeModel.getParent(parent);
                 }
-                final StringBuilder parentPath = new StringBuilder();
-                for (int i = parents.size() - 1; i >= 0; i--) {
-                    String parent = parents.get(i);
-                    parentPath.append(parent);
-                    if (i > 0) {
-                        parentPath.append(" / ");
-                    }
-                }
-
-                final FindInContentResult explorerDocContentMatch = FindInContentResult.builder()
-                        .docContentMatch(docContentMatch)
-                        .path(parentPath.toString())
-                        .icon(explorerActionHandler.getDocumentType().getIcon())
-                        .build();
-                list.add(explorerDocContentMatch);
             }
-        }
+            final StringBuilder parentPath = new StringBuilder();
+            for (int i = parents.size() - 1; i >= 0; i--) {
+                String parent = parents.get(i);
+                parentPath.append(parent);
+                if (i > 0) {
+                    parentPath.append(" / ");
+                }
+            }
 
-        final PageRequest pageRequest = request.getPageRequest();
-        return ResultPage.createPageLimitedList(list, pageRequest);
+            final ExplorerActionHandler explorerActionHandler =
+                    explorerActionHandlers.getHandler(docContentMatch.getDocRef().getType());
+            final FindInContentResult explorerDocContentMatch = FindInContentResult.builder()
+                    .docContentMatch(docContentMatch)
+                    .path(parentPath.toString())
+                    .icon(explorerActionHandler.getDocumentType().getIcon())
+                    .build();
+            list.add(explorerDocContentMatch);
+        }
+        return new ResultPage<>(list, resultPage.getPageResponse());
     }
 
     @Override
     public DocContentHighlights fetchHighlights(final FetchHighlightsRequest request) {
-        final ExplorerActionHandler explorerActionHandler =
-                explorerActionHandlers.getHandler(request.getDocRef().getType());
-        return explorerActionHandler.fetchHighlights(request.getDocRef(), request.getExtension(), request.getFilter());
+        return contentIndex.fetchHighlights(request);
     }
 
     @Override

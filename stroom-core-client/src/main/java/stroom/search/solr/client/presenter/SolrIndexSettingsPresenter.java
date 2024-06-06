@@ -19,6 +19,7 @@ package stroom.search.solr.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.EditExpressionPresenter;
+import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
@@ -33,6 +34,7 @@ import stroom.search.solr.shared.SolrConnectionConfig.InstanceType;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexResource;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.task.client.TaskListener;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -42,7 +44,8 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 
-public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexSettingsView, SolrIndexDoc>
+public class SolrIndexSettingsPresenter
+        extends DocumentEditPresenter<SolrIndexSettingsView, SolrIndexDoc>
         implements SolrIndexSettingsUiHandlers {
 
     private static final SolrIndexResource SOLR_INDEX_RESOURCE = GWT.create(SolrIndexResource.class);
@@ -86,17 +89,22 @@ public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexS
 
     @Override
     public void onTestConnection() {
+        getView().setTestingConnection(true);
         final SolrIndexDoc index = onWrite(new SolrIndexDoc());
         restFactory
                 .create(SOLR_INDEX_RESOURCE)
                 .method(res -> res.solrConnectionTest(index))
                 .onSuccess(result -> {
                     if (result.isOk()) {
-                        AlertEvent.fireInfo(this, "Connection Success", result.getMessage(), null);
+                        AlertEvent.fireInfo(this, "Connection Success", result.getMessage(), () ->
+                                getView().setTestingConnection(false));
                     } else {
-                        AlertEvent.fireError(this, "Connection Failure", result.getMessage(), null);
+                        AlertEvent.fireError(this, "Connection Failure", result.getMessage(), () ->
+                                getView().setTestingConnection(false));
                     }
                 })
+                .onFailure(new DefaultErrorHandler(this, () -> getView().setTestingConnection(false)))
+                .taskListener(this)
                 .exec();
     }
 
@@ -143,6 +151,12 @@ public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexS
         return index;
     }
 
+    @Override
+    public synchronized void setTaskListener(final TaskListener taskListener) {
+        super.setTaskListener(taskListener);
+        fieldSelectionBoxModel.setTaskListener(taskListener);
+    }
+
     public interface SolrIndexSettingsView
             extends View, ReadOnlyChangeHandler, HasUiHandlers<SolrIndexSettingsUiHandlers> {
 
@@ -177,5 +191,7 @@ public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexS
         void setTimeField(String partitionTimeField);
 
         void setDefaultExtractionPipelineView(View view);
+
+        void setTestingConnection(boolean testing);
     }
 }

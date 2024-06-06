@@ -58,14 +58,29 @@ public class OkCancelContent extends Composite implements DialogButtons {
         cancel.setFocus(true);
     }
 
+    @Override
+    public void onDialogAction(final DialogAction action) {
+        setEnabled(false);
+        if (action == DialogAction.OK) {
+            ok.setLoading(true);
+        } else {
+            cancel.setLoading(true);
+        }
+        uiHandlers.hideRequest(new HideRequest(action, () -> {
+            setEnabled(true);
+            ok.setLoading(false);
+            cancel.setLoading(false);
+        }));
+    }
+
     @UiHandler("ok")
     public void onOkClick(final ClickEvent event) {
-        uiHandlers.hideRequest(new HideRequest(false, true));
+        onDialogAction(DialogAction.OK);
     }
 
     @UiHandler("cancel")
     public void onCancelClick(final ClickEvent event) {
-        uiHandlers.hideRequest(new HideRequest(false, false));
+        onDialogAction(DialogAction.CANCEL);
     }
 
     @Override

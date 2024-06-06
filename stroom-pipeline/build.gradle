@@ -32,6 +32,7 @@ dependencies {
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-search:stroom-searchable-api')
 
+    implementation libs.commons_compress
     implementation libs.commons_io
     implementation libs.commons_lang
     implementation libs.commons_text

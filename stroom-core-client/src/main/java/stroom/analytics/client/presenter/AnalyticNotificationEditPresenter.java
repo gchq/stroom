@@ -25,6 +25,7 @@ import stroom.analytics.shared.NotificationEmailDestination;
 import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.dashboard.client.main.UniqueUtil;
 import stroom.document.client.event.DirtyUiHandlers;
+import stroom.task.client.TaskListener;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.AnalyticUiDefaultConfig;
 import stroom.util.shared.GwtNullSafe;
@@ -66,31 +67,33 @@ public class AnalyticNotificationEditPresenter
     }
 
     public void read(final NotificationConfig config) {
-        uiConfigCache.get().onSuccess(extendedUiConfig -> {
-            if (config != null) {
-                notificationUUID = config.getUuid();
-                getView().setLimitNotifications(config.isLimitNotifications());
-                getView().setMaxNotifications(config.getMaxNotifications());
-                getView().setResumeAfter(config.getResumeAfter());
-                getView().setDestinationType(config.getDestinationType());
+        uiConfigCache.get(extendedUiConfig -> {
+            if (extendedUiConfig != null) {
+                if (config != null) {
+                    notificationUUID = config.getUuid();
+                    getView().setLimitNotifications(config.isLimitNotifications());
+                    getView().setMaxNotifications(config.getMaxNotifications());
+                    getView().setResumeAfter(config.getResumeAfter());
+                    getView().setDestinationType(config.getDestinationType());
 
-                setDestinationPresenter(config.getDestinationType());
+                    setDestinationPresenter(config.getDestinationType());
+                }
+
+                // Initialise the sub presenters whether we have config or not, so they get the right defaults
+                final AnalyticUiDefaultConfig defaultConfig = extendedUiConfig.getAnalyticUiDefaultConfig();
+                final NotificationDestination destination = GwtNullSafe.get(
+                        config,
+                        NotificationConfig::getDestination);
+
+                NotificationEmailDestination emailDestination = getOrDefaultEmailDestination(
+                        destination, defaultConfig);
+                GwtNullSafe.consume(emailDestination, analyticEmailDestinationPresenter::read);
+
+                NotificationStreamDestination streamDestination = getOrDefaultStreamDestination(
+                        destination, defaultConfig);
+                GwtNullSafe.consume(streamDestination, analyticStreamDestinationPresenter::read);
             }
-
-            // Initialise the sub presenters whether we have config or not, so they get the right defaults
-            final AnalyticUiDefaultConfig defaultConfig = extendedUiConfig.getAnalyticUiDefaultConfig();
-            final NotificationDestination destination = GwtNullSafe.get(
-                    config,
-                    NotificationConfig::getDestination);
-
-            NotificationEmailDestination emailDestination = getOrDefaultEmailDestination(
-                    destination, defaultConfig);
-            GwtNullSafe.consume(emailDestination, analyticEmailDestinationPresenter::read);
-
-            NotificationStreamDestination streamDestination = getOrDefaultStreamDestination(
-                    destination, defaultConfig);
-            GwtNullSafe.consume(streamDestination, analyticStreamDestinationPresenter::read);
-        });
+        }, this);
     }
 
     private NotificationEmailDestination getOrDefaultEmailDestination(
@@ -172,6 +175,12 @@ public class AnalyticNotificationEditPresenter
     @Override
     public void onDirty() {
         setDestinationPresenter(getView().getDestinationType());
+    }
+
+    @Override
+    public void setTaskListener(final TaskListener taskListener) {
+        analyticEmailDestinationPresenter.setTaskListener(taskListener);
+//        analyticStreamDestinationPresenter.setTaskListener(taskListener);
     }
 
     public interface AnalyticNotificationEditView extends View, HasUiHandlers<DirtyUiHandlers> {

@@ -16,34 +16,24 @@
 
 package com.gwtplatform.mvp.client;
 
+import stroom.task.client.HasTaskListener;
+import stroom.task.client.TaskListener;
+import stroom.task.client.TaskListenerImpl;
+
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.web.bindery.event.shared.Event.Type;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
-public class MyPresenterWidget<V extends View> extends PresenterWidget<V> implements Layer {
+public class MyPresenterWidget<V extends View>
+        extends PresenterWidget<V>
+        implements Layer, TaskListener, HasTaskListener {
 
-//    private double opacity;
-
-    private boolean layerVisible;
+    private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
 
     public MyPresenterWidget(final EventBus eventBus, final V view) {
         super(eventBus, view);
     }
-
-//    @Override
-//    public double getOpacity() {
-//        return opacity;
-//    }
-//
-//    /**************
-//     * Start Layer
-//     **************/
-//    @Override
-//    public void setOpacity(final double opacity) {
-//        this.opacity = opacity;
-//        getWidget().getElement().getStyle().setOpacity(opacity);
-//    }
 
     @Override
     public void setLayerVisible(final boolean fade, final boolean visible) {
@@ -52,7 +42,6 @@ public class MyPresenterWidget<V extends View> extends PresenterWidget<V> implem
 
     @Override
     public void addLayer(final LayerContainer tabContentView) {
-//        setOpacity(opacity);
         tabContentView.add(getWidget());
     }
 
@@ -71,5 +60,20 @@ public class MyPresenterWidget<V extends View> extends PresenterWidget<V> implem
 
     protected final <H> HandlerRegistration addHandlerToSource(final Type<H> type, final H handler) {
         return getEventBus().addHandlerToSource(type, this, handler);
+    }
+
+    @Override
+    public synchronized void setTaskListener(final TaskListener taskListener) {
+        this.taskListener.setTaskListener(taskListener);
+    }
+
+    @Override
+    public synchronized void incrementTaskCount() {
+        taskListener.incrementTaskCount();
+    }
+
+    @Override
+    public synchronized void decrementTaskCount() {
+        taskListener.decrementTaskCount();
     }
 }

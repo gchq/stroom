@@ -23,7 +23,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.DbStatusResource;
@@ -107,13 +107,14 @@ public class DatabaseTablesMonitoringPresenter
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<DBTableStatus>> dataConsumer,
-                                final Consumer<RestError> errorConsumer) {
+                                final RestErrorHandler errorHandler) {
                 CriteriaUtil.setRange(criteria, range);
                 restFactory
                         .create(DB_STATUS_RESOURCE)
                         .method(res -> res.findSystemTableStatus(criteria))
                         .onSuccess(dataConsumer)
-                        .onFailure(errorConsumer)
+                        .onFailure(errorHandler)
+                        .taskListener(view)
                         .exec();
             }
         };

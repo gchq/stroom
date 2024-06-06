@@ -25,12 +25,10 @@ import stroom.docref.HasType;
 import stroom.docstore.shared.DocumentTypeImages;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.SaveAsDocumentEvent;
-import stroom.document.client.event.WriteDocumentEvent;
+import stroom.document.client.event.SaveDocumentEvent;
 import stroom.entity.client.presenter.TabContentProvider.TabProvider;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskEndEvent;
-import stroom.task.client.TaskStartEvent;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.SvgButton;
@@ -96,13 +94,13 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
     @Override
     public void save() {
         if (saveButton.isEnabled()) {
-            WriteDocumentEvent.fire(DocumentEditTabPresenter.this, DocumentEditTabPresenter.this);
+            SaveDocumentEvent.fire(DocumentEditTabPresenter.this, DocumentEditTabPresenter.this);
         }
     }
 
     private void saveAs() {
         if (saveAsButton.isEnabled()) {
-            SaveAsDocumentEvent.fire(DocumentEditTabPresenter.this, docRef);
+            SaveAsDocumentEvent.fire(DocumentEditTabPresenter.this, DocumentEditTabPresenter.this);
         }
     }
 
@@ -116,11 +114,11 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
     }
 
     private void getContent(TabData tab, ContentCallback callback) {
-        callback.onReady(tabContentProvider.getPresenter(tab));
+        callback.onReady(tabContentProvider.getPresenter(tab, this));
     }
 
     public void selectTab(final TabData tab) {
-        TaskStartEvent.fire(DocumentEditTabPresenter.this);
+        incrementTaskCount();
         Scheduler.get().scheduleDeferred(() -> {
             if (tab != null) {
                 getContent(tab, content -> {
@@ -152,8 +150,7 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
                     }
                 });
             }
-
-            TaskEndEvent.fire(DocumentEditTabPresenter.this);
+            decrementTaskCount();
         });
     }
 

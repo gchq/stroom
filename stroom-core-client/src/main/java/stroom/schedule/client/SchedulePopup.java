@@ -92,7 +92,7 @@ public class SchedulePopup
     public void validate(final Schedule schedule,
                          final ScheduleRestriction scheduleRestriction,
                          final Consumer<ScheduledTimes> consumer) {
-        scheduledTimeClient.validate(schedule, scheduleRestriction, consumer);
+        scheduledTimeClient.validate(schedule, scheduleRestriction, consumer, this);
     }
 
     @Override
@@ -155,7 +155,7 @@ public class SchedulePopup
                         getView().getNextScheduledTime().setText("Never");
                     }
                 }
-            });
+            }, this);
         }
     }
 
@@ -169,19 +169,19 @@ public class SchedulePopup
                     // before saving. Getting the scheduled times acts as validation.
                     if (e.isOk()) {
                         validate(createSchedule(), scheduleRestriction, scheduledTimes -> {
-                            if (scheduledTimes.isError()) {
-                                AlertEvent.fireWarn(this, scheduledTimes.getError(), null);
+                            if (scheduledTimes == null) {
+                                e.reset();
                             } else {
-                                e.hide();
+                                if (scheduledTimes.isError()) {
+                                    AlertEvent.fireWarn(this, scheduledTimes.getError(), e::reset);
+                                } else {
+                                    consumer.accept(createSchedule());
+                                    e.hide();
+                                }
                             }
                         });
                     } else {
                         e.hide();
-                    }
-                })
-                .onHide(e -> {
-                    if (e.isOk()) {
-                        consumer.accept(createSchedule());
                     }
                 })
                 .fire();

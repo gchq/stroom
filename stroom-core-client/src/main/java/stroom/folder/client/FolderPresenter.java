@@ -37,7 +37,9 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
-public class FolderPresenter extends LinkTabPanelPresenter implements DocumentTabData {
+public class FolderPresenter
+        extends LinkTabPanelPresenter
+        implements DocumentTabData {
 
     private static final TabData DATA = new TabDataImpl("Data");
     private static final TabData TASKS = new TabDataImpl("Active Tasks");
@@ -123,7 +125,7 @@ public class FolderPresenter extends LinkTabPanelPresenter implements DocumentTa
 
     @Override
     public void getContent(final TabData tab, final ContentCallback callback) {
-        callback.onReady(tabContentProvider.getPresenter(tab));
+        callback.onReady(tabContentProvider.getPresenter(tab, this));
     }
 
     public void read(final DocRef docRef) {

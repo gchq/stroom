@@ -155,6 +155,8 @@ export interface AnalyticRuleDoc {
   notifications?: NotificationConfig[];
   parameters?: Param[];
   query?: string;
+  rememberNotifications?: boolean;
+  suppressDuplicateNotifications?: boolean;
   timeRange?: TimeRange;
   type?: string;
 
@@ -489,15 +491,19 @@ export interface Column {
   sort?: Sort;
 }
 
-export interface CompletionValue {
+export interface CompletionItem {
   caption?: string;
   meta?: string;
 
   /** @format int32 */
   score?: number;
   tooltip?: string;
-  value?: string;
+  type: string;
 }
+
+export type CompletionSnippet = CompletionItem & { snippet?: string };
+
+export type CompletionValue = CompletionItem & { value?: string };
 
 export interface CompletionsRequest {
   /** @format int32 */
@@ -872,6 +878,11 @@ export interface DefaultLocation {
   lineNo?: number;
 }
 
+export interface DeleteDuplicateCheckRequest {
+  analyticDocUuid?: string;
+  rows?: DuplicateCheckRow[];
+}
+
 export interface Dependency {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   from?: DocRef;
@@ -1147,6 +1158,9 @@ export interface DocumentType {
     | "SHIELD"
     | "SHOW"
     | "SHOW_MENU"
+    | "SPINNER_CIRCLE"
+    | "SPINNER_PAUSE"
+    | "SPINNER_SPINNING"
     | "STEP"
     | "STEPPING"
     | "STEPPING_CIRCLE"
@@ -1214,6 +1228,17 @@ export interface DownloadSearchResultsRequest {
   percent?: number;
   sample?: boolean;
   searchRequest?: DashboardSearchRequest;
+}
+
+export interface DuplicateCheckRow {
+  values?: string[];
+}
+
+export interface DuplicateCheckRows {
+  columnNames?: string[];
+
+  /** A page of results. */
+  resultPage?: ResultPageDuplicateCheckRow;
 }
 
 export interface ElasticClusterDoc {
@@ -1614,6 +1639,9 @@ export interface ExplorerNode {
     | "SHIELD"
     | "SHOW"
     | "SHOW_MENU"
+    | "SPINNER_CIRCLE"
+    | "SPINNER_PAUSE"
+    | "SPINNER_SPINNING"
     | "STEP"
     | "STEPPING"
     | "STEPPING_CIRCLE"
@@ -1948,6 +1976,14 @@ export interface FindDataRetentionImpactCriteria {
   sortList?: CriteriaFieldSort[];
 }
 
+export interface FindDuplicateCheckCriteria {
+  analyticDocUuid?: string;
+  pageRequest?: PageRequest;
+  quickFilterInput?: string;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+}
+
 export interface FindElementDocRequest {
   feedName?: string;
   pipelineElement?: PipelineElement;
@@ -2142,6 +2178,9 @@ export interface FindInContentResult {
     | "SHIELD"
     | "SHOW"
     | "SHOW_MENU"
+    | "SPINNER_CIRCLE"
+    | "SPINNER_PAUSE"
+    | "SPINNER_SPINNING"
     | "STEP"
     | "STEPPING"
     | "STEPPING_CIRCLE"
@@ -2374,6 +2413,9 @@ export interface FindResult {
     | "SHIELD"
     | "SHOW"
     | "SHOW_MENU"
+    | "SPINNER_CIRCLE"
+    | "SPINNER_PAUSE"
+    | "SPINNER_SPINNING"
     | "STEP"
     | "STEPPING"
     | "STEPPING_CIRCLE"
@@ -3426,6 +3468,9 @@ export interface PipelineElementType {
     | "SHIELD"
     | "SHOW"
     | "SHOW_MENU"
+    | "SPINNER_CIRCLE"
+    | "SPINNER_PAUSE"
+    | "SPINNER_SPINNING"
     | "STEP"
     | "STEPPING"
     | "STEPPING_CIRCLE"
@@ -4053,6 +4098,9 @@ export interface QueryHelpRow {
     | "SHIELD"
     | "SHOW"
     | "SHOW_MENU"
+    | "SPINNER_CIRCLE"
+    | "SPINNER_PAUSE"
+    | "SPINNER_SPINNING"
     | "STEP"
     | "STEPPING"
     | "STEPPING_CIRCLE"
@@ -4284,10 +4332,10 @@ export interface ResultPageAnalyticDataShard {
 /**
  * A page of results.
  */
-export interface ResultPageCompletionValue {
+export interface ResultPageCompletionItem {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
-  values?: CompletionValue[];
+  values?: CompletionItem[];
 }
 
 /**
@@ -4324,6 +4372,15 @@ export interface ResultPageDependency {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: Dependency[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageDuplicateCheckRow {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: DuplicateCheckRow[];
 }
 
 /**
@@ -6962,7 +7019,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request GET:/authentication/v1/noauth/logout
      * @secure
      */
-    logout: (query: { post_logout_redirect_uri: string; state: string }, params: RequestParams = {}) =>
+    logout: (query: { post_logout_redirect_uri: string }, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/authentication/v1/noauth/logout`,
         method: "GET",
@@ -7884,6 +7941,45 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       this.request<any, DocumentationDoc>({
         path: `/documentation/v1/${uuid}`,
         method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
+  duplicateCheck = {
+    /**
+     * No description
+     *
+     * @tags DuplicateCheck
+     * @name DeleteDuplicateCheckRows
+     * @summary Delete duplicate check rows
+     * @request POST:/duplicateCheck/v1/delete
+     * @secure
+     */
+    deleteDuplicateCheckRows: (data: DeleteDuplicateCheckRequest, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/duplicateCheck/v1/delete`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags DuplicateCheck
+     * @name FindDuplicateCheckRows
+     * @summary Find the duplicate check data for the current analytic
+     * @request POST:/duplicateCheck/v1/find
+     * @secure
+     */
+    findDuplicateCheckRows: (data: FindDuplicateCheckCriteria, params: RequestParams = {}) =>
+      this.request<any, DuplicateCheckRows>({
+        path: `/duplicateCheck/v1/find`,
+        method: "POST",
         body: data,
         secure: true,
         type: ContentType.Json,
@@ -10567,7 +10663,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     fetchCompletions: (data: CompletionsRequest, params: RequestParams = {}) =>
-      this.request<any, ResultPageCompletionValue>({
+      this.request<any, ResultPageCompletionItem>({
         path: `/query/v1/fetchCompletions`,
         method: "POST",
         body: data,

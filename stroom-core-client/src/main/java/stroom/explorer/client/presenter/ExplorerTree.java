@@ -18,16 +18,19 @@ package stroom.explorer.client.presenter;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.task.client.TaskListener;
 import stroom.widget.util.client.MultiSelectionModelImpl;
+
 
 public class ExplorerTree extends AbstractExplorerTree {
 
     private MultiSelectionModelImpl<ExplorerNode> multiSelectionModel;
 
     public ExplorerTree(final RestFactory restFactory,
+                        final TaskListener taskListener,
                         final boolean allowMultiSelect,
                         final boolean showAlerts) {
-        super(restFactory, allowMultiSelect, showAlerts);
+        super(restFactory, taskListener, allowMultiSelect, showAlerts);
     }
 
     @Override

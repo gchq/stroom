@@ -2112,6 +2112,46 @@ paths:
       summary: Update a documentation doc
       tags:
       - Documentation (v1)
+  /duplicateCheck/v1/delete:
+    post:
+      operationId: deleteDuplicateCheckRows
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteDuplicateCheckRequest'
+        description: criteria
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Delete duplicate check rows
+      tags:
+      - DuplicateCheck
+  /duplicateCheck/v1/find:
+    post:
+      operationId: findDuplicateCheckRows
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindDuplicateCheckCriteria'
+        description: criteria
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DuplicateCheckRows'
+          description: default response
+      summary: Find the duplicate check data for the current analytic
+      tags:
+      - DuplicateCheck
   /elasticCluster/v1/testCluster:
     post:
       operationId: testElasticCluster
@@ -5061,7 +5101,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResultPageCompletionValue'
+                $ref: '#/components/schemas/ResultPageCompletionItem'
           description: default response
       summary: Fetch completions for the query
       tags:
@@ -7540,6 +7580,10 @@ components:
             $ref: '#/components/schemas/Param'
         query:
           type: string
+        rememberNotifications:
+          type: boolean
+        suppressDuplicateNotifications:
+          type: boolean
         timeRange:
           $ref: '#/components/schemas/TimeRange'
         type:
@@ -8075,8 +8119,10 @@ components:
           $ref: '#/components/schemas/Sort'
       required:
       - expression
-    CompletionValue:
+    CompletionItem:
       type: object
+      discriminator:
+        propertyName: type
       properties:
         caption:
           type: string
@@ -8087,8 +8133,26 @@ components:
           format: int32
         tooltip:
           type: string
-        value:
+        type:
           type: string
+      required:
+      - type
+    CompletionSnippet:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/CompletionItem'
+      - type: object
+        properties:
+          snippet:
+            type: string
+    CompletionValue:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/CompletionItem'
+      - type: object
+        properties:
+          value:
+            type: string
     CompletionsRequest:
       type: object
       properties:
@@ -8679,6 +8743,15 @@ components:
         lineNo:
           type: integer
           format: int32
+    DeleteDuplicateCheckRequest:
+      type: object
+      properties:
+        analyticDocUuid:
+          type: string
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/DuplicateCheckRow'
     Dependency:
       type: object
       properties:
@@ -9012,6 +9085,9 @@ components:
           - SHIELD
           - SHOW
           - SHOW_MENU
+          - SPINNER_CIRCLE
+          - SPINNER_PAUSE
+          - SPINNER_SPINNING
           - STEP
           - STEPPING
           - STEPPING_CIRCLE
@@ -9113,6 +9189,22 @@ components:
           type: boolean
         searchRequest:
           $ref: '#/components/schemas/DashboardSearchRequest'
+    DuplicateCheckRow:
+      type: object
+      properties:
+        values:
+          type: array
+          items:
+            type: string
+    DuplicateCheckRows:
+      type: object
+      properties:
+        columnNames:
+          type: array
+          items:
+            type: string
+        resultPage:
+          $ref: '#/components/schemas/ResultPageDuplicateCheckRow'
     ElasticClusterDoc:
       type: object
       properties:
@@ -9606,6 +9698,9 @@ components:
           - SHIELD
           - SHOW
           - SHOW_MENU
+          - SPINNER_CIRCLE
+          - SPINNER_PAUSE
+          - SPINNER_SPINNING
           - STEP
           - STEPPING
           - STEPPING_CIRCLE
@@ -10215,6 +10310,22 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
+    FindDuplicateCheckCriteria:
+      type: object
+      properties:
+        analyticDocUuid:
+          type: string
+        pageRequest:
+          $ref: '#/components/schemas/PageRequest'
+        quickFilterInput:
+          type: string
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaFieldSort'
     FindElementDocRequest:
       type: object
       properties:
@@ -10442,6 +10553,9 @@ components:
           - SHIELD
           - SHOW
           - SHOW_MENU
+          - SPINNER_CIRCLE
+          - SPINNER_PAUSE
+          - SPINNER_SPINNING
           - STEP
           - STEPPING
           - STEPPING_CIRCLE
@@ -10720,6 +10834,9 @@ components:
           - SHIELD
           - SHOW
           - SHOW_MENU
+          - SPINNER_CIRCLE
+          - SPINNER_PAUSE
+          - SPINNER_SPINNING
           - STEP
           - STEPPING
           - STEPPING_CIRCLE
@@ -12272,6 +12389,9 @@ components:
           - SHIELD
           - SHOW
           - SHOW_MENU
+          - SPINNER_CIRCLE
+          - SPINNER_PAUSE
+          - SPINNER_SPINNING
           - STEP
           - STEPPING
           - STEPPING_CIRCLE
@@ -13246,6 +13366,9 @@ components:
           - SHIELD
           - SHOW
           - SHOW_MENU
+          - SPINNER_CIRCLE
+          - SPINNER_PAUSE
+          - SPINNER_SPINNING
           - STEP
           - STEPPING
           - STEPPING_CIRCLE
@@ -13573,7 +13696,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AnalyticDataShard'
-    ResultPageCompletionValue:
+    ResultPageCompletionItem:
       type: object
       description: A page of results.
       properties:
@@ -13582,7 +13705,7 @@ components:
         values:
           type: array
           items:
-            $ref: '#/components/schemas/CompletionValue'
+            $ref: '#/components/schemas/CompletionItem'
     ResultPageCustomRollUpMask:
       type: object
       description: A page of results.
@@ -13623,6 +13746,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Dependency'
+    ResultPageDuplicateCheckRow:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/DuplicateCheckRow'
     ResultPageExecutionHistory:
       type: object
       description: A page of results.

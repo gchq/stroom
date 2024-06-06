@@ -103,7 +103,7 @@ public class RenameColumnPresenter
                     AlertEvent.fireError(
                             tablePresenter,
                             "Field name \"" + newFieldName + "\" is already in use",
-                            null);
+                            e::reset);
                 } else {
                     columnChangeConsumer.accept(column, column.copy().name(newFieldName).build());
                     e.hide();

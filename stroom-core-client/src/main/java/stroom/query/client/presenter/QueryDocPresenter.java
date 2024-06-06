@@ -45,12 +45,13 @@ public class QueryDocPresenter
     @Inject
     public QueryDocPresenter(final EventBus eventBus,
                              final LinkTabPanelView view,
-                             final Provider<QueryDocEditPresenter> queryDocEditPresenterProvider,
+                             final QueryDocEditPresenter queryDocEditPresenter,
                              final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
         super(eventBus, view);
 
+        queryDocEditPresenter.setTaskListener(this);
         queryDocDocumentEditTabProvider = new DocumentEditTabProvider<>(
-                queryDocEditPresenterProvider::get);
+                () -> queryDocEditPresenter);
 
         addTab(QUERY, queryDocDocumentEditTabProvider);
         addTab(DOCUMENTATION, new MarkdownTabProvider<QueryDoc>(eventBus, markdownEditPresenterProvider) {
@@ -85,7 +86,15 @@ public class QueryDocPresenter
 
             final DocumentEditPresenter<?, QueryDoc> presenter = queryDocDocumentEditTabProvider.getPresenter();
             if (presenter instanceof QueryDocEditPresenter) {
-                ((QueryDocEditPresenter) presenter).startStop();
+                ((QueryDocEditPresenter) presenter).start();
+            }
+            return true;
+        } else if (Action.CLOSE == action
+                && Objects.equals(getSelectedTab().getType(), QUERY.getType())) {
+
+            final DocumentEditPresenter<?, QueryDoc> presenter = queryDocDocumentEditTabProvider.getPresenter();
+            if (presenter instanceof QueryDocEditPresenter) {
+                ((QueryDocEditPresenter) presenter).stop();
             }
             return true;
         } else {

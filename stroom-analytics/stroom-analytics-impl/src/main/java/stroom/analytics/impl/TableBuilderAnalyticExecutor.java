@@ -232,7 +232,7 @@ public class TableBuilderAnalyticExecutor {
         final DocRef pipelineRef = groupKey.pipeline();
         final String ownerUuid = groupKey.ownerUuid();
         if (!analytics.isEmpty()) {
-            final UserIdentity userIdentity = securityContext.createIdentityByUserUuid(ownerUuid);
+            final UserIdentity userIdentity = securityContext.getIdentityByUserUuid(ownerUuid);
             return securityContext.asUserResult(userIdentity, () -> securityContext.useAsReadResult(() -> {
                 final String pipelineIdentity = pipelineRef.toInfoString();
                 final Runnable runnable = taskContextFactory.childContext(

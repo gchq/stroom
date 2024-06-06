@@ -17,6 +17,8 @@
 package stroom.dashboard.client.vis;
 
 import stroom.script.shared.ScriptDoc;
+import stroom.task.client.HasTaskListener;
+import stroom.task.client.TaskListener;
 import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 
@@ -36,7 +38,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
 
-public class VisFrame extends Composite implements VisPane {
+public class VisFrame extends Composite implements VisPane, HasTaskListener {
 
     private final MessageSupport messageSupport;
     private VisFunction function;
@@ -262,5 +264,10 @@ public class VisFrame extends Composite implements VisPane {
     @Override
     public void removeFromParent() {
         // Do nothing...
+    }
+
+    @Override
+    public void setTaskListener(final TaskListener taskListener) {
+        messageSupport.setTaskListener(taskListener);
     }
 }

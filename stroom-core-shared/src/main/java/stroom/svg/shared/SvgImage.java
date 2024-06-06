@@ -4141,6 +4141,35 @@ public enum SvgImage {
             "5H11z\"></path></svg>\n" +
             ""),
 
+    SPINNER_CIRCLE("spinner/circle.svg", "svg-image__spinner-circle", "" +
+            "<svg width=\"1792\" height=\"1792\" viewBox=\"0 0 1792 1792\" xmlns=\"http://www.w3.org" +
+            "/2000/svg\"><circle style=\"fill:none;stroke:currentColor;stroke-width:254.606;str" +
+            "oke-linejoin:round;stroke-dasharray:none;stroke-opacity:1\" cx=\"896\" cy=\"896\" r=\"" +
+            "640.69708\" /></svg> \n" +
+            ""),
+
+    SPINNER_PAUSE("spinner/pause.svg", "svg-image__spinner-pause", "" +
+            "<svg width=\"1792\" height=\"1792\" viewBox=\"0 0 1792 1792\" xmlns=\"http://www.w3.org" +
+            "/2000/svg\"><path style=\"fill:currentColor;stroke-width:1.449;stroke-dasharray:no" +
+            "ne\" d=\"M 780.04415,1220.6764 H 640.89714 c -38.41038,0 -69.57351,-31.1631 -69.57" +
+            "351,-69.5735 V 640.89716 c 0,-38.41038 31.16313,-69.57351 69.57351,-69.57351 h 1" +
+            "39.14701 c 38.41038,0 69.57351,31.16313 69.57351,69.57351 v 510.20574 c 0,38.410" +
+            "4 -31.16313,69.5735 -69.57351,69.5735 z m 440.63225,-69.5735 V 640.89716 c 0,-38" +
+            ".41038 -31.1631,-69.57351 -69.5735,-69.57351 h -139.147 c -38.41043,0 -69.57356," +
+            "31.16313 -69.57356,69.57351 v 510.20574 c 0,38.4104 31.16313,69.5735 69.57346,69" +
+            ".5735 h 139.1471 c 38.4104,0 69.5735,-31.1631 69.5735,-69.5735 z\" /></svg> \n" +
+            ""),
+
+    SPINNER_SPINNING("spinner/spinning.svg", "svg-image__spinner-spinning", "" +
+            "<svg width=\"1792\" height=\"1792\" viewBox=\"0 0 1792 1792\" xmlns=\"http://www.w3.org" +
+            "/2000/svg\"><g transform=\"rotate(90,791.62915,887.89995)\"><path style=\"fill:none;" +
+            "stroke:currentColor;stroke-width:254.606;stroke-linejoin:round;stroke-dasharray:" +
+            "none;stroke-opacity:1\" d=\"m 1252.7705,330.48771 a 640.69708,640.69708 0 0 1 187." +
+            "6558,453.04131 640.69708,640.69708 0 0 1 -640.69708,640.69708 v 0 A 640.69708,64" +
+            "0.69708 0 0 1 159.03211,783.52902 640.69708,640.69708 0 0 1 346.68791,330.48771\"" +
+            " /></g></svg> \n" +
+            ""),
+
     STEP("step.svg", "svg-image__step", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\"><!-- Font Awesome " +
             "Free 5.15.1 by @fontawesome - https://fontawesome.com License - https://fontawes" +

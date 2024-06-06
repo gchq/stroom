@@ -33,6 +33,12 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
+    duplicateCheckStore:
+      lmdb:
+        localDir: "lmdb/duplicate_check"
+        maxReaders: 10
+        maxStoreSize: "10G"
+        readAheadEnabled: true
     emailConfig:
       fromAddress: "noreply@stroom"
       fromName: "Stroom Analytics"
@@ -44,7 +50,7 @@ appConfig:
         username: null
     resultStore:
       lmdb:
-        localDir: "analytic_store"
+        localDir: "lmdb/analytic_store"
         maxReaders: 10
         maxStoreSize: "10G"
         readAheadEnabled: true
@@ -134,8 +140,12 @@ appConfig:
       minimumIdle: 10
       prepStmtCacheSize: 25
       prepStmtCacheSqlLimit: 256
+  contentIndex:
+    enabled: false
   contentPackImport:
     enabled: false
+    importAsSubjectId: "Administrators"
+    importAsType: "GROUP"
     importDirectory: "content_pack_import"
   core:
     db:
@@ -1106,7 +1116,7 @@ appConfig:
     helpSubPathProperties: "/user-guide/properties/"
     helpSubPathQuickFilter: "/user-guide/finding-things/"
     helpSubPathStroomQueryLanguage: "/user-guide/dashboards/stroom-query-language/"
-    helpUrl: "https://gchq.github.io/stroom-docs/7.2/docs"
+    helpUrl: "https://gchq.github.io/stroom-docs/7.4/docs"
     htmlTitle: "Stroom"
     namePattern: "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$"
     nestedIndexFieldsDelimiterPattern: "[.:]"

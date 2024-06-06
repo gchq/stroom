@@ -17,7 +17,6 @@
 
 package stroom.node.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
@@ -31,7 +30,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.node.client.NodeManager;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.FetchNodeStatusResponse;
@@ -69,7 +68,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
+public class NodeMonitoringPresenter
+        extends ContentTabPresenter<PagerView>
         implements Refreshable {
 
     public static final String TAB_TYPE = "Nodes";
@@ -87,7 +87,6 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
     private final NodeManager nodeManager;
     private final TooltipPresenter tooltipPresenter;
     private final DateTimeFormatter dateTimeFormatter;
-    private final UiConfigCache uiConfigCache;
     private final RestDataProvider<NodeStatusResult, FetchNodeStatusResponse> dataProvider;
 
     private final Map<String, PingResult> latestPing = new HashMap<>();
@@ -108,43 +107,40 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
         this.nodeManager = nodeManager;
         this.tooltipPresenter = tooltipPresenter;
         this.dateTimeFormatter = dateTimeFormatter;
-        this.uiConfigCache = uiConfigCache;
 
         initTableColumns();
         dataProvider = new RestDataProvider<NodeStatusResult, FetchNodeStatusResponse>(eventBus) {
             @Override
             protected void exec(final Range range,
                                 final Consumer<FetchNodeStatusResponse> dataConsumer,
-                                final Consumer<RestError> errorConsumer) {
-                nodeManager.fetchNodeStatus(dataConsumer, errorConsumer, findNodeStatusCriteria);
+                                final RestErrorHandler errorHandler) {
+                nodeManager.fetchNodeStatus(dataConsumer, errorHandler, findNodeStatusCriteria,
+                        NodeMonitoringPresenter.this);
             }
 
             @Override
             protected void changeData(final FetchNodeStatusResponse data) {
-                uiConfigCache.get()
-                        .onSuccess(uiConfig -> {
-                            final NodeMonitoringConfig nodeMonitoringConfig = uiConfig.getNodeMonitoring();
+                uiConfigCache.get(uiConfig -> {
+                    if (uiConfig != null) {
+                        final NodeMonitoringConfig nodeMonitoringConfig = uiConfig.getNodeMonitoring();
 
-                            // Ping each node.
-                            data.getValues().forEach(row -> {
-                                final String nodeName = row.getNode().getName();
-                                nodeManager.ping(nodeName,
-                                        pingMs -> {
-                                            latestPing.put(nodeName, PingResult.success(pingMs, nodeMonitoringConfig));
-                                            super.changeData(data);
-                                        },
-                                        throwable -> {
-                                            latestPing.put(nodeName, PingResult.error(
-                                                    throwable.getMessage(), nodeMonitoringConfig));
-                                            super.changeData(data);
-                                        });
-                            });
-                        })
-                        .onFailure(caught ->
-                                AlertEvent.fireError(
-                                        NodeMonitoringPresenter.this,
-                                        caught.getMessage(),
-                                        null));
+                        // Ping each node.
+                        data.getValues().forEach(row -> {
+                            final String nodeName = row.getNode().getName();
+                            nodeManager.ping(nodeName,
+                                    pingMs -> {
+                                        latestPing.put(nodeName, PingResult.success(pingMs, nodeMonitoringConfig));
+                                        super.changeData(data);
+                                    },
+                                    throwable -> {
+                                        latestPing.put(nodeName, PingResult.error(
+                                                throwable.getMessage(), nodeMonitoringConfig));
+                                        super.changeData(data);
+                                    },
+                                    NodeMonitoringPresenter.this);
+                        });
+                    }
+                }, getView());
 
                 super.changeData(data);
             }
@@ -163,7 +159,8 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
                 nodeManager.info(
                         row.getNode().getName(),
                         result -> showNodeInfoResult(row.getNode(), result, popupPosition),
-                        error -> showNodeInfoError(error.getException(), popupPosition));
+                        error -> showNodeInfoError(error.getException(), popupPosition),
+                        NodeMonitoringPresenter.this);
             }
         };
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
@@ -234,7 +231,8 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
                 nodeManager.setPriority(
                         row.getNode().getName(),
                         value.intValue(),
-                        result -> refresh()));
+                        result -> refresh(),
+                        this));
         dataGrid.addColumn(priorityColumn, "Priority", 75);
 
         // Enabled
@@ -255,7 +253,8 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
                 nodeManager.setEnabled(
                         row.getNode().getName(),
                         value.toBoolean(),
-                        result -> refresh()));
+                        result -> refresh(),
+                        this));
 
         dataGrid.addColumn(enabledColumn, "Enabled", 70);
 

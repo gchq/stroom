@@ -118,6 +118,7 @@ public class AnalyticEmailDestinationPresenter
                     })
                     .onFailure(throwable ->
                             AlertEvent.fireError(this, throwable.getMessage(), null))
+                    .taskListener(this)
                     .exec();
         }
     }
@@ -139,6 +140,7 @@ public class AnalyticEmailDestinationPresenter
                     restFactory
                             .create(ANALYTIC_RULE_RESOURCE)
                             .call(res -> res.sendTestEmail(emailDestination))
+                            .taskListener(getView().getSendTestEmailBtn())
                             .exec();
                 }
             });
@@ -241,7 +243,6 @@ public class AnalyticEmailDestinationPresenter
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
-
 
     // --------------------------------------------------------------------------------
 

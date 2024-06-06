@@ -81,9 +81,7 @@ public class InfoDocumentPresenter
                         getView().focus();
                         isShowing = true;
                     })
-                    .onHide(e -> {
-                        isShowing = false;
-                    })
+                    .onHide(e -> isShowing = false)
                     .fire();
         }
     }

@@ -17,6 +17,7 @@
 package stroom.dictionary.impl;
 
 import stroom.dictionary.shared.DictionaryDoc;
+import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
@@ -31,8 +32,9 @@ public class DictionaryHandlerModule extends AbstractModule {
     protected void configure() {
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
                 .addBinding(DictionaryStoreImpl.class);
-
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(DictionaryStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
                 .addBinding(DictionaryStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())

@@ -3,7 +3,7 @@ package stroom.explorer.client.presenter;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.MyCellTable;
-import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.StringMatch;
 import stroom.document.client.event.OpenDocumentEvent;
@@ -15,12 +15,12 @@ import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.FetchHighlightsRequest;
 import stroom.explorer.shared.FindInContentRequest;
 import stroom.explorer.shared.FindInContentResult;
+import stroom.task.client.TaskListener;
 import stroom.util.client.TextRangeUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TextRange;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -101,6 +101,7 @@ public class FindInContentPresenter
                 }
             }
         };
+        cellTable.addStyleName("FindCellTable");
 
         selectionModel = new MultiSelectionModelImpl<>(cellTable);
         SelectionEventManager<FindInContentResult> selectionEventManager = new SelectionEventManager<>(
@@ -118,7 +119,7 @@ public class FindInContentPresenter
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<FindInContentResult>> dataConsumer,
-                                final Consumer<RestError> errorConsumer) {
+                                final RestErrorHandler errorHandler) {
                 final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
                 currentQuery = new FindInContentRequest(pageRequest,
                         currentQuery.getSortList(),
@@ -156,7 +157,8 @@ public class FindInContentPresenter
 
                                 resetFocus();
                             })
-                            .onFailure(errorConsumer)
+                            .onFailure(errorHandler)
+                            .taskListener(pagerView)
                             .exec();
                 }
             }
@@ -208,6 +210,7 @@ public class FindInContentPresenter
                         }
                     })
                     .onFailure(throwable -> editorPresenter.setText(throwable.getMessage()))
+                    .taskListener(getView().getTaskListener())
                     .exec();
         }
     }
@@ -283,14 +286,13 @@ public class FindInContentPresenter
                     .popupSize(popupSize)
                     .caption("Find In Content")
                     .onShow(e -> getView().focus())
-                    .onHideRequest(HidePopupRequestEvent::hide)
                     .onHide(e -> showing = false)
                     .fire();
         }
     }
 
     private void hide() {
-        HidePopupEvent.builder(this).fire();
+        HidePopupRequestEvent.builder(this).fire();
     }
 
     @ProxyCodeSplit
@@ -305,5 +307,7 @@ public class FindInContentPresenter
         void setResultView(View view);
 
         void setTextView(View view);
+
+        TaskListener getTaskListener();
     }
 }

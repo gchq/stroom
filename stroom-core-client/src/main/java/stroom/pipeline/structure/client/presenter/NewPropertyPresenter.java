@@ -297,6 +297,7 @@ public class NewPropertyPresenter
 
                         dataTypePresenterInitialised = true;
                     })
+                    .taskListener(this)
                     .exec();
 
             dataTypeWidget.addValueChangeHandler(event -> {
@@ -346,6 +347,7 @@ public class NewPropertyPresenter
 
                         dataTypePresenterInitialised = true;
                     })
+                    .taskListener(this)
                     .exec();
 
             dataTypeWidget.addValueChangeHandler(event -> {

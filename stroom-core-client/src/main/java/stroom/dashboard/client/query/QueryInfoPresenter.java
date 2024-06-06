@@ -17,7 +17,9 @@
 package stroom.dashboard.client.query;
 
 import stroom.activity.client.CurrentActivity;
+import stroom.activity.shared.Activity;
 import stroom.alert.client.event.AlertEvent;
+import stroom.task.client.TaskListener;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.QueryConfig;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -32,15 +34,11 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.function.Consumer;
 
-public class QueryInfoPresenter extends MyPresenterWidget<QueryInfoPresenter.QueryInfoView> {
+public class QueryInfoPresenter
+        extends MyPresenterWidget<QueryInfoPresenter.QueryInfoView> {
 
-    private static final String DEFAULT_QUERY_INFO_POPUP_TITLE = "Please Provide Query Info";
-    private static final String DEFAULT_QUERY_INFO_VALIDATION_REGEX = "^[\\s\\S]{3,}$";
-
+    private final UiConfigCache uiConfigCache;
     private final CurrentActivity currentActivity;
-    private boolean queryInfoPopupEnabled = false;
-    private String queryInfoPopupTitle = DEFAULT_QUERY_INFO_POPUP_TITLE;
-    private String queryInfoPopupValidationRegex = DEFAULT_QUERY_INFO_VALIDATION_REGEX;
 
     @Inject
     public QueryInfoPresenter(final EventBus eventBus,
@@ -48,67 +46,75 @@ public class QueryInfoPresenter extends MyPresenterWidget<QueryInfoPresenter.Que
                               final UiConfigCache uiConfigCache,
                               final CurrentActivity currentActivity) {
         super(eventBus, view);
+        this.uiConfigCache = uiConfigCache;
         this.currentActivity = currentActivity;
-
-        uiConfigCache.get()
-                .onSuccess(uiConfig -> {
-                    final QueryConfig queryConfig = uiConfig.getQuery();
-                    queryInfoPopupEnabled = queryConfig.getInfoPopup().isEnabled();
-                    queryInfoPopupTitle = queryConfig.getInfoPopup().getTitle();
-                    queryInfoPopupValidationRegex = queryConfig.getInfoPopup().getValidationRegex();
-                })
-                .onFailure(caught -> AlertEvent.fireError(QueryInfoPresenter.this, caught.getMessage(), null));
     }
 
-    public void show(final String queryInfo, final Consumer<State> consumer) {
+    private boolean isRequired(final Activity activity) {
+        boolean required = true;
+        if (activity != null && activity.getDetails() != null) {
+            final String value = activity.getDetails().value("requireQueryInfo");
+            if (value != null && value.equalsIgnoreCase("false")) {
+                required = false;
+            }
+        }
+        return required;
+    }
+
+    public void show(final String queryInfo,
+                     final Consumer<State> consumer,
+                     final TaskListener taskListener) {
         currentActivity.getActivity(activity -> {
-            boolean required = true;
-            if (activity != null && activity.getDetails() != null) {
-                final String value = activity.getDetails().value("requireQueryInfo");
-                if (value != null && value.equalsIgnoreCase("false")) {
-                    required = false;
-                }
-            }
+            final boolean required = isRequired(activity);
+            uiConfigCache.get(uiConfig -> {
+                if (uiConfig != null) {
+                    final QueryConfig queryConfig = uiConfig.getQuery();
+                    final boolean queryInfoPopupEnabled = queryConfig.getInfoPopup().isEnabled();
+                    final String queryInfoPopupTitle = queryConfig.getInfoPopup().getTitle();
+                    final String queryInfoPopupValidationRegex = queryConfig.getInfoPopup().getValidationRegex();
 
-            if (queryInfoPopupEnabled && required) {
-                getView().setQueryInfo(queryInfo);
-                final PopupSize popupSize = PopupSize.resizable(640, 480);
-                ShowPopupEvent.builder(this)
-                        .popupType(PopupType.OK_CANCEL_DIALOG)
-                        .popupSize(popupSize)
-                        .caption(queryInfoPopupTitle)
-                        .onShow(e -> getView().focus())
-                        .onHideRequest(event -> {
-                            if (event.isOk()) {
-                                boolean valid = true;
-                                if (queryInfoPopupValidationRegex != null
-                                        && !queryInfoPopupValidationRegex.isEmpty()) {
-                                    valid = false;
-                                    try {
-                                        valid = getView().getQueryInfo().matches(queryInfoPopupValidationRegex);
-                                    } catch (final RuntimeException e) {
-                                        AlertEvent.fireErrorFromException(QueryInfoPresenter.this, e, null);
+                    if (queryInfoPopupEnabled && required) {
+                        getView().setQueryInfo(queryInfo);
+                        final PopupSize popupSize = PopupSize.resizable(640, 480);
+                        ShowPopupEvent.builder(this)
+                                .popupType(PopupType.OK_CANCEL_DIALOG)
+                                .popupSize(popupSize)
+                                .caption(queryInfoPopupTitle)
+                                .onShow(e -> getView().focus())
+                                .onHideRequest(e -> {
+                                    if (e.isOk()) {
+                                        boolean valid = true;
+                                        if (queryInfoPopupValidationRegex != null
+                                                && !queryInfoPopupValidationRegex.isEmpty()) {
+                                            valid = false;
+                                            try {
+                                                valid = getView().getQueryInfo().matches(queryInfoPopupValidationRegex);
+                                            } catch (final RuntimeException ex) {
+                                                AlertEvent
+                                                        .fireErrorFromException(QueryInfoPresenter.this, ex, e::reset);
+                                            }
+                                        }
+
+                                        if (valid) {
+                                            e.hide();
+                                            consumer.accept(new State(getView().getQueryInfo(), true));
+                                        } else {
+                                            AlertEvent.fireWarn(QueryInfoPresenter.this,
+                                                    "The text entered is not valid",
+                                                    e::reset);
+                                        }
+                                    } else {
+                                        e.hide();
+                                        consumer.accept(new State(getView().getQueryInfo(), false));
                                     }
-                                }
-
-                                if (valid) {
-                                    event.hide();
-                                    consumer.accept(new State(getView().getQueryInfo(), true));
-                                } else {
-                                    AlertEvent.fireWarn(QueryInfoPresenter.this,
-                                            "The text entered is not valid",
-                                            null);
-                                }
-                            } else {
-                                event.hide();
-                                consumer.accept(new State(getView().getQueryInfo(), false));
-                            }
-                        })
-                        .fire();
-            } else {
-                consumer.accept(new State(null, true));
-            }
-        });
+                                })
+                                .fire();
+                    } else {
+                        consumer.accept(new State(null, true));
+                    }
+                }
+            }, taskListener);
+        }, taskListener);
     }
 
     public interface QueryInfoView extends View, Focus {

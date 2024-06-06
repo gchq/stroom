@@ -643,7 +643,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
         }
 
         @Override
-        public OutputStream getByteArrayOutputStream() {
+        public OutputStream getOutputStream() {
             return getOutputStream(null, null);
         }
 
