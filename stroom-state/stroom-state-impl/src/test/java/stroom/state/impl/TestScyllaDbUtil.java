@@ -13,15 +13,10 @@ public class TestScyllaDbUtil {
 
     @Test
     void testConnection() {
-        try (final CqlSession session = ScyllaDbUtil.connect(ScyllaDbUtil.DEFAULT_CONNECTION_YAML)) {
-            ScyllaDbUtil.createKeyspace(session, ScyllaDbUtil.DEFAULT_KEYSPACE_CQL);
-        }
-        try (final CqlSession session = ScyllaDbUtil.keyspace(
-                ScyllaDbUtil.DEFAULT_CONNECTION_YAML,
-                ScyllaDbUtil.DEFAULT_KEYSPACE)) {
-            ScyllaDbUtil.printMetadata(session, ScyllaDbUtil.DEFAULT_KEYSPACE);
-            StateTables.drop(session);
-            StateTables.create(session);
+        try (final CqlSession session = ScyllaDbUtil.forTesting()) {
+            ScyllaDbUtil.printMetadata(session, ScyllaDbUtil.TEST_KEYSPACE);
+            StateDao.dropTable(session);
+            StateDao.createTable(session);
         }
     }
 
@@ -60,7 +55,6 @@ public class TestScyllaDbUtil {
                         ", typeId: " + state.typeId() +
                         ", value: " + value);
             });
-
 
 
             StateRequest request = new StateRequest(

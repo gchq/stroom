@@ -29,6 +29,7 @@ import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
+import stroom.state.impl.CqlSessionFactory;
 import stroom.state.impl.State;
 import stroom.state.impl.StateDao;
 import stroom.state.impl.StateDocCache;
@@ -191,7 +192,7 @@ public class StateFilter extends AbstractXMLFilter {
     private Instant effectiveTime;
     private final LocationFactoryProxy locationFactory;
     private final StateDocCache stateDocCache;
-    private final StateDao stateDao;
+    private final CqlSessionFactory cqlSessionFactory;
     private final List<State> stateList = new ArrayList<>();
     private Locator locator;
 
@@ -200,13 +201,13 @@ public class StateFilter extends AbstractXMLFilter {
                        final LocationFactoryProxy locationFactory,
                        final MetaHolder metaHolder,
                        final StateDocCache stateDocCache,
-                       final StateDao stateDao,
+                       final CqlSessionFactory cqlSessionFactory,
                        final ByteBufferFactory byteBufferFactory) {
         this.errorReceiverProxy = errorReceiverProxy;
         this.locationFactory = locationFactory;
         this.metaHolder = metaHolder;
         this.stateDocCache = stateDocCache;
-        this.stateDao = stateDao;
+        this.cqlSessionFactory = cqlSessionFactory;
         this.byteBufferFactory = byteBufferFactory;
 
         this.stagingValueOutputStream =
@@ -257,7 +258,7 @@ public class StateFilter extends AbstractXMLFilter {
 
     private void insert() {
         if (!stateList.isEmpty()) {
-            stateDao.insert(stateDoc, stateList);
+            StateDao.insert(cqlSessionFactory.getSession(stateDoc), stateList);
             stateList.forEach(state -> byteBufferFactory.release(state.value()));
             stateList.clear();
         }

@@ -7,9 +7,9 @@ import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.xsltfunctions.StateLookup;
+import stroom.state.impl.CqlSessionFactory;
 import stroom.state.impl.State;
 import stroom.state.impl.StateDao;
-import stroom.state.impl.StateDocCache;
 import stroom.state.impl.StateRequest;
 import stroom.state.shared.StateDoc;
 
@@ -21,14 +21,12 @@ import java.util.Optional;
 
 public class StateLookupImpl implements StateLookup {
 
-    private final StateDao stateDao;
-    private final StateDocCache stateDocCache;
+    private final CqlSessionFactory cqlSessionFactory;
+
 
     @Inject
-    public StateLookupImpl(final StateDao stateDao,
-                           final StateDocCache stateDocCache) {
-        this.stateDao = stateDao;
-        this.stateDocCache = stateDocCache;
+    public StateLookupImpl(final CqlSessionFactory cqlSessionFactory) {
+        this.cqlSessionFactory = cqlSessionFactory;
     }
 
     /**
@@ -54,21 +52,18 @@ public class StateLookupImpl implements StateLookup {
                 final DocRef docRef = pipelineReference.getPipeline();
                 if (docRef != null &&
                         StateDoc.DOCUMENT_TYPE.equals(docRef.getType())) {
-                    final StateDoc stateDoc = stateDocCache.get(pipelineReference.getPipeline());
-                    if (stateDoc != null) {
-                        final StateRequest request = new StateRequest(
-                                lookupIdentifier.getMap(),
-                                lookupIdentifier.getKey(),
-                                Instant.ofEpochMilli(lookupIdentifier.getEventTime()));
-                        final Optional<State> optional = stateDao.getState(stateDoc, request);
-                        if (optional.isPresent()) {
-                            final State state = optional.get();
-                            final RefStreamDefinition refStreamDefinition =
-                                    new RefStreamDefinition(docRef, stateDoc.getVersion(), -1);
-                            final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition,
-                                    lookupIdentifier.getMap());
-                            result.addRefDataValueProxy(new StateValueProxy(state, mapDefinition));
-                        }
+                    final StateRequest request = new StateRequest(
+                            lookupIdentifier.getMap(),
+                            lookupIdentifier.getKey(),
+                            Instant.ofEpochMilli(lookupIdentifier.getEventTime()));
+                    final Optional<State> optional = StateDao.getState(cqlSessionFactory.getSession(docRef), request);
+                    if (optional.isPresent()) {
+                        final State state = optional.get();
+                        final RefStreamDefinition refStreamDefinition =
+                                new RefStreamDefinition(docRef, "0", -1);
+                        final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition,
+                                lookupIdentifier.getMap());
+                        result.addRefDataValueProxy(new StateValueProxy(state, mapDefinition));
                     }
                 }
             }

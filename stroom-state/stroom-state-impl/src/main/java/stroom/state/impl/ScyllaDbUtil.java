@@ -25,11 +25,25 @@ public class ScyllaDbUtil {
             }
             """;
     public static final String DEFAULT_KEYSPACE = "state";
+    public static final String TEST_KEYSPACE = "testing";
     public static final String DEFAULT_KEYSPACE_CQL = """
             CREATE KEYSPACE IF NOT EXISTS state
             WITH replication = { 'class': 'NetworkTopologyStrategy', 'replication_factor': '1' }
             AND durable_writes = TRUE;
             """;
+    public static final String TEST_KEYSPACE_CQL = """
+            CREATE KEYSPACE IF NOT EXISTS testing
+            WITH replication = { 'class': 'NetworkTopologyStrategy', 'replication_factor': '1' }
+            AND durable_writes = TRUE;
+            """;
+
+
+    public static CqlSession forTesting() {
+        try (final CqlSession session = builder(DEFAULT_CONNECTION_YAML).build()) {
+            createKeyspace(session, TEST_KEYSPACE_CQL);
+        }
+        return keyspace(DEFAULT_CONNECTION_YAML, TEST_KEYSPACE);
+    }
 
     /**
      * Initiates a connection to the session.

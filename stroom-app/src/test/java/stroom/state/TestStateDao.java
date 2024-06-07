@@ -18,15 +18,13 @@
 package stroom.state;
 
 import stroom.docref.DocRef;
-import stroom.state.impl.CqlSessionCache;
+import stroom.state.impl.CqlSessionFactory;
 import stroom.state.impl.ScyllaDbDocStore;
 import stroom.state.impl.State;
 import stroom.state.impl.StateDao;
 import stroom.state.impl.StateDocStore;
 import stroom.state.impl.StateRequest;
-import stroom.state.impl.StateTables;
 import stroom.state.impl.ValueTypeId;
-import stroom.state.shared.ScyllaDbDoc;
 import stroom.state.shared.StateDoc;
 import stroom.test.AbstractCoreIntegrationTest;
 
@@ -48,7 +46,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestStateDao extends AbstractCoreIntegrationTest {
 
     @Inject
-    private CqlSessionCache cqlSessionCache;
+    private CqlSessionFactory cqlSessionFactory;
     @Inject
     private ScyllaDbDocStore scyllaDbDocStore;
     @Inject
@@ -59,16 +57,15 @@ class TestStateDao extends AbstractCoreIntegrationTest {
     @Test
     void testDao() {
         final DocRef scyllaDbDocRef = scyllaDbDocStore.createDocument("test");
-        ScyllaDbDoc scyllaDbDoc = scyllaDbDocStore.readDocument(scyllaDbDocRef);
 
         final DocRef stateDocRef = stateDocStore.createDocument("test");
         StateDoc stateDoc = stateDocStore.readDocument(stateDocRef);
         stateDoc.setScyllaDbRef(scyllaDbDocRef);
         stateDoc = stateDocStore.writeDocument(stateDoc);
 
-        final CqlSession session = cqlSessionCache.get(scyllaDbDoc);
-        StateTables.drop(session);
-        StateTables.create(session);
+        final CqlSession session = cqlSessionFactory.getSession(stateDocRef);
+        StateDao.dropTable(session);
+        StateDao.createTable(session);
 
         final ByteBuffer byteBuffer = ByteBuffer.wrap("test".getBytes(StandardCharsets.UTF_8));
         final State state = new State(
@@ -77,10 +74,10 @@ class TestStateDao extends AbstractCoreIntegrationTest {
                 Instant.ofEpochMilli(0),
                 ValueTypeId.STRING,
                 byteBuffer);
-        stateDao.insert(stateDoc, Collections.singletonList(state));
+        StateDao.insert(session, Collections.singletonList(state));
 
         final StateRequest stateRequest = new StateRequest("TEST_MAP", "TEST_KEY", Instant.ofEpochSecond(10));
-        final Optional<State> optional = stateDao.getState(stateDoc, stateRequest);
+        final Optional<State> optional = StateDao.getState(session, stateRequest);
         assertThat(optional).isNotEmpty();
         final State res = optional.get();
         assertThat(res.map()).isEqualTo("TEST_MAP");
