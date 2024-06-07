@@ -33,8 +33,8 @@ class TestStateDao {
     @Test
     void testDao() {
         try (final CqlSession session = ScyllaDbUtil.forTesting()) {
-            StateDao.dropTable(session);
-            StateDao.createTable(session);
+            StateDao.dropTables(session);
+            StateDao.createTables(session);
 
             final ByteBuffer byteBuffer = ByteBuffer.wrap("test".getBytes(StandardCharsets.UTF_8));
             final State state = new State(

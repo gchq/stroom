@@ -12,16 +12,30 @@ import java.util.Optional;
 public class TestScyllaDbUtil {
 
     @Test
-    void testConnection() {
-        try (final CqlSession session = ScyllaDbUtil.forTesting()) {
-            ScyllaDbUtil.printMetadata(session, ScyllaDbUtil.TEST_KEYSPACE);
-            StateDao.dropTable(session);
-            StateDao.createTable(session);
+    void reset() {
+        try (final CqlSession session = ScyllaDbUtil.keyspace(
+                ScyllaDbUtil.DEFAULT_CONNECTION_YAML,
+                ScyllaDbUtil.DEFAULT_KEYSPACE)) {
+            StateDao.dropTables(session);
+            StateDao.createTables(session);
+            RangedStateDao.dropTables(session);
+            RangedStateDao.createTables(session);
         }
     }
 
     @Test
-    void dump() {
+    void testConnection() {
+        try (final CqlSession session = ScyllaDbUtil.forTesting()) {
+            ScyllaDbUtil.printMetadata(session, ScyllaDbUtil.TEST_KEYSPACE);
+            StateDao.dropTables(session);
+            StateDao.createTables(session);
+            RangedStateDao.dropTables(session);
+            RangedStateDao.createTables(session);
+        }
+    }
+
+    @Test
+    void dumpState() {
         try (final CqlSession session = ScyllaDbUtil.keyspace(
                 ScyllaDbUtil.DEFAULT_CONNECTION_YAML,
                 ScyllaDbUtil.DEFAULT_KEYSPACE)) {
@@ -63,6 +77,46 @@ public class TestScyllaDbUtil {
                     Instant.parse("2010-01-01T00:00:00Z"));
             final Optional<State> optional = StateDao.getState(session, request);
             System.out.println(optional);
+        }
+    }
+
+    @Test
+    void dumpRangedState() {
+        try (final CqlSession session = ScyllaDbUtil.keyspace(
+                ScyllaDbUtil.DEFAULT_CONNECTION_YAML,
+                ScyllaDbUtil.DEFAULT_KEYSPACE)) {
+            ScyllaDbUtil.printMetadata(session, ScyllaDbUtil.DEFAULT_KEYSPACE);
+
+            final String cql = """
+                    SELECT map, key_start, key_end, effective_time, type_id, value
+                    FROM range
+                    """;
+
+            //SORT BY effective_time DESC
+
+            final PreparedStatement prepared = session.prepare(cql);
+            final BoundStatement bound = prepared.bind();
+            session.execute(bound).forEach(row -> {
+                final RangedState state = new RangedState(
+                        row.getString(0),
+                        row.getLong(1),
+                        row.getLong(2),
+                        row.getInstant(3),
+                        ValueTypeId.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(row.getByte(4)),
+                        row.getByteBuffer(5));
+
+                String value = state.value().toString();
+                if (state.typeId() == ValueTypeId.STRING) {
+                    value = new String(state.value().array(), StandardCharsets.UTF_8);
+                }
+
+                System.out.println("map: " + state.map() +
+                        ", key_start: " + state.keyStart() +
+                        ", key_end: " + state.keyEnd() +
+                        ", effectiveTime: " + state.effectiveTime() +
+                        ", typeId: " + state.typeId() +
+                        ", value: " + value);
+            });
         }
     }
 }

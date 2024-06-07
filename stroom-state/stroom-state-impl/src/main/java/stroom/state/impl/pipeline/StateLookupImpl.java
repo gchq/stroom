@@ -8,11 +8,14 @@ import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.xsltfunctions.StateLookup;
 import stroom.state.impl.CqlSessionFactory;
+import stroom.state.impl.RangedStateDao;
+import stroom.state.impl.RangedStateRequest;
 import stroom.state.impl.State;
 import stroom.state.impl.StateDao;
 import stroom.state.impl.StateRequest;
 import stroom.state.shared.StateDoc;
 
+import com.datastax.oss.driver.api.core.CqlSession;
 import jakarta.inject.Inject;
 
 import java.time.Instant;
@@ -52,17 +55,40 @@ public class StateLookupImpl implements StateLookup {
                 final DocRef docRef = pipelineReference.getPipeline();
                 if (docRef != null &&
                         StateDoc.DOCUMENT_TYPE.equals(docRef.getType())) {
-                    final StateRequest request = new StateRequest(
-                            lookupIdentifier.getMap(),
-                            lookupIdentifier.getKey(),
-                            Instant.ofEpochMilli(lookupIdentifier.getEventTime()));
-                    final Optional<State> optional = StateDao.getState(cqlSessionFactory.getSession(docRef), request);
+
+                    final CqlSession session = cqlSessionFactory.getSession(docRef);
+                    final String mapName = lookupIdentifier.getMap();
+                    final String keyName = lookupIdentifier.getKey();
+                    final Instant eventTime = Instant.ofEpochMilli(lookupIdentifier.getEventTime());
+                    Optional<State> optional = Optional.empty();
+
+                    // First try a range lookup.
+                    try {
+                        final long longKey = Long.parseLong(keyName);
+                        final RangedStateRequest request = new RangedStateRequest(
+                                mapName,
+                                longKey,
+                                eventTime);
+                        optional = RangedStateDao.getState(session, request);
+                    } catch (final NumberFormatException e) {
+                        // Expected.
+                    }
+
+                    // Then try and exact key lookup.
+                    if (optional.isEmpty()) {
+                        final StateRequest request = new StateRequest(
+                                mapName,
+                                keyName,
+                                eventTime);
+                        optional = StateDao.getState(session, request);
+                    }
+
+                    // If we found a result then add the value.
                     if (optional.isPresent()) {
                         final State state = optional.get();
                         final RefStreamDefinition refStreamDefinition =
                                 new RefStreamDefinition(docRef, "0", -1);
-                        final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition,
-                                lookupIdentifier.getMap());
+                        final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
                         result.addRefDataValueProxy(new StateValueProxy(state, mapDefinition));
                     }
                 }

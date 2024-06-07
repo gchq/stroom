@@ -30,6 +30,8 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
 import stroom.state.impl.CqlSessionFactory;
+import stroom.state.impl.RangedState;
+import stroom.state.impl.RangedStateDao;
 import stroom.state.impl.State;
 import stroom.state.impl.StateDao;
 import stroom.state.impl.StateDocCache;
@@ -194,6 +196,7 @@ public class StateFilter extends AbstractXMLFilter {
     private final StateDocCache stateDocCache;
     private final CqlSessionFactory cqlSessionFactory;
     private final List<State> stateList = new ArrayList<>();
+    private final List<RangedState> rangedStateList = new ArrayList<>();
     private Locator locator;
 
     @Inject
@@ -209,9 +212,6 @@ public class StateFilter extends AbstractXMLFilter {
         this.stateDocCache = stateDocCache;
         this.cqlSessionFactory = cqlSessionFactory;
         this.byteBufferFactory = byteBufferFactory;
-
-        this.stagingValueOutputStream =
-                new ByteBufferPoolOutput(byteBufferFactory, BUFFER_OUTPUT_STREAM_INITIAL_CAPACITY, -1);
     }
 
 
@@ -229,8 +229,6 @@ public class StateFilter extends AbstractXMLFilter {
                 log(Severity.FATAL_ERROR, "Unable to load state doc", null);
                 throw LoggedException.create("Unable to load state doc");
             }
-
-            saxDocumentSerializer.setOutputStream(stagingValueOutputStream);
 
             final Long effectiveMs = metaHolder.getMeta().getEffectiveMs();
             if (effectiveMs != null) {
@@ -261,6 +259,11 @@ public class StateFilter extends AbstractXMLFilter {
             StateDao.insert(cqlSessionFactory.getSession(stateDoc), stateList);
             stateList.forEach(state -> byteBufferFactory.release(state.value()));
             stateList.clear();
+        }
+        if (!rangedStateList.isEmpty()) {
+            RangedStateDao.insert(cqlSessionFactory.getSession(stateDoc), rangedStateList);
+            rangedStateList.forEach(state -> byteBufferFactory.release(state.value()));
+            rangedStateList.clear();
         }
     }
 
@@ -563,34 +566,31 @@ public class StateFilter extends AbstractXMLFilter {
                 final ByteBuffer value = stagingValueOutputStream.getByteBuffer();
                 value.flip();
                 stateList.add(new State(mapName, key, effectiveTime, typeId, value));
-
                 if (stateList.size() > 1000) {
                     insert();
                 }
             } else if (rangeFrom != null && rangeTo != null) {
-                // TODO : SUPPORT RANGE KEYS
-                throw new RuntimeException("Range keys are not supported yet");
+                if (rangeFrom > rangeTo) {
+                    errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
+                            "Range from '" + rangeFrom
+                                    + "' must be less than or equal to range to '" + rangeTo + "'",
+                            null);
+                } else if (rangeFrom < 0) {
+                    // negative values cause problems for the ordering of data in LMDB so prevent their use
+                    // when using byteBuffer.putLong, -10, 0 & 10 will be stored in LMDB as 0, 10, -10
+                    errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
+                            LogUtil.message(
+                                    "Only non-negative numbers are supported (from: {}, to: {})",
+                                    rangeFrom, rangeTo), null);
 
-//                    if (rangeFrom > rangeTo) {
-//                        errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
-//                                "Range from '" + rangeFrom
-//                                        + "' must be less than or equal to range to '" + rangeTo + "'",
-//                                null);
-//                    } else if (rangeFrom < 0) {
-//                        // negative values cause problems for the ordering of data in LMDB so prevent their use
-//                        // when using byteBuffer.putLong, -10, 0 & 10 will be stored in LMDB as 0, 10, -10
-//                        errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
-//                                LogUtil.message(
-//                                        "Only non-negative numbers are supported (from: {}, to: {})",
-//                                        rangeFrom, rangeTo), null);
-//
-//                    } else {
-//                        // convert from inclusive rangeTo to exclusive rangeTo
-//                        // if from==to we still record it as a range
-//                        final Range<Long> range = new Range<>(rangeFrom, rangeTo + 1);
-//                        LOGGER.trace("Putting range {} into map {}", range, mapDefinition);
-//                        refDataLoaderHolder.getRefDataLoader().put(mapDefinition, range, stagingValueOutputStream);
-//                    }
+                } else {
+                    final ByteBuffer value = stagingValueOutputStream.getByteBuffer();
+                    value.flip();
+                    rangedStateList.add(new RangedState(mapName, rangeFrom, rangeTo, effectiveTime, typeId, value));
+                    if (rangedStateList.size() > 1000) {
+                        insert();
+                    }
+                }
             }
         } catch (final BufferOverflowException boe) {
             final String msg = LogUtil.message("Value for key {} in map {} is too big for the buffer",

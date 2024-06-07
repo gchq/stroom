@@ -33,8 +33,8 @@ class TestRangedStateDao {
     @Test
     void testDao() {
         try (final CqlSession session = ScyllaDbUtil.forTesting()) {
-            RangedStateDao.dropTable(session);
-            RangedStateDao.createTable(session);
+            RangedStateDao.dropTables(session);
+            RangedStateDao.createTables(session);
 
             final ByteBuffer byteBuffer = ByteBuffer.wrap("test".getBytes(StandardCharsets.UTF_8));
             final RangedState state = new RangedState(
@@ -52,7 +52,7 @@ class TestRangedStateDao {
             assertThat(optional).isNotEmpty();
             final State res = optional.get();
             assertThat(res.map()).isEqualTo("TEST_MAP");
-            assertThat(res.key()).isEqualTo("TEST_KEY");
+            assertThat(res.key()).isEqualTo("11");
             assertThat(res.effectiveTime()).isEqualTo(Instant.ofEpochMilli(0));
             assertThat(res.typeId()).isEqualTo(ValueTypeId.STRING);
             assertThat(new String(res.value().array(), StandardCharsets.UTF_8)).isEqualTo("test");

@@ -61,7 +61,8 @@ public class CqlSessionCacheImpl implements CqlSessionCache, Clearable {
         final CqlSession session = ScyllaDbUtil.keyspace(
                 scyllaDbDoc.getConnection(),
                 scyllaDbDoc.getKeyspace());
-        StateDao.createTable(session);
+        StateDao.createTables(session);
+        RangedStateDao.createTables(session);
         ScyllaDbUtil.printMetadata(session, scyllaDbDoc.getKeyspace());
         return session;
     }
