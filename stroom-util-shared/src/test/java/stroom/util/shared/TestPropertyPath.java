@@ -5,12 +5,14 @@ import stroom.test.common.TestUtil;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import io.vavr.Tuple;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 import java.io.IOException;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -92,6 +94,26 @@ class TestPropertyPath {
 
         assertThat(propertyPath.toString())
                 .isEqualTo("stroom.node.name");
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testEquals() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(PropertyPath.class, PropertyPath.class)
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase ->
+                        Objects.equals(testCase.getInput()._1, testCase.getInput()._2))
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(PropertyPath.fromParts("a"), PropertyPath.fromParts("a")), true)
+                .addCase(Tuple.of(PropertyPath.fromParts("a", "b"), PropertyPath.fromParts("a", "b")), true)
+                .addCase(Tuple.of(PropertyPath.fromParts("a.b.c"), PropertyPath.fromParts("a.b.c")), true)
+                .addCase(Tuple.of(PropertyPath.fromParts("a"), PropertyPath.fromParts("z")), false)
+                .addCase(Tuple.of(PropertyPath.fromParts("a"), PropertyPath.fromParts()), false)
+                .addCase(Tuple.of(PropertyPath.fromParts("a", "b"), PropertyPath.fromParts("a")), false)
+                .addCase(Tuple.of(PropertyPath.fromParts("a.b.c"), PropertyPath.fromParts("a.b")), false)
+                .addCase(Tuple.of(PropertyPath.fromParts("a.b.c"), PropertyPath.fromParts("a.B.c")), false)
+                .addCase(Tuple.of(PropertyPath.fromParts("a.b.c"), PropertyPath.fromParts("a.b.c.d")), false)
+                .build();
     }
 
     @Test
