@@ -5,6 +5,10 @@ import stroom.config.global.shared.ConfigProperty;
 import stroom.config.impl.db.jooq.tables.records.ConfigRecord;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
+import stroom.util.NullSafe;
+import stroom.util.exception.DataChangedException;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.PropertyPath;
 
@@ -24,6 +28,8 @@ import static stroom.config.impl.db.jooq.tables.Config.CONFIG;
 import static stroom.config.impl.db.jooq.tables.ConfigUpdateTracker.CONFIG_UPDATE_TRACKER;
 
 class ConfigPropertyDaoImpl implements ConfigPropertyDao {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ConfigPropertyDaoImpl.class);
 
     private static final int TRACKER_ID = 1;
 
@@ -115,15 +121,27 @@ class ConfigPropertyDaoImpl implements ConfigPropertyDao {
 
     @Override
     public ConfigProperty update(final ConfigProperty configProperty) {
-        return JooqUtil.transactionResultWithOptimisticLocking(
-                globalConfigDbConnProvider,
-                context -> {
-                    final ConfigProperty updatedConfigProperty = genericDao.update(
-                            context,
-                            configProperty);
-                    updateTracker(context, updatedConfigProperty);
-                    return updatedConfigProperty;
-                });
+        LOGGER.debug(() -> LogUtil.message("Updating config prop {} with id {}, ver {}",
+                configProperty.getName(), configProperty.getId(), configProperty.getVersion()));
+        try {
+            return JooqUtil.transactionResultWithOptimisticLocking(
+                    globalConfigDbConnProvider,
+                    context -> {
+                        final ConfigProperty updatedConfigProperty = genericDao.update(
+                                context,
+                                configProperty);
+                        updateTracker(context, updatedConfigProperty);
+                        return updatedConfigProperty;
+                    });
+        } catch (RuntimeException e) {
+            if (e instanceof DataChangedException) {
+                // Possible someone has made a direct change in the db, naughty, so change the tracker
+                // such that the props will get refreshed on all nodes
+                JooqUtil.context(globalConfigDbConnProvider, context ->
+                        updateTracker(context, System.currentTimeMillis()));
+            }
+            throw e;
+        }
     }
 
     @Override
@@ -164,15 +182,21 @@ class ConfigPropertyDaoImpl implements ConfigPropertyDao {
 
     @Override
     public void ensureTracker(final long updateTimeMs) {
-        // Insert the rec only if it doesn't already exist
         JooqUtil.context(globalConfigDbConnProvider, context ->
-                context.insertInto(CONFIG_UPDATE_TRACKER,
-                                CONFIG_UPDATE_TRACKER.ID,
-                                CONFIG_UPDATE_TRACKER.UPDATE_TIME_MS)
-                        .select(context.select(DSL.inline(TRACKER_ID), DSL.val(updateTimeMs))
-                                .where(DSL.notExists(context.select(CONFIG_UPDATE_TRACKER.ID)
-                                        .where(CONFIG_UPDATE_TRACKER.ID.equal(TRACKER_ID)))))
-                        .execute());
+                ensureTracker(context, updateTimeMs));
+
+    }
+
+    public void ensureTracker(final DSLContext context, final long updateTimeMs) {
+        // Insert the rec only if it doesn't already exist
+        context.insertInto(CONFIG_UPDATE_TRACKER,
+                        CONFIG_UPDATE_TRACKER.ID,
+                        CONFIG_UPDATE_TRACKER.UPDATE_TIME_MS)
+                .select(context.select(DSL.inline(TRACKER_ID), DSL.val(updateTimeMs))
+                        .where(DSL.notExists(context.select(CONFIG_UPDATE_TRACKER.ID)
+                                .from(CONFIG_UPDATE_TRACKER)
+                                .where(CONFIG_UPDATE_TRACKER.ID.equal(TRACKER_ID)))))
+                .execute();
     }
 
     /**
@@ -180,26 +204,31 @@ class ConfigPropertyDaoImpl implements ConfigPropertyDao {
      * which can include removal of records. ANY mutation of the config table MUST also
      * call updateTracker
      */
-    private long updateTracker(final DSLContext context, final long updateTimeMs) {
-        Long val = null;
-        for (int i = 0; i < 2; i++) {
-            // Other threads may have beaten us to it so don't set an older time.
-            final Record1<Long> rec = context.update(CONFIG_UPDATE_TRACKER)
+    // pkg private for testing
+    long updateTracker(final DSLContext context, final long updateTimeMs) {
+        ensureTracker(context, updateTimeMs);
+
+        // Lock the row so we can check then update
+        final Long dbUpdateTimeMs = NullSafe.get(context.select(CONFIG_UPDATE_TRACKER.UPDATE_TIME_MS)
+                        .from(CONFIG_UPDATE_TRACKER)
+                        .where(CONFIG_UPDATE_TRACKER.ID.eq(TRACKER_ID))
+                        .forUpdate()
+                        .fetchOne(),
+                Record1::value1);
+
+        Objects.requireNonNull(dbUpdateTimeMs);
+
+        if (dbUpdateTimeMs >= updateTimeMs) {
+            LOGGER.debug("Config tracker {} is ahead of {}", dbUpdateTimeMs, updateTimeMs);
+            // Another thread has updated it with a more recent time so just use that
+            return dbUpdateTimeMs;
+        } else {
+            LOGGER.debug("Updated config tracker to {}", updateTimeMs);
+            context.update(CONFIG_UPDATE_TRACKER)
                     .set(CONFIG_UPDATE_TRACKER.UPDATE_TIME_MS, updateTimeMs)
-                    .where(CONFIG_UPDATE_TRACKER.UPDATE_TIME_MS.lessThan(updateTimeMs))
-                    .and(CONFIG_UPDATE_TRACKER.ID.eq(TRACKER_ID))
-                    .returningResult(CONFIG_UPDATE_TRACKER.UPDATE_TIME_MS)
-                    .fetchOne();
-            if (rec != null) {
-                val = rec.value1();
-                break;
-            } else {
-                // No record so ensure it, but another thread may beat us so go round again to get
-                // the val
-                ensureTracker(updateTimeMs);
-            }
+                    .where(CONFIG_UPDATE_TRACKER.ID.eq(TRACKER_ID))
+                    .execute();
+            return updateTimeMs;
         }
-        Objects.requireNonNull(val);
-        return val;
     }
 }
