@@ -17,6 +17,10 @@
 
 package stroom.state.impl;
 
+import stroom.entity.shared.ExpressionCriteria;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.language.functions.FieldIndex;
+
 import com.datastax.oss.driver.api.core.CqlSession;
 import org.junit.jupiter.api.Test;
 
@@ -55,6 +59,14 @@ class TestStateDao {
             assertThat(res.effectiveTime()).isEqualTo(Instant.ofEpochMilli(0));
             assertThat(res.typeId()).isEqualTo(ValueTypeId.STRING);
             assertThat(new String(res.value().array(), StandardCharsets.UTF_8)).isEqualTo("test");
+
+            final FieldIndex fieldIndex = new FieldIndex();
+            fieldIndex.create(StateFields.MAP);
+            fieldIndex.create(StateFields.KEY);
+            StateDao.search(session, new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex,
+                    values -> {
+                        System.out.println(values);
+                    });
         }
     }
 }

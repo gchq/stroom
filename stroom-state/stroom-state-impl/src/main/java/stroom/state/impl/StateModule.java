@@ -21,6 +21,7 @@ import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.pipeline.xsltfunctions.StateLookup;
+import stroom.searchable.api.Searchable;
 import stroom.state.impl.pipeline.StateElementModule;
 import stroom.state.impl.pipeline.StateLookupImpl;
 import stroom.state.shared.ScyllaDbDoc;
@@ -93,5 +94,8 @@ public class StateModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(StateDocResourceImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), Searchable.class)
+                .addBinding(SearchableState.class);
     }
 }

@@ -1,7 +1,20 @@
 package stroom.state.impl;
 
+import stroom.datasource.api.v2.FieldType;
+import stroom.datasource.api.v2.QueryField;
+import stroom.entity.shared.ExpressionCriteria;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValDate;
+import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ValNull;
+import stroom.query.language.functions.ValString;
+import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.xml.XMLUtil;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -12,14 +25,29 @@ import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
 import com.datastax.oss.driver.api.core.type.DataTypes;
+import com.datastax.oss.driver.api.querybuilder.Literal;
+import com.datastax.oss.driver.api.querybuilder.relation.ColumnRelationBuilder;
+import com.datastax.oss.driver.api.querybuilder.relation.Relation;
+import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.schema.compaction.DefaultTimeWindowCompactionStrategy;
+import com.esotericsoftware.kryo.io.ByteBufferInputStream;
+import com.sun.xml.fastinfoset.sax.SAXDocumentParser;
+import org.xml.sax.InputSource;
 
+import java.io.StringWriter;
+import java.io.Writer;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.bindMarker;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.insertInto;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
 import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.createTable;
 import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.dropTable;
@@ -70,6 +98,12 @@ public class StateDao {
             .allowFiltering()
             .build();
 
+    private static final Map<String, CqlIdentifier> FIELD_MAP = Map.of(
+            StateFields.MAP, COLUMN_MAP,
+            StateFields.KEY, COLUMN_KEY,
+            StateFields.EFFECTIVE_TIME, COLUMN_EFFECTIVE_TIME,
+            StateFields.VALUE_TYPE, COLUMN_TYPE_ID,
+            StateFields.VALUE, COLUMN_VALUE);
 
     public static void createTables(final CqlSession session) {
         LOGGER.info("Creating tables...");
@@ -188,5 +222,203 @@ public class StateDao {
                         row.getInstant(0),
                         ValueTypeId.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(row.getByte(1)),
                         row.getByteBuffer(2)));
+    }
+
+    private static void getRelations(final ExpressionOperator expressionOperator,
+                                     final List<Relation> relations) {
+        if (expressionOperator.enabled() &&
+                expressionOperator.getChildren() != null &&
+                !expressionOperator.getChildren().isEmpty()) {
+            switch (expressionOperator.op()) {
+                case AND -> expressionOperator.getChildren().forEach(child -> {
+                    if (child instanceof final ExpressionTerm expressionTerm) {
+                        if (expressionTerm.enabled()) {
+                            try {
+                                final Relation relation = convertTerm(expressionTerm);
+                                relations.add(relation);
+                            } catch (final RuntimeException e) {
+                                LOGGER.error(e::getMessage, e);
+                            }
+                        }
+                    } else if (child instanceof final ExpressionOperator operator) {
+                        getRelations(operator, relations);
+                    }
+                });
+                case OR -> throw new RuntimeException("OR conditions are not supported");
+                case NOT -> throw new RuntimeException("NOT conditions are not supported");
+            }
+        }
+    }
+
+    private static Relation convertTerm(final ExpressionTerm term) {
+        final CqlIdentifier column = FIELD_MAP.get(term.getField());
+        if (column == null) {
+            throw new RuntimeException("Unexpected field " + term.getField());
+        }
+
+        final QueryField queryField = StateFields.FIELD_MAP.get(term.getField());
+        final ColumnRelationBuilder<Relation> builder = Relation.column(column);
+        return switch (term.getCondition()) {
+            case EQUALS -> builder.isEqualTo(convertLiteral(queryField, term.getValue()));
+            case CONTAINS -> builder.isEqualTo(convertLiteral(queryField, term.getValue()));
+            case NOT_EQUALS -> builder.isNotEqualTo(convertLiteral(queryField, term.getValue()));
+            case LESS_THAN -> builder.isLessThan(convertLiteral(queryField, term.getValue()));
+            case LESS_THAN_OR_EQUAL_TO -> builder.isLessThanOrEqualTo(convertLiteral(queryField, term.getValue()));
+            case GREATER_THAN -> builder.isGreaterThan(convertLiteral(queryField, term.getValue()));
+            case GREATER_THAN_OR_EQUAL_TO ->
+                    builder.isGreaterThanOrEqualTo(convertLiteral(queryField, term.getValue()));
+            case IN -> {
+                Term[] terms = new Term[0];
+                if (term.getValue() != null) {
+                    final String[] values = term.getValue().split(",");
+                    terms = new Term[values.length];
+                    for (int i = 0; i < values.length; i++) {
+                        terms[i] = convertLiteral(queryField, values[i]);
+                    }
+                }
+                yield builder.in(terms);
+            }
+            default -> throw new RuntimeException("Condition " + term.getCondition() + " is not supported.");
+        };
+    }
+
+    private static Literal convertLiteral(final QueryField queryField, final String value) {
+        switch (queryField.getFldType()) {
+            case ID -> {
+                return literal(Long.parseLong(value));
+            }
+            case BOOLEAN -> {
+                return literal(Boolean.parseBoolean(value));
+            }
+            case INTEGER -> {
+                return literal(Integer.parseInt(value));
+            }
+            case LONG -> {
+                return literal(Long.parseLong(value));
+            }
+            case FLOAT -> {
+                return literal(Float.parseFloat(value));
+            }
+            case DOUBLE -> {
+                return literal(Double.parseDouble(value));
+            }
+            case DATE -> {
+                return literal(Instant.parse(value));
+            }
+            case TEXT -> {
+                return literal(value);
+            }
+            case KEYWORD -> {
+                return literal(value);
+            }
+            case IPV4_ADDRESS -> {
+                return literal(Long.parseLong(value));
+            }
+            case DOC_REF -> {
+//                return literal(Long.parseLong(value));
+            }
+        }
+        throw new RuntimeException("Unable to convert literal: " + queryField.getFldType());
+    }
+
+    public static void search(final CqlSession session,
+                              final ExpressionCriteria criteria,
+                              final FieldIndex fieldIndex,
+                              final ValuesConsumer consumer) {
+        final List<Relation> relations = new ArrayList<>();
+        getRelations(criteria.getExpression(), relations);
+        final String[] fieldNames = fieldIndex.getFields();
+        final FieldType[] fieldTypes = new FieldType[fieldNames.length];
+        final List<CqlIdentifier> columns = new ArrayList<>();
+        int columnPos = 0;
+        final int[] columnPositions = new int[fieldNames.length];
+        int valueTypePosition = -1;
+        int valuePosition = -1;
+
+        for (int i = 0; i < fieldNames.length; i++) {
+            final String fieldName = fieldNames[i];
+            final QueryField queryField = StateFields.FIELD_MAP.get(fieldName);
+            if (queryField != null) {
+                fieldTypes[i] = queryField.getFldType();
+
+                final CqlIdentifier column = FIELD_MAP.get(fieldName);
+                columns.add(column);
+                columnPositions[i] = columnPos;
+
+                if (valueTypePosition == -1 && StateFields.VALUE_TYPE.equals(fieldName)) {
+                    valueTypePosition = columnPos;
+                }
+                if (valuePosition == -1 && StateFields.VALUE.equals(fieldName)) {
+                    valuePosition = columnPos;
+                }
+
+                columnPos++;
+            }
+        }
+
+        // Add the value type and record the value type position if it is needed.
+        if (valuePosition != -1 && valueTypePosition == -1) {
+            columns.add(FIELD_MAP.get(StateFields.VALUE_TYPE));
+            valueTypePosition = columnPos;
+        }
+        final int vtp = valueTypePosition;
+
+        final SimpleStatement SELECT = selectFrom(TABLE)
+                .columns(columns.toArray(new CqlIdentifier[0]))
+                .where(relations)
+                .allowFiltering()
+                .build();
+        session.execute(SELECT).forEach(row -> {
+            final Val[] values = new Val[fieldNames.length];
+            for (int i = 0; i < values.length; i++) {
+                final String fieldName = fieldNames[i];
+                final int columnPosition = columnPositions[i];
+
+                switch (fieldName) {
+                    case StateFields.MAP -> values[i] = ValString.create(row.getString(columnPosition));
+                    case StateFields.KEY -> values[i] = ValString.create(row.getString(columnPosition));
+                    case StateFields.KEY_START -> values[i] = ValLong.create(row.getLong(columnPosition));
+                    case StateFields.KEY_END -> values[i] = ValLong.create(row.getLong(columnPosition));
+                    case StateFields.EFFECTIVE_TIME -> values[i] = ValDate.create(row.getInstant(columnPosition));
+                    case StateFields.VALUE_TYPE -> values[i] = ValString.create(
+                            ValueTypeId.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
+                                    row.getByte(columnPosition)).getDisplayValue());
+                    case StateFields.VALUE -> {
+                        final ValueTypeId valueType = ValueTypeId.PRIMITIVE_VALUE_CONVERTER
+                                .fromPrimitiveValue(row.getByte(vtp));
+
+                        switch (valueType) {
+                            case STRING -> {
+                                values[i] = ValString.create(convertString(row.getByteBuffer(columnPosition)));
+                            }
+                            case FAST_INFOSET -> {
+                                values[i] = ValString.create(convertFastInfoset(row.getByteBuffer(columnPosition)));
+                            }
+                            default -> {
+                                values[i] = ValNull.INSTANCE;
+                            }
+                        }
+                    }
+                    default -> values[i] = ValNull.INSTANCE;
+                }
+            }
+            consumer.accept(Val.of(values));
+        });
+    }
+
+    private static String convertString(final ByteBuffer byteBuffer) {
+        return new String(byteBuffer.array(), StandardCharsets.UTF_8);
+    }
+
+    private static String convertFastInfoset(final ByteBuffer byteBuffer) {
+        try {
+            final Writer writer = new StringWriter(1000);
+            final SAXDocumentParser parser = new SAXDocumentParser();
+            XMLUtil.prettyPrintXML(parser, new InputSource(new ByteBufferInputStream(byteBuffer)), writer);
+            return writer.toString();
+
+        } catch (final Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -1,5 +1,8 @@
 package stroom.state.impl;
 
+import stroom.entity.shared.ExpressionCriteria;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -154,5 +157,12 @@ public class RangedStateDao {
                         row.getInstant(0),
                         ValueTypeId.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(row.getByte(1)),
                         row.getByteBuffer(2)));
+    }
+
+    public static void search(final CqlSession session,
+                              final ExpressionCriteria criteria,
+                              final FieldIndex fieldIndex,
+                              final ValuesConsumer consumer) {
+
     }
 }
