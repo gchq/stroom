@@ -55,6 +55,7 @@ public class StateModule extends AbstractModule {
         bind(ScyllaDbDocCache.class).to(ScyllaDbDocCacheImpl.class);
         bind(StateDocCache.class).to(StateDocCacheImpl.class);
         bind(CqlSessionCache.class).to(CqlSessionCacheImpl.class);
+        bind(CqlSessionFactory.class).to(CqlSessionFactoryImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(ScyllaDbDocCacheImpl.class)

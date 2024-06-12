@@ -32,6 +32,7 @@ import stroom.pipeline.refdata.test.RefTestUtil.KeyOutcomeMap;
 import stroom.pipeline.refdata.test.RefTestUtil.RangeOutcomeMap;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.AsciiTable;
+import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -52,7 +53,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Scanner;
@@ -62,6 +66,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -1561,4 +1566,90 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         LOGGER.info("Full test time {}", Duration.between(fullTestStartTime, Instant.now()));
     }
 
+    @Disabled // Manual run only
+    @Test
+    void testLookupPerf() {
+        MapNameFunc mapNameFunc = this::buildMapNameWithoutRefStreamDef;
+
+        int entryCount = 5_000;
+        int refStreamDefCount = 5;
+        int keyValueMapCount = 20;
+        int rangeValueMapCount = 0;
+
+        int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;
+
+        final List<RefStreamDefinition> refStreamDefinitions = loadBulkData(
+                refStreamDefCount,
+                keyValueMapCount,
+                rangeValueMapCount,
+                entryCount,
+                0,
+                mapNameFunc);
+
+        assertThat(refStreamDefinitions)
+                .hasSize(refStreamDefCount);
+        final RefStreamDefinition refStreamDefinition = refStreamDefinitions.get(0);
+
+        final long keyValueEntryCount = refDataStore.getKeyValueEntryCount();
+
+        assertThat(keyValueEntryCount)
+                .isEqualTo(totalKeyValueEntryCount);
+
+        AtomicInteger cnt = new AtomicInteger();
+        refDataStore.consumeEntries(val -> true, val -> cnt.incrementAndGet() <= 10, entry -> {
+            LOGGER.info("map: {}, key: {}, val: {}",
+                    entry.getMapDefinition().getMapName(),
+                    entry.getKey(),
+                    entry.getValue());
+        });
+
+        // refStrmIdx => mapDefs
+        final Map<Integer, List<MapDefinition>> mapDefinitionsMap = new HashMap<>(refStreamDefCount);
+
+        for (int refStrmIdx = 0; refStrmIdx < refStreamDefCount; refStrmIdx++) {
+            final List<MapDefinition> mapDefs = mapDefinitionsMap.computeIfAbsent(
+                    refStrmIdx,
+                    k -> new ArrayList<>(keyValueMapCount));
+            for (int mapIdx = 0; mapIdx < keyValueMapCount; mapIdx++) {
+                final String mapName = mapNameFunc.buildMapName(refStreamDefinition, KV_TYPE, mapIdx);
+                final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
+                mapDefs.add(mapDefinition);
+            }
+        }
+
+        final Random random = new Random(892374809);
+
+        final Runnable work = () -> {
+            final int refStrmIdx = random.nextInt(refStreamDefCount);
+            final int mapIdx = random.nextInt(keyValueMapCount);
+            final int keyIdx = random.nextInt(entryCount);
+            final MapDefinition mapDef = mapDefinitionsMap.get(refStrmIdx).get(mapIdx);
+            final StringValue value = (StringValue) refDataStore.getValue(mapDef, buildKey(keyIdx))
+                    .orElseThrow();
+
+            Objects.requireNonNull(value.getValue());
+        };
+        DurationTimer timer;
+
+        LOGGER.info("Starting multi thread lookups");
+        timer = DurationTimer.start();
+        IntStream.rangeClosed(0, totalKeyValueEntryCount)
+                .boxed()
+                .parallel()
+                .forEach(i -> work.run());
+
+        LOGGER.info("Completed {} multi thread lookups in {}",
+                ModelStringUtil.formatCsv(totalKeyValueEntryCount),
+                timer);
+
+        LOGGER.info("Starting single thread lookups");
+        timer = DurationTimer.start();
+        for (int i = 0; i < totalKeyValueEntryCount; i++) {
+            work.run();
+        }
+
+        LOGGER.info("Completed {} single thread lookups in {}",
+                ModelStringUtil.formatCsv(totalKeyValueEntryCount),
+                timer);
+    }
 }
