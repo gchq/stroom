@@ -16,12 +16,14 @@
 
 package stroom.state.impl;
 
+import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.pipeline.xsltfunctions.StateLookup;
-import stroom.searchable.api.Searchable;
+import stroom.query.common.v2.IndexFieldProvider;
+import stroom.query.common.v2.SearchProvider;
 import stroom.state.impl.pipeline.StateElementModule;
 import stroom.state.impl.pipeline.StateLookupImpl;
 import stroom.state.shared.ScyllaDbDoc;
@@ -95,7 +97,11 @@ public class StateModule extends AbstractModule {
         RestResourcesBinder.create(binder())
                 .bind(StateDocResourceImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), Searchable.class)
-                .addBinding(SearchableState.class);
+        GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
+                .addBinding(StateSearchProvider.class);
+        GuiceUtil.buildMultiBinder(binder(), SearchProvider.class)
+                .addBinding(StateSearchProvider.class);
+        GuiceUtil.buildMultiBinder(binder(), IndexFieldProvider.class)
+                .addBinding(StateSearchProvider.class);
     }
 }
