@@ -6,10 +6,10 @@ import java.util.Objects;
 
 public class StagingRefDataValue {
 
-    private final int typeId;
+    private final byte typeId;
     private final RefDataValue refDataValue;
 
-    public StagingRefDataValue(final int typeId,
+    public StagingRefDataValue(final byte typeId,
                                 final RefDataValue refDataValue) {
         // Overrides the typeId that may be in the RefDataValue, e.g. if it is an
         // UnknownRefDataValue
@@ -21,7 +21,7 @@ public class StagingRefDataValue {
         return new StagingRefDataValue(refDataValue.getTypeId(), refDataValue);
     }
 
-    public int getTypeId() {
+    public byte getTypeId() {
         return typeId;
     }
 

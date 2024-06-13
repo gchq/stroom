@@ -1042,10 +1042,12 @@ export interface DocumentType {
     | "DOCUMENT_QUERY"
     | "DOCUMENT_RECEIVE_DATA_RULE_SET"
     | "DOCUMENT_SCRIPT"
+    | "DOCUMENT_SCYLLA_DB"
     | "DOCUMENT_SEARCHABLE"
     | "DOCUMENT_SELECT_ALL_OR_NONE"
     | "DOCUMENT_SIGMA_RULE"
     | "DOCUMENT_SOLR_INDEX"
+    | "DOCUMENT_STATE_STORE"
     | "DOCUMENT_STATISTIC_STORE"
     | "DOCUMENT_STROOM_STATS_STORE"
     | "DOCUMENT_SYSTEM"
@@ -1523,10 +1525,12 @@ export interface ExplorerNode {
     | "DOCUMENT_QUERY"
     | "DOCUMENT_RECEIVE_DATA_RULE_SET"
     | "DOCUMENT_SCRIPT"
+    | "DOCUMENT_SCYLLA_DB"
     | "DOCUMENT_SEARCHABLE"
     | "DOCUMENT_SELECT_ALL_OR_NONE"
     | "DOCUMENT_SIGMA_RULE"
     | "DOCUMENT_SOLR_INDEX"
+    | "DOCUMENT_STATE_STORE"
     | "DOCUMENT_STATISTIC_STORE"
     | "DOCUMENT_STROOM_STATS_STORE"
     | "DOCUMENT_SYSTEM"
@@ -2062,10 +2066,12 @@ export interface FindInContentResult {
     | "DOCUMENT_QUERY"
     | "DOCUMENT_RECEIVE_DATA_RULE_SET"
     | "DOCUMENT_SCRIPT"
+    | "DOCUMENT_SCYLLA_DB"
     | "DOCUMENT_SEARCHABLE"
     | "DOCUMENT_SELECT_ALL_OR_NONE"
     | "DOCUMENT_SIGMA_RULE"
     | "DOCUMENT_SOLR_INDEX"
+    | "DOCUMENT_STATE_STORE"
     | "DOCUMENT_STATISTIC_STORE"
     | "DOCUMENT_STROOM_STATS_STORE"
     | "DOCUMENT_SYSTEM"
@@ -2297,10 +2303,12 @@ export interface FindResult {
     | "DOCUMENT_QUERY"
     | "DOCUMENT_RECEIVE_DATA_RULE_SET"
     | "DOCUMENT_SCRIPT"
+    | "DOCUMENT_SCYLLA_DB"
     | "DOCUMENT_SEARCHABLE"
     | "DOCUMENT_SELECT_ALL_OR_NONE"
     | "DOCUMENT_SIGMA_RULE"
     | "DOCUMENT_SOLR_INDEX"
+    | "DOCUMENT_STATE_STORE"
     | "DOCUMENT_STATISTIC_STORE"
     | "DOCUMENT_STROOM_STATS_STORE"
     | "DOCUMENT_SYSTEM"
@@ -3352,10 +3360,12 @@ export interface PipelineElementType {
     | "DOCUMENT_QUERY"
     | "DOCUMENT_RECEIVE_DATA_RULE_SET"
     | "DOCUMENT_SCRIPT"
+    | "DOCUMENT_SCYLLA_DB"
     | "DOCUMENT_SEARCHABLE"
     | "DOCUMENT_SELECT_ALL_OR_NONE"
     | "DOCUMENT_SIGMA_RULE"
     | "DOCUMENT_SOLR_INDEX"
+    | "DOCUMENT_STATE_STORE"
     | "DOCUMENT_STATISTIC_STORE"
     | "DOCUMENT_STROOM_STATS_STORE"
     | "DOCUMENT_SYSTEM"
@@ -3982,10 +3992,12 @@ export interface QueryHelpRow {
     | "DOCUMENT_QUERY"
     | "DOCUMENT_RECEIVE_DATA_RULE_SET"
     | "DOCUMENT_SCRIPT"
+    | "DOCUMENT_SCYLLA_DB"
     | "DOCUMENT_SEARCHABLE"
     | "DOCUMENT_SELECT_ALL_OR_NONE"
     | "DOCUMENT_SIGMA_RULE"
     | "DOCUMENT_SOLR_INDEX"
+    | "DOCUMENT_STATE_STORE"
     | "DOCUMENT_STATISTIC_STORE"
     | "DOCUMENT_STROOM_STATS_STORE"
     | "DOCUMENT_SYSTEM"
@@ -4732,6 +4744,30 @@ export interface ScriptDoc {
   version?: string;
 }
 
+export interface ScyllaDbDoc {
+  connection?: string;
+
+  /** @format int64 */
+  createTimeMs?: number;
+  createUser?: string;
+  description?: string;
+  keyspace?: string;
+  keyspaceCql?: string;
+  name?: string;
+  type?: string;
+
+  /** @format int64 */
+  updateTimeMs?: number;
+  updateUser?: string;
+  uuid?: string;
+  version?: string;
+}
+
+export interface ScyllaDbTestResponse {
+  message?: string;
+  ok?: boolean;
+}
+
 export interface Search {
   componentSettingsMap?: Record<string, ComponentSettings>;
 
@@ -5094,6 +5130,24 @@ export interface SplashConfig {
 }
 
 export type SplitLayoutConfig = LayoutConfig & { children?: LayoutConfig[]; dimension?: number };
+
+export interface StateDoc {
+  /** @format int64 */
+  createTimeMs?: number;
+  createUser?: string;
+  description?: string;
+  name?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  scyllaDbRef?: DocRef;
+  type?: string;
+
+  /** @format int64 */
+  updateTimeMs?: number;
+  updateUser?: string;
+  uuid?: string;
+  version?: string;
+}
 
 export interface StatisticField {
   fieldName?: string;
@@ -11296,6 +11350,62 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         ...params,
       }),
   };
+  scyllaDb = {
+    /**
+     * No description
+     *
+     * @tags ScyllaDB Instances
+     * @name TestScyllaDb
+     * @summary Test connection to the ScyllaDb instance
+     * @request POST:/scyllaDB/v1/testCluster
+     * @secure
+     */
+    testScyllaDb: (data: ScyllaDbDoc, params: RequestParams = {}) =>
+      this.request<any, ScyllaDbTestResponse>({
+        path: `/scyllaDB/v1/testCluster`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags ScyllaDB Instances
+     * @name FetchScyllaDb
+     * @summary Fetch an ScyllaDb config doc by its UUID
+     * @request GET:/scyllaDB/v1/{uuid}
+     * @secure
+     */
+    fetchScyllaDb: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, ScyllaDbDoc>({
+        path: `/scyllaDB/v1/${uuid}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags ScyllaDB Instances
+     * @name UpdateScyllaDb
+     * @summary Update an ScyllaDb config doc
+     * @request PUT:/scyllaDB/v1/{uuid}
+     * @secure
+     */
+    updateScyllaDb: (uuid: string, data: ScyllaDbDoc, params: RequestParams = {}) =>
+      this.request<any, ScyllaDbDoc>({
+        path: `/scyllaDB/v1/${uuid}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
   searchable = {
     /**
      * No description
@@ -11516,6 +11626,43 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       this.request<any, SearchResponse>({
         path: `/sqlstatistics/v2/search`,
         method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
+  stateStore = {
+    /**
+     * No description
+     *
+     * @tags State Stores
+     * @name FetchStateStore
+     * @summary Fetch an state store doc by its UUID
+     * @request GET:/stateStore/v1/{uuid}
+     * @secure
+     */
+    fetchStateStore: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, StateDoc>({
+        path: `/stateStore/v1/${uuid}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags State Stores
+     * @name UpdateStateStore
+     * @summary Update an state store doc
+     * @request PUT:/stateStore/v1/{uuid}
+     * @secure
+     */
+    updateStateStore: (uuid: string, data: StateDoc, params: RequestParams = {}) =>
+      this.request<any, StateDoc>({
+        path: `/stateStore/v1/${uuid}`,
+        method: "PUT",
         body: data,
         secure: true,
         type: ContentType.Json,

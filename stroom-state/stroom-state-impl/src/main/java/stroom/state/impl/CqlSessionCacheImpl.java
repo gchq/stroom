@@ -54,7 +54,7 @@ public class CqlSessionCacheImpl implements CqlSessionCache, Clearable {
         LOGGER.info("Creating keyspace...");
         LOGGER.logDurationIfInfoEnabled(() -> {
             try (final CqlSession session = ScyllaDbUtil.connect(scyllaDbDoc.getConnection())) {
-                ScyllaDbUtil.createKeyspace(session, scyllaDbDoc.getKeyspaceCql());
+                session.execute(scyllaDbDoc.getKeyspaceCql());
             }
         }, "creatingKeyspace()");
 

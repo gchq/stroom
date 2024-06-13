@@ -26,6 +26,9 @@ import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.filter.AbstractXMLFilter;
+import stroom.pipeline.refdata.store.FastInfosetValue;
+import stroom.pipeline.refdata.store.NullValue;
+import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
@@ -35,7 +38,6 @@ import stroom.state.impl.RangedStateDao;
 import stroom.state.impl.State;
 import stroom.state.impl.StateDao;
 import stroom.state.impl.StateDocCache;
-import stroom.state.impl.ValueTypeId;
 import stroom.state.shared.StateDoc;
 import stroom.svg.shared.SvgImage;
 import stroom.util.CharBuffer;
@@ -160,7 +162,7 @@ public class StateFilter extends AbstractXMLFilter {
     private final SAXDocumentSerializer saxDocumentSerializer = new SAXDocumentSerializer();
     private final ByteBufferFactory byteBufferFactory;
     private ByteBufferPoolOutput stagingValueOutputStream;
-    private ValueTypeId typeId;
+    private byte typeId;
     private final CharBuffer contentBuffer = new CharBuffer(20);
 
     private final MetaHolder metaHolder;
@@ -543,14 +545,14 @@ public class StateFilter extends AbstractXMLFilter {
         if (haveSeenXmlInValueElement) {
             // Complete the fastInfoSet serialisation to stagingValueOutputStream
             fastInfosetEndDocument();
-            typeId = ValueTypeId.FAST_INFOSET;
+            typeId = FastInfosetValue.TYPE_ID;
         } else {
             // Simple string value
             final String value = contentBuffer.toString();
             if (NullSafe.isBlankString(value)) {
-                typeId = ValueTypeId.NULL;
+                typeId = NullValue.TYPE_ID;
             } else {
-                typeId = ValueTypeId.STRING;
+                typeId = StringValue.TYPE_ID;
                 stagingValueOutputStream.write(value.getBytes(StandardCharsets.UTF_8));
             }
         }

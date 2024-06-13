@@ -8,7 +8,7 @@ public record RangedState(
         long keyStart,
         long keyEnd,
         Instant effectiveTime,
-        ValueTypeId typeId,
+        byte typeId,
         ByteBuffer value) {
 
 }

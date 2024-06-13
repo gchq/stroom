@@ -58,8 +58,8 @@ public class StagingValueSerde implements Serde<StagingValue> {
         throw new UnsupportedOperationException();
     }
 
-    public static int extractTypeId(final ByteBuffer byteBuffer) {
-        return byteBuffer.getInt(TYPE_ID_OFFSET);
+    public static byte extractTypeId(final ByteBuffer byteBuffer) {
+        return byteBuffer.get(TYPE_ID_OFFSET);
     }
 
     public static long extractValueHash(final ByteBuffer byteBuffer) {
@@ -139,7 +139,7 @@ public class StagingValueSerde implements Serde<StagingValue> {
     private static void putMetaData(final ByteBuffer byteBuffer,
                                     final RefDataValue refDataValue,
                                     final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
-        byteBuffer.putInt(refDataValue.getTypeId());
+        byteBuffer.put(refDataValue.getTypeId());
         byteBuffer.putLong(refDataValue.getValueHashCode(valueStoreHashAlgorithm));
     }
 }

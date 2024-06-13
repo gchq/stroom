@@ -1,8 +1,11 @@
 package stroom.state.impl;
 
+import stroom.pipeline.refdata.store.StringValue;
+
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -11,6 +14,7 @@ import java.util.Optional;
 
 public class TestScyllaDbUtil {
 
+    @Disabled
     @Test
     void reset() {
         try (final CqlSession session = ScyllaDbUtil.keyspace(
@@ -25,15 +29,16 @@ public class TestScyllaDbUtil {
 
     @Test
     void testConnection() {
-        try (final CqlSession session = ScyllaDbUtil.forTesting()) {
-            ScyllaDbUtil.printMetadata(session, ScyllaDbUtil.TEST_KEYSPACE);
+        ScyllaDbUtil.test((session, keyspaceName) -> {
+            ScyllaDbUtil.printMetadata(session, keyspaceName);
             StateDao.dropTables(session);
             StateDao.createTables(session);
             RangedStateDao.dropTables(session);
             RangedStateDao.createTables(session);
-        }
+        });
     }
 
+    @Disabled
     @Test
     void dumpState() {
         try (final CqlSession session = ScyllaDbUtil.keyspace(
@@ -55,11 +60,11 @@ public class TestScyllaDbUtil {
                         row.getString(0),
                         row.getString(1),
                         row.getInstant(2),
-                        ValueTypeId.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(row.getByte(3)),
+                        row.getByte(3),
                         row.getByteBuffer(4));
 
                 String value = state.value().toString();
-                if (state.typeId() == ValueTypeId.STRING) {
+                if (state.typeId() == StringValue.TYPE_ID) {
                     value = new String(state.value().array(), StandardCharsets.UTF_8);
                 }
 
@@ -80,6 +85,7 @@ public class TestScyllaDbUtil {
         }
     }
 
+    @Disabled
     @Test
     void dumpRangedState() {
         try (final CqlSession session = ScyllaDbUtil.keyspace(
@@ -102,11 +108,11 @@ public class TestScyllaDbUtil {
                         row.getLong(1),
                         row.getLong(2),
                         row.getInstant(3),
-                        ValueTypeId.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(row.getByte(4)),
+                        row.getByte(4),
                         row.getByteBuffer(5));
 
                 String value = state.value().toString();
-                if (state.typeId() == ValueTypeId.STRING) {
+                if (state.typeId() == StringValue.TYPE_ID) {
                     value = new String(state.value().array(), StandardCharsets.UTF_8);
                 }
 

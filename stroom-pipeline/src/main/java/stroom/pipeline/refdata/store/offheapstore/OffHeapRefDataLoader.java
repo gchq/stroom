@@ -693,7 +693,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     void migrateKeyEntry(final BatchingWriteTxn batchingWriteTxn,
                          final MapDefinition mapDefinition,
                          final ByteBuffer sourceKeyBuffer,
-                         final int valueTypeId,
+                         final byte valueTypeId,
                          final ByteBuffer refDataValueBuffer) {
         newEntriesCount++;
         // Need to assign a new map UID in the dest store
@@ -724,7 +724,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     void migrateRangeEntry(final BatchingWriteTxn batchingWriteTxn,
                            final MapDefinition mapDefinition,
                            final ByteBuffer sourceKeyBuffer,
-                           final int valueTypeId,
+                           final byte valueTypeId,
                            final ByteBuffer refDataValueBuffer) {
         newEntriesCount++;
 

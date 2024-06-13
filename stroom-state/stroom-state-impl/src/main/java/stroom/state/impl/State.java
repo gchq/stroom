@@ -7,7 +7,7 @@ public record State(
         String map,
         String key,
         Instant effectiveTime,
-        ValueTypeId typeId,
+        byte typeId,
         ByteBuffer value) {
 
 }

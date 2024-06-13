@@ -143,7 +143,7 @@ public class StateDao {
                     state.map(),
                     state.key(),
                     state.effectiveTime(),
-                    state.typeId().getPrimitiveValue(),
+                    state.typeId(),
                     state.value()));
             statementCount++;
 
@@ -220,7 +220,7 @@ public class StateDao {
                         request.map(),
                         request.key(),
                         row.getInstant(0),
-                        ValueTypeId.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(row.getByte(1)),
+                        row.getByte(1),
                         row.getByteBuffer(2)));
     }
 
@@ -380,23 +380,24 @@ public class StateDao {
                     case StateFields.KEY_START -> values[i] = ValLong.create(row.getLong(columnPosition));
                     case StateFields.KEY_END -> values[i] = ValLong.create(row.getLong(columnPosition));
                     case StateFields.EFFECTIVE_TIME -> values[i] = ValDate.create(row.getInstant(columnPosition));
-                    case StateFields.VALUE_TYPE -> values[i] = ValString.create(
-                            ValueTypeId.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
-                                    row.getByte(columnPosition)).getDisplayValue());
-                    case StateFields.VALUE -> {
-                        final ValueTypeId valueType = ValueTypeId.PRIMITIVE_VALUE_CONVERTER
-                                .fromPrimitiveValue(row.getByte(vtp));
-
+                    case StateFields.VALUE_TYPE -> {
+                        final byte valueType = row.getByte(columnPosition);
                         switch (valueType) {
-                            case STRING -> {
-                                values[i] = ValString.create(convertString(row.getByteBuffer(columnPosition)));
-                            }
-                            case FAST_INFOSET -> {
-                                values[i] = ValString.create(convertFastInfoset(row.getByteBuffer(columnPosition)));
-                            }
-                            default -> {
-                                values[i] = ValNull.INSTANCE;
-                            }
+                            case stroom.pipeline.refdata.store.StringValue.TYPE_ID ->
+                                    values[i] = ValString.create("String");
+                            case stroom.pipeline.refdata.store.FastInfosetValue.TYPE_ID ->
+                                    values[i] = ValString.create("Fast Infoset");
+                            default -> values[i] = ValNull.INSTANCE;
+                        }
+                    }
+                    case StateFields.VALUE -> {
+                        final byte valueType = row.getByte(vtp);
+                        switch (valueType) {
+                            case stroom.pipeline.refdata.store.StringValue.TYPE_ID ->
+                                    values[i] = ValString.create(convertString(row.getByteBuffer(columnPosition)));
+                            case stroom.pipeline.refdata.store.FastInfosetValue.TYPE_ID ->
+                                    values[i] = ValString.create(convertFastInfoset(row.getByteBuffer(columnPosition)));
+                            default -> values[i] = ValNull.INSTANCE;
                         }
                     }
                     default -> values[i] = ValNull.INSTANCE;

@@ -24,6 +24,7 @@ import org.lmdbjava.Txn;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -247,9 +248,8 @@ public class StoreMigrator {
             final ByteBuffer keyValueStoreKeyBuffer = keyValBuffers.key();
             final ByteBuffer valueStoreKeyBuffer = keyValBuffers.val();
 
-            final int typeId = valueStore.getTypeId(readTxn, valueStoreKeyBuffer)
-                    .orElseThrow(() -> new RuntimeException(
-                            "Every entry should have a corresponding value meta"));
+            final Byte typeId = valueStore.getTypeId(readTxn, valueStoreKeyBuffer);
+            Objects.requireNonNull(typeId, "Every entry should have a corresponding value meta");
             final ByteBuffer refDataValueBuffer = valueStore.getAsBytes(readTxn, valueStoreKeyBuffer)
                     .orElseThrow(() -> new RuntimeException(
                             "Every entry should have a corresponding value"));
@@ -278,9 +278,8 @@ public class StoreMigrator {
             final ByteBuffer rangeStoreKeyBuffer = keyValBuffers.key();
             final ByteBuffer valueStoreKeyBuffer = keyValBuffers.val();
 
-            final int typeId = valueStore.getTypeId(sourceReadTxn, valueStoreKeyBuffer)
-                    .orElseThrow(() -> new RuntimeException(
-                            "Every entry should have a corresponding value meta"));
+            final Byte typeId = valueStore.getTypeId(sourceReadTxn, valueStoreKeyBuffer);
+            Objects.requireNonNull(typeId, "Every entry should have a corresponding value meta");
             final ByteBuffer refDataValueBuffer = valueStore.getAsBytes(sourceReadTxn, valueStoreKeyBuffer)
                     .orElseThrow(() -> new RuntimeException(
                             "Every entry should have a corresponding value"));
@@ -296,7 +295,6 @@ public class StoreMigrator {
         });
         LOGGER.debug("Migrated Range/Value entries for {}, {}", mapDefinition, migrationState);
     }
-
 
 
     private void updateTaskContextInfoSupplier(final String extraText) {

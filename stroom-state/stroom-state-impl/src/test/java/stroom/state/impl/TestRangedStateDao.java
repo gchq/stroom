@@ -17,6 +17,8 @@
 
 package stroom.state.impl;
 
+import stroom.pipeline.refdata.store.StringValue;
+
 import com.datastax.oss.driver.api.core.CqlSession;
 import org.junit.jupiter.api.Test;
 
@@ -32,7 +34,7 @@ class TestRangedStateDao {
 
     @Test
     void testDao() {
-        try (final CqlSession session = ScyllaDbUtil.forTesting()) {
+        ScyllaDbUtil.test((session, keyspaceName) -> {
             RangedStateDao.dropTables(session);
             RangedStateDao.createTables(session);
 
@@ -42,7 +44,7 @@ class TestRangedStateDao {
                     10,
                     30,
                     Instant.ofEpochMilli(0),
-                    ValueTypeId.STRING,
+                    StringValue.TYPE_ID,
                     byteBuffer);
             RangedStateDao.insert(session, Collections.singletonList(state));
 
@@ -54,8 +56,8 @@ class TestRangedStateDao {
             assertThat(res.map()).isEqualTo("TEST_MAP");
             assertThat(res.key()).isEqualTo("11");
             assertThat(res.effectiveTime()).isEqualTo(Instant.ofEpochMilli(0));
-            assertThat(res.typeId()).isEqualTo(ValueTypeId.STRING);
+            assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
             assertThat(new String(res.value().array(), StandardCharsets.UTF_8)).isEqualTo("test");
-        }
+        });
     }
 }

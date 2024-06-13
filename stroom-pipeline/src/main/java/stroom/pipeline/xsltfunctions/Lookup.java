@@ -44,9 +44,8 @@ class Lookup extends AbstractLookup {
     Lookup(final ReferenceData referenceData,
            final MetaHolder metaHolder,
            final SequenceMakerFactory sequenceMakerFactory,
-           final TaskContextFactory taskContextFactory,
-           final StateLookup stateLookup) {
-        super(referenceData, metaHolder, sequenceMakerFactory, taskContextFactory, stateLookup);
+           final TaskContextFactory taskContextFactory) {
+        super(referenceData, metaHolder, sequenceMakerFactory, taskContextFactory);
     }
 
     @Override

@@ -116,7 +116,7 @@ public class RangedStateDao {
                     state.keyStart(),
                     state.keyEnd(),
                     state.effectiveTime(),
-                    state.typeId().getPrimitiveValue(),
+                    state.typeId(),
                     state.value()));
             statementCount++;
 
@@ -155,7 +155,7 @@ public class RangedStateDao {
                         request.map(),
                         Long.toString(request.key()),
                         row.getInstant(0),
-                        ValueTypeId.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(row.getByte(1)),
+                        row.getByte(1),
                         row.getByteBuffer(2)));
     }
 

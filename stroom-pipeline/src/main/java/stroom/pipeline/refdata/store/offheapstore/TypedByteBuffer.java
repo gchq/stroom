@@ -22,15 +22,15 @@ import java.util.Objects;
 
 public class TypedByteBuffer {
 
-    private final int typeId;
+    private final byte typeId;
     private final ByteBuffer byteBuffer;
 
-    public TypedByteBuffer(final int typeId, final ByteBuffer byteBuffer) {
+    public TypedByteBuffer(final byte typeId, final ByteBuffer byteBuffer) {
         this.typeId = typeId;
         this.byteBuffer = Objects.requireNonNull(byteBuffer);
     }
 
-    public int getTypeId() {
+    public byte getTypeId() {
         return typeId;
     }
 

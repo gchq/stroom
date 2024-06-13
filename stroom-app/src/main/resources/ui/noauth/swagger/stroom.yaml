@@ -5839,6 +5839,70 @@ paths:
       summary: Update a script doc
       tags:
       - Scripts
+  /scyllaDB/v1/testCluster:
+    post:
+      operationId: testScyllaDB
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScyllaDbDoc'
+        description: scyllaDbDoc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScyllaDbTestResponse'
+          description: default response
+      summary: Test connection to the ScyllaDb instance
+      tags:
+      - ScyllaDB Instances
+  /scyllaDB/v1/{uuid}:
+    get:
+      operationId: fetchScyllaDB
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScyllaDbDoc'
+          description: default response
+      summary: Fetch an ScyllaDb config doc by its UUID
+      tags:
+      - ScyllaDB Instances
+    put:
+      operationId: updateScyllaDB
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScyllaDbDoc'
+        description: doc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScyllaDbDoc'
+          description: default response
+      summary: Update an ScyllaDb config doc
+      tags:
+      - ScyllaDB Instances
   /searchable/v2/destroy:
     post:
       operationId: destroySearchableQuery
@@ -6075,6 +6139,50 @@ paths:
       summary: Submit a search request
       tags:
       - Sql Statistics Query
+  /stateStore/v1/{uuid}:
+    get:
+      operationId: fetchStateStore
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StateDoc'
+          description: default response
+      summary: Fetch an state store doc by its UUID
+      tags:
+      - State Stores
+    put:
+      operationId: updateStateStore
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StateDoc'
+        description: doc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StateDoc'
+          description: default response
+      summary: Update an state store doc
+      tags:
+      - State Stores
   /statistic/rollUp/v1/bitMaskConversion:
     post:
       operationId: statisticBitMaskConversion
@@ -8969,10 +9077,12 @@ components:
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
           - DOCUMENT_SCRIPT
+          - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
           - DOCUMENT_SELECT_ALL_OR_NONE
           - DOCUMENT_SIGMA_RULE
           - DOCUMENT_SOLR_INDEX
+          - DOCUMENT_STATE_STORE
           - DOCUMENT_STATISTIC_STORE
           - DOCUMENT_STROOM_STATS_STORE
           - DOCUMENT_SYSTEM
@@ -9582,10 +9692,12 @@ components:
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
           - DOCUMENT_SCRIPT
+          - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
           - DOCUMENT_SELECT_ALL_OR_NONE
           - DOCUMENT_SIGMA_RULE
           - DOCUMENT_SOLR_INDEX
+          - DOCUMENT_STATE_STORE
           - DOCUMENT_STATISTIC_STORE
           - DOCUMENT_STROOM_STATS_STORE
           - DOCUMENT_SYSTEM
@@ -10437,10 +10549,12 @@ components:
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
           - DOCUMENT_SCRIPT
+          - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
           - DOCUMENT_SELECT_ALL_OR_NONE
           - DOCUMENT_SIGMA_RULE
           - DOCUMENT_SOLR_INDEX
+          - DOCUMENT_STATE_STORE
           - DOCUMENT_STATISTIC_STORE
           - DOCUMENT_STROOM_STATS_STORE
           - DOCUMENT_SYSTEM
@@ -10718,10 +10832,12 @@ components:
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
           - DOCUMENT_SCRIPT
+          - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
           - DOCUMENT_SELECT_ALL_OR_NONE
           - DOCUMENT_SIGMA_RULE
           - DOCUMENT_SOLR_INDEX
+          - DOCUMENT_STATE_STORE
           - DOCUMENT_STATISTIC_STORE
           - DOCUMENT_STROOM_STATS_STORE
           - DOCUMENT_SYSTEM
@@ -12273,10 +12389,12 @@ components:
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
           - DOCUMENT_SCRIPT
+          - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
           - DOCUMENT_SELECT_ALL_OR_NONE
           - DOCUMENT_SIGMA_RULE
           - DOCUMENT_SOLR_INDEX
+          - DOCUMENT_STATE_STORE
           - DOCUMENT_STATISTIC_STORE
           - DOCUMENT_STROOM_STATS_STORE
           - DOCUMENT_SYSTEM
@@ -13250,10 +13368,12 @@ components:
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
           - DOCUMENT_SCRIPT
+          - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
           - DOCUMENT_SELECT_ALL_OR_NONE
           - DOCUMENT_SIGMA_RULE
           - DOCUMENT_SOLR_INDEX
+          - DOCUMENT_STATE_STORE
           - DOCUMENT_STATISTIC_STORE
           - DOCUMENT_STROOM_STATS_STORE
           - DOCUMENT_SYSTEM
@@ -14229,6 +14349,42 @@ components:
           type: string
         version:
           type: string
+    ScyllaDbDoc:
+      type: object
+      properties:
+        connection:
+          type: string
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        description:
+          type: string
+        keyspace:
+          type: string
+        keyspaceCql:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        uuid:
+          type: string
+        version:
+          type: string
+    ScyllaDbTestResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        ok:
+          type: boolean
     Search:
       type: object
       properties:
@@ -14820,6 +14976,31 @@ components:
             format: int32
       xml:
         name: splitLayout
+    StateDoc:
+      type: object
+      properties:
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        description:
+          type: string
+        name:
+          type: string
+        scyllaDbRef:
+          $ref: '#/components/schemas/DocRef'
+        type:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        uuid:
+          type: string
+        version:
+          type: string
     StatisticField:
       type: object
       properties:

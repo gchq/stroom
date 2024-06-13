@@ -18,13 +18,13 @@
 package stroom.state;
 
 import stroom.docref.DocRef;
+import stroom.pipeline.refdata.store.StringValue;
 import stroom.state.impl.CqlSessionFactory;
 import stroom.state.impl.ScyllaDbDocStore;
 import stroom.state.impl.State;
 import stroom.state.impl.StateDao;
 import stroom.state.impl.StateDocStore;
 import stroom.state.impl.StateRequest;
-import stroom.state.impl.ValueTypeId;
 import stroom.state.shared.StateDoc;
 import stroom.test.AbstractCoreIntegrationTest;
 
@@ -72,7 +72,7 @@ class TestStateDao extends AbstractCoreIntegrationTest {
                 "TEST_MAP",
                 "TEST_KEY",
                 Instant.ofEpochMilli(0),
-                ValueTypeId.STRING,
+                StringValue.TYPE_ID,
                 byteBuffer);
         StateDao.insert(session, Collections.singletonList(state));
 
@@ -83,7 +83,7 @@ class TestStateDao extends AbstractCoreIntegrationTest {
         assertThat(res.map()).isEqualTo("TEST_MAP");
         assertThat(res.key()).isEqualTo("TEST_KEY");
         assertThat(res.effectiveTime()).isEqualTo(Instant.ofEpochMilli(0));
-        assertThat(res.typeId()).isEqualTo(ValueTypeId.STRING);
+        assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
         assertThat(new String(res.value().array(), StandardCharsets.UTF_8)).isEqualTo("test");
     }
 }

@@ -36,7 +36,9 @@ import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaHolder;
+import stroom.pipeline.xsltfunctions.StateLookup;
 import stroom.security.api.SecurityContext;
+import stroom.state.shared.StateDoc;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.NullSafe;
@@ -79,6 +81,7 @@ public class ReferenceData {
     private final PipelineStore pipelineStore;
     private final SecurityContext securityContext;
     private final TaskContextFactory taskContextFactory;
+    private final StateLookup stateLookup;
 
     @Inject
     ReferenceData(final EffectiveStreamService effectiveStreamService,
@@ -91,7 +94,8 @@ public class ReferenceData {
                   final RefDataLoaderHolder refDataLoaderHolder,
                   final PipelineStore pipelineStore,
                   final SecurityContext securityContext,
-                  final TaskContextFactory taskContextFactory) {
+                  final TaskContextFactory taskContextFactory,
+                  final StateLookup stateLookup) {
         this.effectiveStreamService = effectiveStreamService;
         this.feedHolder = feedHolder;
         this.metaHolder = metaHolder;
@@ -103,6 +107,7 @@ public class ReferenceData {
         this.pipelineStore = pipelineStore;
         this.securityContext = securityContext;
         this.taskContextFactory = taskContextFactory;
+        this.stateLookup = stateLookup;
     }
 
     /**
@@ -123,12 +128,6 @@ public class ReferenceData {
                                                                final ReferenceDataResult result) {
 
         LOGGER.debug("ensureReferenceDataAvailability({}, {})", lookupIdentifier, pipelineReferences);
-
-        // TODO @AT It would be better if the nested map logic was pushed down into the store so that the store
-        //   can accept nested map names. This would allow the store to do the lookup chain in a more efficient
-        //   way with the bytebuffer of the lookup value being used as the key for the next lookup.
-        //   You would still need to have code here to ensure that the data for all maps in the chain was loaded.
-
 
         // Do we have a nested map e.g a map of 'USER_ID_TO_MANAGER/USER_ID_TO_LOCATION' to get the location of a
         // user's manager using a chained lookup
@@ -235,9 +234,15 @@ public class ReferenceData {
             LOGGER.trace("doGetValue - processing pipelineReference {} for {}",
                     pipelineReference, lookupIdentifier);
 
-            // Handle context data differently loading it from the current stream context.
-            if (NullSafe.test(pipelineReference.getStreamType(), StreamTypeNames.CONTEXT::equals)) {
+            // Try the state store if it is present.
+            if (StateDoc.DOCUMENT_TYPE.equals(pipelineReference.getPipeline().getType())) {
+                // TODO : @66 TEMPORARY INTEGRATION OF STATE LOOKUP USING PIPELINE AS STATE DOC REFERENCE.
+                if (stateLookup != null) {
+                    stateLookup.lookup(pipelineReference.getPipeline(), lookupIdentifier, referenceDataResult);
+                }
 
+            } else if (NullSafe.test(pipelineReference.getStreamType(), StreamTypeNames.CONTEXT::equals)) {
+                // Handle context data differently loading it from the current stream context.
                 getValueFromNestedContextStream(
                         pipelineReference,
                         lookupIdentifier.getPrimaryMapName(),

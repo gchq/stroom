@@ -223,21 +223,6 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
         return getStoreName(docRef) + " Search";
     }
 
-
-//    }
-//
-//    @Override
-//    public void search(final ExpressionCriteria criteria, final FieldIndex fieldIndex, final ValuesConsumer consumer) {
-//        securityContext.useAsRead(() -> {
-//            final List<DocRef> list = stateDocStore.list();
-//            for (final DocRef docRef : list) {
-//                final CqlSession session = cqlSessionFactory.getSession(docRef);
-//                StateDao.search(session, criteria, fieldIndex, consumer);
-//                RangedStateDao.search(session, criteria, fieldIndex, consumer);
-//            }
-//        });
-//    }
-
     @Override
     public List<DocRef> list() {
         return stateDocStore.list();

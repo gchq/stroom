@@ -18,6 +18,7 @@
 package stroom.state.impl;
 
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.pipeline.refdata.store.StringValue;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.language.functions.FieldIndex;
 
@@ -29,6 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -36,7 +38,7 @@ class TestStateDao {
 
     @Test
     void testDao() {
-        try (final CqlSession session = ScyllaDbUtil.forTesting()) {
+        ScyllaDbUtil.test((session, keyspaceName) -> {
             StateDao.dropTables(session);
             StateDao.createTables(session);
 
@@ -45,7 +47,7 @@ class TestStateDao {
                     "TEST_MAP",
                     "TEST_KEY",
                     Instant.ofEpochMilli(0),
-                    ValueTypeId.STRING,
+                    StringValue.TYPE_ID,
                     byteBuffer);
             StateDao.insert(session, Collections.singletonList(state));
 
@@ -57,7 +59,7 @@ class TestStateDao {
             assertThat(res.map()).isEqualTo("TEST_MAP");
             assertThat(res.key()).isEqualTo("TEST_KEY");
             assertThat(res.effectiveTime()).isEqualTo(Instant.ofEpochMilli(0));
-            assertThat(res.typeId()).isEqualTo(ValueTypeId.STRING);
+            assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
             assertThat(new String(res.value().array(), StandardCharsets.UTF_8)).isEqualTo("test");
 
             final FieldIndex fieldIndex = new FieldIndex();
@@ -67,6 +69,6 @@ class TestStateDao {
                     values -> {
                         System.out.println(values);
                     });
-        }
+        });
     }
 }
