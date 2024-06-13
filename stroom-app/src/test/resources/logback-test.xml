@@ -21,6 +21,8 @@
     <logger name="stroom.proxy" level="info" />
 
     <logger name="stroom.db.util.SlowQueryExecuteListener" level="debug" />
+<!--    <logger name="stroom.db.util.DataSourceProxy" level="trace" />-->
+
 
 <!--    <logger name="stroom.pipeline.state.LocationHolder" level="INFO" />-->
 

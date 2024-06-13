@@ -30,7 +30,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-// TODO: 22/09/2023 This really ought to be an enum
+// Ideally this would be an enum, except for the fact that we have
+// somewhat dynamic 'Create ...' perm names (one for each doc type) that we don't
+// really want to hard code in. Shame.
 
 /**
  * Provide string constants for the permissions.
@@ -76,7 +78,7 @@ public final class DocumentPermissionNames {
     public static final String[] DOCUMENT_PERMISSIONS = new String[]{USE, READ, UPDATE, DELETE, OWNER};
     public static final Set<String> DOCUMENT_PERMISSIONS_SET = Collections.unmodifiableSet(
             Arrays.stream(DOCUMENT_PERMISSIONS)
-            .collect(Collectors.toSet()));
+                    .collect(Collectors.toSet()));
 
     private static final Map<String, String> LOWER_PERMISSIONS = new HashMap<>();
     private static final Map<String, String> HIGHER_PERMISSIONS = new HashMap<>();
@@ -323,4 +325,122 @@ public final class DocumentPermissionNames {
             return DIRECT.equals(this);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // Wrote this enum before remembering about the type specific 'Create ...' perms. doh!!
+    // Leaving it here in case we can think of a neater way of passing doc perm names around
+
+//    public enum DocumentPermission implements HasDisplayValue {
+//        // --IMPORTANT --
+//        // The order of capabilityLevel values is important. Values can be changed if new perms are added
+//        // but the capabilityLevel must be set such that a doc perm with a higher capabilityLevel
+//        // inherits all doc perms with a lower capabilityLevel. Values do not have to be contiguous
+//        // or start from 0. capabilityLevel should not be used outside this class.
+//        // --IMPORTANT --
+//        USE("Use", 0, PermissionType.NON_DESTRUCTIVE),
+//        CREATE("Create", 1, PermissionType.NON_DESTRUCTIVE),
+//        READ("Read", 2, PermissionType.NON_DESTRUCTIVE),
+//        UPDATE("Update", 3, PermissionType.DESTRUCTIVE),
+//        DELETE("Delete", 4, PermissionType.DESTRUCTIVE),
+//        OWNER("Owner", 5, PermissionType.DESTRUCTIVE),
+//        ;
+//
+//        private static final Set<DocumentPermission> DOCUMENT_PERMISSIONS_SET =
+//                EnumSet.allOf(DocumentPermission.class);
+//
+//        private static final List<DocumentPermission> SORTED_DOCUMENT_PERMISSIONS = valuesSet().stream()
+//                .sorted(Comparator.comparing(docPerm -> docPerm.capabilityLevel))
+//                .collect(Collectors.toList());
+//
+//        private static final Map<DocumentPermission, PermissionType> PERM_TO_PERM_TYPE_MAP =
+//                new EnumMap<>(DOCUMENT_PERMISSIONS_SET.stream()
+//                        .collect(Collectors.toMap(Function.identity(), DocumentPermission::getPermissionType)));
+//
+//        static {
+//            final List<DocumentPermission> sortedDocPerms = sortedValues();
+//            final int cnt = sortedDocPerms.size();
+//            for (int i = 0; i < sortedDocPerms.size(); i++) {
+//                final DocumentPermission docPerm = sortedDocPerms.get(i);
+//                // some will get set twice, but to the same val so is not a big issue as this
+//                // is static initialiser
+//                if (i >= 1) {
+//                    final DocumentPermission prevDocPerm = sortedDocPerms.get(i - 1);
+//                    docPerm.previous = prevDocPerm;
+//                    prevDocPerm.next = docPerm;
+//                }
+//                if (i < cnt - 1) {
+//                    final DocumentPermission nextDocPerm = sortedDocPerms.get(i + 1);
+//                    docPerm.next = nextDocPerm;
+//                    nextDocPerm.previous = docPerm;
+//                }
+//            }
+//        }
+//
+//        private final String displayValue;
+//        private final PermissionType permissionType;
+//        private final int capabilityLevel;
+//
+//        private DocumentPermission next;
+//        private DocumentPermission previous;
+//
+//        DocumentPermission(final String displayValue,
+//                           final int capabilityLevel,
+//                           final PermissionType permissionType) {
+//            this.displayValue = displayValue;
+//            this.permissionType = permissionType;
+//            this.capabilityLevel = capabilityLevel;
+//        }
+//
+//        /**
+//         * @return The {@link DocumentPermission} with a higher capability than this or null
+//         * if this is the highest.
+//         */
+//        public DocumentPermission getHigherPermission() {
+//            return next;
+//        }
+//
+//        /**
+//         * @return The {@link DocumentPermission} with a lower capability than this or null
+//         * if this is the lowest.
+//         */
+//        public DocumentPermission getLowerPermission() {
+//            return previous;
+//        }
+//
+//        /**
+//         * @return The value used for display and DB persistence.
+//         */
+//        public String getDisplayValue() {
+//            return displayValue;
+//        }
+//
+//        public PermissionType getPermissionType() {
+//            return permissionType;
+//        }
+//
+//        /**
+//         * @return The {@link DocumentPermission#values()} as a {@link Set}.
+//         */
+//        public static Set<DocumentPermission> valuesSet() {
+//            return DOCUMENT_PERMISSIONS_SET;
+//        }
+//
+//        /**
+//         * In ascending order of capability
+//         */
+//        public static List<DocumentPermission> sortedValues() {
+//            return SORTED_DOCUMENT_PERMISSIONS;
+//        }
+//
+//        public static DocumentPermission getLowerPermission(final DocumentPermission permission) {
+//            return GwtNullSafe.get(permission, docPerm -> docPerm.getLowerPermission());
+//        }
+//
+//        public static DocumentPermission getHigherPermission(final DocumentPermission permission) {
+//            return GwtNullSafe.get(permission, docPerm -> docPerm.getHigherPermission());
+//        }
+//    }
 }

@@ -186,16 +186,36 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     @Override
     public void clearDocumentPermissions(final String docUuid) {
         LOGGER.debug("clearDocumentPermissions() - docUuid: {}", docUuid);
+        // This is changing the perms of an existing doc, so needs OWNER perms.
+        clearDocumentPermissions(docUuid, DocumentPermissionNames.OWNER);
+    }
+
+    @Override
+    public void deleteDocumentPermissions(final String docUuid) {
+        LOGGER.debug("deleteDocumentPermissions() - docUuid: {}", docUuid);
+        // This is deleting perms of a deleted doc, so only needs DELETE perms.
+        clearDocumentPermissions(docUuid, DocumentPermissionNames.DELETE);
+    }
+
+    @Override
+    public void deleteDocumentPermissions(final Set<String> docUuids) {
+        if (NullSafe.hasItems(docUuids)) {
+            documentPermissionDao.clearDocumentPermissionsForDocs(docUuids);
+            docUuids.forEach(docUuid ->
+                    ClearDocumentPermissionsEvent.fire(permissionChangeEventBus, docUuid));
+        }
+    }
+
+    private void clearDocumentPermissions(final String docUuid, final String requireDocPermission) {
         // Get the current user.
         final UserIdentity userIdentity = securityContext.getUserIdentity();
 
         // If no user is present then don't clear permissions.
         if (userIdentity != null) {
-            if (securityContext.hasDocumentPermission(docUuid, DocumentPermissionNames.OWNER)) {
-                documentPermissionDao.clearDocumentPermissions(docUuid);
+            if (securityContext.hasDocumentPermission(docUuid, requireDocPermission)) {
+                documentPermissionDao.clearDocumentPermissionsForDoc(docUuid);
             }
         }
-
         ClearDocumentPermissionsEvent.fire(permissionChangeEventBus, docUuid);
     }
 

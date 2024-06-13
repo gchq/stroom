@@ -10,9 +10,11 @@ import jakarta.inject.Singleton;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 @Singleton
 public class MockProcessorFilterDao implements ProcessorFilterDao, Clearable {
@@ -58,8 +60,8 @@ public class MockProcessorFilterDao implements ProcessorFilterDao, Clearable {
     }
 
     @Override
-    public int physicalDeleteOldProcessorFilters(final Instant deleteThreshold) {
-        return 0;
+    public Set<String> physicalDeleteOldProcessorFilters(final Instant deleteThreshold) {
+        return Collections.emptySet();
     }
 
     @Override

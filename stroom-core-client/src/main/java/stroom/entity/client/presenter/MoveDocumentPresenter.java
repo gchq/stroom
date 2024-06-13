@@ -113,11 +113,19 @@ public class MoveDocumentPresenter
                 .fire();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     @Override
     public synchronized void setTaskListener(final TaskListener taskListener) {
         super.setTaskListener(taskListener);
         entityTreePresenter.setTaskListener(taskListener);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface MoveDocumentView extends View {
 
@@ -127,6 +135,10 @@ public class MoveDocumentPresenter
 
         void setPermissionInheritance(PermissionInheritance permissionInheritance);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     @ProxyCodeSplit
     public interface MoveDocumentProxy extends Proxy<MoveDocumentPresenter> {

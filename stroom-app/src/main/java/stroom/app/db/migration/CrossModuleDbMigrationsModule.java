@@ -12,7 +12,10 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import org.flywaydb.core.api.migration.JavaMigration;
 
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 import javax.sql.DataSource;
 
@@ -39,9 +42,8 @@ public class CrossModuleDbMigrationsModule
         // the same DB/host. Java migrations must inject the dbConnProvider for each
         // module that they want to deal with, accepting that
         // Order doesn't matter here, but you are going to sort them aren't you.
-        GuiceUtil.buildMultiBinder(binder(), AbstractCrossModuleJavaDbMigration.class);
-//                .addBinding(V07_04_00_005__Vol_Grp_Name_to_UUID.class);
-
+        GuiceUtil.buildMultiBinder(binder(), AbstractCrossModuleJavaDbMigration.class)
+                .addBinding(V07_04_00_005__Orphaned_Doc_Perms.class);
     }
 
     @Override
@@ -69,24 +71,50 @@ public class CrossModuleDbMigrationsModule
     protected boolean performMigration(final DataSource dataSource, final Injector injector) {
 
         // Force all module data sources to be created, so we can be sure all db modules are
-        // up-to-date in order for us to do cross-module migrations
-        final Set<DataSource> dataSources = injector.getInstance(
-                Key.get(GuiceUtil.setOf(DataSource.class)));
+        // fully migrated in order for us to do cross-module migrations
+        injector.getInstance(Key.get(GuiceUtil.setOf(DataSource.class)));
 
         // Get all our app-wide java migs
-        final Set<JavaMigration> javaMigrations = injector.getInstance(
-                        Key.get(GuiceUtil.setOf(AbstractCrossModuleJavaDbMigration.class)))
-                .stream()
-                .map(obj -> (JavaMigration) obj)
-                .collect(Collectors.toSet());
+        final List<JavaMigration> javaMigrations = getCrossModuleMigrations(injector);
+
+        // Add any additional migs, i.e. test data for migration testing
+//        javaMigrations.addAll(getAdditionalMigrations(injector));
+
+        // Add any additional migs, i.e. test data for migration testing
+        getAdditionalMigrationClasses().stream()
+                .map(injector::getInstance)
+                .forEach(javaMigrations::add);
+
+        LOGGER.info("Using migrations classes:\n{}",
+                javaMigrations.stream()
+                        .sorted(Comparator.comparing(JavaMigration::getVersion))
+                        .map(migration -> "  " + migration.getVersion() + " - " + migration.getClass().getName())
+                        .collect(Collectors.joining("\n")));
 
         FlywayUtil.migrate(
                 dataSource,
                 javaMigrations, // Guice injected java migrations only
-                getMigrationTarget().orElse(null),
+                getMigrationTarget().orElse(null), // Where to migrate up to
                 getFlyWayTableName(),
                 getModuleName());
         return true;
+    }
+
+    protected List<JavaMigration> getCrossModuleMigrations(final Injector injector) {
+        return injector.getInstance(
+                        Key.get(GuiceUtil.setOf(AbstractCrossModuleJavaDbMigration.class)))
+                .stream()
+                .map(obj -> (JavaMigration) obj)
+                .collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    /**
+     * This gets overridden for testing to allow the test migration to be added in.
+     * Order doesn't matter as the migrations will be ordered by
+     * {@link org.flywaydb.core.api.MigrationVersion} anyway.
+     */
+    protected List<Class<? extends JavaMigration>> getAdditionalMigrationClasses() {
+        return Collections.emptyList();
     }
 
 
