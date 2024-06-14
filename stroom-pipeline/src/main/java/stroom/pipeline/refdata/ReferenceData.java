@@ -477,13 +477,15 @@ public class ReferenceData {
                 final EffectiveMeta effectiveStream = optEffectiveStream.get();
 
                 result.logLazyTemplate(Severity.INFO,
-                        "Checking effective stream: {} feed: '{}' for presence of map '{}' " +
-                                "(effective time: {}, lookup time: {})",
-                        () -> Arrays.asList(effectiveStream.getId(),
-                                pipelineReference.getFeed().getName(),
+                        "Checking effective stream: {} in feed: '{}' for presence of map '{}' " +
+                                "(stream effective time: {}, lookup time: {}, pipeline feed: '{}')",
+                        () -> Arrays.asList(
+                                effectiveStream.getId(),
+                                effectiveStream.getFeedName(),
                                 mapName,
                                 Instant.ofEpochMilli(effectiveStream.getEffectiveMs()).toString(),
-                                Instant.ofEpochMilli(time).toString()));
+                                Instant.ofEpochMilli(time).toString(),
+                                pipelineReference.getFeed().getName()));
 
                 final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                         pipelineReference.getPipeline(),
