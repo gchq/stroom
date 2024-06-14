@@ -47,7 +47,7 @@ LATEST_SUFFIX="-LATEST"
 # It is used to determine which releases we push the swagger ui to ghpages for
 # As 7 is still in beta, this is currently 6.1
 # The version of stroom-resources used for running the DB
-STROOM_RESOURCES_GIT_TAG="stroom-stacks-v7.5-beta.1-proxy-v7.0.32"
+STROOM_RESOURCES_GIT_TAG="260227a79407cb9137390240fcc97f2edc7aa866"
 SWAGGER_UI_GIT_TAG="v3.49.0"
 doDockerBuild=false
 STROOM_RESOURCES_DIR="${BUILD_DIR}/stroom-resources" 
