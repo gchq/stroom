@@ -1,17 +1,16 @@
 package stroom.state.impl.pipeline;
 
+import stroom.pipeline.refdata.store.StringValue;
 import stroom.state.impl.ScyllaDbUtil;
 import stroom.state.impl.State;
 import stroom.state.impl.StateDao;
 import stroom.state.impl.StateRequest;
-import stroom.state.impl.ValueTypeId;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 
-import com.datastax.oss.driver.api.core.CqlSession;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -45,7 +44,7 @@ class TestStateLookupImpl {
     @Disabled // Manual run only
     @Test
     void perfTest() {
-        try (final CqlSession session = ScyllaDbUtil.forTesting()) {
+        ScyllaDbUtil.test((session, keyspace) -> {
             StateDao.dropTables(session);
             StateDao.createTables(session);
 
@@ -94,7 +93,7 @@ class TestStateLookupImpl {
                         final State state = new State(mapName,
                                 buildKey(keyIdx),
                                 strmTime,
-                                ValueTypeId.STRING,
+                                StringValue.TYPE_ID,
                                 byteBuffer);
                         batch.add(state);
                         if (idxInBatch++ >= batchSize - 1) {
@@ -150,7 +149,7 @@ class TestStateLookupImpl {
             LOGGER.info("Completed {} single thread lookups in {}",
                     ModelStringUtil.formatCsv(totalKeyValueEntryCount),
                     timer);
-        }
+        });
     }
 
     private String buildKey(final int k) {
