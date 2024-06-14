@@ -19,7 +19,7 @@ public class ScyllaDbUtil {
     public static final String DEFAULT_CONNECTION_YAML = """
             # See full reference https://github.com/apache/cassandra-java-driver/blob/4.0.1/core/src/main/resources/reference.conf
             datastax-java-driver {
-                basic.contact-points = [ "127.0.0.1:9042" ]
+                basic.contact-points = [ "localhost:9042" ]
                 basic.session-name = my_session
                 # basic.session-keyspace = state
                 basic.load-balancing-policy {
@@ -33,30 +33,23 @@ public class ScyllaDbUtil {
     public static final String DEFAULT_KEYSPACE = "state";
     public static final String DEFAULT_KEYSPACE_CQL = createKeyspaceCql(DEFAULT_KEYSPACE);
 
-//    public static CqlSession forTesting(final String keyspaceName) {
-//        try (final CqlSession session = builder(DEFAULT_CONNECTION_YAML).build()) {
-//            session.execute(createKeyspaceCql(keyspaceName));
-//        }
-//        return keyspace(DEFAULT_CONNECTION_YAML, keyspaceName);
-//    }
-
     public static void test(final BiConsumer<CqlSession, String> consumer) {
         final String keyspaceName = "test" + UUID.randomUUID().toString().replaceAll("-", "");
-        System.out.println("Using keyspace name: " + keyspaceName);
+        LOGGER.info(() -> "Using keyspace name: " + keyspaceName);
         try {
             try (final CqlSession session = builder(DEFAULT_CONNECTION_YAML).build()) {
-                System.out.println("Creating keyspace: " + keyspaceName);
+                LOGGER.info(() -> "Creating keyspace: " + keyspaceName);
                 session.execute(createKeyspaceCql(keyspaceName));
-                System.out.println("Created keyspace: " + keyspaceName);
+                LOGGER.info(() -> "Created keyspace: " + keyspaceName);
             }
             try (final CqlSession ks = keyspace(DEFAULT_CONNECTION_YAML, keyspaceName)) {
                 consumer.accept(ks, keyspaceName);
             }
         } finally {
             try (final CqlSession session2 = builder(DEFAULT_CONNECTION_YAML).build()) {
-                System.out.println("Dropping keyspace: " + keyspaceName);
+                LOGGER.info(() -> "Dropping keyspace: " + keyspaceName);
                 session2.execute(dropKeyspaceCql(keyspaceName));
-                System.out.println("Dropped keyspace: " + keyspaceName);
+                LOGGER.info(() -> "Dropped keyspace: " + keyspaceName);
             }
         }
     }
@@ -88,14 +81,6 @@ public class ScyllaDbUtil {
     public static CqlSessionBuilder builder(final String connectionYaml) {
         return CqlSession.builder().withConfigLoader(DriverConfigLoader.fromString(connectionYaml));
     }
-
-//    public static void createKeyspace(final CqlSession session, final String keyspaceCql) {
-//        session.execute(keyspaceCql);
-//    }
-//
-//    public static void dropKeyspace(final CqlSession session, final String keyspaceCql) {
-//        session.execute(keyspaceCql);
-//    }
 
     public static void printMetadata(final CqlSession session, final String keyspaceName) {
         LOGGER.info("Print metadata...");
