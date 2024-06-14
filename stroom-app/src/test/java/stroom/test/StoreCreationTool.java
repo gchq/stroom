@@ -399,11 +399,16 @@ public final class StoreCreationTool {
                               final Path dataLocation,
                               final Path contextLocation,
                               final Set<DocRef> referenceFeeds) throws IOException {
-        commonTestControl.createRequiredXMLSchemas();
-
         getEventFeed(feedName, translationTextConverterType, translationTextConverterLocation,
                 translationXsltLocation, contextTextConverterType, contextTextConverterLocation, contextXsltLocation,
                 flatteningXsltLocation, referenceFeeds);
+
+        loadEventData(feedName, dataLocation, contextLocation);
+    }
+
+    public void loadEventData(final String feedName,
+                              final Path dataLocation,
+                              final Path contextLocation) throws IOException {
 
         // Add the associated data to the stream store.
         final MetaProperties metaProperties = MetaProperties.builder()
@@ -439,16 +444,8 @@ public final class StoreCreationTool {
         }
     }
 
-    private DocRef getEventFeed(final String feedName,
-                                final TextConverterType translationTextConverterType,
-                                final Path translationTextConverterLocation,
-                                final Path translationXsltLocation,
-                                final TextConverterType contextTextConverterType,
-                                final Path contextTextConverterLocation,
-                                final Path contextXsltLocation,
-                                final Path flatteningXsltLocation,
-                                final Set<DocRef> referenceFeeds) {
-        final List<PipelineReference> pipelineReferences = new ArrayList<>();
+    public DocRef getOrCreateFeedDoc(final String feedName) {
+        commonTestControl.createRequiredXMLSchemas();
 
         DocRef docRef;
         final List<DocRef> docRefs = feedStore.findByName(feedName);
@@ -463,6 +460,54 @@ public final class StoreCreationTool {
             feedDoc.setStatus(FeedStatus.RECEIVE);
             feedStore.writeDocument(feedDoc);
         }
+        return docRef;
+    }
+
+    public void createEventPipelineAndProcessors(final String feedName,
+                                                 final TextConverterType translationTextConverterType,
+                                                 final Path translationTextConverterLocation,
+                                                 final Path translationXsltLocation,
+                                                 final Path flatteningXsltLocation,
+                                                 final List<PipelineReference> pipelineReferences) {
+        // Create the event pipeline.
+        final DocRef pipelineRef = getEventPipeline(feedName, translationTextConverterType,
+                translationTextConverterLocation, translationXsltLocation, flatteningXsltLocation, pipelineReferences);
+
+        final Processor streamProcessor = processorService
+                .find(new ExpressionCriteria(ProcessorExpressionUtil.createPipelineExpression(pipelineRef)))
+                .getFirst();
+        if (streamProcessor == null) {
+            // Setup the stream processor filter.
+            final QueryData findStreamQueryData = QueryData.builder()
+                    .dataSource(MetaFields.STREAM_STORE_DOC_REF)
+                    .expression(ExpressionOperator.builder()
+                            .addDateTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName)
+                            .addDateTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                            .build())
+                    .build();
+
+            processorFilterService.create(
+                    CreateProcessFilterRequest
+                            .builder()
+                            .pipeline(pipelineRef)
+                            .queryData(findStreamQueryData)
+                            .priority(1)
+                            .build());
+        }
+    }
+
+    private DocRef getEventFeed(final String feedName,
+                                final TextConverterType translationTextConverterType,
+                                final Path translationTextConverterLocation,
+                                final Path translationXsltLocation,
+                                final TextConverterType contextTextConverterType,
+                                final Path contextTextConverterLocation,
+                                final Path contextXsltLocation,
+                                final Path flatteningXsltLocation,
+                                final Set<DocRef> referenceFeeds) {
+        final List<PipelineReference> pipelineReferences = new ArrayList<>();
+
+        final DocRef docRef = getOrCreateFeedDoc(feedName);
 
         // Add context data loader pipeline.
         final DocRef contextPipeline = getContextPipeline(feedName, contextTextConverterType,
@@ -484,30 +529,13 @@ public final class StoreCreationTool {
         }
 
         // Create the event pipeline.
-        final DocRef pipelineRef = getEventPipeline(feedName, translationTextConverterType,
-                translationTextConverterLocation, translationXsltLocation, flatteningXsltLocation, pipelineReferences);
-
-        final Processor streamProcessor = processorService
-                .find(new ExpressionCriteria(ProcessorExpressionUtil.createPipelineExpression(pipelineRef)))
-                .getFirst();
-        if (streamProcessor == null) {
-            // Setup the stream processor filter.
-            final QueryData findStreamQueryData = QueryData.builder()
-                    .dataSource(MetaFields.STREAM_STORE_DOC_REF)
-                    .expression(ExpressionOperator.builder()
-                            .addDateTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, docRef.getName())
-                            .addDateTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
-                            .build())
-                    .build();
-
-            processorFilterService.create(
-                    CreateProcessFilterRequest
-                            .builder()
-                            .pipeline(pipelineRef)
-                            .queryData(findStreamQueryData)
-                            .priority(1)
-                            .build());
-        }
+        createEventPipelineAndProcessors(
+                feedName,
+                translationTextConverterType,
+                translationTextConverterLocation,
+                translationXsltLocation,
+                flatteningXsltLocation,
+                pipelineReferences);
 
         return docRef;
     }
@@ -1013,7 +1041,9 @@ public final class StoreCreationTool {
         feedNode = explorerService.create(FeedDoc.DOCUMENT_TYPE, feedName,
                 ExplorerConstants.SYSTEM_NODE,
                 PermissionInheritance.DESTINATION);
-        final DocRef feedDocRef = feedNode != null ? feedNode.getDocRef() : feedStore.createDocument(feedName);
+        final DocRef feedDocRef = feedNode != null
+                ? feedNode.getDocRef()
+                : feedStore.createDocument(feedName);
         FeedDoc feedDoc = feedStore.readDocument(feedDocRef);
         feedDoc.setReference(isReference);
         feedDoc.setEncoding(encoding);

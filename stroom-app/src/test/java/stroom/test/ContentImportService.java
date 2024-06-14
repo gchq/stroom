@@ -45,7 +45,8 @@ public class ContentImportService {
                 ContentPacks.CORE_XML_SCHEMAS_PACK,
                 ContentPacks.EVENT_LOGGING_XML_SCHEMA_PACK,
                 ContentPacks.TEMPLATE_PIPELINES_PACK,
-                ContentPacks.STANDARD_PIPELINES_PACK
+                ContentPacks.STANDARD_PIPELINES_PACK,
+                ContentPacks.STATE
         ));
     }
 

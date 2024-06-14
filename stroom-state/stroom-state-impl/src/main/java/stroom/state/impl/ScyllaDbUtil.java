@@ -38,7 +38,7 @@ public class ScyllaDbUtil {
 
     public static void test(final BiConsumer<CqlSession, String> consumer) {
         final String connectionYaml = getDefaultConnection();
-        final String keyspaceName = "test" + UUID.randomUUID().toString().replaceAll("-", "");
+        final String keyspaceName = createTestKeyspaceName();
         LOGGER.info(() -> "Using keyspace name: " + keyspaceName);
         try {
             try (final CqlSession session = builder(connectionYaml).build()) {
@@ -56,6 +56,10 @@ public class ScyllaDbUtil {
                 LOGGER.info(() -> "Dropped keyspace: " + keyspaceName);
             }
         }
+    }
+
+    public static String createTestKeyspaceName() {
+        return "test" + UUID.randomUUID().toString().replaceAll("-", "");
     }
 
     public static String getDefaultConnection() {
