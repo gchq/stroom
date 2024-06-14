@@ -116,7 +116,7 @@ start_databases() {
   #export JAVA_OPTS=-Xmx1024m
   #echo -e "JAVA_OPTS: [${GREEN}$JAVA_OPTS${NC}]"
 
-  echo -e "${GREEN}Starting stroom-all-dbs and scylladb in the background${NC}"
+  echo -e "${GREEN}Starting [${dbs_to_start[*]}] in the background${NC}"
   ./bounceIt.sh \
     'up -d --build' \
     -y \
@@ -567,7 +567,7 @@ docker_login
 
 check_for_out_of_date_puml_svgs
 
-echo "::group::Start stroom-all-dbs"
+echo "::group::Start stroom-all-dbs & scylladb"
 start_databases stroom-all-dbs scylladb
 echo "::endgroup::"
 
