@@ -18,8 +18,8 @@ public class TestScyllaDbUtil {
     @Test
     void reset() {
         try (final CqlSession session = ScyllaDbUtil.keyspace(
-                ScyllaDbUtil.DEFAULT_CONNECTION_YAML,
-                ScyllaDbUtil.DEFAULT_KEYSPACE)) {
+                ScyllaDbUtil.getDefaultConnectionYaml(),
+                ScyllaDbUtil.getDefaultKeyspace())) {
             StateDao.dropTables(session);
             StateDao.createTables(session);
             RangedStateDao.dropTables(session);
@@ -42,9 +42,9 @@ public class TestScyllaDbUtil {
     @Test
     void dumpState() {
         try (final CqlSession session = ScyllaDbUtil.keyspace(
-                ScyllaDbUtil.DEFAULT_CONNECTION_YAML,
-                ScyllaDbUtil.DEFAULT_KEYSPACE)) {
-            ScyllaDbUtil.printMetadata(session, ScyllaDbUtil.DEFAULT_KEYSPACE);
+                ScyllaDbUtil.getDefaultConnectionYaml(),
+                ScyllaDbUtil.getDefaultKeyspace())) {
+            ScyllaDbUtil.printMetadata(session, ScyllaDbUtil.getDefaultKeyspace());
 
             final String cql = """
                     SELECT map, key, effective_time, type_id, value
@@ -89,9 +89,9 @@ public class TestScyllaDbUtil {
     @Test
     void dumpRangedState() {
         try (final CqlSession session = ScyllaDbUtil.keyspace(
-                ScyllaDbUtil.DEFAULT_CONNECTION_YAML,
-                ScyllaDbUtil.DEFAULT_KEYSPACE)) {
-            ScyllaDbUtil.printMetadata(session, ScyllaDbUtil.DEFAULT_KEYSPACE);
+                ScyllaDbUtil.getDefaultConnectionYaml(),
+                ScyllaDbUtil.getDefaultKeyspace())) {
+            ScyllaDbUtil.printMetadata(session, ScyllaDbUtil.getDefaultKeyspace());
 
             final String cql = """
                     SELECT map, key_start, key_end, effective_time, type_id, value

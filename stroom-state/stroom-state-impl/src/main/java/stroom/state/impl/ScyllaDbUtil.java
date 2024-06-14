@@ -19,7 +19,7 @@ public class ScyllaDbUtil {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ScyllaDbUtil.class);
 
-    public static final String DEFAULT_CONNECTION_YAML = """
+    private static final String DEFAULT_CONNECTION_YAML = """
             # See full reference https://github.com/apache/cassandra-java-driver/blob/4.0.1/core/src/main/resources/reference.conf
             datastax-java-driver {
                 basic.contact-points = [ "localhost:9042" ]
@@ -33,11 +33,11 @@ public class ScyllaDbUtil {
                 }
             }
             """;
-    public static final String DEFAULT_KEYSPACE = "state";
-    public static final String DEFAULT_KEYSPACE_CQL = createKeyspaceCql(DEFAULT_KEYSPACE);
+    private static final String DEFAULT_KEYSPACE = "state";
+    private static final String DEFAULT_KEYSPACE_CQL = createKeyspaceCql(DEFAULT_KEYSPACE);
 
     public static void test(final BiConsumer<CqlSession, String> consumer) {
-        final String connectionYaml = getTestConnectionYaml();
+        final String connectionYaml = getDefaultConnectionYaml();
         final String keyspaceName = "test" + UUID.randomUUID().toString().replaceAll("-", "");
         LOGGER.info(() -> "Using keyspace name: " + keyspaceName);
         try {
@@ -58,7 +58,7 @@ public class ScyllaDbUtil {
         }
     }
 
-    private static String getTestConnectionYaml() {
+    public static String getDefaultConnectionYaml() {
         // Allow the db conn details to be overridden with env vars, e.g. when we want to run tests
         // from within a container so we need a different host to localhost
         final String effectiveHost = getValueOrOverride(
@@ -68,6 +68,14 @@ public class ScyllaDbUtil {
                 Function.identity());
 
         return DEFAULT_CONNECTION_YAML.replaceAll("localhost", effectiveHost);
+    }
+
+    public static String getDefaultKeyspace() {
+        return DEFAULT_KEYSPACE;
+    }
+
+    public static String getDefaultKeyspaceCql() {
+        return DEFAULT_KEYSPACE_CQL;
     }
 
     public static String createKeyspaceCql(final String keyspaceName) {
