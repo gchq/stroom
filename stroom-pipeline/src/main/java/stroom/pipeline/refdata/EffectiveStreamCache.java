@@ -168,7 +168,6 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
         if (effectiveStreams == null) {
             LOGGER.debug("Effective stream set is null, key: {}", key);
         } else {
-
             final String streamsStr = effectiveStreamsToString(effectiveStreams);
 
             LOGGER.debug("Effective streams ({}) of size {}, key: {}, streams:\n{}",
@@ -185,7 +184,7 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
             final List<String> sortedStringMetas = effectiveStreams.stream()
                     .sorted(Comparator.comparing(EffectiveMeta::getEffectiveMs))
                     .map(LogUtil::toStringWithoutClassName)
-                    .collect(Collectors.toList());
+                    .toList();
 
             Stream<String> stream = sortedStringMetas.stream();
 
@@ -210,40 +209,44 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
                                           final Collection<EffectiveMeta> effectiveStreamSet,
                                           final String msg) {
 
-        LOGGER.debug("Validating effectiveStreamSet ({}) for key: {}", msg, key);
+        try {
+            LOGGER.debug("Validating effectiveStreamSet ({}) for key: {}", msg, key);
 
-        // None of this should ever happen unless we have a problem somewhere
+            // None of this should ever happen unless we have a problem somewhere
 
-        final Set<String> invalidFeedNames = effectiveStreamSet.stream()
-                .map(EffectiveMeta::getFeedName)
-                .filter(feedName -> !Objects.equals(feedName, key.getFeed()))
-                .collect(Collectors.toCollection(TreeSet::new));
+            final Set<String> invalidFeedNames = effectiveStreamSet.stream()
+                    .map(EffectiveMeta::getFeedName)
+                    .filter(feedName -> !Objects.equals(feedName, key.getFeed()))
+                    .collect(Collectors.toCollection(TreeSet::new));
 
-        if (!invalidFeedNames.isEmpty()) {
-            LOGGER.error("Found {} incorrect feed names {} " +
-                            "in effectiveStreamSet for key {}",
-                    invalidFeedNames.size(), invalidFeedNames, key);
-        }
+            if (!invalidFeedNames.isEmpty()) {
+                LOGGER.error("Found {} incorrect feed names {} " +
+                                "in effectiveStreamSet for key {}",
+                        invalidFeedNames.size(), invalidFeedNames, key);
+            }
 
-        final Set<String> invalidTypes = effectiveStreamSet.stream()
-                .map(EffectiveMeta::getTypeName)
-                .filter(typeName -> !Objects.equals(typeName, key.getStreamType()))
-                .collect(Collectors.toCollection(TreeSet::new));
+            final Set<String> invalidTypes = effectiveStreamSet.stream()
+                    .map(EffectiveMeta::getTypeName)
+                    .filter(typeName -> !Objects.equals(typeName, key.getStreamType()))
+                    .collect(Collectors.toCollection(TreeSet::new));
 
-        if (!invalidTypes.isEmpty()) {
-            LOGGER.error("Found {} incorrect stream type names {} " +
-                            "in effectiveStreamSet for key {}",
-                    invalidTypes.size(), invalidTypes, key);
-        }
+            if (!invalidTypes.isEmpty()) {
+                LOGGER.error("Found {} incorrect stream type names {} " +
+                                "in effectiveStreamSet for key {}",
+                        invalidTypes.size(), invalidTypes, key);
+            }
 
-        final Set<EffectiveMeta> metasOutsideKeyWindow = effectiveStreamSet.stream()
-                .filter(effectiveMeta -> !key.isTimeInKeyWindow(effectiveMeta.getEffectiveMs()))
-                .collect(Collectors.toCollection(TreeSet::new));
+            final Set<EffectiveMeta> metasOutsideKeyWindow = effectiveStreamSet.stream()
+                    .filter(effectiveMeta -> !key.isTimeInKeyWindow(effectiveMeta.getEffectiveMs()))
+                    .collect(Collectors.toCollection(TreeSet::new));
 
-        if (!metasOutsideKeyWindow.isEmpty()) {
-            LOGGER.error("Found {} effective streams with an effective time " +
-                            "outside the key window. key: {}, invalid effective streams:\n{}",
-                    metasOutsideKeyWindow.size(), key, effectiveStreamsToString(metasOutsideKeyWindow));
+            if (!metasOutsideKeyWindow.isEmpty()) {
+                LOGGER.error("Found {} effective streams with an effective time " +
+                                "outside the key window. key: {}, invalid effective streams:\n{}",
+                        metasOutsideKeyWindow.size(), key, effectiveStreamsToString(metasOutsideKeyWindow));
+            }
+        } catch (RuntimeException e) {
+            LOGGER.error("Error in validateStreamSet", e);
         }
     }
 
