@@ -63,16 +63,11 @@ public class TestScyllaDbUtil {
                         row.getByte(3),
                         row.getByteBuffer(4));
 
-                String value = state.value().toString();
-                if (state.typeId() == StringValue.TYPE_ID) {
-                    value = new String(state.value().array(), StandardCharsets.UTF_8);
-                }
-
                 System.out.println("map: " + state.map() +
                         ", key: " + state.key() +
                         ", effectiveTime: " + state.effectiveTime() +
                         ", typeId: " + state.typeId() +
-                        ", value: " + value);
+                        ", value: " + state.getValueAsString());
             });
 
 

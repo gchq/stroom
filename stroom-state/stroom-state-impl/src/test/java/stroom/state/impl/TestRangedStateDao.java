@@ -57,7 +57,7 @@ class TestRangedStateDao {
             assertThat(res.key()).isEqualTo("11");
             assertThat(res.effectiveTime()).isEqualTo(Instant.ofEpochMilli(0));
             assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
-            assertThat(new String(res.value().array(), StandardCharsets.UTF_8)).isEqualTo("test");
+            assertThat(res.getValueAsString()).isEqualTo("test");
         });
     }
 }

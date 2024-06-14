@@ -19,7 +19,6 @@ import net.sf.saxon.trans.XPathException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -65,23 +64,23 @@ public class StateValueProxy implements RefDataValueProxy {
     public Optional<RefDataValue> supplyValue() {
         switch (state.typeId()) {
             case StringValue.TYPE_ID -> {
-                return Optional.of(new StringValue(new String(state.value().array(), StandardCharsets.UTF_8)));
+                return Optional.of(new StringValue(state.getValueAsString()));
             }
             case FastInfosetValue.TYPE_ID -> {
-                return Optional.of(new FastInfosetValue(state.value()));
+                return Optional.of(new FastInfosetValue(state.value().duplicate()));
             }
             case NullValue.TYPE_ID -> {
                 return Optional.of(NullValue.getInstance());
             }
             default -> {
-                return Optional.of(new UnknownRefDataValue(state.value()));
+                return Optional.of(new UnknownRefDataValue(state.value().duplicate()));
             }
         }
     }
 
     @Override
     public boolean consumeBytes(final Consumer<TypedByteBuffer> typedByteBufferConsumer) {
-        typedByteBufferConsumer.accept(new TypedByteBuffer(state.typeId(), state.value()));
+        typedByteBufferConsumer.accept(new TypedByteBuffer(state.typeId(), state.value().duplicate()));
         return true;
     }
 

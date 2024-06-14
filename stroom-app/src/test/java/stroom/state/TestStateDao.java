@@ -84,6 +84,6 @@ class TestStateDao extends AbstractCoreIntegrationTest {
         assertThat(res.key()).isEqualTo("TEST_KEY");
         assertThat(res.effectiveTime()).isEqualTo(Instant.ofEpochMilli(0));
         assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
-        assertThat(new String(res.value().array(), StandardCharsets.UTF_8)).isEqualTo("test");
+        assertThat(res.getValueAsString()).isEqualTo("test");
     }
 }
