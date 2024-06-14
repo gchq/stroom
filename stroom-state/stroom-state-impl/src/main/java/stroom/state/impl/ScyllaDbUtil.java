@@ -9,8 +9,11 @@ import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class ScyllaDbUtil {
 
@@ -34,24 +37,37 @@ public class ScyllaDbUtil {
     public static final String DEFAULT_KEYSPACE_CQL = createKeyspaceCql(DEFAULT_KEYSPACE);
 
     public static void test(final BiConsumer<CqlSession, String> consumer) {
+        final String connectionYaml = getTestConnectionYaml();
         final String keyspaceName = "test" + UUID.randomUUID().toString().replaceAll("-", "");
         LOGGER.info(() -> "Using keyspace name: " + keyspaceName);
         try {
-            try (final CqlSession session = builder(DEFAULT_CONNECTION_YAML).build()) {
+            try (final CqlSession session = builder(connectionYaml).build()) {
                 LOGGER.info(() -> "Creating keyspace: " + keyspaceName);
                 session.execute(createKeyspaceCql(keyspaceName));
                 LOGGER.info(() -> "Created keyspace: " + keyspaceName);
             }
-            try (final CqlSession ks = keyspace(DEFAULT_CONNECTION_YAML, keyspaceName)) {
+            try (final CqlSession ks = keyspace(connectionYaml, keyspaceName)) {
                 consumer.accept(ks, keyspaceName);
             }
         } finally {
-            try (final CqlSession session2 = builder(DEFAULT_CONNECTION_YAML).build()) {
+            try (final CqlSession session2 = builder(connectionYaml).build()) {
                 LOGGER.info(() -> "Dropping keyspace: " + keyspaceName);
                 session2.execute(dropKeyspaceCql(keyspaceName));
                 LOGGER.info(() -> "Dropped keyspace: " + keyspaceName);
             }
         }
+    }
+
+    private static String getTestConnectionYaml() {
+        // Allow the db conn details to be overridden with env vars, e.g. when we want to run tests
+        // from within a container so we need a different host to localhost
+        final String effectiveHost = getValueOrOverride(
+                "STROOM_JDBC_DRIVER_HOST",
+                "HOST IP",
+                () -> "localhost",
+                Function.identity());
+
+        return DEFAULT_CONNECTION_YAML.replaceAll("localhost", effectiveHost);
     }
 
     public static String createKeyspaceCql(final String keyspaceName) {
@@ -90,5 +106,20 @@ public class ScyllaDbUtil {
                 LOGGER.info("Keyspace: {}; Table: {}", keyspace.getName(), table.getName());
             }
         }, "printMetadata()");
+    }
+
+    private static <T> T getValueOrOverride(final String envVarName,
+                                            final String propName,
+                                            final Supplier<T> valueSupplier,
+                                            final Function<String, T> typeMapper) {
+        return Optional.ofNullable(System.getenv(envVarName))
+                .map(envVarVal -> {
+                    LOGGER.info("Overriding prop {} with value [{}] from {}",
+                            propName,
+                            envVarVal,
+                            envVarName);
+                    return typeMapper.apply(envVarVal);
+                })
+                .orElseGet(valueSupplier);
     }
 }
