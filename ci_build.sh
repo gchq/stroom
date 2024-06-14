@@ -114,41 +114,12 @@ start_stroom_all_dbs() {
   #export JAVA_OPTS=-Xmx1024m
   #echo -e "JAVA_OPTS: [${GREEN}$JAVA_OPTS${NC}]"
 
-  echo -e "${GREEN}Starting stroom-all-dbs in the background${NC}"
+  echo -e "${GREEN}Starting stroom-all-dbs and scylladb in the background${NC}"
   ./bounceIt.sh \
     'up -d --build' \
     -y \
     -x \
-    stroom-all-dbs
-
-  popd > /dev/null
-}
-
-start_scylladb() {
-
-  if [[ ! -d "${STROOM_RESOURCES_DIR}" ]]; then
-    echo -e "${GREEN}Clone our stroom-resources repo ${BLUE}${STROOM_RESOURCES_GIT_TAG}${NC}"
-
-    git clone \
-      --depth=1 \
-      --branch "${STROOM_RESOURCES_GIT_TAG}" \
-      --single-branch \
-      https://github.com/gchq/stroom-resources.git \
-      "${STROOM_RESOURCES_DIR}"
-  fi
-
-  pushd stroom-resources/bin > /dev/null
-
-  # Increase the size of the heap
-  #export JAVA_OPTS=-Xmx1024m
-  #echo -e "JAVA_OPTS: [${GREEN}$JAVA_OPTS${NC}]"
-
-  echo -e "${GREEN}Starting scylladb in the background${NC}"
-  ./bounceIt.sh \
-    'up -d --build' \
-    -y \
-    -x \
-    scylladb
+    stroom-all-dbs scylladb
 
   popd > /dev/null
 }
@@ -596,10 +567,6 @@ check_for_out_of_date_puml_svgs
 
 echo "::group::Start stroom-all-dbs"
 start_stroom_all_dbs
-echo "::endgroup::"
-
-echo "::group::Start ScyllaDB"
-start_scylladb
 echo "::endgroup::"
 
 # Ensure we have a local.yml file as the integration tests will need it
