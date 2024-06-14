@@ -25,6 +25,7 @@ dependencies {
     implementation libs.scylladb_query_builder
     implementation libs.scylladb_driver_mapper
 
+    implementation libs.caffeine
     implementation libs.fast_infoset
     implementation libs.guava
     implementation libs.guice

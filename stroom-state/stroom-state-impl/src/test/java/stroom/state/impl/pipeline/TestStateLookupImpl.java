@@ -53,8 +53,6 @@ class TestStateLookupImpl {
             int keyValueMapCount = 20;
             int batchSize = 1_000;
 
-            int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;
-
             final List<State> batch = new ArrayList<>(batchSize);
             final List<ByteBuffer> bufferPool = new ArrayList<>(batchSize);
             for (int i = 0; i < batchSize; i++) {
@@ -131,6 +129,7 @@ class TestStateLookupImpl {
 
             LOGGER.info("Starting multi thread lookups");
             timer = DurationTimer.start();
+            int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;
             IntStream.rangeClosed(0, totalKeyValueEntryCount)
                     .boxed()
                     .parallel()

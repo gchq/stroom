@@ -18,7 +18,7 @@ public class TestScyllaDbUtil {
     @Test
     void reset() {
         try (final CqlSession session = ScyllaDbUtil.keyspace(
-                ScyllaDbUtil.getDefaultConnectionYaml(),
+                ScyllaDbUtil.getDefaultConnection(),
                 ScyllaDbUtil.getDefaultKeyspace())) {
             StateDao.dropTables(session);
             StateDao.createTables(session);
@@ -42,7 +42,7 @@ public class TestScyllaDbUtil {
     @Test
     void dumpState() {
         try (final CqlSession session = ScyllaDbUtil.keyspace(
-                ScyllaDbUtil.getDefaultConnectionYaml(),
+                ScyllaDbUtil.getDefaultConnection(),
                 ScyllaDbUtil.getDefaultKeyspace())) {
             ScyllaDbUtil.printMetadata(session, ScyllaDbUtil.getDefaultKeyspace());
 
@@ -89,7 +89,7 @@ public class TestScyllaDbUtil {
     @Test
     void dumpRangedState() {
         try (final CqlSession session = ScyllaDbUtil.keyspace(
-                ScyllaDbUtil.getDefaultConnectionYaml(),
+                ScyllaDbUtil.getDefaultConnection(),
                 ScyllaDbUtil.getDefaultKeyspace())) {
             ScyllaDbUtil.printMetadata(session, ScyllaDbUtil.getDefaultKeyspace());
 

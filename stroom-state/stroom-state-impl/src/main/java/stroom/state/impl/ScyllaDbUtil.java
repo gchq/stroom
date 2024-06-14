@@ -19,7 +19,7 @@ public class ScyllaDbUtil {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ScyllaDbUtil.class);
 
-    private static final String DEFAULT_CONNECTION_YAML = """
+    private static final String DEFAULT_CONNECTION = """
             # See full reference https://github.com/apache/cassandra-java-driver/blob/4.0.1/core/src/main/resources/reference.conf
             datastax-java-driver {
                 basic.contact-points = [ "localhost:9042" ]
@@ -37,7 +37,7 @@ public class ScyllaDbUtil {
     private static final String DEFAULT_KEYSPACE_CQL = createKeyspaceCql(DEFAULT_KEYSPACE);
 
     public static void test(final BiConsumer<CqlSession, String> consumer) {
-        final String connectionYaml = getDefaultConnectionYaml();
+        final String connectionYaml = getDefaultConnection();
         final String keyspaceName = "test" + UUID.randomUUID().toString().replaceAll("-", "");
         LOGGER.info(() -> "Using keyspace name: " + keyspaceName);
         try {
@@ -58,7 +58,7 @@ public class ScyllaDbUtil {
         }
     }
 
-    public static String getDefaultConnectionYaml() {
+    public static String getDefaultConnection() {
         // Allow the db conn details to be overridden with env vars, e.g. when we want to run tests
         // from within a container so we need a different host to localhost
         final String effectiveHost = getValueOrOverride(
@@ -67,7 +67,7 @@ public class ScyllaDbUtil {
                 () -> "localhost",
                 Function.identity());
 
-        return DEFAULT_CONNECTION_YAML.replaceAll("localhost", effectiveHost);
+        return DEFAULT_CONNECTION.replaceAll("localhost", effectiveHost);
     }
 
     public static String getDefaultKeyspace() {
