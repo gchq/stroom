@@ -46,8 +46,9 @@ LATEST_SUFFIX="-LATEST"
 # This is the branch containing the current stable release of stroom
 # It is used to determine which releases we push the swagger ui to ghpages for
 # As 7 is still in beta, this is currently 6.1
-# The version of stroom-resources used for running the DB
-STROOM_RESOURCES_GIT_TAG="260227a79407cb9137390240fcc97f2edc7aa866"
+
+# The version of stroom-resources used for running the DB, should be a tag really
+STROOM_RESOURCES_GIT_TAG="7.5-stroom-7.0-proxy"
 SWAGGER_UI_GIT_TAG="v3.49.0"
 doDockerBuild=false
 STROOM_RESOURCES_DIR="${BUILD_DIR}/stroom-resources" 
@@ -95,7 +96,8 @@ stop_and_clear_down_stroom_all_dbs() {
   docker volume ls -q -f=name='bounceit_stroom-all-dbs*' | xargs -r docker volume rm
 }
 
-start_stroom_all_dbs() {
+start_databases() {
+  local dbs_to_start=( "$@" )
 
   if [[ ! -d "${STROOM_RESOURCES_DIR}" ]]; then
     echo -e "${GREEN}Clone our stroom-resources repo ${BLUE}${STROOM_RESOURCES_GIT_TAG}${NC}"
@@ -114,12 +116,12 @@ start_stroom_all_dbs() {
   #export JAVA_OPTS=-Xmx1024m
   #echo -e "JAVA_OPTS: [${GREEN}$JAVA_OPTS${NC}]"
 
-  echo -e "${GREEN}Starting stroom-all-dbs and scylladb in the background${NC}"
+  echo -e "${GREEN}Starting [${dbs_to_start[*]}] in the background${NC}"
   ./bounceIt.sh \
     'up -d --build' \
     -y \
     -x \
-    stroom-all-dbs scylladb
+    "${dbs_to_start[@]}"
 
   popd > /dev/null
 }
@@ -130,7 +132,7 @@ generate_ddl_dump() {
 
   stop_and_clear_down_stroom_all_dbs
 
-  start_stroom_all_dbs
+  start_databases stroom-all-dbs
 
   # Run the db migration against the empty db to give us a vanilla
   # schema to dump
@@ -565,8 +567,8 @@ docker_login
 
 check_for_out_of_date_puml_svgs
 
-echo "::group::Start stroom-all-dbs"
-start_stroom_all_dbs
+echo "::group::Start stroom-all-dbs & scylladb"
+start_databases stroom-all-dbs scylladb
 echo "::endgroup::"
 
 # Ensure we have a local.yml file as the integration tests will need it
