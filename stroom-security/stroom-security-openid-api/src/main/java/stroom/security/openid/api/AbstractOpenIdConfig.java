@@ -344,11 +344,11 @@ public abstract class AbstractOpenIdConfig
         return userDisplayNameClaim;
     }
 
-    // A fairly basic pattern to ensure we get the meat of an AWS ARN
+    // A fairly basic pattern to ensure we get enough of an ARN, i.e.
     // arn:aws:elasticloadbalancing:region-code:account-id:
-    // I.e. limit signers to down to at least any ELB in an account
+    // I.e. limit signers down to at least any ELB in an account
     // See https://docs.aws.amazon.com/IAM/latest/UserGuide/reference-arns.html
-    @AllMatchPattern(pattern = "arn:aws(-(cn|us-gov))?:[^:]+:[^:]+:[^:]+:.*")
+    @AllMatchPattern(pattern = "^arn:[^:\\s]+:[^:\\s]+:[^:\\s]+:[^:\\s]+:\\S*$")
     @Override
     @SuppressWarnings("checkstyle:lineLength")
     @JsonProperty
