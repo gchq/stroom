@@ -13,6 +13,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.4.4] - 2024-06-17
+
+* Fix verification of the `signer` key in the JWS headers when authentication is handled by an AWS load balancer. If you use AWS load balancers for authentication you must add the partial ARN(s) of your load balancer(s) to the property `stroom.security.authentication.openId.expectedSignerPrefixes`.
+
+* Issue **#4313** : Add debug for authentication exceptions.
+
+* Issue **#4322** : Fix Feed Doc Cache entry invalidation when a new feed is created.
+
+
 ## [v7.4.3] - 2024-06-17
 
 * Add debug logging to HttpAppender.
@@ -625,7 +634,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4.3...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4.4...HEAD
+[v7.4.4]: https://github.com/gchq/stroom/compare/v7.4.3...v7.4.4
 [v7.4.3]: https://github.com/gchq/stroom/compare/v7.4.2...v7.4.3
 [v7.4.2]: https://github.com/gchq/stroom/compare/v7.4.1...v7.4.2
 [v7.4.1]: https://github.com/gchq/stroom/compare/v7.4.0...v7.4.1
