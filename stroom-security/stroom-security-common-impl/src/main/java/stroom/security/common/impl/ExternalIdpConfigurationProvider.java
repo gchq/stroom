@@ -358,4 +358,9 @@ public class ExternalIdpConfigurationProvider
     public String getLogoutRedirectParamName() {
         return localOpenIdConfigProvider.get().getLogoutRedirectParamName();
     }
+
+    @Override
+    public Set<String> getExpectedSignerPrefixes() {
+        return localOpenIdConfigProvider.get().getExpectedSignerPrefixes();
+    }
 }

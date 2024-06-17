@@ -1,6 +1,7 @@
 package stroom.security.common.impl;
 
 import stroom.security.api.exception.AuthenticationException;
+import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
@@ -13,7 +14,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import jakarta.inject.Inject;
@@ -49,8 +49,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -67,7 +69,7 @@ import java.util.stream.Stream;
  * for det
  * </p>
  */
-@Singleton // for ObjectMapper and cache
+@Singleton // for awsPublicKeyCache
 public class StandardJwtContextFactory implements JwtContextFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StandardJwtContextFactory.class);
@@ -85,9 +87,10 @@ public class StandardJwtContextFactory implements JwtContextFactory {
      * The user claims, in JSON web tokens (JWT) format.
      */
     static final String AMZN_OIDC_DATA_HEADER = "x-amzn-oidc-data";
-    static final String AMZN_OIDC_SIGNER_PREFIX = "arn:aws:";
+    static final String AMZN_OIDC_SIGNER_PREFIX = "arn:";
     static final String SIGNER_HEADER_KEY = "signer";
     static final String AMZN_OIDC_SIGNER_SPLIT_CHAR = ":";
+    static final Pattern AMZN_REGION_PATTERN = Pattern.compile("^[a-z0-9-]+$");
 
     private static final String AUTHORIZATION_HEADER = HttpHeaders.AUTHORIZATION;
 
@@ -99,7 +102,6 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     // Stateful things
     // Not clear whether AWS re-uses public keys or not so this may not be needed
     private volatile LoadingCache<String, PublicKey> awsPublicKeyCache = null; // uri => publicKey
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Inject
     public StandardJwtContextFactory(final Provider<OpenIdConfiguration> openIdConfigurationProvider,
@@ -454,7 +456,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     }
 
     private PublicKey getAwsPublicKey(final JwsParts jwsParts) {
-        final String uri = getAwsPublicKeyUri(jwsParts);
+        final String uri = getAwsPublicKeyUri(jwsParts, openIdConfigurationProvider.get().getExpectedSignerPrefixes());
 
         // Lazy initialise the cache and its timer in case we never deal with aws keys
         if (awsPublicKeyCache == null) {
@@ -469,7 +471,8 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     }
 
     // pkg private for testing
-    static String getAwsPublicKeyUri(final JwsParts jwsParts) {
+    static String getAwsPublicKeyUri(final JwsParts jwsParts,
+                                     final Set<String> expectedSignerPrefixes) {
 
         final Map<String, String> headerValues = jwsParts.getHeaderValues(
                 SIGNER_HEADER_KEY,
@@ -479,29 +482,69 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                 .orElseThrow(() -> new RuntimeException(LogUtil.message("Missing '{}' key in jws header {}",
                         SIGNER_HEADER_KEY, jwsParts.header)));
 
+        // 'arn:aws:elasticloadbalancing:region-code:account-id:loadbalancer/app/load-balancer-name/load-balancer-id'
+        // The LB ID is not known at provisioning time so validate signer against a set of valid prefixes
+        // which should go at least up to the account ID.
+        final boolean isExpectedSigner = NullSafe.stream(expectedSignerPrefixes)
+                .anyMatch(expectedSignerPrefix -> {
+                    if (expectedSignerPrefix == null || signer == null) {
+                        return false;
+                    } else {
+                        return signer.startsWith(expectedSignerPrefix);
+                    }
+                });
+
+        // Make sure the signer value is one we expect
+        if (!isExpectedSigner) {
+            throw new RuntimeException(LogUtil.message(
+                    "The value for key '{}' in the JWS header '{}' does not match any of the values in the '{}' " +
+                            "configuration property: [{}]. You need to set '{}' to the partial ARN(s) of the " +
+                            "AWS load balancer that is handling authentication for Stroom. The partial " +
+                            "ARN needs to include at least up to the account ID part.",
+                    SIGNER_HEADER_KEY,
+                    signer,
+                    AbstractOpenIdConfig.PROP_NAME_EXPECTED_SIGNER_PREFIXES,
+                    String.join(", ", NullSafe.set(expectedSignerPrefixes)),
+                    AbstractOpenIdConfig.PROP_NAME_EXPECTED_SIGNER_PREFIXES));
+        }
+
         final String keyId = Optional.ofNullable(headerValues.get(OpenId.KEY_ID))
                 .orElseThrow(() -> new RuntimeException(LogUtil.message("Missing '{}' key in jws header {}",
                         OpenId.KEY_ID, jwsParts.header)));
 
-        if (NullSafe.isBlankString(signer)) {
-            throw new RuntimeException(LogUtil.message("Blank value for '{}' key in jws header {}",
-                    SIGNER_HEADER_KEY, jwsParts.header));
-        }
-
-        // Signer is an Amazon Resource Name of the form:
-        // arn:partition:service:region:account-id:resource-id
-        // No need to pre-compile the regex as split will not use regex for single chars
-        final String[] signerParts = signer.split(AMZN_OIDC_SIGNER_SPLIT_CHAR);
-        if (signerParts.length < 4) {
-            throw new RuntimeException(LogUtil.message("Unable to parse value for '{}' key in jws header {}",
-                    SIGNER_HEADER_KEY, signer));
-        }
-        final String awsRegion = signerParts[3];
+        final String awsRegion = extractAwsRegionFromSigner(signer);
 
         // TODO: 24/02/2023 Ought to come from config
-        final String uri = LogUtil.message("https://public-keys.auth.elb.{}.amazonaws.com/{}",
+        return LogUtil.message("https://public-keys.auth.elb.{}.amazonaws.com/{}",
                 awsRegion, keyId);
-        return uri;
+    }
+
+    private static String extractAwsRegionFromSigner(final String signer) {
+        if (NullSafe.isBlankString(signer)) {
+            return null;
+        } else {
+            // Signer is an Amazon Resource Name of the form:
+            // arn:partition:service:region:account-id:resource-id
+            // No need to pre-compile the regex as split will not use regex for single chars
+            final String[] signerParts = signer.split(AMZN_OIDC_SIGNER_SPLIT_CHAR);
+            if (signerParts.length < 4) {
+                throw new RuntimeException(LogUtil.message("Unable to parse value for '{}' key in JWS header {}",
+                        SIGNER_HEADER_KEY, signer));
+            }
+            final String awsRegion = signerParts[3];
+
+            if (!AMZN_REGION_PATTERN.matcher(awsRegion).matches()) {
+                throw new RuntimeException(LogUtil.message(
+                        "AWS region '{}' extracted from '{}' in property '{}' does not match " +
+                                "pattern '{}'",
+                        awsRegion,
+                        signer,
+                        AbstractOpenIdConfig.PROP_NAME_EXPECTED_SIGNER_PREFIXES,
+                        AMZN_REGION_PATTERN.toString()));
+            }
+
+            return awsRegion;
+        }
     }
 
     private PublicKey fetchAwsPublicKey(final String uri) {
