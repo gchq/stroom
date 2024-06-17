@@ -13,6 +13,18 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.4.3] - 2024-06-17
+
+* Add debug logging to HttpAppender.
+
+
+## [v7.4.2] - 2024-06-14
+
+* Issue **#4306** : Fix inability to update config props that have previously been set to a non-default and then back to a default value.
+
+* Issue **#2897** : Add more debug logging to the reference lookup code.
+
+
 ## [v7.4.1] - 2024-06-05
 
 * Issue **#4307** : Fix stuck search.
@@ -613,7 +625,9 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4.1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4.3...HEAD
+[v7.4.3]: https://github.com/gchq/stroom/compare/v7.4.2...v7.4.3
+[v7.4.2]: https://github.com/gchq/stroom/compare/v7.4.1...v7.4.2
 [v7.4.1]: https://github.com/gchq/stroom/compare/v7.4.0...v7.4.1
 [v7.4.0]: https://github.com/gchq/stroom/compare/v7.4-beta.16...v7.4.0
 [v7.4-beta.16]: https://github.com/gchq/stroom/compare/v7.4-beta.15...v7.4-beta.16

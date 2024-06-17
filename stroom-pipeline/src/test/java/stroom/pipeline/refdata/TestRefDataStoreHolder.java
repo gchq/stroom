@@ -8,17 +8,25 @@ import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.shared.data.PipelineReference;
+import stroom.test.common.TestUtil;
 
+import com.google.inject.TypeLiteral;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 @ExtendWith(MockitoExtension.class)
 class TestRefDataStoreHolder {
@@ -96,7 +104,7 @@ class TestRefDataStoreHolder {
         Assertions.assertThat(mapAvailability)
                 .isEqualTo(MapAvailability.UNKNOWN);
         Assertions.assertThat(mapAvailability.isLookupRequired())
-                        .isTrue();
+                .isTrue();
 
         refDataStoreHolder.addKnownMapNames(mockRefDataStore, refStreamDefinition);
 
@@ -131,10 +139,10 @@ class TestRefDataStoreHolder {
 
         // Always true at this point as it doesn't know either way
         Assertions.assertThat(refDataStoreHolder.getMapAvailabilityInStream(
-                pipelineReference, refStreamDefinition1, mapName))
+                        pipelineReference, refStreamDefinition1, mapName))
                 .isEqualTo(MapAvailability.UNKNOWN);
         Assertions.assertThat(refDataStoreHolder.getMapAvailabilityInStream(
-                pipelineReference, refStreamDefinition2, mapName))
+                        pipelineReference, refStreamDefinition2, mapName))
                 .isEqualTo(MapAvailability.UNKNOWN);
 
         refDataStoreHolder.addKnownMapNames(mockRefDataStore, refStreamDefinition1);
@@ -142,11 +150,28 @@ class TestRefDataStoreHolder {
 
         // The map is there
         Assertions.assertThat(refDataStoreHolder.getMapAvailabilityInStream(
-                pipelineReference, refStreamDefinition1, mapName))
+                        pipelineReference, refStreamDefinition1, mapName))
                 .isEqualTo(MapAvailability.PRESENT);
         // The map is not there
         Assertions.assertThat(refDataStoreHolder.getMapAvailabilityInStream(
-                pipelineReference, refStreamDefinition2, mapName))
+                        pipelineReference, refStreamDefinition2, mapName))
                 .isEqualTo(MapAvailability.NOT_PRESENT);
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testGetMapAvailability() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple2<String, Set<String>>>() {
+                })
+                .withOutputType(MapAvailability.class)
+                .withTestFunction(testCase -> RefDataStoreHolder.getMapAvailability(
+                        testCase.getInput()._1,
+                        testCase.getInput()._2))
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of("CAT", Set.of("DOG", "CAT")), MapAvailability.PRESENT)
+                .addCase(Tuple.of("HORSE", Set.of("DOG", "CAT")), MapAvailability.NOT_PRESENT)
+                .addCase(Tuple.of("HORSE", Collections.emptySet()), MapAvailability.NOT_PRESENT)
+                .addCase(Tuple.of("HORSE", null), MapAvailability.UNKNOWN)
+                .build();
     }
 }
