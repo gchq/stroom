@@ -10,12 +10,14 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaDataHolder;
 import stroom.svg.shared.SvgImage;
+import stroom.util.NullSafe;
 import stroom.util.cert.SSLConfig;
 import stroom.util.cert.SSLUtil;
 import stroom.util.io.CompressionUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 
 import jakarta.inject.Inject;
@@ -161,6 +163,9 @@ public class HTTPAppender extends AbstractAppender {
                 LOGGER.debug(() -> "handleHeader() - setting ChunkedStreamingMode = " + forwardChunkSize);
                 connection.setChunkedStreamingMode(forwardChunkSize.intValue());
             }
+            if (LOGGER.isDebugEnabled()) {
+                logConnectionToDebug(connection);
+            }
             connection.connect();
 
             return outputStreamSupport.create(new FilterOutputStream(connection.getOutputStream()) {
@@ -181,6 +186,24 @@ public class HTTPAppender extends AbstractAppender {
         }
     }
 
+    private void logConnectionToDebug(final HttpURLConnection connection) {
+        LOGGER.debug(() -> LogUtil.message("About to connect to {} with requestMethod: {}, contentType: {}, " +
+                        "readTimeout: {}, connectionTimeout: {}, request properties:\n{}",
+                connection.getURL(),
+                connection.getRequestMethod(),
+                connection.getContentType(),
+                connection.getReadTimeout(),
+                connection.getConnectTimeout(),
+                NullSafe.map(connection.getRequestProperties())
+                        .entrySet()
+                        .stream()
+                        .map(entry ->
+                                entry.getKey() + ": ["
+                                        + String.join(", ", NullSafe.list(entry.getValue()))
+                                        + "]")
+                        .collect(Collectors.joining("\n"))));
+    }
+
     private void addAttributeIfHeaderDefined(final AttributeMap attributeMap, final String headerText) {
         if (headerText == null || headerText.length() < 3) {
             return;
@@ -192,6 +215,7 @@ public class HTTPAppender extends AbstractAppender {
 
         int delimiterPos = headerText.indexOf(':');
         attributeMap.put(headerText.substring(0, delimiterPos), headerText.substring(delimiterPos + 1));
+        LOGGER.debug("Added '{}' to {}", headerText, attributeMap);
     }
 
     private void closeConnection() {

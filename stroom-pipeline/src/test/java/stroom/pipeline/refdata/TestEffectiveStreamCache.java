@@ -308,6 +308,10 @@ class TestEffectiveStreamCache extends StroomUnitTest {
         return new EffectiveMeta(streamId, feedName, TYPE_NAME, effectiveTimeMs);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class InnerStreamMetaService extends MockMetaService {
 
         private final List<Meta> streams = new ArrayList<>();
