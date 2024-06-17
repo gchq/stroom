@@ -36,12 +36,12 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 @Singleton
 @EntityEventHandler(
         type = FeedDoc.DOCUMENT_TYPE,
-        action = {EntityAction.DELETE, EntityAction.UPDATE, EntityAction.CLEAR_CACHE})
+        // Need to react to CREATE as we hold an empty optional for non-existent feeds
+        action = {EntityAction.CREATE, EntityAction.DELETE, EntityAction.UPDATE, EntityAction.CLEAR_CACHE})
 public class FeedDocCache implements Clearable, EntityEvent.Handler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FeedDocCache.class);
@@ -72,7 +72,7 @@ public class FeedDocCache implements Clearable, EntityEvent.Handler {
     private Optional<FeedDoc> create(final String feedName) {
         return securityContext.asProcessingUserResult(() -> {
             final List<DocRef> list = feedStore.findByName(feedName);
-            if (list != null && list.size() > 0) {
+            if (NullSafe.hasItems(list)) {
                 return Optional.ofNullable(feedStore.readDocument(list.get(0)));
             }
             return Optional.empty();
@@ -81,29 +81,31 @@ public class FeedDocCache implements Clearable, EntityEvent.Handler {
 
     @Override
     public void clear() {
+        LOGGER.debug("Clearing {}", CACHE_NAME);
         cache.clear();
     }
 
     @Override
     public void onChange(final EntityEvent event) {
-        LOGGER.debug("Received event {}", event);
+        LOGGER.debug("Received entity event {}", event);
         final EntityAction eventAction = event.getAction();
-        final Consumer<String> feedNameConsumer = feedName -> {
-            LOGGER.debug("Invalidating feed {}", feedName);
-            cache.invalidate(feedName);
-        };
 
         switch (eventAction) {
             case CLEAR_CACHE -> {
                 LOGGER.debug("Clearing cache");
                 clear();
             }
-            case UPDATE, DELETE -> {
-                NullSafe.consume(event.getDocRef(), DocRef::getName, feedNameConsumer);
+            case CREATE, UPDATE, DELETE -> {
+                NullSafe.consume(event.getDocRef(), DocRef::getName, this::invalidateFeed);
                 // Can't rename feeds, but here just in case
-                NullSafe.consume(event.getOldDocRef(), DocRef::getName, feedNameConsumer);
+                NullSafe.consume(event.getOldDocRef(), DocRef::getName, this::invalidateFeed);
             }
             default -> LOGGER.debug("Unexpected event action {}", eventAction);
         }
+    }
+
+    private void invalidateFeed(final String feedName) {
+        LOGGER.debug("Invalidating entry for feed '{}' in {}", feedName, CACHE_NAME);
+        cache.invalidate(feedName);
     }
 }
