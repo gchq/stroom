@@ -12,7 +12,7 @@ import java.util.Set;
  * <p>
  * If you need to be sure you are getting only values from Stroom's config file then inject
  * the Stroom or Proxy named implementations or {@link AbstractOpenIdConfig} directly. E.g.
- * any classes that are the implementation of our internal IDP should be using an of this
+ * any classes that are the implementation of our internal IDP should be using an instance of this
  * class that is only backed by the config file.
  */
 public interface OpenIdConfiguration {
@@ -101,4 +101,9 @@ public interface OpenIdConfiguration {
      * @see AbstractOpenIdConfig#getLogoutRedirectParamName()
      */
     String getLogoutRedirectParamName();
+
+    /**
+     * @see AbstractOpenIdConfig#getExpectedSignerPrefixes()
+     */
+    Set<String> getExpectedSignerPrefixes();
 }

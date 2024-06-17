@@ -112,6 +112,7 @@ proxyConfig:
         - "openid"
         clientId: null
         clientSecret: null
+        expectedSignerPrefixes: []
         formTokenRequest: true
         identityProviderType: "NO_IDP"
         issuer: null

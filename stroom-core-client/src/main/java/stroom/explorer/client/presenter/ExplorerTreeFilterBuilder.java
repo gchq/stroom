@@ -35,23 +35,30 @@ public class ExplorerTreeFilterBuilder {
     private boolean nameFilterChange;
     private List<DocRef> recentItems;
 
+    /**
+     * Set the document types to include. If null/empty return all root notes.
+     */
     public void setIncludedTypeSet(final Set<String> types) {
         includedTypes = types;
     }
 
-    public void setIncludedRootTypeSet(final Set<String> types) {
-        includedRootTypes = types;
-    }
-
     /**
-     * Convenience method.
-     *
-     * @param types
+     * Set the document types to include. If null/empty return all root notes.
      */
     public void setIncludedTypes(final String... types) {
         this.includedTypes = SetUtil.toSet(types);
     }
 
+    /**
+     * Set the document types of root nodes to include. If null/empty return all root notes.
+     */
+    public void setIncludedRootTypeSet(final Set<String> types) {
+        includedRootTypes = types;
+    }
+
+    /**
+     * Set the document types of root nodes to include. If null/empty return all root notes.
+     */
     public void setIncludedRootTypes(final String... types) {
         this.includedRootTypes = SetUtil.toSet(types);
     }

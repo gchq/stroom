@@ -13,6 +13,25 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Fix verification of the `signer` key in the JWS headers when authentication is handled by an AWS load balancer. If you use AWS load balancers for authentication you must add the partial ARN(s) of your load balancer(s) to the property `stroom.security.authentication.openId.expectedSignerPrefixes`.
+
+* Issue **#4313** : Add debug for authentication exceptions.
+
+* Issue **#4322** : Fix Feed Doc Cache entry invalidation when a new feed is created.
+
+* Add debug logging to HttpAppender.
+
+* Issue **#4306** : Fix inability to update config props that have previously been set to a non-default and then back to a default value.
+
+* Issue **#2897** : Add more debug logging to the reference lookup code.
+
+* Issue **#4307** : Fix stuck search.
+
+* Issue **#4303** : Change DSParser to catch and handle StackOverflowError as an ERROR and with a better message.
+
+* Issue **#4281** : Fix recent items dialog throwing an error when there are favourites in the explorer tree.
+
+
 ## [v7.5-beta.1] - 2024-06-04
 
 * Issue **#3989** : Improve pause behaviour in dashboards and general presentation of `busy` state throughout UI.

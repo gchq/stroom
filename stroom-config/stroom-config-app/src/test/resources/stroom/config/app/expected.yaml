@@ -759,6 +759,7 @@ appConfig:
         - "openid"
         clientId: null
         clientSecret: null
+        expectedSignerPrefixes: []
         formTokenRequest: true
         identityProviderType: "INTERNAL_IDP"
         issuer: null

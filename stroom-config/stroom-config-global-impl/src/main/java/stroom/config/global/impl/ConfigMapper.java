@@ -503,6 +503,10 @@ public class ConfigMapper {
                     final SourceType sourceBefore = globalProp.getSource();
 
                     globalProp.setDatabaseOverrideValue(OverrideValue.unSet(String.class));
+                    // Not in the DB so make sure it has no ID, e.g. if the prop is in the db on boot
+                    // then get changed back to default val (which removes it from the db) we would hold
+                    // an old ID for it, which would break future updates
+                    globalProp.setId(null);
 
                     final boolean hasChanged = hasEffectiveValueChanged(
                             globalProp.getName(), effectiveValueBefore, sourceBefore);

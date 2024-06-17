@@ -590,10 +590,6 @@ public class LmdbDataStore implements DataStore {
                 }
 
                 error(new RuntimeException("Error adding data into search result store", e));
-
-                // Treat all errors as fatal so complete.
-                completionState.signalComplete();
-
                 throw e;
 
             } finally {
