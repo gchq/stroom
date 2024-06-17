@@ -13,6 +13,12 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.5-beta.2] - 2024-06-17
+
+* Issue **#4278** : Make document deletion also delete the permission records for that document. Also run migration `V07_04_00_005__Orphaned_Doc_Perms` which will delete all document permissions (in table `doc_permission`) for docs that are not a folder, not the System doc, are not a valid doc (i.e. in the `doc` table) and are not a pipeline filter. Deleted document permission records will first be copied to a backup table `doc_permission_backup_V07_04_00_005`. 
+
+* Change document Copy and Move to check that the user has Owner permission (or admin) on the document being copied/moved if the permissions mode is None, Destination or Combined. This is because those modes will change the permissions which is something only an Owner/admin can do.
+
 * Fix verification of the `signer` key in the JWS headers when authentication is handled by an AWS load balancer. If you use AWS load balancers for authentication you must add the partial ARN(s) of your load balancer(s) to the property `stroom.security.authentication.openId.expectedSignerPrefixes`.
 
 * Issue **#4313** : Add debug for authentication exceptions.
@@ -627,7 +633,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-beta.1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-beta.2...HEAD
+[v7.5-beta.2]: https://github.com/gchq/stroom/compare/v7.5-beta.1...v7.5-beta.2
 [v7.5-beta.1]: https://github.com/gchq/stroom/compare/v7.4-beta.16...v7.5-beta.1
 [v7.4-beta.16]: https://github.com/gchq/stroom/compare/v7.4-beta.15...v7.4-beta.16
 [v7.4-beta.15]: https://github.com/gchq/stroom/compare/v7.4-beta.14...v7.4-beta.15
