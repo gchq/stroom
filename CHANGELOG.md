@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2.24] - 2024-06-18
+
+* Fix verification of the `signer` key in the JWS headers when authentication is handled by an AWS load balancer. If you use AWS load balancers for authentication you must add the partial ARN(s) of your load balancer(s) to the property `stroom.security.authentication.openId.expectedSignerPrefixes`.
+
+
 ## [v7.2.23] - 2024-02-12
 
 * Issue **#4033** : Fix an infinite loop when stepping raw JSON with a FindReplaceFilter. Change the way character data is decoded in the stepper so that it is more lenient to un-decodable bytes, replacing them with '�'. Also make the reader code in the stepper respond to task termination. Add stepper error for each byte sequence that can't be decoded.
@@ -6321,7 +6326,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.23...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.24...HEAD
+[v7.2.24]: https://github.com/gchq/stroom/compare/v7.2.23...v7.2.24
 [v7.2.23]: https://github.com/gchq/stroom/compare/v7.2.22...v7.2.23
 [v7.2.22]: https://github.com/gchq/stroom/compare/v7.2.21...v7.2.22
 [v7.2.21]: https://github.com/gchq/stroom/compare/v7.2.20...v7.2.21
