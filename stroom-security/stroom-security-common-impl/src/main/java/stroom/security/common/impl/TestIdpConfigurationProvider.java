@@ -124,6 +124,11 @@ public class TestIdpConfigurationProvider implements IdpConfigurationProvider {
         throw new UnsupportedOperationException("Not supported for this implementation");
     }
 
+    @Override
+    public Set<String> getExpectedSignerPrefixes() {
+        throw new UnsupportedOperationException("Not supported for this implementation");
+    }
+
     private void showWarning() {
         // Show a warning every 5mins or so to remind people it is totally insecure
         final Instant now = Instant.now();

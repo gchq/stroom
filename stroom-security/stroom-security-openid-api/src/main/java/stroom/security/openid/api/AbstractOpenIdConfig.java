@@ -1,6 +1,7 @@
 package stroom.security.openid.api;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.validation.AllMatchPattern;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -26,6 +27,7 @@ public abstract class AbstractOpenIdConfig
     public static final String PROP_NAME_CLIENT_SECRET = "clientSecret";
     public static final String PROP_NAME_CONFIGURATION_ENDPOINT = "openIdConfigurationEndpoint";
     public static final String PROP_NAME_IDP_TYPE = "identityProviderType";
+    public static final String PROP_NAME_EXPECTED_SIGNER_PREFIXES = "expectedSignerPrefixes";
 
     private final IdpType identityProviderType;
 
@@ -107,7 +109,6 @@ public abstract class AbstractOpenIdConfig
      */
     private final List<String> clientCredentialsScopes;
 
-
     /**
      * Whether to validate the audience in JWT token, when the audience is expected to be the clientId.
      */
@@ -127,6 +128,8 @@ public abstract class AbstractOpenIdConfig
      */
     private final String userDisplayNameClaim;
 
+    private final Set<String> expectedSignerPrefixes;
+
     public AbstractOpenIdConfig() {
         identityProviderType = getDefaultIdpType();
         openIdConfigurationEndpoint = null;
@@ -145,6 +148,7 @@ public abstract class AbstractOpenIdConfig
         validIssuers = Collections.emptySet();
         uniqueIdentityClaim = OpenId.CLAIM__SUBJECT;
         userDisplayNameClaim = OpenId.CLAIM__PREFERRED_USERNAME;
+        expectedSignerPrefixes = Collections.emptySet();
     }
 
     @JsonIgnore
@@ -168,7 +172,8 @@ public abstract class AbstractOpenIdConfig
             @JsonProperty("validateAudience") final boolean validateAudience,
             @JsonProperty("validIssuers") final Set<String> validIssuers,
             @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim,
-            @JsonProperty("userDisplayNameClaim") final String userDisplayNameClaim) {
+            @JsonProperty("userDisplayNameClaim") final String userDisplayNameClaim,
+            @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes) {
 
         this.identityProviderType = identityProviderType;
         this.openIdConfigurationEndpoint = openIdConfigurationEndpoint;
@@ -187,6 +192,7 @@ public abstract class AbstractOpenIdConfig
         this.validIssuers = Objects.requireNonNullElseGet(validIssuers, Collections::emptySet);
         this.uniqueIdentityClaim = uniqueIdentityClaim;
         this.userDisplayNameClaim = userDisplayNameClaim;
+        this.expectedSignerPrefixes = expectedSignerPrefixes;
     }
 
     /**
@@ -338,6 +344,25 @@ public abstract class AbstractOpenIdConfig
         return userDisplayNameClaim;
     }
 
+    // A fairly basic pattern to ensure we get enough of an ARN, i.e.
+    // arn:aws:elasticloadbalancing:region-code:account-id:
+    // I.e. limit signers down to at least any ELB in an account
+    // See https://docs.aws.amazon.com/IAM/latest/UserGuide/reference-arns.html
+    @AllMatchPattern(pattern = "^arn:[^:\\s]+:[^:\\s]+:[^:\\s]+:[^:\\s]+:\\S*$")
+    @Override
+    @SuppressWarnings("checkstyle:lineLength")
+    @JsonProperty
+    @JsonPropertyDescription("If using an AWS load balancer to handle the authentication, set this to the Amazon " +
+            "Resource Names (ARN) of the load balancer(s) fronting stroom, which will be something like " +
+            "'arn:aws:elasticloadbalancing:region-code:account-id:loadbalancer/app/load-balancer-name/load-balancer-id'. " +
+            "This config value will be used to verify the 'signer' in the JWT header. " +
+            "Each value is the first N characters of the ARN and as a minimum must include up to the colon after " +
+            "the account-id, i.e. 'arn:aws:elasticloadbalancing:region-code:account-id:'." +
+            "See https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-authenticate-users.html#user-claims-encoding")
+    public Set<String> getExpectedSignerPrefixes() {
+        return expectedSignerPrefixes;
+    }
+
     @JsonIgnore
     @SuppressWarnings("unused")
     @ValidationMethod(message = "If " + PROP_NAME_IDP_TYPE + " is set to 'EXTERNAL', property "
@@ -346,6 +371,7 @@ public abstract class AbstractOpenIdConfig
         return !IdpType.EXTERNAL_IDP.equals(identityProviderType)
                 || (openIdConfigurationEndpoint != null && !openIdConfigurationEndpoint.isBlank());
     }
+
 
     @Override
     public String toString() {
@@ -364,6 +390,7 @@ public abstract class AbstractOpenIdConfig
                 ", requestScopes='" + requestScopes + '\'' +
                 ", validateAudience=" + validateAudience +
                 ", uniqueIdentityClaim=" + uniqueIdentityClaim +
+                ", expectedSignerPrefixes=" + expectedSignerPrefixes +
                 '}';
     }
 
@@ -389,7 +416,8 @@ public abstract class AbstractOpenIdConfig
                 && Objects.equals(clientId, that.clientId)
                 && Objects.equals(clientSecret, that.clientSecret)
                 && Objects.equals(requestScopes, that.requestScopes)
-                && Objects.equals(uniqueIdentityClaim, that.uniqueIdentityClaim);
+                && Objects.equals(uniqueIdentityClaim, that.uniqueIdentityClaim)
+                && Objects.equals(expectedSignerPrefixes, that.expectedSignerPrefixes);
     }
 
     @Override
@@ -407,10 +435,7 @@ public abstract class AbstractOpenIdConfig
                 clientSecret,
                 requestScopes,
                 validateAudience,
-                uniqueIdentityClaim);
+                uniqueIdentityClaim,
+                expectedSignerPrefixes);
     }
-
-    // --------------------------------------------------------------------------------
-
-
 }

@@ -147,4 +147,9 @@ public class InternalIdpConfigurationProvider implements IdpConfigurationProvide
     public String getLogoutRedirectParamName() {
         return localOpenIdConfigProvider.get().getLogoutRedirectParamName();
     }
+
+    @Override
+    public Set<String> getExpectedSignerPrefixes() {
+        return localOpenIdConfigProvider.get().getExpectedSignerPrefixes();
+    }
 }
