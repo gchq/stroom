@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.3-beta.22] - 2024-06-18
+
+* Fix verification of the `signer` key in the JWS headers when authentication is handled by an AWS load balancer. If you use AWS load balancers for authentication you must add the partial ARN(s) of your load balancer(s) to the property `stroom.security.authentication.openId.expectedSignerPrefixes`.
+
+
 ## [v7.3-beta.21] - 2024-04-19
 
 * Issue **#4221** : Remove `id` column from `index_field` and change the primary key to be `(fk_index_field_source_id, name)`. Add retry logic and existing field check when adding fields to mitigate against deadlocks.
@@ -459,7 +464,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.21...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.22...HEAD
+[v7.3-beta.22]: https://github.com/gchq/stroom/compare/v7.3-beta.21...v7.3-beta.22
 [v7.3-beta.21]: https://github.com/gchq/stroom/compare/v7.3-beta.20...v7.3-beta.21
 [v7.3-beta.20]: https://github.com/gchq/stroom/compare/v7.3-beta.19...v7.3-beta.20
 [v7.3-beta.19]: https://github.com/gchq/stroom/compare/v7.3-beta.18...v7.3-beta.19
