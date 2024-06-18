@@ -1,21 +1,92 @@
 package stroom.security.common.impl;
 
 import stroom.security.common.impl.StandardJwtContextFactory.JwsParts;
+import stroom.security.openid.api.AbstractOpenIdConfig;
+import stroom.security.openid.api.OpenId;
+import stroom.test.common.TestUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
+import com.google.inject.TypeLiteral;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.Set;
+import java.util.stream.Stream;
 
 class TestStandardJwtContextFactory {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestStandardJwtContextFactory.class);
+
+    @TestFactory
+    Stream<DynamicTest> testAwsPublicKeyUriFromSigner() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple2<String, Set<String>>>() {
+                })
+                .withOutputType(String.class)
+                .withTestFunction(testCase -> {
+                    final String signer = testCase.getInput()._1;
+                    final Set<String> expectedSignerPrefixes = testCase.getInput()._2;
+                    final String json = LogUtil.message("""
+                            {
+                              "signer": "{}",
+                              "kid": "999"
+                            }""", signer);
+
+                    final String header = Base64.getEncoder()
+                            .encodeToString(json.getBytes(StandardCharsets.UTF_8));
+
+                    JwsParts jwsParts = new JwsParts(
+                            null,
+                            header,
+                            null,
+                            null);
+
+                    return StandardJwtContextFactory.getAwsPublicKeyUri(jwsParts, expectedSignerPrefixes);
+                })
+                .withSimpleEqualityAssertion()
+
+                .addNamedCase("Single, full",
+                        Tuple.of("arn:aws:elasticloadbalancing:region-x:1234:loadbalancer/app/MyApp/5678",
+                                Set.of("arn:aws:elasticloadbalancing:region-x:1234:loadbalancer/app/MyApp/5678")),
+                        "https://public-keys.auth.elb.region-x.amazonaws.com/999")
+
+                .addNamedCase("Single, partial",
+                        Tuple.of("arn:aws:elasticloadbalancing:region-x:1234:loadbalancer/app/MyApp/5678",
+                                Set.of("arn:aws:elasticloadbalancing:region-x:1234:")),
+                        "https://public-keys.auth.elb.region-x.amazonaws.com/999")
+
+                .addNamedCase("Multiple, full",
+                        Tuple.of("arn:aws:elasticloadbalancing:region-y:1234:loadbalancer/app/MyApp/5678",
+                                Set.of(
+                                        "arn:aws:elasticloadbalancing:region-x:1234:loadbalancer/app/MyApp/5678",
+                                        "arn:aws:elasticloadbalancing:region-y:1234:loadbalancer/app/MyApp/5678")),
+                        "https://public-keys.auth.elb.region-y.amazonaws.com/999")
+
+                .addNamedCase("Multiple, partial",
+                        Tuple.of("arn:aws:elasticloadbalancing:region-y:1234:loadbalancer/app/MyApp/5678",
+                                Set.of(
+                                        "arn:aws:elasticloadbalancing:region-x:1234:loadbalancer/app/MyApp",
+                                        "arn:aws:elasticloadbalancing:region-y:1234:")),
+                        "https://public-keys.auth.elb.region-y.amazonaws.com/999")
+
+                .build();
+    }
+
     @Test
-    void getAwsPublicKeyUriFromSigner() {
+    void getAwsPublicKeyUriFromSigner_blankSigner() {
+        final String signer2 = "arn:aws:elasticloadbalancing:region-y:1234:loadbalancer/app/MyApp/5678";
+
         final String json = """
                 {
-                  "signer": "arn:aws:elasticloadbalancing:region-x:1234:loadbalancer/app/MyApp/5678",
+                  "signer": "",
                   "kid": "999"
                 }""";
 
@@ -27,9 +98,174 @@ class TestStandardJwtContextFactory {
                 null,
                 null);
 
-        final String uri = StandardJwtContextFactory.getAwsPublicKeyUri(jwsParts);
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            StandardJwtContextFactory.getAwsPublicKeyUri(jwsParts, Set.of(signer2));
+                        })
+                .hasMessageContaining("does not match")
+                .hasMessageContaining(AbstractOpenIdConfig.PROP_NAME_EXPECTED_SIGNER_PREFIXES)
+                .isInstanceOf(RuntimeException.class);
+    }
 
-        assertThat(uri)
-                .isEqualTo("https://public-keys.auth.elb.region-x.amazonaws.com/999");
+    @Test
+    void getAwsPublicKeyUriFromSigner_badSigner() {
+        final String signer1 = "arn:aws:elasticloadbalancing:region-x:1234:loadbalancer/app/MyApp/5678";
+        final String signer2 = "arn:aws:elasticloadbalancing:region-y:1234:loadbalancer/app/MyApp/5678";
+
+        final String json = LogUtil.message("""
+                {
+                  "signer": "{}",
+                  "kid": "999"
+                }""", signer1);
+
+        final String header = Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
+
+        JwsParts jwsParts = new JwsParts(
+                null,
+                header,
+                null,
+                null);
+
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            StandardJwtContextFactory.getAwsPublicKeyUri(jwsParts, Set.of(signer2));
+                        })
+                .hasMessageContaining("does not match")
+                .hasMessageContaining(AbstractOpenIdConfig.PROP_NAME_EXPECTED_SIGNER_PREFIXES)
+                .isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void getAwsPublicKeyUriFromSigner_badRegionInSigner() {
+        final String signer1 = "arn:aws:elasticloadbalancing:region-x/foo:1234:loadbalancer/app/MyApp/5678";
+        final String signer2 = "arn:aws:elasticloadbalancing:region-y:1234:loadbalancer/app/MyApp/5678";
+
+        final String json = LogUtil.message("""
+                {
+                  "signer": "{}",
+                  "kid": "999"
+                }""", signer1);
+
+        final String header = Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
+
+        JwsParts jwsParts = new JwsParts(
+                null,
+                header,
+                null,
+                null);
+
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            StandardJwtContextFactory.getAwsPublicKeyUri(jwsParts, Set.of(signer1, signer2));
+                        })
+                .hasMessageContaining("AWS region")
+                .hasMessageContaining("does not match pattern")
+                .isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void getAwsPublicKeyUriFromSigner_noRegionInSigner() {
+        final String signer1 = "arn:aws:elasticloadbalancing::1234:loadbalancer/app/MyApp/5678";
+
+        final String json = LogUtil.message("""
+                {
+                  "signer": "{}",
+                  "kid": "999"
+                }""", signer1);
+
+        final String header = Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
+
+        JwsParts jwsParts = new JwsParts(
+                null,
+                header,
+                null,
+                null);
+
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            StandardJwtContextFactory.getAwsPublicKeyUri(jwsParts, Set.of(signer1));
+                        })
+                .hasMessageContaining("AWS region")
+                .hasMessageContaining("does not match pattern")
+                .isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void getAwsPublicKeyUriFromSigner_nullExpectedSigners() {
+        final String signer1 = "arn:aws:elasticloadbalancing:region-x:1234:loadbalancer/app/MyApp/5678";
+
+        final String json = LogUtil.message("""
+                {
+                  "signer": "{}",
+                  "kid": "999"
+                }""", signer1);
+
+        final String header = Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
+
+        JwsParts jwsParts = new JwsParts(
+                null,
+                header,
+                null,
+                null);
+
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            StandardJwtContextFactory.getAwsPublicKeyUri(jwsParts, null);
+                        })
+                .hasMessageContaining("does not match")
+                .hasMessageContaining(AbstractOpenIdConfig.PROP_NAME_EXPECTED_SIGNER_PREFIXES)
+                .isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void getAwsPublicKeyUriFromSigner_signerNotFound() {
+        final String signer = "arn:aws:elasticloadbalancing:region-x:1234:loadbalancer/app/MyApp/5678";
+
+        final String json = """
+                {
+                  "kid": "999"
+                }""";
+
+        final String header = Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
+
+        JwsParts jwsParts = new JwsParts(
+                null,
+                header,
+                null,
+                null);
+
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            StandardJwtContextFactory.getAwsPublicKeyUri(jwsParts, Set.of(signer));
+                        })
+                .hasMessageContaining("Missing")
+                .hasMessageContaining(StandardJwtContextFactory.SIGNER_HEADER_KEY)
+                .isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void getAwsPublicKeyUriFromSigner_noKeyId() {
+        final String signer = "arn:aws:elasticloadbalancing:region-x:1234:loadbalancer/app/MyApp/5678";
+
+        final String json = LogUtil.message("""
+                {
+                  "signer": "{}"
+                }""", signer);
+
+        final String header = Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
+
+        JwsParts jwsParts = new JwsParts(
+                null,
+                header,
+                null,
+                null);
+
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            StandardJwtContextFactory.getAwsPublicKeyUri(jwsParts, Set.of(signer));
+                        })
+                .hasMessageContaining("Missing")
+                .hasMessageContaining(OpenId.KEY_ID)
+                .isInstanceOf(RuntimeException.class);
     }
 }
