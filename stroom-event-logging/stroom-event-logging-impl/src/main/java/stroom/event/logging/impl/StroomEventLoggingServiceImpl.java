@@ -161,7 +161,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
         return Event.builder()
                 .withEventTime(EventTime.builder()
-                        .withTimeCreated(new Date())
+                        .withTimeCreated(Instant.now())
                         .build())
                 .withEventSource(EventSource.builder()
                         .withSystem(SystemDetail.builder()
