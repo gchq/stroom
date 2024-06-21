@@ -143,4 +143,9 @@ public class DelegatingIdpConfigurationProvider implements IdpConfigurationProvi
     public String getLogoutRedirectParamName() {
         return delegate.getLogoutRedirectParamName();
     }
+
+    @Override
+    public Set<String> getExpectedSignerPrefixes() {
+        return delegate.getExpectedSignerPrefixes();
+    }
 }

@@ -154,7 +154,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
                 sb.append(attributeMap.get(key));
                 sb.append(",");
             });
-            if (sb.length() > 0) {
+            if (!sb.isEmpty()) {
                 sb.setLength(sb.length() - 1);
             }
 

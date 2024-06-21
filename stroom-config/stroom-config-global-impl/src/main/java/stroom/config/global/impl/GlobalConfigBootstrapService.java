@@ -35,6 +35,9 @@ public class GlobalConfigBootstrapService {
         this.dao = dao;
         this.configMapper = configMapper;
 
+        // Make sure we have a row in the table
+        dao.ensureTracker(UNKNOWN_UPDATE_TIME_MS);
+
         LOGGER.debug("Initialising GlobalConfigService");
         updateConfigFromDb(true);
         LOGGER.info("Config initialised with all effective values");
