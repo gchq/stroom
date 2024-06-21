@@ -229,19 +229,12 @@ public class FindInContentPresenter
 
     @Override
     public void changePattern(final String pattern, final boolean matchCase, final boolean regex) {
-        String trimmed;
-        if (pattern == null) {
-            trimmed = "";
-        } else {
-            trimmed = pattern.trim();
-        }
-
         final FindInContentRequest query = new FindInContentRequest(
                 currentQuery.getPageRequest(),
                 currentQuery.getSortList(),
                 regex
-                        ? StringMatch.regex(trimmed, matchCase)
-                        : StringMatch.contains(trimmed, matchCase));
+                        ? StringMatch.regex(pattern, matchCase)
+                        : StringMatch.contains(pattern, matchCase));
 
         if (!Objects.equals(currentQuery, query)) {
             this.currentQuery = query;

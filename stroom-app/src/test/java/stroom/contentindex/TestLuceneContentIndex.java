@@ -24,87 +24,92 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
 
+    @SuppressWarnings("checkstyle:linelength")
+    private static final String TEXT = """
+            <?xml version="1.0" encoding="UTF-8" ?>
+            <xsl:stylesheet xpath-default-namespace="records:2" xmlns="reference-data:2" xmlns:evt="event-logging:3"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                            version="2.0">
+                <xsl:template match="records">
+                    <referenceData xsi:schemaLocation="reference-data:2 file://reference-data-v2.0.1.xsd event-logging:3 file://event-logging-v3.0.0.xsd" version="2.0.1">
+                        <xsl:apply-templates/>
+                    </referenceData>
+                </xsl:template>
+
+                <xsl:template match="record">
+                    <reference>
+                        <map>FILENO_TO_LOCATION_MAP</map>
+                        <key><xsl:value-of select="data[@name='FileNo']/@value"/></key>
+                        <value>
+                            <evt:Location>
+                                <evt:Country><xsl:value-of select="data[@name='Country']/@value"/></evt:Country>
+                                <evt:Site><xsl:value-of select="data[@name='Site']/@value"/></evt:Site>
+                                <evt:Building><xsl:value-of select="data[@name='Building']/@value"/></evt:Building>
+                                <evt:Floor><xsl:value-of select="data[@name='Floor']/@value"/></evt:Floor>
+                                <evt:Room><xsl:value-of select="data[@name='Room']/@value"/></evt:Room>
+                                <evt:Desk><xsl:value-of select="data[@name='Desk']/@value"/></evt:Desk>
+                            </evt:Location>
+                        </value>
+                    </reference>
+                </xsl:template>
+            </xsl:stylesheet>
+            """;
+
     @Inject
     private XsltStore xsltStore;
 
     private XsltDoc xsltDoc;
     private DocRef docRef;
 
-    @SuppressWarnings("checkstyle:linelength")
+
     @BeforeEach
     void setup() {
         docRef = xsltStore.createDocument("Test");
         xsltDoc = xsltStore.readDocument(docRef);
-        xsltDoc.setData("""
-                <?xml version="1.0" encoding="UTF-8" ?>
-                <xsl:stylesheet xpath-default-namespace="records:2" xmlns="reference-data:2" xmlns:evt="event-logging:3"
-                                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                                version="2.0">
-                    <xsl:template match="records">
-                        <referenceData xsi:schemaLocation="reference-data:2 file://reference-data-v2.0.1.xsd event-logging:3 file://event-logging-v3.0.0.xsd" version="2.0.1">
-                            <xsl:apply-templates/>
-                        </referenceData>
-                    </xsl:template>
-
-                    <xsl:template match="record">
-                        <reference>
-                            <map>FILENO_TO_LOCATION_MAP</map>
-                            <key><xsl:value-of select="data[@name='FileNo']/@value"/></key>
-                            <value>
-                                <evt:Location>
-                                    <evt:Country><xsl:value-of select="data[@name='Country']/@value"/></evt:Country>
-                                    <evt:Site><xsl:value-of select="data[@name='Site']/@value"/></evt:Site>
-                                    <evt:Building><xsl:value-of select="data[@name='Building']/@value"/></evt:Building>
-                                    <evt:Floor><xsl:value-of select="data[@name='Floor']/@value"/></evt:Floor>
-                                    <evt:Room><xsl:value-of select="data[@name='Room']/@value"/></evt:Room>
-                                    <evt:Desk><xsl:value-of select="data[@name='Desk']/@value"/></evt:Desk>
-                                </evt:Location>
-                            </value>
-                        </reference>
-                    </xsl:template>
-                </xsl:stylesheet>
-                """);
+        xsltDoc.setData(TEXT);
         xsltStore.writeDocument(xsltDoc);
     }
 
     @Test
     void testBasic() {
-        final DocContentHighlights highlights = test(StringMatch.contains("LOCATION", false));
-        assertThat(highlights.getText()).isEqualTo(xsltDoc.getData());
-        assertThat(highlights.getHighlights().size()).isEqualTo(4);
-        assertThat(xsltDoc.getData().substring(highlights.getHighlights().getFirst().getOffset(),
-                highlights.getHighlights().getFirst().getOffset() +
-                        highlights.getHighlights().getFirst().getLength())).isEqualTo("Location");
+        test(StringMatch.contains("LOCATION"), 4, "Location");
     }
 
     @Test
     void testCaseSensitive() {
-        final DocContentHighlights highlights = test(StringMatch.contains("LOCATION", true));
-        assertThat(highlights.getText()).isEqualTo(xsltDoc.getData());
-        assertThat(highlights.getHighlights().size()).isEqualTo(1);
-        assertThat(xsltDoc.getData().substring(highlights.getHighlights().getFirst().getOffset(),
-                highlights.getHighlights().getFirst().getOffset() +
-                        highlights.getHighlights().getFirst().getLength())).isEqualTo("LOCATION");
+        test(StringMatch.contains("LOCATION", true), 1, "LOCATION");
     }
 
     @Test
     void testPartial() {
-        final DocContentHighlights highlights = test(StringMatch.contains("TION", false));
-        assertThat(highlights.getText()).isEqualTo(xsltDoc.getData());
-        assertThat(highlights.getHighlights().size()).isEqualTo(4);
-        assertThat(xsltDoc.getData().substring(highlights.getHighlights().getFirst().getOffset(),
-                highlights.getHighlights().getFirst().getOffset() +
-                        highlights.getHighlights().getFirst().getLength())).isEqualTo("tion");
+        test(StringMatch.contains("TION"), 4, "tion");
     }
 
     @Test
     void testPartialCaseSensitive() {
-        final DocContentHighlights highlights = test(StringMatch.contains("TION", true));
-        assertThat(highlights.getText()).isEqualTo(xsltDoc.getData());
-        assertThat(highlights.getHighlights().size()).isEqualTo(1);
-        assertThat(xsltDoc.getData().substring(highlights.getHighlights().getFirst().getOffset(),
+        test(StringMatch.contains("TION", true), 1, "TION");
+    }
+
+    @Test
+    void testRegex() {
+        test(StringMatch.regex("XML\\w*"), 6, "xml");
+    }
+
+    @Test
+    void testRegexCaseSensitive() {
+        test(StringMatch.regex("XML\\w*", true), 1, "XMLSchema");
+        test(StringMatch.regex("xml\\w*", true), 5, "xml");
+    }
+
+    void test(final StringMatch stringMatch,
+              final int expectedHighlightCount,
+              final String expectedFirstHightlight) {
+        final DocContentHighlights highlights = test(stringMatch);
+        assertThat(highlights.getText()).isEqualTo(TEXT);
+        assertThat(highlights.getHighlights().size()).isEqualTo(expectedHighlightCount);
+        assertThat(TEXT.substring(highlights.getHighlights().getFirst().getOffset(),
                 highlights.getHighlights().getFirst().getOffset() +
-                        highlights.getHighlights().getFirst().getLength())).isEqualTo("TION");
+                        highlights.getHighlights().getFirst().getLength())).isEqualTo(expectedFirstHightlight);
     }
 
     private DocContentHighlights test(final StringMatch stringMatch) {

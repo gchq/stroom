@@ -49,6 +49,9 @@ public class FindResult {
         return docRef;
     }
 
+    /**
+     * @return The path like 'System / Parent Folder / Child item'
+     */
     public String getPath() {
         return path;
     }

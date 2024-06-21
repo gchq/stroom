@@ -27,6 +27,7 @@ import org.junit.jupiter.api.TestFactory;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -1025,6 +1026,32 @@ class TestNullSafe {
                 .addCase(List.of("foo", "bar"), Tuple.of(2, List.of("foo", "bar")))
                 .build();
     }
+
+    @TestFactory
+    Stream<DynamicTest> testForEach() {
+        final AtomicInteger counter = new AtomicInteger(0);
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Iterable<?>>() {
+                })
+                .withOutputType(int.class)
+                .withTestFunction(testCase -> {
+                    NullSafe.forEach(testCase.getInput(), item -> {
+                        counter.incrementAndGet();
+                    });
+                    return counter.get();
+                })
+                .withSimpleEqualityAssertion()
+                .withBeforeTestCaseAction(() -> counter.set(0))
+                .addCase(null, 0)
+                .addCase(Collections.emptyList(), 0)
+                .addCase(Set.of(1, 2, 3), 3)
+                .addCase(List.of("1", "2", "3"), 3)
+                .addCase(Arrays.asList(null, "2", null), 1)
+                .addCase(Arrays.asList(null, null, null), 0)
+                .build();
+    }
+
 
     @TestFactory
     Stream<DynamicTest> testStream_array() {

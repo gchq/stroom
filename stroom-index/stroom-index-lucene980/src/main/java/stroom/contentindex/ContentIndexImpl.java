@@ -24,67 +24,46 @@ public class ContentIndexImpl implements ContentIndex, EntityEvent.Handler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContentIndexImpl.class);
 
-    private final ContentIndexConfig contentIndexConfig;
-    private final Provider<LuceneContentIndex> luceneContentIndexProvider;
-    private final Provider<BasicContentIndex> basicContentIndexProvider;
-
-    private ContentIndex contentIndex;
-    private EntityEvent.Handler handler;
+    private final ContentIndex contentIndex;
+    private final EntityEvent.Handler handler;
 
 
     @Inject
     public ContentIndexImpl(final ContentIndexConfig contentIndexConfig,
                             final Provider<LuceneContentIndex> luceneContentIndexProvider,
                             final Provider<BasicContentIndex> basicContentIndexProvider) {
-        this.contentIndexConfig = contentIndexConfig;
-        this.luceneContentIndexProvider = luceneContentIndexProvider;
-        this.basicContentIndexProvider = basicContentIndexProvider;
-    }
 
-    private ContentIndex getContentIndex() {
-        init();
-        return contentIndex;
-    }
-
-    private EntityEvent.Handler getHandler() {
-        init();
-        return handler;
-    }
-
-    private synchronized void init() {
-        if (contentIndex == null) {
-            if (contentIndexConfig.isEnabled()) {
-                final LuceneContentIndex index = luceneContentIndexProvider.get();
-                handler = index;
-                contentIndex = index;
-                contentIndex.reindex();
-            } else {
-                handler = event -> {
-                };
-                contentIndex = basicContentIndexProvider.get();
-            }
+        if (contentIndexConfig.isEnabled()) {
+            final LuceneContentIndex index = luceneContentIndexProvider.get();
+            handler = index;
+            contentIndex = index;
+            contentIndex.reindex();
+        } else {
+            handler = event -> {
+            };
+            contentIndex = basicContentIndexProvider.get();
         }
     }
 
     @Override
     public ResultPage<DocContentMatch> findInContent(final FindInContentRequest request) {
         return LOGGER.logDurationIfInfoEnabled(() ->
-                getContentIndex().findInContent(request), "findInContent");
+                contentIndex.findInContent(request), "findInContent");
     }
 
     @Override
     public DocContentHighlights fetchHighlights(final FetchHighlightsRequest request) {
         return LOGGER.logDurationIfInfoEnabled(() ->
-                getContentIndex().fetchHighlights(request), "fetchHighlights");
+                contentIndex.fetchHighlights(request), "fetchHighlights");
     }
 
     @Override
     public void reindex() {
-        getContentIndex().reindex();
+        contentIndex.reindex();
     }
 
     @Override
     public void onChange(final EntityEvent event) {
-        getHandler().onChange(event);
+        handler.onChange(event);
     }
 }

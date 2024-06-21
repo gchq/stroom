@@ -81,6 +81,7 @@ import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.api.TaskContext;
+import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.io.PreviewInputStream;
 import stroom.util.io.WrappedOutputStream;
@@ -238,12 +239,12 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                 process(taskContext);
 
             } catch (final Exception e) {
-                outputError(e);
+                outputFatalError(e);
             } finally {
                 try {
                     processDecorator.afterProcessing();
                 } catch (final Exception e) {
-                    outputError(e);
+                    outputFatalError(e);
                 }
 
                 // Ensure we are no longer interrupting if necessary.
@@ -348,7 +349,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
             LOGGER.info(() -> finishedInfo);
 
         } catch (final RuntimeException e) {
-            outputError(e);
+            outputFatalError(e);
 
         } finally {
             // Record some statistics about processing.
@@ -456,53 +457,62 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                             // Process the boundary.
                             try {
                                 pipeline.process(previewInputStream, encoding);
-                            } catch (final LoggedException e) {
-                                // The exception has already been logged so
-                                // ignore it.
-                                LOGGER.trace(() -> "Error while processing data task: id = " + meta.getId(), e);
-                            } catch (final RuntimeException e) {
-                                outputError(e);
+                            } catch (final Throwable e) {
+                                handleProcessingException(e, meta);
                             }
 
                             // Reset the error statistics for the next stream.
-                            if (errorReceiverProxy.getErrorReceiver() instanceof ErrorStatistics) {
-                                ((ErrorStatistics) errorReceiverProxy.getErrorReceiver()).reset();
+                            if (errorReceiverProxy.getErrorReceiver() instanceof ErrorStatistics errorStatistics) {
+                                errorStatistics.reset();
                             }
                         }
                     }
                 }
             }
-        } catch (final LoggedException e) {
-            // The exception has already been logged so ignore it.
-            if (meta != null) {
-                LOGGER.trace(() -> "Error while processing data task: id = " + meta.getId(), e);
-            }
-        } catch (final IOException | RuntimeException e) {
-            // An exception that's gets here is definitely a failure.
-            outputError(e);
-
+        } catch (final Throwable e) {
+            handleProcessingException(e, meta);
         } finally {
             try {
                 if (startedProcessing) {
                     pipeline.endProcessing();
                 }
-            } catch (final LoggedException e) {
-                // The exception has already been logged so ignore it.
-                LOGGER.trace(() -> "Error while processing data task: id = " + meta.getId(), e);
-            } catch (final RuntimeException e) {
-                outputError(e);
+            } catch (final Throwable e) {
+                handleProcessingException(e, meta);
             }
         }
     }
 
-    private void outputError(final Exception e) {
+    private void handleProcessingException(final Throwable e,
+                                           final Meta meta) {
+        if (e instanceof LoggedException) {
+            // The exception has already been logged so ignore it.
+            LOGGER.trace(() -> "Error while processing data task: id = " + NullSafe.get(meta, Meta::getId), e);
+        } else if (e instanceof IOException
+                || e instanceof RuntimeException) {
+            // An exception that's gets here is definitely a failure.
+            outputFatalError(e);
+        } else if (e instanceof Error err) {
+            // If we get here we are into OOM, stackOverflow type critical JVM errors so try to log
+            // the failure (if the JVM allows) but re-throw as we should not really be swallowing JVM Errors.
+            try {
+                LOGGER.error("Error while processing data task: id = {}", NullSafe.get(meta, Meta::getId), e);
+                outputFatalError(e);
+            } catch (Exception e2) {
+                // Error while logging
+                LOGGER.error("Error while trying to log error '{}'", e.getMessage(), e2);
+            }
+            throw err;
+        }
+    }
+
+    private void outputFatalError(final Throwable e) {
         outputError(e, Severity.FATAL_ERROR);
     }
 
     /**
      * Used to handle any errors that may occur during translation.
      */
-    private void outputError(final Exception e, final Severity severity) {
+    private void outputError(final Throwable e, final Severity severity) {
         if (errorReceiverProxy != null && !(e instanceof LoggedException)) {
             try {
                 if (e.getMessage() != null) {
@@ -512,14 +522,16 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                 }
             } catch (final RuntimeException e2) {
                 // Ignore exception as we generated it.
+                LOGGER.error("Error while trying to log {} to errorReceiverProxy with message '{}'",
+                        severity, e.getMessage(), e2);
             }
 
-            if (errorReceiverProxy.getErrorReceiver() instanceof ErrorStatistics) {
-                ((ErrorStatistics) errorReceiverProxy.getErrorReceiver()).checkRecord(-1);
+            if (errorReceiverProxy.getErrorReceiver() instanceof ErrorStatistics errorStatistics) {
+                errorStatistics.checkRecord(-1);
             }
 
             if (streamSource.getMeta() != null) {
-                LOGGER.trace(() -> "Error while processing stream task: id = " + streamSource.getMeta().getId(), e);
+                LOGGER.trace(() -> "Error while processing data task: id = " + streamSource.getMeta().getId(), e);
             }
         } else {
             LOGGER.error(MarkerFactory.getMarker("FATAL"), e.getMessage(), e);

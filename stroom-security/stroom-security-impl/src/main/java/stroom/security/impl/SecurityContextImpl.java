@@ -250,10 +250,9 @@ class SecurityContextImpl implements SecurityContext {
 
         // If we are currently allowing users with only `Use` permission to `Read` (elevate permissions) then
         // test for `Use` instead of `Read`.
-        String perm = permission;
-        if (CurrentUserState.isElevatePermissions() && DocumentPermissionNames.READ.equals(perm)) {
-            perm = DocumentPermissionNames.USE;
-        }
+        final String perm = DocumentPermissionNames.READ.equals(permission) && CurrentUserState.isElevatePermissions()
+                ? DocumentPermissionNames.USE
+                : permission;
 
         final String userUuid = getUserUuid(userIdentity);
         return hasDocumentPermission(userUuid, documentUuid, perm);

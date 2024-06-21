@@ -26,8 +26,6 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
-import org.jooq.Record2;
-import org.jooq.Result;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
@@ -36,11 +34,12 @@ import org.slf4j.LoggerFactory;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Set;
 import java.util.function.Function;
 
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
@@ -246,57 +245,67 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
      * Physically delete old processor filters that are logically deleted with an update time older than the threshold.
      *
      * @param deleteThreshold Only physically delete filters with an update time older than the threshold.
-     * @return The number of physically deleted filters.
+     * @return The processor filter UUIDs of all the processor filters deleted.
      */
     @Override
-    public int physicalDeleteOldProcessorFilters(final Instant deleteThreshold) {
-        final Result<Record2<Integer, Integer>> result =
+    public Set<String> physicalDeleteOldProcessorFilters(final Instant deleteThreshold) {
+        final List<PipeFilterKeys> result =
                 JooqUtil.contextResult(processorDbConnProvider, context -> context
-                        .select(PROCESSOR_FILTER.ID, PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID)
+                        .select(PROCESSOR_FILTER.ID,
+                                PROCESSOR_FILTER.UUID,
+                                PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID)
                         .from(PROCESSOR_FILTER)
                         .where(PROCESSOR_FILTER.DELETED.eq(true))
                         .and(PROCESSOR_FILTER.UPDATE_TIME_MS.lessThan(deleteThreshold.toEpochMilli()))
-                        .fetch());
+                        .fetch()
+                        .map(rec -> new PipeFilterKeys(
+                                rec.get(PROCESSOR_FILTER.ID),
+                                rec.get(PROCESSOR_FILTER.UUID),
+                                rec.get(PROCESSOR_FILTER_TRACKER.ID))));
 
         LAMBDA_LOGGER.debug(() ->
                 LogUtil.message("Found {} logically deleted filters with an update time older than {}",
                         result.size(), deleteThreshold));
 
-        final AtomicInteger totalCount = new AtomicInteger();
+        final Set<String> processorFilterUuids = new HashSet<>();
         // Delete one by one as we expect some constraint errors.
-        result.forEach(record -> {
-            final int processorFilterId = record.value1();
-            final int processorFilterTrackerId = record.value2();
-
+        result.forEach(dbKeys -> {
             try {
-                JooqUtil.transaction(processorDbConnProvider, context -> {
+                final int count = JooqUtil.transactionResult(processorDbConnProvider, context -> {
                     final int filterCount = context
                             .deleteFrom(PROCESSOR_FILTER)
-                            .where(PROCESSOR_FILTER.ID.eq(processorFilterId))
+                            .where(PROCESSOR_FILTER.ID.eq(dbKeys.processorFilterId))
                             .execute();
-                    LOGGER.debug("Deleted {} processor filters with id {}", filterCount, processorFilterId);
+                    LOGGER.debug("Physically deleted {} processor filters with id {}",
+                            filterCount,
+                            dbKeys.processorFilterId);
 
                     final int trackerCount = context
                             .deleteFrom(PROCESSOR_FILTER_TRACKER)
-                            .where(PROCESSOR_FILTER_TRACKER.ID.eq(processorFilterTrackerId))
+                            .where(PROCESSOR_FILTER_TRACKER.ID.eq(dbKeys.processorFilterTrackerId))
                             .execute();
-                    LOGGER.debug("Deleted {} processor filter trackers with id {}",
-                            trackerCount, processorFilterTrackerId);
+                    LOGGER.debug("Physically deleted {} processor filter trackers with id {}",
+                            trackerCount, dbKeys.processorFilterTrackerId);
 
-                    // No point adding the tracker count as they are 1:1 with filter
-                    totalCount.addAndGet(filterCount);
+                    return filterCount;
                 });
+
+                if (count > 0) {
+                    // Make a note of the uuid, so we can delete any doc perms associated with it
+                    // The tracker is 1:1 with filter, so don't need to return tracker delete count
+                    processorFilterUuids.add(dbKeys.processorFilterUuid);
+                }
             } catch (final DataAccessException e) {
-                if (e.getCause() != null && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
-                    final var sqlEx = (SQLIntegrityConstraintViolationException) e.getCause();
+                if (e.getCause() instanceof final SQLIntegrityConstraintViolationException sqlEx) {
                     LOGGER.debug("Expected constraint violation exception: " + sqlEx.getMessage(), e);
                 } else {
                     throw e;
                 }
             }
         });
-        LAMBDA_LOGGER.debug(() -> "physicalDeleteOldProcessorFilters returning: " + totalCount.get());
-        return totalCount.get();
+        LAMBDA_LOGGER.debug(() -> "physicalDeleteOldProcessorFilters returning: "
+                + processorFilterUuids.size() + " UUIDs");
+        return processorFilterUuids;
     }
 
     @Override
@@ -360,5 +369,16 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         processorFilter.setProcessor(processor);
         processorFilter.setProcessorFilterTracker(processorFilterTracker);
         return marshaller.unmarshal(processorFilter);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record PipeFilterKeys(
+            int processorFilterId,
+            String processorFilterUuid,
+            int processorFilterTrackerId) {
+
     }
 }

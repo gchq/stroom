@@ -39,7 +39,8 @@ public abstract class AbstractDataSourceProviderModule<
 
         // MultiBind the connection provider so we can see status for all databases.
         NullSafe.consume(getConnectionProviderType(), type ->
-                GuiceUtil.buildMultiBinder(binder(), DataSource.class).addBinding(getConnectionProviderType()));
+                GuiceUtil.buildMultiBinder(binder(), DataSource.class)
+                        .addBinding(getConnectionProviderType()));
     }
 
     /**

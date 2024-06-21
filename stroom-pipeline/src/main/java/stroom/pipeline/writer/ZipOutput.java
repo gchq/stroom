@@ -7,6 +7,7 @@ import stroom.util.NullSafe;
 import stroom.util.io.ByteCountOutputStream;
 import stroom.util.shared.ModelStringUtil;
 
+import com.google.common.base.Strings;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 
@@ -48,7 +49,7 @@ public class ZipOutput implements Output {
         count++;
 
         // Write meta.
-        final String base = ModelStringUtil.zeroPad(3, String.valueOf(count));
+        final String base = Strings.padStart(Long.toString(count), 10, '0');
         String dataFileName = base + DATA_EXTENSION;
         String metaFileName = base + META_EXTENSION;
 

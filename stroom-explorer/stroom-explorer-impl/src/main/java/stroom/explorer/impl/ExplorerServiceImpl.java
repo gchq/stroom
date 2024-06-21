@@ -49,6 +49,7 @@ import stroom.explorer.shared.PermissionInheritance;
 import stroom.explorer.shared.StandardExplorerTags;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.Suggestions;
+import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.suggestions.api.SuggestionsQueryHandler;
@@ -107,6 +108,7 @@ class ExplorerServiceImpl
     private final Provider<ExplorerDecorator> explorerDecoratorProvider;
     private final Provider<ExplorerFavService> explorerFavService;
     private final EntityEventBus entityEventBus;
+    private final DocumentPermissionService documentPermissionService;
     private final ContentIndex contentIndex;
 
     @Inject
@@ -118,6 +120,7 @@ class ExplorerServiceImpl
                         final Provider<ExplorerDecorator> explorerDecoratorProvider,
                         final Provider<ExplorerFavService> explorerFavService,
                         final EntityEventBus entityEventBus,
+                        final DocumentPermissionService documentPermissionService,
                         final ContentIndex contentIndex) {
         this.explorerNodeService = explorerNodeService;
         this.explorerTreeModel = explorerTreeModel;
@@ -127,6 +130,7 @@ class ExplorerServiceImpl
         this.explorerDecoratorProvider = explorerDecoratorProvider;
         this.explorerFavService = explorerFavService;
         this.entityEventBus = entityEventBus;
+        this.documentPermissionService = documentPermissionService;
         this.contentIndex = contentIndex;
 
         explorerNodeService.ensureRootNodeExists();
@@ -584,7 +588,18 @@ class ExplorerServiceImpl
             boolean foundFilterMatch = false;
             final Set<ExplorerNodeKey> openNodes = new HashSet<>();
 
-            final List<ExplorerNode> children = treeModelIn.getChildren(parent);
+            List<ExplorerNode> children = treeModelIn.getChildren(parent);
+
+            // If set, only include specified roots
+            if (children != null
+                    && parent == null
+                    && NullSafe.hasItems(filter.getIncludedRootTypes())) {
+                children = children.stream()
+                        .filter(child ->
+                                filter.getIncludedRootTypes().contains(child.getType()))
+                        .toList();
+            }
+
             if (children != null) {
                 // Add all children if the name filter has changed or the parent item is open.
                 final boolean addAllChildren = (filter.isNameFilterChange() && filter.getNameFilter() != null)
@@ -911,22 +926,22 @@ class ExplorerServiceImpl
         createChildMap(explorerNodes, childMap);
 
         // Perform a copy on the selected items.
-        explorerNodes.forEach(sourceNode -> copy(
-                sourceNode,
-                destinationFolder,
-                allowRename,
-                docName,
-                permissionInheritance,
-                resultMessage,
-                remappings));
+        explorerNodes.forEach(sourceNode ->
+                copy(sourceNode,
+                        destinationFolder,
+                        allowRename,
+                        docName,
+                        permissionInheritance,
+                        resultMessage,
+                        remappings));
 
         // Recursively copy any selected folders.
-        explorerNodes.forEach(sourceNode -> recurseCopy(
-                sourceNode,
-                permissionInheritance,
-                resultMessage,
-                remappings,
-                childMap));
+        explorerNodes.forEach(sourceNode ->
+                recurseCopy(sourceNode,
+                        permissionInheritance,
+                        resultMessage,
+                        remappings,
+                        childMap));
 
         // Remap all dependencies for the copied items.
         remappings.values().forEach(newExplorerNode -> {
@@ -975,6 +990,8 @@ class ExplorerServiceImpl
                 // Get a handler to perform the copy.
                 final ExplorerActionHandler handler = explorerActionHandlers.getHandler(sourceNode.getType());
 
+                checkOwnershipForCopy(sourceNode, permissionInheritance);
+
                 // Check that the user is allowed to create an item of this type in the destination folder.
                 checkCreatePermission(getUUID(destinationFolderRef), sourceNode.getType());
 
@@ -988,7 +1005,7 @@ class ExplorerServiceImpl
 
                 // Copy the item to the destination folder.
                 String name = sourceNode.getDocRef().getName();
-                if (allowRename && docName != null && !docName.trim().isEmpty()) {
+                if (allowRename && !NullSafe.isBlankString(docName)) {
                     name = docName;
                 }
                 final DocRef destinationDocRef = handler.copyDocument(
@@ -1016,7 +1033,6 @@ class ExplorerServiceImpl
                             .build());
                 }
             }
-
         } catch (final RuntimeException e) {
             explorerEventLog.copy(sourceNode.getDocRef(), destinationFolderRef, permissionInheritance, e);
             resultMessage.append("Unable to copy '");
@@ -1044,12 +1060,16 @@ class ExplorerServiceImpl
         final ExplorerNode destinationFolder = remappings.get(sourceFolder);
         if (destinationFolder != null) {
             final List<ExplorerNode> children = childMap.get(sourceFolder);
-            if (children != null && !children.isEmpty()) {
-                children.forEach(child -> {
-                    copy(child, destinationFolder, false, null, permissionInheritance, resultMessage, remappings);
-                    recurseCopy(child, permissionInheritance, resultMessage, remappings, childMap);
-                });
-            }
+            NullSafe.forEach(children, child -> {
+                copy(child,
+                        destinationFolder,
+                        false,
+                        null,
+                        permissionInheritance,
+                        resultMessage,
+                        remappings);
+                recurseCopy(child, permissionInheritance, resultMessage, remappings, childMap);
+            });
         }
     }
 
@@ -1060,7 +1080,7 @@ class ExplorerServiceImpl
                                 final Map<ExplorerNode, List<ExplorerNode>> childMap) {
         explorerNodes.forEach(explorerNode -> {
             final List<ExplorerNode> children = explorerNodeService.getChildren(explorerNode.getDocRef());
-            if (children != null && !children.isEmpty()) {
+            if (NullSafe.hasItems(children)) {
                 childMap.put(explorerNode, children);
                 createChildMap(children, childMap);
             }
@@ -1087,6 +1107,8 @@ class ExplorerServiceImpl
             DocRef result = null;
 
             try {
+                checkOwnershipForMove(explorerNode, permissionInheritance);
+
                 // Check that the user is allowed to create an item of this type in the destination folder.
                 checkCreatePermission(getUUID(folderRef), explorerNode.getType());
                 // Move the item.
@@ -1115,6 +1137,37 @@ class ExplorerServiceImpl
         }
 
         return new BulkActionResult(resultNodes, resultMessage.toString());
+    }
+
+    private void checkOwnershipForMove(final ExplorerNode node,
+                                       final PermissionInheritance permissionInheritance) {
+        if (allowsPermissionChange(permissionInheritance)) {
+
+            if (!securityContext.hasDocumentPermission(node.getUuid(), DocumentPermissionNames.OWNER)) {
+                throw new PermissionException(securityContext.getUserIdentityForAudit(),
+                        "You must have 'Owner' permission on the document to move it with permission mode '"
+                                + permissionInheritance.getDisplayValue() + "'.");
+            }
+        }
+    }
+
+    private void checkOwnershipForCopy(final ExplorerNode node,
+                                       final PermissionInheritance permissionInheritance) {
+        if (allowsPermissionChange(permissionInheritance)) {
+            if (!securityContext.hasDocumentPermission(node.getUuid(), DocumentPermissionNames.OWNER)) {
+                throw new PermissionException(securityContext.getUserIdentityForAudit(),
+                        "You must have 'Owner' permission on the document to copy it with permission mode '"
+                                + permissionInheritance.getDisplayValue() + "'.");
+            }
+        }
+    }
+
+    private boolean allowsPermissionChange(final PermissionInheritance permissionInheritance) {
+        // NONE/DESTINATION involve clearing all current perms and COMBINED means adding additional perms.
+        // All are something only an OWNER (or admin) can do.
+        return permissionInheritance == PermissionInheritance.DESTINATION
+                || permissionInheritance == PermissionInheritance.NONE
+                || permissionInheritance == PermissionInheritance.COMBINED;
     }
 
     @Override
@@ -1246,14 +1299,14 @@ class ExplorerServiceImpl
             if (!deleted.contains(explorerNode)) {
                 // Get any children that might need to be deleted.
                 List<ExplorerNode> children = explorerNodeService.getChildren(explorerNode.getDocRef());
-                if (children != null && !children.isEmpty()) {
+                if (NullSafe.hasItems(children)) {
                     // Recursive delete.
                     recursiveDelete(children, deleted, resultDocRefs, resultMessage);
                 }
 
                 // Check to see if we still have children.
                 children = explorerNodeService.getChildren(explorerNode.getDocRef());
-                if (children != null && !children.isEmpty()) {
+                if (NullSafe.hasItems(children)) {
                     final String message = "Unable to delete '" + explorerNode.getName() +
                             "' because the folder is not empty";
                     resultMessage.append(message);
@@ -1265,12 +1318,14 @@ class ExplorerServiceImpl
                     try {
                         handler.deleteDocument(explorerNode.getUuid());
                         explorerEventLog.delete(explorerNode.getDocRef(), null);
+
+                        // Delete all perms associated with this doc
+                        documentPermissionService.deleteDocumentPermissions(explorerNode.getUuid());
                         deleted.add(explorerNode);
                         resultDocRefs.add(explorerNode);
 
                         // Delete the explorer node.
                         explorerNodeService.deleteNode(explorerNode.getDocRef());
-
                     } catch (final Exception e) {
                         explorerEventLog.delete(explorerNode.getDocRef(), e);
                         resultMessage.append("Unable to delete '");
@@ -1467,8 +1522,6 @@ class ExplorerServiceImpl
             if (recentItemsMode) {
                 final Map<DocRef, FindResult> resultMap = results
                         .stream()
-                        .filter(findResult ->
-                                !ExplorerConstants.FAVOURITES_NODE.getName().equals(findResult.getPath()))
                         .collect(Collectors.toMap(FindResult::getDocRef, Function.identity()));
                 final List<FindResult> recentItems = request
                         .getFilter().getRecentItems()
@@ -1500,8 +1553,8 @@ class ExplorerServiceImpl
             for (final ExplorerNode node : nodes) {
                 if (node.hasNodeFlag(NodeFlag.FILTER_MATCH) &&
                         node.getDocRef() != null &&
-                        !Objects.equals(ExplorerConstants.SYSTEM, node.getType()) &&
-                        !Objects.equals(ExplorerConstants.FAVOURITES, node.getType())) {
+                        !ExplorerConstants.isRootNode(node)) {
+
                     results.add(new FindResult(
                             node.getDocRef(),
                             parent,

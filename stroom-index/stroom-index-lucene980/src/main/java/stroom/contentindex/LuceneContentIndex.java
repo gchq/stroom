@@ -32,23 +32,30 @@ import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import org.apache.lucene980.analysis.Analyzer;
+import org.apache.lucene980.analysis.LowerCaseFilter;
+import org.apache.lucene980.analysis.TokenStream;
+import org.apache.lucene980.analysis.Tokenizer;
 import org.apache.lucene980.analysis.core.KeywordAnalyzer;
 import org.apache.lucene980.analysis.miscellaneous.PerFieldAnalyzerWrapper;
+import org.apache.lucene980.analysis.ngram.NGramTokenizer;
 import org.apache.lucene980.document.Document;
+import org.apache.lucene980.document.Field;
 import org.apache.lucene980.document.Field.Store;
+import org.apache.lucene980.document.FieldType;
 import org.apache.lucene980.document.TextField;
 import org.apache.lucene980.index.DirectoryReader;
+import org.apache.lucene980.index.IndexOptions;
 import org.apache.lucene980.index.IndexWriter;
 import org.apache.lucene980.index.IndexWriterConfig;
 import org.apache.lucene980.index.StoredFields;
-import org.apache.lucene980.index.Term;
 import org.apache.lucene980.queryparser.classic.ParseException;
 import org.apache.lucene980.queryparser.classic.QueryParser;
 import org.apache.lucene980.search.IndexSearcher;
+import org.apache.lucene980.search.MatchAllDocsQuery;
+import org.apache.lucene980.search.NGramPhraseQuery;
+import org.apache.lucene980.search.PhraseQuery;
 import org.apache.lucene980.search.Query;
-import org.apache.lucene980.search.RegexpQuery;
 import org.apache.lucene980.search.ScoreDoc;
-import org.apache.lucene980.search.WildcardQuery;
 import org.apache.lucene980.store.Directory;
 import org.apache.lucene980.store.NIOFSDirectory;
 
@@ -67,17 +74,21 @@ import java.util.concurrent.CompletableFuture;
 
 public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
 
+    private static final int MIN_GRAM = 1;
+    private static final int MAX_GRAM = 2;
+    private static final int MAX_HIGHLIGHTS = 100;
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LuceneContentIndex.class);
 
     private static final String TYPE = "type";
     private static final String UUID = "uuid";
     private static final String NAME = "name";
     private static final String EXTENSION = "extension";
-    private static final String DATA = "data";
-    private static final String DATA_CS = "dataCS";
-//        private static final String[] ALL_FIELDS = new String[]{TYPE, UUID, NAME, EXTENSION, DATA};
-//        private static final String[] ALL_CS_FIELDS = new String[]{TYPE_CS, UUID_CS, NAME_CS, EXTENSION_CS, DATA_CS};
-
+    //    private static final String DATA = "data";
+//    private static final String DATA_CS = "data_cs";
+    private static final String DATA_NGRAM = "data_ngram";
+    private static final String DATA_CS_NGRAM = "data_cs_ngram";
+    private static final String TEXT = "text";
 
     private final Map<String, ContentIndexable> indexableMap;
     private final SecurityContext securityContext;
@@ -105,8 +116,11 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
             analyzerMap.put(UUID, AnalyzerFactory.create(AnalyzerType.KEYWORD, false));
             analyzerMap.put(NAME, AnalyzerFactory.create(AnalyzerType.KEYWORD, false));
             analyzerMap.put(EXTENSION, AnalyzerFactory.create(AnalyzerType.KEYWORD, false));
-            analyzerMap.put(DATA, AnalyzerFactory.create(AnalyzerType.KEYWORD, false));
-            analyzerMap.put(DATA_CS, AnalyzerFactory.create(AnalyzerType.KEYWORD, true));
+//            analyzerMap.put(DATA, AnalyzerFactory.create(AnalyzerType.KEYWORD, false));
+//            analyzerMap.put(DATA_CS, AnalyzerFactory.create(AnalyzerType.KEYWORD, true));
+            analyzerMap.put(DATA_NGRAM, new NGramAnalyzer());
+            analyzerMap.put(DATA_CS_NGRAM, new NGramCSAnalyzer());
+            analyzerMap.put(TEXT, AnalyzerFactory.create(AnalyzerType.KEYWORD, true));
             analyzer = new PerFieldAnalyzerWrapper(new KeywordAnalyzer(), analyzerMap);
 
             final Path docIndexDir = tempDirProvider.get().resolve("doc-index");
@@ -201,34 +215,44 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
             final PageRequest pageRequest = request.getPageRequest();
             final List<DocContentMatch> matches = new ArrayList<>();
 
-            final String field = getField(request.getFilter());
-            final Query query = getQuery(field, request.getFilter());
-//            final ContentHighlighter highlighter =
-//            new LuceneContentHighlighter(query, request.getFilter().isCaseSensitive());
-            final ContentHighlighter highlighter = new BasicContentHighlighter(request.getFilter());
+            final Query query = getQuery(request.getFilter());
+            final Highlighter highlighter = getHighlighter(request.getFilter());
+
             long total = 0;
             try (final DirectoryReader directoryReader = DirectoryReader.open(directory)) {
-                final IndexSearcher indexSearcher = new IndexSearcher(directoryReader);
-                final ScoreDoc[] hits = indexSearcher.search(query, 1000000).scoreDocs;
-                final StoredFields storedFields = indexSearcher.storedFields();
+                final IndexSearcher searcher = new IndexSearcher(directoryReader);
+                final ScoreDoc[] hits = searcher.search(query, 1000000).scoreDocs;
+                final StoredFields storedFields = searcher.storedFields();
                 for (final ScoreDoc hit : hits) {
-                    final Document hitDoc = storedFields.document(hit.doc);
-                    final DocRef docRef = new DocRef(hitDoc.get(TYPE), hitDoc.get(UUID), hitDoc.get(NAME));
-                    if (securityContext.hasDocumentPermission(docRef, DocumentPermissionNames.READ)) {
-                        if (total >= pageRequest.getOffset() &&
-                                total < pageRequest.getOffset() + pageRequest.getLength()) {
-                            try {
-                                final String extension = hitDoc.get(EXTENSION);
-                                final String text = hitDoc.get(DATA);
-                                final List<StringMatchLocation> matchList = highlighter.getHighlights(field, text, 1);
-                                if (!matchList.isEmpty()) {
-                                    matches.add(DocContentMatch.create(docRef, extension, text, matchList.getFirst()));
+                    final int docId = hit.doc;
+                    final Document doc = storedFields.document(docId);
+                    final DocRef docRef = new DocRef(doc.get(TYPE), doc.get(UUID), doc.get(NAME));
+                    final String extension = doc.get(EXTENSION);
+                    final String text = doc.get(TEXT);
+                    if (highlighter.filter(text)) {
+                        if (securityContext.hasDocumentPermission(docRef, DocumentPermissionNames.READ)) {
+                            if (total >= pageRequest.getOffset() &&
+                                    total < pageRequest.getOffset() + pageRequest.getLength()) {
+                                try {
+                                    final List<StringMatchLocation> highlights = highlighter
+                                            .getHighlights(directoryReader, docId, text, 1);
+                                    if (!highlights.isEmpty()) {
+                                        matches.add(DocContentMatch.create(docRef,
+                                                extension,
+                                                text,
+                                                highlights.getFirst()));
+                                    } else {
+                                        matches.add(DocContentMatch.create(docRef,
+                                                extension,
+                                                text,
+                                                new StringMatchLocation(0, 0)));
+                                    }
+                                } catch (final Exception e) {
+                                    LOGGER.debug(e::getMessage, e);
                                 }
-                            } catch (final RuntimeException e) {
-                                LOGGER.debug(e::getMessage, e);
                             }
+                            total++;
                         }
-                        total++;
                     }
                 }
             }
@@ -249,28 +273,92 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
         }
     }
 
-    private String getField(final StringMatch stringMatch) {
-        return stringMatch.isCaseSensitive()
-                ? DATA_CS
-                : DATA;
+    private Highlighter getHighlighter(final StringMatch stringMatch) throws ParseException {
+        if (MatchType.REGEX.equals(stringMatch.getMatchType())) {
+            return new BasicContentHighlighter(stringMatch);
+        }
+
+        final Query basicQuery = getBasicQuery(stringMatch);
+        return new LuceneContentHighlighter(getNGramField(stringMatch), basicQuery);
     }
 
-    private Query getQuery(final String field, final StringMatch stringMatch) throws ParseException {
-        final String value = stringMatch.isCaseSensitive()
+    private String getNGramField(final StringMatch stringMatch) {
+        return stringMatch.isCaseSensitive()
+                ? DATA_CS_NGRAM
+                : DATA_NGRAM;
+    }
+
+//    private String[] getFields(final StringMatch stringMatch) {
+//        return stringMatch.isCaseSensitive()
+//                ? new String[]{DATA_CS_NGRAM, DATA_CS}
+//                : new String[]{DATA_NGRAM, DATA};
+//    }
+
+    private String getQueryText(final StringMatch stringMatch) {
+        String value = stringMatch.isCaseSensitive()
                 ? stringMatch.getPattern()
                 : stringMatch.getPattern().toLowerCase(Locale.ROOT);
-        final Query query;
         if (MatchType.REGEX.equals(stringMatch.getMatchType())) {
-            query = new RegexpQuery(new Term(field, ".*" + value + ".*"));
-        } else {
-            query = new WildcardQuery(new Term(field, "*" + value + "*"));
-
-//            final QueryParser queryParser = new QueryParser(field, analyzer);
-//            queryParser.setAllowLeadingWildcard(true);
-//            Query query2 = queryParser.parse("*" + value + "*");
-//            System.out.println(query2);
+            if (!value.startsWith("/")) {
+                value = "/" + value;
+            }
+            if (!value.endsWith("/") || value.length() == 1) {
+                value = value + "/";
+            }
         }
-        return query;
+        return value;
+    }
+
+    private Query getQuery(final StringMatch stringMatch) throws ParseException {
+        // If we are going to do a regex then we'll just scan all content and do regex.
+        if (MatchType.REGEX.equals(stringMatch.getMatchType())) {
+            return new MatchAllDocsQuery();
+        }
+
+        final String field = getNGramField(stringMatch);
+        final String queryText = getQueryText(stringMatch);
+
+        final QueryParser queryParser = new QueryParser(field, analyzer) {
+            @Override
+            protected Query newFieldQuery(Analyzer analyzer, String field, String queryText, boolean quoted)
+                    throws ParseException {
+                // Ensure data is always processed as a phrase.
+                if (isNGram(field) && !quoted && queryText.length() > 1) {
+                    final Query q = super.newFieldQuery(analyzer, field, queryText, true);
+                    if (q instanceof final PhraseQuery phraseQuery) {
+                        return new NGramPhraseQuery(MAX_GRAM, phraseQuery);
+                    }
+                    return q;
+                }
+                return super.newFieldQuery(analyzer, field, queryText, quoted);
+            }
+        };
+
+        queryParser.setAllowLeadingWildcard(true);
+        return queryParser.parse(queryText);
+    }
+
+    private Query getBasicQuery(final StringMatch stringMatch) throws ParseException {
+        final String field = getNGramField(stringMatch);
+        final String queryText = getQueryText(stringMatch);
+        final QueryParser queryParser = new QueryParser(field, analyzer) {
+            @Override
+            protected Query newFieldQuery(Analyzer analyzer, String field, String queryText, boolean quoted)
+                    throws ParseException {
+                // Ensure data is always processed as a phrase.
+                if (isNGram(field) && !quoted && queryText.length() > 1) {
+                    return super.newFieldQuery(analyzer, field, queryText, true);
+                }
+                return super.newFieldQuery(analyzer, field, queryText, quoted);
+            }
+        };
+
+        queryParser.setAllowLeadingWildcard(true);
+        return queryParser.parse(queryText);
+    }
+
+    private boolean isNGram(final String field) {
+        return DATA_NGRAM.equals(field) || DATA_CS_NGRAM.equals(field);
     }
 
     @Override
@@ -288,18 +376,14 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
                 final int docId = hits[0].doc;
                 final StoredFields storedFields = indexSearcher.storedFields();
                 final Document doc = storedFields.document(docId);
-                final String text = doc.get(DATA);
+                final String text = doc.get(TEXT);
 
                 try {
-                    final String field = getField(request.getFilter());
-                    //            final Query query = getQuery(field, request.getFilter());
-                    //            final ContentHighlighter highlighter =
-                    //            new LuceneContentHighlighter(query, request.getFilter().isCaseSensitive());
-                    final ContentHighlighter highlighter = new BasicContentHighlighter(request.getFilter());
-                    final List<StringMatchLocation> matchList = highlighter.getHighlights(field, text, 100);
-                    if (!matchList.isEmpty()) {
-                        return new DocContentHighlights(request.getDocRef(), text, matchList);
-                    }
+                    final Highlighter highlighter = getHighlighter(request.getFilter());
+                    final List<StringMatchLocation> highlights = highlighter
+                            .getHighlights(directoryReader, docId, text, MAX_HIGHLIGHTS);
+                    return new DocContentHighlights(request.getDocRef(), text, highlights);
+
                 } catch (final RuntimeException e) {
                     LOGGER.debug(e::getMessage, e);
                 }
@@ -323,29 +407,35 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
                     try (final IndexWriter writer = new IndexWriter(directory,
                             indexWriterConfig)) {
                         list.forEach(event -> {
-                            switch (event.getAction()) {
-                                case CREATE -> {
-                                    taskContext.info(() -> "Adding: " +
-                                            DocRefUtil.createSimpleDocRefString(event.getDocRef()));
-                                    addDoc(writer, event.getDocRef());
+                            try {
+                                switch (event.getAction()) {
+                                    case CREATE -> {
+                                        taskContext.info(() -> "Adding: " +
+                                                DocRefUtil.createSimpleDocRefString(event.getDocRef()));
+                                        addDoc(writer, event.getDocRef());
+                                    }
+                                    case UPDATE -> {
+                                        taskContext.info(() -> "Updating: " +
+                                                DocRefUtil.createSimpleDocRefString(event.getDocRef()));
+                                        deleteDoc(writer, event.getDocRef());
+                                        addDoc(writer, event.getDocRef());
+                                    }
+                                    case DELETE -> {
+                                        taskContext.info(() -> "Deleting: " +
+                                                DocRefUtil.createSimpleDocRefString(event.getDocRef()));
+                                        deleteDoc(writer, event.getDocRef());
+                                    }
                                 }
-                                case UPDATE -> {
-                                    taskContext.info(() -> "Updating: " +
-                                            DocRefUtil.createSimpleDocRefString(event.getDocRef()));
-                                    deleteDoc(writer, event.getDocRef());
-                                    addDoc(writer, event.getDocRef());
-                                }
-                                case DELETE -> {
-                                    taskContext.info(() -> "Deleting: " +
-                                            DocRefUtil.createSimpleDocRefString(event.getDocRef()));
-                                    deleteDoc(writer, event.getDocRef());
-                                }
+                            } catch (final Exception e) {
+                                LOGGER.error(e::getMessage, e);
                             }
                         });
 
+                        taskContext.info(() -> "Committing");
                         writer.commit();
+                        taskContext.info(() -> "Flushing");
                         writer.flush();
-                    } catch (final IOException e) {
+                    } catch (final Exception e) {
                         LOGGER.error(e::getMessage, e);
                     }
                 }).run());
@@ -359,7 +449,7 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
                 dataMap.forEach((extension, data) -> {
                     try {
                         index(writer, docRef, extension, data);
-                    } catch (final IOException e) {
+                    } catch (final Exception e) {
                         LOGGER.error(e::getMessage, e);
                     }
                 });
@@ -411,8 +501,47 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
         document.add(new TextField(UUID, docRef.getUuid(), Store.YES));
         document.add(new TextField(NAME, docRef.getName(), Store.YES));
         document.add(new TextField(EXTENSION, extension, Store.YES));
-        document.add(new TextField(DATA, data, Store.YES));
-        document.add(new TextField(DATA_CS, data, Store.NO));
+        document.add(createField(DATA_NGRAM, data));
+        document.add(createField(DATA_CS_NGRAM, data));
+//        document.add(createField(DATA, data));
+//        document.add(createField(DATA_CS, data));
+        document.add(new TextField(TEXT, data, Store.YES));
         writer.addDocument(document);
+    }
+
+    private Field createField(final String name, final String data) {
+        final FieldType fieldType = new FieldType();
+        // Indexes documents, frequencies, positions and offsets:
+        fieldType.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
+        // Field's value is NOT stored in the index:
+        fieldType.setStored(false);
+        // Store index data in term vectors:
+        fieldType.setStoreTermVectors(true);
+        // Store token character offsets in term vectors:
+        fieldType.setStoreTermVectorOffsets(true);
+        // Store token positions in term vectors:
+        fieldType.setStoreTermVectorPositions(true);
+        // Do NOT store token payloads into the term vector:
+        fieldType.setStoreTermVectorPayloads(true);
+        return new Field(name, data, fieldType);
+    }
+
+    static class NGramAnalyzer extends Analyzer {
+
+        @Override
+        protected TokenStreamComponents createComponents(final String fieldName) {
+            final Tokenizer tokenizer = new NGramTokenizer(MIN_GRAM, MAX_GRAM);
+            TokenStream tokenStream = new LowerCaseFilter(tokenizer);
+            return new Analyzer.TokenStreamComponents(tokenizer, tokenStream);
+        }
+    }
+
+    static class NGramCSAnalyzer extends Analyzer {
+
+        @Override
+        protected TokenStreamComponents createComponents(final String fieldName) {
+            final Tokenizer tokenizer = new NGramTokenizer(MIN_GRAM, MAX_GRAM);
+            return new Analyzer.TokenStreamComponents(tokenizer, tokenizer);
+        }
     }
 }
