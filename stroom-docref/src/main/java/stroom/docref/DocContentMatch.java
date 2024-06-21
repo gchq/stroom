@@ -34,13 +34,16 @@ public class DocContentMatch {
         this.sample = sample;
     }
 
+    @SuppressWarnings("checkstyle:VariableDeclarationUsageDistance")
     public static DocContentMatch create(final DocRef docRef,
                                          final String extension,
                                          final String text,
                                          final StringMatchLocation location) {
+        int offset = location.getOffset();
+        int length = location.getLength();
         final char[] chars = text.toCharArray();
-        final int min = Math.max(0, location.getOffset() - SAMPLE_LENGTH_BEFORE);
-        int sampleStart = location.getOffset();
+        final int min = Math.max(0, offset - SAMPLE_LENGTH_BEFORE);
+        int sampleStart = offset;
         // Go back to get a sample from the same line.
         for (; sampleStart >= min; sampleStart--) {
             char c = chars[sampleStart];
@@ -51,32 +54,41 @@ public class DocContentMatch {
         sampleStart = Math.max(0, sampleStart);
 
         // Trim leading whitespace.
-        for (; sampleStart < location.getOffset(); sampleStart++) {
+        for (; sampleStart < offset; sampleStart++) {
             char c = chars[sampleStart];
             if (!Character.isWhitespace(c)) {
                 break;
             }
         }
-        int sampleEnd = location.getOffset();
-        int max = Math.min(text.length(), location.getOffset() + SAMPLE_LENGTH_AFTER);
-        for (; sampleEnd < max; sampleEnd++) {
-            char c = chars[sampleEnd];
+
+        // Adjust offset for start of sample.
+        offset -= sampleStart;
+
+        // Now remove newlines and adjust offset and length to accordingly.
+        final StringBuilder sample = new StringBuilder();
+        for (int i = sampleStart; i < chars.length; i++) {
+            char c = chars[i];
             if (c == '\n') {
-                break;
+                sample.append(' ');
+            } else {
+                sample.append(c);
+                if (sample.length() >= SAMPLE_LENGTH_BEFORE + SAMPLE_LENGTH_AFTER) {
+                    break;
+                }
             }
         }
-        sampleEnd = Math.min(text.length(), sampleEnd);
 
-        final String sample = text.substring(sampleStart, sampleEnd);
-        final StringMatchLocation match = new StringMatchLocation(
-                location.getOffset() - sampleStart,
-                location.getLength());
+        // Ensure offset and length are positive.
+        offset = Math.max(offset, 0);
+        length = Math.max(length, 0);
+
+        final StringMatchLocation match = new StringMatchLocation(offset, length);
         return DocContentMatch
                 .builder()
                 .docRef(docRef)
                 .extension(extension)
                 .location(match)
-                .sample(sample)
+                .sample(sample.toString())
                 .build();
     }
 
