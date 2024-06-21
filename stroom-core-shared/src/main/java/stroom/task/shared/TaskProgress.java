@@ -52,7 +52,6 @@ public class TaskProgress implements TreeRow {
     @JsonProperty
     private Expander expander;
 
-    // filteredOut as opposed to inFilter to avoid issues with bool serialisation as false is default
     @JsonProperty
     private FilterMatchState filterMatchState;
 
@@ -195,6 +194,10 @@ public class TaskProgress implements TreeRow {
     public String toString() {
         return taskName + " " + ModelStringUtil.formatDurationString(getAgeMs());
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     /**
      * This could be a boolean but due to the issues around (de)serialisation of primitive boolean
