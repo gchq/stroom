@@ -123,8 +123,8 @@ public class DataRetentionImpactPresenter
         flatNestedToggleButton = view.addToggleButton(
                 SvgPresets.TABLE.title(BTN_TITLE_FLAT_TABLE),
                 SvgPresets.TABLE_NESTED.title(BTN_TITLE_NESTED_TABLE));
-        expandAllButton = view.addButton(SvgPresets.EXPAND_DOWN.title(BTN_TITLE_EXPAND_ALL));
-        collapseAllButton = view.addButton(SvgPresets.COLLAPSE_UP.title(BTN_TITLE_COLLAPSE_ALL));
+        expandAllButton = view.addButton(SvgPresets.EXPAND_ALL.title(BTN_TITLE_EXPAND_ALL));
+        collapseAllButton = view.addButton(SvgPresets.COLLAPSE_ALL.title(BTN_TITLE_COLLAPSE_ALL));
 
         updateButtonStates();
 
