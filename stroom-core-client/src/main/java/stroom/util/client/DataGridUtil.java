@@ -9,6 +9,7 @@ import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.client.TickBoxCell.DefaultAppearance;
 import stroom.cell.tickbox.client.TickBoxCell.NoBorderAppearance;
 import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.cell.valuespinner.client.ValueSpinnerCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CopyTextCell;
 import stroom.data.client.presenter.DocRefCell;
@@ -28,8 +29,11 @@ import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.Cell.Context;
+import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -368,6 +372,14 @@ public class DataGridUtil {
         return new ColumnBuilder<>(cellExtractor, Function.identity(), TextCell::new);
     }
 
+    public static <T_ROW> ColumnBuilder<T_ROW, Number, Number, ValueSpinnerCell> valueSpinnerColumnBuilder(
+            final Function<T_ROW, Number> cellExtractor, final long minValue, final long maxValue) {
+        return new ColumnBuilder<>(
+                cellExtractor,
+                Function.identity(),
+                () -> new ValueSpinnerCell(minValue, maxValue));
+    }
+
     public static <T_ROW> ColumnBuilder<T_ROW, String, String, ColourSwatchCell> colourSwatchColumnBuilder(
             final Function<T_ROW, String> cssColourExtractor) {
         return new ColumnBuilder<>(cssColourExtractor, Function.identity(), ColourSwatchCell::new);
@@ -515,6 +527,8 @@ public class DataGridUtil {
         private boolean isIgnoreCaseOrdering = false;
         private List<String> styleNames = null;
         private List<Function<T_ROW, String>> styleFunctions = null;
+        private FieldUpdater<T_ROW, T_CELL_VAL> fieldUpdater = null;
+        private BrowserEventHandler<T_ROW> browserEventHandler = null;
 
         private ColumnBuilder(final Function<T_ROW, T_RAW_VAL> valueExtractor,
                               final Function<T_RAW_VAL, T_CELL_VAL> formatter,
@@ -608,6 +622,18 @@ public class DataGridUtil {
             return this;
         }
 
+        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withFieldUpdater(
+                final FieldUpdater<T_ROW, T_CELL_VAL> fieldUpdater) {
+            this.fieldUpdater = fieldUpdater;
+            return this;
+        }
+
+        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withBrowserEventHandler(
+                final BrowserEventHandler<T_ROW> browserEventHandler) {
+            this.browserEventHandler = browserEventHandler;
+            return this;
+        }
+
         private String buildCellStyles(final String baseStyleNames,
                                        final T_ROW object) {
 
@@ -655,6 +681,17 @@ public class DataGridUtil {
                     public String getCellStyleNames(final Context context, final T_ROW object) {
                         return buildCellStyles(super.getCellStyleNames(context, object), object);
                     }
+
+                    @Override
+                    public void onBrowserEvent(final Context context,
+                                               final Element elem,
+                                               final T_ROW object,
+                                               final NativeEvent event) {
+                        super.onBrowserEvent(context, elem, object, event);
+                        if (browserEventHandler != null) {
+                            browserEventHandler.handle(context, elem, object, event);
+                        }
+                    }
                 };
             } else {
                 // Explicit generics typing for GWT
@@ -668,6 +705,17 @@ public class DataGridUtil {
                     public String getCellStyleNames(final Context context, final T_ROW object) {
                         return buildCellStyles(super.getCellStyleNames(context, object), object);
                     }
+
+                    @Override
+                    public void onBrowserEvent(final Context context,
+                                               final Element elem,
+                                               final T_ROW object,
+                                               final NativeEvent event) {
+                        super.onBrowserEvent(context, elem, object, event);
+                        if (browserEventHandler != null) {
+                            browserEventHandler.handle(context, elem, object, event);
+                        }
+                    }
                 };
             }
             if (horizontalAlignment != null) {
@@ -676,6 +724,10 @@ public class DataGridUtil {
 
             if (verticalAlignment != null) {
                 column.setVerticalAlignment(verticalAlignment);
+            }
+
+            if (fieldUpdater != null) {
+                column.setFieldUpdater(fieldUpdater);
             }
 
             return column;
@@ -761,5 +813,17 @@ public class DataGridUtil {
         LEFT,
         CENTER,
         RIGHT;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static interface BrowserEventHandler<T_ROW> {
+
+        void handle(final Context context,
+                    final Element elem,
+                    final T_ROW row,
+                    final NativeEvent event);
     }
 }

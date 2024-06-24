@@ -54,6 +54,9 @@ public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> {
             final Job row = jobListPresenter.getSelectionModel().getSelected();
             jobNodeListPresenter.read(row);
         }));
+
+        jobListPresenter.setChangeHandler(job ->
+                jobNodeListPresenter.refresh());
     }
 
     @Override

@@ -189,7 +189,12 @@
     color: var(--text-color--disabled);
 }
 
-.dataGridDisabledCell .tickBox {
+.dataGridDisabledCell .valueSpinner .gwt-TextBox {
+    color: var(--text-color--disabled);
+}
+
+.dataGridDisabledCell .tickBox,
+.dataGridDisabledCell .svgIcon {
     cursor: default;
     color: #000;
     opacity: 0.3;

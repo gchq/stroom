@@ -16,17 +16,11 @@
 
 package stroom.job.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
-import stroom.cell.info.client.InfoHelpLinkColumn;
-import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.cell.valuespinner.client.ValueSpinnerCell;
 import stroom.cell.valuespinner.shared.EditableInteger;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -41,22 +35,15 @@ import stroom.job.shared.JobNodeUtil;
 import stroom.job.shared.ScheduleReferenceTime;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.schedule.client.SchedulePopup;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.widget.util.client.MouseUtil;
 
-import com.google.gwt.cell.client.Cell.Context;
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -140,7 +127,41 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
         };
     }
 
-    private void refresh() {
+    private static String getTypeAndSchedule(JobNode jobNode) {
+        //noinspection EnhancedSwitchMigration // not in GWT
+        switch (jobNode.getJobType()) {
+            case CRON:
+                return "Cron " + jobNode.getSchedule();
+            case FREQUENCY:
+                return "Frequency " + jobNode.getSchedule();
+            case DISTRIBUTED:
+                return "Distributed";
+            default:
+                return null;
+        }
+    }
+
+    private static String getType(JobNode jobNode) {
+        //noinspection EnhancedSwitchMigration // not in GWT
+        switch (jobNode.getJobType()) {
+            case CRON:
+                return "Cron";
+            case FREQUENCY:
+                return "Frequency";
+            case DISTRIBUTED:
+                return "Distributed";
+            default:
+                return null;
+        }
+    }
+
+    private Number getTaskLimit(JobNode jobNode) {
+        return JobType.DISTRIBUTED.equals(jobNode.getJobType())
+                ? new EditableInteger(jobNode.getTaskLimit())
+                : null;
+    }
+
+    void refresh() {
         dataProvider.refresh();
     }
 
@@ -148,178 +169,125 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
      * Add the columns to the table.
      */
     private void initTable() {
-
         DataGridUtil.addColumnSortHandler(dataGrid, findJobNodeCriteria, this::refresh);
 
         // Enabled.
-        final Column<JobNode, TickBoxState> enabledColumn = new OrderByColumn<JobNode, TickBoxState>(
-                TickBoxCell.create(false, false),
-                FindJobNodeCriteria.FIELD_ID_ENABLED,
-                true) {
-            @Override
-            public TickBoxState getValue(final JobNode row) {
-                return TickBoxState.fromBoolean(row.isEnabled());
-            }
-        };
-        enabledColumn.setFieldUpdater((index, row, value) -> {
-            row.setEnabled(value.toBoolean());
-            restFactory
-                    .create(JOB_NODE_RESOURCE)
-                    .call(res -> res.setEnabled(row.getId(), value.toBoolean()))
-                    .taskListener(getView())
-                    .exec();
-        });
-        dataGrid.addColumn(enabledColumn, "Enabled", 80);
-
-        // Job Name
-        final Column<JobNode, String> nameColumn = new Column<JobNode, String>(new TextCell()) {
-            @Override
-            public String getValue(final JobNode row) {
-                return row.getJob().getName();
-            }
-        };
-        dataGrid.addResizableColumn(nameColumn, "Job", 200);
-
-        // Help
-        dataGrid.addColumn(new InfoHelpLinkColumn<JobNode>() {
-            @Override
-            public Preset getValue(final JobNode row) {
-                if (row != null) {
-                    return SvgPresets.HELP;
-                }
-                return null;
-            }
-
-            @Override
-            protected void showHelp(final JobNode row) {
-                clientPropertyCache.get(result -> {
-                    if (result != null) {
-                        final String helpUrl = result.getHelpUrlJobs();
-                        if (helpUrl != null && helpUrl.trim().length() > 0) {
-                            // This is a bit fragile as if the headings change in the docs then the anchors
-                            // won't work
-                            final String url = helpUrl
-                                    + formatAnchor(row.getJob().getName());
-                            Window.open(url, "_blank", "");
-                        } else {
-                            AlertEvent.fireError(JobNodeListPresenter.this, "Help is not configured!", null);
-                        }
-                    }
-                }, getView());
-            }
-
-        }, "<br/>", 20);
+        dataGrid.addColumn(
+                DataGridUtil.updatableTickBoxColumnBuilder(JobNode::isEnabled)
+                        .enabledWhen(this::isJobNodeEnabled)
+                        .withSorting(FindJobNodeCriteria.FIELD_ID_ENABLED)
+                        .withFieldUpdater(this::updateEnabledState)
+                        .build(),
+                DataGridUtil.headingBuilder("Enabled")
+                        .withToolTip("Whether this job is enabled on this node or not. " +
+                                "The parent job must also be enabled for the job to execute.")
+                        .build(),
+                70);
 
         // Node Name
-        final Column<JobNode, String> nodeColumn = new OrderByColumn<JobNode, String>(
-                new TextCell(),
-                FindJobNodeCriteria.FIELD_ID_NODE,
-                true) {
-            @Override
-            public String getValue(final JobNode row) {
-                return row.getNodeName();
-            }
-        };
-        dataGrid.addResizableColumn(nodeColumn, "Node", 200);
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder(JobNode::getNodeName)
+                        .enabledWhen(this::isJobNodeEnabled)
+                        .withSorting(FindJobNodeCriteria.FIELD_ID_NODE)
+                        .build(),
+                DataGridUtil.headingBuilder("Node")
+                        .withToolTip("The Stroom node the job runs on")
+                        .build(),
+                400);
+
+        // Type
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder(JobNodeListPresenter::getType)
+                        .enabledWhen(this::isJobNodeEnabled)
+                        .build(),
+                DataGridUtil.headingBuilder("Type")
+                        .withToolTip("The type of the job")
+                        .build(),
+                80);
 
         // Schedule.
-        final Column<JobNode, String> typeColumn = new Column<JobNode, String>(new TextCell()) {
-            @Override
-            public String getValue(final JobNode row) {
-                final JobNode jobNode = row;
-                final JobType jobType = jobNode.getJobType();
-                if (JobType.CRON.equals(jobType)) {
-                    return "Cron " + jobNode.getSchedule();
-                } else if (JobType.FREQUENCY.equals(jobType)) {
-                    return "Frequency " + jobNode.getSchedule();
-                } else if (JobType.DISTRIBUTED.equals(jobType)) {
-                    return "Distributed";
-                }
-                return null;
-            }
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder((JobNode jobNode1) -> GwtNullSafe.requireNonNullElse(
+                                jobNode1.getSchedule(),
+                                "N/A"))
+                        .enabledWhen(this::isJobNodeEnabled)
+                        .withBrowserEventHandler((context, elem, jobNode, event) -> {
+                            if (jobNode != null && MouseUtil.isPrimary(event)) {
+                                showSchedule(jobNode);
+                            }
+                        })
+                        .build(),
+                DataGridUtil.headingBuilder("Schedule")
+                        .withToolTip("The schedule for this job on this node, if applicable to the job type")
+                        .build(),
+                250);
 
-            @Override
-            public void onBrowserEvent(final Context context, final Element elem, final JobNode row,
-                                       final NativeEvent event) {
-                super.onBrowserEvent(context, elem, row, event);
-                if (row != null && MouseUtil.isPrimary(event)) {
-                    showSchedule(row);
-                }
-            }
-        };
-        dataGrid.addResizableColumn(typeColumn, "Type", 250);
-
-        // Job Type.
-        final Column<JobNode, JobType> typeEditColumn = new Column<JobNode, JobType>(new JobTypeCell()) {
-            @Override
-            public JobType getValue(final JobNode row) {
-                if (row.getJobType() == null) {
-                    return JobType.UNKNOWN;
-                }
-                return row.getJobType();
-            }
-
-            @Override
-            public void onBrowserEvent(final Context context, final Element elem, final JobNode row,
-                                       final NativeEvent event) {
-                super.onBrowserEvent(context, elem, row, event);
-                if (row != null && MouseUtil.isPrimary(event)) {
-                    showSchedule(row);
-                }
-            }
-        };
-        dataGrid.addColumn(typeEditColumn, "", ColumnSizeConstants.ICON_COL);
+        // Job Type Icon
+        dataGrid.addColumn(
+                DataGridUtil.columnBuilder((JobNode jobNode) ->
+                                        GwtNullSafe.requireNonNullElse(jobNode.getJobType(), JobType.UNKNOWN),
+                                JobTypeCell::new)
+                        .enabledWhen(this::isJobNodeEnabled)
+                        .withBrowserEventHandler((context, elem, jobNode, event) -> {
+                            if (jobNode != null && MouseUtil.isPrimary(event)) {
+                                showSchedule(jobNode);
+                            }
+                        })
+                        .build(),
+                DataGridUtil.headingBuilder("")
+                        .build(),
+                ColumnSizeConstants.ICON_COL);
 
         // Max.
-        final Column<JobNode, Number> maxColumn = new Column<JobNode, Number>(new ValueSpinnerCell(1, 1000)) {
-            @Override
-            public Number getValue(final JobNode row) {
-                if (JobType.DISTRIBUTED.equals(row.getJobType())) {
-                    return new EditableInteger(row.getTaskLimit());
-                }
-                return null;
-            }
-        };
+        dataGrid.addColumn(
+                DataGridUtil.valueSpinnerColumnBuilder(this::getTaskLimit, 1L, 9999L)
+                        .enabledWhen(this::isJobNodeEnabled)
+                        .withFieldUpdater((rowIndex, jobNode, value) -> {
+                            jobNode.setTaskLimit(value.intValue());
+                            restFactory
+                                    .create(JOB_NODE_RESOURCE)
+                                    .call(res -> res.setTaskLimit(jobNode.getId(), value.intValue()))
+                                    .taskListener(getView())
+                                    .exec();
+                        })
+                        .build(),
+                DataGridUtil.headingBuilder("Max Tasks")
+                        .withToolTip("The task limit for this job on this node")
+                        .build(),
+                80);
 
-        maxColumn.setFieldUpdater((index, row, value) -> {
-            row.setTaskLimit(value.intValue());
-            restFactory
-                    .create(JOB_NODE_RESOURCE)
-                    .call(res -> res.setTaskLimit(row.getId(), value.intValue()))
-                    .taskListener(getView())
-                    .exec();
-        });
-        dataGrid.addColumn(maxColumn, "Max", 62);
-
-        // Cur.
-        final Column<JobNode, String> curColumn = new Column<JobNode, String>(new TextCell()) {
-            @Override
-            public String getValue(final JobNode row) {
-                final JobNodeInfo jobNodeInfo = latestNodeInfo.get(row);
-                if (jobNodeInfo != null) {
-                    return ModelStringUtil.formatCsv(jobNodeInfo.getCurrentTaskCount());
-                } else {
-                    return "?";
-                }
-            }
-        };
-        dataGrid.addColumn(curColumn, "Cur", 59);
+        // Current Tasks (Cur).
+        dataGrid.addColumn(
+                DataGridUtil.textColumnBuilder(this::getCurrentTaskCountAsStr)
+                        .enabledWhen(this::isJobNodeEnabled)
+                        .rightAligned()
+                        .build(),
+                DataGridUtil.headingBuilder("Current Tasks")
+                        .withToolTip("The number of the currently executing tasks on this node for this job")
+                        .build(),
+                100);
 
         // Last executed.
-        final Column<JobNode, String> lastExecutedColumn = new Column<JobNode, String>(new TextCell()) {
-            @Override
-            public String getValue(final JobNode row) {
-                final JobNodeInfo jobNodeInfo = latestNodeInfo.get(row);
-                if (jobNodeInfo != null) {
-                    return dateTimeFormatter.formatWithDuration(jobNodeInfo.getLastExecutedTime());
-                } else {
-                    return "?";
-                }
-            }
-        };
-        dataGrid.addColumn(lastExecutedColumn, "Last Executed", ColumnSizeConstants.DATE_AND_DURATION_COL);
+        dataGrid.addColumn(
+                DataGridUtil.textColumnBuilder(this::getLastExecutedTimeAsStr)
+                        .enabledWhen(this::isJobNodeEnabled)
+                        .build(),
+                DataGridUtil.headingBuilder("Last Executed")
+                        .withToolTip("The date/time that this job was last executed on this node")
+                        .build(),
+                ColumnSizeConstants.DATE_AND_DURATION_COL);
 
-        dataGrid.addEndColumn(new EndColumn<>());
+        DataGridUtil.addEndColumn(dataGrid);
+    }
+
+    private boolean isJobNodeEnabled(final JobNode jobNode) {
+        if (jobNode == null) {
+            return false;
+        } else {
+            // A job node is only enabled if enabled both at the job and job node level
+            return jobNode.isEnabled()
+                    && GwtNullSafe.isTrue(jobNode.getJob(), Job::isEnabled);
+        }
     }
 
     private void showSchedule(final JobNode row) {
@@ -363,5 +331,31 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
             jobName = job.getName();
             dataProvider.refresh();
         }
+    }
+
+    private String getCurrentTaskCountAsStr(JobNode jobNode) {
+        return GwtNullSafe.getOrElse(
+                latestNodeInfo.get(jobNode),
+                info -> ModelStringUtil.formatCsv(info.getCurrentTaskCount()),
+                "?");
+    }
+
+    private String getLastExecutedTimeAsStr(JobNode jobNode) {
+        return GwtNullSafe.getOrElse(
+                latestNodeInfo.get(jobNode),
+                info -> dateTimeFormatter.formatWithDuration(info.getLastExecutedTime()),
+                "?");
+    }
+
+    private void updateEnabledState(int rowIndex, JobNode jobNode, TickBoxState value) {
+        jobNode.setEnabled(value.toBoolean());
+        restFactory
+                .create(JOB_NODE_RESOURCE)
+                .call(res -> {
+                    res.setEnabled(jobNode.getId(), value.toBoolean());
+                    dataGrid.redrawRow(rowIndex);
+                })
+                .taskListener(getView())
+                .exec();
     }
 }

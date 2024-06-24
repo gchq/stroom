@@ -241,7 +241,7 @@ class TaskManagerImpl implements TaskManager {
 
         // For DEV testing uncomment this line to send dummy data to UI so you have some thing to
         // look at in the UI.
-        taskProgressList.addAll(buildDummyTaskDataForTesting(fuzzyMatchPredicate));
+//        taskProgressList.addAll(buildDummyTaskDataForTesting(fuzzyMatchPredicate));
 //        if (LOGGER.isDebugEnabled()) {
 //            LOGGER.debug("taskProgressList:\n" + AsciiTable.from(taskProgressList));
 //        }

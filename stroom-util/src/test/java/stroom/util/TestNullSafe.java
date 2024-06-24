@@ -1242,6 +1242,29 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testIsTrue2() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple2<
+                        AtomicReference<Boolean>,
+                        Function<AtomicReference<Boolean>, Boolean>>>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    final AtomicReference<Boolean> ref = testCase.getInput()._1;
+                    final Function<AtomicReference<Boolean>, Boolean> func = testCase.getInput()._2;
+                    return NullSafe.isTrue(ref, func);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(null, null), false)
+                .addThrowsCase(Tuple.of(new AtomicReference<>(), null), NullPointerException.class)
+                .addThrowsCase(Tuple.of(new AtomicReference<>(false), null), NullPointerException.class)
+                .addThrowsCase(Tuple.of(new AtomicReference<>(false), null), NullPointerException.class)
+                .addCase(Tuple.of(new AtomicReference<>(false), AtomicReference::get), false)
+                .addCase(Tuple.of(new AtomicReference<>(true), AtomicReference::get), true)
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testGetInt() {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(Integer.class)
