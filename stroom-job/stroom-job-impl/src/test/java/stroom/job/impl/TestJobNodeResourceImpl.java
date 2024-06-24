@@ -146,7 +146,8 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
 
         final String subPath = JobNodeResource.INFO_PATH_PART;
 
-        final JobNodeInfo expectedResponse = new JobNodeInfo(BASE_PORT, 2L, 3L);
+        final JobNodeInfo expectedResponse = new JobNodeInfo(
+                BASE_PORT, 2L, 3L, 4L);
 
         final JobNodeInfo response = doGetTest(
                 subPath,
@@ -170,7 +171,8 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
 
         final String subPath = JobNodeResource.INFO_PATH_PART;
 
-        final JobNodeInfo expectedResponse = new JobNodeInfo(BASE_PORT + 1, 2L, 3L);
+        final JobNodeInfo expectedResponse = new JobNodeInfo(
+                BASE_PORT + 1, 2L, 3L, 4L);
 
         final JobNodeInfo response = doGetTest(
                 subPath,
@@ -320,7 +322,8 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
 
         // Use the port as a unique task count
         when(jobNodeService.getInfo(any()))
-                .thenReturn(new JobNodeInfo(node.getPort(), 2L, 3L));
+                .thenReturn(new JobNodeInfo(
+                        node.getPort(), 2L, 3L, 4L));
 
         when(jobNodeService.find(any()))
                 .thenReturn(JOB_NODES);
@@ -332,7 +335,8 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
                 .then(invocation -> {
                     final JobNode input = invocation.getArgument(0);
 
-                    final JobNode output = buildJobNode(input.getId(), input.getVersion() + 1, input.getNodeName());
+                    final JobNode output = buildJobNode(
+                            input.getId(), input.getVersion() + 1, input.getNodeName());
                     output.setTaskLimit(input.getTaskLimit());
                     output.setSchedule(input.getSchedule());
                     output.setEnabled(input.isEnabled());

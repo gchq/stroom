@@ -107,16 +107,17 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
             @Override
             protected void changeData(final ResultPage<JobNode> data) {
                 // Ping each node.
-                data.getValues().forEach(row -> {
+                data.getValues().forEach(jobNodeInfo -> {
                     restFactory
                             .create(JOB_NODE_RESOURCE)
-                            .method(res -> res.info(row.getJob().getName(), row.getNodeName()))
+                            .method(res -> res.info(jobNodeInfo.getJob().getName(), jobNodeInfo.getNodeName()))
                             .onSuccess(info -> {
-                                latestNodeInfo.put(row, info);
+                                latestNodeInfo.put(jobNodeInfo, info);
                                 super.changeData(data);
+                                dataGrid.redraw();
                             })
                             .onFailure(throwable -> {
-                                latestNodeInfo.remove(row);
+                                latestNodeInfo.remove(jobNodeInfo);
                                 super.changeData(data);
                             })
                             .taskListener(getView())
@@ -125,20 +126,6 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                 super.changeData(data);
             }
         };
-    }
-
-    private static String getTypeAndSchedule(JobNode jobNode) {
-        //noinspection EnhancedSwitchMigration // not in GWT
-        switch (jobNode.getJobType()) {
-            case CRON:
-                return "Cron " + jobNode.getSchedule();
-            case FREQUENCY:
-                return "Frequency " + jobNode.getSchedule();
-            case DISTRIBUTED:
-                return "Distributed";
-            default:
-                return null;
-        }
     }
 
     private static String getType(JobNode jobNode) {
@@ -193,7 +180,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                 DataGridUtil.headingBuilder("Node")
                         .withToolTip("The Stroom node the job runs on")
                         .build(),
-                400);
+                350);
 
         // Type
         dataGrid.addResizableColumn(
@@ -273,7 +260,19 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                         .enabledWhen(this::isJobNodeEnabled)
                         .build(),
                 DataGridUtil.headingBuilder("Last Executed")
-                        .withToolTip("The date/time that this job was last executed on this node")
+                        .withToolTip("The date/time that this job was last executed on this node, " +
+                                "if applicable to the job type.")
+                        .build(),
+                ColumnSizeConstants.DATE_AND_DURATION_COL);
+
+        // Last executed.
+        dataGrid.addColumn(
+                DataGridUtil.textColumnBuilder(this::getNextScheduledTimeAsStr)
+                        .enabledWhen(this::isJobNodeEnabled)
+                        .build(),
+                DataGridUtil.headingBuilder("Next Scheduled")
+                        .withToolTip("The date/time that this job is next scheduled to execute on this node, " +
+                                "if applicable to the job type.")
                         .build(),
                 ColumnSizeConstants.DATE_AND_DURATION_COL);
 
@@ -304,7 +303,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
         final Schedule currentSchedule = JobNodeUtil.getSchedule(jobNode);
         if (currentSchedule != null) {
             if (jobNodeInfo == null) {
-                jobNodeInfo = new JobNodeInfo();
+                jobNodeInfo = JobNodeInfo.empty();
             }
 
             schedulePresenter.setSchedule(currentSchedule, new ScheduleReferenceTime(
@@ -341,19 +340,42 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
     }
 
     private String getLastExecutedTimeAsStr(JobNode jobNode) {
-        return GwtNullSafe.getOrElse(
-                latestNodeInfo.get(jobNode),
-                info -> dateTimeFormatter.formatWithDuration(info.getLastExecutedTime()),
-                "?");
+        if (GwtNullSafe.test(jobNode, jobNode2 ->
+                jobNode2.getJobType() == JobType.CRON
+                        || jobNode2.getJobType() == JobType.FREQUENCY)) {
+            return GwtNullSafe.getOrElse(
+                    latestNodeInfo.get(jobNode),
+                    info -> dateTimeFormatter.formatWithDuration(info.getLastExecutedTime()),
+                    "?");
+        } else {
+            return "N/A";
+        }
+    }
+
+    private String getNextScheduledTimeAsStr(JobNode jobNode) {
+        if (GwtNullSafe.test(jobNode, jobNode2 ->
+                jobNode2.getJobType() == JobType.CRON
+                        || jobNode2.getJobType() == JobType.FREQUENCY)) {
+            return GwtNullSafe.getOrElse(
+                    latestNodeInfo.get(jobNode),
+                    info -> dateTimeFormatter.formatWithDuration(info.getNextScheduledTime()),
+                    "?");
+        } else {
+            return "N/A";
+        }
     }
 
     private void updateEnabledState(int rowIndex, JobNode jobNode, TickBoxState value) {
-        jobNode.setEnabled(value.toBoolean());
+        final boolean isEnabled = GwtNullSafe.isTrue(value.toBoolean());
+        jobNode.setEnabled(isEnabled);
         restFactory
                 .create(JOB_NODE_RESOURCE)
-                .call(res -> {
-                    res.setEnabled(jobNode.getId(), value.toBoolean());
-                    dataGrid.redrawRow(rowIndex);
+                .call(jobNodeResource -> {
+                    jobNodeResource.setEnabled(jobNode.getId(), isEnabled);
+                })
+                .onSuccess(aVoid -> {
+                    // To update the Next Scheduled col
+                    dataProvider.refresh();
                 })
                 .taskListener(getView())
                 .exec();

@@ -18,16 +18,21 @@
 package stroom.job.impl;
 
 import stroom.job.shared.FindJobNodeCriteria;
+import stroom.job.shared.GetScheduledTimesRequest;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeListResponse;
+import stroom.job.shared.ScheduledTimes;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
+import stroom.util.NullSafe;
 import stroom.util.scheduler.CronTrigger;
 import stroom.util.scheduler.FrequencyTrigger;
 import stroom.util.scheduler.SimpleScheduleExec;
+import stroom.util.shared.scheduler.Schedule;
+import stroom.util.shared.scheduler.ScheduleType;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -40,14 +45,17 @@ class JobNodeService {
     private final JobNodeDao jobNodeDao;
     private final JobNodeTrackerCache jobNodeTrackerCache;
     private final SecurityContext securityContext;
+    private final ScheduleService scheduleService;
 
     @Inject
     JobNodeService(final JobNodeDao jobNodeDao,
                    final JobNodeTrackerCache jobNodeTrackerCache,
-                   final SecurityContext securityContext) {
+                   final SecurityContext securityContext,
+                   final ScheduleService scheduleService) {
         this.jobNodeDao = jobNodeDao;
         this.jobNodeTrackerCache = jobNodeTrackerCache;
         this.securityContext = securityContext;
+        this.scheduleService = scheduleService;
     }
 
     JobNode update(final JobNode jobNode) {
@@ -82,16 +90,41 @@ class JobNodeService {
                     final int currentTaskCount = tracker.getCurrentTaskCount();
 
                     Long scheduleReferenceTime = null;
+                    Long nextScheduledTime = null;
                     final SimpleScheduleExec scheduler = trackers.getScheduleExec(jobNode);
                     if (scheduler != null && scheduler.getLastExecutionTime() != null) {
                         scheduleReferenceTime = scheduler.getLastExecutionTime().toEpochMilli();
+                        if (jobNode != null && jobNode.isEnabled() && jobNode.getJob().isEnabled()) {
+                            final ScheduleType scheduleType = convertJobType(jobNode.getJobType());
+
+                            final ScheduledTimes scheduledTimes = scheduleService.getScheduledTimes(
+                                    new GetScheduledTimesRequest(
+                                            new Schedule(scheduleType, jobNode.getSchedule()),
+                                            scheduleReferenceTime,
+                                            null));
+                            nextScheduledTime = scheduledTimes.getNextScheduledTimeMs();
+                        }
                     }
-                    result = new JobNodeInfo(currentTaskCount, scheduleReferenceTime, tracker.getLastExecutedTime());
+                    result = new JobNodeInfo(
+                            currentTaskCount,
+                            scheduleReferenceTime,
+                            tracker.getLastExecutedTime(),
+                            nextScheduledTime);
                 }
             }
 
             return result;
         });
+    }
+
+    private ScheduleType convertJobType(final JobType jobType) {
+        return NullSafe.get(
+                jobType,
+                jobType2 -> switch (jobType2) {
+                    case CRON -> ScheduleType.CRON;
+                    case FREQUENCY -> ScheduleType.FREQUENCY;
+                    default -> null;
+                });
     }
 
 //    public stroom.util.shared.SharedMap<JobNode, JobNodeInfo> exec(final JobNodeInfoClusterTask task) {
