@@ -63,6 +63,10 @@ class JobNodeTrackerCacheImpl implements JobNodeTrackerCache {
         return asyncReference.get();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     static class JobNodeTrackersImpl implements JobNodeTrackers {
 
         private final Map<JobNode, JobNodeTracker> trackersForJobNode = new HashMap<>();

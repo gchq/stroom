@@ -41,7 +41,9 @@ import java.util.Objects;
         "name",
         "url",
         "priority",
-        "enabled"})
+        "enabled",
+        "buildVersion",
+        "lastBootMs"})
 @JsonInclude(Include.NON_NULL)
 public class Node implements HasAuditInfo, HasIntegerId {
 
@@ -65,7 +67,7 @@ public class Node implements HasAuditInfo, HasIntegerId {
     private String url;
 
     /**
-     * A number to imply how import that this node is from the POV of being a
+     * A number to imply how important that this node is from the POV of being a
      * master node. The bigger the number the better chance it will become a
      * master
      */
@@ -73,6 +75,10 @@ public class Node implements HasAuditInfo, HasIntegerId {
     private int priority;
     @JsonProperty
     private boolean enabled;
+    @JsonProperty
+    private String buildVersion;
+    @JsonProperty
+    private Long lastBootMs;
 
     public Node() {
         priority = 1;
@@ -89,7 +95,9 @@ public class Node implements HasAuditInfo, HasIntegerId {
                 @JsonProperty("name") final String name,
                 @JsonProperty("url") final String url,
                 @JsonProperty("priority") final Integer priority,
-                @JsonProperty("enabled") final Boolean enabled) {
+                @JsonProperty("enabled") final Boolean enabled,
+                @JsonProperty("buildVersion") final String buildVersion,
+                @JsonProperty("lastBootMs") final Long lastBootMs) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -100,6 +108,8 @@ public class Node implements HasAuditInfo, HasIntegerId {
         this.url = url;
         this.priority = priority;
         this.enabled = enabled;
+        this.buildVersion = buildVersion;
+        this.lastBootMs = lastBootMs;
     }
 
     /**
@@ -196,7 +206,23 @@ public class Node implements HasAuditInfo, HasIntegerId {
         this.enabled = enabled;
     }
 
-//    @Override
+    public String getBuildVersion() {
+        return buildVersion;
+    }
+
+    public void setBuildVersion(final String buildVersion) {
+        this.buildVersion = buildVersion;
+    }
+
+    public Long getLastBootMs() {
+        return lastBootMs;
+    }
+
+    public void setLastBootMs(final Long lastBootMs) {
+        this.lastBootMs = lastBootMs;
+    }
+
+    //    @Override
 //    protected void toString(final StringBuilder sb) {
 //        super.toString(sb);
 //        sb.append(", name=");
@@ -240,7 +266,9 @@ public class Node implements HasAuditInfo, HasIntegerId {
                 Objects.equals(updateTimeMs, node.updateTimeMs) &&
                 Objects.equals(updateUser, node.updateUser) &&
                 Objects.equals(name, node.name) &&
-                Objects.equals(url, node.url);
+                Objects.equals(url, node.url) &&
+                Objects.equals(buildVersion, node.buildVersion) &&
+                Objects.equals(lastBootMs, node.lastBootMs);
     }
 
     @Override
@@ -254,7 +282,9 @@ public class Node implements HasAuditInfo, HasIntegerId {
                 name,
                 url,
                 priority,
-                enabled);
+                enabled,
+                buildVersion,
+                lastBootMs);
     }
 
     @Override
@@ -270,6 +300,8 @@ public class Node implements HasAuditInfo, HasIntegerId {
                 ", url='" + url + '\'' +
                 ", priority=" + priority +
                 ", enabled=" + enabled +
+                ", buildVersion=" + buildVersion +
+                ", lastBootMs=" + lastBootMs +
                 '}';
     }
 }

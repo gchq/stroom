@@ -238,6 +238,10 @@ class ScheduledTaskExecutor {
         return runningMapOfScheduledJobs.computeIfAbsent(scheduledJob, k -> new AtomicBoolean(false));
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class JobNodeTrackedFunction extends ScheduledJobFunction {
 
         private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeTrackedFunction.class);

@@ -193,6 +193,10 @@
     color: var(--text-color--disabled);
 }
 
+.dataGridDisabledCell span.nodePingBar-text {
+    color: var(--text-color--disabled);
+}
+
 .dataGridDisabledCell .tickBox,
 .dataGridDisabledCell .svgIcon {
     cursor: default;

@@ -66,7 +66,11 @@ class NodeResourceImpl implements NodeResource {
             FindNodeStatusCriteria.FIELD_ID_PRIORITY,
             Comparator.comparing(Node::getPriority),
             FindNodeStatusCriteria.FIELD_ID_ENABLED,
-            Comparator.comparing(Node::isEnabled));
+            Comparator.comparing(Node::isEnabled),
+            FindNodeStatusCriteria.FIELD_ID_BUILD_VERSION,
+            CompareUtil.getNullSafeCaseInsensitiveComparator(Node::getBuildVersion),
+            FindNodeStatusCriteria.FIELD_ID_LAST_BOOT_MS,
+            CompareUtil.getNullSafeComparator(Node::getLastBootMs));
 
     @Inject
     NodeResourceImpl(final Provider<NodeServiceImpl> nodeServiceProvider,

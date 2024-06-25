@@ -18,16 +18,11 @@
 package stroom.node.client.presenter;
 
 import stroom.cell.info.client.InfoColumn;
-import stroom.cell.tickbox.client.TickBoxCell;
-import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.cell.valuespinner.client.ValueSpinnerCell;
 import stroom.cell.valuespinner.shared.EditableInteger;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
@@ -54,12 +49,10 @@ import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.TableBuilder;
 import stroom.widget.util.client.TableCell;
 
-import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -148,10 +141,32 @@ public class NodeMonitoringPresenter
         dataProvider.addDataDisplay(dataGrid);
     }
 
+    private static boolean isNodeEnabled(NodeStatusResult nodeStatusResult) {
+        return GwtNullSafe.isTrue(nodeStatusResult.getNode(), Node::isEnabled);
+    }
+
+    private static Number extractNodePriority(NodeStatusResult result) {
+        return GwtNullSafe.get(
+                result,
+                NodeStatusResult::getNode,
+                Node::getPriority,
+                EditableInteger::new);
+    }
+
+    private String extractLastBootTimeAsStr(NodeStatusResult result) {
+        return GwtNullSafe.get(
+                result,
+                NodeStatusResult::getNode,
+                Node::getLastBootMs,
+                dateTimeFormatter::formatWithDuration);
+    }
+
     /**
      * Add the columns to the table.
      */
     private void initTableColumns() {
+        DataGridUtil.addColumnSortHandler(dataGrid, findNodeStatusCriteria, this::refresh);
+
         // Info column.
         final InfoColumn<NodeStatusResult> infoColumn = new InfoColumn<NodeStatusResult>() {
             @Override
@@ -166,99 +181,128 @@ public class NodeMonitoringPresenter
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
 
         // Name.
-        final Column<NodeStatusResult, String> nameColumn = new OrderByColumn<NodeStatusResult, String>(
-                new TextCell(),
-                FindNodeStatusCriteria.FIELD_ID_NAME,
-                true) {
-            @Override
-            public String getValue(final NodeStatusResult row) {
-                if (row == null) {
-                    return null;
-                }
-                return row.getNode().getName();
-            }
-        };
-        DataGridUtil.addColumnSortHandler(dataGrid, findNodeStatusCriteria, this::refresh);
-        dataGrid.addResizableColumn(nameColumn, "Name", 200);
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder((NodeStatusResult result) -> GwtNullSafe.get(
+                                result,
+                                NodeStatusResult::getNode,
+                                Node::getName))
+                        .enabledWhen(NodeMonitoringPresenter::isNodeEnabled)
+                        .withSorting(FindNodeStatusCriteria.FIELD_ID_NAME)
+                        .build(),
+                DataGridUtil.headingBuilder("Name")
+                        .withToolTip("The name of the node as defined in configuration.")
+                        .build(),
+                300);
 
         // Host Name.
-        final Column<NodeStatusResult, String> hostNameColumn = new OrderByColumn<NodeStatusResult, String>(
-                new TextCell(),
-                FindNodeStatusCriteria.FIELD_ID_URL,
-                true) {
-            @Override
-            public String getValue(final NodeStatusResult row) {
-                if (row == null) {
-                    return null;
-                }
-                return row.getNode().getUrl();
-            }
-        };
-        dataGrid.addResizableColumn(hostNameColumn, "Cluster Base Endpoint URL", 400);
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder((NodeStatusResult result) -> GwtNullSafe.get(
+                                result,
+                                NodeStatusResult::getNode,
+                                Node::getUrl))
+                        .enabledWhen(NodeMonitoringPresenter::isNodeEnabled)
+                        .withSorting(FindNodeStatusCriteria.FIELD_ID_URL)
+                        .build(),
+                DataGridUtil.headingBuilder("Cluster Base Endpoint")
+                        .withToolTip("The base URL for the node.")
+                        .build(),
+                300);
+
+        // Version
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder((NodeStatusResult result) -> GwtNullSafe.get(
+                                result,
+                                NodeStatusResult::getNode,
+                                Node::getBuildVersion))
+                        .enabledWhen(NodeMonitoringPresenter::isNodeEnabled)
+                        .withSorting(FindNodeStatusCriteria.FIELD_ID_BUILD_VERSION)
+                        .build(),
+                DataGridUtil.headingBuilder("Build Version")
+                        .withToolTip("The version of Stroom that the node is running.")
+                        .build(),
+                150);
 
         // Ping (ms)
-        final Column<NodeStatusResult, SafeHtml> safeHtmlColumn = DataGridUtil.safeHtmlColumn(this::getPingBarSafeHtml);
-        dataGrid.addResizableColumn(safeHtmlColumn, "Ping (ms)", 300);
+        dataGrid.addResizableColumn(
+                DataGridUtil.columnBuilder(
+                                this::getPingBarSafeHtml,
+                                SafeHtmlCell::new)
+                        .enabledWhen(NodeMonitoringPresenter::isNodeEnabled)
+                        .build(),
+                DataGridUtil.headingBuilder("Ping (ms)")
+                        .withToolTip("The time in milliseconds to get a response back from the node.")
+                        .build(),
+                250);
+
+        // Last Boot Time
+        dataGrid.addColumn(
+                DataGridUtil.textColumnBuilder(this::extractLastBootTimeAsStr)
+                        .enabledWhen(NodeMonitoringPresenter::isNodeEnabled)
+                        .withSorting(FindNodeStatusCriteria.FIELD_ID_LAST_BOOT_MS)
+                        .build(),
+                DataGridUtil.headingBuilder("Up Date")
+                        .withToolTip("The time that the node last started up whether currently running or not.")
+                        .build(),
+                ColumnSizeConstants.DATE_AND_DURATION_COL);
 
         // Master.
-        final Column<NodeStatusResult, TickBoxState> masterColumn = new Column<NodeStatusResult, TickBoxState>(
-                TickBoxCell.create(new TickBoxCell.NoBorderAppearance(), false, false, false)) {
-            @Override
-            public TickBoxState getValue(final NodeStatusResult row) {
-                if (row == null) {
-                    return null;
-                }
-                return TickBoxState.fromBoolean(row.isMaster());
-            }
-        };
-        masterColumn.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-        dataGrid.addColumn(masterColumn, "Master", 60);
+        dataGrid.addColumn(
+                DataGridUtil.readOnlyTickBoxColumnBuilder((NodeStatusResult result) -> GwtNullSafe.get(
+                                result,
+                                NodeStatusResult::isMaster))
+                        .enabledWhen(NodeMonitoringPresenter::isNodeEnabled)
+                        .centerAligned()
+                        .build(),
+                DataGridUtil.headingBuilder("Master")
+                        .withToolTip("Whether the node has been assigned as the master node for the cluster.")
+                        .centerAligned()
+                        .build(),
+                60);
 
         // Priority.
-        final Column<NodeStatusResult, Number> priorityColumn = new OrderByColumn<NodeStatusResult, Number>(
-                new ValueSpinnerCell(1, 100),
-                FindNodeStatusCriteria.FIELD_ID_PRIORITY,
-                true) {
-            @Override
-            public Number getValue(final NodeStatusResult row) {
-                if (row == null) {
-                    return null;
-                }
-                return new EditableInteger(row.getNode().getPriority());
-            }
-        };
-        priorityColumn.setFieldUpdater((index, row, value) ->
-                nodeManager.setPriority(
-                        row.getNode().getName(),
-                        value.intValue(),
-                        result -> refresh(),
-                        this));
-        dataGrid.addColumn(priorityColumn, "Priority", 75);
+        dataGrid.addColumn(
+                DataGridUtil.valueSpinnerColumnBuilder(NodeMonitoringPresenter::extractNodePriority,
+                                1L,
+                                100L)
+                        .enabledWhen(NodeMonitoringPresenter::isNodeEnabled)
+                        .withSorting(FindNodeStatusCriteria.FIELD_ID_PRIORITY)
+                        .withFieldUpdater((rowIndex, nodeStatusResult, value) ->
+                                nodeManager.setPriority(
+                                        nodeStatusResult.getNode().getName(),
+                                        value.intValue(),
+                                        result -> refresh(),
+                                        this))
+                        .build(),
+                DataGridUtil.headingBuilder("Priority")
+                        .withToolTip("Defines how important the node is when it comes to " +
+                                "assigning a master. The larger the number the more chance it will become " +
+                                "the master.")
+                        .build(),
+                80);
 
         // Enabled
-        final Column<NodeStatusResult, TickBoxState> enabledColumn = new OrderByColumn<NodeStatusResult, TickBoxState>(
-                TickBoxCell.create(false, false),
-                FindNodeStatusCriteria.FIELD_ID_ENABLED,
-                true) {
-            @Override
-            public TickBoxState getValue(final NodeStatusResult row) {
-                if (row == null) {
-                    return null;
-                }
-                return TickBoxState.fromBoolean(row.getNode().isEnabled());
-            }
-        };
-        enabledColumn.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-        enabledColumn.setFieldUpdater((index, row, value) ->
-                nodeManager.setEnabled(
-                        row.getNode().getName(),
-                        value.toBoolean(),
-                        result -> refresh(),
-                        this));
+        dataGrid.addColumn(
+                DataGridUtil.updatableTickBoxColumnBuilder((NodeStatusResult result) -> GwtNullSafe.get(
+                                result,
+                                NodeStatusResult::getNode,
+                                Node::isEnabled))
+                        .enabledWhen(NodeMonitoringPresenter::isNodeEnabled)
+                        .withSorting(FindNodeStatusCriteria.FIELD_ID_ENABLED)
+                        .withFieldUpdater((index, row, value) ->
+                                nodeManager.setEnabled(
+                                        row.getNode().getName(),
+                                        value.toBoolean(),
+                                        result -> refresh(),
+                                        this))
+                        .centerAligned()
+                        .build(),
+                DataGridUtil.headingBuilder("Enabled")
+                        .withToolTip("Whether the node is enabled for processing and background jobs.")
+                        .centerAligned()
+                        .build(),
+                70);
 
-        dataGrid.addColumn(enabledColumn, "Enabled", 70);
-
-        dataGrid.addEndColumn(new EndColumn<>());
+        DataGridUtil.addEndColumn(dataGrid);
     }
 
     private SafeHtml getPingBarSafeHtml(final NodeStatusResult row) {
@@ -266,27 +310,38 @@ public class NodeMonitoringPresenter
             return SafeHtmlUtils.EMPTY_SAFE_HTML;
         }
 
-        final PingResult pingResult = latestPing.get(row.getNode().getName());
+        final Node node = row.getNode();
+        final PingResult pingResult = latestPing.get(node.getName());
 
         if (pingResult != null) {
-            if ("No response".equals(pingResult.getError())) {
-                return SafeHtmlUtil.getSafeHtml(pingResult.getError());
-            }
-            if (pingResult.getError() != null) {
-                return SafeHtmlUtil.getSafeHtml("Error");
-            }
-            final Long ping = pingResult.getPing();
-            if (ping == null || ping < 0) {
-                return SafeHtmlUtil.getSafeHtml("Invalid ping value: "
-                        + GwtNullSafe.requireNonNullElse(ping, "null"));
+            Long ping = pingResult.getPing();
+            String pingMsg = null;
+            if (!node.isEnabled()) {
+                // Disabled so bad ping is expected
+                if (ping == null) {
+                    ping = 0L;
+                    pingMsg = "No response from disabled node";
+                }
+            } else if ("No response".equals(pingResult.getError())) {
+                ping = Long.MAX_VALUE;
+                pingMsg = pingResult.getError();
+            } else if (pingResult.getError() != null) {
+                ping = Long.MAX_VALUE;
+                pingMsg = "Error: " + pingResult.getError();
+            } else if (ping == null || ping < 0) {
+                ping = Long.MAX_VALUE;
+                pingMsg = "Invalid ping value: "
+                        + GwtNullSafe.requireNonNullElse(ping, "null");
             }
 
-            return buildPingBar(ping, pingResult.getNodeMonitoringConfig());
+            return buildPingBar(ping, pingMsg, pingResult.getNodeMonitoringConfig());
         }
         return SafeHtmlUtil.getSafeHtml("-");
     }
 
-    private SafeHtml buildPingBar(final long ping, final NodeMonitoringConfig nodeMonitoringConfig) {
+    private SafeHtml buildPingBar(final Long ping,
+                                  final String msg,
+                                  final NodeMonitoringConfig nodeMonitoringConfig) {
         final int warnThresholdMs = nodeMonitoringConfig.getPingWarnThreshold();
         final int maxThresholdMs = nodeMonitoringConfig.getPingMaxThreshold();
         final int maxBarWidthPct = 100;
@@ -305,13 +360,22 @@ public class NodeMonitoringPresenter
         }
         final String severityClass = PING_SEVERITY_CLASS_BASE + severityClassSuffix;
 
+        final String text;
+        final String title;
+        if (msg == null) {
+            text = THOUSANDS_FORMATTER.format(ping);
+            title = "Ping: " + ping + "ms";
+        } else {
+            text = msg;
+            title = msg;
+        }
+
         HtmlBuilder htmlBuilder = new HtmlBuilder();
         htmlBuilder.div(hb1 ->
                 hb1.div(hb2 ->
-                                hb2.span(hb3 ->
-                                                hb3.append(THOUSANDS_FORMATTER
-                                                        .format(ping)),
-                                        Attribute.className(PING_TEXT_CLASS)),
+                                hb2.span(hb3 -> hb3.append(text),
+                                        Attribute.className(PING_TEXT_CLASS),
+                                        Attribute.title(title)),
                         Attribute.className(PING_BAR_CLASS + " " + severityClass),
                         Attribute.style("width:" +
                                 barWidthPct +

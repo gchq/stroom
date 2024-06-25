@@ -35,10 +35,12 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.rest.RestUtil;
+import stroom.util.shared.BuildInfo;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.client.Invocation;
@@ -48,6 +50,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -57,7 +60,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-@Singleton
+@Singleton // because of createOrRefreshNode
 public class NodeServiceImpl implements NodeService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(NodeServiceImpl.class);
@@ -68,6 +71,7 @@ public class NodeServiceImpl implements NodeService {
     private final UriFactory uriFactory;
     private final EntityEventBus entityEventBus;
     private final WebTargetFactory webTargetFactory;
+    private final Provider<BuildInfo> buildInfoProvider;
 
     @Inject
     NodeServiceImpl(final SecurityContext securityContext,
@@ -75,16 +79,18 @@ public class NodeServiceImpl implements NodeService {
                     final NodeInfo nodeInfo,
                     final UriFactory uriFactory,
                     final EntityEventBus entityEventBus,
-                    final WebTargetFactory webTargetFactory) {
+                    final WebTargetFactory webTargetFactory,
+                    final Provider<BuildInfo> buildInfoProvider) {
         this.securityContext = securityContext;
         this.nodeDao = nodeDao;
         this.nodeInfo = nodeInfo;
         this.uriFactory = uriFactory;
         this.entityEventBus = entityEventBus;
         this.webTargetFactory = webTargetFactory;
+        this.buildInfoProvider = buildInfoProvider;
 
         // Ensure the node record for this node is in the DB
-        refreshNode();
+        createOrRefreshNode();
     }
 
     Node update(final Node node) {
@@ -265,31 +271,42 @@ public class NodeServiceImpl implements NodeService {
         return securityContext.secureResult(() -> nodeDao.getNode(nodeName));
     }
 
-    private synchronized void refreshNode() {
+    private synchronized void createOrRefreshNode() {
         securityContext.asProcessingUser(() -> {
             final String nodeName = nodeInfo.getThisNodeName();
-            LOGGER.info("Creating node in DB with name: " + nodeName);
+
             if (nodeName == null || nodeName.isEmpty()) {
                 throw new RuntimeException("Node name is not configured");
             }
             // See if we have a node record in the DB, we won't on first boot
-            Node thisNode = nodeDao.getNode(nodeName);
+            final Node thisNode = nodeDao.getNode(nodeName);
+
             // Get the node endpoint URL from config or determine it
-            final String endpointUrl = uriFactory.nodeUri("").toString();
             if (thisNode == null) {
                 // This will start a new mini transaction to create the node record
                 final Node node = new Node();
                 node.setName(nodeName);
-                node.setUrl(endpointUrl);
-                LOGGER.info("Creating node record for {} with endpoint url {}",
-                        node.getName(), node.getUrl());
-                nodeDao.create(node);
-            } else if (!endpointUrl.equals(thisNode.getUrl())) {
-                // Endpoint URL in the DB is out of date so update it
-                thisNode.setUrl(endpointUrl);
-                LOGGER.info("Updating node endpoint url to {} for node {}", endpointUrl, thisNode.getName());
+                updateNodeObj(node);
+
+                LOGGER.info("Creating node record for {} with endpoint url: {} and buildVersion: {}",
+                        node.getName(), node.getUrl(), node.getBuildVersion());
+                nodeDao.tryCreate(node);
+            } else {
+                // Node record already exists so create it
+                updateNodeObj(thisNode);
+
+                LOGGER.info("Updating node record for {} with endpoint url: {} and buildVersion: {}",
+                        thisNode.getName(), thisNode.getUrl(), thisNode.getBuildVersion());
                 update(thisNode);
             }
         });
+    }
+
+    private void updateNodeObj(final Node node) {
+        final String endpointUrl = uriFactory.nodeUri("").toString();
+        final BuildInfo buildInfo = buildInfoProvider.get();
+        node.setUrl(endpointUrl);
+        node.setBuildVersion(buildInfo.getBuildVersion());
+        node.setLastBootMs(Instant.now().toEpochMilli());
     }
 }
