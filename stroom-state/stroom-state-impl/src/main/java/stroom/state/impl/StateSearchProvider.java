@@ -20,10 +20,8 @@ import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProcess;
 import stroom.query.common.v2.SearchProvider;
-import stroom.state.impl.dao.SessionDao;
+import stroom.state.impl.dao.DaoFactory;
 import stroom.state.impl.dao.StateFieldUtil;
-import stroom.state.impl.dao.TemporalRangedStateDao;
-import stroom.state.impl.dao.TemporalStateDao;
 import stroom.state.shared.StateDoc;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
@@ -133,6 +131,8 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
         final DocRef docRef = query.getDataSource();
 
         // Check we have permission to read the doc.
+        final StateDoc stateDoc = stateDocCache.get(docRef.getName());
+        Objects.requireNonNull(stateDoc, "Unable to find state doc with name: " + docRef.getName());
         final Provider<CqlSession> sessionProvider = cqlSessionFactory.getSessionProvider(docRef.getName());
 
         // Extract highlights.
@@ -205,13 +205,11 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
 
                 final Instant queryStart = Instant.now();
                 try {
-                    // Give the data array to each of our coprocessors
-                    new TemporalStateDao(sessionProvider).search(criteria, coprocessors.getFieldIndex(), coprocessors);
-                    new TemporalRangedStateDao(sessionProvider).search(criteria,
+                    DaoFactory.create(sessionProvider, stateDoc.getStateType()).search(
+                            criteria,
                             coprocessors.getFieldIndex(),
+                            searchRequest.getDateTimeSettings(),
                             coprocessors);
-                    new SessionDao(sessionProvider).search(criteria, coprocessors.getFieldIndex(), coprocessors);
-
                 } catch (final RuntimeException e) {
                     LOGGER.debug(e::getMessage, e);
                     resultStore.addError(e);

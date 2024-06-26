@@ -1,6 +1,7 @@
 package stroom.state.impl.dao;
 
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.logging.LambdaLogger;
@@ -151,8 +152,9 @@ public class TemporalStateDao extends AbstractStateDao<TemporalState> {
     @Override
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
+                       final DateTimeSettings dateTimeSettings,
                        final ValuesConsumer consumer) {
-        searchHelper.search(criteria, fieldIndex, consumer);
+        searchHelper.search(criteria, fieldIndex, dateTimeSettings, consumer);
     }
 
     private void findKeys(final List<Relation> relations,
@@ -168,6 +170,7 @@ public class TemporalStateDao extends AbstractStateDao<TemporalState> {
         }
     }
 
+    @Override
     public void condense(final Instant oldest) {
         findKeys(Collections.emptyList(), key -> {
             final SimpleStatement select = selectFrom(TABLE)
@@ -207,6 +210,7 @@ public class TemporalStateDao extends AbstractStateDao<TemporalState> {
         });
     }
 
+    @Override
     public void removeOldData(final Instant oldest) {
         // We have to select rows to delete data here as you can only execute delete statements against primary keys.
         final SimpleStatement select = selectFrom(TABLE)

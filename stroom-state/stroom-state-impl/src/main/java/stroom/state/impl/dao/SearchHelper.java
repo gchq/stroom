@@ -2,6 +2,7 @@ package stroom.state.impl.dao;
 
 import stroom.datasource.api.v2.QueryField;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValBoolean;
@@ -57,9 +58,10 @@ public class SearchHelper {
 
     void search(final ExpressionCriteria criteria,
                 final FieldIndex fieldIndex,
+                final DateTimeSettings dateTimeSettings,
                 final ValuesConsumer consumer) {
         final List<Relation> relations = new ArrayList<>();
-        ScyllaDbExpressionUtil.getRelations(columnMap, criteria.getExpression(), relations);
+        ScyllaDbExpressionUtil.getRelations(fieldMap, columnMap, criteria.getExpression(), relations, dateTimeSettings);
         final String[] fieldNames = fieldIndex.getFields();
         final List<CqlIdentifier> columns = new ArrayList<>();
 

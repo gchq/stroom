@@ -117,7 +117,7 @@ class TestSessionDao extends AbstractCoreIntegrationTest {
 
         final ValDate minTime = ValDate.create(min);
         final ValDate maxTime = ValDate.create(max);
-        sessionDao.search(criteria, fieldIndex, values -> {
+        sessionDao.search(criteria, fieldIndex, null, values -> {
             count.incrementAndGet();
             assertThat(values[1]).isEqualTo(minTime);
             assertThat(values[2]).isEqualTo(maxTime);
@@ -128,7 +128,7 @@ class TestSessionDao extends AbstractCoreIntegrationTest {
         sessionDao.condense(Instant.now());
         assertThat(sessionDao.count()).isOne();
 
-        sessionDao.search(new ExpressionCriteria(expression), fieldIndex, values -> {
+        sessionDao.search(new ExpressionCriteria(expression), fieldIndex, null, values -> {
             count.incrementAndGet();
             assertThat(values[1]).isEqualTo(minTime);
             assertThat(values[2]).isEqualTo(maxTime);

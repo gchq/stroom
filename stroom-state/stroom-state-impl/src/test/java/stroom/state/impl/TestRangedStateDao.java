@@ -61,7 +61,7 @@ class TestRangedStateDao {
             final FieldIndex fieldIndex = new FieldIndex();
             fieldIndex.create(RangedStateFields.KEY_START);
             final AtomicInteger count = new AtomicInteger();
-            rangedStateDao.search(new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex,
+            rangedStateDao.search(new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex, null,
                     v -> count.incrementAndGet());
             assertThat(count.get()).isEqualTo(1);
         });

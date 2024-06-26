@@ -1,9 +1,11 @@
 package stroom.state.impl;
 
 import stroom.datasource.api.v2.QueryField;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.state.impl.dao.SessionFields;
+import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.common.v2.DateExpressionParser;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -23,9 +25,11 @@ public class ScyllaDbExpressionUtil {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ScyllaDbExpressionUtil.class);
 
-    public static void getRelations(final Map<String, CqlIdentifier> fieldMap,
+    public static void getRelations(final Map<String, QueryField> fieldMap,
+                                    final Map<String, CqlIdentifier> columnMap,
                                     final ExpressionOperator expressionOperator,
-                                    final List<Relation> relations) {
+                                    final List<Relation> relations,
+                                    final DateTimeSettings dateTimeSettings) {
         if (expressionOperator != null &&
                 expressionOperator.enabled() &&
                 expressionOperator.getChildren() != null &&
@@ -35,14 +39,15 @@ public class ScyllaDbExpressionUtil {
                     if (child instanceof final ExpressionTerm expressionTerm) {
                         if (expressionTerm.enabled()) {
                             try {
-                                final Relation relation = convertTerm(fieldMap, expressionTerm);
+                                final Relation relation =
+                                        convertTerm(fieldMap, columnMap, expressionTerm, dateTimeSettings);
                                 relations.add(relation);
                             } catch (final RuntimeException e) {
                                 LOGGER.error(e::getMessage, e);
                             }
                         }
                     } else if (child instanceof final ExpressionOperator operator) {
-                        getRelations(fieldMap, operator, relations);
+                        getRelations(fieldMap, columnMap, operator, relations, dateTimeSettings);
                     }
                 });
                 case OR -> throw new RuntimeException("OR conditions are not supported");
@@ -51,39 +56,60 @@ public class ScyllaDbExpressionUtil {
         }
     }
 
-    private static Relation convertTerm(final Map<String, CqlIdentifier> fieldMap, final ExpressionTerm term) {
-        final CqlIdentifier column = fieldMap.get(term.getField());
+    private static Relation convertTerm(final Map<String, QueryField> fieldMap,
+                                        final Map<String, CqlIdentifier> columnMap,
+                                        final ExpressionTerm term,
+                                        final DateTimeSettings dateTimeSettings) {
+        final CqlIdentifier column = columnMap.get(term.getField());
         if (column == null) {
+            throw new RuntimeException("Unexpected column " + term.getField());
+        }
+        final QueryField queryField = fieldMap.get(term.getField());
+        if (queryField == null) {
             throw new RuntimeException("Unexpected field " + term.getField());
         }
 
-        final QueryField queryField = SessionFields.FIELD_MAP.get(term.getField());
         final ColumnRelationBuilder<Relation> builder = Relation.column(column);
-        return switch (term.getCondition()) {
-            case EQUALS -> builder.isEqualTo(convertLiteral(queryField, term.getValue()));
-            case CONTAINS -> builder.isEqualTo(convertLiteral(queryField, term.getValue()));
-            case NOT_EQUALS -> builder.isNotEqualTo(convertLiteral(queryField, term.getValue()));
-            case LESS_THAN -> builder.isLessThan(convertLiteral(queryField, term.getValue()));
-            case LESS_THAN_OR_EQUAL_TO -> builder.isLessThanOrEqualTo(convertLiteral(queryField, term.getValue()));
-            case GREATER_THAN -> builder.isGreaterThan(convertLiteral(queryField, term.getValue()));
-            case GREATER_THAN_OR_EQUAL_TO ->
-                    builder.isGreaterThanOrEqualTo(convertLiteral(queryField, term.getValue()));
+        Condition condition = term.getCondition();
+        String value = term.getValue();
+        return switch (condition) {
+            case EQUALS, CONTAINS -> {
+                if (value.contains("*") || value.contains("?")) {
+                    value = value.replaceAll("\\*", "%");
+                    value = value.replaceAll("\\?", "_");
+                    yield builder.like(convertLiteral(queryField, value, dateTimeSettings));
+                } else {
+                    yield builder.isEqualTo(convertLiteral(queryField, value, dateTimeSettings));
+                }
+            }
+            case NOT_EQUALS -> builder.isNotEqualTo(
+                    convertLiteral(queryField, value, dateTimeSettings));
+            case LESS_THAN -> builder.isLessThan(
+                    convertLiteral(queryField, value, dateTimeSettings));
+            case LESS_THAN_OR_EQUAL_TO -> builder.isLessThanOrEqualTo(
+                    convertLiteral(queryField, value, dateTimeSettings));
+            case GREATER_THAN -> builder.isGreaterThan(
+                    convertLiteral(queryField, value, dateTimeSettings));
+            case GREATER_THAN_OR_EQUAL_TO -> builder.isGreaterThanOrEqualTo(
+                    convertLiteral(queryField, value, dateTimeSettings));
             case IN -> {
                 Term[] terms = new Term[0];
-                if (term.getValue() != null) {
-                    final String[] values = term.getValue().split(",");
+                if (value != null) {
+                    final String[] values = value.split(",");
                     terms = new Term[values.length];
                     for (int i = 0; i < values.length; i++) {
-                        terms[i] = convertLiteral(queryField, values[i]);
+                        terms[i] = convertLiteral(queryField, values[i], dateTimeSettings);
                     }
                 }
                 yield builder.in(terms);
             }
-            default -> throw new RuntimeException("Condition " + term.getCondition() + " is not supported.");
+            default -> throw new RuntimeException("Condition " + condition + " is not supported.");
         };
     }
 
-    private static Literal convertLiteral(final QueryField queryField, final String value) {
+    private static Literal convertLiteral(final QueryField queryField,
+                                          final String value,
+                                          final DateTimeSettings dateTimeSettings) {
         switch (queryField.getFldType()) {
             case ID -> {
                 return literal(Long.parseLong(value));
@@ -104,7 +130,8 @@ public class ScyllaDbExpressionUtil {
                 return literal(Double.parseDouble(value));
             }
             case DATE -> {
-                return literal(Instant.parse(value));
+                final long ms = DateExpressionParser.getMs(queryField.getFldName(), value, dateTimeSettings);
+                return literal(Instant.ofEpochMilli(ms));
             }
             case TEXT -> {
                 return literal(value);

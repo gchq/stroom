@@ -19,6 +19,7 @@ package stroom.state.impl;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
+import stroom.state.impl.dao.DaoFactory;
 import stroom.state.impl.dao.RangedStateDao;
 import stroom.state.impl.dao.SessionDao;
 import stroom.state.impl.dao.StateDao;
@@ -83,15 +84,7 @@ public class CqlSessionCacheImpl implements CqlSessionCache, Clearable {
         final CqlSession session = ScyllaDbUtil.keyspace(
                 scyllaDbDoc.getConnection(),
                 stateDoc.getKeyspace());
-
-        switch (stateDoc.getStateType()) {
-            case STATE -> new StateDao(() -> session).createTables();
-            case TEMPORAL_STATE -> new TemporalStateDao(() -> session).createTables();
-            case RANGED_STATE -> new RangedStateDao(() -> session).createTables();
-            case TEMPORAL_RANGED_STATE -> new TemporalRangedStateDao(() -> session).createTables();
-            case SESSION -> new SessionDao(() -> session).createTables();
-        }
-
+        DaoFactory.create(() -> session, stateDoc.getStateType()).createTables();
         ScyllaDbUtil.printMetadata(() -> session, stateDoc.getKeyspace());
         return session;
     }

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface TemporalRangedStateFields {
+
     String KEY_START = "KeyStart";
     String KEY_END = "KeyEnd";
     String EFFECTIVE_TIME = "EffectiveTime";
@@ -19,10 +20,12 @@ public interface TemporalRangedStateFields {
     QueryField VALUE_TYPE_FIELD = QueryField.createText(VALUE_TYPE, false);
     QueryField VALUE_FIELD = QueryField.createText(VALUE, false);
 
-    List<QueryField> QUERYABLE_FIELDS = Arrays.asList(
+    List<QueryField> FIELDS = Arrays.asList(
             KEY_START_FIELD,
             KEY_END_FIELD,
-            EFFECTIVE_TIME_FIELD);
+            EFFECTIVE_TIME_FIELD,
+            VALUE_TYPE_FIELD,
+            VALUE_FIELD);
 
     Map<String, QueryField> FIELD_MAP = Map.of(
             KEY_START, KEY_START_FIELD,

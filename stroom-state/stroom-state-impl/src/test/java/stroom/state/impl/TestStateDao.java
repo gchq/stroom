@@ -59,7 +59,7 @@ class TestStateDao {
             final FieldIndex fieldIndex = new FieldIndex();
             fieldIndex.create(StateFields.KEY);
             final AtomicInteger count = new AtomicInteger();
-            stateDao.search(new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex,
+            stateDao.search(new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex, null,
                     v -> count.incrementAndGet());
             assertThat(count.get()).isEqualTo(1);
         });

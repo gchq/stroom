@@ -62,7 +62,7 @@ class TestTemporalStateDao {
             final FieldIndex fieldIndex = new FieldIndex();
             fieldIndex.create(TemporalStateFields.KEY);
             final AtomicInteger count = new AtomicInteger();
-            stateDao.search(new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex,
+            stateDao.search(new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex, null,
                     v -> count.incrementAndGet());
             assertThat(count.get()).isEqualTo(100);
         });

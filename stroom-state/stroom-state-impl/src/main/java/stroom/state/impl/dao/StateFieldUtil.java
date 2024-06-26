@@ -10,11 +10,11 @@ public class StateFieldUtil {
 
     public static List<QueryField> getQueryableFields(final StateType stateType) {
         return switch (stateType) {
-            case STATE -> StateFields.QUERYABLE_FIELDS;
-            case TEMPORAL_STATE -> TemporalStateFields.QUERYABLE_FIELDS;
-            case RANGED_STATE -> RangedStateFields.QUERYABLE_FIELDS;
-            case TEMPORAL_RANGED_STATE -> TemporalRangedStateFields.QUERYABLE_FIELDS;
-            case SESSION -> SessionFields.QUERYABLE_FIELDS;
+            case STATE -> StateFields.FIELDS;
+            case TEMPORAL_STATE -> TemporalStateFields.FIELDS;
+            case RANGED_STATE -> RangedStateFields.FIELDS;
+            case TEMPORAL_RANGED_STATE -> TemporalRangedStateFields.FIELDS;
+            case SESSION -> SessionFields.FIELDS;
         };
     }
 

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface SessionFields {
+
     String KEY = "Key";
     String START = "Start";
     String END = "End";
@@ -17,10 +18,11 @@ public interface SessionFields {
     QueryField END_FIELD = QueryField.createDate(END);
     QueryField TERMINAL_FIELD = QueryField.createText(TERMINAL, false);
 
-    List<QueryField> QUERYABLE_FIELDS = Arrays.asList(
+    List<QueryField> FIELDS = Arrays.asList(
             KEY_FIELD,
             START_FIELD,
-            END_FIELD);
+            END_FIELD,
+            TERMINAL_FIELD);
 
     Map<String, QueryField> FIELD_MAP = Map.of(
             KEY, KEY_FIELD,

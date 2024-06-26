@@ -1,6 +1,7 @@
 package stroom.state.impl.dao;
 
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValBoolean;
@@ -90,7 +91,7 @@ public class SessionDao extends AbstractStateDao<Session> {
             .allowFiltering()
             .build();
 
-    private static final Map<String, CqlIdentifier> FIELD_MAP = Map.of(
+    private static final Map<String, CqlIdentifier> COLUMN_MAP = Map.of(
             SessionFields.KEY, COLUMN_KEY,
             SessionFields.START, COLUMN_START,
             SessionFields.END, COLUMN_END,
@@ -144,10 +145,16 @@ public class SessionDao extends AbstractStateDao<Session> {
     @Override
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
+                       final DateTimeSettings dateTimeSettings,
                        final ValuesConsumer valuesConsumer) {
         final Consumer<Session> sessionConsumer = new SessionConsumer(fieldIndex, valuesConsumer);
         final List<Relation> relations = new ArrayList<>();
-        ScyllaDbExpressionUtil.getRelations(FIELD_MAP, criteria.getExpression(), relations);
+        ScyllaDbExpressionUtil.getRelations(
+                SessionFields.FIELD_MAP,
+                COLUMN_MAP,
+                criteria.getExpression(),
+                relations,
+                dateTimeSettings);
         findKeys(relations, key -> {
             final List<Relation> childRelations = new ArrayList<>(relations);
             childRelations.add(Relation.column(COLUMN_KEY).isEqualTo(literal(key)));
@@ -227,10 +234,12 @@ public class SessionDao extends AbstractStateDao<Session> {
                 .orElse(false);
     }
 
+    @Override
     public void condense(final Instant oldest) {
         new Condenser(this).condense(oldest);
     }
 
+    @Override
     public void removeOldData(final Instant oldest) {
         try (final BatchStatementExecutor executor = new BatchStatementExecutor(sessionProvider)) {
             findKeys(Collections.emptyList(), key -> {

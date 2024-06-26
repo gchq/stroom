@@ -1,6 +1,7 @@
 package stroom.state.impl.dao;
 
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 
@@ -10,6 +11,7 @@ import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import jakarta.inject.Provider;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -52,10 +54,17 @@ public abstract class AbstractStateDao<T> {
 
     public abstract void search(ExpressionCriteria criteria,
                                 FieldIndex fieldIndex,
+                                DateTimeSettings dateTimeSettings,
                                 ValuesConsumer valuesConsumer);
 
     public long count() {
         final SimpleStatement statement = selectFrom(table).countAll().build();
         return sessionProvider.get().execute(statement).one().getLong(0);
     }
+
+    public void condense(Instant oldest) {
+        // Not all implementations condense data.
+    }
+
+    public abstract void removeOldData(Instant oldest);
 }

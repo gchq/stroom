@@ -65,7 +65,7 @@ class TestSessionDao {
 
             final ValDate minTime = ValDate.create(outerRange.min());
             final ValDate maxTime = ValDate.create(outerRange.max());
-            sessionDao.search(criteria, fieldIndex, values -> {
+            sessionDao.search(criteria, fieldIndex, null, values -> {
                 count.incrementAndGet();
                 assertThat(values[1]).isEqualTo(minTime);
                 assertThat(values[2]).isEqualTo(maxTime);
@@ -76,7 +76,7 @@ class TestSessionDao {
             sessionDao.condense(Instant.now());
             assertThat(sessionDao.count()).isOne();
 
-            sessionDao.search(new ExpressionCriteria(expression), fieldIndex, values -> {
+            sessionDao.search(new ExpressionCriteria(expression), fieldIndex, null, values -> {
                 count.incrementAndGet();
                 assertThat(values[1]).isEqualTo(minTime);
                 assertThat(values[2]).isEqualTo(maxTime);

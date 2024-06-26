@@ -2,6 +2,7 @@ package stroom.state.impl;
 
 import stroom.docref.DocRef;
 import stroom.security.api.SecurityContext;
+import stroom.state.impl.dao.DaoFactory;
 import stroom.state.impl.dao.RangedStateDao;
 import stroom.state.impl.dao.SessionDao;
 import stroom.state.impl.dao.StateDao;
@@ -83,18 +84,7 @@ public class StateMaintenanceExecutor {
 
                             final Provider<CqlSession> cqlSessionProvider =
                                     cqlSessionFactory.getSessionProvider(doc.getKeyspace());
-                            switch (doc.getStateType()) {
-                                case STATE -> new StateDao(cqlSessionProvider)
-                                        .removeOldData(oldest);
-                                case TEMPORAL_STATE -> new TemporalStateDao(cqlSessionProvider)
-                                        .removeOldData(oldest);
-                                case RANGED_STATE -> new RangedStateDao(cqlSessionProvider)
-                                        .removeOldData(oldest);
-                                case TEMPORAL_RANGED_STATE -> new TemporalRangedStateDao(cqlSessionProvider)
-                                        .removeOldData(oldest);
-                                case SESSION -> new SessionDao(cqlSessionProvider)
-                                        .removeOldData(oldest);
-                            }
+                            DaoFactory.create(cqlSessionProvider, doc.getStateType()).removeOldData(oldest);
                         }
                     } catch (final Exception e) {
                         LOGGER.error(e::getMessage, e);

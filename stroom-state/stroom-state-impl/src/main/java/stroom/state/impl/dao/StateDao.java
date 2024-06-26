@@ -1,6 +1,7 @@
 package stroom.state.impl.dao;
 
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.logging.LambdaLogger;
@@ -140,10 +141,12 @@ public class StateDao extends AbstractStateDao<State> {
     @Override
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
+                       final DateTimeSettings dateTimeSettings,
                        final ValuesConsumer consumer) {
-        searchHelper.search(criteria, fieldIndex, consumer);
+        searchHelper.search(criteria, fieldIndex, dateTimeSettings, consumer);
     }
 
+    @Override
     public void removeOldData(final Instant oldest) {
         // We have to select rows to delete data here as you can only execute delete statements against primary keys.
         final SimpleStatement select = selectFrom(TABLE)
