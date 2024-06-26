@@ -36,6 +36,8 @@ import stroom.state.impl.ScyllaDbDocStore;
 import stroom.state.impl.ScyllaDbUtil;
 import stroom.state.impl.StateDocStore;
 import stroom.state.shared.ScyllaDbDoc;
+import stroom.state.shared.StateDoc;
+import stroom.state.shared.StateType;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.CommonTranslationTestHelper;
 import stroom.test.StoreCreationTool;
@@ -89,11 +91,12 @@ class TestStateLookupTask extends AbstractProcessIntegrationTest {
         assertThat(scyllaDbDocStore.list().size()).isOne();
         final ScyllaDbDoc scyllaDbDoc = scyllaDbDocStore.readDocument(scyllaDbDocStore.list().getFirst());
 
-        final String keyspaceName = ScyllaDbUtil.createTestKeyspaceName();
         scyllaDbDoc.setConnection(ScyllaDbUtil.getDefaultConnection());
-        scyllaDbDoc.setKeyspace(keyspaceName);
-        scyllaDbDoc.setKeyspaceCql(ScyllaDbUtil.createKeyspaceCql(keyspaceName));
         scyllaDbDocStore.writeDocument(scyllaDbDoc);
+
+        createStateDoc(scyllaDbDoc, "hostname_to_location_map");
+        createStateDoc(scyllaDbDoc, "hostname_to_ip_map");
+        createStateDoc(scyllaDbDoc, "id_to_user_map");
 
         // Add reference data to state store.
         // Setup the pipeline.
@@ -102,7 +105,7 @@ class TestStateLookupTask extends AbstractProcessIntegrationTest {
         final QueryData findStreamQueryData = QueryData.builder()
                 .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                 .expression(ExpressionOperator.builder()
-                        .addDateTerm(MetaFields.TYPE,
+                        .addTextTerm(MetaFields.TYPE,
                                 ExpressionTerm.Condition.EQUALS,
                                 StreamTypeNames.REFERENCE)
                         .build())
@@ -120,11 +123,10 @@ class TestStateLookupTask extends AbstractProcessIntegrationTest {
         assertThat(refDataProcessResults).hasSize(3);
 
         // Add event data and processor filters.
-        final DocRef stateDocRef = stateDocStore.list().getFirst();
         final List<PipelineReference> pipelineReferences = Collections.singletonList(PipelineDataUtil.createReference(
                 "translationFilter",
                 "pipelineReference",
-                stateDocRef,
+                new DocRef(StateDoc.DOCUMENT_TYPE, null),
                 null,
                 null));
         commonTranslationTestHelper.setupStateProcess(
@@ -175,5 +177,15 @@ class TestStateLookupTask extends AbstractProcessIntegrationTest {
                     .as(result.toString())
                     .isZero();
         }
+    }
+
+    private void createStateDoc(final ScyllaDbDoc scyllaDbDoc, final String name) {
+        final DocRef docRef = stateDocStore.createDocument(name);
+        final StateDoc stateDoc = stateDocStore.readDocument(docRef);
+        stateDoc.setScyllaDbRef(scyllaDbDoc.asDocRef());
+        stateDoc.setKeyspace(name);
+        stateDoc.setKeyspaceCql(ScyllaDbUtil.createKeyspaceCql(name));
+        stateDoc.setStateType(StateType.TEMPORAL_STATE);
+        stateDocStore.writeDocument(stateDoc);
     }
 }

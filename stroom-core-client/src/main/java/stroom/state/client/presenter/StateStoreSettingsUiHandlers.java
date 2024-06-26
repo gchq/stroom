@@ -20,6 +20,4 @@ import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface StateStoreSettingsUiHandlers extends UiHandlers {
     void onChange();
-
-//    void onTestIndex();
 }

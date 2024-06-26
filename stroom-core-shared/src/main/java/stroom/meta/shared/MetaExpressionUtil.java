@@ -17,7 +17,7 @@ public final class MetaExpressionUtil {
     }
 
     public static ExpressionOperator createStatusExpression(final Status status) {
-        return ExpressionUtil.equalsDate(MetaFields.STATUS, status.getDisplayValue());
+        return ExpressionUtil.equalsText(MetaFields.STATUS, status.getDisplayValue());
     }
 
     public static ExpressionOperator createDataIdSetExpression(final Set<Long> idSet) {
@@ -42,21 +42,21 @@ public final class MetaExpressionUtil {
     public static ExpressionOperator createDataIdExpression(final long id, final Status status) {
         return ExpressionOperator.builder()
                 .addIdTerm(MetaFields.ID, Condition.EQUALS, id)
-                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, status.getDisplayValue())
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, status.getDisplayValue())
                 .build();
     }
 
     public static ExpressionOperator createParentIdExpression(final long parentId, final Status status) {
         return ExpressionOperator.builder()
                 .addIdTerm(MetaFields.PARENT_ID, Condition.EQUALS, parentId)
-                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, status.getDisplayValue())
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, status.getDisplayValue())
                 .build();
     }
 
     public static ExpressionOperator createTypeExpression(final String typeName, final Status status) {
         return ExpressionOperator.builder()
-                .addDateTerm(MetaFields.TYPE, Condition.EQUALS, typeName)
-                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, status.getDisplayValue())
+                .addTextTerm(MetaFields.TYPE, Condition.EQUALS, typeName)
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, status.getDisplayValue())
                 .build();
     }
 
@@ -70,35 +70,35 @@ public final class MetaExpressionUtil {
                                 .addDocRefTerm(MetaFields.PIPELINE, Condition.IN_FOLDER, folder)
                                 .build()
                 )
-                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 
     public static ExpressionOperator createFeedExpression(final DocRef feedRef) {
         return ExpressionOperator.builder()
                 .addDocRefTerm(MetaFields.FEED, Condition.IS_DOC_REF, feedRef)
-                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 
     public static ExpressionOperator createFeedExpression(final String feedName) {
         return ExpressionOperator.builder()
-                .addDateTerm(MetaFields.FEED, Condition.EQUALS, feedName)
-                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTextTerm(MetaFields.FEED, Condition.EQUALS, feedName)
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 
     public static ExpressionOperator createFeedsExpression(final String... feedNames) {
         return ExpressionOperator.builder()
-                .addDateTerm(MetaFields.FEED, Condition.IN, String.join(",", feedNames))
-                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTextTerm(MetaFields.FEED, Condition.IN, String.join(",", feedNames))
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 
     public static ExpressionOperator createPipelineExpression(final DocRef pipelineRef) {
         return ExpressionOperator.builder()
                 .addDocRefTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, pipelineRef)
-                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 }

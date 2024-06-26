@@ -37,6 +37,7 @@ import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Objects;
 
 @Singleton
@@ -50,7 +51,7 @@ public class StateDocCacheImpl implements StateDocCache, Clearable, EntityEvent.
     private static final String CACHE_NAME = "State Doc Cache";
 
     private final StateDocStore stateDocStore;
-    private final LoadingStroomCache<DocRef, StateDoc> cache;
+    private final LoadingStroomCache<String, StateDoc> cache;
     private final SecurityContext securityContext;
 
     @Inject
@@ -66,8 +67,17 @@ public class StateDocCacheImpl implements StateDocCache, Clearable, EntityEvent.
                 this::create);
     }
 
-    private StateDoc create(final DocRef docRef) {
+    private StateDoc create(final String name) {
         return securityContext.asProcessingUserResult(() -> {
+            final List<DocRef> list = stateDocStore.findByName(name);
+            if (list.size() > 1) {
+                throw new RuntimeException("Unexpectedly found more than one state doc with name: " + name);
+            }
+            if (list.isEmpty()) {
+                throw new NullPointerException("No state doc can be found for name: " + name);
+            }
+
+            final DocRef docRef = list.getFirst();
             final StateDoc loaded = stateDocStore.readDocument(docRef);
             if (loaded == null) {
                 throw new NullPointerException("No state doc can be found for: " + docRef);
@@ -78,19 +88,22 @@ public class StateDocCacheImpl implements StateDocCache, Clearable, EntityEvent.
     }
 
     @Override
-    public StateDoc get(final DocRef docRef) {
-        Objects.requireNonNull(docRef, "Null DocRef supplied");
+    public StateDoc get(final String name) {
+        Objects.requireNonNull(name, "Null name supplied");
+        final StateDoc stateDoc = cache.get(name);
 
+        final DocRef docRef = stateDoc.asDocRef();
         if (!securityContext.hasDocumentPermission(docRef, DocumentPermissionNames.USE)) {
             throw new PermissionException(
                     securityContext.getUserIdentityForAudit(),
                     LogUtil.message("You are not authorised to read {}", docRef));
         }
-        return cache.get(docRef);
+
+        return stateDoc;
     }
 
     @Override
-    public void remove(final DocRef key) {
+    public void remove(final String key) {
         cache.invalidate(key);
     }
 
@@ -114,7 +127,7 @@ public class StateDocCacheImpl implements StateDocCache, Clearable, EntityEvent.
                         event.getDocRef(),
                         docRef -> {
                             LOGGER.debug("Invalidating docRef {}", docRef);
-                            cache.invalidate(docRef);
+                            cache.invalidate(docRef.getName());
                         });
             }
             default -> LOGGER.debug("Unexpected event action {}", eventAction);

@@ -222,12 +222,12 @@ public final class SetupSampleDataBean {
                         final QueryData criteria = QueryData.builder()
                                 .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                                 .expression(ExpressionOperator.builder()
-                                        .addDateTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
+                                        .addTextTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
                                         .addOperator(ExpressionOperator.builder().op(Op.OR)
-                                                .addDateTerm(MetaFields.TYPE,
+                                                .addTextTerm(MetaFields.TYPE,
                                                         ExpressionTerm.Condition.EQUALS,
                                                         StreamTypeNames.RAW_EVENTS)
-                                                .addDateTerm(MetaFields.TYPE,
+                                                .addTextTerm(MetaFields.TYPE,
                                                         ExpressionTerm.Condition.EQUALS,
                                                         StreamTypeNames.RAW_REFERENCE)
                                                 .build())

@@ -16,13 +16,11 @@
 
 package stroom.state.impl;
 
-import stroom.state.shared.ScyllaDbDoc;
-
 import com.datastax.oss.driver.api.core.CqlSession;
 
 public interface CqlSessionCache {
 
-    CqlSession get(ScyllaDbDoc key);
+    CqlSession get(String keyspace);
 
-    void remove(ScyllaDbDoc key);
+    void remove(String keyspace);
 }

@@ -19,11 +19,14 @@ package stroom.state.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.state.client.presenter.StateStoreSettingsPresenter.StateStoreSettingsView;
 import stroom.state.shared.ScyllaDbDoc;
 import stroom.state.shared.StateDoc;
+import stroom.state.shared.StateType;
+import stroom.util.shared.time.TimeUnit;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -63,19 +66,75 @@ public class StateStoreSettingsPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final StateDoc index, final boolean readOnly) {
-        clusterPresenter.setSelectedEntityReference(index.getScyllaDbRef());
+    protected void onRead(final DocRef docRef, final StateDoc doc, final boolean readOnly) {
+        getView().onReadOnly(readOnly);
+
+        clusterPresenter.setSelectedEntityReference(doc.getScyllaDbRef());
+        getView().setKeyspace(doc.getKeyspace());
+        getView().setKeyspaceCql(doc.getKeyspaceCql());
+        getView().setStateType(doc.getStateType());
+        getView().setCondense(doc.isCondense());
+        getView().setCondenseAge(doc.getCondenseAge());
+        getView().setCondenseTimeUnit(doc.getCondenseTimeUnit());
+        getView().setRetainForever(doc.isRetainForever());
+        getView().setRetainAge(doc.getRetainAge());
+        getView().setRetainTimeUnit(doc.getRetainTimeUnit());
     }
 
     @Override
-    protected StateDoc onWrite(final StateDoc index) {
-        index.setScyllaDbRef(clusterPresenter.getSelectedEntityReference());
-        return index;
+    protected StateDoc onWrite(final StateDoc doc) {
+        doc.setScyllaDbRef(clusterPresenter.getSelectedEntityReference());
+        doc.setKeyspace(getView().getKeyspace());
+        doc.setKeyspaceCql(getView().getKeyspaceCql());
+        doc.setStateType(getView().getStateType());
+        doc.setCondense(getView().isCondense());
+        doc.setCondenseAge(getView().getCondenseAge());
+        doc.setCondenseTimeUnit(getView().getCondenseTimeUnit());
+        doc.setRetainForever(getView().isRetainForever());
+        doc.setRetainAge(getView().getRetainAge());
+        doc.setRetainTimeUnit(getView().getRetainTimeUnit());
+        return doc;
     }
 
     public interface StateStoreSettingsView
-            extends View, HasUiHandlers<StateStoreSettingsUiHandlers> {
+            extends View, ReadOnlyChangeHandler, HasUiHandlers<StateStoreSettingsUiHandlers> {
 
         void setClusterView(final View view);
+
+        String getKeyspace();
+
+        void setKeyspace(String keyspace);
+
+        String getKeyspaceCql();
+
+        void setKeyspaceCql(String keyspaceCql);
+
+        StateType getStateType();
+
+        void setStateType(StateType stateType);
+
+        boolean isCondense();
+
+        void setCondense(boolean condense);
+
+        int getCondenseAge();
+
+        void setCondenseAge(int age);
+
+        TimeUnit getCondenseTimeUnit();
+
+        void setCondenseTimeUnit(TimeUnit condenseTimeUnit);
+
+        boolean isRetainForever();
+
+        void setRetainForever(boolean retainForever);
+
+        int getRetainAge();
+
+        void setRetainAge(int age);
+
+        TimeUnit getRetainTimeUnit();
+
+        void setRetainTimeUnit(TimeUnit retainTimeUnit);
     }
 }

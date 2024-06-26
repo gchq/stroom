@@ -16,11 +16,13 @@
 
 package stroom.state.impl;
 
+import stroom.cluster.lock.api.ClusterLockService;
 import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.job.api.ScheduledJobsBinder;
 import stroom.pipeline.xsltfunctions.StateLookup;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.SearchProvider;
@@ -28,12 +30,14 @@ import stroom.state.impl.pipeline.StateElementModule;
 import stroom.state.impl.pipeline.StateLookupImpl;
 import stroom.state.shared.ScyllaDbDoc;
 import stroom.state.shared.StateDoc;
+import stroom.util.RunnableWrapper;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
+import jakarta.inject.Inject;
 
 public class StateModule extends AbstractModule {
 
@@ -104,5 +108,21 @@ public class StateModule extends AbstractModule {
                 .addBinding(StateSearchProvider.class);
         GuiceUtil.buildMultiBinder(binder(), IndexFieldProvider.class)
                 .addBinding(StateSearchProvider.class);
+
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(StateMaintenanceRunnable.class, builder -> builder
+                        .name(StateMaintenanceExecutor.TASK_NAME)
+                        .description("State store maintenance")
+                        .cronSchedule("0 0 0 * * ?")
+                        .advanced(true));
+    }
+
+    private static class StateMaintenanceRunnable extends RunnableWrapper {
+
+        @Inject
+        StateMaintenanceRunnable(final StateMaintenanceExecutor condenserExecutor,
+                                 final ClusterLockService clusterLockService) {
+            super(() -> clusterLockService.tryLock(StateMaintenanceExecutor.TASK_NAME, condenserExecutor::exec));
+        }
     }
 }

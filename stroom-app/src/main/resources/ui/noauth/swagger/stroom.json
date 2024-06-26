@@ -18718,12 +18718,6 @@
           "description" : {
             "type" : "string"
           },
-          "keyspace" : {
-            "type" : "string"
-          },
-          "keyspaceCql" : {
-            "type" : "string"
-          },
           "name" : {
             "type" : "string"
           },
@@ -19515,6 +19509,17 @@
       "StateDoc" : {
         "type" : "object",
         "properties" : {
+          "condense" : {
+            "type" : "boolean"
+          },
+          "condenseAge" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "condenseTimeUnit" : {
+            "type" : "string",
+            "enum" : [ "NANOSECONDS", "MILLISECONDS", "SECONDS", "MINUTES", "HOURS", "DAYS", "WEEKS", "MONTHS", "YEARS" ]
+          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -19525,11 +19530,32 @@
           "description" : {
             "type" : "string"
           },
+          "keyspace" : {
+            "type" : "string"
+          },
+          "keyspaceCql" : {
+            "type" : "string"
+          },
           "name" : {
             "type" : "string"
           },
+          "retainAge" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "retainForever" : {
+            "type" : "boolean"
+          },
+          "retainTimeUnit" : {
+            "type" : "string",
+            "enum" : [ "NANOSECONDS", "MILLISECONDS", "SECONDS", "MINUTES", "HOURS", "DAYS", "WEEKS", "MONTHS", "YEARS" ]
+          },
           "scyllaDbRef" : {
             "$ref" : "#/components/schemas/DocRef"
+          },
+          "stateType" : {
+            "type" : "string",
+            "enum" : [ "STATE", "TEMPORAL_STATE", "RANGED_STATE", "TEMPORAL_RANGED_STATE", "SESSION" ]
           },
           "type" : {
             "type" : "string"

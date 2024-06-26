@@ -20,6 +20,10 @@ import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProcess;
 import stroom.query.common.v2.SearchProvider;
+import stroom.state.impl.dao.SessionDao;
+import stroom.state.impl.dao.StateFieldUtil;
+import stroom.state.impl.dao.TemporalRangedStateDao;
+import stroom.state.impl.dao.TemporalStateDao;
 import stroom.state.shared.StateDoc;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
@@ -32,11 +36,14 @@ import stroom.util.shared.ResultPage;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -75,14 +82,29 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
         this.taskContextFactory = taskContextFactory;
     }
 
+    private StateDoc getStateDoc(final DocRef docRef) {
+        Objects.requireNonNull(docRef, "Null doc reference");
+        Objects.requireNonNull(docRef.getName(), "Null doc name");
+        final StateDoc stateDoc = stateDocCache.get(docRef.getName());
+        Objects.requireNonNull(stateDoc, "Null state doc");
+        return stateDoc;
+    }
+
     @Override
     public ResultPage<QueryField> getFieldInfo(final FindFieldInfoCriteria criteria) {
-        return FieldInfoResultPageBuilder.builder(criteria).addAll(StateFields.QUERYABLE_FIELDS).build();
+        final StateDoc stateDoc = getStateDoc(criteria.getDataSourceRef());
+        final List<QueryField> fields = StateFieldUtil.getQueryableFields(stateDoc.getStateType());
+        return FieldInfoResultPageBuilder
+                .builder(criteria)
+                .addAll(fields)
+                .build();
     }
 
     @Override
     public IndexField getIndexField(final DocRef docRef, final String fieldName) {
-        final QueryField queryField = StateFields.FIELD_MAP.get(fieldName);
+        final StateDoc stateDoc = getStateDoc(docRef);
+        final Map<String, QueryField> fieldMap = StateFieldUtil.getFieldMap(stateDoc.getStateType());
+        final QueryField queryField = fieldMap.get(fieldName);
         if (queryField == null) {
             return null;
         }
@@ -91,7 +113,7 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
 
     @Override
     public Optional<String> fetchDocumentation(final DocRef docRef) {
-        return Optional.ofNullable(stateDocCache.get(docRef)).map(StateDoc::getDescription);
+        return Optional.ofNullable(stateDocCache.get(docRef.getName())).map(StateDoc::getDescription);
     }
 
     @Override
@@ -111,7 +133,7 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
         final DocRef docRef = query.getDataSource();
 
         // Check we have permission to read the doc.
-        final CqlSession session = cqlSessionFactory.getSession(docRef);
+        final Provider<CqlSession> sessionProvider = cqlSessionFactory.getSessionProvider(docRef.getName());
 
         // Extract highlights.
         final Set<String> highlights = Collections.emptySet();
@@ -184,8 +206,11 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
                 final Instant queryStart = Instant.now();
                 try {
                     // Give the data array to each of our coprocessors
-                    StateDao.search(session, criteria, coprocessors.getFieldIndex(), coprocessors);
-                    RangedStateDao.search(session, criteria, coprocessors.getFieldIndex(), coprocessors);
+                    new TemporalStateDao(sessionProvider).search(criteria, coprocessors.getFieldIndex(), coprocessors);
+                    new TemporalRangedStateDao(sessionProvider).search(criteria,
+                            coprocessors.getFieldIndex(),
+                            coprocessors);
+                    new SessionDao(sessionProvider).search(criteria, coprocessors.getFieldIndex(), coprocessors);
 
                 } catch (final RuntimeException e) {
                     LOGGER.debug(e::getMessage, e);
@@ -209,7 +234,8 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
 
     @Override
     public QueryField getTimeField(final DocRef docRef) {
-        return StateFields.EFFECTIVE_TIME_FIELD;
+        final StateDoc stateDoc = getStateDoc(docRef);
+        return StateFieldUtil.getTimeField(stateDoc.getStateType());
     }
 
     private String getStoreName(final DocRef docRef) {

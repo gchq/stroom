@@ -23,11 +23,11 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
 
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
@@ -40,25 +40,12 @@ public class ScyllaDbSettingsViewImpl extends ViewWithUiHandlers<ScyllaDbSetting
     @UiField
     TextArea connectionYaml;
     @UiField
-    TextBox keyspace;
-    @UiField
-    TextArea keyspaceCql;
-    @UiField
     Button testConnection;
 
     @Inject
     public ScyllaDbSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         testConnection.setIcon(SvgImage.OK);
-        connectionYaml.addKeyDownHandler(e -> fireChange());
-        keyspace.addKeyDownHandler(e -> fireChange());
-        keyspaceCql.addKeyDownHandler(e -> fireChange());
-    }
-
-    private void fireChange() {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onChange();
-        }
     }
 
     @Override
@@ -77,29 +64,13 @@ public class ScyllaDbSettingsViewImpl extends ViewWithUiHandlers<ScyllaDbSetting
     }
 
     @Override
-    public String getKeyspace() {
-        return keyspace.getText();
-    }
-
-    @Override
-    public void setKeyspace(final String keyspace) {
-        this.keyspace.setText(keyspace);
-    }
-
-    @Override
-    public String getKeyspaceCql() {
-        return keyspaceCql.getText();
-    }
-
-    @Override
-    public void setKeyspaceCql(final String keyspaceCql) {
-        this.keyspaceCql.setText(keyspaceCql);
-    }
-
-    @Override
     public void onReadOnly(final boolean readOnly) {
         connectionYaml.setEnabled(!readOnly);
-        keyspace.setEnabled(!readOnly);
+    }
+
+    @UiHandler("connectionYaml")
+    public void onConnectionYaml(final ValueChangeEvent<String> event) {
+        getUiHandlers().onChange();
     }
 
     @UiHandler("testConnection")

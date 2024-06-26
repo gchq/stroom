@@ -78,7 +78,7 @@ class TestProcessorTaskCreator extends AbstractCoreIntegrationTest {
                 false,
                 100).size()).isEqualTo(1);
 
-        expression = ExpressionOperator.builder().addDateTerm(MetaFields.FEED, Condition.EQUALS, feedName).build();
+        expression = ExpressionOperator.builder().addTextTerm(MetaFields.FEED, Condition.EQUALS, feedName).build();
         assertThat(processorTaskCreator.runSelectMetaQuery(expression,
                 0,
                 null,
@@ -87,7 +87,7 @@ class TestProcessorTaskCreator extends AbstractCoreIntegrationTest {
                 false,
                 100).size()).isEqualTo(1);
 
-        expression = ExpressionOperator.builder().addDateTerm(MetaFields.FEED, Condition.EQUALS, "otherFed").build();
+        expression = ExpressionOperator.builder().addTextTerm(MetaFields.FEED, Condition.EQUALS, "otherFed").build();
         assertThat(processorTaskCreator.runSelectMetaQuery(expression,
                 0,
                 null,

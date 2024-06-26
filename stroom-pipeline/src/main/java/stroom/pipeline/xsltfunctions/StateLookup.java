@@ -1,6 +1,5 @@
 package stroom.pipeline.xsltfunctions;
 
-import stroom.docref.DocRef;
 import stroom.pipeline.refdata.LookupIdentifier;
 import stroom.pipeline.refdata.ReferenceDataResult;
 
@@ -18,7 +17,6 @@ public interface StateLookup {
      * @param lookupIdentifier The identifier to lookup in the reference data
      * @param result           The reference result object containing the proxy object for performing the lookup
      */
-    void lookup(DocRef docRef,
-                LookupIdentifier lookupIdentifier,
+    void lookup(LookupIdentifier lookupIdentifier,
                 ReferenceDataResult result);
 }

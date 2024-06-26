@@ -21,15 +21,17 @@ import stroom.docref.DocRef;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.state.impl.CqlSessionFactory;
 import stroom.state.impl.ScyllaDbDocStore;
-import stroom.state.impl.State;
-import stroom.state.impl.StateDao;
 import stroom.state.impl.StateDocStore;
-import stroom.state.impl.StateRequest;
+import stroom.state.impl.dao.TemporalState;
+import stroom.state.impl.dao.TemporalStateDao;
+import stroom.state.impl.dao.TemporalStateRequest;
 import stroom.state.shared.StateDoc;
+import stroom.state.shared.StateType;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -51,36 +53,36 @@ class TestStateDao extends AbstractCoreIntegrationTest {
     private ScyllaDbDocStore scyllaDbDocStore;
     @Inject
     private StateDocStore stateDocStore;
-    @Inject
-    private StateDao stateDao;
 
     @Test
     void testDao() {
         final DocRef scyllaDbDocRef = scyllaDbDocStore.createDocument("test");
 
-        final DocRef stateDocRef = stateDocStore.createDocument("test");
+        final DocRef stateDocRef = stateDocStore.createDocument("test_state");
         StateDoc stateDoc = stateDocStore.readDocument(stateDocRef);
         stateDoc.setScyllaDbRef(scyllaDbDocRef);
+        stateDoc.setStateType(StateType.STATE);
         stateDoc = stateDocStore.writeDocument(stateDoc);
 
-        final CqlSession session = cqlSessionFactory.getSession(stateDocRef);
-        StateDao.dropTables(session);
-        StateDao.createTables(session);
+        final Provider<CqlSession> sessionProvider = cqlSessionFactory.getSessionProvider(stateDocRef.getName());
+        final TemporalStateDao stateDao = new TemporalStateDao(sessionProvider);
+        stateDao.dropTables();
+        stateDao.createTables();
 
         final ByteBuffer byteBuffer = ByteBuffer.wrap("test".getBytes(StandardCharsets.UTF_8));
-        final State state = new State(
-                "TEST_MAP",
+        final TemporalState state = new TemporalState(
                 "TEST_KEY",
                 Instant.ofEpochMilli(0),
                 StringValue.TYPE_ID,
                 byteBuffer);
-        StateDao.insert(session, Collections.singletonList(state));
+        stateDao.insert(Collections.singletonList(state));
 
-        final StateRequest stateRequest = new StateRequest("TEST_MAP", "TEST_KEY", Instant.ofEpochSecond(10));
-        final Optional<State> optional = StateDao.getState(session, stateRequest);
+        final TemporalStateRequest stateRequest = new TemporalStateRequest("TEST_MAP",
+                "TEST_KEY",
+                Instant.ofEpochSecond(10));
+        final Optional<TemporalState> optional = stateDao.getState(stateRequest);
         assertThat(optional).isNotEmpty();
-        final State res = optional.get();
-        assertThat(res.map()).isEqualTo("TEST_MAP");
+        final TemporalState res = optional.get();
         assertThat(res.key()).isEqualTo("TEST_KEY");
         assertThat(res.effectiveTime()).isEqualTo(Instant.ofEpochMilli(0));
         assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);

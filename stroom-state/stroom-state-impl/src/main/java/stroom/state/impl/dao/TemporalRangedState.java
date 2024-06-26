@@ -1,10 +1,9 @@
-package stroom.state.impl;
+package stroom.state.impl.dao;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;
 
-public record RangedState(
-        String map,
+public record TemporalRangedState(
         long keyStart,
         long keyEnd,
         Instant effectiveTime,

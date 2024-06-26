@@ -2,9 +2,9 @@ package stroom.state.impl.pipeline;
 
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.state.impl.ScyllaDbUtil;
-import stroom.state.impl.State;
-import stroom.state.impl.StateDao;
-import stroom.state.impl.StateRequest;
+import stroom.state.impl.dao.TemporalState;
+import stroom.state.impl.dao.TemporalStateDao;
+import stroom.state.impl.dao.TemporalStateRequest;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -44,16 +44,17 @@ class TestStateLookupImpl {
     @Disabled // Manual run only
     @Test
     void perfTest() {
-        ScyllaDbUtil.test((session, keyspace) -> {
-            StateDao.dropTables(session);
-            StateDao.createTables(session);
+        ScyllaDbUtil.test((sessionProvider, keyspace) -> {
+            final TemporalStateDao stateDao = new TemporalStateDao(sessionProvider);
+            stateDao.dropTables();
+            stateDao.createTables();
 
             int entryCount = 5_000;
             int refStreamDefCount = 5;
             int keyValueMapCount = 20;
             int batchSize = 1_000;
 
-            final List<State> batch = new ArrayList<>(batchSize);
+            final List<TemporalState> batch = new ArrayList<>(batchSize);
             final List<ByteBuffer> bufferPool = new ArrayList<>(batchSize);
             for (int i = 0; i < batchSize; i++) {
                 bufferPool.add(ByteBuffer.allocate(500));
@@ -88,21 +89,21 @@ class TestStateLookupImpl {
                         byteBuffer.clear();
                         byteBuffer.put(val.getBytes(StandardCharsets.UTF_8));
                         byteBuffer.flip();
-                        final State state = new State(mapName,
+                        final TemporalState state = new TemporalState(
                                 buildKey(keyIdx),
                                 strmTime,
                                 StringValue.TYPE_ID,
                                 byteBuffer);
                         batch.add(state);
                         if (idxInBatch++ >= batchSize - 1) {
-                            StateDao.insert(session, batch);
+                            stateDao.insert(batch);
                             idxInBatch = 0;
                             batch.clear();
                         }
                     }
                 }
                 if (!batch.isEmpty()) {
-                    StateDao.insert(session, batch);
+                    stateDao.insert(batch);
                 }
             }
 
@@ -116,8 +117,8 @@ class TestStateLookupImpl {
                 final String key = buildKey(keyIdx);
                 final Instant time = lookupTimes.get(refStrmIdx);
 
-                final StateRequest request = new StateRequest(mapName, key, time);
-                final State state = StateDao.getState(session, request)
+                final TemporalStateRequest request = new TemporalStateRequest(mapName, key, time);
+                final TemporalState state = stateDao.getState(request)
                         .orElseThrow(() -> new RuntimeException(LogUtil.message(
                                 "No entry found for map: {}, key: {}, time: {}",
                                 mapName, key, time)));

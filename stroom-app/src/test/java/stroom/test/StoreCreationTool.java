@@ -232,8 +232,8 @@ public final class StoreCreationTool {
             final QueryData findStreamQueryData = QueryData.builder()
                     .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                     .expression(ExpressionOperator.builder()
-                            .addDateTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
-                            .addDateTerm(MetaFields.TYPE,
+                            .addTextTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
+                            .addTextTerm(MetaFields.TYPE,
                                     ExpressionTerm.Condition.EQUALS,
                                     StreamTypeNames.RAW_REFERENCE)
                             .build())
@@ -481,8 +481,8 @@ public final class StoreCreationTool {
             final QueryData findStreamQueryData = QueryData.builder()
                     .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                     .expression(ExpressionOperator.builder()
-                            .addDateTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName)
-                            .addDateTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                            .addTextTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName)
+                            .addTextTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                             .build())
                     .build();
 
@@ -879,7 +879,7 @@ public final class StoreCreationTool {
             final QueryData findStreamQueryData = QueryData.builder()
                     .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                     .expression(ExpressionOperator.builder()
-                            .addDateTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
+                            .addTextTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
                             .build())
                     .build();
             processorFilterService.create(

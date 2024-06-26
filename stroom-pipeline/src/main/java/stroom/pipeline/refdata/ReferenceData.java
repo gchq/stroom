@@ -238,7 +238,7 @@ public class ReferenceData {
             if (StateDoc.DOCUMENT_TYPE.equals(pipelineReference.getPipeline().getType())) {
                 // TODO : @66 TEMPORARY INTEGRATION OF STATE LOOKUP USING PIPELINE AS STATE DOC REFERENCE.
                 if (stateLookup != null) {
-                    stateLookup.lookup(pipelineReference.getPipeline(), lookupIdentifier, referenceDataResult);
+                    stateLookup.lookup(lookupIdentifier, referenceDataResult);
                 }
 
             } else if (NullSafe.test(pipelineReference.getStreamType(), StreamTypeNames.CONTEXT::equals)) {

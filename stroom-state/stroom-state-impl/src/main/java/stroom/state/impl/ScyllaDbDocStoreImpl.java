@@ -64,8 +64,6 @@ public class ScyllaDbDocStoreImpl implements ScyllaDbDocStore {
         DocRef docRef = store.createDocument(name);
         ScyllaDbDoc doc = store.readDocument(docRef);
         doc.setConnection(ScyllaDbUtil.getDefaultConnection());
-        doc.setKeyspace(ScyllaDbUtil.getDefaultKeyspace());
-        doc.setKeyspaceCql(ScyllaDbUtil.getDefaultKeyspaceCql());
         store.writeDocument(doc);
         return docRef;
     }

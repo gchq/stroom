@@ -89,7 +89,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
         } else {
             final ExpressionOperator.Builder builder = ExpressionOperator.builder();
             if (!showSystemFiles) {
-                builder.addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
+                builder.addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
             }
             builder.addIdTerm(MetaFields.ID, Condition.EQUALS, metaRow.getMeta().getId());
 

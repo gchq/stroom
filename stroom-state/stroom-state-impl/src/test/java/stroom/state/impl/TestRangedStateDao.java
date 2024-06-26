@@ -17,9 +17,16 @@
 
 package stroom.state.impl;
 
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.pipeline.refdata.store.StringValue;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.language.functions.FieldIndex;
+import stroom.state.impl.dao.RangedState;
+import stroom.state.impl.dao.RangedStateDao;
+import stroom.state.impl.dao.RangedStateFields;
+import stroom.state.impl.dao.RangedStateRequest;
+import stroom.state.impl.dao.State;
 
-import com.datastax.oss.driver.api.core.CqlSession;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
@@ -27,6 +34,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,30 +42,62 @@ class TestRangedStateDao {
 
     @Test
     void testDao() {
-        ScyllaDbUtil.test((session, keyspaceName) -> {
-            RangedStateDao.dropTables(session);
-            RangedStateDao.createTables(session);
+        ScyllaDbUtil.test((sessionProvider, keyspaceName) -> {
+            final RangedStateDao rangedStateDao = new RangedStateDao(sessionProvider);
+            rangedStateDao.dropTables();
+            rangedStateDao.createTables();
 
-            final ByteBuffer byteBuffer = ByteBuffer.wrap("test".getBytes(StandardCharsets.UTF_8));
-            final RangedState state = new RangedState(
-                    "TEST_MAP",
-                    10,
-                    30,
-                    Instant.ofEpochMilli(0),
-                    StringValue.TYPE_ID,
-                    byteBuffer);
-            RangedStateDao.insert(session, Collections.singletonList(state));
+            insertData(rangedStateDao, 100);
 
             final RangedStateRequest stateRequest =
-                    new RangedStateRequest("TEST_MAP", 11, Instant.ofEpochSecond(10));
-            final Optional<State> optional = RangedStateDao.getState(session, stateRequest);
+                    new RangedStateRequest("TEST_MAP", 11);
+            final Optional<State> optional = rangedStateDao.getState(stateRequest);
             assertThat(optional).isNotEmpty();
             final State res = optional.get();
-            assertThat(res.map()).isEqualTo("TEST_MAP");
             assertThat(res.key()).isEqualTo("11");
-            assertThat(res.effectiveTime()).isEqualTo(Instant.ofEpochMilli(0));
             assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
-            assertThat(res.getValueAsString()).isEqualTo("test");
+            assertThat(res.getValueAsString()).isEqualTo("test99");
+
+            final FieldIndex fieldIndex = new FieldIndex();
+            fieldIndex.create(RangedStateFields.KEY_START);
+            final AtomicInteger count = new AtomicInteger();
+            rangedStateDao.search(new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex,
+                    v -> count.incrementAndGet());
+            assertThat(count.get()).isEqualTo(1);
         });
+    }
+
+    @Test
+    void testRemoveOldData() {
+        ScyllaDbUtil.test((sessionProvider, keyspaceName) -> {
+            final RangedStateDao stateDao = new RangedStateDao(sessionProvider);
+            stateDao.dropTables();
+            stateDao.createTables();
+
+            Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
+            insertData(stateDao, 100);
+            insertData(stateDao, 10);
+
+            assertThat(stateDao.count()).isEqualTo(1);
+
+            stateDao.removeOldData(refTime);
+            assertThat(stateDao.count()).isEqualTo(1);
+
+            stateDao.removeOldData(Instant.now());
+            assertThat(stateDao.count()).isEqualTo(0);
+        });
+    }
+
+    private void insertData(final RangedStateDao rangedStateDao,
+                            final int rows) {
+        for (int i = 0; i < rows; i++) {
+            final ByteBuffer byteBuffer = ByteBuffer.wrap(("test" + i).getBytes(StandardCharsets.UTF_8));
+            final RangedState state = new RangedState(
+                    10,
+                    30,
+                    StringValue.TYPE_ID,
+                    byteBuffer);
+            rangedStateDao.insert(Collections.singletonList(state));
+        }
     }
 }

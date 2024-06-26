@@ -49,7 +49,7 @@ public final class DataRetentionMetaCriteriaUtil {
             }
         }
 
-        outer.addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
+        outer.addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
 
         if (period.getFromMs() != null) {
             outer.addDateTerm(MetaFields.CREATE_TIME,

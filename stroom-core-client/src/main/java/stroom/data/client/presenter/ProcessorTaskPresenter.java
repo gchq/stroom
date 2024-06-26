@@ -64,10 +64,10 @@ public class ProcessorTaskPresenter extends MyPresenterWidget<ProcessorTaskPrese
                     root.addDocRefTerm(ProcessorTaskFields.PIPELINE, Condition.IS_DOC_REF, row.getPipeline());
                 }
                 if (row.getFeed() != null) {
-                    root.addDateTerm(ProcessorTaskFields.FEED, Condition.EQUALS, row.getFeed());
+                    root.addTextTerm(ProcessorTaskFields.FEED, Condition.EQUALS, row.getFeed());
                 }
                 if (row.getStatus() != null) {
-                    root.addDateTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, row.getStatus().getDisplayValue());
+                    root.addTextTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, row.getStatus().getDisplayValue());
                 }
 
                 processorTaskListPresenter.setExpression(root.build());

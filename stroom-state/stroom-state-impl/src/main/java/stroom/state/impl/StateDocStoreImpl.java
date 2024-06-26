@@ -22,12 +22,14 @@ import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
-import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
+import stroom.security.api.SecurityContext;
 import stroom.state.shared.StateDoc;
+import stroom.state.shared.StateType;
+import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Message;
 
 import jakarta.inject.Inject;
@@ -36,6 +38,7 @@ import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Singleton
 public class StateDocStoreImpl implements StateDocStore {
@@ -46,12 +49,15 @@ public class StateDocStoreImpl implements StateDocStore {
             "State Store",
             StateDoc.ICON);
     private final Store<StateDoc> store;
+    private final SecurityContext securityContext;
 
     @Inject
     public StateDocStoreImpl(
             final StoreFactory storeFactory,
-            final StateDocSerialiser serialiser) {
+            final StateDocSerialiser serialiser,
+            final SecurityContext securityContext) {
         this.store = storeFactory.createStore(serialiser, StateDoc.DOCUMENT_TYPE, StateDoc.class);
+        this.securityContext = securityContext;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -60,7 +66,53 @@ public class StateDocStoreImpl implements StateDocStore {
 
     @Override
     public DocRef createDocument(final String name) {
-        return store.createDocument(name);
+        validateName(name);
+
+        final DocRef created = store.createDocument(name);
+
+        // Double check the feed wasn't created elsewhere at the same time.
+        if (checkDuplicateName(name, created.getUuid())) {
+            // Delete the newly created document as the name is duplicated.
+
+            // Delete as a processing user to ensure we are allowed to delete the item as documents do not have
+            // permissions added to them until after they are created in the store.
+            securityContext.asProcessingUser(() -> store.deleteDocument(created.getUuid()));
+            throwNameException(name);
+        }
+
+        // Set the default keyspace.
+        StateDoc doc = store.readDocument(created);
+        doc.setKeyspace(name);
+        doc.setKeyspaceCql(ScyllaDbUtil.createKeyspaceCql(name));
+        doc.setStateType(StateType.TEMPORAL_STATE);
+        doc.setRetainForever(true);
+        store.writeDocument(doc);
+
+        return created;
+    }
+
+    private void validateName(final String name) {
+        KeyspaceNameValidator.validateName(name);
+
+        // Check a feed doesn't already exist with this name.
+        if (checkDuplicateName(name, null)) {
+            throwNameException(name);
+        }
+    }
+
+    private void throwNameException(final String name) {
+        throw new EntityServiceException("A state store named '" + name + "' already exists");
+    }
+
+    private boolean checkDuplicateName(final String name, final String whitelistUuid) {
+        final List<DocRef> list = list();
+        for (final DocRef docRef : list) {
+            if (name.equals(docRef.getName()) &&
+                    (whitelistUuid == null || !whitelistUuid.equals(docRef.getUuid()))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -68,8 +120,57 @@ public class StateDocStoreImpl implements StateDocStore {
                                final String name,
                                final boolean makeNameUnique,
                                final Set<String> existingNames) {
-        final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
-        return store.copyDocument(docRef.getUuid(), newName);
+        String newName = name;
+        if (makeNameUnique) {
+            newName = createUniqueName(name, getExistingNames());
+        } else if (checkDuplicateName(name, null)) {
+            throwNameException(name);
+        }
+
+        final DocRef newDocRef = store.copyDocument(docRef.getUuid(), newName);
+        fixKeyspace(newDocRef);
+        return newDocRef;
+    }
+
+    private Set<String> getExistingNames() {
+        return list()
+                .stream()
+                .map(DocRef::getName)
+                .collect(Collectors.toSet());
+    }
+
+    static String createUniqueName(final String name, final Set<String> existingNames) {
+        // Get a numbered suffix.
+        final char[] chars = name.toCharArray();
+        int index = -1;
+        for (int i = chars.length - 1; i >= 0; i--) {
+            final char c = chars[i];
+            if (!Character.isDigit(c)) {
+                index = i + 1;
+                break;
+            }
+        }
+
+        String prefix = name.substring(0, index);
+        String suffix = name.substring(index);
+        int num = 2;
+        if (!suffix.isEmpty()) {
+            num = Integer.parseInt(suffix) + 1;
+        }
+
+        for (int i = num; i < 10000; i++) {
+            suffix = String.valueOf(i);
+            final int maxPrefixLength = 48 - suffix.length();
+            if (prefix.length() > maxPrefixLength) {
+                prefix = prefix.substring(0, maxPrefixLength);
+            }
+            final String copyName = prefix + suffix;
+            if (!existingNames.contains(copyName)) {
+                return copyName;
+            }
+        }
+
+        throw new EntityServiceException("Unable to make unique name for state store.");
     }
 
     @Override
@@ -79,7 +180,33 @@ public class StateDocStoreImpl implements StateDocStore {
 
     @Override
     public DocRef renameDocument(final String uuid, final String name) {
-        return store.renameDocument(uuid, name);
+        validateName(name);
+
+        // Check a state store doesn't already exist with this name.
+        if (checkDuplicateName(name, uuid)) {
+            throw new EntityServiceException("A state store named '" + name + "' already exists");
+        }
+
+        final DocRef docRef = store.renameDocument(uuid, name);
+
+        // Change the keyspace name.
+        fixKeyspace(docRef);
+
+        return docRef;
+    }
+
+    private void fixKeyspace(final DocRef docRef) {
+        final StateDoc doc = readDocument(docRef);
+        if (doc != null) {
+            final String name = docRef.getName();
+            doc.setKeyspace(name);
+            if (doc.getKeyspaceCql() != null) {
+                String cql = doc.getKeyspaceCql();
+                cql = ScyllaDbUtil.replaceKeyspaceNameInCql(cql, name);
+                doc.setKeyspaceCql(cql);
+                writeDocument(doc);
+            }
+        }
     }
 
     @Override

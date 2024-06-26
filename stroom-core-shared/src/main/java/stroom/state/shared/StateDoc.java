@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.time.TimeUnit;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -41,7 +42,17 @@ import java.util.Objects;
         "createUser",
         "updateUser",
         "description",
-        "scyllaDbRef"
+        "scyllaDbRef",
+        "keyspace",
+        "keyspaceCql",
+        "stateType",
+        "condense",
+        "condenseAge",
+        "condenseTimeUnit",
+        "retainForever",
+        "retainAge",
+        "retainTimeUnit"
+
 })
 @JsonInclude(Include.NON_NULL)
 public class StateDoc extends Doc {
@@ -57,6 +68,24 @@ public class StateDoc extends Doc {
 
     @JsonProperty
     private String description;
+    @JsonProperty
+    private String keyspace;
+    @JsonProperty
+    private String keyspaceCql;
+    @JsonProperty
+    private StateType stateType;
+    @JsonProperty
+    private boolean condense;
+    @JsonProperty
+    private int condenseAge;
+    @JsonProperty
+    private TimeUnit condenseTimeUnit;
+    @JsonProperty
+    private boolean retainForever;
+    @JsonProperty
+    private int retainAge;
+    @JsonProperty
+    private TimeUnit retainTimeUnit;
 
     public StateDoc() {
     }
@@ -72,10 +101,28 @@ public class StateDoc extends Doc {
             @JsonProperty("createUser") final String createUser,
             @JsonProperty("updateUser") final String updateUser,
             @JsonProperty("description") final String description,
-            @JsonProperty("scyllaDbRef") final DocRef scyllaDbRef) {
+            @JsonProperty("scyllaDbRef") final DocRef scyllaDbRef,
+            @JsonProperty("keyspace") final String keyspace,
+            @JsonProperty("keyspaceCql") final String keyspaceCql,
+            @JsonProperty("stateType") final StateType stateType,
+            @JsonProperty("condense") final boolean condense,
+            @JsonProperty("condenseAge") final int condenseAge,
+            @JsonProperty("condenseTimeUnit") final TimeUnit condenseTimeUnit,
+            @JsonProperty("retainForever") final boolean retainForever,
+            @JsonProperty("retainAge") final int retainAge,
+            @JsonProperty("retainTimeUnit") final TimeUnit retainTimeUnit) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.scyllaDbRef = scyllaDbRef;
+        this.keyspace = keyspace;
+        this.keyspaceCql = keyspaceCql;
+        this.stateType = stateType;
+        this.condense = condense;
+        this.condenseAge = condenseAge;
+        this.condenseTimeUnit = condenseTimeUnit;
+        this.retainForever = retainForever;
+        this.retainAge = retainAge;
+        this.retainTimeUnit = retainTimeUnit;
     }
 
     /**
@@ -110,6 +157,78 @@ public class StateDoc extends Doc {
         this.scyllaDbRef = scyllaDbRef;
     }
 
+    public String getKeyspace() {
+        return keyspace;
+    }
+
+    public void setKeyspace(final String keyspace) {
+        this.keyspace = keyspace;
+    }
+
+    public String getKeyspaceCql() {
+        return keyspaceCql;
+    }
+
+    public void setKeyspaceCql(final String keyspaceCql) {
+        this.keyspaceCql = keyspaceCql;
+    }
+
+    public StateType getStateType() {
+        return stateType;
+    }
+
+    public void setStateType(final StateType stateType) {
+        this.stateType = stateType;
+    }
+
+    public boolean isCondense() {
+        return condense;
+    }
+
+    public void setCondense(final boolean condense) {
+        this.condense = condense;
+    }
+
+    public int getCondenseAge() {
+        return condenseAge;
+    }
+
+    public void setCondenseAge(final int condenseAge) {
+        this.condenseAge = condenseAge;
+    }
+
+    public TimeUnit getCondenseTimeUnit() {
+        return condenseTimeUnit;
+    }
+
+    public void setCondenseTimeUnit(final TimeUnit condenseTimeUnit) {
+        this.condenseTimeUnit = condenseTimeUnit;
+    }
+
+    public boolean isRetainForever() {
+        return retainForever;
+    }
+
+    public void setRetainForever(final boolean retainForever) {
+        this.retainForever = retainForever;
+    }
+
+    public int getRetainAge() {
+        return retainAge;
+    }
+
+    public void setRetainAge(final int retainAge) {
+        this.retainAge = retainAge;
+    }
+
+    public TimeUnit getRetainTimeUnit() {
+        return retainTimeUnit;
+    }
+
+    public void setRetainTimeUnit(final TimeUnit retainTimeUnit) {
+        this.retainTimeUnit = retainTimeUnit;
+    }
+
     @JsonIgnore
     @Override
     public final String getType() {
@@ -121,30 +240,56 @@ public class StateDoc extends Doc {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof StateDoc)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
         if (!super.equals(o)) {
             return false;
         }
-        final StateDoc elasticIndex = (StateDoc) o;
-        return Objects.equals(description, elasticIndex.description) &&
-                Objects.equals(scyllaDbRef, elasticIndex.scyllaDbRef);
+        final StateDoc stateDoc = (StateDoc) o;
+        return condense == stateDoc.condense &&
+                condenseAge == stateDoc.condenseAge &&
+                retainForever == stateDoc.retainForever &&
+                retainAge == stateDoc.retainAge &&
+                Objects.equals(scyllaDbRef, stateDoc.scyllaDbRef) &&
+                Objects.equals(description, stateDoc.description) &&
+                Objects.equals(keyspace, stateDoc.keyspace) &&
+                Objects.equals(keyspaceCql, stateDoc.keyspaceCql) &&
+                stateType == stateDoc.stateType &&
+                condenseTimeUnit == stateDoc.condenseTimeUnit &&
+                retainTimeUnit == stateDoc.retainTimeUnit;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(
-                super.hashCode(),
+        return Objects.hash(super.hashCode(),
+                scyllaDbRef,
                 description,
-                scyllaDbRef);
+                keyspace,
+                keyspaceCql,
+                stateType,
+                condense,
+                condenseAge,
+                condenseTimeUnit,
+                retainForever,
+                retainAge,
+                retainTimeUnit);
     }
 
     @Override
     public String toString() {
-        return "StateStoreDoc{" +
-                "description='" + description + '\'' +
-                ", scyllaDbRef='" + scyllaDbRef + '\'' +
+        return "StateDoc{" +
+                "scyllaDbRef=" + scyllaDbRef +
+                ", description='" + description + '\'' +
+                ", keyspace='" + keyspace + '\'' +
+                ", keyspaceCql='" + keyspaceCql + '\'' +
+                ", stateType=" + stateType +
+                ", condense=" + condense +
+                ", condenseAge=" + condenseAge +
+                ", condenseTimeUnit=" + condenseTimeUnit +
+                ", retainForever=" + retainForever +
+                ", retainAge=" + retainAge +
+                ", retainTimeUnit=" + retainTimeUnit +
                 '}';
     }
 }

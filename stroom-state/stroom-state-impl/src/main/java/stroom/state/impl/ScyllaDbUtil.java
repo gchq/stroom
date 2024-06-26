@@ -8,7 +8,9 @@ import com.datastax.oss.driver.api.core.CqlSessionBuilder;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
+import jakarta.inject.Provider;
 
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiConsumer;
@@ -36,7 +38,7 @@ public class ScyllaDbUtil {
     private static final String DEFAULT_KEYSPACE = "state";
     private static final String DEFAULT_KEYSPACE_CQL = createKeyspaceCql(DEFAULT_KEYSPACE);
 
-    public static void test(final BiConsumer<CqlSession, String> consumer) {
+    public static void test(final BiConsumer<Provider<CqlSession>, String> consumer) {
         final String connectionYaml = getDefaultConnection();
         final String keyspaceName = createTestKeyspaceName();
         LOGGER.info(() -> "Using keyspace name: " + keyspaceName);
@@ -47,7 +49,7 @@ public class ScyllaDbUtil {
                 LOGGER.info(() -> "Created keyspace: " + keyspaceName);
             }
             try (final CqlSession ks = keyspace(connectionYaml, keyspaceName)) {
-                consumer.accept(ks, keyspaceName);
+                consumer.accept(() -> ks, keyspaceName);
             }
         } finally {
             try (final CqlSession session2 = builder(connectionYaml).build()) {
@@ -85,8 +87,36 @@ public class ScyllaDbUtil {
     public static String createKeyspaceCql(final String keyspaceName) {
         return "CREATE KEYSPACE IF NOT EXISTS " +
                 keyspaceName +
-                " WITH replication = { 'class': 'NetworkTopologyStrategy', 'replication_factor': '1' }" +
-                " AND durable_writes = TRUE;";
+                "\nWITH replication = { 'class': 'NetworkTopologyStrategy', 'replication_factor': '1' }" +
+                "\nAND durable_writes = TRUE;";
+    }
+
+    public static String replaceKeyspaceNameInCql(final String cql, final String keyspaceName) {
+        final String lower = cql.toLowerCase(Locale.ROOT);
+        int start = lower.indexOf("keyspace");
+        if (start != -1) {
+            start += "keyspace".length();
+            int index2 = lower.indexOf("exists");
+            if (index2 != -1) {
+                index2 += "exists".length();
+            }
+            if (index2 > start) {
+                start = index2;
+            }
+            final char[] chars = cql.toCharArray();
+            while (start < chars.length && (Character.isWhitespace(chars[start]) || chars[start] == '\"')) {
+                start++;
+            }
+            int end = start;
+            while (end < chars.length && !Character.isWhitespace(chars[end]) && chars[end] != '\"') {
+                end++;
+            }
+
+            final String prefix = cql.substring(0, start);
+            final String suffix = cql.substring(end);
+            return prefix + keyspaceName + suffix;
+        }
+        return cql;
     }
 
     public static String dropKeyspaceCql(final String keyspaceName) {
@@ -110,10 +140,14 @@ public class ScyllaDbUtil {
         return CqlSession.builder().withConfigLoader(DriverConfigLoader.fromString(connectionYaml));
     }
 
-    public static void printMetadata(final CqlSession session, final String keyspaceName) {
+    public static void printMetadata(final Provider<CqlSession> sessionProvider, final String keyspaceName) {
         LOGGER.info("Print metadata...");
         LOGGER.logDurationIfInfoEnabled(() -> {
-            final KeyspaceMetadata keyspace = session.getMetadata().getKeyspace(keyspaceName).orElseThrow();
+            final KeyspaceMetadata keyspace = sessionProvider
+                    .get()
+                    .getMetadata()
+                    .getKeyspace(keyspaceName)
+                    .orElseThrow();
             for (final TableMetadata table : keyspace.getTables().values()) {
                 LOGGER.info("Keyspace: {}; Table: {}", keyspace.getName(), table.getName());
             }

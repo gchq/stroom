@@ -24,6 +24,7 @@ import stroom.core.client.HasSave;
 import stroom.core.client.HasSaveRegistry;
 import stroom.core.client.UrlParameters;
 import stroom.core.client.presenter.Plugin;
+import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -97,6 +98,7 @@ import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItem;
 import stroom.widget.menu.client.presenter.Separator;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseOtherTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseSavedTabsEvent;
@@ -324,7 +326,8 @@ public class DocumentPluginEventManager extends Plugin {
 
                             // The initiator of this event can now do what they want with the docref.
                             event.getNewDocConsumer().accept(explorerNode);
-                        }, explorerListener)));
+                        }, explorerListener,
+                        event.getHidePopupRequestEvent())));
 
         // 8.1. Handle entity open events.
         registerHandler(getEventBus().addHandler(OpenDocumentEvent.getType(), event ->
@@ -353,7 +356,8 @@ public class DocumentPluginEventManager extends Plugin {
                     if (result.getExplorerNodes().size() > 0) {
                         highlight(result.getExplorerNodes().get(0));
                     }
-                }, explorerListener)));
+                }, explorerListener,
+                event.getHidePopupRequestEvent())));
 
         // 8.3. Handle entity move events.
         registerHandler(getEventBus().addHandler(MoveDocumentEvent.getType(), event -> move(
@@ -371,7 +375,8 @@ public class DocumentPluginEventManager extends Plugin {
                     if (result.getExplorerNodes().size() > 0) {
                         highlight(result.getExplorerNodes().get(0));
                     }
-                }, explorerListener)));
+                }, explorerListener,
+                event.getHidePopupRequestEvent())));
 
         // 8.4. Handle entity delete events.
         registerHandler(getEventBus().addHandler(DeleteDocumentEvent.getType(), event -> {
@@ -400,9 +405,10 @@ public class DocumentPluginEventManager extends Plugin {
             event.getHidePopupRequestEvent().hide();
 
             rename(event.getExplorerNode(), event.getDocName(), explorerNode -> {
-                highlight(explorerNode);
-                RefreshDocumentEvent.fire(this, explorerNode.getDocRef());
-            }, explorerListener);
+                        highlight(explorerNode);
+                        RefreshDocumentEvent.fire(this, explorerNode.getDocRef());
+                    }, explorerListener,
+                    event.getHidePopupRequestEvent());
         }));
 
         // 10. Handle entity delete events.
@@ -619,7 +625,8 @@ public class DocumentPluginEventManager extends Plugin {
                        final ExplorerNode destinationFolder,
                        final PermissionInheritance permissionInheritance,
                        final Consumer<ExplorerNode> consumer,
-                       final TaskListener taskListener) {
+                       final TaskListener taskListener,
+                       final HidePopupRequestEvent hidePopupRequestEvent) {
         restFactory
                 .create(EXPLORER_RESOURCE)
                 .method(res -> res.create(new ExplorerServiceCreateRequest(
@@ -628,6 +635,7 @@ public class DocumentPluginEventManager extends Plugin {
                         destinationFolder,
                         permissionInheritance)))
                 .onSuccess(consumer)
+                .onFailure(new DefaultErrorHandler(this, hidePopupRequestEvent::reset))
                 .taskListener(taskListener)
                 .exec();
     }
@@ -638,7 +646,8 @@ public class DocumentPluginEventManager extends Plugin {
                       final String newName,
                       final PermissionInheritance permissionInheritance,
                       final Consumer<BulkActionResult> consumer,
-                      final TaskListener taskListener) {
+                      final TaskListener taskListener,
+                      final HidePopupRequestEvent hidePopupRequestEvent) {
         restFactory
                 .create(EXPLORER_RESOURCE)
                 .method(res -> res.copy(new ExplorerServiceCopyRequest(
@@ -648,6 +657,7 @@ public class DocumentPluginEventManager extends Plugin {
                         newName,
                         permissionInheritance)))
                 .onSuccess(consumer)
+                .onFailure(new DefaultErrorHandler(this, hidePopupRequestEvent::reset))
                 .taskListener(taskListener)
                 .exec();
     }
@@ -656,7 +666,8 @@ public class DocumentPluginEventManager extends Plugin {
                       final ExplorerNode destinationFolder,
                       final PermissionInheritance permissionInheritance,
                       final Consumer<BulkActionResult> consumer,
-                      final TaskListener taskListener) {
+                      final TaskListener taskListener,
+                      final HidePopupRequestEvent hidePopupRequestEvent) {
         restFactory
                 .create(EXPLORER_RESOURCE)
                 .method(res -> res.move(new ExplorerServiceMoveRequest(
@@ -664,6 +675,7 @@ public class DocumentPluginEventManager extends Plugin {
                         destinationFolder,
                         permissionInheritance)))
                 .onSuccess(consumer)
+                .onFailure(new DefaultErrorHandler(this, hidePopupRequestEvent::reset))
                 .taskListener(taskListener)
                 .exec();
     }
@@ -671,11 +683,13 @@ public class DocumentPluginEventManager extends Plugin {
     private void rename(final ExplorerNode explorerNode,
                         final String docName,
                         final Consumer<ExplorerNode> consumer,
-                        final TaskListener taskListener) {
+                        final TaskListener taskListener,
+                        final HidePopupRequestEvent hidePopupRequestEvent) {
         restFactory
                 .create(EXPLORER_RESOURCE)
                 .method(res -> res.rename(new ExplorerServiceRenameRequest(explorerNode, docName)))
                 .onSuccess(consumer)
+                .onFailure(new DefaultErrorHandler(this, hidePopupRequestEvent::reset))
                 .taskListener(taskListener)
                 .exec();
     }
@@ -711,7 +725,9 @@ public class DocumentPluginEventManager extends Plugin {
         }
     }
 
-    public void open(final DocRef docRef, final boolean forceOpen, final boolean fullScreen,
+    public void open(final DocRef docRef,
+                     final boolean forceOpen,
+                     final boolean fullScreen,
                      final TaskListener taskListener) {
         final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(docRef.getType());
         if (documentPlugin != null) {

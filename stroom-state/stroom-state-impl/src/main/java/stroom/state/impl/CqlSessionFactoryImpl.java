@@ -1,46 +1,25 @@
 package stroom.state.impl;
 
-import stroom.docref.DocRef;
-import stroom.docstore.shared.DocRefUtil;
-import stroom.state.shared.ScyllaDbDoc;
-import stroom.state.shared.StateDoc;
-
 import com.datastax.oss.driver.api.core.CqlSession;
 import jakarta.inject.Inject;
-
-import java.util.Objects;
+import jakarta.inject.Provider;
 
 public class CqlSessionFactoryImpl implements CqlSessionFactory {
 
     private final CqlSessionCache cqlSessionCache;
-    private final ScyllaDbDocCache scyllaDbDocCache;
-    private final StateDocCache stateDocCache;
 
     @Inject
-    public CqlSessionFactoryImpl(final CqlSessionCache cqlSessionCache,
-                                 final ScyllaDbDocCache scyllaDbDocCache,
-                                 final StateDocCache stateDocCache) {
+    public CqlSessionFactoryImpl(final CqlSessionCache cqlSessionCache) {
         this.cqlSessionCache = cqlSessionCache;
-        this.scyllaDbDocCache = scyllaDbDocCache;
-        this.stateDocCache = stateDocCache;
     }
 
     @Override
-    public CqlSession getSession(final DocRef stateDocRef) {
-        Objects.requireNonNull(stateDocRef, "Null state doc ref");
-        final StateDoc stateDoc = stateDocCache.get(stateDocRef);
-        return getSession(stateDoc);
+    public CqlSession getSession(final String keyspace) {
+        return cqlSessionCache.get(keyspace);
     }
 
     @Override
-    public CqlSession getSession(final StateDoc stateDoc) {
-        Objects.requireNonNull(stateDoc, "Null state doc");
-        Objects.requireNonNull(stateDoc.getScyllaDbRef(), "Null ScyllaDB ref");
-
-        final ScyllaDbDoc scyllaDbDoc = scyllaDbDocCache.get(stateDoc.getScyllaDbRef());
-        Objects.requireNonNull(scyllaDbDoc, "Unable to find ScyllaDB doc referenced by " +
-                DocRefUtil.createSimpleDocRefString(stateDoc.getScyllaDbRef()));
-
-        return cqlSessionCache.get(scyllaDbDoc);
+    public Provider<CqlSession> getSessionProvider(final String keyspace) {
+        return () -> getSession(keyspace);
     }
 }

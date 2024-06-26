@@ -21,8 +21,11 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.language.functions.FieldIndex;
+import stroom.state.impl.dao.State;
+import stroom.state.impl.dao.StateDao;
+import stroom.state.impl.dao.StateFields;
+import stroom.state.impl.dao.StateRequest;
 
-import com.datastax.oss.driver.api.core.CqlSession;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
@@ -30,7 +33,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -38,37 +41,60 @@ class TestStateDao {
 
     @Test
     void testDao() {
-        ScyllaDbUtil.test((session, keyspaceName) -> {
-            StateDao.dropTables(session);
-            StateDao.createTables(session);
+        ScyllaDbUtil.test((sessionProvider, keyspaceName) -> {
+            final StateDao stateDao = new StateDao(sessionProvider);
+            stateDao.dropTables();
+            stateDao.createTables();
 
-            final ByteBuffer byteBuffer = ByteBuffer.wrap("test".getBytes(StandardCharsets.UTF_8));
-            final State state = new State(
-                    "TEST_MAP",
-                    "TEST_KEY",
-                    Instant.ofEpochMilli(0),
-                    StringValue.TYPE_ID,
-                    byteBuffer);
-            StateDao.insert(session, Collections.singletonList(state));
+            insertData(stateDao, 100);
 
-            final StateRequest stateRequest =
-                    new StateRequest("TEST_MAP", "TEST_KEY", Instant.ofEpochSecond(10));
-            final Optional<State> optional = StateDao.getState(session, stateRequest);
+            final StateRequest stateRequest = new StateRequest("TEST_MAP", "TEST_KEY");
+            final Optional<State> optional = stateDao.getState(stateRequest);
             assertThat(optional).isNotEmpty();
             final State res = optional.get();
-            assertThat(res.map()).isEqualTo("TEST_MAP");
             assertThat(res.key()).isEqualTo("TEST_KEY");
-            assertThat(res.effectiveTime()).isEqualTo(Instant.ofEpochMilli(0));
             assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
-            assertThat(res.getValueAsString()).isEqualTo("test");
+            assertThat(res.getValueAsString()).isEqualTo("test99");
 
             final FieldIndex fieldIndex = new FieldIndex();
-            fieldIndex.create(StateFields.MAP);
             fieldIndex.create(StateFields.KEY);
-            StateDao.search(session, new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex,
-                    values -> {
-                        System.out.println(values);
-                    });
+            final AtomicInteger count = new AtomicInteger();
+            stateDao.search(new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex,
+                    v -> count.incrementAndGet());
+            assertThat(count.get()).isEqualTo(1);
         });
+    }
+
+    @Test
+    void testRemoveOldData() {
+        ScyllaDbUtil.test((sessionProvider, keyspaceName) -> {
+            final StateDao stateDao = new StateDao(sessionProvider);
+            stateDao.dropTables();
+            stateDao.createTables();
+
+            Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
+            insertData(stateDao, 100);
+            insertData(stateDao, 10);
+
+            assertThat(stateDao.count()).isEqualTo(1);
+
+            stateDao.removeOldData(refTime);
+            assertThat(stateDao.count()).isEqualTo(1);
+
+            stateDao.removeOldData(Instant.now());
+            assertThat(stateDao.count()).isEqualTo(0);
+        });
+    }
+
+    private void insertData(final StateDao stateDao,
+                            final int rows) {
+        for (int i = 0; i < rows; i++) {
+            final ByteBuffer byteBuffer = ByteBuffer.wrap(("test" + i).getBytes(StandardCharsets.UTF_8));
+            final State state = new State(
+                    "TEST_KEY",
+                    StringValue.TYPE_ID,
+                    byteBuffer);
+            stateDao.insert(Collections.singletonList(state));
+        }
     }
 }

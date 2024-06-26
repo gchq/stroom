@@ -18,13 +18,9 @@ package stroom.state.impl.pipeline;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferPoolOutput;
-import stroom.docref.DocRef;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.factory.ConfigurableElement;
-import stroom.pipeline.factory.PipelineProperty;
-import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.NullValue;
@@ -33,23 +29,33 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
 import stroom.state.impl.CqlSessionFactory;
-import stroom.state.impl.RangedState;
-import stroom.state.impl.RangedStateDao;
-import stroom.state.impl.State;
-import stroom.state.impl.StateDao;
+import stroom.state.impl.KeyspaceNameValidator;
 import stroom.state.impl.StateDocCache;
+import stroom.state.impl.dao.RangedState;
+import stroom.state.impl.dao.RangedStateDao;
+import stroom.state.impl.dao.Session;
+import stroom.state.impl.dao.SessionDao;
+import stroom.state.impl.dao.State;
+import stroom.state.impl.dao.StateDao;
+import stroom.state.impl.dao.TemporalRangedState;
+import stroom.state.impl.dao.TemporalRangedStateDao;
+import stroom.state.impl.dao.TemporalState;
+import stroom.state.impl.dao.TemporalStateDao;
 import stroom.state.shared.StateDoc;
 import stroom.svg.shared.SvgImage;
 import stroom.util.CharBuffer;
 import stroom.util.NullSafe;
+import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Range;
 import stroom.util.shared.Severity;
 
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.sun.xml.fastinfoset.sax.SAXDocumentSerializer;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -63,8 +69,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -167,14 +175,12 @@ public class StateFilter extends AbstractXMLFilter {
 
     private final MetaHolder metaHolder;
     private String mapName;
+    private Optional<StateDoc> stateDocOptional = Optional.empty();
     private String key;
     private boolean insideValueElement;
     private boolean haveSeenXmlInValueElement = false;
     private Long rangeFrom;
     private Long rangeTo;
-    //    private RefDataValue refDataValue;
-    private boolean warnOnDuplicateKeys = false;
-    private boolean overrideExistingValues = true;
 
     // Track all prefix=>uri mappings that are in scope in the wrapper xml
     private final Map<String, String> prefixToUriMap = new HashMap<>();
@@ -190,29 +196,33 @@ public class StateFilter extends AbstractXMLFilter {
     private String valueXmlDefaultNamespaceUri = null;
     private int valueCount = 0;
 
-
-    private DocRef stateDocRef;
-    private StateDoc stateDoc;
     private Instant effectiveTime;
     private final LocationFactoryProxy locationFactory;
-    private final StateDocCache stateDocCache;
     private final CqlSessionFactory cqlSessionFactory;
-    private final List<State> stateList = new ArrayList<>();
-    private final List<RangedState> rangedStateList = new ArrayList<>();
+    private final StateDocCache stateDocCache;
+    private final Map<String, List<State>> stateMap = new HashMap<>();
+    private final Map<String, List<TemporalState>> temporalStateMap = new HashMap<>();
+    private final Map<String, List<RangedState>> rangedStateMap = new HashMap<>();
+    private final Map<String, List<TemporalRangedState>> temporalRangedStateMap = new HashMap<>();
+    private final Map<String, List<Session>> sessionMap = new HashMap<>();
+    private final Map<String, Optional<StateDoc>> stateDocMap = new HashMap<>();
+    private int uncommited = 0;
     private Locator locator;
+
+    private Session.Builder sessionBuilder;
 
     @Inject
     public StateFilter(final ErrorReceiverProxy errorReceiverProxy,
                        final LocationFactoryProxy locationFactory,
                        final MetaHolder metaHolder,
-                       final StateDocCache stateDocCache,
                        final CqlSessionFactory cqlSessionFactory,
+                       final StateDocCache stateDocCache,
                        final ByteBufferFactory byteBufferFactory) {
         this.errorReceiverProxy = errorReceiverProxy;
         this.locationFactory = locationFactory;
         this.metaHolder = metaHolder;
-        this.stateDocCache = stateDocCache;
         this.cqlSessionFactory = cqlSessionFactory;
+        this.stateDocCache = stateDocCache;
         this.byteBufferFactory = byteBufferFactory;
     }
 
@@ -220,18 +230,6 @@ public class StateFilter extends AbstractXMLFilter {
     @Override
     public void startProcessing() {
         try {
-            if (stateDocRef == null) {
-                log(Severity.FATAL_ERROR, "State doc has not been set", null);
-                throw LoggedException.create("State doc has not been set");
-            }
-
-            // Get the index and index fields from the cache.
-            stateDoc = stateDocCache.get(stateDocRef);
-            if (stateDoc == null) {
-                log(Severity.FATAL_ERROR, "Unable to load state doc", null);
-                throw LoggedException.create("Unable to load state doc");
-            }
-
             final Long effectiveMs = metaHolder.getMeta().getEffectiveMs();
             if (effectiveMs != null) {
                 effectiveTime = Instant.ofEpochMilli(effectiveMs);
@@ -256,17 +254,72 @@ public class StateFilter extends AbstractXMLFilter {
         insert();
     }
 
+    private void tryFlush() {
+        uncommited++;
+        if (uncommited > 1000) {
+            insert();
+        }
+    }
+
     private void insert() {
-        if (!stateList.isEmpty()) {
-            StateDao.insert(cqlSessionFactory.getSession(stateDoc), stateList);
-            stateList.forEach(state -> byteBufferFactory.release(state.value()));
-            stateList.clear();
-        }
-        if (!rangedStateList.isEmpty()) {
-            RangedStateDao.insert(cqlSessionFactory.getSession(stateDoc), rangedStateList);
-            rangedStateList.forEach(state -> byteBufferFactory.release(state.value()));
-            rangedStateList.clear();
-        }
+        stateMap.forEach((mapName, list) -> {
+            try {
+                final Provider<CqlSession> sessionProvider = cqlSessionFactory.getSessionProvider(mapName);
+                new StateDao(sessionProvider).insert(list);
+                list.forEach(state -> byteBufferFactory.release(state.value()));
+                list.clear();
+            } catch (final Exception e) {
+                errorReceiverProxy.log(Severity.ERROR, null, getElementId(), e.getMessage(), e);
+            }
+        });
+        stateMap.clear();
+
+        temporalStateMap.forEach((mapName, list) -> {
+            try {
+                final Provider<CqlSession> sessionProvider = cqlSessionFactory.getSessionProvider(mapName);
+                new TemporalStateDao(sessionProvider).insert(list);
+                list.forEach(state -> byteBufferFactory.release(state.value()));
+                list.clear();
+            } catch (final Exception e) {
+                errorReceiverProxy.log(Severity.ERROR, null, getElementId(), e.getMessage(), e);
+            }
+        });
+        temporalStateMap.clear();
+
+        rangedStateMap.forEach((mapName, list) -> {
+            try {
+                final Provider<CqlSession> sessionProvider = cqlSessionFactory.getSessionProvider(mapName);
+                new RangedStateDao(sessionProvider).insert(list);
+                list.forEach(state -> byteBufferFactory.release(state.value()));
+                list.clear();
+            } catch (final Exception e) {
+                errorReceiverProxy.log(Severity.ERROR, null, getElementId(), e.getMessage(), e);
+            }
+        });
+        rangedStateMap.clear();
+
+        temporalRangedStateMap.forEach((mapName, list) -> {
+            try {
+                final Provider<CqlSession> sessionProvider = cqlSessionFactory.getSessionProvider(mapName);
+                new TemporalRangedStateDao(sessionProvider).insert(list);
+                list.forEach(state -> byteBufferFactory.release(state.value()));
+                list.clear();
+            } catch (final Exception e) {
+                errorReceiverProxy.log(Severity.ERROR, null, getElementId(), e.getMessage(), e);
+            }
+        });
+        temporalRangedStateMap.clear();
+
+        sessionMap.forEach((mapName, list) -> {
+            try {
+                final Provider<CqlSession> sessionProvider = cqlSessionFactory.getSessionProvider(mapName);
+                new SessionDao(sessionProvider).insert(list);
+                list.clear();
+            } catch (final Exception e) {
+                errorReceiverProxy.log(Severity.ERROR, null, getElementId(), e.getMessage(), e);
+            }
+        });
+        sessionMap.clear();
     }
 
     /**
@@ -317,12 +370,7 @@ public class StateFilter extends AbstractXMLFilter {
 
     private void removeWrapperPrefixMapping(final String prefix) {
         LOGGER.trace("Removing prefix mapping {}, map contains {}", prefix, prefixToUriMap);
-
         prefixToUriMap.remove(prefix);
-//        prefixToUriMap.values()
-//                .removeIf(value ->
-//                        ((value == null && prefix == null)
-//                                || (value != null && value.equals(prefix))));
     }
 
     /**
@@ -345,15 +393,6 @@ public class StateFilter extends AbstractXMLFilter {
                              final String qName,
                              final Attributes atts)
             throws SAXException {
-
-        // For slowing down a load in testing
-//        try {
-//            Thread.sleep(2_000);
-//            LOGGER.info("Finished sleep");
-//        } catch (InterruptedException e) {
-//            LOGGER.info("==================INTERRUPTED=======================");
-//            Thread.currentThread().interrupt();
-//        }
 
         depthLevel++;
         insideElement = true;
@@ -392,27 +431,14 @@ public class StateFilter extends AbstractXMLFilter {
                 }
             }
 
-//            LOGGER.trace("appliedUris {}", appliedUris);
-////            if (!appliedUris.contains(uri) && !uri.equals(valueXmlDefaultNamespaceUri)) {
-//            uriToPrefixMap.c
-//            if (!appliedUris.contains(uri)) {
-//                // we haven't seen this uri before so find its prefix and call startPrefixMapping on the
-//                // serializer so it understands them
-//                String prefix = uriToPrefixMap.get(uri);
-//                if (prefix != null) {
-////                    fastInfosetStartPrefixMapping(prefix, uri);
-//                }
-//                appliedUris.add(uri);
-//            }
-
-//            if (uri.equals(valueXmlDefaultNamespaceUri)) {
-//                // This is the default namespace so remove it from the element
-////                newUri = "";
-//                newQName = localName;
-////                fastInfosetStartPrefixMapping("", uri);
-//            }
-
             fastInfosetStartElement(localName, uri, newQName, atts);
+
+        } else if ("session-start".equals(localName)) {
+            sessionBuilder = new Session.Builder();
+            sessionBuilder.terminal(false);
+        } else if ("session-end".equals(localName)) {
+            sessionBuilder = new Session.Builder();
+            sessionBuilder.terminal(true);
         }
 
         super.startElement(uri, localName, newQName, atts);
@@ -480,18 +506,40 @@ public class StateFilter extends AbstractXMLFilter {
             if (MAP_ELEMENT.equalsIgnoreCase(localName)) {
                 // capture the name of the map that the subsequent values will belong to. A ref
                 // stream can contain data for multiple maps
-                mapName = contentBuffer.toString();
+                mapName = contentBuffer.toString().toLowerCase(Locale.ROOT);
+
+                stateDocOptional = stateDocMap.computeIfAbsent(mapName, k -> {
+                    try {
+                        KeyspaceNameValidator.validateName(k);
+                    } catch (final RuntimeException e) {
+                        error("Bad map name: " + k);
+                    }
+                    StateDoc stateDoc = null;
+                    try {
+                        stateDoc = stateDocCache.get(k);
+                        if (stateDoc == null) {
+                            error("Unable to find state doc for map name: " + k);
+                        }
+                    } catch (final RuntimeException e) {
+                        error(e);
+                    }
+                    return Optional.ofNullable(stateDoc);
+                });
+
             } else if (KEY_ELEMENT.equalsIgnoreCase(localName)) {
                 // the key for the KV pair
                 key = contentBuffer.toString();
+
+                if (sessionBuilder != null) {
+                    sessionBuilder.key(key);
+                }
             } else if (FROM_ELEMENT.equalsIgnoreCase(localName)) {
                 // the start key for the key range
                 final String string = contentBuffer.toString();
                 try {
                     rangeFrom = Long.parseLong(string);
                 } catch (final RuntimeException e) {
-                    errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
-                            "Unable to parse string \"" + string + "\" as long for range from", e);
+                    error("Unable to parse string \"" + string + "\" as long for range from", e);
                 }
             } else if (TO_ELEMENT.equalsIgnoreCase(localName)) {
                 // the end key for the key range
@@ -499,12 +547,27 @@ public class StateFilter extends AbstractXMLFilter {
                 try {
                     rangeTo = Long.parseLong(string);
                 } catch (final RuntimeException e) {
-                    errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
-                            "Unable to parse string \"" + string + "\" as long for range to", e);
+                    error("Unable to parse string \"" + string + "\" as long for range to", e);
                 }
-
             } else if (REFERENCE_ELEMENT.equalsIgnoreCase(localName)) {
                 handleReferenceEndElement();
+
+            } else if ("start".equals(localName)) {
+                sessionBuilder.start(DateUtil.parseNormalDateTimeStringToInstant(contentBuffer.toString()));
+            } else if ("end".equals(localName)) {
+                sessionBuilder.end(DateUtil.parseNormalDateTimeStringToInstant(contentBuffer.toString()));
+            } else if (("session-start").equals(localName) || "session-end".equals(localName)) {
+                stateDocOptional.ifPresent(stateDoc -> {
+                    switch (stateDoc.getStateType()) {
+                        case SESSION -> {
+                            final Session session = sessionBuilder.build();
+                            sessionMap.computeIfAbsent(mapName, k -> new ArrayList<>()).add(session);
+                            sessionBuilder = null;
+                            tryFlush();
+                        }
+                        default -> error("Unexpected state type: " + stateDoc.getStateType());
+                    }
+                });
             }
         }
 
@@ -562,46 +625,81 @@ public class StateFilter extends AbstractXMLFilter {
         // end of the ref data item so ensure it is persisted in the store
         valueCount++;
         try {
-            if (mapName != null && key != null) {
-                LOGGER.trace("Putting key {} into map {}", key, mapName);
-
-                final ByteBuffer value = stagingValueOutputStream.getByteBuffer();
-                value.flip();
-                stateList.add(new State(mapName, key, effectiveTime, typeId, value));
-                if (stateList.size() > 1000) {
-                    insert();
-                }
-            } else if (rangeFrom != null && rangeTo != null) {
-                if (rangeFrom > rangeTo) {
-                    errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
-                            "Range from '" + rangeFrom
-                                    + "' must be less than or equal to range to '" + rangeTo + "'",
-                            null);
-                } else if (rangeFrom < 0) {
-                    // negative values cause problems for the ordering of data in LMDB so prevent their use
-                    // when using byteBuffer.putLong, -10, 0 & 10 will be stored in LMDB as 0, 10, -10
-                    errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
-                            LogUtil.message(
-                                    "Only non-negative numbers are supported (from: {}, to: {})",
-                                    rangeFrom, rangeTo), null);
-
-                } else {
-                    final ByteBuffer value = stagingValueOutputStream.getByteBuffer();
-                    value.flip();
-                    rangedStateList.add(new RangedState(mapName, rangeFrom, rangeTo, effectiveTime, typeId, value));
-                    if (rangedStateList.size() > 1000) {
-                        insert();
+            stateDocOptional.ifPresent(stateDoc -> {
+                final String keyspace = stateDoc.getKeyspace();
+                switch (stateDoc.getStateType()) {
+                    case STATE -> {
+                        if (key != null) {
+                            LOGGER.trace("Putting key {} into keyspace {}", key, keyspace);
+                            final ByteBuffer value = stagingValueOutputStream.getByteBuffer();
+                            value.flip();
+                            stateMap.computeIfAbsent(keyspace, k -> new ArrayList<>())
+                                    .add(new State(key, typeId, value));
+                            tryFlush();
+                        }
                     }
+                    case TEMPORAL_STATE -> {
+                        LOGGER.trace("Putting key {} into map {}", key, keyspace);
+
+                        final ByteBuffer value = stagingValueOutputStream.getByteBuffer();
+                        value.flip();
+                        temporalStateMap.computeIfAbsent(keyspace, k -> new ArrayList<>())
+                                .add(new TemporalState(key, effectiveTime, typeId, value));
+                        tryFlush();
+                    }
+                    case RANGED_STATE -> {
+                        if (rangeFrom != null && rangeTo != null) {
+                            if (rangeFrom > rangeTo) {
+                                error("Range from '" + rangeFrom
+                                        + "' must be less than or equal to range to '" + rangeTo + "'");
+                            } else if (rangeFrom < 0) {
+                                // negative values cause problems for the ordering of data in LMDB so prevent their use
+                                // when using byteBuffer.putLong, -10, 0 & 10 will be stored in LMDB as 0, 10, -10
+                                error(LogUtil.message(
+                                        "Only non-negative numbers are supported (from: {}, to: {})",
+                                        rangeFrom, rangeTo));
+
+                            } else {
+                                final ByteBuffer value = stagingValueOutputStream.getByteBuffer();
+                                value.flip();
+                                rangedStateMap.computeIfAbsent(keyspace, k -> new ArrayList<>())
+                                        .add(new RangedState(rangeFrom, rangeTo, typeId, value));
+                                tryFlush();
+                            }
+                        }
+                    }
+                    case TEMPORAL_RANGED_STATE -> {
+                        if (rangeFrom != null && rangeTo != null) {
+                            if (rangeFrom > rangeTo) {
+                                error("Range from '" + rangeFrom
+                                        + "' must be less than or equal to range to '" + rangeTo + "'");
+                            } else if (rangeFrom < 0) {
+                                // negative values cause problems for the ordering of data in LMDB so prevent their use
+                                // when using byteBuffer.putLong, -10, 0 & 10 will be stored in LMDB as 0, 10, -10
+                                error(LogUtil.message(
+                                        "Only non-negative numbers are supported (from: {}, to: {})",
+                                        rangeFrom, rangeTo));
+
+                            } else {
+                                final ByteBuffer value = stagingValueOutputStream.getByteBuffer();
+                                value.flip();
+                                temporalRangedStateMap.computeIfAbsent(keyspace, k -> new ArrayList<>())
+                                        .add(new TemporalRangedState(rangeFrom, rangeTo, effectiveTime, typeId, value));
+                                tryFlush();
+                            }
+                        }
+                    }
+                    default -> error("Unexpected state type: " + stateDoc.getStateType());
                 }
-            }
+            });
         } catch (final BufferOverflowException boe) {
             final String msg = LogUtil.message("Value for key {} in map {} is too big for the buffer",
                     key,
                     mapName);
-            errorReceiverProxy.log(Severity.ERROR, null, getElementId(), msg, boe);
+            error(msg, boe);
             LOGGER.error(msg, boe);
         } catch (final RuntimeException e) {
-            errorReceiverProxy.log(Severity.ERROR, null, getElementId(), e.getMessage(), e);
+            error(e);
             LOGGER.error("Error putting key {} into map {}: {} {}",
                     key, mapName, e.getClass().getSimpleName(), e.getMessage());
             LOGGER.debug("Error putting key {} into map {}: {}", key, mapName, e.getMessage(), e);
@@ -609,6 +707,7 @@ public class StateFilter extends AbstractXMLFilter {
 
         // Set keys to null.
         mapName = null;
+        stateDocOptional = Optional.empty();
         key = null;
         rangeFrom = null;
         rangeTo = null;
@@ -623,55 +722,6 @@ public class StateFilter extends AbstractXMLFilter {
     private String getRangeText(final Range<Long> range) {
         return LogUtil.message("range [{}] to [{}]", range.getFrom(), range.getTo());
     }
-
-//    private void validateRangeValuePutSuccess(final Supplier<MapDefinition> mapDefSupplier,
-//                                              final Range<Long> range,
-//                                              final PutOutcome putOutcome) {
-//        LOGGER.debug(() -> LogUtil.message("PutOutcome {} for {} in map {}",
-//                putOutcome, getRangeText(range), mapDefSupplier.get().getMapName()));
-//        validatePutSuccess(mapDefSupplier, () -> getRangeText(range), putOutcome);
-//    }
-//
-//    private void validateKeyValuePutSuccess(final Supplier<MapDefinition> mapDefSupplier,
-//                                            final String key,
-//                                            final PutOutcome putOutcome) {
-//        LOGGER.debug(() -> LogUtil.message("PutOutcome {} for {} in map {}",
-//                putOutcome, getKeyText(key), mapDefSupplier.get().getMapName()));
-//        validatePutSuccess(mapDefSupplier, () -> getKeyText(key), putOutcome);
-//    }
-//
-//    private void validatePutSuccess(final Supplier<MapDefinition> mapDefSupplier,
-//                                    final Supplier<String> keyTextSupplier,
-//                                    final PutOutcome putOutcome) {
-//        if (warnOnDuplicateKeys) {
-//            if (overrideExistingValues
-//                    && putOutcome.isSuccess()
-//                    && putOutcome.isDuplicate().orElse(false)) {
-//
-//                final MapDefinition mapDefinition = mapDefSupplier.get();
-//                errorReceiverProxy.log(Severity.WARNING, null, getElementId(),
-//                        LogUtil.message(
-//                                "Replaced entry for {} in map {} from stream {} as an entry already exists in the " +
-//                                        "store and overrideExistingValues is set to true on the reference " +
-//                                        "loader pipeline. Set warnOnDuplicateKeys to false to hide these warnings.",
-//                                keyTextSupplier.get(),
-//                                mapDefinition.getMapName(),
-//                                mapDefinition.getRefStreamDefinition().getStreamId()), null);
-//
-//            } else if (!overrideExistingValues
-//                    && putOutcome.isDuplicate().orElse(false)) {
-//                final MapDefinition mapDefinition = mapDefSupplier.get();
-//                errorReceiverProxy.log(Severity.WARNING, null, getElementId(),
-//                        LogUtil.message(
-//                                "Unable to load entry for {} into map {} from stream {} as an entry already exists " +
-//                                        "in the store and overrideExistingValues is set to false on the reference " +
-//                                        "loader pipeline. Set warnOnDuplicateKeys to false to hide these warnings.",
-//                                keyTextSupplier.get(),
-//                                mapDefinition.getMapName(),
-//                                mapDefinition.getRefStreamDefinition().getStreamId()), null);
-//            }
-//        }
-//    }
 
     /**
      * @param ch     An array of characters.
@@ -694,14 +744,6 @@ public class StateFilter extends AbstractXMLFilter {
                 }
             } else {
                 contentBuffer.append(ch, start, length);
-//                // This is a simple String value
-//                final String str = new String(ch, start, length);
-//                try {
-//                    stagingValueOutputStream.write(str.getBytes(StandardCharsets.UTF_8));
-//                } catch (IOException e) {
-//                    throw new RuntimeException(LogUtil.message(
-//                            "Error writing chars '{}' to stagingValueOutputStream", str), e);
-//                }
             }
         } else {
             // outside the value element so capture the chars, so we can get keys, map names, etc.
@@ -715,25 +757,13 @@ public class StateFilter extends AbstractXMLFilter {
     public void endProcessing() {
         LOGGER.debug("Processed {} XML ref data entries for ref stream", valueCount);
         try {
-            LOGGER.debug("closing stagingValueOutputStream");
-            stagingValueOutputStream.close();
+            if (stagingValueOutputStream != null) {
+                LOGGER.debug("closing stagingValueOutputStream");
+                stagingValueOutputStream.close();
+            }
         } finally {
             super.endProcessing();
         }
-    }
-
-    @PipelineProperty(description = "Warn if there are duplicate keys found in the reference data?",
-            defaultValue = "false",
-            displayPriority = 1)
-    public void setWarnOnDuplicateKeys(final boolean warnOnDuplicateKeys) {
-        this.warnOnDuplicateKeys = warnOnDuplicateKeys;
-    }
-
-    @PipelineProperty(description = "Allow duplicate keys to override existing values?",
-            defaultValue = "true",
-            displayPriority = 2)
-    public void setOverrideExistingValues(final boolean overrideExistingValues) {
-        this.overrideExistingValues = overrideExistingValues;
     }
 
     private boolean isAllWhitespace(char[] ch, final int start, final int length) {
@@ -782,10 +812,6 @@ public class StateFilter extends AbstractXMLFilter {
         LOGGER.trace("saxDocumentSerializer - endPrefixMapping({}})", prefix);
         saxDocumentSerializer.endPrefixMapping(prefix);
         appliedPrefixToUriMap.remove(prefix);
-//        appliedPrefixToUriMap.values()
-//                .removeIf(value ->
-//                        ((value == null && prefix == null)
-//                                || (value != null && value.equals(prefix))));
     }
 
     private void fastInfosetCharacters(final char[] ch, final int start, final int length) throws SAXException {
@@ -827,13 +853,19 @@ public class StateFilter extends AbstractXMLFilter {
         return appliedPrefixToUriMap.containsKey(prefix);
     }
 
-    private void log(final Severity severity, final String message, final Exception e) {
-        errorReceiverProxy.log(severity, locationFactory.create(locator), getElementId(), message, e);
+    private void error(final String message) {
+        log(Severity.ERROR, message, null);
     }
 
-    @PipelineProperty(description = "The store to send data to.", displayPriority = 1)
-    @PipelinePropertyDocRef(types = StateDoc.DOCUMENT_TYPE)
-    public void setStateDoc(final DocRef storeRef) {
-        this.stateDocRef = storeRef;
+    private void error(final String message, final Exception e) {
+        log(Severity.ERROR, message, e);
+    }
+
+    private void error(final Exception e) {
+        log(Severity.ERROR, e.getMessage(), e);
+    }
+
+    private void log(final Severity severity, final String message, final Exception e) {
+        errorReceiverProxy.log(severity, locationFactory.create(locator), getElementId(), message, e);
     }
 }

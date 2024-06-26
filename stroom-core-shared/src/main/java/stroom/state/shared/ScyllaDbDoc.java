@@ -42,9 +42,7 @@ import java.util.Objects;
         "createUser",
         "updateUser",
         "description",
-        "connection",
-        "keyspace",
-        "keyspaceCql"
+        "connection"
 })
 @JsonInclude(Include.NON_NULL)
 public class ScyllaDbDoc extends Doc {
@@ -56,10 +54,6 @@ public class ScyllaDbDoc extends Doc {
     private String description;
     @JsonProperty
     private String connection;
-    @JsonProperty
-    private String keyspace;
-    @JsonProperty
-    private String keyspaceCql;
 
     public ScyllaDbDoc() {
     }
@@ -74,14 +68,10 @@ public class ScyllaDbDoc extends Doc {
                        @JsonProperty("createUser") final String createUser,
                        @JsonProperty("updateUser") final String updateUser,
                        @JsonProperty("description") final String description,
-                       @JsonProperty("connection") final String connection,
-                       @JsonProperty("keyspace") final String keyspace,
-                       @JsonProperty("keyspaceCql") final String keyspaceCql) {
+                       @JsonProperty("connection") final String connection) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.connection = connection;
-        this.keyspace = keyspace;
-        this.keyspaceCql = keyspaceCql;
     }
 
     /**
@@ -116,22 +106,6 @@ public class ScyllaDbDoc extends Doc {
         this.connection = connection;
     }
 
-    public String getKeyspace() {
-        return keyspace;
-    }
-
-    public void setKeyspace(final String keyspace) {
-        this.keyspace = keyspace;
-    }
-
-    public String getKeyspaceCql() {
-        return keyspaceCql;
-    }
-
-    public void setKeyspaceCql(final String keyspaceCql) {
-        this.keyspaceCql = keyspaceCql;
-    }
-
     @JsonIgnore
     @Override
     public final String getType() {
@@ -151,14 +125,12 @@ public class ScyllaDbDoc extends Doc {
         }
         final ScyllaDbDoc doc = (ScyllaDbDoc) o;
         return Objects.equals(description, doc.description) &&
-                Objects.equals(connection, doc.connection) &&
-                Objects.equals(keyspace, doc.keyspace) &&
-                Objects.equals(keyspaceCql, doc.keyspaceCql);
+                Objects.equals(connection, doc.connection);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), description, connection, keyspace, keyspaceCql);
+        return Objects.hash(super.hashCode(), description, connection);
     }
 
     @Override
@@ -166,8 +138,6 @@ public class ScyllaDbDoc extends Doc {
         return "ScyllaDbDoc{" +
                 "description='" + description + '\'' +
                 ", connection='" + connection + '\'' +
-                ", keyspace='" + keyspace + '\'' +
-                ", keyspaceCql='" + keyspaceCql + '\'' +
                 '}';
     }
 }

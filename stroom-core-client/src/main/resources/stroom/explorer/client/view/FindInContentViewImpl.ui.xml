@@ -5,7 +5,7 @@
              xmlns:spinner="urn:import:stroom.widget.spinner.client">
     <g:FlowPanel styleName="max form">
         <g:FlowPanel styleName="dock-container-horizontal dock-min find-topBar">
-            <g:TextBox ui:field="pattern" addStyleNames="dock-max allow-focus"/>
+            <g:TextArea ui:field="pattern" addStyleNames="dock-max allow-focus"/>
             <g:FlowPanel ui:field="buttonContainer" styleName="dock-min find-buttons">
                 <p:InlineSvgToggleButton ui:field="toggleMatchCase"/>
                 <p:InlineSvgToggleButton ui:field="toggleRegex"/>

@@ -16,12 +16,11 @@
 
 package stroom.state.impl;
 
-import stroom.docref.DocRef;
 import stroom.state.shared.StateDoc;
 
 public interface StateDocCache {
 
-    StateDoc get(DocRef key);
+    StateDoc get(String name);
 
-    void remove(DocRef key);
+    void remove(String name);
 }

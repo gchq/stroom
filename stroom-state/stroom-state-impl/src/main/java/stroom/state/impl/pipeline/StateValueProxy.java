@@ -12,7 +12,7 @@ import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.UnknownRefDataValue;
 import stroom.pipeline.refdata.store.offheapstore.RefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
-import stroom.state.impl.State;
+import stroom.state.impl.dao.TemporalState;
 import stroom.util.logging.LogUtil;
 
 import net.sf.saxon.trans.XPathException;
@@ -28,13 +28,13 @@ public class StateValueProxy implements RefDataValueProxy {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StateValueProxy.class);
 
-    private final State state;
+    private final TemporalState state;
     private final MapDefinition mapDefinition;
 
     // This will be set with mapDefinition if we have a successful lookup with it, else stays null
     private MapDefinition successfulMapDefinition = null;
 
-    public StateValueProxy(final State state,
+    public StateValueProxy(final TemporalState state,
                            final MapDefinition mapDefinition) {
         this.state = state;
         this.mapDefinition = mapDefinition;
@@ -47,7 +47,7 @@ public class StateValueProxy implements RefDataValueProxy {
 
     @Override
     public String getMapName() {
-        return state.map();
+        return mapDefinition.getMapName();
     }
 
     @Override

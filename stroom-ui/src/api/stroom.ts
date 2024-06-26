@@ -4751,8 +4751,6 @@ export interface ScyllaDbDoc {
   createTimeMs?: number;
   createUser?: string;
   description?: string;
-  keyspace?: string;
-  keyspaceCql?: string;
   name?: string;
   type?: string;
 
@@ -5132,14 +5130,46 @@ export interface SplashConfig {
 export type SplitLayoutConfig = LayoutConfig & { children?: LayoutConfig[]; dimension?: number };
 
 export interface StateDoc {
+  condense?: boolean;
+
+  /** @format int32 */
+  condenseAge?: number;
+  condenseTimeUnit?:
+    | "NANOSECONDS"
+    | "MILLISECONDS"
+    | "SECONDS"
+    | "MINUTES"
+    | "HOURS"
+    | "DAYS"
+    | "WEEKS"
+    | "MONTHS"
+    | "YEARS";
+
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   description?: string;
+  keyspace?: string;
+  keyspaceCql?: string;
   name?: string;
+
+  /** @format int32 */
+  retainAge?: number;
+  retainForever?: boolean;
+  retainTimeUnit?:
+    | "NANOSECONDS"
+    | "MILLISECONDS"
+    | "SECONDS"
+    | "MINUTES"
+    | "HOURS"
+    | "DAYS"
+    | "WEEKS"
+    | "MONTHS"
+    | "YEARS";
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   scyllaDbRef?: DocRef;
+  stateType?: "STATE" | "TEMPORAL_STATE" | "RANGED_STATE" | "TEMPORAL_RANGED_STATE" | "SESSION";
   type?: string;
 
   /** @format int64 */
