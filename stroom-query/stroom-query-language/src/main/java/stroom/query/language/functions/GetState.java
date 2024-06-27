@@ -50,7 +50,7 @@ import java.util.function.Supplier;
 class GetState extends AbstractManyChildFunction {
 
     static final String NAME = "getState";
-    private final LookupProvider lookupProvider;
+    private final StateProvider lookupProvider;
     private Generator gen;
     private String map;
     private String key;
@@ -58,7 +58,7 @@ class GetState extends AbstractManyChildFunction {
 
     public GetState(final ExpressionContext expressionContext, final String name) {
         super(name, 2, 3);
-        this.lookupProvider = expressionContext.getLookupProvider();
+        this.lookupProvider = expressionContext.getStateProvider();
         Objects.requireNonNull(lookupProvider, "Null lookup provider");
     }
 
@@ -83,7 +83,7 @@ class GetState extends AbstractManyChildFunction {
         // If we have values for all params then do a lookup now.
         if (map != null && key != null && effectiveTime != null) {
             // Create static value.
-            final Val val = lookupProvider.lookup(map, key, effectiveTime);
+            final Val val = lookupProvider.getState(map, key, effectiveTime);
             gen = new StaticValueGen(val);
         }
     }
@@ -103,12 +103,12 @@ class GetState extends AbstractManyChildFunction {
 
     private static final class Gen extends AbstractManyChildGenerator {
 
-        private final LookupProvider lookupProvider;
+        private final StateProvider lookupProvider;
         private final String map;
         private final String key;
         private final Instant effectiveTime;
 
-        Gen(final LookupProvider lookupProvider,
+        Gen(final StateProvider lookupProvider,
             final String map,
             final String key,
             final Instant effectiveTime,
@@ -150,7 +150,7 @@ class GetState extends AbstractManyChildFunction {
 
                 Val val = ValNull.INSTANCE;
                 if (map != null && key != null && effectiveTime != null) {
-                    val = lookupProvider.lookup(map, key, effectiveTime);
+                    val = lookupProvider.getState(map, key, effectiveTime);
                 }
                 return val;
 

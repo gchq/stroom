@@ -10,21 +10,21 @@ public class ExpressionContext {
 
     private final int maxStringLength;
     private final DateTimeSettings dateTimeSettings;
-    private final LookupProvider lookupProvider;
+    private final StateProvider stateProvider;
 
     public ExpressionContext() {
         this.maxStringLength = 100;
         this.dateTimeSettings = DateTimeSettings.builder().build();
-        this.lookupProvider = (map, key, effectiveTimeMs) -> ValNull.INSTANCE;
+        this.stateProvider = (map, key, effectiveTimeMs) -> ValNull.INSTANCE;
     }
 
     @JsonCreator
     public ExpressionContext(final int maxStringLength,
                              final DateTimeSettings dateTimeSettings,
-                             final LookupProvider lookupProvider) {
+                             final StateProvider stateProvider) {
         this.maxStringLength = maxStringLength;
         this.dateTimeSettings = dateTimeSettings;
-        this.lookupProvider = lookupProvider;
+        this.stateProvider = stateProvider;
     }
 
     public int getMaxStringLength() {
@@ -35,8 +35,8 @@ public class ExpressionContext {
         return dateTimeSettings;
     }
 
-    public LookupProvider getLookupProvider() {
-        return lookupProvider;
+    public StateProvider getStateProvider() {
+        return stateProvider;
     }
 
     @Override
@@ -81,7 +81,7 @@ public class ExpressionContext {
 
         private int maxStringLength;
         private DateTimeSettings dateTimeSettings;
-        private LookupProvider lookupProvider;
+        private StateProvider stateProvider;
 
         private Builder() {
         }
@@ -89,7 +89,7 @@ public class ExpressionContext {
         private Builder(final ExpressionContext expressionContext) {
             this.maxStringLength = expressionContext.maxStringLength;
             this.dateTimeSettings = expressionContext.dateTimeSettings;
-            this.lookupProvider = expressionContext.lookupProvider;
+            this.stateProvider = expressionContext.stateProvider;
         }
 
         public Builder maxStringLength(final int maxStringLength) {
@@ -102,13 +102,13 @@ public class ExpressionContext {
             return this;
         }
 
-        public Builder lookupProvider(final LookupProvider lookupProvider) {
-            this.lookupProvider = lookupProvider;
+        public Builder stateProvider(final StateProvider stateProvider) {
+            this.stateProvider = stateProvider;
             return this;
         }
 
         public ExpressionContext build() {
-            return new ExpressionContext(maxStringLength, dateTimeSettings, lookupProvider);
+            return new ExpressionContext(maxStringLength, dateTimeSettings, stateProvider);
         }
     }
 }
