@@ -13,6 +13,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.5-beta.3] - 2024-06-27
+
+* Issue **#2126** : Add experimental state store.
+
+* Issue **#4305** : Don't show warnings on the Server Tasks screen for disabled nodes. Append `(Disabled)` to the node name for disabled nodes in case a disabled node is still running tasks. Changed the position of the warning icon to the right of the wrap icon so it is the right-most icon.
+
+* Make the expand/collapse all icons on Server Tasks and Data Retention Impact Summary consistent with those on the Explorer tree.
+
+* Issue **#4334** : Popup explorer text on mouse hover.
+
+
 ## [v7.5-beta.2] - 2024-06-17
 
 * Issue **#4278** : Make document deletion also delete the permission records for that document. Also run migration `V07_04_00_005__Orphaned_Doc_Perms` which will delete all document permissions (in table `doc_permission`) for docs that are not a folder, not the System doc, are not a valid doc (i.e. in the `doc` table) and are not a pipeline filter. Deleted document permission records will first be copied to a backup table `doc_permission_backup_V07_04_00_005`. 
@@ -633,7 +644,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-beta.2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-beta.3...HEAD
+[v7.5-beta.3]: https://github.com/gchq/stroom/compare/v7.5-beta.2...v7.5-beta.3
 [v7.5-beta.2]: https://github.com/gchq/stroom/compare/v7.5-beta.1...v7.5-beta.2
 [v7.5-beta.1]: https://github.com/gchq/stroom/compare/v7.4-beta.16...v7.5-beta.1
 [v7.4-beta.16]: https://github.com/gchq/stroom/compare/v7.4-beta.15...v7.4-beta.16
