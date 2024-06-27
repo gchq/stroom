@@ -20,7 +20,7 @@ package stroom.analytics.impl;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.core.dataprocess.ProcessorTaskDecorator;
 import stroom.docref.DocRef;
-import stroom.expression.api.ExpressionContext;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.meta.shared.Meta;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.query.api.v2.ParamUtil;

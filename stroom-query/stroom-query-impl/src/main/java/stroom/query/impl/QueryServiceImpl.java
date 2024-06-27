@@ -26,7 +26,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.expression.api.DateTimeSettings;
-import stroom.expression.api.ExpressionContext;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.Param;

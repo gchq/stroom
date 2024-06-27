@@ -26,6 +26,8 @@ import stroom.job.api.ScheduledJobsBinder;
 import stroom.pipeline.xsltfunctions.StateLookup;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.SearchProvider;
+import stroom.query.language.functions.LookupProvider;
+import stroom.state.impl.pipeline.LookupProviderImpl;
 import stroom.state.impl.pipeline.StateElementModule;
 import stroom.state.impl.pipeline.StateLookupImpl;
 import stroom.state.shared.ScyllaDbDoc;
@@ -46,15 +48,8 @@ public class StateModule extends AbstractModule {
         install(new StateElementModule());
 
         bind(StateLookup.class).to(StateLookupImpl.class);
+        bind(LookupProvider.class).to(LookupProviderImpl.class);
 
-//        // Services
-//
-//        bind(StateStoreService.class).to(ElasticSearchProvider.class);
-//        bind(ElasticSuggestionsQueryHandler.class).to(ElasticSuggestionsQueryHandlerImpl.class);
-//
-//        SuggestionsServiceBinder.create(binder())
-//                .bind(StateStoreDoc.DOCUMENT_TYPE, ElasticSuggestionsQueryHandler.class);
-//
         // Caches
         bind(ScyllaDbDocCache.class).to(ScyllaDbDocCacheImpl.class);
         bind(StateDocCache.class).to(StateDocCacheImpl.class);

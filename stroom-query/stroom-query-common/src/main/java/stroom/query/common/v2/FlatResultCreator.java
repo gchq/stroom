@@ -16,7 +16,7 @@
 
 package stroom.query.common.v2;
 
-import stroom.expression.api.ExpressionContext;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.FlatResultBuilder;

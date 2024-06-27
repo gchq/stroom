@@ -1,7 +1,7 @@
 package stroom.query.common.v2;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
-import stroom.expression.api.ExpressionContext;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.language.functions.FieldIndex;

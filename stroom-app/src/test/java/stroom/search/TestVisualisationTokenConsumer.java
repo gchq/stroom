@@ -2,7 +2,7 @@ package stroom.search;
 
 import stroom.dictionary.impl.DictionaryStore;
 import stroom.expression.api.DateTimeSettings;
-import stroom.expression.api.ExpressionContext;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.index.impl.IndexStore;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.ExpressionContextFactory;

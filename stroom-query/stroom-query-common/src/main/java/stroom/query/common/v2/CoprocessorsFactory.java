@@ -2,7 +2,7 @@ package stroom.query.common.v2;
 
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
-import stroom.expression.api.ExpressionContext;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.QueryKey;

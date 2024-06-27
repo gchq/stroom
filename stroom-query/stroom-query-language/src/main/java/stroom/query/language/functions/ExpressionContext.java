@@ -1,32 +1,30 @@
-package stroom.expression.api;
+package stroom.query.language.functions;
+
+import stroom.expression.api.DateTimeSettings;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
-@JsonPropertyOrder(alphabetic = true)
-@JsonInclude(Include.NON_NULL)
 public class ExpressionContext {
 
-    @JsonProperty
     private final int maxStringLength;
-    @JsonProperty
     private final DateTimeSettings dateTimeSettings;
+    private final LookupProvider lookupProvider;
 
     public ExpressionContext() {
         this.maxStringLength = 100;
         this.dateTimeSettings = DateTimeSettings.builder().build();
+        this.lookupProvider = (map, key, effectiveTimeMs) -> ValNull.INSTANCE;
     }
 
     @JsonCreator
-    public ExpressionContext(@JsonProperty("maxStringLength") final int maxStringLength,
-                             @JsonProperty("dateTimeSettings") final DateTimeSettings dateTimeSettings) {
+    public ExpressionContext(final int maxStringLength,
+                             final DateTimeSettings dateTimeSettings,
+                             final LookupProvider lookupProvider) {
         this.maxStringLength = maxStringLength;
         this.dateTimeSettings = dateTimeSettings;
+        this.lookupProvider = lookupProvider;
     }
 
     public int getMaxStringLength() {
@@ -35,6 +33,10 @@ public class ExpressionContext {
 
     public DateTimeSettings getDateTimeSettings() {
         return dateTimeSettings;
+    }
+
+    public LookupProvider getLookupProvider() {
+        return lookupProvider;
     }
 
     @Override
@@ -79,6 +81,7 @@ public class ExpressionContext {
 
         private int maxStringLength;
         private DateTimeSettings dateTimeSettings;
+        private LookupProvider lookupProvider;
 
         private Builder() {
         }
@@ -86,6 +89,7 @@ public class ExpressionContext {
         private Builder(final ExpressionContext expressionContext) {
             this.maxStringLength = expressionContext.maxStringLength;
             this.dateTimeSettings = expressionContext.dateTimeSettings;
+            this.lookupProvider = expressionContext.lookupProvider;
         }
 
         public Builder maxStringLength(final int maxStringLength) {
@@ -98,8 +102,13 @@ public class ExpressionContext {
             return this;
         }
 
+        public Builder lookupProvider(final LookupProvider lookupProvider) {
+            this.lookupProvider = lookupProvider;
+            return this;
+        }
+
         public ExpressionContext build() {
-            return new ExpressionContext(maxStringLength, dateTimeSettings);
+            return new ExpressionContext(maxStringLength, dateTimeSettings, lookupProvider);
         }
     }
 }
