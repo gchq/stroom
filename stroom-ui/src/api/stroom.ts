@@ -147,6 +147,7 @@ export interface AnalyticRuleDoc {
   createTimeMs?: number;
   createUser?: string;
   description?: string;
+  duplicateNotificationConfig?: DuplicateNotificationConfig;
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   errorFeed?: DocRef;
@@ -1241,6 +1242,13 @@ export interface DuplicateCheckRows {
 
   /** A page of results. */
   resultPage?: ResultPageDuplicateCheckRow;
+}
+
+export interface DuplicateNotificationConfig {
+  chooseColumns?: boolean;
+  columnNames?: string[];
+  rememberNotifications?: boolean;
+  suppressDuplicateNotifications?: boolean;
 }
 
 export interface ElasticClusterDoc {
