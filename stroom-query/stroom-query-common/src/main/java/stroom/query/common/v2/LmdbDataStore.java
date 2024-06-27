@@ -19,7 +19,6 @@ package stroom.query.common.v2;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.expression.api.DateTimeSettings;
-import stroom.query.language.functions.ExpressionContext;
 import stroom.lmdb2.LmdbDb;
 import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.ReadTxn;
@@ -35,6 +34,7 @@ import stroom.query.api.v2.TimeFilter;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.query.language.functions.ChildData;
 import stroom.query.language.functions.CountPrevious;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Generator;
 import stroom.query.language.functions.Val;

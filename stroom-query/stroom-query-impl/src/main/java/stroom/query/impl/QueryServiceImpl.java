@@ -26,7 +26,6 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.expression.api.DateTimeSettings;
-import stroom.query.language.functions.ExpressionContext;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.Param;
@@ -41,6 +40,7 @@ import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.language.SearchRequestFactory;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.token.TokenException;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryContext;
@@ -56,7 +56,6 @@ import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResultPage;
 import stroom.util.string.ExceptionStringUtil;
-import stroom.view.api.ViewStore;
 
 import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
@@ -86,7 +85,6 @@ class QueryServiceImpl implements QueryService {
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
     private final DataSourceProviderRegistry dataSourceProviderRegistry;
-    private final ViewStore viewStore;
     private final ResultStoreManager searchResponseCreatorManager;
     private final NodeInfo nodeInfo;
     private final SearchRequestFactory searchRequestFactory;
@@ -101,7 +99,6 @@ class QueryServiceImpl implements QueryService {
                      final ExecutorProvider executorProvider,
                      final TaskContextFactory taskContextFactory,
                      final DataSourceProviderRegistry dataSourceProviderRegistry,
-                     final ViewStore viewStore,
                      final ResultStoreManager searchResponseCreatorManager,
                      final NodeInfo nodeInfo,
                      final SearchRequestFactory searchRequestFactory,
@@ -114,7 +111,6 @@ class QueryServiceImpl implements QueryService {
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
         this.dataSourceProviderRegistry = dataSourceProviderRegistry;
-        this.viewStore = viewStore;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.nodeInfo = nodeInfo;
         this.searchRequestFactory = searchRequestFactory;

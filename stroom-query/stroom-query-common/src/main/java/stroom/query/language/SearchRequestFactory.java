@@ -1,7 +1,6 @@
 package stroom.query.language;
 
 import stroom.docref.DocRef;
-import stroom.query.language.functions.ExpressionContext;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -21,6 +20,7 @@ import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.DateExpressionParser.DatePoint;
 import stroom.query.language.functions.Expression;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.ExpressionParser;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ParamFactory;

@@ -19,7 +19,6 @@ package stroom.search;
 
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
-import stroom.query.language.functions.ExpressionContext;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.query.api.v2.DestroyReason;
@@ -33,6 +32,7 @@ import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.language.SearchRequestFactory;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.json.JsonUtil;
 

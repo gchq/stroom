@@ -1,11 +1,11 @@
 package stroom.query.language;
 
 import stroom.expression.api.DateTimeSettings;
-import stroom.query.language.functions.ExpressionContext;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.token.AbstractQueryTest;
 import stroom.util.json.JsonUtil;
 

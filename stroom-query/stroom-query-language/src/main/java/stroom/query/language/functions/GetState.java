@@ -31,7 +31,8 @@ import java.util.function.Supplier;
         commonReturnType = ValString.class,
         commonReturnDescription = "The state value if found else null.",
         signatures = @FunctionSignature(
-                description = "Lookup a value from a state map using a key and optional effective time for temporally sensitive states.",
+                description = "Lookup a value from a state map using a key and optional effective time for " +
+                        "temporally sensitive states.",
                 args = {
                         @FunctionArg(
                                 name = "map",

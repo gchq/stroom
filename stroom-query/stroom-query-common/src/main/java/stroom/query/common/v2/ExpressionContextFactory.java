@@ -1,17 +1,14 @@
 package stroom.query.common.v2;
 
 import stroom.expression.api.DateTimeSettings;
-import stroom.query.language.functions.ExpressionContext;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchRequestSource;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.LookupProvider;
-import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValNull;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
-
-import java.time.Instant;
 
 public class ExpressionContextFactory {
 
