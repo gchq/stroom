@@ -18,6 +18,7 @@ package stroom.analytics.impl;
 
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.DuplicateNotificationConfig;
 import stroom.analytics.shared.NotificationConfig;
 import stroom.analytics.shared.NotificationDestinationType;
 import stroom.analytics.shared.NotificationStreamDestination;
@@ -127,6 +128,12 @@ class TestDuplicateCheckFactoryImpl {
 
     private DuplicateCheck createDuplicateCheck(final DuplicateCheckFactoryImpl duplicateCheckFactory,
                                                 final String ruleUUID) {
+        final DuplicateNotificationConfig duplicateNotificationConfig = new DuplicateNotificationConfig(
+                true,
+                true,
+                false,
+                Collections.emptyList());
+
         final AnalyticRuleDoc analyticRuleDoc = AnalyticRuleDoc.builder()
                 .uuid(ruleUUID)
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
@@ -134,8 +141,7 @@ class TestDuplicateCheckFactoryImpl {
                 .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
                 .notifications(createNotificationConfig())
                 .errorFeed(new DocRef("Feed", "error"))
-                .rememberNotifications(true)
-                .suppressDuplicateNotifications(true)
+                .duplicateNotificationConfig(duplicateNotificationConfig)
                 .build();
 
         final Column column = Column

@@ -4,6 +4,7 @@ import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.DeleteDuplicateCheckRequest;
 import stroom.analytics.shared.DuplicateCheckRow;
 import stroom.analytics.shared.DuplicateCheckRows;
+import stroom.analytics.shared.DuplicateNotificationConfig;
 import stroom.analytics.shared.FindDuplicateCheckCriteria;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.query.api.v2.Row;
@@ -47,23 +48,16 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
     @Override
     public DuplicateCheck create(final AnalyticRuleDoc analyticRuleDoc,
                                  final CompiledColumns compiledColumns) {
-        if (!analyticRuleDoc.isRememberNotifications() &&
-                !analyticRuleDoc.isSuppressDuplicateNotifications()) {
-            return new DuplicateCheck() {
-                @Override
-                public boolean check(final Row row) {
-                    return true;
-                }
-
-                @Override
-                public void close() {
-                    // Ignore
-                }
-            };
+        final DuplicateNotificationConfig duplicateNotificationConfig =
+                analyticRuleDoc.getDuplicateNotificationConfig();
+        if (!duplicateNotificationConfig.isRememberNotifications() &&
+                !duplicateNotificationConfig.isSuppressDuplicateNotifications()) {
+            return new NoOpDuplicateCheck();
         }
 
         final DuplicateCheckStore store = pool.borrow(analyticRuleDoc.getUuid());
-        final DuplicateCheckRowFactory duplicateCheckRowFactory = new DuplicateCheckRowFactory(compiledColumns);
+        final DuplicateCheckRowFactory duplicateCheckRowFactory =
+                new DuplicateCheckRowFactory(duplicateNotificationConfig, compiledColumns);
         store.writeColumnNames(duplicateCheckRowFactory.getColumnNames());
 
         return new DuplicateCheck() {
@@ -71,7 +65,7 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
             public boolean check(final Row row) {
                 final DuplicateCheckRow duplicateCheckRow = duplicateCheckRowFactory.createDuplicateCheckRow(row);
                 final boolean success = store.tryInsert(duplicateCheckRow);
-                if (analyticRuleDoc.isSuppressDuplicateNotifications()) {
+                if (duplicateNotificationConfig.isSuppressDuplicateNotifications()) {
                     return success;
                 } else {
                     return true;
@@ -91,5 +85,18 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
 
     public synchronized Boolean delete(final DeleteDuplicateCheckRequest request) {
         return pool.use(request.getAnalyticDocUuid(), store -> store.delete(request, byteBufferFactory));
+    }
+
+    private static class NoOpDuplicateCheck implements DuplicateCheck {
+
+        @Override
+        public boolean check(final Row row) {
+            return true;
+        }
+
+        @Override
+        public void close() {
+            // Ignore
+        }
     }
 }
