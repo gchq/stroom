@@ -4,11 +4,13 @@ import stroom.pipeline.refdata.LookupIdentifier;
 import stroom.pipeline.refdata.ReferenceDataResult;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.xsltfunctions.StateLookup;
 import stroom.state.impl.CqlSessionFactory;
 import stroom.state.impl.StateDocCache;
 import stroom.state.impl.dao.RangedStateDao;
 import stroom.state.impl.dao.RangedStateRequest;
+import stroom.state.impl.dao.SessionDao;
 import stroom.state.impl.dao.StateDao;
 import stroom.state.impl.dao.StateRequest;
 import stroom.state.impl.dao.TemporalRangedStateDao;
@@ -25,6 +27,8 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Locale;
@@ -33,6 +37,11 @@ import java.util.Optional;
 
 @PipelineScoped
 public class StateLookupImpl implements StateLookup {
+
+    private static final ByteBuffer TRUE = ByteBuffer
+            .wrap(Boolean.toString(true).getBytes(StandardCharsets.UTF_8));
+    private static final ByteBuffer FALSE = ByteBuffer
+            .wrap(Boolean.toString(false).getBytes(StandardCharsets.UTF_8));
 
     private final CqlSessionFactory cqlSessionFactory;
     private final StateDocCache stateDocCache;
@@ -125,7 +134,19 @@ public class StateLookupImpl implements StateLookup {
                         eventTime);
                 optional = new TemporalRangedStateDao(sessionProvider).getState(request);
             }
-            case SESSION -> throw new RuntimeException("Unsupported");
+            case SESSION -> {
+                final TemporalStateRequest request = new TemporalStateRequest(
+                        mapName,
+                        keyName,
+                        eventTime);
+                final boolean inSession = new SessionDao(sessionProvider).inSession(request);
+                final ByteBuffer byteBuffer = inSession
+                        ? TRUE
+                        : FALSE;
+                final TemporalState state = new TemporalState(keyName, eventTime, StringValue.TYPE_ID, byteBuffer);
+                optional = Optional.of(state);
+            }
+            default -> throw new RuntimeException("Unexpected state type: " + doc.getStateType());
         }
 
         return optional;
