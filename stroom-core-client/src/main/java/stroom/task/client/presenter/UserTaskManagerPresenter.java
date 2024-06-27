@@ -226,12 +226,20 @@ public class UserTaskManagerPresenter
     protected void revealInParent() {
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface UserTaskManagerView extends View, Focus {
 
         void addTask(View task);
 
         void removeTask(View task);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     @ProxyCodeSplit
     public interface UserTaskManagerProxy extends Proxy<UserTaskManagerPresenter> {

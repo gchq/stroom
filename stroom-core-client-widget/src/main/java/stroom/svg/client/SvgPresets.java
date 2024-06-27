@@ -77,6 +77,8 @@ public final class SvgPresets {
 
     public static final Preset COLLAPSE_UP = enabled(SvgImage.COLLAPSE_UP, "Collapse");
     public static final Preset EXPAND_DOWN = enabled(SvgImage.EXPAND_DOWN, "Expand");
+    public static final Preset COLLAPSE_ALL = enabled(SvgImage.COLLAPSE_ALL, "Collapse All");
+    public static final Preset EXPAND_ALL = enabled(SvgImage.EXPAND_ALL, "Expand All");
 
     public static final Preset LOCKED_AMBER = enabled(SvgImage.LOCKED, "Locked");
 
