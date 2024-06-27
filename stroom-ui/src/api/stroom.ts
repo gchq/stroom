@@ -5149,7 +5149,6 @@ export interface StateDoc {
   createTimeMs?: number;
   createUser?: string;
   description?: string;
-  keyspace?: string;
   keyspaceCql?: string;
   name?: string;
 

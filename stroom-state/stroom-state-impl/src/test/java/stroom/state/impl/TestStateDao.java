@@ -72,13 +72,12 @@ class TestStateDao {
             stateDao.dropTables();
             stateDao.createTables();
 
-            Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
             insertData(stateDao, 100);
             insertData(stateDao, 10);
 
             assertThat(stateDao.count()).isEqualTo(1);
 
-            stateDao.removeOldData(refTime);
+            stateDao.removeOldData(Instant.parse("2000-01-01T00:00:00.000Z"));
             assertThat(stateDao.count()).isEqualTo(1);
 
             stateDao.removeOldData(Instant.now());

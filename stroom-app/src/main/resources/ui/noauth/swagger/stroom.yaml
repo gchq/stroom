@@ -14999,8 +14999,6 @@ components:
           type: string
         description:
           type: string
-        keyspace:
-          type: string
         keyspaceCql:
           type: string
         name:

@@ -405,10 +405,9 @@ public class DocumentPluginEventManager extends Plugin {
             event.getHidePopupRequestEvent().hide();
 
             rename(event.getExplorerNode(), event.getDocName(), explorerNode -> {
-                        highlight(explorerNode);
-                        RefreshDocumentEvent.fire(this, explorerNode.getDocRef());
-                    }, explorerListener,
-                    event.getHidePopupRequestEvent());
+                highlight(explorerNode);
+                RefreshDocumentEvent.fire(this, explorerNode.getDocRef());
+            }, explorerListener, event.getHidePopupRequestEvent());
         }));
 
         // 10. Handle entity delete events.
