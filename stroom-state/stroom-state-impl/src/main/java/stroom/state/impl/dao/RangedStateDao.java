@@ -39,14 +39,14 @@ public class RangedStateDao extends AbstractStateDao<RangedState> {
     private static final CqlIdentifier TABLE = CqlIdentifier.fromCql("range");
     private static final CqlIdentifier COLUMN_KEY_START = CqlIdentifier.fromCql("key_start");
     private static final CqlIdentifier COLUMN_KEY_END = CqlIdentifier.fromCql("key_end");
-    private static final CqlIdentifier COLUMN_TYPE_ID = CqlIdentifier.fromCql("type_Id");
+    private static final CqlIdentifier COLUMN_VALUE_TYPE = CqlIdentifier.fromCql("value_type");
     private static final CqlIdentifier COLUMN_VALUE = CqlIdentifier.fromCql("value");
     private static final CqlIdentifier COLUMN_INSERT_TIME = CqlIdentifier.fromCql("insert_time");
     private static final SimpleStatement CREATE_TABLE = createTable(TABLE)
             .ifNotExists()
             .withPartitionKey(COLUMN_KEY_START, DataTypes.BIGINT)
             .withPartitionKey(COLUMN_KEY_END, DataTypes.BIGINT)
-            .withColumn(COLUMN_TYPE_ID, DataTypes.TINYINT)
+            .withColumn(COLUMN_VALUE_TYPE, DataTypes.TINYINT)
             .withColumn(COLUMN_VALUE, DataTypes.BLOB)
             .withColumn(COLUMN_INSERT_TIME, DataTypes.TIMESTAMP)
             .withCompaction(new DefaultTimeWindowCompactionStrategy())
@@ -58,7 +58,7 @@ public class RangedStateDao extends AbstractStateDao<RangedState> {
     private static final SimpleStatement INSERT = insertInto(TABLE)
             .value(COLUMN_KEY_START, bindMarker())
             .value(COLUMN_KEY_END, bindMarker())
-            .value(COLUMN_TYPE_ID, bindMarker())
+            .value(COLUMN_VALUE_TYPE, bindMarker())
             .value(COLUMN_VALUE, bindMarker())
             .value(COLUMN_INSERT_TIME, bindMarker())
             .build();
@@ -70,7 +70,7 @@ public class RangedStateDao extends AbstractStateDao<RangedState> {
             .build();
 
     private static final SimpleStatement SELECT = selectFrom(TABLE)
-            .column(COLUMN_TYPE_ID)
+            .column(COLUMN_VALUE_TYPE)
             .column(COLUMN_VALUE)
             .whereColumn(COLUMN_KEY_START).isLessThanOrEqualTo(bindMarker())
             .whereColumn(COLUMN_KEY_END).isGreaterThanOrEqualTo(bindMarker())
@@ -78,11 +78,17 @@ public class RangedStateDao extends AbstractStateDao<RangedState> {
             .allowFiltering()
             .build();
 
-    private static final Map<String, CqlIdentifier> COLUMN_MAP = Map.of(
-            RangedStateFields.KEY_START, COLUMN_KEY_START,
-            RangedStateFields.KEY_END, COLUMN_KEY_END,
-            RangedStateFields.VALUE_TYPE, COLUMN_TYPE_ID,
-            RangedStateFields.VALUE, COLUMN_VALUE);
+    private static final Map<String, ScyllaDbColumn> COLUMN_MAP = Map.of(
+            RangedStateFields.KEY_START,
+            new ScyllaDbColumn(RangedStateFields.KEY_START, DataTypes.BIGINT, COLUMN_KEY_START),
+            RangedStateFields.KEY_END,
+            new ScyllaDbColumn(RangedStateFields.KEY_END, DataTypes.BIGINT, COLUMN_KEY_END),
+            RangedStateFields.VALUE_TYPE,
+            new ScyllaDbColumn(RangedStateFields.VALUE_TYPE, DataTypes.TINYINT, COLUMN_VALUE_TYPE),
+            RangedStateFields.VALUE,
+            new ScyllaDbColumn(RangedStateFields.VALUE, DataTypes.BLOB, COLUMN_VALUE),
+            RangedStateFields.INSERT_TIME,
+            new ScyllaDbColumn(RangedStateFields.INSERT_TIME, DataTypes.TIMESTAMP, COLUMN_INSERT_TIME));
 
     private final SearchHelper searchHelper;
 
@@ -92,7 +98,6 @@ public class RangedStateDao extends AbstractStateDao<RangedState> {
                 sessionProvider,
                 TABLE,
                 COLUMN_MAP,
-                RangedStateFields.FIELD_MAP,
                 RangedStateFields.VALUE_TYPE,
                 RangedStateFields.VALUE);
     }

@@ -29,19 +29,27 @@ import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
 import stroom.state.shared.StateDoc;
 import stroom.state.shared.StateType;
+import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Message;
 
+import com.datastax.oss.driver.api.core.CqlSession;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Singleton
 public class StateDocStoreImpl implements StateDocStore {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StateDocStoreImpl.class);
 
     public static final DocumentType DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.INDEXING,
@@ -49,14 +57,17 @@ public class StateDocStoreImpl implements StateDocStore {
             "State Store",
             StateDoc.ICON);
     private final Store<StateDoc> store;
+    private final Provider<CqlSessionCache> cqlSessionCacheProvider;
     private final SecurityContext securityContext;
 
     @Inject
     public StateDocStoreImpl(
             final StoreFactory storeFactory,
             final StateDocSerialiser serialiser,
+            final Provider<CqlSessionCache> cqlSessionCacheProvider,
             final SecurityContext securityContext) {
         this.store = storeFactory.createStore(serialiser, StateDoc.DOCUMENT_TYPE, StateDoc.class);
+        this.cqlSessionCacheProvider = cqlSessionCacheProvider;
         this.securityContext = securityContext;
     }
 
@@ -82,7 +93,6 @@ public class StateDocStoreImpl implements StateDocStore {
 
         // Set the default keyspace.
         StateDoc doc = store.readDocument(created);
-        doc.setKeyspace(name);
         doc.setKeyspaceCql(ScyllaDbUtil.createKeyspaceCql(name));
         doc.setStateType(StateType.TEMPORAL_STATE);
         doc.setRetainForever(true);
@@ -198,11 +208,10 @@ public class StateDocStoreImpl implements StateDocStore {
     private void fixKeyspace(final DocRef docRef) {
         final StateDoc doc = readDocument(docRef);
         if (doc != null) {
-            final String name = docRef.getName();
-            doc.setKeyspace(name);
+            final String keyspace = docRef.getName();
             if (doc.getKeyspaceCql() != null) {
                 String cql = doc.getKeyspaceCql();
-                cql = ScyllaDbUtil.replaceKeyspaceNameInCql(cql, name);
+                cql = ScyllaDbUtil.replaceKeyspaceNameInCql(cql, keyspace);
                 doc.setKeyspaceCql(cql);
                 writeDocument(doc);
             }
@@ -211,6 +220,20 @@ public class StateDocStoreImpl implements StateDocStore {
 
     @Override
     public void deleteDocument(final String uuid) {
+        // Drop the keyspace before deleting the document.
+        final StateDoc doc = readDocument(new DocRef(StateDoc.DOCUMENT_TYPE, uuid));
+        if (doc != null) {
+            try {
+                final CqlSessionCache sessionCache = cqlSessionCacheProvider.get();
+                final String keyspace = doc.getName();
+                final CqlSession session = sessionCache.get(keyspace);
+                ScyllaDbUtil.dropKeyspace(session, keyspace);
+                sessionCache.remove(keyspace);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e::getMessage, e);
+            }
+        }
+
         store.deleteDocument(uuid);
     }
 
@@ -239,6 +262,28 @@ public class StateDocStoreImpl implements StateDocStore {
 
     @Override
     public StateDoc writeDocument(final StateDoc document) {
+        // Validate that the keyspace CQL has the correct keyspace name else bad things could happen.
+        if (NullSafe.isBlankString(document.getKeyspaceCql())) {
+            throw new EntityServiceException("No keyspace CQL has been defined for '" +
+                    document.getName() +
+                    "'");
+        }
+
+        final Optional<String> keyspace = ScyllaDbUtil.extractKeyspaceNameFromCql(document.getKeyspaceCql());
+        if (keyspace.isEmpty()) {
+            throw new EntityServiceException("Unable to determine keyspace name from keyspace CQL in '" +
+                    document.getName() +
+                    "'");
+        }
+
+        if (!keyspace.get().equals(document.getName())) {
+            throw new EntityServiceException("Keyspace name '" +
+                    keyspace.get() +
+                    "' in CQL does not match document name '" +
+                    document.getName() +
+                    "'");
+        }
+
         return store.writeDocument(document);
     }
 

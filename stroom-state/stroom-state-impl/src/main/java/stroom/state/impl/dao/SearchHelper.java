@@ -1,6 +1,5 @@
 package stroom.state.impl.dao;
 
-import stroom.datasource.api.v2.QueryField;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.expression.api.DateTimeSettings;
 import stroom.query.language.functions.FieldIndex;
@@ -20,6 +19,8 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.type.DataType;
+import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import jakarta.inject.Provider;
 
@@ -34,8 +35,7 @@ public class SearchHelper {
 
     private final Provider<CqlSession> sessionProvider;
     private final CqlIdentifier table;
-    private final Map<String, CqlIdentifier> columnMap;
-    private final Map<String, QueryField> fieldMap;
+    private final Map<String, ScyllaDbColumn> columnMap;
     private final String valueTypeFieldName;
     private final String valueFieldName;
 
@@ -44,14 +44,12 @@ public class SearchHelper {
 
     public SearchHelper(final Provider<CqlSession> sessionProvider,
                         final CqlIdentifier table,
-                        final Map<String, CqlIdentifier> columnMap,
-                        final Map<String, QueryField> fieldMap,
+                        final Map<String, ScyllaDbColumn> columnMap,
                         final String valueTypeFieldName,
                         final String valueFieldName) {
         this.sessionProvider = sessionProvider;
         this.table = table;
         this.columnMap = columnMap;
-        this.fieldMap = fieldMap;
         this.valueTypeFieldName = valueTypeFieldName;
         this.valueFieldName = valueFieldName;
     }
@@ -61,7 +59,7 @@ public class SearchHelper {
                 final DateTimeSettings dateTimeSettings,
                 final ValuesConsumer consumer) {
         final List<Relation> relations = new ArrayList<>();
-        ScyllaDbExpressionUtil.getRelations(fieldMap, columnMap, criteria.getExpression(), relations, dateTimeSettings);
+        ScyllaDbExpressionUtil.getRelations(columnMap, criteria.getExpression(), relations, dateTimeSettings);
         final String[] fieldNames = fieldIndex.getFields();
         final List<CqlIdentifier> columns = new ArrayList<>();
 
@@ -69,10 +67,9 @@ public class SearchHelper {
         final ValFunction[] valFunctions = new ValFunction[fieldNames.length];
         for (int i = 0; i < fieldNames.length; i++) {
             final String fieldName = fieldNames[i];
-            final QueryField queryField = fieldMap.get(fieldName);
-            if (queryField != null) {
-                final CqlIdentifier column = columnMap.get(fieldName);
-                columns.add(column);
+            final ScyllaDbColumn column = columnMap.get(fieldName);
+            if (column != null) {
+                columns.add(column.cqlIdentifier());
                 final int pos = columnPos;
 
                 if (valueTypeFieldName.equals(fieldName)) {
@@ -86,17 +83,7 @@ public class SearchHelper {
                     }
                     valFunctions[i] = row -> ValUtil.getValue(row.getByte(valueTypePosition), row.getByteBuffer(pos));
                 } else {
-                    switch (queryField.getFldType()) {
-                        case ID -> valFunctions[i] = row -> ValLong.create(row.getLong(pos));
-                        case BOOLEAN -> valFunctions[i] = row -> ValBoolean.create(row.getBoolean(pos));
-                        case INTEGER -> valFunctions[i] = row -> ValInteger.create(row.getInt(pos));
-                        case LONG -> valFunctions[i] = row -> ValLong.create(row.getLong(pos));
-                        case FLOAT -> valFunctions[i] = row -> ValFloat.create(row.getFloat(pos));
-                        case DOUBLE -> valFunctions[i] = row -> ValDouble.create(row.getDouble(pos));
-                        case DATE -> valFunctions[i] = row -> ValDate.create(row.getInstant(pos));
-                        case TEXT -> valFunctions[i] = row -> ValString.create(row.getString(pos));
-                        default -> throw new RuntimeException("Unexpected field type");
-                    }
+                    valFunctions[i] = convertRow(column.dataType(), pos);
                 }
 
                 columnPos++;
@@ -107,7 +94,7 @@ public class SearchHelper {
 
         // Add the value type and record the value type position if it is needed.
         if (valuePosition != -1 && valueTypePosition == -1) {
-            columns.add(columnMap.get(valueTypeFieldName));
+            columns.add(columnMap.get(valueTypeFieldName).cqlIdentifier());
             valueTypePosition = columnPos;
         }
 
@@ -127,6 +114,26 @@ public class SearchHelper {
             }
             consumer.accept(Val.of(values));
         });
+    }
+
+    private ValFunction convertRow(final DataType dataType, final int pos) {
+        if (DataTypes.TEXT.equals(dataType)) {
+            return row -> ValString.create(row.getString(pos));
+        } else if (DataTypes.BOOLEAN.equals(dataType)) {
+            return row -> ValBoolean.create(row.getBoolean(pos));
+        } else if (DataTypes.INT.equals(dataType)) {
+            return row -> ValInteger.create(row.getInt(pos));
+        } else if (DataTypes.BIGINT.equals(dataType)) {
+            return row -> ValLong.create(row.getLong(pos));
+        } else if (DataTypes.FLOAT.equals(dataType)) {
+            return row -> ValFloat.create(row.getFloat(pos));
+        } else if (DataTypes.DOUBLE.equals(dataType)) {
+            return row -> ValDouble.create(row.getDouble(pos));
+        } else if (DataTypes.TIMESTAMP.equals(dataType)) {
+            return row -> ValDate.create(row.getInstant(pos));
+        }
+
+        throw new RuntimeException("Unexpected data type: " + dataType);
     }
 
     private interface ValFunction extends Function<Row, Val> {

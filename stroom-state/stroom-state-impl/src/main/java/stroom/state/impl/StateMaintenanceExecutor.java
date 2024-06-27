@@ -3,9 +3,7 @@ package stroom.state.impl;
 import stroom.docref.DocRef;
 import stroom.security.api.SecurityContext;
 import stroom.state.impl.dao.DaoFactory;
-import stroom.state.impl.dao.RangedStateDao;
 import stroom.state.impl.dao.SessionDao;
-import stroom.state.impl.dao.StateDao;
 import stroom.state.impl.dao.TemporalRangedStateDao;
 import stroom.state.impl.dao.TemporalStateDao;
 import stroom.state.shared.StateDoc;
@@ -52,8 +50,9 @@ public class StateMaintenanceExecutor {
                 for (final DocRef docRef : list) {
                     try {
                         final StateDoc doc = stateDocStore.readDocument(docRef);
+                        final String keyspace = doc.getName();
                         if (doc.isCondense()) {
-                            taskContext.info(() -> "Condensing " + doc.getKeyspace());
+                            taskContext.info(() -> "Condensing " + keyspace);
                             final SimpleDuration duration = SimpleDuration
                                     .builder()
                                     .time(doc.getCondenseAge())
@@ -62,7 +61,7 @@ public class StateMaintenanceExecutor {
                             final Instant oldest = SimpleDurationUtil.minus(Instant.now(), duration);
 
                             final Provider<CqlSession> cqlSessionProvider =
-                                    cqlSessionFactory.getSessionProvider(doc.getKeyspace());
+                                    cqlSessionFactory.getSessionProvider(keyspace);
                             switch (doc.getStateType()) {
                                 case TEMPORAL_STATE -> new TemporalStateDao(cqlSessionProvider)
                                         .condense(oldest);
@@ -74,7 +73,7 @@ public class StateMaintenanceExecutor {
                         }
 
                         if (!doc.isRetainForever()) {
-                            taskContext.info(() -> "State Retention " + doc.getKeyspace());
+                            taskContext.info(() -> "State Retention " + keyspace);
                             final SimpleDuration duration = SimpleDuration
                                     .builder()
                                     .time(doc.getRetainAge())
@@ -83,7 +82,7 @@ public class StateMaintenanceExecutor {
                             final Instant oldest = SimpleDurationUtil.minus(Instant.now(), duration);
 
                             final Provider<CqlSession> cqlSessionProvider =
-                                    cqlSessionFactory.getSessionProvider(doc.getKeyspace());
+                                    cqlSessionFactory.getSessionProvider(keyspace);
                             DaoFactory.create(cqlSessionProvider, doc.getStateType()).removeOldData(oldest);
                         }
                     } catch (final Exception e) {

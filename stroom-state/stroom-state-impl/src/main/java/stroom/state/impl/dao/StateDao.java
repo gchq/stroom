@@ -39,13 +39,13 @@ public class StateDao extends AbstractStateDao<State> {
 
     private static final CqlIdentifier TABLE = CqlIdentifier.fromCql("state");
     private static final CqlIdentifier COLUMN_KEY = CqlIdentifier.fromCql("key");
-    private static final CqlIdentifier COLUMN_TYPE_ID = CqlIdentifier.fromCql("type_Id");
+    private static final CqlIdentifier COLUMN_VALUE_TYPE = CqlIdentifier.fromCql("value_type");
     private static final CqlIdentifier COLUMN_VALUE = CqlIdentifier.fromCql("value");
     private static final CqlIdentifier COLUMN_INSERT_TIME = CqlIdentifier.fromCql("insert_time");
     private static final SimpleStatement CREATE_TABLE = createTable(TABLE)
             .ifNotExists()
             .withPartitionKey(COLUMN_KEY, DataTypes.TEXT)
-            .withColumn(COLUMN_TYPE_ID, DataTypes.TINYINT)
+            .withColumn(COLUMN_VALUE_TYPE, DataTypes.TINYINT)
             .withColumn(COLUMN_VALUE, DataTypes.BLOB)
             .withColumn(COLUMN_INSERT_TIME, DataTypes.TIMESTAMP)
             .withCompaction(new DefaultTimeWindowCompactionStrategy())
@@ -56,7 +56,7 @@ public class StateDao extends AbstractStateDao<State> {
 
     private static final SimpleStatement INSERT = insertInto(TABLE)
             .value(COLUMN_KEY, bindMarker())
-            .value(COLUMN_TYPE_ID, bindMarker())
+            .value(COLUMN_VALUE_TYPE, bindMarker())
             .value(COLUMN_VALUE, bindMarker())
             .value(COLUMN_INSERT_TIME, bindMarker())
             .build();
@@ -67,17 +67,21 @@ public class StateDao extends AbstractStateDao<State> {
             .build();
 
     private static final SimpleStatement SELECT = selectFrom(TABLE)
-            .column(COLUMN_TYPE_ID)
+            .column(COLUMN_VALUE_TYPE)
             .column(COLUMN_VALUE)
             .whereColumn(COLUMN_KEY).isEqualTo(bindMarker())
             .limit(1)
             .allowFiltering()
             .build();
-
-    private static final Map<String, CqlIdentifier> COLUMN_MAP = Map.of(
-            StateFields.KEY, COLUMN_KEY,
-            StateFields.VALUE_TYPE, COLUMN_TYPE_ID,
-            StateFields.VALUE, COLUMN_VALUE);
+    private static final Map<String, ScyllaDbColumn> COLUMN_MAP = Map.of(
+            StateFields.KEY,
+            new ScyllaDbColumn(StateFields.KEY, DataTypes.TEXT, COLUMN_KEY),
+            StateFields.VALUE_TYPE,
+            new ScyllaDbColumn(StateFields.VALUE_TYPE, DataTypes.TINYINT, COLUMN_VALUE_TYPE),
+            StateFields.VALUE,
+            new ScyllaDbColumn(StateFields.VALUE, DataTypes.BLOB, COLUMN_VALUE),
+            StateFields.INSERT_TIME,
+            new ScyllaDbColumn(StateFields.INSERT_TIME, DataTypes.TIMESTAMP, COLUMN_INSERT_TIME));
 
     private final SearchHelper searchHelper;
 
@@ -87,7 +91,6 @@ public class StateDao extends AbstractStateDao<State> {
                 sessionProvider,
                 TABLE,
                 COLUMN_MAP,
-                StateFields.FIELD_MAP,
                 StateFields.VALUE_TYPE,
                 StateFields.VALUE);
     }

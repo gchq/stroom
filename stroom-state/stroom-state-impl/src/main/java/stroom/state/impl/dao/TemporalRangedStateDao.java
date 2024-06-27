@@ -44,14 +44,14 @@ public class TemporalRangedStateDao extends AbstractStateDao<TemporalRangedState
     private static final CqlIdentifier COLUMN_KEY_START = CqlIdentifier.fromCql("key_start");
     private static final CqlIdentifier COLUMN_KEY_END = CqlIdentifier.fromCql("key_end");
     private static final CqlIdentifier COLUMN_EFFECTIVE_TIME = CqlIdentifier.fromCql("effective_time");
-    private static final CqlIdentifier COLUMN_TYPE_ID = CqlIdentifier.fromCql("type_Id");
+    private static final CqlIdentifier COLUMN_VALUE_TYPE = CqlIdentifier.fromCql("value_type");
     private static final CqlIdentifier COLUMN_VALUE = CqlIdentifier.fromCql("value");
     private static final SimpleStatement CREATE_TABLE = createTable(TABLE)
             .ifNotExists()
             .withPartitionKey(COLUMN_KEY_START, DataTypes.BIGINT)
             .withPartitionKey(COLUMN_KEY_END, DataTypes.BIGINT)
             .withClusteringColumn(COLUMN_EFFECTIVE_TIME, DataTypes.TIMESTAMP)
-            .withColumn(COLUMN_TYPE_ID, DataTypes.TINYINT)
+            .withColumn(COLUMN_VALUE_TYPE, DataTypes.TINYINT)
             .withColumn(COLUMN_VALUE, DataTypes.BLOB)
             .withClusteringOrder(COLUMN_EFFECTIVE_TIME, ClusteringOrder.DESC)
             .withCompaction(new DefaultTimeWindowCompactionStrategy())
@@ -64,7 +64,7 @@ public class TemporalRangedStateDao extends AbstractStateDao<TemporalRangedState
             .value(COLUMN_KEY_START, bindMarker())
             .value(COLUMN_KEY_END, bindMarker())
             .value(COLUMN_EFFECTIVE_TIME, bindMarker())
-            .value(COLUMN_TYPE_ID, bindMarker())
+            .value(COLUMN_VALUE_TYPE, bindMarker())
             .value(COLUMN_VALUE, bindMarker())
             .build();
 
@@ -77,7 +77,7 @@ public class TemporalRangedStateDao extends AbstractStateDao<TemporalRangedState
 
     private static final SimpleStatement SELECT = selectFrom(TABLE)
             .column(COLUMN_EFFECTIVE_TIME)
-            .column(COLUMN_TYPE_ID)
+            .column(COLUMN_VALUE_TYPE)
             .column(COLUMN_VALUE)
             .whereColumn(COLUMN_KEY_START).isLessThanOrEqualTo(bindMarker())
             .whereColumn(COLUMN_KEY_END).isGreaterThanOrEqualTo(bindMarker())
@@ -85,13 +85,17 @@ public class TemporalRangedStateDao extends AbstractStateDao<TemporalRangedState
             .limit(1)
             .allowFiltering()
             .build();
-
-    private static final Map<String, CqlIdentifier> COLUMN_MAP = Map.of(
-            TemporalRangedStateFields.KEY_START, COLUMN_KEY_START,
-            TemporalRangedStateFields.KEY_END, COLUMN_KEY_END,
-            TemporalRangedStateFields.EFFECTIVE_TIME, COLUMN_EFFECTIVE_TIME,
-            TemporalRangedStateFields.VALUE_TYPE, COLUMN_TYPE_ID,
-            TemporalRangedStateFields.VALUE, COLUMN_VALUE);
+    private static final Map<String, ScyllaDbColumn> COLUMN_MAP = Map.of(
+            TemporalRangedStateFields.KEY_START,
+            new ScyllaDbColumn(TemporalRangedStateFields.KEY_START, DataTypes.BIGINT, COLUMN_KEY_START),
+            TemporalRangedStateFields.KEY_END,
+            new ScyllaDbColumn(TemporalRangedStateFields.KEY_END, DataTypes.BIGINT, COLUMN_KEY_END),
+            TemporalRangedStateFields.EFFECTIVE_TIME,
+            new ScyllaDbColumn(TemporalRangedStateFields.EFFECTIVE_TIME, DataTypes.TIMESTAMP, COLUMN_EFFECTIVE_TIME),
+            TemporalRangedStateFields.VALUE_TYPE,
+            new ScyllaDbColumn(TemporalRangedStateFields.VALUE_TYPE, DataTypes.TINYINT, COLUMN_VALUE_TYPE),
+            TemporalRangedStateFields.VALUE,
+            new ScyllaDbColumn(TemporalRangedStateFields.VALUE, DataTypes.BLOB, COLUMN_VALUE));
 
     private final SearchHelper searchHelper;
 
@@ -101,7 +105,6 @@ public class TemporalRangedStateDao extends AbstractStateDao<TemporalRangedState
                 sessionProvider,
                 TABLE,
                 COLUMN_MAP,
-                TemporalRangedStateFields.FIELD_MAP,
                 TemporalRangedStateFields.VALUE_TYPE,
                 TemporalRangedStateFields.VALUE);
     }
@@ -183,7 +186,7 @@ public class TemporalRangedStateDao extends AbstractStateDao<TemporalRangedState
         findKeys(Collections.emptyList(), (keyStart, keyEnd) -> {
             final SimpleStatement select = selectFrom(TABLE)
                     .column(COLUMN_EFFECTIVE_TIME)
-                    .column(COLUMN_TYPE_ID)
+                    .column(COLUMN_VALUE_TYPE)
                     .column(COLUMN_VALUE)
                     .whereColumn(COLUMN_KEY_START).isEqualTo(literal(keyStart))
                     .whereColumn(COLUMN_KEY_END).isEqualTo(literal(keyEnd))

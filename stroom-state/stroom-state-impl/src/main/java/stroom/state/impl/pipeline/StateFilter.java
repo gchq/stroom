@@ -514,16 +514,16 @@ public class StateFilter extends AbstractXMLFilter {
                     } catch (final RuntimeException e) {
                         error("Bad map name: " + k);
                     }
-                    StateDoc stateDoc = null;
+                    StateDoc doc = null;
                     try {
-                        stateDoc = stateDocCache.get(k);
-                        if (stateDoc == null) {
+                        doc = stateDocCache.get(k);
+                        if (doc == null) {
                             error("Unable to find state doc for map name: " + k);
                         }
                     } catch (final RuntimeException e) {
                         error(e);
                     }
-                    return Optional.ofNullable(stateDoc);
+                    return Optional.ofNullable(doc);
                 });
 
             } else if (KEY_ELEMENT.equalsIgnoreCase(localName)) {
@@ -626,7 +626,7 @@ public class StateFilter extends AbstractXMLFilter {
         valueCount++;
         try {
             stateDocOptional.ifPresent(stateDoc -> {
-                final String keyspace = stateDoc.getKeyspace();
+                final String keyspace = stateDoc.getName();
                 switch (stateDoc.getStateType()) {
                     case STATE -> {
                         if (key != null) {

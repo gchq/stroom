@@ -83,15 +83,15 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
     private StateDoc getStateDoc(final DocRef docRef) {
         Objects.requireNonNull(docRef, "Null doc reference");
         Objects.requireNonNull(docRef.getName(), "Null doc name");
-        final StateDoc stateDoc = stateDocCache.get(docRef.getName());
-        Objects.requireNonNull(stateDoc, "Null state doc");
-        return stateDoc;
+        final StateDoc doc = stateDocCache.get(docRef.getName());
+        Objects.requireNonNull(doc, "Null state doc");
+        return doc;
     }
 
     @Override
     public ResultPage<QueryField> getFieldInfo(final FindFieldInfoCriteria criteria) {
-        final StateDoc stateDoc = getStateDoc(criteria.getDataSourceRef());
-        final List<QueryField> fields = StateFieldUtil.getQueryableFields(stateDoc.getStateType());
+        final StateDoc doc = getStateDoc(criteria.getDataSourceRef());
+        final List<QueryField> fields = StateFieldUtil.getQueryableFields(doc.getStateType());
         return FieldInfoResultPageBuilder
                 .builder(criteria)
                 .addAll(fields)
@@ -100,8 +100,8 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
 
     @Override
     public IndexField getIndexField(final DocRef docRef, final String fieldName) {
-        final StateDoc stateDoc = getStateDoc(docRef);
-        final Map<String, QueryField> fieldMap = StateFieldUtil.getFieldMap(stateDoc.getStateType());
+        final StateDoc doc = getStateDoc(docRef);
+        final Map<String, QueryField> fieldMap = StateFieldUtil.getFieldMap(doc.getStateType());
         final QueryField queryField = fieldMap.get(fieldName);
         if (queryField == null) {
             return null;
@@ -131,8 +131,8 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
         final DocRef docRef = query.getDataSource();
 
         // Check we have permission to read the doc.
-        final StateDoc stateDoc = stateDocCache.get(docRef.getName());
-        Objects.requireNonNull(stateDoc, "Unable to find state doc with name: " + docRef.getName());
+        final StateDoc doc = stateDocCache.get(docRef.getName());
+        Objects.requireNonNull(doc, "Unable to find state doc with name: " + docRef.getName());
         final Provider<CqlSession> sessionProvider = cqlSessionFactory.getSessionProvider(docRef.getName());
 
         // Extract highlights.
@@ -205,7 +205,7 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
 
                 final Instant queryStart = Instant.now();
                 try {
-                    DaoFactory.create(sessionProvider, stateDoc.getStateType()).search(
+                    DaoFactory.create(sessionProvider, doc.getStateType()).search(
                             criteria,
                             coprocessors.getFieldIndex(),
                             searchRequest.getDateTimeSettings(),
@@ -232,8 +232,8 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
 
     @Override
     public QueryField getTimeField(final DocRef docRef) {
-        final StateDoc stateDoc = getStateDoc(docRef);
-        return StateFieldUtil.getTimeField(stateDoc.getStateType());
+        final StateDoc doc = getStateDoc(docRef);
+        return StateFieldUtil.getTimeField(doc.getStateType());
     }
 
     private String getStoreName(final DocRef docRef) {

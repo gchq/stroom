@@ -65,19 +65,7 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
         widget = binder.createAndBindUi(this);
         testConnection.setIcon(SvgImage.OK);
 
-        connectionUrls.addKeyDownHandler(e -> fireChange());
-        caCertificate.addKeyDownHandler(e -> fireChange());
-        apiKeyId.addKeyDownHandler(e -> fireChange());
-        apiKeySecret.addKeyDownHandler(e -> fireChange());
-        socketTimeoutMillis.addKeyDownHandler(e -> fireChange());
-
         updateAuthenticationControlEnabledState(useAuthentication.getValue());
-    }
-
-    private void fireChange() {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onChange();
-        }
     }
 
     @Override
@@ -160,17 +148,40 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
         socketTimeoutMillis.setEnabled(!readOnly);
     }
 
+    @UiHandler("connectionUrls")
+    public void onConnectionUrls(final ValueChangeEvent<String> event) {
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("caCertificate")
+    public void onCaCertificate(final ValueChangeEvent<String> event) {
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("apiKeyId")
+    public void onApiKeyId(final ValueChangeEvent<String> event) {
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("apiKeySecret")
+    public void onApiKeySecret(final ValueChangeEvent<String> event) {
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("socketTimeoutMillis")
+    public void onSocketTimeoutMillis(final ValueChangeEvent<Integer> event) {
+        getUiHandlers().onChange();
+    }
+
     @UiHandler("testConnection")
     public void onTestConnectionClick(final ClickEvent event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onTestConnection(testConnection);
-        }
+        getUiHandlers().onTestConnection(testConnection);
     }
 
     @UiHandler("useAuthentication")
     public void onUseAuthenticationChange(final ValueChangeEvent<Boolean> event) {
         updateAuthenticationControlEnabledState(event.getValue());
-        fireChange();
+        getUiHandlers().onChange();
     }
 
     private void updateAuthenticationControlEnabledState(final boolean useAuthentication) {

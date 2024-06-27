@@ -20,11 +20,6 @@ package stroom.state.impl;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.state.impl.dao.DaoFactory;
-import stroom.state.impl.dao.RangedStateDao;
-import stroom.state.impl.dao.SessionDao;
-import stroom.state.impl.dao.StateDao;
-import stroom.state.impl.dao.TemporalRangedStateDao;
-import stroom.state.impl.dao.TemporalStateDao;
 import stroom.state.shared.ScyllaDbDoc;
 import stroom.state.shared.StateDoc;
 import stroom.util.logging.LambdaLogger;
@@ -65,47 +60,48 @@ public class CqlSessionCacheImpl implements CqlSessionCache, Clearable {
                 this::destroy);
     }
 
-    private CqlSession create(final StateDoc stateDoc) {
-        if (stateDoc.getScyllaDbRef() == null) {
-            throw new RuntimeException("State doc scylla db ref not set: " + stateDoc);
+    private CqlSession create(final StateDoc doc) {
+        if (doc.getScyllaDbRef() == null) {
+            throw new RuntimeException("State doc scylla db ref not set: " + doc);
         }
-        final ScyllaDbDoc scyllaDbDoc = scyllaDbDocCache.get(stateDoc.getScyllaDbRef());
+        final ScyllaDbDoc scyllaDbDoc = scyllaDbDocCache.get(doc.getScyllaDbRef());
         if (scyllaDbDoc == null) {
-            throw new RuntimeException("Scylla DB doc not found: " + stateDoc.getScyllaDbRef());
+            throw new RuntimeException("Scylla DB doc not found: " + doc.getScyllaDbRef());
         }
 
-        LOGGER.info("Creating keyspace...");
+        final String keyspace = doc.getName();
+        LOGGER.info("Creating keyspace: " + keyspace);
         LOGGER.logDurationIfInfoEnabled(() -> {
             try (final CqlSession session = ScyllaDbUtil.connect(scyllaDbDoc.getConnection())) {
-                session.execute(stateDoc.getKeyspaceCql());
+                session.execute(doc.getKeyspaceCql());
             }
-        }, "creatingKeyspace()");
+        }, "creatingKeyspace: " + keyspace);
 
         final CqlSession session = ScyllaDbUtil.keyspace(
                 scyllaDbDoc.getConnection(),
-                stateDoc.getKeyspace());
-        DaoFactory.create(() -> session, stateDoc.getStateType()).createTables();
-        ScyllaDbUtil.printMetadata(() -> session, stateDoc.getKeyspace());
+                keyspace);
+        DaoFactory.create(() -> session, doc.getStateType()).createTables();
+        ScyllaDbUtil.printMetadata(() -> session, keyspace);
         return session;
     }
 
-    private void destroy(StateDoc stateDoc, final CqlSession session) {
+    private void destroy(StateDoc doc, final CqlSession session) {
         session.close();
     }
 
     @Override
     public CqlSession get(final String keyspace) {
         Objects.requireNonNull(keyspace, "Null keyspace supplied");
-        final StateDoc stateDoc = stateDocCache.get(keyspace);
+        final StateDoc doc = stateDocCache.get(keyspace);
         Objects.requireNonNull(keyspace, "Unable to find state doc");
-        return cache.get(stateDoc);
+        return cache.get(doc);
     }
 
     @Override
     public void remove(final String keyspace) {
-        final StateDoc stateDoc = stateDocCache.get(keyspace);
-        if (stateDoc != null) {
-            cache.invalidate(stateDoc);
+        final StateDoc doc = stateDocCache.get(keyspace);
+        if (doc != null) {
+            cache.invalidate(doc);
         }
     }
 

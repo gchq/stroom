@@ -90,16 +90,16 @@ public class StateDocCacheImpl implements StateDocCache, Clearable, EntityEvent.
     @Override
     public StateDoc get(final String name) {
         Objects.requireNonNull(name, "Null name supplied");
-        final StateDoc stateDoc = cache.get(name);
+        final StateDoc doc = cache.get(name);
 
-        final DocRef docRef = stateDoc.asDocRef();
+        final DocRef docRef = doc.asDocRef();
         if (!securityContext.hasDocumentPermission(docRef, DocumentPermissionNames.USE)) {
             throw new PermissionException(
                     securityContext.getUserIdentityForAudit(),
                     LogUtil.message("You are not authorised to read {}", docRef));
         }
 
-        return stateDoc;
+        return doc;
     }
 
     @Override
@@ -118,17 +118,9 @@ public class StateDocCacheImpl implements StateDocCache, Clearable, EntityEvent.
         final EntityAction eventAction = event.getAction();
 
         switch (eventAction) {
-            case CLEAR_CACHE -> {
+            case UPDATE, DELETE, CLEAR_CACHE -> {
                 LOGGER.debug("Clearing cache");
                 clear();
-            }
-            case UPDATE, DELETE -> {
-                NullSafe.consume(
-                        event.getDocRef(),
-                        docRef -> {
-                            LOGGER.debug("Invalidating docRef {}", docRef);
-                            cache.invalidate(docRef.getName());
-                        });
             }
             default -> LOGGER.debug("Unexpected event action {}", eventAction);
         }

@@ -91,11 +91,15 @@ public class SessionDao extends AbstractStateDao<Session> {
             .allowFiltering()
             .build();
 
-    private static final Map<String, CqlIdentifier> COLUMN_MAP = Map.of(
-            SessionFields.KEY, COLUMN_KEY,
-            SessionFields.START, COLUMN_START,
-            SessionFields.END, COLUMN_END,
-            SessionFields.TERMINAL, COLUMN_TERMINAL);
+    private static final Map<String, ScyllaDbColumn> COLUMN_MAP = Map.of(
+            SessionFields.KEY,
+            new ScyllaDbColumn(SessionFields.KEY, DataTypes.TEXT, COLUMN_KEY),
+            SessionFields.START,
+            new ScyllaDbColumn(SessionFields.START, DataTypes.TIMESTAMP, COLUMN_START),
+            SessionFields.END,
+            new ScyllaDbColumn(SessionFields.END, DataTypes.TIMESTAMP, COLUMN_END),
+            SessionFields.TERMINAL,
+            new ScyllaDbColumn(SessionFields.TERMINAL, DataTypes.BOOLEAN, COLUMN_TERMINAL));
 
     public SessionDao(final Provider<CqlSession> sessionProvider) {
         super(sessionProvider, TABLE);
@@ -150,7 +154,6 @@ public class SessionDao extends AbstractStateDao<Session> {
         final Consumer<Session> sessionConsumer = new SessionConsumer(fieldIndex, valuesConsumer);
         final List<Relation> relations = new ArrayList<>();
         ScyllaDbExpressionUtil.getRelations(
-                SessionFields.FIELD_MAP,
                 COLUMN_MAP,
                 criteria.getExpression(),
                 relations,

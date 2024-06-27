@@ -6,10 +6,13 @@ import stroom.util.logging.LambdaLoggerFactory;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.CqlSessionBuilder;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import jakarta.inject.Provider;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
@@ -44,19 +47,13 @@ public class ScyllaDbUtil {
         LOGGER.info(() -> "Using keyspace name: " + keyspaceName);
         try {
             try (final CqlSession session = builder(connectionYaml).build()) {
-                LOGGER.info(() -> "Creating keyspace: " + keyspaceName);
-                session.execute(createKeyspaceCql(keyspaceName));
-                LOGGER.info(() -> "Created keyspace: " + keyspaceName);
+                createKeyspace(session, keyspaceName);
             }
             try (final CqlSession ks = keyspace(connectionYaml, keyspaceName)) {
                 consumer.accept(() -> ks, keyspaceName);
             }
         } finally {
-            try (final CqlSession session2 = builder(connectionYaml).build()) {
-                LOGGER.info(() -> "Dropping keyspace: " + keyspaceName);
-                session2.execute(dropKeyspaceCql(keyspaceName));
-                LOGGER.info(() -> "Dropped keyspace: " + keyspaceName);
-            }
+            dropKeyspaceFromDefault(keyspaceName);
         }
     }
 
@@ -91,7 +88,25 @@ public class ScyllaDbUtil {
                 "\nAND durable_writes = TRUE;";
     }
 
+    public static Optional<String> extractKeyspaceNameFromCql(final String cql) {
+        final String[] parts = splitKeyspaceCql(cql);
+        if (parts.length == 3) {
+            return Optional.of(parts[1]);
+        }
+        return Optional.empty();
+    }
+
     public static String replaceKeyspaceNameInCql(final String cql, final String keyspaceName) {
+        final String[] parts = splitKeyspaceCql(cql);
+        if (parts.length == 3) {
+            final String prefix = parts[0];
+            final String suffix = parts[2];
+            return prefix + keyspaceName + suffix;
+        }
+        return cql;
+    }
+
+    private static String[] splitKeyspaceCql(final String cql) {
         final String lower = cql.toLowerCase(Locale.ROOT);
         int start = lower.indexOf("keyspace");
         if (start != -1) {
@@ -113,10 +128,11 @@ public class ScyllaDbUtil {
             }
 
             final String prefix = cql.substring(0, start);
+            final String keyspace = cql.substring(start, end);
             final String suffix = cql.substring(end);
-            return prefix + keyspaceName + suffix;
+            return new String[] {prefix, keyspace, suffix};
         }
-        return cql;
+        return new String[] {cql};
     }
 
     public static String dropKeyspaceCql(final String keyspaceName) {
@@ -167,5 +183,57 @@ public class ScyllaDbUtil {
                     return typeMapper.apply(envVarVal);
                 })
                 .orElseGet(valueSupplier);
+    }
+
+    public static List<String> getKeyspacesFromDefault() {
+        try (final CqlSession session = ScyllaDbUtil.connect(ScyllaDbUtil.getDefaultConnection())) {
+            return getKeyspaces(session);
+        }
+    }
+
+    public static List<String> getKeyspaces(final CqlSession session) {
+        final List<String> list = new ArrayList<>();
+        final ResultSet resultSet = session.execute("DESC keyspaces");
+        resultSet.forEach(row -> {
+            final String keyspace = row.getString(0);
+            // Ignore system keyspaces.
+            if (keyspace != null && !keyspace.startsWith("system")) {
+                LOGGER.info("Found keyspace: " + keyspace);
+                list.add(keyspace);
+            }
+        });
+        return list;
+    }
+
+    public static void createKeyspace(final CqlSession session, final String keyspace) {
+        LOGGER.info(() -> "Creating keyspace: " + keyspace);
+        final String cql = createKeyspaceCql(keyspace);
+        session.execute(cql);
+        LOGGER.info(() -> "Created keyspace: " + keyspace);
+    }
+
+    public static void dropAllKeyspacesFromDefault() {
+        try (final CqlSession session = ScyllaDbUtil.connect(ScyllaDbUtil.getDefaultConnection())) {
+            dropAllKeyspaces(session);
+        }
+    }
+
+    public static void dropAllKeyspaces(final CqlSession session) {
+        getKeyspaces(session).forEach(keyspace -> {
+            dropKeyspace(session, keyspace);
+        });
+    }
+
+    public static void dropKeyspaceFromDefault(final String keyspace) {
+        try (final CqlSession session = ScyllaDbUtil.connect(ScyllaDbUtil.getDefaultConnection())) {
+            dropKeyspace(session, keyspace);
+        }
+    }
+
+    public static void dropKeyspace(final CqlSession session, final String keyspace) {
+        LOGGER.info(() -> "Dropping keyspace: " + keyspace);
+        final String cql = dropKeyspaceCql(keyspace);
+        session.execute(cql);
+        LOGGER.info(() -> "Dropped keyspace: " + keyspace);
     }
 }

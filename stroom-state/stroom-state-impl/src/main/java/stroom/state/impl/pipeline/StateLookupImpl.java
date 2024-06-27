@@ -80,14 +80,15 @@ public class StateLookupImpl implements StateLookup {
         });
     }
 
-    private Optional<TemporalState> getState(final StateDoc stateDoc,
+    private Optional<TemporalState> getState(final StateDoc doc,
                                              final String mapName,
                                              final String keyName,
                                              final Instant eventTime) {
         Optional<TemporalState> optional = Optional.empty();
-        final Provider<CqlSession> sessionProvider = cqlSessionFactory.getSessionProvider(stateDoc.getKeyspace());
+        final String keyspace = doc.getName();
+        final Provider<CqlSession> sessionProvider = cqlSessionFactory.getSessionProvider(keyspace);
 
-        switch (stateDoc.getStateType()) {
+        switch (doc.getStateType()) {
             case STATE -> {
                 final StateRequest request = new StateRequest(
                         mapName,

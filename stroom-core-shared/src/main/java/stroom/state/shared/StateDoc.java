@@ -43,7 +43,6 @@ import java.util.Objects;
         "updateUser",
         "description",
         "scyllaDbRef",
-        "keyspace",
         "keyspaceCql",
         "stateType",
         "condense",
@@ -68,8 +67,6 @@ public class StateDoc extends Doc {
 
     @JsonProperty
     private String description;
-    @JsonProperty
-    private String keyspace;
     @JsonProperty
     private String keyspaceCql;
     @JsonProperty
@@ -102,7 +99,6 @@ public class StateDoc extends Doc {
             @JsonProperty("updateUser") final String updateUser,
             @JsonProperty("description") final String description,
             @JsonProperty("scyllaDbRef") final DocRef scyllaDbRef,
-            @JsonProperty("keyspace") final String keyspace,
             @JsonProperty("keyspaceCql") final String keyspaceCql,
             @JsonProperty("stateType") final StateType stateType,
             @JsonProperty("condense") final boolean condense,
@@ -114,7 +110,6 @@ public class StateDoc extends Doc {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.scyllaDbRef = scyllaDbRef;
-        this.keyspace = keyspace;
         this.keyspaceCql = keyspaceCql;
         this.stateType = stateType;
         this.condense = condense;
@@ -155,14 +150,6 @@ public class StateDoc extends Doc {
 
     public void setScyllaDbRef(final DocRef scyllaDbRef) {
         this.scyllaDbRef = scyllaDbRef;
-    }
-
-    public String getKeyspace() {
-        return keyspace;
-    }
-
-    public void setKeyspace(final String keyspace) {
-        this.keyspace = keyspace;
     }
 
     public String getKeyspaceCql() {
@@ -246,18 +233,17 @@ public class StateDoc extends Doc {
         if (!super.equals(o)) {
             return false;
         }
-        final StateDoc stateDoc = (StateDoc) o;
-        return condense == stateDoc.condense &&
-                condenseAge == stateDoc.condenseAge &&
-                retainForever == stateDoc.retainForever &&
-                retainAge == stateDoc.retainAge &&
-                Objects.equals(scyllaDbRef, stateDoc.scyllaDbRef) &&
-                Objects.equals(description, stateDoc.description) &&
-                Objects.equals(keyspace, stateDoc.keyspace) &&
-                Objects.equals(keyspaceCql, stateDoc.keyspaceCql) &&
-                stateType == stateDoc.stateType &&
-                condenseTimeUnit == stateDoc.condenseTimeUnit &&
-                retainTimeUnit == stateDoc.retainTimeUnit;
+        final StateDoc doc = (StateDoc) o;
+        return condense == doc.condense &&
+                condenseAge == doc.condenseAge &&
+                retainForever == doc.retainForever &&
+                retainAge == doc.retainAge &&
+                Objects.equals(scyllaDbRef, doc.scyllaDbRef) &&
+                Objects.equals(description, doc.description) &&
+                Objects.equals(keyspaceCql, doc.keyspaceCql) &&
+                stateType == doc.stateType &&
+                condenseTimeUnit == doc.condenseTimeUnit &&
+                retainTimeUnit == doc.retainTimeUnit;
     }
 
     @Override
@@ -265,7 +251,6 @@ public class StateDoc extends Doc {
         return Objects.hash(super.hashCode(),
                 scyllaDbRef,
                 description,
-                keyspace,
                 keyspaceCql,
                 stateType,
                 condense,
@@ -281,7 +266,6 @@ public class StateDoc extends Doc {
         return "StateDoc{" +
                 "scyllaDbRef=" + scyllaDbRef +
                 ", description='" + description + '\'' +
-                ", keyspace='" + keyspace + '\'' +
                 ", keyspaceCql='" + keyspaceCql + '\'' +
                 ", stateType=" + stateType +
                 ", condense=" + condense +

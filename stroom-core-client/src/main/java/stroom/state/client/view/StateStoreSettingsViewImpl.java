@@ -30,7 +30,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
@@ -75,8 +74,6 @@ public class StateStoreSettingsViewImpl
     @Inject
     public StateStoreSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        keyspace.addKeyDownHandler(e -> fireChange());
-        keyspaceCql.addKeyDownHandler(e -> fireChange());
 
         stateType.addItem(StateType.STATE);
         stateType.addItem(StateType.RANGED_STATE);
@@ -105,12 +102,8 @@ public class StateStoreSettingsViewImpl
         retainTimeUnit.addItem(TimeUnit.MONTHS);
         retainTimeUnit.addItem(TimeUnit.YEARS);
         retainTimeUnit.setValue(TimeUnit.YEARS);
-    }
 
-    private void fireChange() {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onChange();
-        }
+        keyspace.setEnabled(false);
     }
 
     @Override
@@ -121,11 +114,6 @@ public class StateStoreSettingsViewImpl
     @Override
     public void setClusterView(final View view) {
         scyllaDBConnection.setWidget(view.asWidget());
-    }
-
-    @Override
-    public String getKeyspace() {
-        return keyspace.getText();
     }
 
     @Override
@@ -245,13 +233,7 @@ public class StateStoreSettingsViewImpl
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        keyspace.setEnabled(!readOnly);
         keyspaceCql.setEnabled(!readOnly);
-    }
-
-    @UiHandler("keyspace")
-    public void onKeyspace(final ValueChangeEvent<String> event) {
-        getUiHandlers().onChange();
     }
 
     @UiHandler("keyspaceCql")

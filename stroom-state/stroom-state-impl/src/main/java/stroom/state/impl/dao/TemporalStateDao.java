@@ -44,13 +44,13 @@ public class TemporalStateDao extends AbstractStateDao<TemporalState> {
     private static final CqlIdentifier TABLE = CqlIdentifier.fromCql("temporal_state");
     private static final CqlIdentifier COLUMN_KEY = CqlIdentifier.fromCql("key");
     private static final CqlIdentifier COLUMN_EFFECTIVE_TIME = CqlIdentifier.fromCql("effective_time");
-    private static final CqlIdentifier COLUMN_TYPE_ID = CqlIdentifier.fromCql("type_Id");
+    private static final CqlIdentifier COLUMN_VALUE_TYPE = CqlIdentifier.fromCql("value_type");
     private static final CqlIdentifier COLUMN_VALUE = CqlIdentifier.fromCql("value");
     private static final SimpleStatement CREATE_TABLE = createTable(TABLE)
             .ifNotExists()
             .withPartitionKey(COLUMN_KEY, DataTypes.TEXT)
             .withClusteringColumn(COLUMN_EFFECTIVE_TIME, DataTypes.TIMESTAMP)
-            .withColumn(COLUMN_TYPE_ID, DataTypes.TINYINT)
+            .withColumn(COLUMN_VALUE_TYPE, DataTypes.TINYINT)
             .withColumn(COLUMN_VALUE, DataTypes.BLOB)
             .withClusteringOrder(COLUMN_EFFECTIVE_TIME, ClusteringOrder.DESC)
             .withCompaction(new DefaultTimeWindowCompactionStrategy())
@@ -62,7 +62,7 @@ public class TemporalStateDao extends AbstractStateDao<TemporalState> {
     private static final SimpleStatement INSERT = insertInto(TABLE)
             .value(COLUMN_KEY, bindMarker())
             .value(COLUMN_EFFECTIVE_TIME, bindMarker())
-            .value(COLUMN_TYPE_ID, bindMarker())
+            .value(COLUMN_VALUE_TYPE, bindMarker())
             .value(COLUMN_VALUE, bindMarker())
             .build();
 
@@ -74,7 +74,7 @@ public class TemporalStateDao extends AbstractStateDao<TemporalState> {
 
     private static final SimpleStatement SELECT = selectFrom(TABLE)
             .column(COLUMN_EFFECTIVE_TIME)
-            .column(COLUMN_TYPE_ID)
+            .column(COLUMN_VALUE_TYPE)
             .column(COLUMN_VALUE)
             .whereColumn(COLUMN_KEY).isEqualTo(bindMarker())
             .whereColumn(COLUMN_EFFECTIVE_TIME).isLessThanOrEqualTo(bindMarker())
@@ -83,11 +83,15 @@ public class TemporalStateDao extends AbstractStateDao<TemporalState> {
             .allowFiltering()
             .build();
 
-    private static final Map<String, CqlIdentifier> COLUMN_MAP = Map.of(
-            TemporalStateFields.KEY, COLUMN_KEY,
-            TemporalStateFields.EFFECTIVE_TIME, COLUMN_EFFECTIVE_TIME,
-            TemporalStateFields.VALUE_TYPE, COLUMN_TYPE_ID,
-            TemporalStateFields.VALUE, COLUMN_VALUE);
+    private static final Map<String, ScyllaDbColumn> COLUMN_MAP = Map.of(
+            TemporalStateFields.KEY,
+            new ScyllaDbColumn(TemporalStateFields.KEY, DataTypes.TEXT, COLUMN_KEY),
+            TemporalStateFields.EFFECTIVE_TIME,
+            new ScyllaDbColumn(TemporalStateFields.EFFECTIVE_TIME, DataTypes.TIMESTAMP, COLUMN_EFFECTIVE_TIME),
+            TemporalStateFields.VALUE_TYPE,
+            new ScyllaDbColumn(TemporalStateFields.VALUE_TYPE, DataTypes.TINYINT, COLUMN_VALUE_TYPE),
+            TemporalStateFields.VALUE,
+            new ScyllaDbColumn(TemporalStateFields.VALUE, DataTypes.BLOB, COLUMN_VALUE));
 
     private final SearchHelper searchHelper;
 
@@ -97,7 +101,6 @@ public class TemporalStateDao extends AbstractStateDao<TemporalState> {
                 sessionProvider,
                 TABLE,
                 COLUMN_MAP,
-                TemporalStateFields.FIELD_MAP,
                 TemporalStateFields.VALUE_TYPE,
                 TemporalStateFields.VALUE);
     }
@@ -175,7 +178,7 @@ public class TemporalStateDao extends AbstractStateDao<TemporalState> {
         findKeys(Collections.emptyList(), key -> {
             final SimpleStatement select = selectFrom(TABLE)
                     .column(COLUMN_EFFECTIVE_TIME)
-                    .column(COLUMN_TYPE_ID)
+                    .column(COLUMN_VALUE_TYPE)
                     .column(COLUMN_VALUE)
                     .whereColumn(COLUMN_KEY).isEqualTo(literal(key))
                     .whereColumn(COLUMN_EFFECTIVE_TIME).isLessThanOrEqualTo(literal(oldest))
