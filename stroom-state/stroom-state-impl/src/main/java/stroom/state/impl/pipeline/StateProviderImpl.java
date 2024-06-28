@@ -64,14 +64,13 @@ public class StateProviderImpl implements StateProvider {
                          final String mapName,
                          final String keyName,
                          final Instant eventTime) {
-        final String keyspace = doc.getName();
-        final Provider<CqlSession> sessionProvider = cqlSessionFactory.getSessionProvider(keyspace);
+        final Provider<CqlSession> sessionProvider = cqlSessionFactory.getSessionProvider(doc.getScyllaDbRef());
         switch (doc.getStateType()) {
             case STATE -> {
                 final StateRequest request = new StateRequest(
                         mapName,
                         keyName);
-                return getVal(new StateDao(sessionProvider).getState(request)
+                return getVal(new StateDao(sessionProvider, mapName).getState(request)
                         .map(state -> new TemporalState(state.key(),
                                 Instant.ofEpochMilli(0),
                                 state.typeId(),
@@ -82,14 +81,14 @@ public class StateProviderImpl implements StateProvider {
                         mapName,
                         keyName,
                         eventTime);
-                return getVal(new TemporalStateDao(sessionProvider).getState(request));
+                return getVal(new TemporalStateDao(sessionProvider, mapName).getState(request));
             }
             case RANGED_STATE -> {
                 final long longKey = Long.parseLong(keyName);
                 final RangedStateRequest request = new RangedStateRequest(
                         mapName,
                         longKey);
-                return getVal(new RangedStateDao(sessionProvider).getState(request)
+                return getVal(new RangedStateDao(sessionProvider, mapName).getState(request)
                         .map(state -> new TemporalState(state.key(),
                                 Instant.ofEpochMilli(0),
                                 state.typeId(),
@@ -101,14 +100,14 @@ public class StateProviderImpl implements StateProvider {
                         mapName,
                         longKey,
                         eventTime);
-                return getVal(new TemporalRangedStateDao(sessionProvider).getState(request));
+                return getVal(new TemporalRangedStateDao(sessionProvider, mapName).getState(request));
             }
             case SESSION -> {
                 final TemporalStateRequest request = new TemporalStateRequest(
                         mapName,
                         keyName,
                         eventTime);
-                return ValBoolean.create(new SessionDao(sessionProvider).inSession(request));
+                return ValBoolean.create(new SessionDao(sessionProvider, mapName).inSession(request));
             }
             default -> throw new RuntimeException("Unexpected state type: " + doc.getStateType());
         }

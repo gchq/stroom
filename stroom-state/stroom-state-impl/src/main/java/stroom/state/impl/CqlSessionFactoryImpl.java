@@ -1,5 +1,7 @@
 package stroom.state.impl;
 
+import stroom.docref.DocRef;
+
 import com.datastax.oss.driver.api.core.CqlSession;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -14,12 +16,12 @@ public class CqlSessionFactoryImpl implements CqlSessionFactory {
     }
 
     @Override
-    public CqlSession getSession(final String keyspace) {
-        return cqlSessionCache.get(keyspace);
+    public CqlSession getSession(DocRef scyllaDbDocRef) {
+        return cqlSessionCache.get(scyllaDbDocRef);
     }
 
     @Override
-    public Provider<CqlSession> getSessionProvider(final String keyspace) {
-        return () -> getSession(keyspace);
+    public Provider<CqlSession> getSessionProvider(DocRef scyllaDbDocRef) {
+        return () -> getSession(scyllaDbDocRef);
     }
 }

@@ -70,8 +70,6 @@ public class StateStoreSettingsPresenter
         getView().onReadOnly(readOnly);
 
         clusterPresenter.setSelectedEntityReference(doc.getScyllaDbRef());
-        getView().setKeyspace(doc.getName());
-        getView().setKeyspaceCql(doc.getKeyspaceCql());
         getView().setStateType(doc.getStateType());
         getView().setCondense(doc.isCondense());
         getView().setCondenseAge(doc.getCondenseAge());
@@ -84,7 +82,6 @@ public class StateStoreSettingsPresenter
     @Override
     protected StateDoc onWrite(final StateDoc doc) {
         doc.setScyllaDbRef(clusterPresenter.getSelectedEntityReference());
-        doc.setKeyspaceCql(getView().getKeyspaceCql());
         doc.setStateType(getView().getStateType());
         doc.setCondense(getView().isCondense());
         doc.setCondenseAge(getView().getCondenseAge());
@@ -99,12 +96,6 @@ public class StateStoreSettingsPresenter
             extends View, ReadOnlyChangeHandler, HasUiHandlers<StateStoreSettingsUiHandlers> {
 
         void setClusterView(final View view);
-
-        void setKeyspace(String keyspace);
-
-        String getKeyspaceCql();
-
-        void setKeyspaceCql(String keyspaceCql);
 
         StateType getStateType();
 

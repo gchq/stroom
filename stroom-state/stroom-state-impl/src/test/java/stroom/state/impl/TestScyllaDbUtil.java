@@ -1,17 +1,29 @@
 package stroom.state.impl;
 
+import stroom.pipeline.refdata.store.StringValue;
+import stroom.state.impl.dao.State;
+import stroom.state.impl.dao.StateDao;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestScyllaDbUtil {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestScyllaDbUtil.class);
+
     @Test
     void testConnection() {
-        ScyllaDbUtil.test(ScyllaDbUtil::printMetadata);
+        ScyllaDbUtil.test((sessionProvider, tableName) ->
+                ScyllaDbUtil.printMetadata(sessionProvider, "test"));
     }
 
     @Test
@@ -37,5 +49,16 @@ public class TestScyllaDbUtil {
     @Test
     public void dropAllKeyspacesFromDefault() {
         ScyllaDbUtil.dropAllKeyspacesFromDefault();
+    }
+
+    @Test
+    void testConnectionPerformance() {
+        ScyllaDbUtil.test((sessionProvider, tableName) -> {
+            new StateDao(sessionProvider, "test").insert(Collections.singletonList(
+                    new State(
+                            "test",
+                            StringValue.TYPE_ID,
+                            ByteBuffer.wrap("test".getBytes(StandardCharsets.UTF_8)))));
+        });
     }
 }

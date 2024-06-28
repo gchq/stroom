@@ -42,10 +42,8 @@ class TestRangedStateDao {
 
     @Test
     void testDao() {
-        ScyllaDbUtil.test((sessionProvider, keyspaceName) -> {
-            final RangedStateDao rangedStateDao = new RangedStateDao(sessionProvider);
-            rangedStateDao.dropTables();
-            rangedStateDao.createTables();
+        ScyllaDbUtil.test((sessionProvider, tableName) -> {
+            final RangedStateDao rangedStateDao = new RangedStateDao(sessionProvider, tableName);
 
             insertData(rangedStateDao, 100);
 
@@ -69,10 +67,8 @@ class TestRangedStateDao {
 
     @Test
     void testRemoveOldData() {
-        ScyllaDbUtil.test((sessionProvider, keyspaceName) -> {
-            final RangedStateDao stateDao = new RangedStateDao(sessionProvider);
-            stateDao.dropTables();
-            stateDao.createTables();
+        ScyllaDbUtil.test((sessionProvider, tableName) -> {
+            final RangedStateDao stateDao = new RangedStateDao(sessionProvider, tableName);
 
             insertData(stateDao, 100);
             insertData(stateDao, 10);

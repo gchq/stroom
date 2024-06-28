@@ -41,10 +41,8 @@ class TestTemporalStateDao {
 
     @Test
     void testDao() {
-        ScyllaDbUtil.test((sessionProvider, keyspaceName) -> {
-            final TemporalStateDao stateDao = new TemporalStateDao(sessionProvider);
-            stateDao.dropTables();
-            stateDao.createTables();
+        ScyllaDbUtil.test((sessionProvider, tableName) -> {
+            final TemporalStateDao stateDao = new TemporalStateDao(sessionProvider, tableName);
 
             Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
             insertData(stateDao, refTime, "test", 100, 10);
@@ -70,10 +68,8 @@ class TestTemporalStateDao {
 
     @Test
     void testRemoveOldData() {
-        ScyllaDbUtil.test((sessionProvider, keyspaceName) -> {
-            final TemporalStateDao stateDao = new TemporalStateDao(sessionProvider);
-            stateDao.dropTables();
-            stateDao.createTables();
+        ScyllaDbUtil.test((sessionProvider, tableName) -> {
+            final TemporalStateDao stateDao = new TemporalStateDao(sessionProvider, tableName);
 
             Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
             insertData(stateDao, refTime, "test", 100, 10);
@@ -91,10 +87,8 @@ class TestTemporalStateDao {
 
     @Test
     void testCondense() {
-        ScyllaDbUtil.test((sessionProvider, keyspaceName) -> {
-            final TemporalStateDao stateDao = new TemporalStateDao(sessionProvider);
-            stateDao.dropTables();
-            stateDao.createTables();
+        ScyllaDbUtil.test((sessionProvider, tableName) -> {
+            final TemporalStateDao stateDao = new TemporalStateDao(sessionProvider, tableName);
 
             Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
             insertData(stateDao, refTime, "test", 100, 10);

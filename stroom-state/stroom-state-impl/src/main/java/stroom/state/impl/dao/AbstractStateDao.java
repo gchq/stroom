@@ -4,11 +4,15 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.expression.api.DateTimeSettings;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.data.CqlDuration;
+import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import jakarta.inject.Provider;
 
 import java.time.Instant;
@@ -17,11 +21,16 @@ import java.util.Objects;
 import java.util.function.Function;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
+import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.dropTable;
 
 public abstract class AbstractStateDao<T> {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractStateDao.class);
+
+    final CqlDuration TEN_SECONDS = CqlDuration.from("PT10S");
+
     final Provider<CqlSession> sessionProvider;
-    private final CqlIdentifier table;
+    final CqlIdentifier table;
 
     public AbstractStateDao(final Provider<CqlSession> sessionProvider,
                             final CqlIdentifier table) {
@@ -29,9 +38,14 @@ public abstract class AbstractStateDao<T> {
         this.table = table;
     }
 
-    public abstract void createTables();
+    abstract void createTables();
 
-    public abstract void dropTables();
+    final void dropTables() {
+        final SimpleStatement statement = dropTable(table)
+                .ifExists()
+                .build();
+        sessionProvider.get().execute(statement);
+    }
 
     public abstract void insert(List<T> rows);
 
@@ -67,4 +81,18 @@ public abstract class AbstractStateDao<T> {
     }
 
     public abstract void removeOldData(Instant oldest);
+
+    PreparedStatement prepare(final SimpleStatement statement) {
+        PreparedStatement preparedStatement;
+        try {
+            preparedStatement = sessionProvider.get().prepare(statement);
+        } catch (final InvalidQueryException e) {
+            LOGGER.debug(e::getMessage, e);
+            if (e.getMessage().contains("unconfigured table")) {
+                createTables();
+            }
+            preparedStatement = sessionProvider.get().prepare(statement);
+        }
+        return preparedStatement;
+    }
 }

@@ -133,7 +133,7 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
         // Check we have permission to read the doc.
         final StateDoc doc = stateDocCache.get(docRef.getName());
         Objects.requireNonNull(doc, "Unable to find state doc with name: " + docRef.getName());
-        final Provider<CqlSession> sessionProvider = cqlSessionFactory.getSessionProvider(docRef.getName());
+        final Provider<CqlSession> sessionProvider = cqlSessionFactory.getSessionProvider(doc.getScyllaDbRef());
 
         // Extract highlights.
         final Set<String> highlights = Collections.emptySet();
@@ -205,7 +205,7 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
 
                 final Instant queryStart = Instant.now();
                 try {
-                    DaoFactory.create(sessionProvider, doc.getStateType()).search(
+                    DaoFactory.create(sessionProvider, doc.getStateType(), doc.getName()).search(
                             criteria,
                             coprocessors.getFieldIndex(),
                             searchRequest.getDateTimeSettings(),

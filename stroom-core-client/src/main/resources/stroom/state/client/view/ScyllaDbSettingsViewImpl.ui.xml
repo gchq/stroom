@@ -7,6 +7,12 @@
         <form:FormGroup identity="scyllaDbSettingsConnectionConfig" label="Connection Config">
             <g:TextArea ui:field="connectionConfig" width="100%" height="400px"/>
         </form:FormGroup>
+        <form:FormGroup identity="scyllaDbSettingsKeyspace" label="Keyspace">
+            <g:TextBox ui:field="keyspace" width="400px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="scyllaDbSettingsKeyspaceCql" label="Keyspace CQL">
+            <g:TextArea ui:field="keyspaceCql" width="100%" height="100px"/>
+        </form:FormGroup>
         <b:Button ui:field="testConnection" text="Test Connection" width="200px" addStyleNames="allow-focus"/>
     </g:FlowPanel>
 </ui:UiBinder> 

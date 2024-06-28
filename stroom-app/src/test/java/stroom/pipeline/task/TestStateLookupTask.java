@@ -183,7 +183,6 @@ class TestStateLookupTask extends AbstractProcessIntegrationTest {
         final DocRef docRef = stateDocStore.createDocument(name);
         final StateDoc doc = stateDocStore.readDocument(docRef);
         doc.setScyllaDbRef(scyllaDbDoc.asDocRef());
-        doc.setKeyspaceCql(ScyllaDbUtil.createKeyspaceCql(name));
         doc.setStateType(StateType.TEMPORAL_STATE);
         stateDocStore.writeDocument(doc);
     }

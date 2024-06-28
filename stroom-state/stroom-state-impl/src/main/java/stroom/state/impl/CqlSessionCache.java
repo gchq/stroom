@@ -16,11 +16,13 @@
 
 package stroom.state.impl;
 
+import stroom.docref.DocRef;
+
 import com.datastax.oss.driver.api.core.CqlSession;
 
 public interface CqlSessionCache {
 
-    CqlSession get(String keyspace);
+    CqlSession get(DocRef scyllaDbDocRef);
 
-    void remove(String keyspace);
+    void remove(DocRef scyllaDbDocRef);
 }

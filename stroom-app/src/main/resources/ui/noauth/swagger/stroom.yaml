@@ -9106,6 +9106,7 @@ components:
           - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
+          - EYE
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
@@ -9734,6 +9735,7 @@ components:
           - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
+          - EYE
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
@@ -10591,6 +10593,7 @@ components:
           - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
+          - EYE
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
@@ -10874,6 +10877,7 @@ components:
           - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
+          - EYE
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
@@ -12431,6 +12435,7 @@ components:
           - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
+          - EYE
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
@@ -13410,6 +13415,7 @@ components:
           - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
+          - EYE
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
@@ -14376,6 +14382,10 @@ components:
           type: string
         description:
           type: string
+        keyspace:
+          type: string
+        keyspaceCql:
+          type: string
         name:
           type: string
         type:
@@ -15013,8 +15023,6 @@ components:
         createUser:
           type: string
         description:
-          type: string
-        keyspaceCql:
           type: string
         name:
           type: string

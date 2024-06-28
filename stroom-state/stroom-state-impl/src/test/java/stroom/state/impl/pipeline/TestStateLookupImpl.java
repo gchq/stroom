@@ -45,9 +45,7 @@ class TestStateLookupImpl {
     @Test
     void perfTest() {
         ScyllaDbUtil.test((sessionProvider, keyspace) -> {
-            final TemporalStateDao stateDao = new TemporalStateDao(sessionProvider);
-            stateDao.dropTables();
-            stateDao.createTables();
+            final TemporalStateDao stateDao = new TemporalStateDao(sessionProvider, "test");
 
             int entryCount = 5_000;
             int refStreamDefCount = 5;

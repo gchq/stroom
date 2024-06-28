@@ -70,39 +70,38 @@ public class StateLookupImpl implements StateLookup {
                           final String keyName,
                           final Instant eventTime,
                           final ReferenceDataResult result) {
-        final String keyspace = mapName.toLowerCase(Locale.ROOT);
-        final Optional<StateDoc> stateOptional = stateDocMap.computeIfAbsent(keyspace, k ->
-                Optional.ofNullable(stateDocCache.get(keyspace)));
+        final String tableName = mapName.toLowerCase(Locale.ROOT);
+        final Optional<StateDoc> stateOptional = stateDocMap.computeIfAbsent(tableName, k ->
+                Optional.ofNullable(stateDocCache.get(tableName)));
         stateOptional.ifPresent(stateDoc -> {
-            final Key key = new Key(keyspace, keyName, eventTime);
+            final Key key = new Key(tableName, keyName, eventTime);
             final Optional<TemporalState> optional = cache.get(key,
-                    k -> getState(stateDoc, keyspace, keyName, eventTime));
+                    k -> getState(stateDoc, tableName, keyName, eventTime));
 
             // If we found a result then add the value.
             if (optional.isPresent()) {
                 final TemporalState state = optional.get();
                 final RefStreamDefinition refStreamDefinition =
                         new RefStreamDefinition(stateDoc.asDocRef(), "0", -1);
-                final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, keyspace);
+                final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, tableName);
                 result.addRefDataValueProxy(new StateValueProxy(state, mapDefinition));
             }
         });
     }
 
     private Optional<TemporalState> getState(final StateDoc doc,
-                                             final String mapName,
+                                             final String tableName,
                                              final String keyName,
                                              final Instant eventTime) {
-        Optional<TemporalState> optional = Optional.empty();
-        final String keyspace = doc.getName();
-        final Provider<CqlSession> sessionProvider = cqlSessionFactory.getSessionProvider(keyspace);
+        Optional<TemporalState> optional;
+        final Provider<CqlSession> sessionProvider = cqlSessionFactory.getSessionProvider(doc.getScyllaDbRef());
 
         switch (doc.getStateType()) {
             case STATE -> {
                 final StateRequest request = new StateRequest(
-                        mapName,
+                        tableName,
                         keyName);
-                optional = new StateDao(sessionProvider).getState(request)
+                optional = new StateDao(sessionProvider, tableName).getState(request)
                         .map(state -> new TemporalState(state.key(),
                                 Instant.ofEpochMilli(0),
                                 state.typeId(),
@@ -110,17 +109,17 @@ public class StateLookupImpl implements StateLookup {
             }
             case TEMPORAL_STATE -> {
                 final TemporalStateRequest request = new TemporalStateRequest(
-                        mapName,
+                        tableName,
                         keyName,
                         eventTime);
-                optional = new TemporalStateDao(sessionProvider).getState(request);
+                optional = new TemporalStateDao(sessionProvider, tableName).getState(request);
             }
             case RANGED_STATE -> {
                 final long longKey = Long.parseLong(keyName);
                 final RangedStateRequest request = new RangedStateRequest(
-                        mapName,
+                        tableName,
                         longKey);
-                optional = new RangedStateDao(sessionProvider).getState(request)
+                optional = new RangedStateDao(sessionProvider, tableName).getState(request)
                         .map(state -> new TemporalState(state.key(),
                                 Instant.ofEpochMilli(0),
                                 state.typeId(),
@@ -129,17 +128,17 @@ public class StateLookupImpl implements StateLookup {
             case TEMPORAL_RANGED_STATE -> {
                 final long longKey = Long.parseLong(keyName);
                 final TemporalRangedStateRequest request = new TemporalRangedStateRequest(
-                        mapName,
+                        tableName,
                         longKey,
                         eventTime);
-                optional = new TemporalRangedStateDao(sessionProvider).getState(request);
+                optional = new TemporalRangedStateDao(sessionProvider, tableName).getState(request);
             }
             case SESSION -> {
                 final TemporalStateRequest request = new TemporalStateRequest(
-                        mapName,
+                        tableName,
                         keyName,
                         eventTime);
-                final boolean inSession = new SessionDao(sessionProvider).inSession(request);
+                final boolean inSession = new SessionDao(sessionProvider, tableName).inSession(request);
                 final ByteBuffer byteBuffer = inSession
                         ? TRUE
                         : FALSE;
@@ -152,7 +151,7 @@ public class StateLookupImpl implements StateLookup {
         return optional;
     }
 
-    private record Key(String mapName, String keyName, Instant eventTime) {
+    private record Key(String tableName, String keyName, Instant eventTime) {
 
     }
 }

@@ -16,7 +16,6 @@
 
 package stroom.state.client.view;
 
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.item.client.SelectionBox;
 import stroom.state.client.presenter.StateStoreSettingsPresenter.StateStoreSettingsView;
 import stroom.state.client.presenter.StateStoreSettingsUiHandlers;
@@ -31,8 +30,6 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -40,16 +37,12 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class StateStoreSettingsViewImpl
         extends ViewWithUiHandlers<StateStoreSettingsUiHandlers>
-        implements StateStoreSettingsView, ReadOnlyChangeHandler {
+        implements StateStoreSettingsView {
 
     private final Widget widget;
 
     @UiField
     SimplePanel scyllaDBConnection;
-    @UiField
-    TextBox keyspace;
-    @UiField
-    TextArea keyspaceCql;
     @UiField
     SelectionBox<StateType> stateType;
     @UiField
@@ -70,6 +63,8 @@ public class StateStoreSettingsViewImpl
     ValueSpinner retainAge;
     @UiField
     SelectionBox<TimeUnit> retainTimeUnit;
+
+    private boolean readOnly;
 
     @Inject
     public StateStoreSettingsViewImpl(final Binder binder) {
@@ -102,8 +97,6 @@ public class StateStoreSettingsViewImpl
         retainTimeUnit.addItem(TimeUnit.MONTHS);
         retainTimeUnit.addItem(TimeUnit.YEARS);
         retainTimeUnit.setValue(TimeUnit.YEARS);
-
-        keyspace.setEnabled(false);
     }
 
     @Override
@@ -114,21 +107,6 @@ public class StateStoreSettingsViewImpl
     @Override
     public void setClusterView(final View view) {
         scyllaDBConnection.setWidget(view.asWidget());
-    }
-
-    @Override
-    public void setKeyspace(final String keyspace) {
-        this.keyspace.setText(keyspace);
-    }
-
-    @Override
-    public String getKeyspaceCql() {
-        return keyspaceCql.getText();
-    }
-
-    @Override
-    public void setKeyspaceCql(final String keyspaceCql) {
-        this.keyspaceCql.setText(keyspaceCql);
     }
 
     @Override
@@ -212,33 +190,39 @@ public class StateStoreSettingsViewImpl
     }
 
     private void setCondenseEnabled(final boolean enabled) {
-        if (enabled) {
-            condenseAgePanel.getElement().getStyle().setOpacity(1);
-        } else {
-            condenseAgePanel.getElement().getStyle().setOpacity(0.5);
+        if (!readOnly) {
+            if (enabled) {
+                condenseAgePanel.getElement().getStyle().setOpacity(1);
+            } else {
+                condenseAgePanel.getElement().getStyle().setOpacity(0.5);
+            }
+            condenseAge.setEnabled(enabled);
+            condenseTimeUnit.setEnabled(enabled);
         }
-        condenseAge.setEnabled(enabled);
-        condenseTimeUnit.setEnabled(enabled);
     }
 
     private void setRetainEnabled(final boolean enabled) {
-        if (enabled) {
-            retainAgePanel.getElement().getStyle().setOpacity(1);
-        } else {
-            retainAgePanel.getElement().getStyle().setOpacity(0.5);
+        if (!readOnly) {
+            if (enabled) {
+                retainAgePanel.getElement().getStyle().setOpacity(1);
+            } else {
+                retainAgePanel.getElement().getStyle().setOpacity(0.5);
+            }
+            retainAge.setEnabled(enabled);
+            retainTimeUnit.setEnabled(enabled);
         }
-        retainAge.setEnabled(enabled);
-        retainTimeUnit.setEnabled(enabled);
     }
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        keyspaceCql.setEnabled(!readOnly);
-    }
-
-    @UiHandler("keyspaceCql")
-    public void onKeyspaceCql(final ValueChangeEvent<String> event) {
-        getUiHandlers().onChange();
+        this.readOnly = readOnly;
+        stateType.setEnabled(!readOnly);
+        condense.setEnabled(!readOnly);
+        condenseAge.setEnabled(!readOnly);
+        condenseTimeUnit.setEnabled(!readOnly);
+        retainForever.setEnabled(!readOnly);
+        retainAge.setEnabled(!readOnly);
+        retainTimeUnit.setEnabled(!readOnly);
     }
 
     @UiHandler("stateType")

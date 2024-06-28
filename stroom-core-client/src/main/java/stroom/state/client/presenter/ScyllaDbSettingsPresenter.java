@@ -81,13 +81,18 @@ public class ScyllaDbSettingsPresenter
 
     @Override
     protected void onRead(final DocRef docRef, final ScyllaDbDoc doc, final boolean readOnly) {
-        getView().setConnectionConfig(doc.getConnection());
         getView().onReadOnly(readOnly);
+
+        getView().setConnectionConfig(doc.getConnection());
+        getView().setKeyspace(doc.getKeyspace());
+        getView().setKeyspaceCql(doc.getKeyspaceCql());
     }
 
     @Override
     protected ScyllaDbDoc onWrite(final ScyllaDbDoc doc) {
         doc.setConnection(getView().getConnectionConfig());
+        doc.setKeyspace(getView().getKeyspace());
+        doc.setKeyspaceCql(getView().getKeyspaceCql());
         return doc;
     }
 
@@ -97,5 +102,13 @@ public class ScyllaDbSettingsPresenter
         String getConnectionConfig();
 
         void setConnectionConfig(String connectionConfig);
+
+        String getKeyspace();
+
+        void setKeyspace(String keyspace);
+
+        String getKeyspaceCql();
+
+        void setKeyspaceCql(String keyspaceCql);
     }
 }

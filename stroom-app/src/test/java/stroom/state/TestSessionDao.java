@@ -17,24 +17,18 @@
 
 package stroom.state;
 
-import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValDate;
-import stroom.state.impl.ScyllaDbDocStore;
 import stroom.state.impl.ScyllaDbUtil;
-import stroom.state.impl.StateDocStore;
 import stroom.state.impl.dao.Session;
 import stroom.state.impl.dao.SessionDao;
 import stroom.state.impl.dao.SessionFields;
 import stroom.state.impl.dao.TemporalStateRequest;
-import stroom.state.shared.StateDoc;
-import stroom.state.shared.StateType;
 import stroom.test.AbstractCoreIntegrationTest;
 
-import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -48,29 +42,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(MockitoExtension.class)
 class TestSessionDao extends AbstractCoreIntegrationTest {
 
-    @Inject
-    private ScyllaDbDocStore scyllaDbDocStore;
-    @Inject
-    private StateDocStore stateDocStore;
-
     @Test
     void testDao() {
-        ScyllaDbUtil.test((sessionProvider, keyspaceName) -> {
-            final DocRef scyllaDbDocRef = scyllaDbDocStore.createDocument("test");
-            final DocRef stateDocRef = stateDocStore.createDocument(keyspaceName);
-            StateDoc doc = stateDocStore.readDocument(stateDocRef);
-            doc.setScyllaDbRef(scyllaDbDocRef);
-            doc.setStateType(StateType.SESSION);
-            doc = stateDocStore.writeDocument(doc);
-
+        ScyllaDbUtil.test((sessionProvider, tableName) -> {
             ExpressionOperator expression = ExpressionOperator.builder()
                     .addTextTerm(SessionFields.KEY_FIELD, Condition.EQUALS, "TEST")
                     .build();
             final ExpressionCriteria criteria = new ExpressionCriteria(expression);
 
-            final SessionDao sessionDao = new SessionDao(sessionProvider);
-            sessionDao.dropTables();
-            sessionDao.createTables();
+            final SessionDao sessionDao = new SessionDao(sessionProvider, tableName);
 
             Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
             Instant min = refTime;

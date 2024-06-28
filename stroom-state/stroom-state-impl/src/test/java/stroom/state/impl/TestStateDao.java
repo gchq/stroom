@@ -41,10 +41,8 @@ class TestStateDao {
 
     @Test
     void testDao() {
-        ScyllaDbUtil.test((sessionProvider, keyspaceName) -> {
-            final StateDao stateDao = new StateDao(sessionProvider);
-            stateDao.dropTables();
-            stateDao.createTables();
+        ScyllaDbUtil.test((sessionProvider, tableName) -> {
+            final StateDao stateDao = new StateDao(sessionProvider, tableName);
 
             insertData(stateDao, 100);
 
@@ -67,10 +65,8 @@ class TestStateDao {
 
     @Test
     void testRemoveOldData() {
-        ScyllaDbUtil.test((sessionProvider, keyspaceName) -> {
-            final StateDao stateDao = new StateDao(sessionProvider);
-            stateDao.dropTables();
-            stateDao.createTables();
+        ScyllaDbUtil.test((sessionProvider, tableName) -> {
+            final StateDao stateDao = new StateDao(sessionProvider, tableName);
 
             insertData(stateDao, 100);
             insertData(stateDao, 10);

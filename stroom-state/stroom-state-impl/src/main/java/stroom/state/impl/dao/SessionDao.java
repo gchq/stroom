@@ -46,50 +46,10 @@ public class SessionDao extends AbstractStateDao<Session> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SessionDao.class);
 
-    private static final CqlIdentifier TABLE = CqlIdentifier.fromCql("session");
     private static final CqlIdentifier COLUMN_KEY = CqlIdentifier.fromCql("key");
     private static final CqlIdentifier COLUMN_START = CqlIdentifier.fromCql("start");
     private static final CqlIdentifier COLUMN_END = CqlIdentifier.fromCql("end");
     private static final CqlIdentifier COLUMN_TERMINAL = CqlIdentifier.fromCql("terminal");
-    private static final SimpleStatement CREATE_TABLE = createTable(TABLE)
-            .ifNotExists()
-            .withPartitionKey(COLUMN_KEY, DataTypes.TEXT)
-            .withClusteringColumn(COLUMN_START, DataTypes.TIMESTAMP)
-            .withClusteringColumn(COLUMN_END, DataTypes.TIMESTAMP)
-            .withClusteringColumn(COLUMN_TERMINAL, DataTypes.BOOLEAN)
-            .withClusteringOrder(COLUMN_START, ClusteringOrder.DESC)
-            .withClusteringOrder(COLUMN_START, ClusteringOrder.ASC)
-            .withCompaction(new DefaultTimeWindowCompactionStrategy())
-            .build();
-    private static final SimpleStatement DROP_TABLE = dropTable(TABLE)
-            .ifExists()
-            .build();
-
-    private static final SimpleStatement INSERT = insertInto(TABLE)
-            .value(COLUMN_KEY, bindMarker())
-            .value(COLUMN_START, bindMarker())
-            .value(COLUMN_END, bindMarker())
-            .value(COLUMN_TERMINAL, bindMarker())
-            .build();
-
-    private static final SimpleStatement DELETE = deleteFrom(TABLE)
-            .where(
-                    Relation.column(COLUMN_KEY).isEqualTo(bindMarker()),
-                    Relation.column(COLUMN_START).isEqualTo(bindMarker()),
-                    Relation.column(COLUMN_END).isEqualTo(bindMarker()),
-                    Relation.column(COLUMN_TERMINAL).isEqualTo(bindMarker()))
-            .build();
-
-    private static final SimpleStatement SELECT = selectFrom(TABLE)
-            .column(COLUMN_START)
-            .column(COLUMN_END)
-            .column(COLUMN_TERMINAL)
-            .whereColumn(COLUMN_KEY).isEqualTo(bindMarker())
-            .whereColumn(COLUMN_START).isLessThanOrEqualTo(bindMarker())
-            .orderBy(COLUMN_START, ClusteringOrder.DESC)
-            .limit(1)
-            .allowFiltering()
-            .build();
 
     private static final Map<String, ScyllaDbColumn> COLUMN_MAP = Map.of(
             SessionFields.KEY,
@@ -101,27 +61,39 @@ public class SessionDao extends AbstractStateDao<Session> {
             SessionFields.TERMINAL,
             new ScyllaDbColumn(SessionFields.TERMINAL, DataTypes.BOOLEAN, COLUMN_TERMINAL));
 
-    public SessionDao(final Provider<CqlSession> sessionProvider) {
-        super(sessionProvider, TABLE);
+    public SessionDao(final Provider<CqlSession> sessionProvider, final String tableName) {
+        super(sessionProvider, CqlIdentifier.fromCql(tableName));
     }
 
     @Override
-    public void createTables() {
-        LOGGER.info("Creating tables...");
+    void createTables() {
+        LOGGER.info("Creating table: " + table);
         LOGGER.logDurationIfInfoEnabled(() -> {
-            sessionProvider.get().execute(CREATE_TABLE);
+            final SimpleStatement statement = createTable(table)
+                    .ifNotExists()
+                    .withPartitionKey(COLUMN_KEY, DataTypes.TEXT)
+                    .withClusteringColumn(COLUMN_START, DataTypes.TIMESTAMP)
+                    .withClusteringColumn(COLUMN_END, DataTypes.TIMESTAMP)
+                    .withClusteringColumn(COLUMN_TERMINAL, DataTypes.BOOLEAN)
+                    .withClusteringOrder(COLUMN_START, ClusteringOrder.DESC)
+                    .withClusteringOrder(COLUMN_START, ClusteringOrder.ASC)
+                    .withCompaction(new DefaultTimeWindowCompactionStrategy())
+                    .build();
+            sessionProvider.get().execute(statement);
         }, "createTables()");
-    }
-
-    @Override
-    public void dropTables() {
-        sessionProvider.get().execute(DROP_TABLE);
     }
 
     @Override
     public void insert(final List<Session> sessions) {
         Objects.requireNonNull(sessions, "Null sessions list");
-        final PreparedStatement preparedStatement = sessionProvider.get().prepare(INSERT);
+        final SimpleStatement statement = insertInto(table)
+                .value(COLUMN_KEY, bindMarker())
+                .value(COLUMN_START, bindMarker())
+                .value(COLUMN_END, bindMarker())
+                .value(COLUMN_TERMINAL, bindMarker())
+                .usingTimeout(TEN_SECONDS)
+                .build();
+        final PreparedStatement preparedStatement = prepare(statement);
         try (final BatchStatementExecutor executor = new BatchStatementExecutor(sessionProvider)) {
             for (final Session session : sessions) {
                 Objects.requireNonNull(session.key());
@@ -139,7 +111,13 @@ public class SessionDao extends AbstractStateDao<Session> {
 
     @Override
     public void delete(final List<Session> sessions) {
-        doDelete(sessions, DELETE, session -> new Object[]{
+        final SimpleStatement statement = deleteFrom(table)
+                .whereColumn(COLUMN_KEY).isEqualTo(bindMarker())
+                .whereColumn(COLUMN_START).isEqualTo(bindMarker())
+                .whereColumn(COLUMN_END).isEqualTo(bindMarker())
+                .whereColumn(COLUMN_TERMINAL).isEqualTo(bindMarker())
+                .build();
+        doDelete(sessions, statement, session -> new Object[]{
                 session.key(),
                 session.start(),
                 session.end(),
@@ -190,7 +168,7 @@ public class SessionDao extends AbstractStateDao<Session> {
 
     private void findKeys(final List<Relation> relations,
                           final Consumer<String> consumer) {
-        final SimpleStatement statement = selectFrom(TABLE)
+        final SimpleStatement statement = selectFrom(table)
                 .column(COLUMN_KEY)
                 .where(relations)
                 .groupByColumnIds(COLUMN_KEY)
@@ -203,7 +181,7 @@ public class SessionDao extends AbstractStateDao<Session> {
 
     private void findRows(final List<Relation> relations,
                           final Consumer<Row> consumer) {
-        final SimpleStatement statement = selectFrom(TABLE)
+        final SimpleStatement statement = selectFrom(table)
                 .column(COLUMN_START)
                 .column(COLUMN_END)
                 .column(COLUMN_TERMINAL)
@@ -216,7 +194,17 @@ public class SessionDao extends AbstractStateDao<Session> {
     }
 
     public boolean inSession(final TemporalStateRequest request) {
-        final PreparedStatement preparedStatement = sessionProvider.get().prepare(SELECT);
+        final SimpleStatement statement = selectFrom(table)
+                .column(COLUMN_START)
+                .column(COLUMN_END)
+                .column(COLUMN_TERMINAL)
+                .whereColumn(COLUMN_KEY).isEqualTo(bindMarker())
+                .whereColumn(COLUMN_START).isLessThanOrEqualTo(bindMarker())
+                .orderBy(COLUMN_START, ClusteringOrder.DESC)
+                .limit(1)
+                .allowFiltering()
+                .build();
+        final PreparedStatement preparedStatement = sessionProvider.get().prepare(statement);
         final BoundStatement bound = preparedStatement.bind(request.key(), request.effectiveTime());
         return Optional
                 .ofNullable(sessionProvider.get().execute(bound).one())
@@ -246,7 +234,7 @@ public class SessionDao extends AbstractStateDao<Session> {
     public void removeOldData(final Instant oldest) {
         try (final BatchStatementExecutor executor = new BatchStatementExecutor(sessionProvider)) {
             findKeys(Collections.emptyList(), key -> {
-                final SimpleStatement statement = deleteFrom(TABLE)
+                final SimpleStatement statement = deleteFrom(table)
                         .whereColumn(COLUMN_KEY).isEqualTo(literal(key))
                         .whereColumn(COLUMN_START).isLessThan(literal(oldest))
                         .build();

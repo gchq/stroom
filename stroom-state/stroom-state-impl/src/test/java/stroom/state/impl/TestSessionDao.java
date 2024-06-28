@@ -44,10 +44,8 @@ class TestSessionDao {
                 .build();
         final ExpressionCriteria criteria = new ExpressionCriteria(expression);
 
-        ScyllaDbUtil.test((sessionProvider, keyspaceName) -> {
-            final SessionDao sessionDao = new SessionDao(sessionProvider);
-            sessionDao.dropTables();
-            sessionDao.createTables();
+        ScyllaDbUtil.test((sessionProvider, tableName) -> {
+            final SessionDao sessionDao = new SessionDao(sessionProvider, tableName);
 
             final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
             final InstantRange highRange = insertData(sessionDao, refTime, 100, 10);
@@ -102,10 +100,8 @@ class TestSessionDao {
 
     @Test
     void testRemoveOldData() {
-        ScyllaDbUtil.test((sessionProvider, keyspaceName) -> {
-            final SessionDao sessionDao = new SessionDao(sessionProvider);
-            sessionDao.dropTables();
-            sessionDao.createTables();
+        ScyllaDbUtil.test((sessionProvider, tableName) -> {
+            final SessionDao sessionDao = new SessionDao(sessionProvider, tableName);
 
             Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
             insertData(sessionDao, refTime, 100, 10);

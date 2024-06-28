@@ -1070,6 +1070,7 @@ export interface DocumentType {
     | "EXPAND_ALL"
     | "EXPAND_DOWN"
     | "EXPLORER"
+    | "EYE"
     | "FAST_BACKWARD"
     | "FAST_FORWARD"
     | "FATAL"
@@ -1560,6 +1561,7 @@ export interface ExplorerNode {
     | "EXPAND_ALL"
     | "EXPAND_DOWN"
     | "EXPLORER"
+    | "EYE"
     | "FAST_BACKWARD"
     | "FAST_FORWARD"
     | "FATAL"
@@ -2101,6 +2103,7 @@ export interface FindInContentResult {
     | "EXPAND_ALL"
     | "EXPAND_DOWN"
     | "EXPLORER"
+    | "EYE"
     | "FAST_BACKWARD"
     | "FAST_FORWARD"
     | "FATAL"
@@ -2338,6 +2341,7 @@ export interface FindResult {
     | "EXPAND_ALL"
     | "EXPAND_DOWN"
     | "EXPLORER"
+    | "EYE"
     | "FAST_BACKWARD"
     | "FAST_FORWARD"
     | "FATAL"
@@ -3395,6 +3399,7 @@ export interface PipelineElementType {
     | "EXPAND_ALL"
     | "EXPAND_DOWN"
     | "EXPLORER"
+    | "EYE"
     | "FAST_BACKWARD"
     | "FAST_FORWARD"
     | "FATAL"
@@ -4027,6 +4032,7 @@ export interface QueryHelpRow {
     | "EXPAND_ALL"
     | "EXPAND_DOWN"
     | "EXPLORER"
+    | "EYE"
     | "FAST_BACKWARD"
     | "FAST_FORWARD"
     | "FATAL"
@@ -4759,6 +4765,8 @@ export interface ScyllaDbDoc {
   createTimeMs?: number;
   createUser?: string;
   description?: string;
+  keyspace?: string;
+  keyspaceCql?: string;
   name?: string;
   type?: string;
 
@@ -5157,7 +5165,6 @@ export interface StateDoc {
   createTimeMs?: number;
   createUser?: string;
   description?: string;
-  keyspaceCql?: string;
   name?: string;
 
   /** @format int32 */

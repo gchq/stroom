@@ -29,7 +29,7 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
 import stroom.state.impl.CqlSessionFactory;
-import stroom.state.impl.KeyspaceNameValidator;
+import stroom.state.impl.ScyllaDbNameValidator;
 import stroom.state.impl.StateDocCache;
 import stroom.state.impl.dao.RangedState;
 import stroom.state.impl.dao.RangedStateDao;
@@ -49,7 +49,6 @@ import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.Range;
 import stroom.util.shared.Severity;
 
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -175,7 +174,7 @@ public class StateFilter extends AbstractXMLFilter {
 
     private final MetaHolder metaHolder;
     private String mapName;
-    private Optional<StateDoc> stateDocOptional = Optional.empty();
+    private StateDoc stateDoc;
     private String key;
     private boolean insideValueElement;
     private boolean haveSeenXmlInValueElement = false;
@@ -200,11 +199,11 @@ public class StateFilter extends AbstractXMLFilter {
     private final LocationFactoryProxy locationFactory;
     private final CqlSessionFactory cqlSessionFactory;
     private final StateDocCache stateDocCache;
-    private final Map<String, List<State>> stateMap = new HashMap<>();
-    private final Map<String, List<TemporalState>> temporalStateMap = new HashMap<>();
-    private final Map<String, List<RangedState>> rangedStateMap = new HashMap<>();
-    private final Map<String, List<TemporalRangedState>> temporalRangedStateMap = new HashMap<>();
-    private final Map<String, List<Session>> sessionMap = new HashMap<>();
+    private final Map<StateDoc, List<State>> stateMap = new HashMap<>();
+    private final Map<StateDoc, List<TemporalState>> temporalStateMap = new HashMap<>();
+    private final Map<StateDoc, List<RangedState>> rangedStateMap = new HashMap<>();
+    private final Map<StateDoc, List<TemporalRangedState>> temporalRangedStateMap = new HashMap<>();
+    private final Map<StateDoc, List<Session>> sessionMap = new HashMap<>();
     private final Map<String, Optional<StateDoc>> stateDocMap = new HashMap<>();
     private int uncommited = 0;
     private Locator locator;
@@ -262,10 +261,11 @@ public class StateFilter extends AbstractXMLFilter {
     }
 
     private void insert() {
-        stateMap.forEach((mapName, list) -> {
+        stateMap.forEach((stateDoc, list) -> {
             try {
-                final Provider<CqlSession> sessionProvider = cqlSessionFactory.getSessionProvider(mapName);
-                new StateDao(sessionProvider).insert(list);
+                final Provider<CqlSession> sessionProvider =
+                        cqlSessionFactory.getSessionProvider(stateDoc.getScyllaDbRef());
+                new StateDao(sessionProvider, stateDoc.getName()).insert(list);
                 list.forEach(state -> byteBufferFactory.release(state.value()));
                 list.clear();
             } catch (final Exception e) {
@@ -274,10 +274,11 @@ public class StateFilter extends AbstractXMLFilter {
         });
         stateMap.clear();
 
-        temporalStateMap.forEach((mapName, list) -> {
+        temporalStateMap.forEach((stateDoc, list) -> {
             try {
-                final Provider<CqlSession> sessionProvider = cqlSessionFactory.getSessionProvider(mapName);
-                new TemporalStateDao(sessionProvider).insert(list);
+                final Provider<CqlSession> sessionProvider =
+                        cqlSessionFactory.getSessionProvider(stateDoc.getScyllaDbRef());
+                new TemporalStateDao(sessionProvider, stateDoc.getName()).insert(list);
                 list.forEach(state -> byteBufferFactory.release(state.value()));
                 list.clear();
             } catch (final Exception e) {
@@ -286,10 +287,11 @@ public class StateFilter extends AbstractXMLFilter {
         });
         temporalStateMap.clear();
 
-        rangedStateMap.forEach((mapName, list) -> {
+        rangedStateMap.forEach((stateDoc, list) -> {
             try {
-                final Provider<CqlSession> sessionProvider = cqlSessionFactory.getSessionProvider(mapName);
-                new RangedStateDao(sessionProvider).insert(list);
+                final Provider<CqlSession> sessionProvider =
+                        cqlSessionFactory.getSessionProvider(stateDoc.getScyllaDbRef());
+                new RangedStateDao(sessionProvider, stateDoc.getName()).insert(list);
                 list.forEach(state -> byteBufferFactory.release(state.value()));
                 list.clear();
             } catch (final Exception e) {
@@ -298,10 +300,11 @@ public class StateFilter extends AbstractXMLFilter {
         });
         rangedStateMap.clear();
 
-        temporalRangedStateMap.forEach((mapName, list) -> {
+        temporalRangedStateMap.forEach((stateDoc, list) -> {
             try {
-                final Provider<CqlSession> sessionProvider = cqlSessionFactory.getSessionProvider(mapName);
-                new TemporalRangedStateDao(sessionProvider).insert(list);
+                final Provider<CqlSession> sessionProvider =
+                        cqlSessionFactory.getSessionProvider(stateDoc.getScyllaDbRef());
+                new TemporalRangedStateDao(sessionProvider, stateDoc.getName()).insert(list);
                 list.forEach(state -> byteBufferFactory.release(state.value()));
                 list.clear();
             } catch (final Exception e) {
@@ -310,10 +313,11 @@ public class StateFilter extends AbstractXMLFilter {
         });
         temporalRangedStateMap.clear();
 
-        sessionMap.forEach((mapName, list) -> {
+        sessionMap.forEach((stateDoc, list) -> {
             try {
-                final Provider<CqlSession> sessionProvider = cqlSessionFactory.getSessionProvider(mapName);
-                new SessionDao(sessionProvider).insert(list);
+                final Provider<CqlSession> sessionProvider =
+                        cqlSessionFactory.getSessionProvider(stateDoc.getScyllaDbRef());
+                new SessionDao(sessionProvider, stateDoc.getName()).insert(list);
                 list.clear();
             } catch (final Exception e) {
                 errorReceiverProxy.log(Severity.ERROR, null, getElementId(), e.getMessage(), e);
@@ -400,7 +404,6 @@ public class StateFilter extends AbstractXMLFilter {
 
         LOGGER.trace("startElement {} {} {}, level:{}", uri, localName, qName, depthLevel);
 
-        String newQName = qName;
         if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
             insideValueElement = true;
 
@@ -431,7 +434,7 @@ public class StateFilter extends AbstractXMLFilter {
                 }
             }
 
-            fastInfosetStartElement(localName, uri, newQName, atts);
+            fastInfosetStartElement(localName, uri, qName, atts);
 
         } else if ("session-start".equals(localName)) {
             sessionBuilder = new Session.Builder();
@@ -441,7 +444,7 @@ public class StateFilter extends AbstractXMLFilter {
             sessionBuilder.terminal(true);
         }
 
-        super.startElement(uri, localName, newQName, atts);
+        super.startElement(uri, localName, qName, atts);
     }
 
 
@@ -507,24 +510,26 @@ public class StateFilter extends AbstractXMLFilter {
                 // capture the name of the map that the subsequent values will belong to. A ref
                 // stream can contain data for multiple maps
                 mapName = contentBuffer.toString().toLowerCase(Locale.ROOT);
+                if (!NullSafe.isBlankString(mapName)) {
+                    stateDoc = stateDocMap.computeIfAbsent(mapName, k -> {
+                        StateDoc doc = null;
 
-                stateDocOptional = stateDocMap.computeIfAbsent(mapName, k -> {
-                    try {
-                        KeyspaceNameValidator.validateName(k);
-                    } catch (final RuntimeException e) {
-                        error("Bad map name: " + k);
-                    }
-                    StateDoc doc = null;
-                    try {
-                        doc = stateDocCache.get(k);
-                        if (doc == null) {
-                            error("Unable to find state doc for map name: " + k);
+                        if (!ScyllaDbNameValidator.isValidName(k)) {
+                            error("Bad map name: " + k);
+                        } else {
+                            try {
+                                doc = stateDocCache.get(k);
+                                if (doc == null) {
+                                    error("Unable to find state doc for map name: " + k);
+                                }
+                            } catch (final RuntimeException e) {
+                                error(e);
+                            }
                         }
-                    } catch (final RuntimeException e) {
-                        error(e);
-                    }
-                    return Optional.ofNullable(doc);
-                });
+
+                        return Optional.ofNullable(doc);
+                    }).orElse(null);
+                }
 
             } else if (KEY_ELEMENT.equalsIgnoreCase(localName)) {
                 // the key for the KV pair
@@ -550,24 +555,14 @@ public class StateFilter extends AbstractXMLFilter {
                     error("Unable to parse string \"" + string + "\" as long for range to", e);
                 }
             } else if (REFERENCE_ELEMENT.equalsIgnoreCase(localName)) {
-                handleReferenceEndElement();
+                addData();
 
             } else if ("start".equals(localName)) {
                 sessionBuilder.start(DateUtil.parseNormalDateTimeStringToInstant(contentBuffer.toString()));
             } else if ("end".equals(localName)) {
                 sessionBuilder.end(DateUtil.parseNormalDateTimeStringToInstant(contentBuffer.toString()));
             } else if (("session-start").equals(localName) || "session-end".equals(localName)) {
-                stateDocOptional.ifPresent(stateDoc -> {
-                    switch (stateDoc.getStateType()) {
-                        case SESSION -> {
-                            final Session session = sessionBuilder.build();
-                            sessionMap.computeIfAbsent(mapName, k -> new ArrayList<>()).add(session);
-                            sessionBuilder = null;
-                            tryFlush();
-                        }
-                        default -> error("Unexpected state type: " + stateDoc.getStateType());
-                    }
-                });
+                addData();
             }
         }
 
@@ -621,106 +616,130 @@ public class StateFilter extends AbstractXMLFilter {
         }
     }
 
-    private void handleReferenceEndElement() {
-        // end of the ref data item so ensure it is persisted in the store
-        valueCount++;
-        try {
-            stateDocOptional.ifPresent(stateDoc -> {
-                final String keyspace = stateDoc.getName();
+    private void addData() {
+        if (NullSafe.isBlankString(mapName)) {
+            error("Null map name");
+        } else if (stateDoc == null) {
+            error("No state doc found for " + mapName);
+        } else {
+            // end of the ref data item so ensure it is persisted in the store
+            valueCount++;
+            try {
+                final String tableName = stateDoc.getName();
                 switch (stateDoc.getStateType()) {
                     case STATE -> {
-                        if (key != null) {
-                            LOGGER.trace("Putting key {} into keyspace {}", key, keyspace);
+                        if (key == null) {
+                            error(LogUtil.message("Key is null for {}", tableName));
+                        } else {
+                            LOGGER.trace("Putting key {} into table {}", key, tableName);
                             final ByteBuffer value = stagingValueOutputStream.getByteBuffer();
                             value.flip();
-                            stateMap.computeIfAbsent(keyspace, k -> new ArrayList<>())
+                            stateMap.computeIfAbsent(stateDoc, k -> new ArrayList<>())
                                     .add(new State(key, typeId, value));
                             tryFlush();
                         }
                     }
                     case TEMPORAL_STATE -> {
-                        LOGGER.trace("Putting key {} into map {}", key, keyspace);
-
-                        final ByteBuffer value = stagingValueOutputStream.getByteBuffer();
-                        value.flip();
-                        temporalStateMap.computeIfAbsent(keyspace, k -> new ArrayList<>())
-                                .add(new TemporalState(key, effectiveTime, typeId, value));
-                        tryFlush();
+                        if (key == null) {
+                            error(LogUtil.message("Key is null for {}", tableName));
+                        } else if (effectiveTime == null) {
+                            error(LogUtil.message("Effective time is null for {}", tableName));
+                        } else {
+                            LOGGER.trace("Putting key {} into table {}", key, tableName);
+                            final ByteBuffer value = stagingValueOutputStream.getByteBuffer();
+                            value.flip();
+                            temporalStateMap.computeIfAbsent(stateDoc, k -> new ArrayList<>())
+                                    .add(new TemporalState(key, effectiveTime, typeId, value));
+                            tryFlush();
+                        }
                     }
                     case RANGED_STATE -> {
-                        if (rangeFrom != null && rangeTo != null) {
-                            if (rangeFrom > rangeTo) {
-                                error("Range from '" + rangeFrom
-                                        + "' must be less than or equal to range to '" + rangeTo + "'");
-                            } else if (rangeFrom < 0) {
-                                // negative values cause problems for the ordering of data in LMDB so prevent their use
-                                // when using byteBuffer.putLong, -10, 0 & 10 will be stored in LMDB as 0, 10, -10
-                                error(LogUtil.message(
-                                        "Only non-negative numbers are supported (from: {}, to: {})",
-                                        rangeFrom, rangeTo));
-
-                            } else {
-                                final ByteBuffer value = stagingValueOutputStream.getByteBuffer();
-                                value.flip();
-                                rangedStateMap.computeIfAbsent(keyspace, k -> new ArrayList<>())
-                                        .add(new RangedState(rangeFrom, rangeTo, typeId, value));
-                                tryFlush();
-                            }
+                        if (rangeFrom == null) {
+                            error(LogUtil.message("Range from is null for {}", tableName));
+                        } else if (rangeTo == null) {
+                            error(LogUtil.message("Range to is null for {}", tableName));
+                        } else if (rangeFrom > rangeTo) {
+                            error(LogUtil.message(
+                                    "Range from must be less than or equal to range to (from: {}, to: {}) for {}",
+                                    rangeFrom, rangeTo, tableName));
+                        } else if (rangeFrom < 0) {
+                            // negative values cause problems for the ordering of data in LMDB so prevent their use
+                            // when using byteBuffer.putLong, -10, 0 & 10 will be stored in LMDB as 0, 10, -10
+                            error(LogUtil.message(
+                                    "Only non-negative numbers are supported (from: {}, to: {}) for {}",
+                                    rangeFrom, rangeTo, tableName));
+                        } else {
+                            final ByteBuffer value = stagingValueOutputStream.getByteBuffer();
+                            value.flip();
+                            rangedStateMap.computeIfAbsent(stateDoc, k -> new ArrayList<>())
+                                    .add(new RangedState(rangeFrom, rangeTo, typeId, value));
+                            tryFlush();
                         }
                     }
                     case TEMPORAL_RANGED_STATE -> {
-                        if (rangeFrom != null && rangeTo != null) {
-                            if (rangeFrom > rangeTo) {
-                                error("Range from '" + rangeFrom
-                                        + "' must be less than or equal to range to '" + rangeTo + "'");
-                            } else if (rangeFrom < 0) {
-                                // negative values cause problems for the ordering of data in LMDB so prevent their use
-                                // when using byteBuffer.putLong, -10, 0 & 10 will be stored in LMDB as 0, 10, -10
-                                error(LogUtil.message(
-                                        "Only non-negative numbers are supported (from: {}, to: {})",
-                                        rangeFrom, rangeTo));
-
-                            } else {
-                                final ByteBuffer value = stagingValueOutputStream.getByteBuffer();
-                                value.flip();
-                                temporalRangedStateMap.computeIfAbsent(keyspace, k -> new ArrayList<>())
-                                        .add(new TemporalRangedState(rangeFrom, rangeTo, effectiveTime, typeId, value));
-                                tryFlush();
-                            }
+                        if (rangeFrom == null) {
+                            error(LogUtil.message("Range from is null for {}", tableName));
+                        } else if (rangeTo == null) {
+                            error(LogUtil.message("Range to is null for {}", tableName));
+                        } else if (effectiveTime == null) {
+                            error(LogUtil.message("Effective time is null for {}", tableName));
+                        } else if (rangeFrom > rangeTo) {
+                            error(LogUtil.message(
+                                    "Range from must be less than or equal to range to (from: {}, to: {}) for {}",
+                                    rangeFrom, rangeTo, tableName));
+                        } else if (rangeFrom < 0) {
+                            // negative values cause problems for the ordering of data in LMDB so prevent their use
+                            // when using byteBuffer.putLong, -10, 0 & 10 will be stored in LMDB as 0, 10, -10
+                            error(LogUtil.message(
+                                    "Only non-negative numbers are supported (from: {}, to: {}) for {}",
+                                    rangeFrom, rangeTo, tableName));
+                        } else {
+                            final ByteBuffer value = stagingValueOutputStream.getByteBuffer();
+                            value.flip();
+                            temporalRangedStateMap.computeIfAbsent(stateDoc, k -> new ArrayList<>())
+                                    .add(new TemporalRangedState(rangeFrom, rangeTo, effectiveTime, typeId, value));
+                            tryFlush();
+                        }
+                    }
+                    case SESSION -> {
+                        final Session session = sessionBuilder.build();
+                        if (session.key() == null) {
+                            error(LogUtil.message("Session key is null for {}", tableName));
+                        } else if (session.start() == null) {
+                            error(LogUtil.message("Session start is null for {}", tableName));
+                        } else if (session.end() == null) {
+                            error(LogUtil.message("Session end is null for {}", tableName));
+                        } else {
+                            LOGGER.trace("Putting session {} into table {}", key, tableName);
+                            sessionMap.computeIfAbsent(stateDoc, k -> new ArrayList<>()).add(session);
+                            sessionBuilder = null;
+                            tryFlush();
                         }
                     }
                     default -> error("Unexpected state type: " + stateDoc.getStateType());
                 }
-            });
-        } catch (final BufferOverflowException boe) {
-            final String msg = LogUtil.message("Value for key {} in map {} is too big for the buffer",
-                    key,
-                    mapName);
-            error(msg, boe);
-            LOGGER.error(msg, boe);
-        } catch (final RuntimeException e) {
-            error(e);
-            LOGGER.error("Error putting key {} into map {}: {} {}",
-                    key, mapName, e.getClass().getSimpleName(), e.getMessage());
-            LOGGER.debug("Error putting key {} into map {}: {}", key, mapName, e.getMessage(), e);
+            } catch (final BufferOverflowException boe) {
+                final String msg = LogUtil.message("Value for key {} in map {} is too big for the buffer",
+                        key,
+                        mapName);
+                error(msg, boe);
+                LOGGER.error(msg, boe);
+            } catch (final RuntimeException e) {
+                error(e);
+                LOGGER.error("Error putting key {} into map {}: {} {}",
+                        key, mapName, e.getClass().getSimpleName(), e.getMessage());
+                LOGGER.debug("Error putting key {} into map {}: {}", key, mapName, e.getMessage(), e);
+            }
         }
 
         // Set keys to null.
         mapName = null;
-        stateDocOptional = Optional.empty();
+        stateDoc = null;
         key = null;
         rangeFrom = null;
         rangeTo = null;
         haveSeenXmlInValueElement = false;
         valueXmlDefaultNamespaceUri = null;
-    }
-
-    private String getKeyText(final String key) {
-        return LogUtil.message("key [{}]", key);
-    }
-
-    private String getRangeText(final Range<Long> range) {
-        return LogUtil.message("range [{}] to [{}]", range.getFrom(), range.getTo());
     }
 
     /**

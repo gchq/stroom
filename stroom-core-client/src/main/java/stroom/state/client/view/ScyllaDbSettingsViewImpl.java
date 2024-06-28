@@ -16,7 +16,6 @@
 
 package stroom.state.client.view;
 
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.state.client.presenter.ScyllaDbSettingsPresenter.ScyllaDbSettingsView;
 import stroom.state.client.presenter.ScyllaDbSettingsUiHandlers;
 import stroom.svg.shared.SvgImage;
@@ -28,17 +27,22 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.TextArea;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class ScyllaDbSettingsViewImpl extends ViewWithUiHandlers<ScyllaDbSettingsUiHandlers>
-        implements ScyllaDbSettingsView, ReadOnlyChangeHandler {
+        implements ScyllaDbSettingsView {
 
     private final Widget widget;
 
     @UiField
     TextArea connectionConfig;
+    @UiField
+    TextBox keyspace;
+    @UiField
+    TextArea keyspaceCql;
     @UiField
     Button testConnection;
 
@@ -64,12 +68,44 @@ public class ScyllaDbSettingsViewImpl extends ViewWithUiHandlers<ScyllaDbSetting
     }
 
     @Override
+    public String getKeyspace() {
+        return keyspace.getText();
+    }
+
+    @Override
+    public void setKeyspace(final String keyspace) {
+        this.keyspace.setText(keyspace);
+    }
+
+    @Override
+    public String getKeyspaceCql() {
+        return keyspaceCql.getText();
+    }
+
+    @Override
+    public void setKeyspaceCql(final String keyspaceCql) {
+        this.keyspaceCql.setText(keyspaceCql);
+    }
+
+    @Override
     public void onReadOnly(final boolean readOnly) {
         connectionConfig.setEnabled(!readOnly);
+        keyspace.setEnabled(!readOnly);
+        keyspaceCql.setEnabled(!readOnly);
     }
 
     @UiHandler("connectionConfig")
     public void onConnectionConfig(final ValueChangeEvent<String> event) {
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("keyspace")
+    public void onKeyspace(final ValueChangeEvent<String> event) {
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("keyspaceCql")
+    public void onKeyspaceCql(final ValueChangeEvent<String> event) {
         getUiHandlers().onChange();
     }
 

@@ -29,7 +29,6 @@ import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
 import stroom.state.shared.StateDoc;
 import stroom.state.shared.StateType;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.EntityServiceException;
@@ -42,7 +41,6 @@ import jakarta.inject.Singleton;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -81,7 +79,7 @@ public class StateDocStoreImpl implements StateDocStore {
 
         final DocRef created = store.createDocument(name);
 
-        // Double check the feed wasn't created elsewhere at the same time.
+        // Double-check the feed wasn't created elsewhere at the same time.
         if (checkDuplicateName(name, created.getUuid())) {
             // Delete the newly created document as the name is duplicated.
 
@@ -93,7 +91,6 @@ public class StateDocStoreImpl implements StateDocStore {
 
         // Set the default keyspace.
         StateDoc doc = store.readDocument(created);
-        doc.setKeyspaceCql(ScyllaDbUtil.createKeyspaceCql(name));
         doc.setStateType(StateType.TEMPORAL_STATE);
         doc.setRetainForever(true);
         store.writeDocument(doc);
@@ -102,11 +99,10 @@ public class StateDocStoreImpl implements StateDocStore {
     }
 
     private void validateName(final String name) {
-        KeyspaceNameValidator.validateName(name);
-
-        // Check a feed doesn't already exist with this name.
-        if (checkDuplicateName(name, null)) {
-            throwNameException(name);
+        if (!ScyllaDbNameValidator.isValidName(name)) {
+            throw new EntityServiceException("The state store name must match the pattern '" +
+                    ScyllaDbNameValidator.getPattern() +
+                    "'");
         }
     }
 
@@ -137,9 +133,7 @@ public class StateDocStoreImpl implements StateDocStore {
             throwNameException(name);
         }
 
-        final DocRef newDocRef = store.copyDocument(docRef.getUuid(), newName);
-        fixKeyspace(newDocRef);
-        return newDocRef;
+        return store.copyDocument(docRef.getUuid(), newName);
     }
 
     private Set<String> getExistingNames() {
@@ -197,38 +191,18 @@ public class StateDocStoreImpl implements StateDocStore {
             throw new EntityServiceException("A state store named '" + name + "' already exists");
         }
 
-        final DocRef docRef = store.renameDocument(uuid, name);
-
-        // Change the keyspace name.
-        fixKeyspace(docRef);
-
-        return docRef;
-    }
-
-    private void fixKeyspace(final DocRef docRef) {
-        final StateDoc doc = readDocument(docRef);
-        if (doc != null) {
-            final String keyspace = docRef.getName();
-            if (doc.getKeyspaceCql() != null) {
-                String cql = doc.getKeyspaceCql();
-                cql = ScyllaDbUtil.replaceKeyspaceNameInCql(cql, keyspace);
-                doc.setKeyspaceCql(cql);
-                writeDocument(doc);
-            }
-        }
+        return store.renameDocument(uuid, name);
     }
 
     @Override
     public void deleteDocument(final String uuid) {
-        // Drop the keyspace before deleting the document.
+        // Drop the associated ScyllaDB table before deleting the document.
         final StateDoc doc = readDocument(new DocRef(StateDoc.DOCUMENT_TYPE, uuid));
         if (doc != null) {
             try {
                 final CqlSessionCache sessionCache = cqlSessionCacheProvider.get();
-                final String keyspace = doc.getName();
-                final CqlSession session = sessionCache.get(keyspace);
-                ScyllaDbUtil.dropKeyspace(session, keyspace);
-                sessionCache.remove(keyspace);
+                final CqlSession session = sessionCache.get(doc.getScyllaDbRef());
+                ScyllaDbUtil.dropTable(session, doc.getName());
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
             }
@@ -262,28 +236,7 @@ public class StateDocStoreImpl implements StateDocStore {
 
     @Override
     public StateDoc writeDocument(final StateDoc document) {
-        // Validate that the keyspace CQL has the correct keyspace name else bad things could happen.
-        if (NullSafe.isBlankString(document.getKeyspaceCql())) {
-            throw new EntityServiceException("No keyspace CQL has been defined for '" +
-                    document.getName() +
-                    "'");
-        }
-
-        final Optional<String> keyspace = ScyllaDbUtil.extractKeyspaceNameFromCql(document.getKeyspaceCql());
-        if (keyspace.isEmpty()) {
-            throw new EntityServiceException("Unable to determine keyspace name from keyspace CQL in '" +
-                    document.getName() +
-                    "'");
-        }
-
-        if (!keyspace.get().equals(document.getName())) {
-            throw new EntityServiceException("Keyspace name '" +
-                    keyspace.get() +
-                    "' in CQL does not match document name '" +
-                    document.getName() +
-                    "'");
-        }
-
+        validateName(document.getName());
         return store.writeDocument(document);
     }
 

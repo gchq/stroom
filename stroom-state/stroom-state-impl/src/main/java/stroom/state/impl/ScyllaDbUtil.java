@@ -7,8 +7,10 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.CqlSessionBuilder;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
+import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
 import jakarta.inject.Provider;
 
 import java.util.ArrayList;
@@ -41,23 +43,32 @@ public class ScyllaDbUtil {
     private static final String DEFAULT_KEYSPACE = "state";
     private static final String DEFAULT_KEYSPACE_CQL = createKeyspaceCql(DEFAULT_KEYSPACE);
 
+    private static CqlSession testSession;
+
     public static void test(final BiConsumer<Provider<CqlSession>, String> consumer) {
-        final String connectionConfig = getDefaultConnection();
-        final String keyspaceName = createTestKeyspaceName();
-        LOGGER.info(() -> "Using keyspace name: " + keyspaceName);
+        final String tableName = createTestTableName();
+        LOGGER.info(() -> "Using test table: " + tableName);
         try {
-            try (final CqlSession session = builder(connectionConfig).build()) {
-                createKeyspace(session, keyspaceName);
+            if (testSession == null) {
+                synchronized (ScyllaDbUtil.class) {
+                    if (testSession == null) {
+                        final String connectionConfig = getDefaultConnection();
+                        try (final CqlSession session = builder(connectionConfig).build()) {
+                            createKeyspace(session, "test");
+                        }
+                        testSession = keyspace(connectionConfig, "test");
+                    }
+                }
             }
-            try (final CqlSession ks = keyspace(connectionConfig, keyspaceName)) {
-                consumer.accept(() -> ks, keyspaceName);
-            }
+            consumer.accept(() -> testSession, tableName);
         } finally {
-            dropKeyspaceFromDefault(keyspaceName);
+            if (testSession != null) {
+                dropTable(testSession, tableName);
+            }
         }
     }
 
-    public static String createTestKeyspaceName() {
+    public static String createTestTableName() {
         return "test" + UUID.randomUUID().toString().replaceAll("-", "");
     }
 
@@ -236,5 +247,13 @@ public class ScyllaDbUtil {
         final String cql = dropKeyspaceCql(keyspace);
         session.execute(cql);
         LOGGER.info(() -> "Dropped keyspace: " + keyspace);
+    }
+
+    public static void dropTable(final CqlSession session,
+                                 final String tableName) {
+        final SimpleStatement statement = SchemaBuilder.dropTable(tableName)
+                .ifExists()
+                .build();
+        session.execute(statement);
     }
 }

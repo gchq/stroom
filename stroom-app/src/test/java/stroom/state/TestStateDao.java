@@ -17,19 +17,13 @@
 
 package stroom.state;
 
-import stroom.docref.DocRef;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.state.impl.ScyllaDbDocStore;
 import stroom.state.impl.ScyllaDbUtil;
-import stroom.state.impl.StateDocStore;
 import stroom.state.impl.dao.TemporalState;
 import stroom.state.impl.dao.TemporalStateDao;
 import stroom.state.impl.dao.TemporalStateRequest;
-import stroom.state.shared.StateDoc;
-import stroom.state.shared.StateType;
 import stroom.test.AbstractCoreIntegrationTest;
 
-import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -45,24 +39,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(MockitoExtension.class)
 class TestStateDao extends AbstractCoreIntegrationTest {
 
-    @Inject
-    private ScyllaDbDocStore scyllaDbDocStore;
-    @Inject
-    private StateDocStore stateDocStore;
-
     @Test
     void testDao() {
-        ScyllaDbUtil.test((sessionProvider, keyspaceName) -> {
-            final DocRef scyllaDbDocRef = scyllaDbDocStore.createDocument("test");
-            final DocRef stateDocRef = stateDocStore.createDocument(keyspaceName);
-            StateDoc doc = stateDocStore.readDocument(stateDocRef);
-            doc.setScyllaDbRef(scyllaDbDocRef);
-            doc.setStateType(StateType.STATE);
-            doc = stateDocStore.writeDocument(doc);
-
-            final TemporalStateDao stateDao = new TemporalStateDao(sessionProvider);
-            stateDao.dropTables();
-            stateDao.createTables();
+        ScyllaDbUtil.test((sessionProvider, tableName) -> {
+            final TemporalStateDao stateDao = new TemporalStateDao(sessionProvider, tableName);
 
             final ByteBuffer byteBuffer = ByteBuffer.wrap("test".getBytes(StandardCharsets.UTF_8));
             final TemporalState state = new TemporalState(
@@ -72,7 +52,7 @@ class TestStateDao extends AbstractCoreIntegrationTest {
                     byteBuffer);
             stateDao.insert(Collections.singletonList(state));
 
-            final TemporalStateRequest stateRequest = new TemporalStateRequest(keyspaceName,
+            final TemporalStateRequest stateRequest = new TemporalStateRequest(tableName,
                     "TEST_KEY",
                     Instant.ofEpochSecond(10));
             final Optional<TemporalState> optional = stateDao.getState(stateRequest);

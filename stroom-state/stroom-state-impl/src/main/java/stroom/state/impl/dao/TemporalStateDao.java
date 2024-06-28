@@ -13,6 +13,7 @@ import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.data.CqlDuration;
 import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.relation.Relation;
@@ -41,47 +42,10 @@ public class TemporalStateDao extends AbstractStateDao<TemporalState> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TemporalStateDao.class);
 
-    private static final CqlIdentifier TABLE = CqlIdentifier.fromCql("temporal_state");
     private static final CqlIdentifier COLUMN_KEY = CqlIdentifier.fromCql("key");
     private static final CqlIdentifier COLUMN_EFFECTIVE_TIME = CqlIdentifier.fromCql("effective_time");
     private static final CqlIdentifier COLUMN_VALUE_TYPE = CqlIdentifier.fromCql("value_type");
     private static final CqlIdentifier COLUMN_VALUE = CqlIdentifier.fromCql("value");
-    private static final SimpleStatement CREATE_TABLE = createTable(TABLE)
-            .ifNotExists()
-            .withPartitionKey(COLUMN_KEY, DataTypes.TEXT)
-            .withClusteringColumn(COLUMN_EFFECTIVE_TIME, DataTypes.TIMESTAMP)
-            .withColumn(COLUMN_VALUE_TYPE, DataTypes.TINYINT)
-            .withColumn(COLUMN_VALUE, DataTypes.BLOB)
-            .withClusteringOrder(COLUMN_EFFECTIVE_TIME, ClusteringOrder.DESC)
-            .withCompaction(new DefaultTimeWindowCompactionStrategy())
-            .build();
-    private static final SimpleStatement DROP_TABLE = dropTable(TABLE)
-            .ifExists()
-            .build();
-
-    private static final SimpleStatement INSERT = insertInto(TABLE)
-            .value(COLUMN_KEY, bindMarker())
-            .value(COLUMN_EFFECTIVE_TIME, bindMarker())
-            .value(COLUMN_VALUE_TYPE, bindMarker())
-            .value(COLUMN_VALUE, bindMarker())
-            .build();
-
-    private static final SimpleStatement DELETE = deleteFrom(TABLE)
-            .where(
-                    Relation.column(COLUMN_KEY).isEqualTo(bindMarker()),
-                    Relation.column(COLUMN_EFFECTIVE_TIME).isEqualTo(bindMarker()))
-            .build();
-
-    private static final SimpleStatement SELECT = selectFrom(TABLE)
-            .column(COLUMN_EFFECTIVE_TIME)
-            .column(COLUMN_VALUE_TYPE)
-            .column(COLUMN_VALUE)
-            .whereColumn(COLUMN_KEY).isEqualTo(bindMarker())
-            .whereColumn(COLUMN_EFFECTIVE_TIME).isLessThanOrEqualTo(bindMarker())
-            .orderBy(COLUMN_EFFECTIVE_TIME, ClusteringOrder.DESC)
-            .limit(1)
-            .allowFiltering()
-            .build();
 
     private static final Map<String, ScyllaDbColumn> COLUMN_MAP = Map.of(
             TemporalStateFields.KEY,
@@ -93,35 +57,40 @@ public class TemporalStateDao extends AbstractStateDao<TemporalState> {
             TemporalStateFields.VALUE,
             new ScyllaDbColumn(TemporalStateFields.VALUE, DataTypes.BLOB, COLUMN_VALUE));
 
-    private final SearchHelper searchHelper;
 
-    public TemporalStateDao(final Provider<CqlSession> sessionProvider) {
-        super(sessionProvider, TABLE);
-        searchHelper = new SearchHelper(
-                sessionProvider,
-                TABLE,
-                COLUMN_MAP,
-                TemporalStateFields.VALUE_TYPE,
-                TemporalStateFields.VALUE);
+
+    public TemporalStateDao(final Provider<CqlSession> sessionProvider, final String tableName) {
+        super(sessionProvider, CqlIdentifier.fromCql(tableName));
     }
 
     @Override
-    public void createTables() {
-        LOGGER.info("Creating tables...");
+    void createTables() {
+        LOGGER.info("Creating table: " + table);
         LOGGER.logDurationIfInfoEnabled(() -> {
-            sessionProvider.get().execute(CREATE_TABLE);
+            final SimpleStatement statement = createTable(table)
+                    .ifNotExists()
+                    .withPartitionKey(COLUMN_KEY, DataTypes.TEXT)
+                    .withClusteringColumn(COLUMN_EFFECTIVE_TIME, DataTypes.TIMESTAMP)
+                    .withColumn(COLUMN_VALUE_TYPE, DataTypes.TINYINT)
+                    .withColumn(COLUMN_VALUE, DataTypes.BLOB)
+                    .withClusteringOrder(COLUMN_EFFECTIVE_TIME, ClusteringOrder.DESC)
+                    .withCompaction(new DefaultTimeWindowCompactionStrategy())
+                    .build();
+            sessionProvider.get().execute(statement);
         }, "createTables()");
-    }
-
-    @Override
-    public void dropTables() {
-        sessionProvider.get().execute(DROP_TABLE);
     }
 
     @Override
     public void insert(final List<TemporalState> states) {
         Objects.requireNonNull(states, "Null states list");
-        final PreparedStatement preparedStatement = sessionProvider.get().prepare(INSERT);
+        final SimpleStatement statement = insertInto(table)
+                .value(COLUMN_KEY, bindMarker())
+                .value(COLUMN_EFFECTIVE_TIME, bindMarker())
+                .value(COLUMN_VALUE_TYPE, bindMarker())
+                .value(COLUMN_VALUE, bindMarker())
+                .usingTimeout(TEN_SECONDS)
+                .build();
+        final PreparedStatement preparedStatement = prepare(statement);
         try (final BatchStatementExecutor executor = new BatchStatementExecutor(sessionProvider)) {
             for (final TemporalState state : states) {
                 executor.addStatement(preparedStatement.bind(
@@ -135,13 +104,27 @@ public class TemporalStateDao extends AbstractStateDao<TemporalState> {
 
     @Override
     public void delete(final List<TemporalState> states) {
-        doDelete(states, DELETE, state -> new Object[]{
+        final SimpleStatement statement = deleteFrom(table)
+                .whereColumn(COLUMN_KEY).isEqualTo(bindMarker())
+                .whereColumn(COLUMN_EFFECTIVE_TIME).isEqualTo(bindMarker())
+                .build();
+        doDelete(states, statement, state -> new Object[]{
                 state.key(),
                 state.effectiveTime()});
     }
 
     public Optional<TemporalState> getState(final TemporalStateRequest request) {
-        final PreparedStatement preparedStatement = sessionProvider.get().prepare(SELECT);
+        final SimpleStatement statement = selectFrom(table)
+                .column(COLUMN_EFFECTIVE_TIME)
+                .column(COLUMN_VALUE_TYPE)
+                .column(COLUMN_VALUE)
+                .whereColumn(COLUMN_KEY).isEqualTo(bindMarker())
+                .whereColumn(COLUMN_EFFECTIVE_TIME).isLessThanOrEqualTo(bindMarker())
+                .orderBy(COLUMN_EFFECTIVE_TIME, ClusteringOrder.DESC)
+                .limit(1)
+                .allowFiltering()
+                .build();
+        final PreparedStatement preparedStatement = sessionProvider.get().prepare(statement);
         final BoundStatement bound = preparedStatement.bind(request.key(), request.effectiveTime());
         return Optional
                 .ofNullable(sessionProvider.get().execute(bound).one())
@@ -157,12 +140,18 @@ public class TemporalStateDao extends AbstractStateDao<TemporalState> {
                        final FieldIndex fieldIndex,
                        final DateTimeSettings dateTimeSettings,
                        final ValuesConsumer consumer) {
+        final SearchHelper searchHelper = new SearchHelper(
+                sessionProvider,
+                table,
+                COLUMN_MAP,
+                TemporalStateFields.VALUE_TYPE,
+                TemporalStateFields.VALUE);
         searchHelper.search(criteria, fieldIndex, dateTimeSettings, consumer);
     }
 
     private void findKeys(final List<Relation> relations,
                           final Consumer<String> consumer) {
-        final SimpleStatement statement = selectFrom(TABLE)
+        final SimpleStatement statement = selectFrom(table)
                 .column(COLUMN_KEY)
                 .where(relations)
                 .groupByColumnIds(COLUMN_KEY)
@@ -176,7 +165,7 @@ public class TemporalStateDao extends AbstractStateDao<TemporalState> {
     @Override
     public void condense(final Instant oldest) {
         findKeys(Collections.emptyList(), key -> {
-            final SimpleStatement select = selectFrom(TABLE)
+            final SimpleStatement select = selectFrom(table)
                     .column(COLUMN_EFFECTIVE_TIME)
                     .column(COLUMN_VALUE_TYPE)
                     .column(COLUMN_VALUE)
@@ -185,7 +174,7 @@ public class TemporalStateDao extends AbstractStateDao<TemporalState> {
                     .orderBy(COLUMN_EFFECTIVE_TIME, ClusteringOrder.ASC)
                     .allowFiltering()
                     .build();
-            final SimpleStatement delete = deleteFrom(TABLE)
+            final SimpleStatement delete = deleteFrom(table)
                     .whereColumn(COLUMN_KEY).isEqualTo(bindMarker())
                     .whereColumn(COLUMN_EFFECTIVE_TIME).isEqualTo(bindMarker())
                     .build();
@@ -216,13 +205,13 @@ public class TemporalStateDao extends AbstractStateDao<TemporalState> {
     @Override
     public void removeOldData(final Instant oldest) {
         // We have to select rows to delete data here as you can only execute delete statements against primary keys.
-        final SimpleStatement select = selectFrom(TABLE)
+        final SimpleStatement select = selectFrom(table)
                 .column(COLUMN_KEY)
                 .column(COLUMN_EFFECTIVE_TIME)
                 .whereColumn(COLUMN_EFFECTIVE_TIME).isLessThan(literal(oldest))
                 .allowFiltering()
                 .build();
-        final SimpleStatement delete = deleteFrom(TABLE)
+        final SimpleStatement delete = deleteFrom(table)
                 .whereColumn(COLUMN_KEY).isEqualTo(bindMarker())
                 .whereColumn(COLUMN_EFFECTIVE_TIME).isEqualTo(bindMarker())
                 .build();
