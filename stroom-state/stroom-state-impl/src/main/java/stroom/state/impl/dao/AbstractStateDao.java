@@ -27,7 +27,7 @@ public abstract class AbstractStateDao<T> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractStateDao.class);
 
-    final CqlDuration TEN_SECONDS = CqlDuration.from("PT10S");
+    static final CqlDuration TEN_SECONDS = CqlDuration.from("PT10S");
 
     final Provider<CqlSession> sessionProvider;
     final CqlIdentifier table;

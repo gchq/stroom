@@ -9106,7 +9106,6 @@ components:
           - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
-          - EYE
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
@@ -9735,7 +9734,6 @@ components:
           - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
-          - EYE
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
@@ -10593,7 +10591,6 @@ components:
           - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
-          - EYE
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
@@ -10877,7 +10874,6 @@ components:
           - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
-          - EYE
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
@@ -12435,7 +12431,6 @@ components:
           - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
-          - EYE
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
@@ -13415,7 +13410,6 @@ components:
           - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
-          - EYE
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
