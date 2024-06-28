@@ -81,21 +81,21 @@ public class ScyllaDbSettingsPresenter
 
     @Override
     protected void onRead(final DocRef docRef, final ScyllaDbDoc doc, final boolean readOnly) {
-        getView().setConnectionYaml(doc.getConnection());
+        getView().setConnectionConfig(doc.getConnection());
         getView().onReadOnly(readOnly);
     }
 
     @Override
     protected ScyllaDbDoc onWrite(final ScyllaDbDoc doc) {
-        doc.setConnection(getView().getConnectionYaml());
+        doc.setConnection(getView().getConnectionConfig());
         return doc;
     }
 
     public interface ScyllaDbSettingsView
             extends View, ReadOnlyChangeHandler, HasUiHandlers<ScyllaDbSettingsUiHandlers> {
 
-        String getConnectionYaml();
+        String getConnectionConfig();
 
-        void setConnectionYaml(String connectionYaml);
+        void setConnectionConfig(String connectionConfig);
     }
 }

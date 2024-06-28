@@ -42,14 +42,14 @@ public class ScyllaDbUtil {
     private static final String DEFAULT_KEYSPACE_CQL = createKeyspaceCql(DEFAULT_KEYSPACE);
 
     public static void test(final BiConsumer<Provider<CqlSession>, String> consumer) {
-        final String connectionYaml = getDefaultConnection();
+        final String connectionConfig = getDefaultConnection();
         final String keyspaceName = createTestKeyspaceName();
         LOGGER.info(() -> "Using keyspace name: " + keyspaceName);
         try {
-            try (final CqlSession session = builder(connectionYaml).build()) {
+            try (final CqlSession session = builder(connectionConfig).build()) {
                 createKeyspace(session, keyspaceName);
             }
-            try (final CqlSession ks = keyspace(connectionYaml, keyspaceName)) {
+            try (final CqlSession ks = keyspace(connectionConfig, keyspaceName)) {
                 consumer.accept(() -> ks, keyspaceName);
             }
         } finally {
@@ -65,6 +65,7 @@ public class ScyllaDbUtil {
         // Allow the db conn details to be overridden with env vars, e.g. when we want to run tests
         // from within a container so we need a different host to localhost
         final String effectiveHost = getValueOrOverride(
+                // STROOM_JDBC_DRIVER_HOST is used by the CI build process for MySQL so we will also use it for ScyllaDB
                 "STROOM_JDBC_DRIVER_HOST",
                 "HOST IP",
                 () -> "localhost",
@@ -130,9 +131,9 @@ public class ScyllaDbUtil {
             final String prefix = cql.substring(0, start);
             final String keyspace = cql.substring(start, end);
             final String suffix = cql.substring(end);
-            return new String[] {prefix, keyspace, suffix};
+            return new String[]{prefix, keyspace, suffix};
         }
-        return new String[] {cql};
+        return new String[]{cql};
     }
 
     public static String dropKeyspaceCql(final String keyspaceName) {
@@ -144,16 +145,16 @@ public class ScyllaDbUtil {
     /**
      * Initiates a connection to the session.
      */
-    public static CqlSession connect(final String connectionYaml) {
-        return builder(connectionYaml).build();
+    public static CqlSession connect(final String connectionConfig) {
+        return builder(connectionConfig).build();
     }
 
-    public static CqlSession keyspace(final String connectionYaml, final String keyspaceName) {
-        return builder(connectionYaml).withKeyspace(keyspaceName).build();
+    public static CqlSession keyspace(final String connectionConfig, final String keyspaceName) {
+        return builder(connectionConfig).withKeyspace(keyspaceName).build();
     }
 
-    public static CqlSessionBuilder builder(final String connectionYaml) {
-        return CqlSession.builder().withConfigLoader(DriverConfigLoader.fromString(connectionYaml));
+    public static CqlSessionBuilder builder(final String connectionConfig) {
+        return CqlSession.builder().withConfigLoader(DriverConfigLoader.fromString(connectionConfig));
     }
 
     public static void printMetadata(final Provider<CqlSession> sessionProvider, final String keyspaceName) {

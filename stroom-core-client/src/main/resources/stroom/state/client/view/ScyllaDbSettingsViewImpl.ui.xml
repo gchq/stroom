@@ -4,8 +4,8 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="scyllaDbSettingsConnectionYaml" label="Connection YAML">
-            <g:TextArea ui:field="connectionYaml" width="100%" height="400px"/>
+        <form:FormGroup identity="scyllaDbSettingsConnectionConfig" label="Connection Config">
+            <g:TextArea ui:field="connectionConfig" width="100%" height="400px"/>
         </form:FormGroup>
         <b:Button ui:field="testConnection" text="Test Connection" width="200px" addStyleNames="allow-focus"/>
     </g:FlowPanel>

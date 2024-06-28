@@ -38,7 +38,7 @@ public class ScyllaDbSettingsViewImpl extends ViewWithUiHandlers<ScyllaDbSetting
     private final Widget widget;
 
     @UiField
-    TextArea connectionYaml;
+    TextArea connectionConfig;
     @UiField
     Button testConnection;
 
@@ -54,22 +54,22 @@ public class ScyllaDbSettingsViewImpl extends ViewWithUiHandlers<ScyllaDbSetting
     }
 
     @Override
-    public String getConnectionYaml() {
-        return connectionYaml.getText();
+    public String getConnectionConfig() {
+        return connectionConfig.getText();
     }
 
     @Override
-    public void setConnectionYaml(final String connectionYaml) {
-        this.connectionYaml.setText(connectionYaml);
+    public void setConnectionConfig(final String connectionConfig) {
+        this.connectionConfig.setText(connectionConfig);
     }
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        connectionYaml.setEnabled(!readOnly);
+        connectionConfig.setEnabled(!readOnly);
     }
 
-    @UiHandler("connectionYaml")
-    public void onConnectionYaml(final ValueChangeEvent<String> event) {
+    @UiHandler("connectionConfig")
+    public void onConnectionConfig(final ValueChangeEvent<String> event) {
         getUiHandlers().onChange();
     }
 
