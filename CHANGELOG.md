@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.5-beta.4] - 2024-06-28
+
+* Issue **#4339** : Allow user selection of analytic duplicate columns.
+
+
 ## [v7.5-beta.3] - 2024-06-27
 
 * Issue **#2126** : Add experimental state store.
@@ -644,7 +649,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-beta.3...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-beta.4...HEAD
+[v7.5-beta.4]: https://github.com/gchq/stroom/compare/v7.5-beta.3...v7.5-beta.4
 [v7.5-beta.3]: https://github.com/gchq/stroom/compare/v7.5-beta.2...v7.5-beta.3
 [v7.5-beta.2]: https://github.com/gchq/stroom/compare/v7.5-beta.1...v7.5-beta.2
 [v7.5-beta.1]: https://github.com/gchq/stroom/compare/v7.4-beta.16...v7.5-beta.1
