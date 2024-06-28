@@ -11163,6 +11163,9 @@
           "description" : {
             "type" : "string"
           },
+          "duplicateNotificationConfig" : {
+            "$ref" : "#/components/schemas/DuplicateNotificationConfig"
+          },
           "errorFeed" : {
             "$ref" : "#/components/schemas/DocRef"
           },
@@ -13216,6 +13219,26 @@
           },
           "resultPage" : {
             "$ref" : "#/components/schemas/ResultPageDuplicateCheckRow"
+          }
+        }
+      },
+      "DuplicateNotificationConfig" : {
+        "type" : "object",
+        "properties" : {
+          "chooseColumns" : {
+            "type" : "boolean"
+          },
+          "columnNames" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "rememberNotifications" : {
+            "type" : "boolean"
+          },
+          "suppressDuplicateNotifications" : {
+            "type" : "boolean"
           }
         }
       },
@@ -18718,6 +18741,12 @@
           "description" : {
             "type" : "string"
           },
+          "keyspace" : {
+            "type" : "string"
+          },
+          "keyspaceCql" : {
+            "type" : "string"
+          },
           "name" : {
             "type" : "string"
           },
@@ -19528,9 +19557,6 @@
             "type" : "string"
           },
           "description" : {
-            "type" : "string"
-          },
-          "keyspaceCql" : {
             "type" : "string"
           },
           "name" : {

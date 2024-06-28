@@ -7669,6 +7669,8 @@ components:
           type: string
         description:
           type: string
+        duplicateNotificationConfig:
+          $ref: '#/components/schemas/DuplicateNotificationConfig'
         errorFeed:
           $ref: '#/components/schemas/DocRef'
         languageVersion:
@@ -9315,6 +9317,19 @@ components:
             type: string
         resultPage:
           $ref: '#/components/schemas/ResultPageDuplicateCheckRow'
+    DuplicateNotificationConfig:
+      type: object
+      properties:
+        chooseColumns:
+          type: boolean
+        columnNames:
+          type: array
+          items:
+            type: string
+        rememberNotifications:
+          type: boolean
+        suppressDuplicateNotifications:
+          type: boolean
     ElasticClusterDoc:
       type: object
       properties:
@@ -14361,6 +14376,10 @@ components:
           type: string
         description:
           type: string
+        keyspace:
+          type: string
+        keyspaceCql:
+          type: string
         name:
           type: string
         type:
@@ -14998,8 +15017,6 @@ components:
         createUser:
           type: string
         description:
-          type: string
-        keyspaceCql:
           type: string
         name:
           type: string
