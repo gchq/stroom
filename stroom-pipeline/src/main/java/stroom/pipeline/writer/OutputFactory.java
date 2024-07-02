@@ -1,5 +1,6 @@
 package stroom.pipeline.writer;
 
+import stroom.meta.api.AttributeMap;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.state.MetaDataHolder;
 import stroom.util.NullSafe;
@@ -13,6 +14,8 @@ import java.io.OutputStream;
 
 public class OutputFactory {
 
+    public static String COMPRESSION_ZIP = "zip";
+
     private final MetaDataHolder metaDataHolder;
     private boolean useCompression;
     private String compressionMethod;
@@ -22,10 +25,22 @@ public class OutputFactory {
     }
 
     public Output create(final OutputStream innerOutputStream) throws IOException {
+        return create(innerOutputStream, null);
+    }
+
+    /**
+     * @param attributeMapOverride If supplied these attributes will be used rather than those in the metaHolder
+     */
+    public Output create(final OutputStream innerOutputStream,
+                         final AttributeMap attributeMapOverride) throws IOException {
         final Output output;
         if (useCompression) {
-            if (compressionMethod.equalsIgnoreCase("zip")) {
-                output = new ZipOutput(metaDataHolder, innerOutputStream);
+            if (compressionMethod.equalsIgnoreCase(COMPRESSION_ZIP)) {
+                if (attributeMapOverride != null) {
+                    output = new ZipOutput(attributeMapOverride, innerOutputStream);
+                } else {
+                    output = new ZipOutput(metaDataHolder, innerOutputStream);
+                }
             } else {
                 try {
                     output = new BasicOutput(new CompressorStreamFactory()

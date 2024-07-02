@@ -5,7 +5,8 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.pipeline.state.MetaDataHolder;
 import stroom.util.NullSafe;
 import stroom.util.io.ByteCountOutputStream;
-import stroom.util.shared.ModelStringUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import com.google.common.base.Strings;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
@@ -16,19 +17,40 @@ import java.io.OutputStream;
 
 public class ZipOutput implements Output {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ZipOutput.class);
+
     public static final String DATA_EXTENSION = ".dat";
     public static final String META_EXTENSION = ".meta";
 
     private final MetaDataHolder metaDataHolder;
+    private final AttributeMap attributeMap;
     private ZipArchiveEntry currentZipEntry;
     private long count;
 
     private final ZipArchiveOutputStream zipOutputStream;
     private final ByteCountOutputStream outputStream;
 
+    /**
+     * Use the attributes from the metaDataHolder
+     */
     public ZipOutput(final MetaDataHolder metaDataHolder,
                      final OutputStream innerOutputStream) {
+        this(metaDataHolder, null, innerOutputStream);
+    }
+
+    /**
+     * Use the attributes from the supplied attributeMap
+     */
+    public ZipOutput(final AttributeMap attributeMap,
+                     final OutputStream innerOutputStream) {
+        this(null, attributeMap, innerOutputStream);
+    }
+
+    private ZipOutput(final MetaDataHolder metaDataHolder,
+                      final AttributeMap attributeMap,
+                      final OutputStream innerOutputStream) {
         this.metaDataHolder = metaDataHolder;
+        this.attributeMap = attributeMap;
 
         count = 0;
         zipOutputStream = new ZipArchiveOutputStream(innerOutputStream) {
@@ -53,11 +75,21 @@ public class ZipOutput implements Output {
         String dataFileName = base + DATA_EXTENSION;
         String metaFileName = base + META_EXTENSION;
 
-        if (metaDataHolder != null) {
-            final AttributeMap attributeMap = metaDataHolder.getMetaData();
+        final AttributeMap effectiveAttributeMap;
+        if (attributeMap != null) {
+            // A passed in attributeMap trumps the stream metadata
+            effectiveAttributeMap = attributeMap;
+            LOGGER.debug("Using attributeMap: {}", attributeMap);
+        } else if (metaDataHolder != null) {
+            effectiveAttributeMap = metaDataHolder.getMetaData();
+            LOGGER.debug("Using metaDataHolder: {}", effectiveAttributeMap);
+        } else {
+            effectiveAttributeMap = null;
+        }
 
+        if (effectiveAttributeMap != null) {
             // TODO : I'm not sure where/who is setting fileName in meta so will leave for now.
-            final String fileName = attributeMap.get("fileName");
+            final String fileName = effectiveAttributeMap.get("fileName");
             if (!NullSafe.isBlankString(fileName)) {
                 dataFileName = fileName;
                 final int index = fileName.lastIndexOf(".");
@@ -69,7 +101,7 @@ public class ZipOutput implements Output {
             }
 
             zipOutputStream.putArchiveEntry(new ZipArchiveEntry(metaFileName));
-            AttributeMapUtil.write(attributeMap, zipOutputStream);
+            AttributeMapUtil.write(effectiveAttributeMap, zipOutputStream);
             zipOutputStream.closeArchiveEntry();
         }
 

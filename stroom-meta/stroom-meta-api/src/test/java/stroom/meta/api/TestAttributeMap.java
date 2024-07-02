@@ -1,6 +1,8 @@
 package stroom.meta.api;
 
 import stroom.test.common.TestUtil;
+import stroom.util.NullSafe;
+import stroom.util.date.DateUtil;
 
 import io.vavr.Tuple;
 import org.junit.jupiter.api.DynamicTest;
@@ -12,6 +14,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -436,6 +439,195 @@ class TestAttributeMap {
         final Instant instant = Instant.parse(val);
         assertThat(Duration.between(now, instant))
                 .isLessThan(Duration.ofMillis(100));
+    }
+
+    @Test
+    void testAppendDateTime_notPresent() {
+        final String key = "foo";
+        final Instant instant1 = Instant.now();
+        final String str1 = DateUtil.createNormalDateTimeString(instant1);
+
+        final AttributeMap attributeMap = new AttributeMap();
+
+        final String val1 = attributeMap.appendDateTime(key, instant1);
+        assertThat(val1)
+                .isEqualTo(null);
+        assertThat(attributeMap.get(key))
+                .isEqualTo(str1);
+    }
+
+    @Test
+    void testAppendDateTime_present() {
+        final String key = "foo";
+        final Instant instant1 = Instant.now().minus(1, ChronoUnit.DAYS);
+        final String str1 = DateUtil.createNormalDateTimeString(instant1);
+        final Instant instant2 = Instant.now();
+        final String str2 = DateUtil.createNormalDateTimeString(instant2);
+
+        final AttributeMap attributeMap = new AttributeMap();
+
+        final String val1 = attributeMap.appendDateTime(key, instant1);
+        assertThat(val1)
+                .isEqualTo(null);
+        assertThat(attributeMap.get(key))
+                .isEqualTo(str1);
+
+        final String val2 = attributeMap.appendDateTime(key, instant2);
+
+        assertThat(val2)
+                .isEqualTo(str1);
+        assertThat(attributeMap.get(key))
+                .isEqualTo(str1 + AttributeMapUtil.VALUE_DELIMITER + str2);
+    }
+
+    @Test
+    void testAppendDateTime_present_null() {
+        final String key = "foo";
+        final Instant instant1 = Instant.now();
+        final String str1 = DateUtil.createNormalDateTimeString(instant1);
+
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put(key, null);
+
+        final String val1 = attributeMap.appendDateTime(key, instant1);
+        assertThat(val1)
+                .isEqualTo(null);
+        assertThat(attributeMap.get(key))
+                .isEqualTo(str1);
+    }
+
+    @Test
+    void testAppendDateTime_present_emptyString() {
+        final String key = "foo";
+        final Instant instant1 = Instant.now();
+        final String str1 = DateUtil.createNormalDateTimeString(instant1);
+
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put(key, "");
+
+        final String val1 = attributeMap.appendDateTime(key, instant1);
+        assertThat(val1)
+                .isEqualTo("");
+        assertThat(attributeMap.get(key))
+                .isEqualTo(str1);
+    }
+
+    @Test
+    void testAppendItem_notPresent() {
+        final String key = "foo";
+        final String item1 = "1";
+
+        final AttributeMap attributeMap = new AttributeMap();
+
+        final String val1 = attributeMap.appendItem(key, item1);
+        assertThat(val1)
+                .isEqualTo(null);
+        assertThat(attributeMap.get(key))
+                .isEqualTo(item1);
+    }
+
+    @Test
+    void testAppendItem_present() {
+        final String key = "foo";
+        final String item1 = "1";
+        final String item2 = "2";
+
+        final AttributeMap attributeMap = new AttributeMap();
+
+        final String val1 = attributeMap.appendItem(key, item1);
+        assertThat(val1)
+                .isEqualTo(null);
+        assertThat(attributeMap.get(key))
+                .isEqualTo(item1);
+
+        final String val2 = attributeMap.appendItem(key, item2);
+
+        assertThat(val2)
+                .isEqualTo(item1);
+        assertThat(attributeMap.get(key))
+                .isEqualTo(item1 + AttributeMapUtil.VALUE_DELIMITER + item2);
+    }
+
+    @Test
+    void testAppendItem_present_null() {
+        final String key = "foo";
+        final String item1 = "1";
+
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put(key, null);
+
+        final String val1 = attributeMap.appendItem(key, item1);
+        assertThat(val1)
+                .isEqualTo(null);
+        assertThat(attributeMap.get(key))
+                .isEqualTo(item1);
+    }
+
+    @Test
+    void testAppendItem_present_emptyString() {
+        final String key = "foo";
+        final String item1 = "1";
+
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put(key, "");
+
+        final String val1 = attributeMap.appendItem(key, item1);
+        assertThat(val1)
+                .isEqualTo("");
+        assertThat(attributeMap.get(key))
+                .isEqualTo(item1);
+    }
+
+    @Test
+    void testAppendItemIf_notPresent() {
+        final String key = "foo";
+        final String item1 = "1";
+
+        final AttributeMap attributeMap = new AttributeMap();
+
+        assertThat(attributeMap.get(key))
+                .isEqualTo(null);
+
+        final String val1 = attributeMap.appendItemIf(key, item1, val -> false);
+        assertThat(attributeMap.get(key))
+                .isEqualTo(null);
+        assertThat(val1)
+                .isEqualTo(null);
+
+        final String val2 = attributeMap.appendItemIf(key, item1, val -> !NullSafe.contains(val, "1"));
+        assertThat(attributeMap.get(key))
+                .isEqualTo("1");
+        assertThat(val2)
+                .isEqualTo(null);
+
+        assertThat(attributeMap.get(key))
+                .isEqualTo("1");
+    }
+
+    @Test
+    void testAppendItemIf_present() {
+        final String key = "foo";
+        final String item1 = "1";
+        final String item2 = "2";
+
+        final AttributeMap attributeMap = new AttributeMap();
+
+        attributeMap.put(key, item1);
+        assertThat(attributeMap.get(key))
+                .isEqualTo(item1);
+
+
+        final String val1 = attributeMap.appendItemIf(key, item2, curVal -> !NullSafe.contains(curVal, "1"));
+        assertThat(val1)
+                .isEqualTo("1");
+        assertThat(attributeMap.get(key))
+                .isEqualTo(item1);
+
+        final String val2 = attributeMap.appendItemIf(key, item2, curVal -> NullSafe.contains(curVal, "1"));
+        assertThat(val1)
+                .isEqualTo("1");
+        assertThat(attributeMap.get(key))
+                .isEqualTo(item1 + AttributeMapUtil.VALUE_DELIMITER + item2);
     }
 
     @Test
