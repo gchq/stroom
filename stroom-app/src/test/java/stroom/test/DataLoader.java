@@ -134,6 +134,8 @@ public class DataLoader {
             final AttributeMap map = new AttributeMap();
             map.put(StandardHeaderArguments.FEED, feedName);
             map.putDateTime(StandardHeaderArguments.EFFECTIVE_TIME, effectiveMs);
+            map.putDateTime(StandardHeaderArguments.RECEIVED_TIME, effectiveMs);
+            map.putDateTime(StandardHeaderArguments.RECEIVED_TIME_HISTORY, effectiveMs);
 
             final ProgressHandler progressHandler = new ProgressHandler("Data Loader");
             streamTargetStreamHandlers.handle(feedName, null, map, handler -> {

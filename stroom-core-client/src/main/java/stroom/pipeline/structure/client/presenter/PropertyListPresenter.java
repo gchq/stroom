@@ -40,6 +40,7 @@ import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.popup.client.presenter.Size;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -358,7 +359,14 @@ public class PropertyListPresenter
                 e.hide();
             };
 
-            final PopupSize popupSize = PopupSize.resizableX();
+            final PopupSize popupSize = PopupSize.builder()
+                    .width(Size.builder()
+                            .initial(600)
+                            .min(600)
+                            .resizable(true)
+                            .build())
+                    .build();
+
             ShowPopupEvent.builder(editor)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
                     .popupSize(popupSize)
@@ -504,6 +512,10 @@ public class PropertyListPresenter
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public enum Source implements HasDisplayValue {
         LOCAL("Local"),

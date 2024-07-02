@@ -232,6 +232,10 @@ public class SSLConfig extends AbstractConfig implements IsProxyConfig {
             return this;
         }
 
+        public String getSslProtocol() {
+            return sslProtocol;
+        }
+
         public SSLConfig build() {
             return new SSLConfig(
                     keyStorePath,

@@ -5,27 +5,50 @@
         xmlns:i="urn:import:stroom.item.client"
         xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="newPropertyElementId" label="Element Id">
+        <form:FormGroup identity="newPropertyElementId"
+                        label="Element Id"
+                        helpText="The unique ID of the pipeline element that this property relates to.">
             <g:Label ui:field="element" addStyleNames="stroom-control-label"/>
         </form:FormGroup>
-        <form:FormGroup identity="newPropertyName" label="Name">
+        <form:FormGroup identity="newPropertyName"
+                        label="Name"
+                        helpText="The name of the property on this pipeline element.">
             <g:Label ui:field="name" addStyleNames="stroom-control-label"/>
         </form:FormGroup>
-        <form:FormGroup identity="newPropertyDescription" label="Description">
+        <form:FormGroup identity="newPropertyDescription"
+                        label="Description"
+                        helpText="The description of this property.">
             <g:Label ui:field="description" addStyleNames="stroom-control-label"/>
         </form:FormGroup>
-        <form:FormGroup identity="newPropertySource" label="Source">
+        <form:FormGroup identity="newPropertySource"
+                        label="Source">
+            <form:HelpHTML>
+                <p>The source of the value for this property.</p>
+                <ul>
+                    <li><code>Default</code> means the default value is used.</li>
+                    <li><code>Inherit</code> means the value is inherited from the parent pipeline.</li>
+                    <li><code>Local</code> means the value set on this element is used.</li>
+                </ul>
+            </form:HelpHTML>
             <i:SelectionBox ui:field="source" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="newPropertyValue" label="Value">
+        <form:FormGroup identity="newPropertyValue"
+                        label="Value"
+                        helpText="The value assigned to this property.">
             <g:SimplePanel ui:field="value" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="defaultValueGroup" identity="newPropertyDefaultValue" label="Default Value">
+        <form:FormGroup ui:field="defaultValueGroup"
+                        identity="newPropertyDefaultValue"
+                        label="Default Value"
+                        helpText="The default value for this property on this pipeline element type.">
             <g:Label ui:field="defaultValue" addStyleNames="stroom-control-label"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="inheritedValueGroup" identity="newPropertyInheritedValue" label="Inherited Value">
+        <form:FormGroup ui:field="inheritedValueGroup"
+                        identity="newPropertyInheritedValue"
+                        label="Inherited Value"
+                        helpText="The value inherited from the parent pipeline.">
             <g:Label ui:field="inheritedValue" addStyleNames="stroom-control-label"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>
- 
+

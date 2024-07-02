@@ -341,6 +341,7 @@ class TestModelStringUtil {
                 .addCase("", null)
                 .addCase(" ", null)
                 .addCase("1", 1L)
+                .addCase("1b", 1L)
                 .addCase("1bytes", 1L)
                 .addCase("1 bytes", 1L)
                 .addCase("1KiB", 1024L)

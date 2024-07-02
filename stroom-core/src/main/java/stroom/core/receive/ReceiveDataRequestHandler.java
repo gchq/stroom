@@ -31,9 +31,9 @@ import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamProcessor;
 import stroom.receive.common.StroomStreamStatus;
 import stroom.security.api.SecurityContext;
-import stroom.security.api.UserIdentity;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskProgressHandler;
+import stroom.util.NullSafe;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -44,8 +44,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -85,11 +85,13 @@ class ReceiveDataRequestHandler implements RequestHandler {
     @Override
     public void handle(final HttpServletRequest request, final HttpServletResponse response) {
         securityContext.asProcessingUser(() -> {
+            final Instant receivedTime = Instant.now();
             final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
             final AttributeMap attributeMap = AttributeMapUtil.create(request, certificateExtractor);
 
-            // Authenticate the request token if there is one.
-            final UserIdentity userIdentity = requestAuthenticator.authenticate(request, attributeMap);
+            // Authenticate the request using token or cert depending on configuration
+            // Adds sender details to the attributeMap
+            requestAuthenticator.authenticate(request, attributeMap);
 
             // Validate the supplied attributes.
             AttributeMapValidator.validate(attributeMap, metaService::getTypes);
@@ -98,14 +100,10 @@ class ReceiveDataRequestHandler implements RequestHandler {
             if (attributeMapFilter.filter(attributeMap)) {
                 debug("Receiving data", attributeMap);
 
-                feedName = Optional.ofNullable(attributeMap.get(StandardHeaderArguments.FEED))
-                        .map(String::trim)
-                        .orElse("");
+                feedName = NullSafe.trim(attributeMap.get(StandardHeaderArguments.FEED));
 
                 // Get the type name from the header arguments if supplied.
-                String typeName = Optional.ofNullable(attributeMap.get(StandardHeaderArguments.TYPE))
-                        .map(String::trim)
-                        .orElse("");
+                String typeName = NullSafe.trim(attributeMap.get(StandardHeaderArguments.TYPE));
 
                 taskContextFactory.context("Receiving Data", taskContext -> {
                     final Consumer<Long> progressHandler =
@@ -116,8 +114,8 @@ class ReceiveDataRequestHandler implements RequestHandler {
                                     attributeMap,
                                     handler,
                                     progressHandler);
-                            stroomStreamProcessor.processRequestHeader(request);
-                            stroomStreamProcessor.processInputStream(inputStream, "");
+                            stroomStreamProcessor.processRequestHeader(request, receivedTime);
+                            stroomStreamProcessor.processInputStream(inputStream, "", receivedTime);
                         });
                     } catch (final RuntimeException | IOException e) {
                         LOGGER.debug(e.getMessage(), e);

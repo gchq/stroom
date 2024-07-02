@@ -75,6 +75,10 @@ class CIStringHashMap implements Map<String, String> {
         return map.size();
     }
 
+    /**
+     * DOESN'T adhere to the contract of {@link Map#entrySet()}, so any changes
+     * to the returned {@link Set} will NOT affect this map.
+     */
     @Override
     public Set<Entry<String, String>> entrySet() {
         final Set<Entry<String, String>> rtnSet = new HashSet<>();
@@ -84,6 +88,10 @@ class CIStringHashMap implements Map<String, String> {
         return rtnSet;
     }
 
+    /**
+     * DOESN'T adhere to the contract of {@link Map#keySet()}, so any changes
+     * to the returned {@link Set} will NOT affect this map.
+     */
     @Override
     public Set<String> keySet() {
         final Set<String> rtnSet = new HashSet<>();
