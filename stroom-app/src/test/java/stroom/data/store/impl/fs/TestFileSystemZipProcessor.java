@@ -30,7 +30,10 @@ import stroom.receive.common.StreamTargetStreamHandlers;
 import stroom.receive.common.StroomStreamProcessor;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
+import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LogUtil;
+import stroom.util.net.HostNameUtil;
 
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -40,6 +43,7 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -82,8 +86,12 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
             map.put(null, "File1\nFile1\n");
             expectedBoundaries.add(map);
 
-            doTest(file, 1, new HashSet<>(Arrays.asList("revt.bgz", "revt.meta.bgz", "revt.mf.dat")),
-                    expectedContent, expectedBoundaries);
+            doTest(file,
+                    1,
+                    new HashSet<>(Arrays.asList("revt.bgz", "revt.meta.bgz", "revt.mf.dat")),
+                    expectedContent,
+                    expectedBoundaries,
+                    Instant.now());
         } finally {
             Files.delete(file);
         }
@@ -117,7 +125,8 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                             "revt.meta.bdy.dat",
                             "revt.mf.dat")),
                     expectedContent,
-                    expectedBoundaries);
+                    expectedBoundaries,
+                    Instant.now());
         } finally {
             Files.delete(file);
         }
@@ -145,20 +154,33 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
             expectedContent.put(StreamTypeNames.CONTEXT, "Context1\nContext1\n");
             expectedContent.put(StreamTypeNames.META, "Meta11:1\nMeta12:1\nStreamSize:12\n");
 
+            final Instant receivedTime = Instant.now();
+            final String receivedTimeStr = DateUtil.createNormalDateTimeString(receivedTime);
+            final String hostName = HostNameUtil.determineHostName();
+
             final List<Map<String, String>> expectedBoundaries = new ArrayList<>();
             Map<String, String> map = new HashMap<>();
             map.put(null, "File1\nFile1\n");
             map.put(StreamTypeNames.CONTEXT, "Context1\nContext1\n");
-            map.put(StreamTypeNames.META, "Meta11:1\nMeta12:1\nStreamSize:12\n");
+            map.put(StreamTypeNames.META, LogUtil.message("""
+                    Meta11:1
+                    Meta12:1
+                    ReceivedPath:{}
+                    ReceivedTime:{}
+                    ReceivedTimeHistory:{}
+                    StreamSize:12
+                    """, hostName, receivedTimeStr, receivedTimeStr));
             expectedBoundaries.add(map);
 
-            doTest(file, 1,
+            doTest(file,
+                    1,
                     new HashSet<>(Arrays.asList("revt.bgz", "revt.ctx.bgz", "revt.meta.bgz", "revt.mf.dat")),
-                    expectedContent, expectedBoundaries);
+                    expectedContent,
+                    expectedBoundaries,
+                    receivedTime);
         } finally {
             Files.delete(file);
         }
-
     }
 
     @Test
@@ -193,21 +215,44 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
             expectedContent.put(StreamTypeNames.CONTEXT, "Context1\nContext1\nContext2\nContext2\n");
             expectedContent.put(StreamTypeNames.META, "Meta1a\nMeta1b\nStreamSize:12\nMeta2a\nMeta2b\nStreamSize:12\n");
 
+            final Instant receivedTime = Instant.now();
+            final String receivedTimeStr = DateUtil.createNormalDateTimeString(receivedTime);
+            final String hostName = HostNameUtil.determineHostName();
+
             final List<Map<String, String>> expectedBoundaries = new ArrayList<>();
             Map<String, String> map = new HashMap<>();
             map.put(null, "File1\nFile1\n");
             map.put(StreamTypeNames.CONTEXT, "Context1\nContext1\n");
-            map.put(StreamTypeNames.META, "Meta1a\nMeta1b\nStreamSize:12\n");
+            map.put(StreamTypeNames.META, LogUtil.message("""
+                    Meta1a
+                    Meta1b
+                    ReceivedPath:{}
+                    ReceivedTime:{}
+                    ReceivedTimeHistory:{}
+                    StreamSize:12
+                    """, hostName, receivedTimeStr, receivedTimeStr));
             expectedBoundaries.add(map);
+
             map = new HashMap<>();
             map.put(null, "File2\nFile2\n");
             map.put(StreamTypeNames.CONTEXT, "Context2\nContext2\n");
-            map.put(StreamTypeNames.META, "Meta2a\nMeta2b\nStreamSize:12\n");
+            map.put(StreamTypeNames.META, LogUtil.message("""
+                    Meta2a
+                    Meta2b
+                    ReceivedPath:{}
+                    ReceivedTime:{}
+                    ReceivedTimeHistory:{}
+                    StreamSize:12
+                    """, hostName, receivedTimeStr, receivedTimeStr));
             expectedBoundaries.add(map);
 
-            doTest(file, 1, new HashSet<>(Arrays.asList("revt.bgz", "revt.bdy.dat", "revt.ctx.bgz",
-                            "revt.ctx.bdy.dat", "revt.meta.bgz", "revt.meta.bdy.dat", "revt.mf.dat")), expectedContent,
-                    expectedBoundaries);
+            doTest(file,
+                    1,
+                    new HashSet<>(Arrays.asList("revt.bgz", "revt.bdy.dat", "revt.ctx.bgz",
+                            "revt.ctx.bdy.dat", "revt.meta.bgz", "revt.meta.bdy.dat", "revt.mf.dat")),
+                    expectedContent,
+                    expectedBoundaries,
+                    receivedTime);
         } finally {
             Files.delete(file);
         }
@@ -242,15 +287,19 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                             "revt.meta.bdy.dat",
                             "revt.mf.dat")),
                     expectedContent,
-                    expectedBoundaries);
+                    expectedBoundaries,
+                    Instant.now());
         } finally {
             Files.delete(file);
         }
     }
 
-    private void doTest(final Path file, final int processCount, final Set<String> expectedFiles,
+    private void doTest(final Path file,
+                        final int processCount,
+                        final Set<String> expectedFiles,
                         final HashMap<String, String> expectedContent,
-                        final List<Map<String, String>> expectedBoundaries) throws IOException {
+                        final List<Map<String, String>> expectedBoundaries,
+                        final Instant receivedTime) throws IOException {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
         final AttributeMap attributeMap = new AttributeMap();
@@ -264,11 +313,11 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                     attributeMap,
                     handler,
                     new ProgressHandler("Test"));
-            stroomStreamProcessor.setAppendReceivedPath(false);
+//            stroomStreamProcessor.setAppendReceivedPath(false);
 
             for (int i = 0; i < processCount; i++) {
                 try (final InputStream inputStream = Files.newInputStream(file)) {
-                    stroomStreamProcessor.processInputStream(inputStream, String.valueOf(i));
+                    stroomStreamProcessor.processInputStream(inputStream, String.valueOf(i), receivedTime);
                 } catch (final IOException e) {
                     throw new UncheckedIOException(e);
                 }

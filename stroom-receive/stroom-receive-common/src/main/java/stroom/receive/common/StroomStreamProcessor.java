@@ -62,7 +62,6 @@ public class StroomStreamProcessor {
     private final AttributeMap globalAttributeMap;
     private final StreamHandler handler;
     private final Consumer<Long> progressHandler;
-    private boolean appendReceivedPath = true;
 
     @SuppressWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
     public StroomStreamProcessor(final AttributeMap attributeMap,
@@ -78,14 +77,6 @@ public class StroomStreamProcessor {
             StroomStreamProcessor.hostName = HostNameUtil.determineHostName();
         }
         return hostName;
-    }
-
-    public static void setHostName(final String hostName) {
-        StroomStreamProcessor.hostName = hostName;
-    }
-
-    public void setAppendReceivedPath(final boolean appendReceivedPath) {
-        this.appendReceivedPath = appendReceivedPath;
     }
 
     public void processRequestHeader(final HttpServletRequest httpServletRequest,
@@ -126,7 +117,9 @@ public class StroomStreamProcessor {
             attributeMap.appendItemIf(
                     StandardHeaderArguments.RECEIVED_TIME_HISTORY,
                     normalisedPrevReceivedTime,
-                    curVal -> !NullSafe.contains(curVal, prevReceivedTime));
+                    curVal ->
+                            !(NullSafe.contains(curVal, prevReceivedTime)
+                                    || NullSafe.contains(curVal, normalisedPrevReceivedTime)));
         }
         // Add our new time to the end of the history
         attributeMap.appendDateTime(StandardHeaderArguments.RECEIVED_TIME_HISTORY, receivedTime);
@@ -317,11 +310,10 @@ public class StroomStreamProcessor {
                     // try/catch, so we can return to the client an error in the case
                     // of a corrupt stream.
                     try {
-                        // TODO This read() will overwrite any entries that have already been set from HTTP headers
-                        //  or by the receipt code prior to this. E.g. if the .meta in the zip contains ReceivedTime
-                        //  it will overwrite the value set when this stream was received by this thread.
-                        //  We probably don't want this to happen, but also don't want to lose data that used
-                        //  to be in the .meta file.
+                        // This read() will overwrite any entries that have already been set from HTTP headers
+                        // or by the receipt code prior to this. E.g. if the .meta in the zip contains ReceivedTime
+                        // it will overwrite the value set when this stream was received by this thread.
+                        // Thus, some keys need to be set below to ensure we have them.
                         AttributeMapUtil.read(zipArchiveInputStream, entryAttributeMap);
                     } catch (final IOException ioEx) {
                         throw new StroomStreamException(
@@ -330,18 +322,16 @@ public class StroomStreamProcessor {
                                 ioEx.getMessage());
                     }
 
-                    if (appendReceivedPath) {
-                        // Here we build up a list of stroom servers that have received
-                        // the message
+                    // Here we build up a list of stroom servers that have received
+                    // the message
 
-                        // The entry one will be initially set at the boundary Stroom
-                        // server
-                        final String hostName = getHostName();
-                        entryAttributeMap.appendItemIf(
-                                StandardHeaderArguments.RECEIVED_PATH,
-                                hostName,
-                                curVal -> !NullSafe.contains(curVal, hostName));
-                    }
+                    // The entry one will be initially set at the boundary Stroom
+                    // server
+                    final String hostName = getHostName();
+                    entryAttributeMap.appendItemIf(
+                            StandardHeaderArguments.RECEIVED_PATH,
+                            hostName,
+                            curVal -> !NullSafe.contains(curVal, hostName));
 
                     // Set RECEIVED_TIME and append to RECEIVED_TIME_HISTORY in the meta
                     setAndAppendReceivedTime(entryAttributeMap, receivedTime);
