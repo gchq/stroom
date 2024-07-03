@@ -320,6 +320,10 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class DestinationWriterProcessor extends DestinationProcessor {
 
         private final List<Writer> otherWriters;

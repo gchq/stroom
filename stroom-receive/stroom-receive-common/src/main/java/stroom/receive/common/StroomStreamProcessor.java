@@ -25,6 +25,8 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
+import stroom.util.NullSafe;
+import stroom.util.date.DateUtil;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.net.HostNameUtil;
@@ -43,6 +45,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +62,6 @@ public class StroomStreamProcessor {
     private final AttributeMap globalAttributeMap;
     private final StreamHandler handler;
     private final Consumer<Long> progressHandler;
-    private boolean appendReceivedPath = true;
 
     @SuppressWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
     public StroomStreamProcessor(final AttributeMap attributeMap,
@@ -77,15 +79,8 @@ public class StroomStreamProcessor {
         return hostName;
     }
 
-    public static void setHostName(final String hostName) {
-        StroomStreamProcessor.hostName = hostName;
-    }
-
-    public void setAppendReceivedPath(final boolean appendReceivedPath) {
-        this.appendReceivedPath = appendReceivedPath;
-    }
-
-    public void processRequestHeader(final HttpServletRequest httpServletRequest) {
+    public void processRequestHeader(final HttpServletRequest httpServletRequest,
+                                     final Instant receivedTime) {
         String guid = globalAttributeMap.get(StandardHeaderArguments.GUID);
 
         // Allocate a GUID if we have not got one.
@@ -94,21 +89,42 @@ public class StroomStreamProcessor {
             globalAttributeMap.put(StandardHeaderArguments.GUID, guid);
 
             // Only allocate RemoteXxx details if the GUID has not been
-            // allocated.
+            // allocated. This is to prevent us setting them to proxy's addr/host
+            // when it has already set them to the addr/host of the actual client.
 
             // Allocate remote address if not set.
-            if (httpServletRequest.getRemoteAddr() != null && !httpServletRequest.getRemoteAddr().isEmpty()) {
-                globalAttributeMap.put(StandardHeaderArguments.REMOTE_ADDRESS, httpServletRequest.getRemoteAddr());
+            final String remoteAddr = httpServletRequest.getRemoteAddr();
+            if (NullSafe.isNonEmptyString(remoteAddr)) {
+                globalAttributeMap.put(StandardHeaderArguments.REMOTE_ADDRESS, remoteAddr);
             }
 
-            // Save the time the data was received.
-            globalAttributeMap.putCurrentDateTime(StandardHeaderArguments.RECEIVED_TIME);
-
             // Allocate remote address if not set.
-            if (httpServletRequest.getRemoteHost() != null && !httpServletRequest.getRemoteHost().isEmpty()) {
-                globalAttributeMap.put(StandardHeaderArguments.REMOTE_HOST, httpServletRequest.getRemoteHost());
+            final String remoteHost = httpServletRequest.getRemoteHost();
+            if (NullSafe.isNonEmptyString(remoteHost)) {
+                globalAttributeMap.put(StandardHeaderArguments.REMOTE_HOST, remoteHost);
             }
         }
+
+        setAndAppendReceivedTime(globalAttributeMap, receivedTime);
+    }
+
+    private void setAndAppendReceivedTime(final AttributeMap attributeMap, final Instant receivedTime) {
+        final String prevReceivedTime = attributeMap.get(StandardHeaderArguments.RECEIVED_TIME);
+
+        if (NullSafe.isNonEmptyString(prevReceivedTime)) {
+            // If prev time is not in history, add it, but ensure it is in a normal form
+            final String normalisedPrevReceivedTime = DateUtil.normaliseDate(prevReceivedTime, true);
+            attributeMap.appendItemIf(
+                    StandardHeaderArguments.RECEIVED_TIME_HISTORY,
+                    normalisedPrevReceivedTime,
+                    curVal ->
+                            !(NullSafe.contains(curVal, prevReceivedTime)
+                                    || NullSafe.contains(curVal, normalisedPrevReceivedTime)));
+        }
+        // Add our new time to the end of the history
+        attributeMap.appendDateTime(StandardHeaderArguments.RECEIVED_TIME_HISTORY, receivedTime);
+        // Now overwrite the receivedTime with the new time
+        attributeMap.putDateTime(StandardHeaderArguments.RECEIVED_TIME, receivedTime);
     }
 
     public void processZipFile(final Path zipFilePath) {
@@ -148,9 +164,17 @@ public class StroomStreamProcessor {
         }
     }
 
-    public void processInputStream(InputStream inputStream, final String prefix) {
+    public void processInputStream(InputStream inputStream,
+                                   final String prefix) {
+        processInputStream(inputStream, prefix, Instant.now());
+    }
+
+    public void processInputStream(InputStream inputStream,
+                                   final String prefix,
+                                   final Instant receivedTime) {
+
         String compression = globalAttributeMap.get(StandardHeaderArguments.COMPRESSION);
-        if (compression != null && !compression.isEmpty()) {
+        if (NullSafe.isNonEmptyString(compression)) {
             compression = compression.toUpperCase(StreamUtil.DEFAULT_LOCALE);
             if (!StandardHeaderArguments.VALID_COMPRESSION_SET.contains(compression)) {
                 throw new StroomStreamException(
@@ -165,7 +189,7 @@ public class StroomStreamProcessor {
 
         if (StandardHeaderArguments.COMPRESSION_ZIP.equals(compression)) {
             // Handle a zip stream.
-            processZipStream(inputStream, prefix);
+            processZipStream(inputStream, prefix, receivedTime);
 
         } else {
             if (StandardHeaderArguments.COMPRESSION_GZIP.equals(compression)) {
@@ -221,7 +245,9 @@ public class StroomStreamProcessor {
         }
     }
 
-    private void processZipStream(final InputStream inputStream, final String prefix) {
+    private void processZipStream(final InputStream inputStream,
+                                  final String prefix,
+                                  final Instant receivedTime) {
         try {
             final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(inputStream);
 
@@ -280,10 +306,14 @@ public class StroomStreamProcessor {
 
                 if (StroomZipFileType.META.equals(stroomZipEntry.getStroomZipFileType())) {
                     final AttributeMap entryAttributeMap = AttributeMapUtil.cloneAllowable(globalAttributeMap);
-                    // We have to wrap our stream reading code in a individual
-                    // try/catch so we can return to the client an error in the case
+                    // We have to wrap our stream reading code in an individual
+                    // try/catch, so we can return to the client an error in the case
                     // of a corrupt stream.
                     try {
+                        // This read() will overwrite any entries that have already been set from HTTP headers
+                        // or by the receipt code prior to this. E.g. if the .meta in the zip contains ReceivedTime
+                        // it will overwrite the value set when this stream was received by this thread.
+                        // Thus, some keys need to be set below to ensure we have them.
                         AttributeMapUtil.read(zipArchiveInputStream, entryAttributeMap);
                     } catch (final IOException ioEx) {
                         throw new StroomStreamException(
@@ -292,23 +322,19 @@ public class StroomStreamProcessor {
                                 ioEx.getMessage());
                     }
 
-                    if (appendReceivedPath) {
-                        // Here we build up a list of stroom servers that have received
-                        // the message
+                    // Here we build up a list of stroom servers that have received
+                    // the message
 
-                        // The entry one will be initially set at the boundary Stroom
-                        // server
-                        final String entryReceivedServer = entryAttributeMap.get(StandardHeaderArguments.RECEIVED_PATH);
+                    // The entry one will be initially set at the boundary Stroom
+                    // server
+                    final String hostName = getHostName();
+                    entryAttributeMap.appendItemIf(
+                            StandardHeaderArguments.RECEIVED_PATH,
+                            hostName,
+                            curVal -> !NullSafe.contains(curVal, hostName));
 
-                        if (entryReceivedServer != null) {
-                            if (!entryReceivedServer.contains(getHostName())) {
-                                entryAttributeMap.put(StandardHeaderArguments.RECEIVED_PATH,
-                                        entryReceivedServer + "," + getHostName());
-                            }
-                        } else {
-                            entryAttributeMap.put(StandardHeaderArguments.RECEIVED_PATH, getHostName());
-                        }
-                    }
+                    // Set RECEIVED_TIME and append to RECEIVED_TIME_HISTORY in the meta
+                    setAndAppendReceivedTime(entryAttributeMap, receivedTime);
 
                     if (entryAttributeMap.containsKey(StandardHeaderArguments.STREAM_SIZE)) {
                         // Header already has stream size so just send it on
