@@ -30,6 +30,9 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.jersey.WebTargetFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.scheduler.Schedule;
 
@@ -40,6 +43,7 @@ import event.logging.Term;
 import event.logging.TermCondition;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
@@ -49,6 +53,8 @@ import java.util.function.Consumer;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class JobNodeResourceImpl implements JobNodeResource {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JobNodeResourceImpl.class);
 
     private final Provider<JobNodeService> jobNodeServiceProvider;
     private final Provider<NodeService> nodeServiceProvider;
@@ -178,6 +184,30 @@ class JobNodeResourceImpl implements JobNodeResource {
     @Override
     public void setEnabled(final Integer id, final Boolean enabled) {
         modifyJobNode(id, jobNode -> jobNode.setEnabled(enabled));
+    }
+
+    @AutoLogged(value = OperationType.PROCESS, verb = "Executing job on node")
+    @Override
+    public void execute(final Integer id) {
+        final JobNodeService jobNodeService = jobNodeServiceProvider.get();
+        final JobNode jobNode = jobNodeService.fetch(id)
+                .orElseThrow(NotFoundException::new);
+
+        try {
+            nodeServiceProvider.get().remoteRestCall(
+                    jobNode.getNodeName(),
+                    () -> ResourcePaths.buildAuthenticatedApiPath(
+                            JobNodeResource.BASE_PATH,
+                            String.valueOf(jobNode.getId()),
+                            JobNodeResource.EXECUTE_PATH_PART),
+                    () ->
+                            jobNodeService.executeJob(jobNode),
+                    builder -> builder.post(null));
+        } catch (Exception e) {
+            LOGGER.error("Error executing job {} on node {}: {}",
+                    jobNode.getJobName(), jobNode.getNodeName(), LogUtil.exceptionMessage(e), e);
+            throw new RuntimeException(e);
+        }
     }
 
     private void modifyJobNode(final int id, final Consumer<JobNode> mutation) {

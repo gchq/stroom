@@ -25,6 +25,7 @@ import stroom.node.api.NodeInfo;
 import stroom.task.api.ExecutorProvider;
 import stroom.util.concurrent.AsyncReference;
 import stroom.util.scheduler.SimpleScheduleExec;
+import stroom.util.scheduler.Trigger;
 import stroom.util.scheduler.TriggerFactory;
 import stroom.util.shared.scheduler.Schedule;
 
@@ -38,6 +39,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
 class JobNodeTrackerCacheImpl implements JobNodeTrackerCache {
@@ -72,7 +74,7 @@ class JobNodeTrackerCacheImpl implements JobNodeTrackerCache {
         private final Map<JobNode, JobNodeTracker> trackersForJobNode = new HashMap<>();
         private final Map<String, JobNodeTracker> trackersForJobName = new HashMap<>();
         private final Map<JobNode, String> scheduleValueMap = new HashMap<>();
-        private final Map<JobNode, SimpleScheduleExec> schedulerMap = new HashMap<>();
+        private final Map<JobNode, SimpleScheduleExec> schedulerMap = new ConcurrentHashMap<>();
         private final List<JobNodeTracker> distributedJobNodeTrackers = new ArrayList<>();
 
         JobNodeTrackersImpl(final JobNodeTrackersImpl previousState,
@@ -159,6 +161,23 @@ class JobNodeTrackerCacheImpl implements JobNodeTrackerCache {
         @Override
         public SimpleScheduleExec getScheduleExec(final JobNode jobNode) {
             return schedulerMap.get(jobNode);
+        }
+
+        @Override
+        public void triggerImmediateExecution(final JobNode jobNode) {
+            if (jobNode != null
+                    && (jobNode.getJobType() == JobType.CRON || jobNode.getJobType() == JobType.FREQUENCY)) {
+
+                schedulerMap.compute(jobNode, (jobNode2, curSimpleScheduleExec) -> {
+                    SimpleScheduleExec newSimpleScheduleExec = curSimpleScheduleExec;
+                    if (newSimpleScheduleExec == null) {
+                        final Schedule schedule = JobNodeUtil.getSchedule(jobNode);
+                        final Trigger trigger = TriggerFactory.create(schedule);
+                        newSimpleScheduleExec = new SimpleScheduleExec(trigger);
+                    }
+                    return newSimpleScheduleExec.cloneWithImmediateExecution();
+                });
+            }
         }
     }
 }

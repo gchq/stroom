@@ -17,10 +17,14 @@
 package stroom.util.scheduler;
 
 import stroom.util.date.DateUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.time.Instant;
 
 public class SimpleScheduleExec {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SimpleScheduleExec.class);
 
     private final Trigger trigger;
     private Instant lastExecute;
@@ -28,6 +32,11 @@ public class SimpleScheduleExec {
 
     public SimpleScheduleExec(final Trigger trigger) {
         this.trigger = trigger;
+    }
+
+    private SimpleScheduleExec(final Trigger trigger, final Instant nextExecute) {
+        this.trigger = trigger;
+        this.nextExecute = nextExecute;
     }
 
     /**
@@ -40,14 +49,17 @@ public class SimpleScheduleExec {
     }
 
     public boolean execute(final Instant now) {
+        boolean willExecute = false;
         if (nextExecute == null) {
             nextExecute = trigger.getNextExecutionTimeAfter(now);
         } else if (now.isAfter(nextExecute)) {
             nextExecute = trigger.getNextExecutionTimeAfter(now);
             lastExecute = now;
-            return true;
+            willExecute = true;
         }
-        return false;
+        LOGGER.trace("execute() - now: {}, lastExecute: {}, nextExecute: {}, willExecute: {}",
+                now, lastExecute, nextExecute, willExecute);
+        return willExecute;
     }
 
     public Instant getLastExecutionTime() {
@@ -72,5 +84,14 @@ public class SimpleScheduleExec {
             sb.append("\" ");
         }
         return sb.toString();
+    }
+
+    public SimpleScheduleExec cloneWithImmediateExecution() {
+        // Set the nextExecute time to now, so that the next time execute() is called for this job, it will
+        // return true and thus run.
+        final Instant now = Instant.now();
+        LOGGER.debug("cloneWithImmediateExecution() - now: {}, lastExecute: {}, nextExecute: {}",
+                now, lastExecute, nextExecute);
+        return new SimpleScheduleExec(trigger, now);
     }
 }

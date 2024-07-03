@@ -241,7 +241,8 @@ public class NodeServiceImpl implements NodeService {
                 try (Response response = responseBuilderFunc.apply(builder)) {
 
                     LOGGER.debug(() -> "Response status " + response.getStatus());
-                    if (response.getStatus() != Status.OK.getStatusCode()) {
+                    if (response.getStatus() != Status.OK.getStatusCode()
+                            && response.getStatus() != Status.NO_CONTENT.getStatusCode()) {
                         throw new WebApplicationException(response);
                     }
                 }

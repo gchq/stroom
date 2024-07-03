@@ -46,6 +46,7 @@ public interface JobNodeResource extends RestResource, DirectRestService {
     String INFO_PATH_PART = "/info";
     String SCHEDULE_PATH_PART = "/schedule";
     String ENABLED_PATH_PART = "/enabled";
+    String EXECUTE_PATH_PART = "/execute";
     String TASK_LIMIT_PATH_PART = "/taskLimit";
     String INFO_PATH = BASE_PATH + INFO_PATH_PART;
 
@@ -96,4 +97,11 @@ public interface JobNodeResource extends RestResource, DirectRestService {
             operationId = "setJobNodeEnabled")
     void setEnabled(@PathParam("id") Integer id,
                     @Parameter(description = "enabled", required = true) Boolean enabled);
+
+    @POST
+    @Path("/{id}" + EXECUTE_PATH_PART)
+    @Operation(
+            summary = "Execute job node now",
+            operationId = "executeJobNode")
+    void execute(@PathParam("id") Integer id);
 }

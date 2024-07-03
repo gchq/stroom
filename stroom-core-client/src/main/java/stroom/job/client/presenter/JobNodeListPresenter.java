@@ -16,6 +16,7 @@
 
 package stroom.job.client.presenter;
 
+import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.cell.valuespinner.shared.EditableInteger;
 import stroom.data.client.presenter.ColumnSizeConstants;
@@ -35,6 +36,8 @@ import stroom.job.shared.JobNodeUtil;
 import stroom.job.shared.ScheduleReferenceTime;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.schedule.client.SchedulePopup;
+import stroom.svg.client.Preset;
+import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.GwtNullSafe;
@@ -43,7 +46,10 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.widget.util.client.MouseUtil;
 
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -142,7 +148,17 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
         }
     }
 
-    private Number getTaskLimit(JobNode jobNode) {
+    private static Preset buildRunIconPreset(final JobNode jobNode) {
+        if (jobNode != null
+                && jobNode.getJobType() != JobType.DISTRIBUTED
+                && jobNode.getJobType() != JobType.UNKNOWN) {
+            return SvgPresets.RUN
+                    .title("Execute job on node " + jobNode.getNodeName() + " now.");
+        }
+        return null;
+    }
+
+    private Number getTaskLimit(final JobNode jobNode) {
         return JobType.DISTRIBUTED.equals(jobNode.getJobType())
                 ? new EditableInteger(jobNode.getTaskLimit())
                 : null;
@@ -209,12 +225,11 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                         .build(),
                 250);
 
-        // Job Type Icon
+        // Job Type Icon, always enabled, so you can edit schedule for disabled jobs
         dataGrid.addColumn(
                 DataGridUtil.columnBuilder((JobNode jobNode) ->
                                         GwtNullSafe.requireNonNullElse(jobNode.getJobType(), JobType.UNKNOWN),
                                 JobTypeCell::new)
-                        .enabledWhen(this::isJobNodeEnabled)
                         .withBrowserEventHandler((context, elem, jobNode, event) -> {
                             if (jobNode != null && MouseUtil.isPrimary(event)) {
                                 showSchedule(jobNode);
@@ -224,6 +239,15 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                 DataGridUtil.headingBuilder("")
                         .build(),
                 ColumnSizeConstants.ICON_COL);
+
+        // Run now icon, always enabled, so you can run disabled jobs
+        dataGrid.addColumn(
+                DataGridUtil.svgPresetColumnBuilder(true, JobNodeListPresenter::buildRunIconPreset)
+                        .withBrowserEventHandler(this::executeJobNow)
+                        .build(),
+                DataGridUtil.headingBuilder("Run")
+                        .withToolTip("Execute the job on a node now.")
+                        .build(), 40);
 
         // Max.
         dataGrid.addColumn(
@@ -379,5 +403,20 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                 })
                 .taskListener(getView())
                 .exec();
+    }
+
+    private void executeJobNow(Context context, Element elem, JobNode jobNode, NativeEvent event) {
+        ConfirmEvent.fire(JobNodeListPresenter.this,
+                "Are you sure you want to execute job '" + jobNode.getJobName()
+                        + "' on node '" + jobNode.getNodeName() + "' now. " +
+                        "\n\nThe job will execute shortly, likely within ten seconds. " +
+                        "You can check it has run by refreshing the table until the 'Last Executed' " +
+                        "column has been updated.",
+                ok -> {
+                    restFactory.create(JOB_NODE_RESOURCE)
+                            .call(resource -> resource.execute(jobNode.getId()))
+                            .taskListener(getView())
+                            .exec();
+                });
     }
 }

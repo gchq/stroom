@@ -28,6 +28,8 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
 import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.scheduler.CronTrigger;
 import stroom.util.scheduler.FrequencyTrigger;
 import stroom.util.scheduler.SimpleScheduleExec;
@@ -41,6 +43,8 @@ import java.util.Optional;
 
 @Singleton
 class JobNodeService {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JobNodeService.class);
 
     private final JobNodeDao jobNodeDao;
     private final JobNodeTrackerCache jobNodeTrackerCache;
@@ -265,5 +269,13 @@ class JobNodeService {
 
     Optional<JobNode> fetch(final int id) {
         return jobNodeDao.fetch(id);
+    }
+
+    void executeJob(final JobNode jobNode) {
+        LOGGER.info("Marking job '{}' on node '{}' for immediate execution",
+                jobNode.getJobName(), jobNode.getNodeName());
+
+        jobNodeTrackerCache.getTrackers()
+                .triggerImmediateExecution(jobNode);
     }
 }
