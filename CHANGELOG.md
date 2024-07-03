@@ -13,6 +13,31 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.4.5] - 2024-07-03
+
+* Issue **#4305** : Don't show warnings on the Server Tasks screen for disabled nodes. Append `(Disabled)` to the node name for disabled nodes in case a disabled node is still running tasks. Changed the position of the warning icon to the right of the wrap icon so it is the right-most icon.
+
+* Make the expand/collapse all icons on Server Tasks and Data Retention Impact Summary consistent with those on the Explorer tree.
+
+* Add properties `httpHeadersStreamMetaDataAllowList` and `httpHeadersStreamMetaDataDenyList` to `HttpAppender` to allow fine grained control of what stream meta keys are sent to the HTTP destination as HTTP headers and `.meta` entries.
+
+* Change `/datafeed` receipt to always set `ReceivedTime` to `now()`. If it was already set (e.g. by proxy) then that value is added to `ReceivedTimeHistory` along with the latest `ReceivedTime`. This can be used to see the latency between proxy receipt and stroom receipt. This is similar to how `ReceivedPath` works.
+
+* Make long descriptions on the Edit Property (pipeline element property) screen wrap onto multiple lines.
+
+* Issue **#4317** : Fix explicit `Feed` header being ignored when `compression` is `true` on `HttpAppender`.
+
+* Issue **#4331** : Fix `java.lang.IllegalStateException` errors when using HTTPAppender.
+
+* Issue **#4330** : Fix NPE in HTTPAppender when the destination errors.
+
+* Improve description text for HttpAppender properties. Also add validation of some property values.
+
+* Add property `useContentEncodingHeader` to HttpAppender to allow the user to choose between using the stroom bespoke `Compression` and HTTP standard `Content-Encoding` headers.
+
+* When using zip compression with HttpAppender, make the .meta file also respect the various HTTP header pipeline element properties.
+
+
 ## [v7.4.4] - 2024-06-17
 
 * Fix verification of the `signer` key in the JWS headers when authentication is handled by an AWS load balancer. If you use AWS load balancers for authentication you must add the partial ARN(s) of your load balancer(s) to the property `stroom.security.authentication.openId.expectedSignerPrefixes`.
@@ -634,7 +659,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4.4...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4.5...HEAD
+[v7.4.5]: https://github.com/gchq/stroom/compare/v7.4.4...v7.4.5
 [v7.4.4]: https://github.com/gchq/stroom/compare/v7.4.3...v7.4.4
 [v7.4.3]: https://github.com/gchq/stroom/compare/v7.4.2...v7.4.3
 [v7.4.2]: https://github.com/gchq/stroom/compare/v7.4.1...v7.4.2
