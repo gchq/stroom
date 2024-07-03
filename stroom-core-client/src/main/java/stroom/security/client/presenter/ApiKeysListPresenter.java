@@ -157,18 +157,12 @@ public class ApiKeysListPresenter
     }
 
     private void createNewKey() {
-        editApiKeyPresenter.showCreateDialog(Mode.PRE_CREATE, e -> {
-            dataProvider.refresh();
-            e.hide();
-        });
+        editApiKeyPresenter.showCreateDialog(Mode.PRE_CREATE, dataProvider::refresh);
     }
 
     private void editSelectedKey() {
         final HashedApiKey apiKey = selectionModel.getSelected();
-        editApiKeyPresenter.showEditDialog(apiKey, Mode.EDIT, e -> {
-            dataProvider.refresh();
-            e.hide();
-        });
+        editApiKeyPresenter.showEditDialog(apiKey, Mode.EDIT, dataProvider::refresh);
     }
 
     private void deleteSelectedKeys() {

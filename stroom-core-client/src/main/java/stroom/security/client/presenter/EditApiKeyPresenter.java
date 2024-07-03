@@ -31,7 +31,6 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
-import java.util.function.Consumer;
 
 public class EditApiKeyPresenter
         extends MyPresenterWidget<EditApiKeyView>
@@ -45,7 +44,7 @@ public class EditApiKeyPresenter
     private final UiConfigCache uiConfigCache;
 
     private HashedApiKey apiKey;
-    private Consumer<HidePopupRequestEvent> hidePopupRequestEventConsumer;
+    private Runnable onChangeHandler;
 
     @Inject
     public EditApiKeyPresenter(final EventBus eventBus,
@@ -76,8 +75,8 @@ public class EditApiKeyPresenter
     }
 
     public void showCreateDialog(final Mode mode,
-                                 final Consumer<HidePopupRequestEvent> hidePopupRequestEventConsumer) {
-        this.hidePopupRequestEventConsumer = hidePopupRequestEventConsumer;
+                                 final Runnable onChangeHandler) {
+        this.onChangeHandler = onChangeHandler;
         getView().setMode(mode);
         reset();
         getView().setUiHandlers(new DefaultHideRequestUiHandlers(this));
@@ -112,8 +111,8 @@ public class EditApiKeyPresenter
 
     public void showEditDialog(final HashedApiKey apiKey,
                                final Mode mode,
-                               final Consumer<HidePopupRequestEvent> hidePopupRequestEventConsumer) {
-        this.hidePopupRequestEventConsumer = hidePopupRequestEventConsumer;
+                               final Runnable onChangeHandler) {
+        this.onChangeHandler = onChangeHandler;
         this.apiKey = apiKey;
         getView().setMode(mode);
         reset();
@@ -177,7 +176,7 @@ public class EditApiKeyPresenter
                         .method(res -> res.update(this.apiKey.getId(), updatedApiKey))
                         .onSuccess(apiKey -> {
                             this.apiKey = apiKey;
-                            hidePopupRequestEventConsumer.accept(e);
+                            onChangeHandler.run();
                             e.hide();
                         })
                         .onFailure(throwable ->
@@ -199,6 +198,7 @@ public class EditApiKeyPresenter
                             "Are you sure you want to close this dialog?",
                     ok -> {
                         if (ok) {
+                            onChangeHandler.run();
                             e.hide();
                         } else {
                             e.reset();
@@ -214,13 +214,12 @@ public class EditApiKeyPresenter
                                     .create(API_KEY_RESOURCE)
                                     .method(res -> res.delete(this.apiKey.getId()))
                                     .onSuccess(didDelete -> {
-                                        hidePopupRequestEventConsumer.accept(e);
+                                        onChangeHandler.run();
                                         e.hide();
                                     })
-                                    .onFailure(throwable -> {
-                                        AlertEvent.fireError(this, "Error deleting API key: "
-                                                + throwable.getMessage(), e::reset);
-                                    })
+                                    .onFailure(throwable ->
+                                            AlertEvent.fireError(this, "Error deleting API key: "
+                                                    + throwable.getMessage(), e::reset))
                                     .taskListener(this)
                                     .exec();
                         } else {
@@ -271,12 +270,12 @@ public class EditApiKeyPresenter
                         getView().setApiKey(response.getApiKey());
                         getView().setPrefix(apiKey.getApiKeyPrefix());
 
-                        hidePopupRequestEventConsumer.accept(event);
+                        event.reset();
+                        onChangeHandler.run();
                     })
-                    .onFailure(throwable -> {
-                        AlertEvent.fireError(this, "Error creating API key: "
-                                + throwable.getMessage(), event::reset);
-                    })
+                    .onFailure(throwable ->
+                            AlertEvent.fireError(this, "Error creating API key: "
+                                    + throwable.getMessage(), event::reset))
                     .taskListener(this)
                     .exec();
         }
