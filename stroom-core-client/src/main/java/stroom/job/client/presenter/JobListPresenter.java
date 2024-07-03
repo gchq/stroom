@@ -17,7 +17,7 @@
 package stroom.job.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.cell.info.client.InfoHelpLinkColumn;
+import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -25,7 +25,6 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobResource;
-import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
@@ -152,36 +151,14 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
                 350);
 
         // Help
-        dataGrid.addColumn(new InfoHelpLinkColumn<Job>() {
-            @Override
-            public Preset getValue(final Job row) {
-                if (row != null) {
-                    return SvgPresets.HELP;
-                }
-                return null;
-            }
-
-            @Override
-            protected void showHelp(final Job row) {
-                uiConfigCache.get(result -> {
-                    if (result != null) {
-                        final String helpUrl = result.getHelpUrlJobs();
-                        if (!GwtNullSafe.isBlankString(helpUrl)) {
-                            // This is a bit fragile as if the headings change in the docs then the anchors
-                            // wont work
-                            final String url = helpUrl + formatAnchor(row.getName());
-                            Window.open(url, "_blank", "");
-                        } else {
-                            AlertEvent.fireError(
-                                    JobListPresenter.this,
-                                    "Help is not configured!",
-                                    null);
-                        }
-                    }
-                }, getView());
-            }
-
-        }, "<br/>", 20);
+        dataGrid.addColumn(
+                DataGridUtil.svgPresetColumnBuilder(true, (Job job) -> SvgPresets.HELP)
+                        .enabledWhen(job -> GwtNullSafe.isTrue(job, Job::isEnabled))
+                        .withBrowserEventHandler((context, elem, row, event) -> {
+                            showHelp(uiConfigCache, row);
+                        })
+                        .build(),
+                "<br/>", ColumnSizeConstants.ICON_COL);
 
         // Description col, allow for null rows
         dataGrid.addAutoResizableColumn(
@@ -202,5 +179,34 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
 
     public void setChangeHandler(Consumer<Job> changeHandler) {
         this.changeHandler = changeHandler;
+    }
+
+
+    /**
+     * @param name The name of the job
+     * @return The name formatted as a markdown anchor, i.e. "My Job" => "#my-job"
+     */
+    private String formatAnchor(String name) {
+        return "#" + name.replace(" ", "-")
+                .toLowerCase();
+    }
+
+    private void showHelp(final UiConfigCache uiConfigCache, final Job row) {
+        uiConfigCache.get(result -> {
+            if (result != null) {
+                final String helpUrl = result.getHelpUrlJobs();
+                if (!GwtNullSafe.isBlankString(helpUrl)) {
+                    // This is a bit fragile as if the headings change in the docs then the anchors
+                    // wont work
+                    final String url = helpUrl + formatAnchor(row.getName());
+                    Window.open(url, "_blank", "");
+                } else {
+                    AlertEvent.fireError(
+                            JobListPresenter.this,
+                            "Help is not configured!",
+                            null);
+                }
+            }
+        }, getView());
     }
 }

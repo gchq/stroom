@@ -198,7 +198,8 @@
 }
 
 .dataGridDisabledCell .tickBox,
-.dataGridDisabledCell .svgIcon {
+.dataGridDisabledCell .svgIcon,
+.dataGridDisabledCell .svgCell-button.svgCell-icon {
     cursor: default;
     color: #000;
     opacity: 0.3;

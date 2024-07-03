@@ -161,7 +161,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         defaultMaxResults = "1000000,100,10,1";
         process = new ProcessConfig();
         helpUrl = "https://gchq.github.io/stroom-docs/7.5/docs";
-        helpSubPathJobs = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/reference-section/jobs/";
+        helpSubPathJobs = "/reference-section/jobs/";
         helpSubPathQuickFilter = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/finding-things/";
         helpSubPathProperties = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/properties/";
         helpSubPathExpressions = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/dashboards/expressions/";
