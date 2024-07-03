@@ -29,5 +29,7 @@ public final class AuthenticateModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(AuthenticationResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bind(AuthenticationResource2Impl.class);
     }
 }

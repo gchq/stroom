@@ -1,4 +1,6 @@
-package stroom.security.identity.account;
+package stroom.security.shared.account;
+
+import stroom.security.shared.account.Account;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

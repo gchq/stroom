@@ -42,6 +42,7 @@ dependencies {
     implementation libs.jakarta_validation_api
     implementation libs.jaxb_api
     implementation libs.jose4j
+    implementation libs.restygwt
     implementation libs.simple_java_mail
     implementation libs.simple_java_mail_batch_module
     implementation libs.slf4j_api

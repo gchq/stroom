@@ -27,6 +27,8 @@ import stroom.analytics.client.gin.AnalyticsModule;
 import stroom.annotation.client.AnnotationModule;
 import stroom.cache.client.gin.CacheGinjector;
 import stroom.cache.client.gin.CacheModule;
+import stroom.changepassword.client.gin.ChangePasswordGinjector;
+import stroom.changepassword.client.gin.ChangePasswordModule;
 import stroom.content.client.presenter.ContentTabPanePresenter;
 import stroom.core.client.presenter.CorePresenter;
 import stroom.core.client.presenter.FullScreenPresenter;
@@ -136,6 +138,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         QueryModule.class,
         ScriptModule.class,
         SecurityModule.class,
+        ChangePasswordModule.class,
         ElasticClusterModule.class,
         ElasticIndexModule.class,
         AnalyticsModule.class,
@@ -175,6 +178,7 @@ public interface AppGinjectorUser extends
         UserPreferencesGinjector,
         ScriptGinjector,
         SecurityGinjector,
+        ChangePasswordGinjector,
         AnalyticsGinjector,
         ElasticClusterGinjector,
         ElasticIndexGinjector,

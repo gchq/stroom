@@ -23,6 +23,11 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.identity.config.PasswordPolicyConfig;
 import stroom.security.identity.exceptions.NoSuchUserException;
+import stroom.security.shared.changepassword.AuthenticationState;
+import stroom.security.shared.changepassword.ChangePasswordRequest;
+import stroom.security.shared.changepassword.ChangePasswordResponse;
+import stroom.security.shared.changepassword.ConfirmPasswordRequest;
+import stroom.security.shared.changepassword.ConfirmPasswordResponse;
 import stroom.util.shared.PermissionException;
 
 import com.codahale.metrics.annotation.Timed;

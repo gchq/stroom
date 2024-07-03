@@ -22,6 +22,8 @@ import stroom.activity.client.ActivityModule;
 import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
 import stroom.annotation.client.AnnotationModule;
+import stroom.changepassword.client.gin.ChangePasswordGinjector;
+import stroom.changepassword.client.gin.ChangePasswordModule;
 import stroom.core.client.presenter.CorePresenter;
 import stroom.core.client.presenter.FullScreenPresenter;
 import stroom.dashboard.client.vis.gin.VisGinjector;
@@ -52,6 +54,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         AnnotationModule.class,
         AlertModule.class,
         SecurityModule.class,
+        ChangePasswordModule.class,
         EntityModule.class,
         UserPreferencesModule.class,
         QueryModule.class,
@@ -66,7 +69,8 @@ public interface DashboardAppGinjectorUser extends
         EntityGinjector,
         DashboardGinjector,
         UserPreferencesGinjector,
-        VisGinjector {
+        VisGinjector,
+        ChangePasswordGinjector {
 
     // Default implementation of standard resources
     EventBus getEventBus();

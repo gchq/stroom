@@ -5,9 +5,14 @@ import stroom.security.identity.authenticate.PasswordValidator;
 import stroom.security.identity.config.IdentityConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfiguration;
+import stroom.security.shared.account.Account;
+import stroom.security.shared.account.AccountResultPage;
 import stroom.security.shared.FindUserNameCriteria;
 import stroom.security.shared.PermissionNames;
+import stroom.security.shared.account.FindAccountRequest;
 import stroom.security.shared.UserNameProvider;
+import stroom.security.shared.account.CreateAccountRequest;
+import stroom.security.shared.account.UpdateAccountRequest;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.SimpleUserName;
@@ -56,7 +61,7 @@ public class AccountServiceImpl implements AccountService, UserNameProvider {
 
         // Only the internal IDP uses Accounts, so no point hitting it for other IDPs
         if (shouldProvideNames()) {
-            final SearchAccountRequest request = new SearchAccountRequest(
+            final FindAccountRequest request = new FindAccountRequest(
                     criteria.getPageRequest(),
                     criteria.getSortList(),
                     criteria.getQuickFilterInput());
@@ -132,7 +137,7 @@ public class AccountServiceImpl implements AccountService, UserNameProvider {
     }
 
     @Override
-    public AccountResultPage search(final SearchAccountRequest request) {
+    public AccountResultPage search(final FindAccountRequest request) {
         checkPermission();
         return accountDao.search(request);
     }

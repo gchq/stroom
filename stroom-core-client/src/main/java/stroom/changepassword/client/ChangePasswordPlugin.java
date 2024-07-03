@@ -1,5 +1,6 @@
 package stroom.changepassword.client;
 
+import stroom.changepassword.client.presenter.CurrentPasswordPresenter;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
@@ -10,6 +11,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Singleton;
@@ -18,35 +20,29 @@ import javax.inject.Singleton;
 public class ChangePasswordPlugin extends Plugin {
 
     private final UiConfigCache clientPropertyCache;
+    private final Provider<CurrentPasswordPresenter> currentPasswordPresenterProvider;
 
     @Inject
     public ChangePasswordPlugin(final EventBus eventBus,
-                                final UiConfigCache clientPropertyCache) {
+                                final UiConfigCache clientPropertyCache,
+                                final Provider<CurrentPasswordPresenter> currentPasswordPresenterProvider) {
         super(eventBus);
         this.clientPropertyCache = clientPropertyCache;
+        this.currentPasswordPresenterProvider = currentPasswordPresenterProvider;
     }
 
     @Override
     public void onReveal(final BeforeRevealMenubarEvent event) {
         clientPropertyCache.get(result -> {
             if (result != null) {
-                final IconMenuItem changePasswordMenuItem;
                 final SvgImage icon = SvgImage.PASSWORD;
-                changePasswordMenuItem = new IconMenuItem.Builder()
+                final IconMenuItem changePasswordMenuItem = new IconMenuItem.Builder()
                         .priority(5)
                         .icon(icon)
                         .iconColour(IconColour.GREY)
-                        .text("Change password")
+                        .text("Change Password")
                         .command(() -> {
-//                            final Hyperlink hyperlink = new Builder()
-//                                    .text("Change password")
-//                                    .href(changePasswordUiUrl)
-//                                    .type(HyperlinkType.TAB + "|Change password")
-//                                    .icon(icon)
-//                                    .build();
-//                            HyperlinkEvent.fire(this, hyperlink);
-                            postMessage("changePassword");
-
+                            currentPasswordPresenterProvider.get().show();
                         })
                         .build();
 

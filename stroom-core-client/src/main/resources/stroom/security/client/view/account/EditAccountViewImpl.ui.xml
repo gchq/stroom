@@ -1,0 +1,39 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:b="urn:import:stroom.widget.button.client">
+    <g:FlowPanel styleName="max dock-container-vertical form">
+        <form:FormGroup identity="accountUserId" label="User Id">
+            <g:TextBox ui:field="userId" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="accountEmail" label="Email">
+            <g:TextBox ui:field="email" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="accountFirstName" label="First Name">
+            <g:TextBox ui:field="firstName" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="accountLastName" label="Last Name">
+            <g:TextBox ui:field="lastName" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="accountComments" label="Comments">
+            <g:TextArea ui:field="comments" addStyleNames="w-100"/>
+        </form:FormGroup>
+
+        <form:FormGroup ui:field="neverExpiresGroup" identity="accountNeverExpires" label="Never Expires">
+            <tickbox:CustomCheckBox ui:field="neverExpires" identity="accountNeverExpiresCheckBox"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="enabledGroup" identity="accountEnabled" label="Enabled">
+            <tickbox:CustomCheckBox ui:field="enabled" identity="accountEnabledCheckBox"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="inactiveGroup" identity="accountInactive" label="Inactive">
+            <tickbox:CustomCheckBox ui:field="inactive" identity="accountInactiveCheckBox"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="lockedGroup" identity="accountLocked" label="Locked">
+            <tickbox:CustomCheckBox ui:field="locked" identity="accountLockedCheckBox"/>
+        </form:FormGroup>
+
+        <b:Button ui:field="changePassword" text="Change Password" width="200px" addStyleNames="allow-focus"/>
+    </g:FlowPanel>
+</ui:UiBinder>

@@ -16,7 +16,7 @@
  *
  */
 
-package stroom.security.identity.authenticate;
+package stroom.security.shared.changepassword;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

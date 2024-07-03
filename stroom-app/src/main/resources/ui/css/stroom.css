@@ -919,8 +919,11 @@ input:focus-visible {
   border: thin solid var(--focus-border) !important;
   box-shadow: var(--focus-shadow);
 }
+select.invalid:focus-visible,
+input.invalid:focus-visible {
+  box-shadow: var(--focus-shadow--invalid);
+}
 select.invalid,
 input.invalid {
   border: thin solid var(--focus-border--invalid) !important;
-  box-shadow: var(--focus-shadow--invalid);
 }

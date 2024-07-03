@@ -16,18 +16,19 @@
  *
  */
 
-package stroom.security.identity.account;
+package stroom.security.shared.account;
 
 import stroom.util.shared.HasIntegerId;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Objects;
+import java.util.Optional;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(Include.NON_NULL)
 public class Account implements HasIntegerId {
 
     @JsonProperty
@@ -300,8 +301,8 @@ public class Account implements HasIntegerId {
         } else {
             return String.join(
                     " ",
-                    Objects.requireNonNullElse(firstName, ""),
-                    Objects.requireNonNullElse(lastName, ""));
+                    Optional.ofNullable(firstName).orElse(""),
+                    Optional.ofNullable(lastName).orElse(""));
         }
     }
 

@@ -20,10 +20,10 @@ package stroom.security.identity.db;
 
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
-import stroom.security.identity.account.Account;
+import stroom.security.shared.account.Account;
 import stroom.security.identity.account.AccountDao;
-import stroom.security.identity.account.AccountResultPage;
-import stroom.security.identity.account.SearchAccountRequest;
+import stroom.security.shared.account.AccountResultPage;
+import stroom.security.shared.account.FindAccountRequest;
 import stroom.security.identity.authenticate.CredentialValidationResult;
 import stroom.security.identity.config.IdentityConfig;
 import stroom.security.identity.db.jooq.tables.records.AccountRecord;
@@ -210,7 +210,7 @@ class AccountDaoImpl implements AccountDao {
     }
 
     @Override
-    public AccountResultPage search(final SearchAccountRequest request) {
+    public AccountResultPage search(final FindAccountRequest request) {
         final Condition condition = createCondition(request);
 
         // Sort on user_id if no sort supplied
@@ -279,8 +279,8 @@ class AccountDaoImpl implements AccountDao {
         });
     }
 
-    private Optional<Comparator<Account>> buildComparator(final SearchAccountRequest searchAccountRequest) {
-        if (NullSafe.hasItems(searchAccountRequest, SearchAccountRequest::getSortList)) {
+    private Optional<Comparator<Account>> buildComparator(final FindAccountRequest searchAccountRequest) {
+        if (NullSafe.hasItems(searchAccountRequest, FindAccountRequest::getSortList)) {
             return Optional.of(CompareUtil.buildCriteriaComparator(FIELD_COMPARATORS, searchAccountRequest));
         } else {
             return Optional.empty();
@@ -640,7 +640,7 @@ class AccountDaoImpl implements AccountDao {
                 .execute());
     }
 
-    private Condition createCondition(final SearchAccountRequest request) {
+    private Condition createCondition(final FindAccountRequest request) {
         Condition condition = ACCOUNT.PROCESSING_ACCOUNT.isFalse();
 //        if (request.getQuickFilter() != null) {
 //            condition = condition.and(ACCOUNT.USER_ID.contains(request.getQuickFilter()));

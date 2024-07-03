@@ -53,6 +53,8 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskListener 
     private final PopupSize popupSize;
 
     @UiField
+    SimplePanel icon;
+    @UiField
     Label titleText;
     @UiField
     SimplePanel content;
@@ -126,6 +128,16 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskListener 
                 (popupSize != null && popupSize.getHeight() != null && popupSize.getHeight().isResizable()));
 
         SvgImageUtil.setSvgAsInnerHtml(resizeHandle, SvgImage.RESIZE_HANDLE);
+    }
+
+    @Override
+    public void setIcon(final SvgImage icon) {
+        if (icon != null) {
+            this.icon.getElement().setInnerHTML(icon.getSvg());
+            if (icon.getClassName() != null) {
+                this.icon.getElement().addClassName(icon.getClassName());
+            }
+        }
     }
 
     @Override

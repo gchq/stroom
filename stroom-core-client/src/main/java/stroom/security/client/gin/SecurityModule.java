@@ -16,8 +16,8 @@
 
 package stroom.security.client.gin;
 
-import stroom.changepassword.client.ChangePasswordPlugin;
 import stroom.core.client.gin.PluginModule;
+import stroom.security.client.AccountsPlugin;
 import stroom.security.client.ApiKeysPlugin;
 import stroom.security.client.CurrentUser;
 import stroom.security.client.LoginManager;
@@ -36,6 +36,10 @@ import stroom.security.client.presenter.PermissionsListPresenter;
 import stroom.security.client.presenter.PermissionsListPresenter.PermissionsListView;
 import stroom.security.client.presenter.UserEditPresenter;
 import stroom.security.client.presenter.UserListView;
+import stroom.security.client.presenter.account.AccountsPresenter;
+import stroom.security.client.presenter.account.AccountsPresenter.AccountsView;
+import stroom.security.client.presenter.account.EditAccountPresenter;
+import stroom.security.client.presenter.account.EditAccountPresenter.EditAccountView;
 import stroom.security.client.view.ApiKeysViewImpl;
 import stroom.security.client.view.CreateMultipleUsersViewImpl;
 import stroom.security.client.view.CreateNewUserViewImpl;
@@ -47,6 +51,8 @@ import stroom.security.client.view.PermissionsListViewImpl;
 import stroom.security.client.view.UserEditViewImpl;
 import stroom.security.client.view.UserGroupEditViewImpl;
 import stroom.security.client.view.UserListViewImpl;
+import stroom.security.client.view.account.AccountsViewImpl;
+import stroom.security.client.view.account.EditAccountViewImpl;
 
 import com.google.inject.Singleton;
 
@@ -59,10 +65,10 @@ public class SecurityModule extends PluginModule {
         bind(LoginManager.class).in(Singleton.class);
 
         bindPlugin(LogoutPlugin.class);
-        bindPlugin(ChangePasswordPlugin.class);
 
         // Users
         bindPlugin(ManageUserPlugin.class);
+        bindPlugin(AccountsPlugin.class);
         bindPlugin(ApiKeysPlugin.class);
         bindSharedView(UserListView.class, UserListViewImpl.class);
         bindSharedView(UserEditPresenter.UserEditView.class, UserEditViewImpl.class);
@@ -83,14 +89,18 @@ public class SecurityModule extends PluginModule {
                 FolderPermissionsTabPresenter.FolderPermissionsTabView.class,
                 FolderPermissionsTabViewImpl.class);
 
+        bindPresenterWidget(AccountsPresenter.class,
+                AccountsView.class,
+                AccountsViewImpl.class);
+        bindPresenterWidget(EditAccountPresenter.class,
+                EditAccountView.class,
+                EditAccountViewImpl.class);
+
         bindPresenterWidget(ApiKeysPresenter.class,
                 ApiKeysPresenter.ApiKeysView.class,
                 ApiKeysViewImpl.class);
         bindPresenterWidget(EditApiKeyPresenter.class,
                 EditApiKeyPresenter.EditApiKeyView.class,
                 EditApiKeyViewImpl.class);
-//        bindPresenterWidget(ApiKeysListPresenter.class,
-//                ApiKeysListPresenter.ApiKeysListView.class,
-//                ApiKeysListViewImpl.class);
     }
 }

@@ -69,6 +69,7 @@ public class PopupManager implements DialogEvent.Handler {
             final PopupSupport popupSupport = new PopupSupportImpl(
                     presenterWidget.getView(),
                     hasTaskListener,
+                    event.getIcon(),
                     event.getCaption(),
                     event.getModal(), event.getAutoHidePartners());
 

@@ -60,6 +60,18 @@
     height: 22px;
 }
 
+.dialog-icon {
+    display: flex;
+    align-items: center;
+}
+
+.dialog-icon svg {
+    width: 24px;
+    height: 24px;
+    margin-right: 5px;
+    color: var(--text-color);
+}
+
 .dialog-titleText {
     color: var(--text-color);
     cursor: default;

@@ -57,12 +57,6 @@ public class EditApiKeyPresenter
         this.securityContext = securityContext;
         this.uiConfigCache = uiConfigCache;
 
-        reset();
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
         getView().setCanSelectOwner(securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION));
 
         restFactory
@@ -72,6 +66,8 @@ public class EditApiKeyPresenter
                         getView().setUserNames(userNames))
                 .taskListener(this)
                 .exec();
+
+        reset();
     }
 
     public void showCreateDialog(final Mode mode,

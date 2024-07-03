@@ -1,5 +1,6 @@
 package stroom.widget.help.client.presenter;
 
+import stroom.svg.shared.SvgImage;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.view.AbstractPopupPanel;
@@ -78,6 +79,11 @@ public class HelpManager {
         @Override
         public void forceHide(final boolean autoClose) {
             super.hide(autoClose);
+        }
+
+        @Override
+        public void setIcon(final SvgImage icon) {
+            // No icon
         }
 
         @Override

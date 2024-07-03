@@ -20,6 +20,11 @@ package stroom.security.identity.authenticate;
 
 import stroom.security.identity.config.PasswordPolicyConfig;
 import stroom.security.openid.api.OpenId;
+import stroom.security.shared.changepassword.AuthenticationState;
+import stroom.security.shared.changepassword.ChangePasswordRequest;
+import stroom.security.shared.changepassword.ChangePasswordResponse;
+import stroom.security.shared.changepassword.ConfirmPasswordRequest;
+import stroom.security.shared.changepassword.ConfirmPasswordResponse;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 

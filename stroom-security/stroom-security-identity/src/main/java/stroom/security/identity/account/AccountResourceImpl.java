@@ -23,6 +23,11 @@ import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.account.Account;
+import stroom.security.shared.account.AccountResultPage;
+import stroom.security.shared.account.FindAccountRequest;
+import stroom.security.shared.account.CreateAccountRequest;
+import stroom.security.shared.account.UpdateAccountRequest;
 import stroom.util.NullSafe;
 
 import com.codahale.metrics.annotation.Timed;
@@ -99,9 +104,9 @@ class AccountResourceImpl implements AccountResource {
 
     @Timed
     @Override
-    public AccountResultPage search(final SearchAccountRequest request) {
-        if (NullSafe.isBlankString(request, SearchAccountRequest::getQuickFilter)
-                && NullSafe.isEmptyCollection(request, SearchAccountRequest::getSortList)) {
+    public AccountResultPage search(final FindAccountRequest request) {
+        if (NullSafe.isBlankString(request, FindAccountRequest::getQuickFilter)
+                && NullSafe.isEmptyCollection(request, FindAccountRequest::getSortList)) {
             return list();
         } else {
 

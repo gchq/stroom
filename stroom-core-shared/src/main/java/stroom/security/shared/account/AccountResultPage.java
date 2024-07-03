@@ -1,4 +1,4 @@
-package stroom.security.identity.account;
+package stroom.security.shared.account;
 
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.QuickFilterResultPage;

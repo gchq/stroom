@@ -18,6 +18,11 @@
 
 package stroom.security.identity.account;
 
+import stroom.security.shared.account.Account;
+import stroom.security.shared.account.AccountResultPage;
+import stroom.security.shared.account.FindAccountRequest;
+import stroom.security.shared.account.CreateAccountRequest;
+import stroom.security.shared.account.UpdateAccountRequest;
 import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.filter.FilterFieldDefinition;
@@ -64,7 +69,7 @@ public interface AccountResource extends RestResource, FetchWithIntegerId<Accoun
     @POST
     @Path("search")
     @NotNull
-    AccountResultPage search(@Parameter(description = "account", required = true) SearchAccountRequest request);
+    AccountResultPage search(@Parameter(description = "account", required = true) FindAccountRequest request);
 
     @Operation(
             summary = "Create an account.",
