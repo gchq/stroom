@@ -1918,6 +1918,18 @@ button.main-menu svg {
      color: var(--black);
 }
 
+.dataGridDisabledCell .nodePingBar-bar.nodePingBar-severity__healthy,
+.dataGridDisabledCell .nodePingBar-bar.nodePingBar-severity__warn,
+.dataGridDisabledCell .nodePingBar-bar.nodePingBar-severity__max {
+     background-color: var(--text-color--disabled);
+}
+
+.dataGridDisabledCell .nodePingBar-bar.nodePingBar-severity__healthy .nodePingBar-text,
+.dataGridDisabledCell .nodePingBar-bar.nodePingBar-severity__warn .nodePingBar-text,
+.dataGridDisabledCell .nodePingBar-bar.nodePingBar-severity__max .nodePingBar-text {
+     color: var(--black);
+}
+
 .nodePingBar-text {
     padding-left: .25em;
 }
