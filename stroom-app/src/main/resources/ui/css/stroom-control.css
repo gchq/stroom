@@ -69,7 +69,9 @@
 
 .stroom .stroom-control-label {
   	width: 100%;
-  	white-space: nowrap;
+  	/* No point having labels span the full width of the screen */
+  	max-width: 60em;
+  	white-space: normal;
   	padding: 3px 0;
   	-webkit-user-select: text;
   	-moz-user-select: text;

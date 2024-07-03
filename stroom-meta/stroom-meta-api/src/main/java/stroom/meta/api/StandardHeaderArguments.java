@@ -32,11 +32,23 @@ public interface StandardHeaderArguments {
             COMPRESSION_NONE);
 
     String CONTENT_LENGTH = "content-length";
+
+    String CONTENT_ENCODING = "content-encoding";
+    String CONTENT_ENCODING_GZIP = "gzip";
+    String CONTENT_ENCODING_DEFLATE = "deflate";
+    String CONTENT_ENCODING_BROTLI = "br";
+    String CONTENT_ENCODING_ZSTD = "zstd";
+
     String USER_AGENT = "user-agent";
 
     String REMOTE_ADDRESS = "RemoteAddress";
     String REMOTE_HOST = "RemoteHost";
     String RECEIVED_TIME = "ReceivedTime";
+    /**
+     * A comma delimited list of ReceivedTime values, oldest first that includes the
+     * ReceivedTime value as its last item.
+     */
+    String RECEIVED_TIME_HISTORY = "ReceivedTimeHistory";
     String RECEIVED_PATH = "ReceivedPath";
     String EFFECTIVE_TIME = "EffectiveTime";
     String REMOTE_DN = "RemoteDN";
