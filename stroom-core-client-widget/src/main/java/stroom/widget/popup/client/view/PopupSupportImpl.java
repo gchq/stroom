@@ -25,7 +25,6 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupSupport;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.popup.client.presenter.Size;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
@@ -179,21 +178,21 @@ public class PopupSupportImpl implements PopupSupport {
         return id;
     }
 
-    private int getSize(final int current, Size size) {
-        int newSize = current;
-        if (size != null) {
-            if (size.getInitial() == null) {
-                size.setInitial(current);
-            }
-
-            if (size.getMin() == null) {
-                size.setMin(Math.min(current, size.getInitial()));
-            }
-
-            newSize = Math.max(size.getMin(), size.getInitial());
-        }
-        return newSize;
-    }
+//    private int getSize(final int current, Size size) {
+//        int newSize = current;
+//        if (size != null) {
+//            if (size.getInitial() == null) {
+//                size.setInitial(current);
+//            }
+//
+//            if (size.getMin() == null) {
+//                size.setMin(Math.min(current, size.getInitial()));
+//            }
+//
+//            newSize = Math.max(size.getMin(), size.getInitial());
+//        }
+//        return newSize;
+//    }
 
     @Override
     public void hideRequest(final HidePopupRequestEvent event) {

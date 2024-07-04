@@ -1,30 +1,11 @@
-/*
- * Copyright 2017 Crown Copyright
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
 package stroom.node.client.presenter;
 
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.valuespinner.shared.EditableInteger;
-import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.node.client.NodeManager;
 import stroom.node.shared.ClusterNodeInfo;
@@ -33,8 +14,6 @@ import stroom.node.shared.FindNodeStatusCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeStatusResult;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.svg.client.IconColour;
-import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.NodeMonitoringConfig;
 import stroom.util.client.DataGridUtil;
@@ -45,6 +24,8 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.TableBuilder;
 import stroom.widget.util.client.TableCell;
@@ -56,16 +37,13 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public class NodeMonitoringPresenter
-        extends ContentTabPresenter<PagerView>
-        implements Refreshable {
-
-    public static final String TAB_TYPE = "Nodes";
+public class NodeListPresenter extends MyPresenterWidget<PagerView> {
 
     private static final NumberFormat THOUSANDS_FORMATTER = NumberFormat.getFormat("#,###");
     private static final String CLASS_BASE = "nodePingBar";
@@ -84,18 +62,20 @@ public class NodeMonitoringPresenter
 
     private final Map<String, PingResult> latestPing = new HashMap<>();
     private final FindNodeStatusCriteria findNodeStatusCriteria = new FindNodeStatusCriteria();
+    private final MultiSelectionModelImpl<NodeStatusResult> selectionModel;
 
     @Inject
-    public NodeMonitoringPresenter(final EventBus eventBus,
-                                   final PagerView view,
-                                   final NodeManager nodeManager,
-                                   final TooltipPresenter tooltipPresenter,
-                                   final DateTimeFormatter dateTimeFormatter,
-                                   final UiConfigCache uiConfigCache) {
+    public NodeListPresenter(final EventBus eventBus,
+                             final PagerView view,
+                             final NodeManager nodeManager,
+                             final TooltipPresenter tooltipPresenter,
+                             final DateTimeFormatter dateTimeFormatter,
+                             final UiConfigCache uiConfigCache) {
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>();
         view.setDataWidget(dataGrid);
+        selectionModel = dataGrid.addDefaultSelectionModel(true);
 
         this.nodeManager = nodeManager;
         this.tooltipPresenter = tooltipPresenter;
@@ -108,7 +88,7 @@ public class NodeMonitoringPresenter
                                 final Consumer<FetchNodeStatusResponse> dataConsumer,
                                 final RestErrorHandler errorHandler) {
                 nodeManager.fetchNodeStatus(dataConsumer, errorHandler, findNodeStatusCriteria,
-                        NodeMonitoringPresenter.this);
+                        NodeListPresenter.this);
             }
 
             @Override
@@ -130,7 +110,7 @@ public class NodeMonitoringPresenter
                                                 throwable.getMessage(), nodeMonitoringConfig));
                                         super.changeData(data);
                                     },
-                                    NodeMonitoringPresenter.this);
+                                    NodeListPresenter.this);
                         });
                     }
                 }, getView());
@@ -139,6 +119,10 @@ public class NodeMonitoringPresenter
             }
         };
         dataProvider.addDataDisplay(dataGrid);
+    }
+
+    public MultiSelectionModel<NodeStatusResult> getSelectionModel() {
+        return selectionModel;
     }
 
     private static boolean isNodeEnabled(NodeStatusResult nodeStatusResult) {
@@ -175,7 +159,7 @@ public class NodeMonitoringPresenter
                         row.getNode().getName(),
                         result -> showNodeInfoResult(row.getNode(), result, popupPosition),
                         error -> showNodeInfoError(error.getException(), popupPosition),
-                        NodeMonitoringPresenter.this);
+                        NodeListPresenter.this);
             }
         };
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
@@ -186,7 +170,7 @@ public class NodeMonitoringPresenter
                                 result,
                                 NodeStatusResult::getNode,
                                 Node::getName))
-                        .enabledWhen(NodeMonitoringPresenter::isNodeEnabled)
+                        .enabledWhen(NodeListPresenter::isNodeEnabled)
                         .withSorting(FindNodeStatusCriteria.FIELD_ID_NAME)
                         .build(),
                 DataGridUtil.headingBuilder("Name")
@@ -200,7 +184,7 @@ public class NodeMonitoringPresenter
                                 result,
                                 NodeStatusResult::getNode,
                                 Node::getUrl))
-                        .enabledWhen(NodeMonitoringPresenter::isNodeEnabled)
+                        .enabledWhen(NodeListPresenter::isNodeEnabled)
                         .withSorting(FindNodeStatusCriteria.FIELD_ID_URL)
                         .build(),
                 DataGridUtil.headingBuilder("Cluster Base Endpoint")
@@ -214,7 +198,7 @@ public class NodeMonitoringPresenter
                                 result,
                                 NodeStatusResult::getNode,
                                 Node::getBuildVersion))
-                        .enabledWhen(NodeMonitoringPresenter::isNodeEnabled)
+                        .enabledWhen(NodeListPresenter::isNodeEnabled)
                         .withSorting(FindNodeStatusCriteria.FIELD_ID_BUILD_VERSION)
                         .build(),
                 DataGridUtil.headingBuilder("Build Version")
@@ -227,7 +211,7 @@ public class NodeMonitoringPresenter
                 DataGridUtil.columnBuilder(
                                 this::getPingBarSafeHtml,
                                 SafeHtmlCell::new)
-                        .enabledWhen(NodeMonitoringPresenter::isNodeEnabled)
+                        .enabledWhen(NodeListPresenter::isNodeEnabled)
                         .build(),
                 DataGridUtil.headingBuilder("Ping (ms)")
                         .withToolTip("The time in milliseconds to get a response back from the node.")
@@ -237,7 +221,7 @@ public class NodeMonitoringPresenter
         // Last Boot Time
         dataGrid.addColumn(
                 DataGridUtil.textColumnBuilder(this::extractLastBootTimeAsStr)
-                        .enabledWhen(NodeMonitoringPresenter::isNodeEnabled)
+                        .enabledWhen(NodeListPresenter::isNodeEnabled)
                         .withSorting(FindNodeStatusCriteria.FIELD_ID_LAST_BOOT_MS)
                         .build(),
                 DataGridUtil.headingBuilder("Up Date")
@@ -250,7 +234,7 @@ public class NodeMonitoringPresenter
                 DataGridUtil.readOnlyTickBoxColumnBuilder((NodeStatusResult result) -> GwtNullSafe.get(
                                 result,
                                 NodeStatusResult::isMaster))
-                        .enabledWhen(NodeMonitoringPresenter::isNodeEnabled)
+                        .enabledWhen(NodeListPresenter::isNodeEnabled)
                         .centerAligned()
                         .build(),
                 DataGridUtil.headingBuilder("Master")
@@ -261,10 +245,10 @@ public class NodeMonitoringPresenter
 
         // Priority.
         dataGrid.addColumn(
-                DataGridUtil.valueSpinnerColumnBuilder(NodeMonitoringPresenter::extractNodePriority,
+                DataGridUtil.valueSpinnerColumnBuilder(NodeListPresenter::extractNodePriority,
                                 1L,
                                 100L)
-                        .enabledWhen(NodeMonitoringPresenter::isNodeEnabled)
+                        .enabledWhen(NodeListPresenter::isNodeEnabled)
                         .withSorting(FindNodeStatusCriteria.FIELD_ID_PRIORITY)
                         .withFieldUpdater((rowIndex, nodeStatusResult, value) ->
                                 nodeManager.setPriority(
@@ -286,7 +270,7 @@ public class NodeMonitoringPresenter
                                 result,
                                 NodeStatusResult::getNode,
                                 Node::isEnabled))
-                        .enabledWhen(NodeMonitoringPresenter::isNodeEnabled)
+                        .enabledWhen(NodeListPresenter::isNodeEnabled)
                         .withSorting(FindNodeStatusCriteria.FIELD_ID_ENABLED)
                         .withFieldUpdater((index, row, value) ->
                                 nodeManager.setEnabled(
@@ -436,35 +420,15 @@ public class NodeMonitoringPresenter
         tooltipPresenter.show(SafeHtmlUtils.fromString(caught.getMessage()), popupPosition);
     }
 
-    @Override
-    public void refresh() {
+    void refresh() {
         dataProvider.refresh();
-    }
-
-    @Override
-    public SvgImage getIcon() {
-        return SvgImage.NODES;
-    }
-
-    @Override
-    public IconColour getIconColour() {
-        return IconColour.GREY;
-    }
-
-    @Override
-    public String getLabel() {
-        return "Nodes";
-    }
-
-    @Override
-    public String getType() {
-        return TAB_TYPE;
     }
 
 
     // --------------------------------------------------------------------------------
 
 
+    @SuppressWarnings("ClassCanBeRecord")
     private static final class PingResult {
 
         private final Long ping;

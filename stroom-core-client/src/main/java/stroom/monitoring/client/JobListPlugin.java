@@ -38,8 +38,10 @@ import javax.inject.Singleton;
 public class JobListPlugin extends MonitoringPlugin<JobPresenter> {
 
     @Inject
-    public JobListPlugin(final EventBus eventBus, final ContentManager eventManager,
-                         final Provider<JobPresenter> presenterProvider, final ClientSecurityContext securityContext) {
+    public JobListPlugin(final EventBus eventBus,
+                         final ContentManager eventManager,
+                         final Provider<JobPresenter> presenterProvider,
+                         final ClientSecurityContext securityContext) {
         super(eventBus, eventManager, presenterProvider, securityContext);
     }
 

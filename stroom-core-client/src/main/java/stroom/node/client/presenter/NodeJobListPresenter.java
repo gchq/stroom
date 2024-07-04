@@ -1,22 +1,5 @@
-/*
- * Copyright 2016 Crown Copyright
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+package stroom.node.client.presenter;
 
-package stroom.job.client.presenter;
-
-import stroom.cell.valuespinner.shared.EditableInteger;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
@@ -28,15 +11,13 @@ import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
-import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeResource;
 import stroom.node.client.JobNodeListHelper;
-import stroom.preferences.client.DateTimeFormatter;
-import stroom.schedule.client.SchedulePopup;
-import stroom.ui.config.client.UiConfigCache;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
@@ -45,46 +26,48 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Consumer;
 
-public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
+public class NodeJobListPresenter extends MyPresenterWidget<PagerView> {
 
     private static final JobNodeResource JOB_NODE_RESOURCE = GWT.create(JobNodeResource.class);
+    private static final String FILTER_BTN_TITLE_ON = "Click to show all jobs";
+    private static final String FILTER_BTN_TITLE_OFF = "Click to show only enabled jobs";
 
     private final RestFactory restFactory;
-    private final DateTimeFormatter dateTimeFormatter;
-    private final SchedulePopup schedulePresenter;
-    private final UiConfigCache clientPropertyCache;
     private final JobNodeListHelper jobNodeListHelper;
-
     private final RestDataProvider<JobNode, ResultPage<JobNode>> dataProvider;
-    private final Map<JobNode, JobNodeInfo> latestNodeInfo = new HashMap<>();
-
     private final MyDataGrid<JobNode> dataGrid;
-
-    private String jobName;
     private final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
+    private final InlineSvgToggleButton showEnabledToggleBtn;
+    private String nodeName;
 
     @Inject
-    public JobNodeListPresenter(final EventBus eventBus,
+    public NodeJobListPresenter(final EventBus eventBus,
                                 final PagerView view,
                                 final RestFactory restFactory,
-                                final DateTimeFormatter dateTimeFormatter,
-                                final SchedulePopup schedulePresenter,
-                                final UiConfigCache clientPropertyCache,
                                 final JobNodeListHelper jobNodeListHelper) {
         super(eventBus, view);
         this.restFactory = restFactory;
-        this.dateTimeFormatter = dateTimeFormatter;
-        this.schedulePresenter = schedulePresenter;
-        this.clientPropertyCache = clientPropertyCache;
         this.jobNodeListHelper = jobNodeListHelper;
 
         dataGrid = new MyDataGrid<>();
         dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
+        showEnabledToggleBtn = new InlineSvgToggleButton();
+        showEnabledToggleBtn.setSvg(SvgImage.FILTER);
+        showEnabledToggleBtn.setTitle(FILTER_BTN_TITLE_OFF);
+        showEnabledToggleBtn.setOff();
+        view.addButton(showEnabledToggleBtn);
+
+        showEnabledToggleBtn.addClickHandler(event -> {
+            if (showEnabledToggleBtn.isOn()) {
+                showEnabledToggleBtn.setTitle(FILTER_BTN_TITLE_ON);
+            } else {
+                showEnabledToggleBtn.setTitle(FILTER_BTN_TITLE_OFF);
+            }
+            refresh();
+        });
 
         initTable();
 
@@ -93,7 +76,11 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
             protected void exec(final Range range,
                                 final Consumer<ResultPage<JobNode>> dataConsumer,
                                 final RestErrorHandler errorHandler) {
-                findJobNodeCriteria.getJobName().setString(jobName);
+                findJobNodeCriteria.getNodeName().setString(nodeName);
+                // ON is show enabled only, OFF is show all states
+                findJobNodeCriteria.setJobNodeEnabled(showEnabledToggleBtn.isOn()
+                        ? true
+                        : null);
                 restFactory
                         .create(JOB_NODE_RESOURCE)
                         .method(res -> res.find(findJobNodeCriteria))
@@ -127,10 +114,14 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
         };
     }
 
-    private Number getTaskLimit(final JobNode jobNode) {
-        return JobType.DISTRIBUTED.equals(jobNode.getJobType())
-                ? new EditableInteger(jobNode.getTaskLimit())
-                : null;
+    public void read(final String nodeName) {
+        if (this.nodeName == null) {
+            this.nodeName = nodeName;
+            dataProvider.addDataDisplay(dataGrid);
+        } else {
+            this.nodeName = nodeName;
+            dataProvider.refresh();
+        }
     }
 
     void refresh() {
@@ -143,28 +134,43 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
     private void initTable() {
         DataGridUtil.addColumnSortHandler(dataGrid, findJobNodeCriteria, this::refresh);
 
-        // Enabled.
+        // Job Enabled.
+        dataGrid.addColumn(
+                DataGridUtil.readOnlyTickBoxColumnBuilder((JobNode jobNode) -> GwtNullSafe.test(
+                                jobNode,
+                                JobNode::getJob,
+                                Job::isEnabled))
+                        .enabledWhen(jobNode -> false)
+                        .withSorting(FindJobNodeCriteria.FIELD_ID_ENABLED)
+                        .build(),
+                DataGridUtil.headingBuilder("Job")
+                        .withToolTip("Whether this job is enabled across all nodes or not. " +
+                                "An enabled job must also be enabled on a node for it to execute on that node.")
+                        .build(),
+                40);
+
+        // JobNode Enabled.
         dataGrid.addColumn(
                 DataGridUtil.updatableTickBoxColumnBuilder(JobNode::isEnabled)
                         .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
                         .withSorting(FindJobNodeCriteria.FIELD_ID_ENABLED)
-//                        .withFieldUpdater(jobNodeListHelper.createEnabledStateFieldUpdater(
-//                                getView(), dataProvider::refresh))
+                        .withFieldUpdater(jobNodeListHelper.createEnabledStateFieldUpdater(
+                                getView(), this::refresh))
                         .build(),
-                DataGridUtil.headingBuilder("Enabled")
+                DataGridUtil.headingBuilder("This Node")
                         .withToolTip("Whether this job is enabled on this node or not. " +
                                 "The parent job must also be enabled for the job to execute.")
                         .build(),
-                70);
+                80);
 
-        // Node Name
+        // Job Name
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder(JobNode::getNodeName)
+                DataGridUtil.textColumnBuilder(JobNode::getJobName)
                         .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
                         .withSorting(FindJobNodeCriteria.FIELD_ID_NODE)
                         .build(),
-                DataGridUtil.headingBuilder("Node")
-                        .withToolTip("The Stroom node the job runs on")
+                DataGridUtil.headingBuilder("Job Name")
+                        .withToolTip("The name of the job.")
                         .build(),
                 350);
 
@@ -180,15 +186,16 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
 
         // Schedule.
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder((JobNode jobNode1) -> GwtNullSafe.requireNonNullElse(
-                                jobNode1.getSchedule(),
-                                "N/A"))
+                DataGridUtil.textColumnBuilder((JobNode jobNode1) ->
+                                GwtNullSafe.requireNonNullElse(
+                                        jobNode1.getSchedule(),
+                                        "N/A"))
                         .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
-                        .withBrowserEventHandler((context, elem, jobNode, event) -> {
-                            if (jobNode != null && MouseUtil.isPrimary(event)) {
-                                jobNodeListHelper.showSchedule(jobNode, getView(), dataProvider::refresh);
-                            }
-                        })
+//                        .withBrowserEventHandler((context, elem, jobNode, event) -> {
+//                            if (jobNode != null && MouseUtil.isPrimary(event)) {
+//                                showSchedule(jobNode);
+//                            }
+//                        })
                         .build(),
                 DataGridUtil.headingBuilder("Schedule")
                         .withToolTip("The schedule for this job on this node, if applicable to the job type")
@@ -214,42 +221,42 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
         dataGrid.addColumn(
                 DataGridUtil.svgPresetColumnBuilder(true, JobNodeListHelper::buildRunIconPreset)
                         .withBrowserEventHandler(jobNodeListHelper.createExecuteJobNowHandler(
-                                JobNodeListPresenter.this,
+                                NodeJobListPresenter.this,
                                 getView()))
                         .build(),
                 DataGridUtil.headingBuilder("Run")
                         .withToolTip("Execute the job on a node now.")
                         .build(), 40);
-
-        // Max.
-        dataGrid.addColumn(
-                DataGridUtil.valueSpinnerColumnBuilder(this::getTaskLimit, 1L, 9999L)
-                        .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
-                        .withFieldUpdater((rowIndex, jobNode, value) -> {
-                            jobNode.setTaskLimit(value.intValue());
-                            restFactory
-                                    .create(JOB_NODE_RESOURCE)
-                                    .call(res -> res.setTaskLimit(jobNode.getId(), value.intValue()))
-                                    .taskListener(getView())
-                                    .exec();
-                        })
-                        .build(),
-                DataGridUtil.headingBuilder("Max Tasks")
-                        .withToolTip("The task limit for this job on this node")
-                        .build(),
-                80);
-
-        // Current Tasks (Cur).
-        dataGrid.addColumn(
-                DataGridUtil.textColumnBuilder(jobNodeListHelper::getCurrentTaskCountAsStr)
-                        .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
-                        .rightAligned()
-                        .build(),
-                DataGridUtil.headingBuilder("Current Tasks")
-                        .withToolTip("The number of the currently executing tasks on this node for this job")
-                        .build(),
-                100);
-
+//
+//        // Max.
+//        dataGrid.addColumn(
+//                DataGridUtil.valueSpinnerColumnBuilder(this::getTaskLimit, 1L, 9999L)
+//                        .enabledWhen(JobListUtil::isJobNodeEnabled)
+//                        .withFieldUpdater((rowIndex, jobNode, value) -> {
+//                            jobNode.setTaskLimit(value.intValue());
+//                            restFactory
+//                                    .create(JOB_NODE_RESOURCE)
+//                                    .call(res -> res.setTaskLimit(jobNode.getId(), value.intValue()))
+//                                    .taskListener(getView())
+//                                    .exec();
+//                        })
+//                        .build(),
+//                DataGridUtil.headingBuilder("Max Tasks")
+//                        .withToolTip("The task limit for this job on this node")
+//                        .build(),
+//                80);
+//
+//        // Current Tasks (Cur).
+//        dataGrid.addColumn(
+//                DataGridUtil.textColumnBuilder(this::getCurrentTaskCountAsStr)
+//                        .enabledWhen(JobListUtil::isJobNodeEnabled)
+//                        .rightAligned()
+//                        .build(),
+//                DataGridUtil.headingBuilder("Current Tasks")
+//                        .withToolTip("The number of the currently executing tasks on this node for this job")
+//                        .build(),
+//                100);
+//
         // Last executed.
         dataGrid.addColumn(
                 DataGridUtil.textColumnBuilder(jobNodeListHelper::getLastExecutedTimeAsStr)
@@ -261,7 +268,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                         .build(),
                 ColumnSizeConstants.DATE_AND_DURATION_COL);
 
-        // Last executed.
+        // Next executed.
         dataGrid.addColumn(
                 DataGridUtil.textColumnBuilder(jobNodeListHelper::getNextScheduledTimeAsStr)
                         .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
@@ -273,15 +280,5 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                 ColumnSizeConstants.DATE_AND_DURATION_COL);
 
         DataGridUtil.addEndColumn(dataGrid);
-    }
-
-    public void read(final Job job) {
-        if (jobName == null) {
-            jobName = job.getName();
-            dataProvider.addDataDisplay(dataGrid);
-        } else {
-            jobName = job.getName();
-            dataProvider.refresh();
-        }
     }
 }

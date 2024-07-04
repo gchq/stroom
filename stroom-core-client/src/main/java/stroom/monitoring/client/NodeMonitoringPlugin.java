@@ -20,7 +20,7 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.node.client.presenter.NodeMonitoringPresenter;
+import stroom.node.client.presenter.NodePresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.IconColour;
@@ -35,12 +35,12 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class NodeMonitoringPlugin extends MonitoringPlugin<NodeMonitoringPresenter> {
+public class NodeMonitoringPlugin extends MonitoringPlugin<NodePresenter> {
 
     @Inject
     public NodeMonitoringPlugin(final EventBus eventBus,
                                 final ContentManager eventManager,
-                                final Provider<NodeMonitoringPresenter> presenterProvider,
+                                final Provider<NodePresenter> presenterProvider,
                                 final ClientSecurityContext securityContext) {
         super(eventBus, eventManager, presenterProvider, securityContext);
     }

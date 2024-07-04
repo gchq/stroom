@@ -43,20 +43,24 @@ public class FindJobNodeCriteria extends BaseCriteria {
     private final StringCriteria jobName;
     @JsonProperty
     private final StringCriteria nodeName;
+    private Boolean jobNodeEnabled;
 
     public FindJobNodeCriteria() {
         jobName = new StringCriteria();
         nodeName = new StringCriteria();
+        jobNodeEnabled = null;
     }
 
     @JsonCreator
     public FindJobNodeCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                @JsonProperty("jobName") final StringCriteria jobName,
-                               @JsonProperty("nodeName") final StringCriteria nodeName) {
+                               @JsonProperty("nodeName") final StringCriteria nodeName,
+                               @JsonProperty("jobNodeEnabled") final Boolean jobNodeEnabled) {
         super(pageRequest, sortList);
         this.jobName = jobName;
         this.nodeName = nodeName;
+        this.jobNodeEnabled = jobNodeEnabled;
     }
 
     public StringCriteria getJobName() {
@@ -65,5 +69,22 @@ public class FindJobNodeCriteria extends BaseCriteria {
 
     public StringCriteria getNodeName() {
         return nodeName;
+    }
+
+    public Boolean getJobNodeEnabled() {
+        return jobNodeEnabled;
+    }
+
+    public void setJobNodeEnabled(final Boolean jobNodeEnabled) {
+        this.jobNodeEnabled = jobNodeEnabled;
+    }
+
+    @Override
+    public String toString() {
+        return "FindJobNodeCriteria{" +
+                "jobName=" + jobName +
+                ", nodeName=" + nodeName +
+                ", jobNodeEnabled=" + jobNodeEnabled +
+                '}';
     }
 }
