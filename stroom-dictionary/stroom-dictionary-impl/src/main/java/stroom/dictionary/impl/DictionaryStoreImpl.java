@@ -33,7 +33,6 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
-import stroom.util.NullSafe;
 import stroom.util.shared.Message;
 import stroom.util.string.StringUtil;
 
@@ -241,15 +240,17 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
     @Override
     public String[] getWords(final DocRef dictionaryRef) {
+        // returns null is doc not found
         final String words = getCombinedData(dictionaryRef);
-
-        if (!NullSafe.isBlankString(words)) {
+        if (words == null) {
+            return null;
+        } else if (words.isBlank()) {
+            return new String[0];
+        } else {
             // Split by line break (`LF` or `CRLF`) and trim whitespace from each resulting line
             return StringUtil.splitToLines(words, true)
                     .toArray(String[]::new);
         }
-
-        return null;
     }
 
     private String doGetCombinedData(final DocRef docRef, final Set<DocRef> visited) {
@@ -263,7 +264,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
                 for (final DocRef ref : doc.getImports()) {
                     final String data = doGetCombinedData(ref, visited);
                     if (data != null && !data.isEmpty()) {
-                        if (sb.length() > 0) {
+                        if (!sb.isEmpty()) {
                             sb.append("\n");
                         }
                         sb.append(data);
@@ -271,7 +272,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
                 }
             }
             if (doc.getData() != null) {
-                if (sb.length() > 0) {
+                if (!sb.isEmpty()) {
                     sb.append("\n");
                 }
                 sb.append(doc.getData());
