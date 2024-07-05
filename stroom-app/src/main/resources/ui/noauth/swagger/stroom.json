@@ -20,7 +20,7 @@
     "ApiKeyAuth" : [ ]
   } ],
   "paths" : {
-    "/account/v2" : {
+    "/account/v1" : {
       "get" : {
         "operationId" : "listAccounts",
         "responses" : {
@@ -68,7 +68,7 @@
         "tags" : [ "Account" ]
       }
     },
-    "/account/v2/search" : {
+    "/account/v1/search" : {
       "post" : {
         "operationId" : "searchAccounts",
         "requestBody" : {
@@ -98,7 +98,7 @@
         "tags" : [ "Account" ]
       }
     },
-    "/account/v2/{id}" : {
+    "/account/v1/{id}" : {
       "delete" : {
         "operationId" : "deleteAccount",
         "parameters" : [ {
@@ -1409,7 +1409,7 @@
         "tags" : [ "API Key" ]
       }
     },
-    "/authentication/v2/noauth/changePassword" : {
+    "/authentication/v1/noauth/changePassword" : {
       "post" : {
         "operationId" : "changePassword",
         "requestBody" : {
@@ -1439,7 +1439,7 @@
         "tags" : [ "Authentication" ]
       }
     },
-    "/authentication/v2/noauth/confirmPassword" : {
+    "/authentication/v1/noauth/confirmPassword" : {
       "post" : {
         "operationId" : "confirmPassword",
         "requestBody" : {
@@ -1469,7 +1469,7 @@
         "tags" : [ "Authentication" ]
       }
     },
-    "/authentication/v2/noauth/fetchPasswordPolicy" : {
+    "/authentication/v1/noauth/fetchPasswordPolicy" : {
       "get" : {
         "operationId" : "fetchPasswordPolicy",
         "responses" : {
@@ -1488,7 +1488,7 @@
         "tags" : [ "Authentication" ]
       }
     },
-    "/authentication/v2/noauth/login" : {
+    "/authentication/v1/noauth/login" : {
       "post" : {
         "operationId" : "login",
         "requestBody" : {
@@ -1518,7 +1518,7 @@
         "tags" : [ "Authentication" ]
       }
     },
-    "/authentication/v2/noauth/logout" : {
+    "/authentication/v1/noauth/logout" : {
       "get" : {
         "operationId" : "logout",
         "parameters" : [ {
@@ -1545,7 +1545,7 @@
         "tags" : [ "Authentication" ]
       }
     },
-    "/authentication/v2/noauth/reset/{email}" : {
+    "/authentication/v1/noauth/reset/{email}" : {
       "get" : {
         "operationId" : "resetEmail",
         "parameters" : [ {
