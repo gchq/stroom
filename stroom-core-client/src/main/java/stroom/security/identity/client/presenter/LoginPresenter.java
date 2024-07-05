@@ -18,6 +18,7 @@ package stroom.security.identity.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.DefaultErrorHandler;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.identity.client.presenter.LoginPresenter.LoginProxy;
 import stroom.security.identity.client.presenter.LoginPresenter.LoginView;
@@ -128,7 +129,7 @@ public class LoginPresenter extends MyPresenter<LoginView, LoginProxy> implement
                                     AlertEvent.fireError(this, result.getMessage(), e::reset);
                                 }
                             })
-                            .onFailure(new DefaultErrorHandler(this, e::reset))
+                            .onFailure(RestErrorHandler.forPopup(this, e))
                             .taskListener(new DefaultTaskListener(this))
                             .exec();
 
