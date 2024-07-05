@@ -209,4 +209,13 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
             }
         }, getView());
     }
+
+    public void setSelected(final Job job) {
+        if (job != null) {
+            selectionModel.setSelected(job);
+        } else {
+            selectionModel.clear();
+        }
+    }
+
 }

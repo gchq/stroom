@@ -21,6 +21,8 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.JobNode;
+import stroom.job.shared.JobNodeAndInfo;
+import stroom.job.shared.JobNodeAndInfoListResponse;
 import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeListResponse;
 import stroom.job.shared.JobNodeResource;
@@ -45,10 +47,13 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
@@ -75,21 +80,21 @@ class JobNodeResourceImpl implements JobNodeResource {
         this.documentEventLogProvider = documentEventLogProvider;
     }
 
-    @Override
-    public JobNodeListResponse list(final String jobName, final String nodeName) {
-        final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
-        if (jobName != null) {
-            findJobNodeCriteria.getJobName().setString(jobName);
-        }
-        if (nodeName != null) {
-            findJobNodeCriteria.getNodeName().setString(nodeName);
-        }
-        return find(findJobNodeCriteria);
-    }
+//    @Override
+//    public JobNodeListResponse list(final String jobName, final String nodeName) {
+//        final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
+//        if (jobName != null) {
+//            findJobNodeCriteria.getJobName().setString(jobName);
+//        }
+//        if (nodeName != null) {
+//            findJobNodeCriteria.getNodeName().setString(nodeName);
+//        }
+//        return find(findJobNodeCriteria);
+//    }
 
     @Override
-    public JobNodeListResponse find(final FindJobNodeCriteria findJobNodeCriteria) {
-        JobNodeListResponse response = null;
+    public JobNodeAndInfoListResponse find(final FindJobNodeCriteria findJobNodeCriteria) {
+        JobNodeAndInfoListResponse response = null;
 
         And.Builder<Void> andBuilder = And.builder();
 
@@ -115,25 +120,68 @@ class JobNodeResourceImpl implements JobNodeResource {
                 .build();
         try {
 
-            response = jobNodeServiceProvider.get()
-                    .find(findJobNodeCriteria);
+            if (findJobNodeCriteria.getNodeName().getString() != null) {
+                response = doFindByNode(findJobNodeCriteria);
+            } else {
+                response = doFind(findJobNodeCriteria);
+            }
 
             documentEventLogProvider.get().search(
                     "ListJobNodes",
                     query,
-                    JobNode.class.getSimpleName(),
+                    JobNodeAndInfo.class.getSimpleName(),
                     response.getPageResponse(),
                     null);
         } catch (final RuntimeException e) {
             documentEventLogProvider.get().search(
                     "ListJobNodes",
                     query,
-                    JobNode.class.getSimpleName(),
+                    JobNodeAndInfo.class.getSimpleName(),
                     null,
                     e);
             throw e;
         }
         return response;
+    }
+
+    private JobNodeAndInfoListResponse doFind(final FindJobNodeCriteria criteria) {
+        final JobNodeService jobNodeService = jobNodeServiceProvider.get();
+        final JobNodeListResponse jobNodeListResponse = jobNodeService.find(criteria);
+        final String thisNodeName = nodeInfoProvider.get().getThisNodeName();
+
+        final List<JobNodeAndInfo> list = jobNodeListResponse.getValues()
+                .stream()
+                .map(jobNode -> {
+                    // We can add in the jobNodeInfo if the jobNode is for this node as the info
+                    // is obtained from the node's in memory state.
+                    if (Objects.equals(jobNode.getNodeName(), thisNodeName)) {
+                        final JobNodeInfo jobNodeInfo = jobNodeService.getInfo(jobNode.getJobName());
+                        return new JobNodeAndInfo(jobNode, jobNodeInfo);
+                    } else {
+                        return JobNodeAndInfo.withoutInfo(jobNode);
+                    }
+                })
+                .toList();
+
+        return JobNodeAndInfoListResponse.createUnboundedResponse(list);
+    }
+
+    private JobNodeAndInfoListResponse doFindByNode(final FindJobNodeCriteria criteria) {
+        final String nodeName = criteria.getNodeName().getString();
+
+        // Criteria are constrained to a single node, so hit that node so we can get its
+        // node info
+        return nodeServiceProvider.get()
+                .remoteRestResult(
+                        nodeName,
+                        JobNodeAndInfoListResponse.class,
+                        () ->
+                                ResourcePaths.buildAuthenticatedApiPath(
+                                        JobNodeResource.BASE_PATH,
+                                        JobNodeResource.FIND_PATH_PART),
+                        () ->
+                                doFind(criteria),
+                        builder -> builder.post(Entity.json(criteria)));
     }
 
     @Override
@@ -168,6 +216,32 @@ class JobNodeResourceImpl implements JobNodeResource {
 
         return jobNodeInfo;
     }
+
+//    @Override
+//    public JobNodeAndInfoListResponse findNodeJobs(final FindJobNodeCriteria criteria) {
+//        if (!criteria.getNodeName().isConstrained()) {
+//            throw new IllegalArgumentException("This method must be constrained to a single node.");
+//        }
+//        final String nodeName = criteria.getNodeName().getString();
+//
+//        return nodeServiceProvider.get()
+//                .remoteRestResult(
+//                        nodeName,
+//                        JobNodeAndInfoListResponse.class,
+//                        () -> ResourcePaths.buildAuthenticatedApiPath(JobNodeResource.FIND_NODE_JOBS_PATH_PART),
+//                        () -> {
+//                            final JobNodeService jobNodeService = jobNodeServiceProvider.get();
+//                            final JobNodeListResponse jobNodeListResponse = jobNodeService.find(criteria);
+//                            final List<JobNodeAndInfo> infoList = jobNodeListResponse.getValues().stream()
+//                                    .map(jobNode -> {
+//                                        final JobNodeInfo info = jobNodeService.getInfo(jobNode.getJobName());
+//                                        return new JobNodeAndInfo(jobNode, info);
+//                                    })
+//                                    .toList();
+//                            return new JobNodeAndInfoListResponse(infoList);
+//                        },
+//                        builder -> builder.post(Entity.json(criteria)));
+//    }
 
     @Override
     public void setTaskLimit(final Integer id, final Integer taskLimit) {

@@ -19,6 +19,7 @@ package stroom.node.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.table.client.Refreshable;
+import stroom.job.shared.JobNode;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeStatusResult;
 import stroom.svg.client.IconColour;
@@ -89,6 +90,18 @@ public class NodePresenter
     @Override
     public String getType() {
         return TAB_TYPE;
+    }
+
+    public void setSelected(final String nodeName) {
+        nodeListPresenter.setSelected(nodeName);
+        nodeJobListPresenter.read(nodeName);
+    }
+
+    public void setSelected(final JobNode jobNode) {
+        final String nodeName = GwtNullSafe.get(jobNode, JobNode::getNodeName);
+        nodeJobListPresenter.read(nodeName);
+        nodeListPresenter.setSelected(nodeName);
+        nodeJobListPresenter.setSelected(jobNode);
     }
 
 

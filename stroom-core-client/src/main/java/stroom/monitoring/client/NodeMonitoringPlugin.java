@@ -19,6 +19,7 @@ package stroom.monitoring.client;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.job.shared.JobNode;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.presenter.NodePresenter;
 import stroom.security.client.api.ClientSecurityContext;
@@ -68,5 +69,15 @@ public class NodeMonitoringPlugin extends MonitoringPlugin<NodePresenter> {
     @Override
     protected Action getOpenAction() {
         return Action.GOTO_NODES;
+    }
+
+    public void open(final String nodeName) {
+        final NodePresenter nodePresenter = open();
+        nodePresenter.setSelected(nodeName);
+    }
+
+    public void open(final JobNode jobNode) {
+        final NodePresenter nodePresenter = open();
+        nodePresenter.setSelected(jobNode);
     }
 }

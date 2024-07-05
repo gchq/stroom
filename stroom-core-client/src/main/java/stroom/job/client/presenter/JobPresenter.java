@@ -18,8 +18,10 @@ package stroom.job.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.job.shared.Job;
+import stroom.job.shared.JobNode;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.GwtNullSafe;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -77,6 +79,16 @@ public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> {
     @Override
     public String getType() {
         return TAB_TYPE;
+    }
+
+    public void setSelected(final Job job) {
+        jobListPresenter.setSelected(job);
+        jobNodeListPresenter.setSelected(null);
+    }
+
+    public void setSelected(final JobNode jobNode) {
+        jobListPresenter.setSelected(GwtNullSafe.get(jobNode, JobNode::getJob));
+        jobNodeListPresenter.setSelected(jobNode);
     }
 
 

@@ -19,6 +19,7 @@ package stroom.job.impl;
 
 import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.GetScheduledTimesRequest;
+import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.job.shared.JobNodeInfo;
@@ -33,12 +34,17 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.scheduler.CronTrigger;
 import stroom.util.scheduler.FrequencyTrigger;
 import stroom.util.scheduler.SimpleScheduleExec;
+import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.util.shared.scheduler.ScheduleType;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Singleton
@@ -50,16 +56,19 @@ class JobNodeService {
     private final JobNodeTrackerCache jobNodeTrackerCache;
     private final SecurityContext securityContext;
     private final ScheduleService scheduleService;
+    private final JobService jobService;
 
     @Inject
     JobNodeService(final JobNodeDao jobNodeDao,
                    final JobNodeTrackerCache jobNodeTrackerCache,
                    final SecurityContext securityContext,
-                   final ScheduleService scheduleService) {
+                   final ScheduleService scheduleService,
+                   final JobService jobService) {
         this.jobNodeDao = jobNodeDao;
         this.jobNodeTrackerCache = jobNodeTrackerCache;
         this.securityContext = securityContext;
         this.scheduleService = scheduleService;
+        this.jobService = jobService;
     }
 
     JobNode update(final JobNode jobNode) {
@@ -80,7 +89,35 @@ class JobNodeService {
     JobNodeListResponse find(final FindJobNodeCriteria findJobNodeCriteria) {
         return securityContext.secureResult(
                 PermissionNames.MANAGE_JOBS_PERMISSION,
-                () -> jobNodeDao.find(findJobNodeCriteria));
+                () -> {
+                    final JobNodeListResponse jobNodeListResponse = jobNodeDao.find(findJobNodeCriteria);
+
+                    final boolean sortOnAdvanced = GwtNullSafe.stream(findJobNodeCriteria.getSortList())
+                            .map(CriteriaFieldSort::getId)
+                            .anyMatch(id -> Objects.equals(id, FindJobNodeCriteria.FIELD_ADVANCED));
+
+                    if (sortOnAdvanced) {
+                        final List<JobNode> list = jobNodeListResponse.getValues();
+                        final List<JobNode> advancedList = new ArrayList<>();
+                        final List<JobNode> nonAdvancedList = new ArrayList<>();
+                        for (final JobNode jobNode : list) {
+                            final Job job = jobNode.getJob();
+                            // Add the advanced state
+                            jobService.decorate(job);
+                            if (job.isAdvanced()) {
+                                advancedList.add(jobNode);
+                            } else {
+                                nonAdvancedList.add(jobNode);
+                            }
+                        }
+                        final List<JobNode> returnList = new ArrayList<>(list.size());
+                        returnList.addAll(nonAdvancedList);
+                        returnList.addAll(advancedList);
+                        return JobNodeListResponse.createUnboundedJobNodeResponse(returnList);
+                    } else {
+                        return jobNodeListResponse;
+                    }
+                });
     }
 
     JobNodeInfo getInfo(final String jobName) {

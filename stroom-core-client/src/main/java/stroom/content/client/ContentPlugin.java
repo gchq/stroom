@@ -46,7 +46,7 @@ public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends Plug
         return presenter;
     }
 
-    public void open() {
+    public P open() {
         if (presenter == null) {
             // If the presenter is null then we haven't got this tab open.
             // Create a new presenter.
@@ -84,5 +84,6 @@ public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends Plug
             final Refreshable refreshable = (Refreshable) presenter;
             refreshable.refresh();
         }
+        return presenter;
     }
 }

@@ -41,7 +41,10 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class NodeListPresenter extends MyPresenterWidget<PagerView> {
 
@@ -63,6 +66,8 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> {
     private final Map<String, PingResult> latestPing = new HashMap<>();
     private final FindNodeStatusCriteria findNodeStatusCriteria = new FindNodeStatusCriteria();
     private final MultiSelectionModelImpl<NodeStatusResult> selectionModel;
+    private Map<String, NodeStatusResult> nodeNameToNodeStatusMap = null;
+    private String selectedNodeName = null;
 
     @Inject
     public NodeListPresenter(final EventBus eventBus,
@@ -93,6 +98,19 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> {
 
             @Override
             protected void changeData(final FetchNodeStatusResponse data) {
+                // Build a map to help us with selecting rows
+                final boolean isSelectionRequired = nodeNameToNodeStatusMap == null;
+                nodeNameToNodeStatusMap = data.stream()
+                        .filter(Objects::nonNull)
+                        .filter(nodeStatus -> nodeStatus.getNode() != null)
+                        .collect(Collectors.toMap(
+                                nodeStatus -> nodeStatus.getNode().getName(),
+                                Function.identity()));
+                // Do the requested selection now we can map node names to rows
+                if (isSelectionRequired) {
+                    setSelected(selectedNodeName);
+                }
+
                 uiConfigCache.get(uiConfig -> {
                     if (uiConfig != null) {
                         final NodeMonitoringConfig nodeMonitoringConfig = uiConfig.getNodeMonitoring();
@@ -422,6 +440,20 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> {
 
     void refresh() {
         dataProvider.refresh();
+    }
+
+    public void setSelected(final String nodeName) {
+        selectedNodeName = nodeName;
+        if (nodeName != null) {
+            final NodeStatusResult nodeStatusResult = nodeNameToNodeStatusMap.get(nodeName);
+            if (nodeStatusResult != null) {
+                selectionModel.setSelected(nodeStatusResult);
+            } else {
+                selectionModel.clear();
+            }
+        } else {
+            selectionModel.clear();
+        }
     }
 
 

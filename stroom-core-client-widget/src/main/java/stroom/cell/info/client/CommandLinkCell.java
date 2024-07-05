@@ -39,16 +39,20 @@ public class CommandLinkCell extends AbstractCell<CommandLink> {
         if (value == null) {
             sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else if (value.getCommand() != null) {
-            sb.append(template.link(value.getText()));
+            sb.append(template.link(value.getText(), value.getTooltip()));
         } else {
             sb.append(template.text(value.getText()));
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     interface Template extends SafeHtmlTemplates {
 
-        @Template("<div class=\"CommandLinkCell\">{0}</div>")
-        SafeHtml link(String text);
+        @Template("<div class=\"CommandLinkCell\" title=\"{1}\">{0}</div>")
+        SafeHtml link(String text, String tooltip);
 
         @Template("{0}")
         SafeHtml text(String text);

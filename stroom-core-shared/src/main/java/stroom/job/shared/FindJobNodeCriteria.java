@@ -35,6 +35,8 @@ import java.util.List;
 public class FindJobNodeCriteria extends BaseCriteria {
 
     public static final String FIELD_ID_ID = "Id";
+    public static final String FIELD_ADVANCED = "Advanced";
+    public static final String FIELD_JOB_NAME = "Job Name";
     public static final String FIELD_ID_ENABLED = "Enabled";
     public static final String FIELD_ID_NODE = "Node";
     public static final String FIELD_ID_LAST_EXECUTED = "Last Executed";
@@ -49,6 +51,12 @@ public class FindJobNodeCriteria extends BaseCriteria {
         jobName = new StringCriteria();
         nodeName = new StringCriteria();
         jobNodeEnabled = null;
+    }
+
+    public FindJobNodeCriteria(final String nodeName) {
+        this.jobName = new StringCriteria();
+        this.nodeName = new StringCriteria(nodeName);
+        this.jobNodeEnabled = null;
     }
 
     @JsonCreator

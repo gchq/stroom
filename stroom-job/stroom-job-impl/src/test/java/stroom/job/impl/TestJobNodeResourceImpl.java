@@ -39,7 +39,7 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
     private static final JobNode JOB_NODE_1 = buildJobNode(1, 1, "node1");
     private static final JobNode JOB_NODE_2 = buildJobNode(2, 1, "node2");
 
-    private static final JobNodeListResponse JOB_NODES = JobNodeListResponse.createUnboundedJobeNodeResponse(List.of(
+    private static final JobNodeListResponse JOB_NODES = JobNodeListResponse.createUnboundedJobNodeResponse(List.of(
             JOB_NODE_1,
             JOB_NODE_2));
 

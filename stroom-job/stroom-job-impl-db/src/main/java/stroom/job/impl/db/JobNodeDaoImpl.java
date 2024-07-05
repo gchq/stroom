@@ -33,6 +33,7 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.of(
             FindJobNodeCriteria.FIELD_ID_ID, JOB_NODE.ID,
+            FindJobNodeCriteria.FIELD_JOB_NAME, JOB.NAME,
             FindJobNodeCriteria.FIELD_ID_NODE, JOB_NODE.NODE_NAME,
             FindJobNodeCriteria.FIELD_ID_ENABLED, JOB_NODE.ENABLED,
             FindJobNodeCriteria.FIELD_ID_LAST_EXECUTED, JOB_NODE.UPDATE_TIME_MS);
@@ -153,6 +154,6 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
                     jobNode.setJob(job);
                     return jobNode;
                 });
-        return JobNodeListResponse.createUnboundedJobeNodeResponse(list);
+        return JobNodeListResponse.createUnboundedJobNodeResponse(list);
     }
 }
