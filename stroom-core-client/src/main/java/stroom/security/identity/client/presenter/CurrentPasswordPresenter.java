@@ -17,7 +17,7 @@
 package stroom.security.identity.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.DefaultErrorHandler;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.CurrentUser;
 import stroom.security.identity.client.presenter.CurrentPasswordPresenter.CurrentPasswordView;
@@ -118,7 +118,7 @@ public class CurrentPasswordPresenter extends MyPresenterWidget<CurrentPasswordV
                         AlertEvent.fireError(this, r.getMessage(), event::reset);
                     }
                 })
-                .onFailure(new DefaultErrorHandler(this, event::reset))
+                .onFailure(RestErrorHandler.forPopup(this, event))
                 .taskListener(this)
                 .exec();
     }
@@ -140,7 +140,7 @@ public class CurrentPasswordPresenter extends MyPresenterWidget<CurrentPasswordV
                         AlertEvent.fireError(this, r.getMessage(), event::reset);
                     }
                 })
-                .onFailure(new DefaultErrorHandler(this, event::reset))
+                .onFailure(RestErrorHandler.forPopup(this, event))
                 .taskListener(this)
                 .exec();
     }

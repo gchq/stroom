@@ -17,7 +17,7 @@
 package stroom.security.identity.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.DefaultErrorHandler;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.identity.client.presenter.EmailResetPasswordPresenter.EmailResetPasswordView;
 import stroom.security.identity.shared.AuthenticationResource;
@@ -104,7 +104,7 @@ public class EmailResetPasswordPresenter extends MyPresenterWidget<EmailResetPas
                                 "Unable to reset password", event::reset);
                     }
                 })
-                .onFailure(new DefaultErrorHandler(this, event::reset))
+                .onFailure(RestErrorHandler.forPopup(this, event))
                 .taskListener(this)
                 .exec();
     }
