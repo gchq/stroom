@@ -47,8 +47,6 @@ public final class AccountModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(AccountResourceImpl.class);
-        RestResourcesBinder.create(binder())
-                .bind(AccountResource2Impl.class);
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(AccountMaintenance.class, jobBuilder -> jobBuilder

@@ -1,10 +1,10 @@
 package stroom.security.identity.account;
 
-import stroom.security.shared.account.Account;
-import stroom.security.shared.account.AccountResultPage;
-import stroom.security.shared.account.FindAccountRequest;
-import stroom.security.shared.account.CreateAccountRequest;
-import stroom.security.shared.account.UpdateAccountRequest;
+import stroom.security.identity.shared.Account;
+import stroom.security.identity.shared.AccountResultPage;
+import stroom.security.identity.shared.CreateAccountRequest;
+import stroom.security.identity.shared.FindAccountRequest;
+import stroom.security.identity.shared.UpdateAccountRequest;
 
 import java.util.Optional;
 

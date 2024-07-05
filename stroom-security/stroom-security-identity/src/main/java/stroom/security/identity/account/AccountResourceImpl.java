@@ -23,11 +23,12 @@ import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.account.Account;
-import stroom.security.shared.account.AccountResultPage;
-import stroom.security.shared.account.FindAccountRequest;
-import stroom.security.shared.account.CreateAccountRequest;
-import stroom.security.shared.account.UpdateAccountRequest;
+import stroom.security.identity.shared.Account;
+import stroom.security.identity.shared.AccountResource;
+import stroom.security.identity.shared.AccountResultPage;
+import stroom.security.identity.shared.CreateAccountRequest;
+import stroom.security.identity.shared.FindAccountRequest;
+import stroom.security.identity.shared.UpdateAccountRequest;
 import stroom.util.NullSafe;
 
 import com.codahale.metrics.annotation.Timed;
@@ -51,7 +52,6 @@ import event.logging.ViewEventAction;
 import event.logging.util.EventLoggingUtil;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.NotFoundException;
 
 import java.math.BigInteger;
@@ -104,7 +104,7 @@ class AccountResourceImpl implements AccountResource {
 
     @Timed
     @Override
-    public AccountResultPage search(final FindAccountRequest request) {
+    public AccountResultPage find(final FindAccountRequest request) {
         if (NullSafe.isBlankString(request, FindAccountRequest::getQuickFilter)
                 && NullSafe.isEmptyCollection(request, FindAccountRequest::getSortList)) {
             return list();
@@ -146,8 +146,7 @@ class AccountResourceImpl implements AccountResource {
 
     @Timed
     @Override
-    public Integer create(final HttpServletRequest httpServletRequest,
-                          final CreateAccountRequest request) {
+    public Integer create(final CreateAccountRequest request) {
 
         return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                 .withTypeId("CreateAccount")
@@ -211,7 +210,7 @@ class AccountResourceImpl implements AccountResource {
     }
 
     private MultiObject getBefore(int accountId) {
-        event.logging.User user = event.logging.User.builder().withId("" + accountId).build();
+        User user = User.builder().withId("" + accountId).build();
 
         try {
             Optional<Account> accountOptional = securityContextProvider.get().asProcessingUserResult(
@@ -227,8 +226,8 @@ class AccountResourceImpl implements AccountResource {
         return MultiObject.builder().addUser(user).build();
     }
 
-    private event.logging.User userForAccount(Account account) {
-        User.Builder<Void> builder = event.logging.User.builder();
+    private User userForAccount(Account account) {
+        User.Builder<Void> builder = User.builder();
 
         if (account == null) {
             builder.withState("Not found");
@@ -250,8 +249,7 @@ class AccountResourceImpl implements AccountResource {
 
     @Timed
     @Override
-    public Boolean update(final HttpServletRequest httpServletRequest,
-                          final UpdateAccountRequest request,
+    public Boolean update(final UpdateAccountRequest request,
                           final int accountId) {
 
         final User afterUser = userForAccount(request.getAccount());
@@ -303,8 +301,7 @@ class AccountResourceImpl implements AccountResource {
 
     @Timed
     @Override
-    public Boolean delete(final HttpServletRequest httpServletRequest,
-                          final int userId) {
+    public Boolean delete(final int userId) {
 
         return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                 .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "delete"))

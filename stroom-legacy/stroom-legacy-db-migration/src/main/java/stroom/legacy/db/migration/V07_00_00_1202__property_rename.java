@@ -677,7 +677,7 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
                     "stroom.volumes.resilientReplicationCount");
             map("stroom.streamstore.volumeSelector", "stroom.volumes.volumeSelector");
 //            map("stroom.theme.background-attachment", "stroom.ui.theme.backgroundAttachment");
-            map("stroom.theme.background-color", "stroom.ui.theme.backgroundColour");
+            ignoredMappings.add("stroom.theme.background-color");
 //            map("stroom.theme.background-image", "stroom.ui.theme.backgroundImage");
 //            map("stroom.theme.background-opacity", "stroom.ui.theme.backgroundOpacity");
 //            map("stroom.theme.background-position", "stroom.ui.theme.backgroundPosition");

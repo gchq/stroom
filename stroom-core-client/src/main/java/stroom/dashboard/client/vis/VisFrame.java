@@ -47,7 +47,7 @@ public class VisFrame extends Composite implements VisPane, HasTaskListener {
 
     public VisFrame(final EventBus eventBus) {
         // + "?time=" + System.currentTimeMillis());
-        frame = new Frame("vis.html");
+        frame = new Frame("ui/vis.html");
         frame.addStyleName("VisFrame-frame");
         messageSupport = new MessageSupport(eventBus, frame.getElement());
 

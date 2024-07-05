@@ -1,8 +1,6 @@
 package stroom.security.identity.authenticate;
 
 import stroom.config.common.UriFactory;
-import stroom.security.api.SecurityContext;
-import stroom.security.shared.account.Account;
 import stroom.security.identity.account.AccountDao;
 import stroom.security.identity.account.AccountService;
 import stroom.security.identity.authenticate.api.AuthenticationService;
@@ -10,14 +8,16 @@ import stroom.security.identity.config.IdentityConfig;
 import stroom.security.identity.config.PasswordPolicyConfig;
 import stroom.security.identity.config.TokenConfig;
 import stroom.security.identity.exceptions.BadRequestException;
+import stroom.security.identity.shared.Account;
+import stroom.security.identity.shared.ChangePasswordRequest;
+import stroom.security.identity.shared.ChangePasswordResponse;
+import stroom.security.identity.shared.ConfirmPasswordRequest;
+import stroom.security.identity.shared.ConfirmPasswordResponse;
+import stroom.security.identity.shared.LoginRequest;
+import stroom.security.identity.shared.LoginResponse;
 import stroom.security.identity.token.TokenBuilderFactory;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdClientFactory;
-import stroom.security.shared.changepassword.AuthenticationState;
-import stroom.security.shared.changepassword.ChangePasswordRequest;
-import stroom.security.shared.changepassword.ChangePasswordResponse;
-import stroom.security.shared.changepassword.ConfirmPasswordRequest;
-import stroom.security.shared.changepassword.ConfirmPasswordResponse;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.logging.LambdaLogger;
@@ -48,7 +48,6 @@ class AuthenticationServiceImpl implements AuthenticationService {
     private final EmailSender emailSender;
     private final AccountDao accountDao;
     private final AccountService accountService;
-    private final SecurityContext securityContext;
     private final OpenIdClientFactory openIdClientDetailsFactory;
     private final TokenBuilderFactory tokenBuilderFactory;
     private final TokenConfig tokenConfig;
@@ -61,7 +60,6 @@ class AuthenticationServiceImpl implements AuthenticationService {
             final EmailSender emailSender,
             final AccountDao accountDao,
             final AccountService accountService,
-            final SecurityContext securityContext,
             final OpenIdClientFactory openIdClientDetailsFactory,
             final TokenBuilderFactory tokenBuilderFactory,
             final TokenConfig tokenConfig,
@@ -71,20 +69,10 @@ class AuthenticationServiceImpl implements AuthenticationService {
         this.emailSender = emailSender;
         this.accountDao = accountDao;
         this.accountService = accountService;
-        this.securityContext = securityContext;
         this.openIdClientDetailsFactory = openIdClientDetailsFactory;
         this.tokenBuilderFactory = tokenBuilderFactory;
         this.tokenConfig = tokenConfig;
         this.certificateExtractor = certificateExtractor;
-    }
-
-    public AuthenticationState getAuthenticationState(final HttpServletRequest request) {
-        final AuthStateImpl authState = getAuthState(request);
-        String userId = null;
-        if (authState != null && !authState.isRequirePasswordChange()) {
-            userId = authState.getSubject();
-        }
-        return new AuthenticationState(userId, config.getPasswordPolicyConfig().isAllowPasswordResets());
     }
 
     private void setAuthState(final HttpSession session, final AuthStateImpl authStateImpl) {
@@ -329,33 +317,6 @@ class AuthenticationServiceImpl implements AuthenticationService {
                 .build();
     }
 
-    public ChangePasswordResponse resetPassword(final HttpServletRequest request,
-                                                final ResetPasswordRequest resetPasswordRequest) {
-        if (!securityContext.isLoggedIn()) {
-            throw new RuntimeException("No user is currently logged in.");
-        }
-        final AuthStateImpl authState = getAuthState(request);
-        final boolean forceSignIn = shouldForceSignIn(authState);
-
-        final String loggedInUser = securityContext.getSubjectId();
-        PasswordPolicyConfig conf = config.getPasswordPolicyConfig();
-
-        PasswordValidator.validateLength(resetPasswordRequest.getNewPassword(), conf.getMinimumPasswordLength());
-        PasswordValidator.validateComplexity(resetPasswordRequest.getNewPassword(), conf.getPasswordComplexityRegex());
-        PasswordValidator.validateConfirmation(resetPasswordRequest.getNewPassword(),
-                resetPasswordRequest.getConfirmNewPassword());
-
-        accountDao.changePassword(loggedInUser, resetPasswordRequest.getNewPassword());
-        return new ChangePasswordResponse(true, null, forceSignIn);
-    }
-
-    public boolean needsPasswordChange(String email) {
-        return accountDao.needsPasswordChange(
-                email,
-                config.getPasswordPolicyConfig().getMandatoryPasswordChangeDuration().getDuration(),
-                config.getPasswordPolicyConfig().isForcePasswordChangeOnFirstLogin());
-    }
-
     private LoginResponse processSuccessfulLogin(final HttpServletRequest request,
                                                  final Account account,
                                                  final String message) {
@@ -383,22 +344,6 @@ class AuthenticationServiceImpl implements AuthenticationService {
         LOGGER.debug("Sending user to login.");
         UriBuilder uriBuilder = UriBuilder.fromUri(uriFactory.uiUri(AuthenticationService.SIGN_IN_URL_PATH));
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, "error", "login_required");
-        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.REDIRECT_URI, redirectUri);
-        return uriBuilder.build();
-    }
-
-    @Override
-    public URI createConfirmPasswordUri(final String redirectUri) {
-        LOGGER.debug("Sending user to confirm password.");
-        UriBuilder uriBuilder = UriBuilder.fromUri(uriFactory.uiUri(AuthenticationService.CONFIRM_PASSWORD_URL_PATH));
-        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.REDIRECT_URI, redirectUri);
-        return uriBuilder.build();
-    }
-
-    @Override
-    public URI createChangePasswordUri(final String redirectUri) {
-        LOGGER.debug("Sending user to change password.");
-        UriBuilder uriBuilder = UriBuilder.fromUri(uriFactory.uiUri(AuthenticationService.CHANGE_PASSWORD_URL_PATH));
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.REDIRECT_URI, redirectUri);
         return uriBuilder.build();
     }

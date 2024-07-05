@@ -22,8 +22,6 @@ import stroom.activity.client.ActivityModule;
 import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
 import stroom.annotation.client.AnnotationModule;
-import stroom.changepassword.client.gin.ChangePasswordGinjector;
-import stroom.changepassword.client.gin.ChangePasswordModule;
 import stroom.core.client.presenter.CorePresenter;
 import stroom.core.client.presenter.FullScreenPresenter;
 import stroom.dashboard.client.vis.gin.VisGinjector;
@@ -36,6 +34,8 @@ import stroom.preferences.client.gin.UserPreferencesModule;
 import stroom.query.client.gin.QueryModule;
 import stroom.security.client.gin.SecurityGinjector;
 import stroom.security.client.gin.SecurityModule;
+import stroom.security.identity.client.gin.ChangePasswordGinjector;
+import stroom.security.identity.client.gin.ChangePasswordModule;
 import stroom.widget.popup.client.gin.PopupGinjector;
 import stroom.widget.popup.client.gin.PopupModule;
 

@@ -14,7 +14,7 @@ servers:
 security:
 - ApiKeyAuth: []
 paths:
-  /account/v1:
+  /account/v2:
     get:
       operationId: listAccounts
       responses:
@@ -47,14 +47,14 @@ paths:
       summary: Create an account.
       tags:
       - Account
-  /account/v1/search:
+  /account/v2/search:
     post:
       operationId: searchAccounts
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SearchAccountRequest'
+              $ref: '#/components/schemas/FindAccountRequest'
         description: account
         required: true
       responses:
@@ -67,7 +67,7 @@ paths:
       summary: Search for an account by email.
       tags:
       - Account
-  /account/v1/{id}:
+  /account/v2/{id}:
     delete:
       operationId: deleteAccount
       parameters:
@@ -976,25 +976,7 @@ paths:
       summary: Update a dictionary doc
       tags:
       - API Key
-  /authentication/v1/needsPasswordChange:
-    get:
-      operationId: needsPasswordChange
-      parameters:
-      - in: query
-        name: email
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: boolean
-          description: default response
-      summary: Check if a user's password needs changing.
-      tags:
-      - Authentication
-  /authentication/v1/noauth/changePassword:
+  /authentication/v2/noauth/changePassword:
     post:
       operationId: changePassword
       requestBody:
@@ -1014,7 +996,7 @@ paths:
       summary: Change a user's password.
       tags:
       - Authentication
-  /authentication/v1/noauth/confirmPassword:
+  /authentication/v2/noauth/confirmPassword:
     post:
       operationId: confirmPassword
       requestBody:
@@ -1034,7 +1016,7 @@ paths:
       summary: Confirm an authenticated user's current password.
       tags:
       - Authentication
-  /authentication/v1/noauth/fetchPasswordPolicy:
+  /authentication/v2/noauth/fetchPasswordPolicy:
     get:
       operationId: fetchPasswordPolicy
       responses:
@@ -1042,25 +1024,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PasswordPolicyConfig'
+                $ref: '#/components/schemas/InternalIdpPasswordPolicyConfig'
           description: default response
       summary: Get the password policy
       tags:
       - Authentication
-  /authentication/v1/noauth/getAuthenticationState:
-    get:
-      operationId: getAuthenticationState
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthenticationState'
-          description: default response
-      summary: Get the current authentication state
-      tags:
-      - Authentication
-  /authentication/v1/noauth/login:
+  /authentication/v2/noauth/login:
     post:
       operationId: login
       requestBody:
@@ -1080,7 +1049,7 @@ paths:
       summary: Handle a login request made using username and password credentials.
       tags:
       - Authentication
-  /authentication/v1/noauth/logout:
+  /authentication/v2/noauth/logout:
     get:
       operationId: logout
       parameters:
@@ -1099,7 +1068,7 @@ paths:
       summary: Log a user out of their session
       tags:
       - Authentication
-  /authentication/v1/noauth/reset/{email}:
+  /authentication/v2/noauth/reset/{email}:
     get:
       operationId: resetEmail
       parameters:
@@ -1116,26 +1085,6 @@ paths:
                 type: boolean
           description: default response
       summary: Reset a user account using an email address.
-      tags:
-      - Authentication
-  /authentication/v1/resetPassword:
-    post:
-      operationId: resetPassword
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ResetPasswordRequest'
-        description: changePasswordRequest
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ChangePasswordResponse'
-          description: default response
-      summary: Reset an authenticated user's password.
       tags:
       - Authentication
   /authproxy/v1/noauth/fetchClientCredsToken:
@@ -7888,13 +7837,6 @@ components:
           type: string
         sourceTaskId:
           $ref: '#/components/schemas/TaskId'
-    AuthenticationState:
-      type: object
-      properties:
-        allowPasswordResets:
-          type: boolean
-        userId:
-          type: string
     Automate:
       type: object
       properties:
@@ -9106,6 +9048,8 @@ components:
           - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
+          - EYE
+          - EYE_OFF
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
@@ -9135,6 +9079,7 @@ components:
           - HIDE
           - HIDE_MENU
           - HISTORY
+          - INFINITY_LOGO
           - INFO
           - INSERT
           - JOBS
@@ -9734,6 +9679,8 @@ components:
           - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
+          - EYE
+          - EYE_OFF
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
@@ -9763,6 +9710,7 @@ components:
           - HIDE
           - HIDE_MENU
           - HISTORY
+          - INFINITY_LOGO
           - INFO
           - INSERT
           - JOBS
@@ -10379,6 +10327,20 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/UserName'
+    FindAccountRequest:
+      type: object
+      properties:
+        pageRequest:
+          $ref: '#/components/schemas/PageRequest'
+        quickFilter:
+          type: string
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaFieldSort'
     FindAnalyticDataShardCriteria:
       type: object
       properties:
@@ -10591,6 +10553,8 @@ components:
           - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
+          - EYE
+          - EYE_OFF
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
@@ -10620,6 +10584,7 @@ components:
           - HIDE
           - HIDE_MENU
           - HISTORY
+          - INFINITY_LOGO
           - INFO
           - INSERT
           - JOBS
@@ -10874,6 +10839,8 @@ components:
           - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
+          - EYE
+          - EYE_OFF
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
@@ -10903,6 +10870,7 @@ components:
           - HIDE
           - HIDE_MENU
           - HISTORY
+          - INFINITY_LOGO
           - INFO
           - INSERT
           - JOBS
@@ -11574,6 +11542,27 @@ components:
           type: string
         validationRegex:
           type: string
+    InternalIdpPasswordPolicyConfig:
+      type: object
+      properties:
+        allowPasswordResets:
+          type: boolean
+        minimumPasswordLength:
+          type: integer
+          format: int32
+          minimum: 0
+        minimumPasswordStrength:
+          type: integer
+          format: int32
+          maximum: 5
+          minimum: 0
+        passwordComplexityRegex:
+          type: string
+        passwordPolicyMessage:
+          type: string
+      required:
+      - minimumPasswordLength
+      - minimumPasswordStrength
     Job:
       type: object
       properties:
@@ -12236,38 +12225,6 @@ components:
           enum:
           - OPTIONAL
           - MANDATORY
-    PasswordPolicyConfig:
-      type: object
-      properties:
-        allowPasswordResets:
-          type: boolean
-        forcePasswordChangeOnFirstLogin:
-          type: boolean
-        mandatoryPasswordChangeDuration:
-          type: string
-        minimumPasswordLength:
-          type: integer
-          format: int32
-          minimum: 0
-        minimumPasswordStrength:
-          type: integer
-          format: int32
-          maximum: 5
-          minimum: 0
-        neverUsedAccountDeactivationThreshold:
-          type: string
-        passwordComplexityRegex:
-          type: string
-        passwordPolicyMessage:
-          type: string
-        unusedAccountDeactivationThreshold:
-          type: string
-      required:
-      - mandatoryPasswordChangeDuration
-      - minimumPasswordLength
-      - minimumPasswordStrength
-      - neverUsedAccountDeactivationThreshold
-      - unusedAccountDeactivationThreshold
     PermissionChangeEvent:
       type: object
       discriminator:
@@ -12431,6 +12388,8 @@ components:
           - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
+          - EYE
+          - EYE_OFF
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
@@ -12460,6 +12419,7 @@ components:
           - HIDE
           - HIDE_MENU
           - HISTORY
+          - INFINITY_LOGO
           - INFO
           - INSERT
           - JOBS
@@ -13410,6 +13370,8 @@ components:
           - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
+          - EYE
+          - EYE_OFF
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
@@ -13439,6 +13401,7 @@ components:
           - HIDE
           - HIDE_MENU
           - HISTORY
+          - INFINITY_LOGO
           - INFO
           - INSERT
           - JOBS
@@ -13765,13 +13728,6 @@ components:
           - WARN
           - ERROR
           - FATAL
-    ResetPasswordRequest:
-      type: object
-      properties:
-        confirmNewPassword:
-          type: string
-        newPassword:
-          type: string
     ResourceGeneration:
       type: object
       properties:
@@ -14421,20 +14377,6 @@ components:
           type: string
         timeRange:
           $ref: '#/components/schemas/TimeRange'
-    SearchAccountRequest:
-      type: object
-      properties:
-        pageRequest:
-          $ref: '#/components/schemas/PageRequest'
-        quickFilter:
-          type: string
-        sort:
-          type: string
-          writeOnly: true
-        sortList:
-          type: array
-          items:
-            $ref: '#/components/schemas/CriteriaFieldSort'
     SearchApiKeyRequest:
       type: object
       properties:
@@ -15796,8 +15738,6 @@ components:
     ThemeConfig:
       type: object
       properties:
-        backgroundColour:
-          type: string
         labelColours:
           type: string
         pageBorder:

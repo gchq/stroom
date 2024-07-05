@@ -20,14 +20,14 @@ package stroom.security.identity.db;
 
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
-import stroom.security.shared.account.Account;
 import stroom.security.identity.account.AccountDao;
-import stroom.security.shared.account.AccountResultPage;
-import stroom.security.shared.account.FindAccountRequest;
 import stroom.security.identity.authenticate.CredentialValidationResult;
 import stroom.security.identity.config.IdentityConfig;
 import stroom.security.identity.db.jooq.tables.records.AccountRecord;
 import stroom.security.identity.exceptions.NoSuchUserException;
+import stroom.security.identity.shared.Account;
+import stroom.security.identity.shared.AccountResultPage;
+import stroom.security.identity.shared.FindAccountRequest;
 import stroom.security.shared.User;
 import stroom.util.NullSafe;
 import stroom.util.ResultPageFactory;
@@ -279,9 +279,9 @@ class AccountDaoImpl implements AccountDao {
         });
     }
 
-    private Optional<Comparator<Account>> buildComparator(final FindAccountRequest searchAccountRequest) {
-        if (NullSafe.hasItems(searchAccountRequest, FindAccountRequest::getSortList)) {
-            return Optional.of(CompareUtil.buildCriteriaComparator(FIELD_COMPARATORS, searchAccountRequest));
+    private Optional<Comparator<Account>> buildComparator(final FindAccountRequest request) {
+        if (NullSafe.hasItems(request, FindAccountRequest::getSortList)) {
+            return Optional.of(CompareUtil.buildCriteriaComparator(FIELD_COMPARATORS, request));
         } else {
             return Optional.empty();
         }

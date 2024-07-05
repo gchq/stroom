@@ -122,8 +122,8 @@
      */
 
     /* Page */
-    --app__background-color: #22252c;/*#19171d;*/
-    --page__background-color: var(--app__background-color);
+    --app__background-color: #020202;/*#19171d;*/
+    --page__background-color: #22252c;
     --page__text-color: #cacbcb;
 
     /* Splitter */
@@ -218,7 +218,7 @@
     --table__odd-row__background-color: rgba(var(--black-rgb), 0.2);
 
     /* Dialog */
-    --dialog__background-color: var(--app__background-color);
+    --dialog__background-color: var(--page__background-color);
     --dialog__border-color: rgb(132 132 132 / 60%);
     --dialog__shadow: 0 0 20px 5px rgba(0, 0, 0, .7);
     --popup__shadow: 0 0 10px 1px rgb(0, 0, 0, .8);

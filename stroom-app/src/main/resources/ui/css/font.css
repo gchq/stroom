@@ -1,3 +1,12 @@
+/* Font Awesome */
+@import url("../fonts/FontAwesome/font-awesome.css");
+
+/* Roboto Font */
+@import url("../fonts/Roboto/roboto.css");
+
+/* Roboto Monospace Font */
+@import url("../fonts/Roboto_Mono/Roboto_Mono.css");
+
 :root {
     --regular-font-family: Roboto, Arial Unicode MS, Arial, tahoma, verdana, sans-serif;
     --monospace-font-family: "courier new", courier, sans-serif;

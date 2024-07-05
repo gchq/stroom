@@ -23,12 +23,15 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.identity.config.PasswordPolicyConfig;
 import stroom.security.identity.exceptions.NoSuchUserException;
-import stroom.security.shared.changepassword.AuthenticationState;
-import stroom.security.shared.changepassword.ChangePasswordRequest;
-import stroom.security.shared.changepassword.ChangePasswordResponse;
-import stroom.security.shared.changepassword.ConfirmPasswordRequest;
-import stroom.security.shared.changepassword.ConfirmPasswordResponse;
-import stroom.util.shared.PermissionException;
+import stroom.security.identity.shared.AuthenticationResource;
+import stroom.security.identity.shared.ChangePasswordRequest;
+import stroom.security.identity.shared.ChangePasswordResponse;
+import stroom.security.identity.shared.ConfirmPasswordRequest;
+import stroom.security.identity.shared.ConfirmPasswordResponse;
+import stroom.security.identity.shared.InternalIdpPasswordPolicyConfig;
+import stroom.security.identity.shared.LoginRequest;
+import stroom.security.identity.shared.LoginResponse;
+import stroom.util.servlet.HttpServletRequestHolder;
 
 import com.codahale.metrics.annotation.Timed;
 import event.logging.AuthenticateAction;
@@ -39,14 +42,11 @@ import event.logging.AuthenticateOutcomeReason;
 import event.logging.Data;
 import event.logging.Event;
 import event.logging.EventSource;
-import event.logging.Outcome;
 import event.logging.User;
-import event.logging.ViewEventAction;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.RedirectionException;
 import jakarta.ws.rs.core.Response.Status;
@@ -62,34 +62,31 @@ class AuthenticationResourceImpl implements AuthenticationResource {
 
     private final Provider<AuthenticationServiceImpl> serviceProvider;
     private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
+    private final Provider<HttpServletRequestHolder> httpServletRequestHolderProvider;
 
     @Inject
     AuthenticationResourceImpl(final Provider<AuthenticationServiceImpl> serviceProvider,
-                               final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider) {
+                               final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
+                               final Provider<HttpServletRequestHolder> httpServletRequestHolderProvider) {
         this.serviceProvider = serviceProvider;
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
+        this.httpServletRequestHolderProvider = httpServletRequestHolderProvider;
     }
 
     @Timed
     @Override
-    public AuthenticationState getAuthenticationState(final HttpServletRequest request) {
-        return serviceProvider.get().getAuthenticationState(request);
-    }
-
-    @Timed
-    @Override
-    public LoginResponse login(final HttpServletRequest request,
-                               final LoginRequest loginRequest) {
+    public LoginResponse login(final LoginRequest loginRequest) {
         LOGGER.debug("Received a login request");
         if (loginRequest != null) {
-            final AuthenticateEventAction.Builder<Void> eventBuilder = event.logging.AuthenticateEventAction.builder()
+            final AuthenticateEventAction.Builder<Void> eventBuilder = AuthenticateEventAction.builder()
                     .withLogonType(AuthenticateLogonType.INTERACTIVE)
                     .withAction(AuthenticateAction.LOGON)
-                    .withAuthenticationEntity(event.logging.User.builder()
+                    .withAuthenticationEntity(User.builder()
                             .withId(loginRequest.getUserId())
                             .build());
 
             try {
+                final HttpServletRequest request = httpServletRequestHolderProvider.get().get();
                 final LoginResponse response = serviceProvider.get().handleLogin(loginRequest, request);
                 if (response != null && !response.isLoginSuccessful()) {
                     eventBuilder.withOutcome(AuthenticateOutcome.builder()
@@ -128,17 +125,17 @@ class AuthenticationResourceImpl implements AuthenticationResource {
      */
     @Timed
     @Override
-    public Boolean logout(final HttpServletRequest request,
-                          final String postLogoutRedirectUri) {
+    public Boolean logout(final String postLogoutRedirectUri) {
         LOGGER.debug("Received a logout request");
-        final AuthenticateEventAction.Builder<Void> eventBuilder = event.logging.AuthenticateEventAction.builder()
+        final AuthenticateEventAction.Builder<Void> eventBuilder = AuthenticateEventAction.builder()
                 .withLogonType(AuthenticateLogonType.INTERACTIVE)
                 .withAction(AuthenticateAction.LOGOFF);
 
         try {
+            final HttpServletRequest request = httpServletRequestHolderProvider.get().get();
             final String userId = serviceProvider.get().logout(request);
-            eventBuilder.withUser(event.logging.User.builder().withId(userId).build())
-                    .withAuthenticationEntity(event.logging.User.builder()
+            eventBuilder.withUser(User.builder().withId(userId).build())
+                    .withAuthenticationEntity(User.builder()
                             .withId(userId)
                             .build());
 
@@ -165,29 +162,28 @@ class AuthenticationResourceImpl implements AuthenticationResource {
         }
     }
 
-    @Timed
     @Override
-    @AutoLogged(OperationType.UNLOGGED)
-    public ConfirmPasswordResponse confirmPassword(final HttpServletRequest request,
-                                                   final ConfirmPasswordRequest confirmPasswordRequest) {
-        return serviceProvider.get().confirmPassword(request, confirmPasswordRequest);
+    public ConfirmPasswordResponse confirmPassword(final ConfirmPasswordRequest confirmPasswordRequest) {
+        final HttpServletRequest request = httpServletRequestHolderProvider.get().get();
+        final AuthenticationServiceImpl service = serviceProvider.get();
+        return service.confirmPassword(request, confirmPasswordRequest);
     }
 
-    @Timed
     @Override
-    public final ChangePasswordResponse changePassword(final HttpServletRequest request,
-                                                       final ChangePasswordRequest changePasswordRequest) {
+    public ChangePasswordResponse changePassword(final ChangePasswordRequest changePasswordRequest) {
+        final HttpServletRequest request = httpServletRequestHolderProvider.get().get();
+        final AuthenticationServiceImpl service = serviceProvider.get();
+        final String userId = service.getUserIdFromRequest(request);
         final AuthenticateEventAction.Builder<Void> eventBuilder = event.logging.AuthenticateEventAction.builder()
-                .withUser(event.logging.User.builder().withId(getUserId(request)).build())
+                .withUser(event.logging.User.builder().withId(userId).build())
                 .withAuthenticationEntity(event.logging.User.builder()
                         .withId(changePasswordRequest.getUserId())
                         .build())
                 .withAction(AuthenticateAction.CHANGE_PASSWORD);
-        final String userId = getUserId(request);
 
         try {
             final ChangePasswordResponse response =
-                    serviceProvider.get().changePassword(request, changePasswordRequest);
+                    service.changePassword(request, changePasswordRequest);
 
             if (!response.isChangeSucceeded()) {
                 eventBuilder.withOutcome(AuthenticateOutcome.builder()
@@ -237,14 +233,9 @@ class AuthenticationResourceImpl implements AuthenticationResource {
         }
     }
 
-    private String getUserId(final HttpServletRequest request) {
-        return serviceProvider.get().getUserIdFromRequest(request);
-    }
-
     @Timed
     @Override
-    public Boolean resetEmail(final HttpServletRequest request, final String emailAddress) throws NoSuchUserException {
-
+    public Boolean resetEmail(final String emailAddress) throws NoSuchUserException {
         final AuthenticateEventAction.Builder<Void> eventBuilder = event.logging.AuthenticateEventAction.builder()
                 .withAuthenticationEntity(event.logging.User.builder()
                         .withEmailAddress(emailAddress)
@@ -277,74 +268,14 @@ class AuthenticationResourceImpl implements AuthenticationResource {
         }
     }
 
-    @Timed
     @Override
-    public final ChangePasswordResponse resetPassword(final HttpServletRequest request,
-                                                      final ResetPasswordRequest resetPasswordRequest) {
-        final AuthenticateEventAction.Builder<Void> eventBuilder = event.logging.AuthenticateEventAction.builder()
-                .withUser(event.logging.User.builder().withId(getUserId(request)).build())
-                .withAuthenticationEntity(event.logging.User.builder()
-                        .withId(getUserId(request))
-                        .build())
-                .withAction(AuthenticateAction.RESET_PASSWORD);
-
-        try {
-            final ChangePasswordResponse changePasswordResponse = serviceProvider.get().resetPassword(request,
-                    resetPasswordRequest);
-            if (changePasswordResponse != null) {
-                return changePasswordResponse;
-            }
-            throw new NotAuthorizedException("Not authorised");
-        } catch (Throwable e) {
-            eventBuilder.withOutcome(AuthenticateOutcome.builder()
-                    .withSuccess(false)
-                    .withPermitted(false)
-                    .withReason(AuthenticateOutcomeReason.OTHER)
-                    .withData(Data.builder()
-                            .withName("Error")
-                            .withValue(e.getMessage())
-                            .build())
-                    .withDescription(e.getMessage())
-                    .build());
-            throw e;
-        } finally {
-            stroomEventLoggingServiceProvider.get().log(
-                    "AuthenticationResourceImpl.resetPassword",
-                    "User password reset/change",
-                    eventBuilder.build());
-        }
-    }
-
-    @Timed
-    @Override
-    public final Boolean needsPasswordChange(final String email) {
-        ViewEventAction.Builder<Void> eventBuilder = event.logging.ViewEventAction.builder()
-                .withObjects(event.logging.User.builder().withEmailAddress(email).build());
-        try {
-            return serviceProvider.get().needsPasswordChange(email);
-
-        } catch (Throwable e) {
-            Outcome.Builder<Void> outcomeBuilder = Outcome.builder()
-                    .withSuccess(false)
-                    .withPermitted(false)
-                    .withDescription(e.getMessage());
-            if (e instanceof PermissionException) {
-                outcomeBuilder.withPermitted(false);
-            }
-            eventBuilder.withOutcome(outcomeBuilder.build());
-            throw e;
-        } finally {
-            stroomEventLoggingServiceProvider.get().log(
-                    "AuthenticationResourceImpl.needsPasswordChange",
-                    "Check whether password needs to be changed",
-                    eventBuilder.build());
-        }
-    }
-
-    @Timed
-    @Override
-    @AutoLogged(OperationType.VIEW)
-    public PasswordPolicyConfig fetchPasswordPolicy() {
-        return serviceProvider.get().getPasswordPolicy();
+    public InternalIdpPasswordPolicyConfig fetchPasswordPolicy() {
+        final PasswordPolicyConfig passwordPolicyConfig = serviceProvider.get().getPasswordPolicy();
+        return new InternalIdpPasswordPolicyConfig(
+                passwordPolicyConfig.isAllowPasswordResets(),
+                passwordPolicyConfig.getPasswordComplexityRegex(),
+                passwordPolicyConfig.getMinimumPasswordStrength(),
+                passwordPolicyConfig.getMinimumPasswordLength(),
+                passwordPolicyConfig.getPasswordPolicyMessage());
     }
 }

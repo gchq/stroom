@@ -144,9 +144,9 @@
      */
 
     /* Page */
-    --app__background-color-rgb: 255, 255, 255;
-    --app__background-color: rgb(var(--app__background-color-rgb));
-    --page__background-color: var(--app__background-color);
+    --app__background-color: rgb(30, 136, 229);
+    --page__background-color-rgb: 255, 255, 255;
+    --page__background-color: var(--page__background-color);
     --page__text-color: rgba(0, 0, 0, 0.8);
 
     /* Splitter */
@@ -248,7 +248,7 @@
     --table__odd-row__background-color: rgba(var(--black-rgb), .05);
 
     /* Dialog */
-    --dialog__background-color-rgb: var(--app__background-color-rgb);
+    --dialog__background-color-rgb: var(--page__background-color-rgb);
     --dialog__background-color: rgb(var(--dialog__background-color-rgb));
     --dialog__border-color: rgba(var(--black-rgb), .3);
     --dialog__shadow: 0 0 20px 5px rgba(0, 0, 0, .5);

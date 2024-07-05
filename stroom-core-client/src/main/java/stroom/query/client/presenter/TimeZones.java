@@ -25,37 +25,45 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 @Singleton
 public class TimeZones {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
+    private final RestFactory restFactory;
     private String localTimeZoneId;
     private List<String> ids;
 
     @Inject
     public TimeZones(final RestFactory restFactory) {
+        this.restFactory = restFactory;
         try {
             localTimeZoneId = getIntlTimeZone();
         } catch (final RuntimeException e) {
             localTimeZoneId = "Z";
         }
-
-        restFactory
-                .create(QUERY_RESOURCE)
-                .method(QueryResource::fetchTimeZones)
-                .onSuccess(result -> ids = result)
-                .taskListener(new QuietTaskListener())
-                .exec();
     }
 
     public String getLocalTimeZoneId() {
         return localTimeZoneId;
     }
 
-    public List<String> getIds() {
-        return ids;
+    public void getIds(final Consumer<List<String>> consumer) {
+        if (this.ids != null) {
+            consumer.accept(ids);
+        } else {
+            restFactory
+                    .create(QUERY_RESOURCE)
+                    .method(QueryResource::fetchTimeZones)
+                    .onSuccess(result -> {
+                        ids = result;
+                        consumer.accept(ids);
+                    })
+                    .taskListener(new QuietTaskListener())
+                    .exec();
+        }
     }
 
     /**

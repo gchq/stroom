@@ -1,9 +1,10 @@
 package stroom.security.identity.account;
 
 import stroom.security.identity.authenticate.CredentialValidationResult;
-import stroom.security.shared.account.Account;
-import stroom.security.shared.account.AccountResultPage;
-import stroom.security.shared.account.FindAccountRequest;
+import stroom.security.identity.shared.Account;
+import stroom.security.identity.shared.AccountResource;
+import stroom.security.identity.shared.AccountResultPage;
+import stroom.security.identity.shared.FindAccountRequest;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 
