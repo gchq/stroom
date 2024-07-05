@@ -444,15 +444,15 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> {
 
     public void setSelected(final String nodeName) {
         selectedNodeName = nodeName;
-        if (nodeName != null) {
+        selectionModel.clear();
+
+        if (nodeName != null && nodeNameToNodeStatusMap != null) {
             final NodeStatusResult nodeStatusResult = nodeNameToNodeStatusMap.get(nodeName);
             if (nodeStatusResult != null) {
                 selectionModel.setSelected(nodeStatusResult);
             } else {
                 selectionModel.clear();
             }
-        } else {
-            selectionModel.clear();
         }
     }
 

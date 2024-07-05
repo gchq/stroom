@@ -60,7 +60,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
 
         final MyDataGrid<Job> dataGrid = new MyDataGrid<>();
         dataGrid.setMultiLine(true);
-        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 
         final RestDataProvider<Job, ResultPage<Job>> dataProvider = createDataProvider(
