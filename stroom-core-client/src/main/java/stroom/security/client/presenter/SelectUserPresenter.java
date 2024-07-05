@@ -261,7 +261,11 @@ public class SelectUserPresenter
                                     .onFailure(RestErrorHandler.forPopup(this, e))
                                     .taskListener(this)
                                     .exec();
+                        } else {
+                            e.hide();
                         }
+                    } else {
+                        e.hide();
                     }
                 })
                 .fire();
