@@ -41,6 +41,7 @@ import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuBuilder;
@@ -142,8 +143,9 @@ public class DependenciesPresenter
                 COL_WIDTH_TYPE);
 
         // From (Name)
-        final Column<Dependency, CommandLink> fromNameColumn = DataGridUtil.commandLinkColumnBuilder((Dependency row) ->
-                        getName(row, Dependency::getFrom, true))
+        final Column<Dependency, CommandLink> fromNameColumn = DataGridUtil.commandLinkColumnBuilder(
+                        (Dependency row) ->
+                                getName(row, Dependency::getFrom, true))
                 .withSorting(DependencyCriteria.FIELD_FROM_NAME, true)
                 .build();
         DataGridUtil.addCommandLinkFieldUpdater(fromNameColumn);
@@ -316,9 +318,15 @@ public class DependenciesPresenter
         final DocRef docRef = docRefExtractor.apply(row);
         if (docRef != null) {
             if (from || (openableTypes.contains(docRef.getType()) && row.isOk())) {
-                return new CommandLink(docRef.getName(), () -> onOpenDoc(docRef));
+                final String name = GwtNullSafe.requireNonNullElseGet(
+                        docRef.getName(),
+                        docRef::getUuid);
+                return new CommandLink(
+                        docRef.getName(),
+                        "Open " + docRef.getType() + " '" + name + "'",
+                        () -> onOpenDoc(docRef));
             } else {
-                return new CommandLink(docRef.getName(), null);
+                return CommandLink.withoutCommand(docRef.getName());
             }
         } else {
             return null;

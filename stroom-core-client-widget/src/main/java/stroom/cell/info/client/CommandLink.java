@@ -33,6 +33,10 @@ public class CommandLink {
         return command;
     }
 
+    public boolean hasCommand() {
+        return command != null;
+    }
+
     public String getTooltip() {
         return tooltip;
     }

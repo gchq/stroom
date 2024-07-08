@@ -28,7 +28,7 @@ import static com.google.gwt.dom.client.BrowserEvents.MOUSEDOWN;
 
 public class DocRefCell extends AbstractCell<DocRef> implements HasHandlers, EventCell {
 
-    private static final String ICON_NAME = "svgIcon";
+    private static final String ICON_CLASS_NAME = "svgIcon";
     private static final String COPY_CLASS_NAME = "docRefLinkCopy";
     private static final String OPEN_CLASS_NAME = "docRefLinkOpen";
 
@@ -42,11 +42,7 @@ public class DocRefCell extends AbstractCell<DocRef> implements HasHandlers, Eve
         this.allowLinkByName = allowLinkByName;
 
         if (template == null) {
-            synchronized (DocRefCell.class) {
-                if (template == null) {
-                    template = GWT.create(Template.class);
-                }
-            }
+            template = GWT.create(Template.class);
         }
     }
 
@@ -110,13 +106,13 @@ public class DocRefCell extends AbstractCell<DocRef> implements HasHandlers, Eve
                 sb.appendHtmlConstant("<div class=\"docRefLinkContainer\">");
                 sb.append(textSafeHtml);
 
-                final SafeHtml copy = SvgImageUtil.toSafeHtml(SvgImage.COPY, ICON_NAME, COPY_CLASS_NAME);
+                final SafeHtml copy = SvgImageUtil.toSafeHtml(SvgImage.COPY, ICON_CLASS_NAME, COPY_CLASS_NAME);
                 sb.append(template.divWithToolTip(
                         "Copy name '" + value.getName() + "' to clipboard",
                         copy));
 
                 if (value.getUuid() != null || allowLinkByName) {
-                    final SafeHtml open = SvgImageUtil.toSafeHtml(SvgImage.OPEN, ICON_NAME, OPEN_CLASS_NAME);
+                    final SafeHtml open = SvgImageUtil.toSafeHtml(SvgImage.OPEN, ICON_CLASS_NAME, OPEN_CLASS_NAME);
                     sb.append(template.divWithToolTip(
                             "Open " + value.getType() + " " + value.getName() + " in new tab",
                             open));

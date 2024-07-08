@@ -415,7 +415,8 @@
 }
 
 .docRefLinkCopy,
-.docRefLinkOpen {
+.docRefLinkOpen,
+.commandLinkOpen {
     cursor: pointer;
 }
 
@@ -2235,18 +2236,21 @@ button.main-menu svg {
     margin-bottom: 0px;
 }
 
-.docRefLinkContainer {
+.docRefLinkContainer,
+.commandLinkContainer {
     display: flex;
     gap: 0.5rem;
     align-items: center;
 }
 
-.docRefLinkContainer .svg-image {
+.docRefLinkContainer .svg-image,
+.commandLinkContainer .svg-image {
     opacity: 0;
 }
 
 .dataGridCell:hover .docRefLinkContainer .svg-image,
-.docRefLinkContainer:hover .svg-image {
+.docRefLinkContainer:hover .svg-image,
+.commandLinkContainer:hover .svg-image {
     opacity: .8;
 }
 
