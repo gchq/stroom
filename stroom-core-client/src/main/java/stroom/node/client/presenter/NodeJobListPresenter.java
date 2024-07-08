@@ -34,16 +34,14 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
+/**
+ * Bottom pane of NodePresenter (Nodes tab). Lists jobNodes for a single node.
+ */
 public class NodeJobListPresenter extends MyPresenterWidget<PagerView> {
 
     private static final JobNodeResource JOB_NODE_RESOURCE = GWT.create(JobNodeResource.class);
-    private static final String FILTER_BTN_TITLE_ON = "Click to show all jobs";
-    private static final String FILTER_BTN_TITLE_OFF = "Click to show only enabled jobs";
 
-
-    //    private final RestFactory restFactory;
     private final JobNodeListHelper jobNodeListHelper;
     private final RestDataProvider<JobNodeAndInfo, JobNodeAndInfoListResponse> dataProvider;
     private final MyDataGrid<JobNodeAndInfo> dataGrid;
@@ -51,7 +49,7 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> {
     private final InlineSvgToggleButton showEnabledToggleBtn;
     private final Provider<JobListPlugin> jobListPluginProvider;
     private final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel;
-
+    private Consumer<Boolean> filterStateConsumer = null;
 
     @Inject
     public NodeJobListPresenter(final EventBus eventBus,
@@ -60,12 +58,10 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> {
                                 final JobNodeListHelper jobNodeListHelper,
                                 final Provider<JobListPlugin> jobListPluginProvider) {
         super(eventBus, view);
-//        this.restFactory = restFactory;
         this.jobNodeListHelper = jobNodeListHelper;
         this.jobListPluginProvider = jobListPluginProvider;
 
         dataGrid = new MyDataGrid<>();
-        dataGrid.addDefaultSelectionModel(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 
@@ -127,13 +123,11 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> {
     }
 
     public void read(final String nodeName) {
-        if (getNodeNameCriteria() == null) {
-            setNodeNameCriteria(nodeName);
+        if (dataProvider.getDataDisplays().isEmpty()) {
             dataProvider.addDataDisplay(dataGrid);
-        } else {
-            setNodeNameCriteria(nodeName);
-            refresh();
         }
+        setNodeNameCriteria(nodeName);
+        refresh();
     }
 
     private String getNodeNameCriteria() {
@@ -145,6 +139,7 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> {
     }
 
     void refresh() {
+        updateFormGroupHeading();
         dataProvider.refresh();
     }
 
@@ -166,11 +161,11 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> {
                         .withToolTip("Whether this job is enabled on this node or not. " +
                                 "The parent job must also be enabled for the job to execute.")
                         .build(),
-                70);
+                60);
 
         // Job Name
         final Column<JobNodeAndInfo, CommandLink> jobNameColumn = DataGridUtil.commandLinkColumnBuilder(
-                        buildOpenJobNodeCommandLink())
+                        this::openJobNodeAsCommandLink)
                 .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
 //                .withSorting(FindJobNodeCriteria.FIELD_ID_NODE)
                 .build();
@@ -206,18 +201,14 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> {
                 80);
 
         // Schedule.
+        final Column<JobNodeAndInfo, CommandLink> scheduleColumn = DataGridUtil.commandLinkColumnBuilder(
+                        jobNodeListHelper.buildOpenScheduleCommandLinkFunc(
+                                getView(), this::refresh))
+                .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
+                .build();
+        DataGridUtil.addCommandLinkFieldUpdater(scheduleColumn);
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder((JobNodeAndInfo jobNodeAndInfo) ->
-                                GwtNullSafe.requireNonNullElse(
-                                        jobNodeAndInfo.getSchedule(),
-                                        "N/A"))
-                        .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
-//                        .withBrowserEventHandler((context, elem, jobNode, event) -> {
-//                            if (jobNode != null && MouseUtil.isPrimary(event)) {
-//                                showSchedule(jobNode);
-//                            }
-//                        })
-                        .build(),
+                scheduleColumn,
                 DataGridUtil.headingBuilder("Schedule")
                         .withToolTip("The schedule for this job on this node, if applicable to the job type")
                         .build(),
@@ -303,19 +294,17 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> {
         DataGridUtil.addEndColumn(dataGrid);
     }
 
-    private Function<JobNodeAndInfo, CommandLink> buildOpenJobNodeCommandLink() {
-        return (JobNodeAndInfo jobNodeAndInfo) -> {
-            if (jobNodeAndInfo != null) {
-                final String jobName = jobNodeAndInfo.getJobName();
-                final String nodeName = jobNodeAndInfo.getNodeName();
-                return new CommandLink(
-                        jobName,
-                        "Open job '" + jobName + "' on node '" + nodeName + "' on the Jobs screen.",
-                        () -> jobListPluginProvider.get().open(jobNodeAndInfo.getJobNode()));
-            } else {
-                return null;
-            }
-        };
+    private CommandLink openJobNodeAsCommandLink(JobNodeAndInfo jobNodeAndInfo) {
+        if (jobNodeAndInfo != null) {
+            final String jobName = jobNodeAndInfo.getJobName();
+            final String nodeName = jobNodeAndInfo.getNodeName();
+            return new CommandLink(
+                    jobName,
+                    "Open job '" + jobName + "' on node '" + nodeName + "' on the Jobs screen.",
+                    () -> jobListPluginProvider.get().open(jobNodeAndInfo.getJobNode()));
+        } else {
+            return null;
+        }
     }
 
     public void setSelected(final JobNode jobNode) {
@@ -324,5 +313,17 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> {
         } else {
             selectionModel.clear();
         }
+    }
+
+    private void updateFormGroupHeading() {
+        final String nodeName = getNodeNameCriteria();
+        final boolean isShowEnabled = showEnabledToggleBtn.getState();
+        final String prefix = isShowEnabled
+                ? "Enabled"
+                : "All";
+        getView().setHeading(GwtNullSafe.getOrElse(
+                nodeName,
+                name -> prefix + " jobs on node '" + name + "'",
+                null));
     }
 }

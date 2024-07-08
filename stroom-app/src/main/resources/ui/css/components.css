@@ -639,6 +639,11 @@
     justify-content: flex-end;
 }
 
+.pager-heading {
+
+
+}
+
 .pager-label {
     display: inline-block;
     margin: 0;
@@ -1686,6 +1691,11 @@ button.main-menu svg {
     margin-top: 0.3em;
 }
 
+.dashboard-panel > .form-group label.form-group-label:not(:empty) {
+    margin-top: 0.3em;
+    margin-left: 0.2em;
+}
+
 /* The invalid-feedback divs add a 0.25em margin-top even when empty so removing it pending
    us doing something with client side validation */
 .form-group .invalid-feedback {
@@ -1702,6 +1712,10 @@ button.main-menu svg {
     gap: var(--control__gap--horizontal);
     align-items: center;
     margin-bottom: 0.25rem;
+}
+
+.form-group-label-container:has(> label.form-group-label:empty) {
+    margin-bottom: 0em;
 }
 
 .form-group-description-container {

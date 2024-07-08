@@ -44,6 +44,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+/**
+ * Top pane of JobPresenter (Jobs tab). Lists jobs (i.e. the parent job)
+ */
 public class JobListPresenter extends MyPresenterWidget<PagerView> {
 
     private static final JobResource JOB_RESOURCE = GWT.create(JobResource.class);
@@ -138,7 +141,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
                         .withToolTip("Whether this job is enabled. " +
                                 "The parent job and the node must both be enabled for the job to execute.")
                         .build(),
-                70);
+                60);
 
         // Job name, allow for null rows
         dataGrid.addResizableColumn(

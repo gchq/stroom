@@ -60,11 +60,9 @@ public class NodePresenter
 
         registerHandler(nodeListPresenter.getSelectionModel().addSelectionHandler(event -> {
             final NodeStatusResult row = nodeListPresenter.getSelectionModel().getSelected();
-            nodeJobListPresenter.read(GwtNullSafe.get(row, NodeStatusResult::getNode, Node::getName));
+            final String nodeName = GwtNullSafe.get(row, NodeStatusResult::getNode, Node::getName);
+            nodeJobListPresenter.read(nodeName);
         }));
-//
-//        jobListPresenter.setChangeHandler(job ->
-//                jobNodeListPresenter.refresh());
     }
 
     @Override

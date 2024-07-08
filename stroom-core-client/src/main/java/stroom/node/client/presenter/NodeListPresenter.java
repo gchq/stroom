@@ -80,7 +80,7 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> {
 
         dataGrid = new MyDataGrid<>();
         view.setDataWidget(dataGrid);
-        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        selectionModel = dataGrid.addDefaultSelectionModel(false);
 
         this.nodeManager = nodeManager;
         this.tooltipPresenter = tooltipPresenter;

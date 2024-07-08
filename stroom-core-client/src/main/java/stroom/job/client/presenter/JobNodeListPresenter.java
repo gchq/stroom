@@ -52,6 +52,9 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+/**
+ * Bottom pane of JobPresenter (Jobs tab). Lists jobNodes for a single parent job.
+ */
 public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
 
     private static final JobNodeResource JOB_NODE_RESOURCE = GWT.create(JobNodeResource.class);
@@ -88,7 +91,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
 
         dataGrid = new MyDataGrid<>();
         dataGrid.addDefaultSelectionModel(true);
-        selectionModel = dataGrid.addDefaultSelectionModel(false);
+        selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 
         showEnabledToggleBtn = JobNodeListHelper.buildJobFilterButton(this::refresh);
@@ -169,6 +172,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
     }
 
     void refresh() {
+        updateFormGroupHeading();
         dataProvider.refresh();
     }
 
@@ -190,7 +194,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                         .withToolTip("Whether this job is enabled on this node or not. " +
                                 "The parent job must also be enabled for the job to execute.")
                         .build(),
-                70);
+                60);
 
         // Node Name
         final Column<JobNodeAndInfo, CommandLink> nodeNameColumn = DataGridUtil.commandLinkColumnBuilder(
@@ -217,17 +221,14 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                 80);
 
         // Schedule.
+        final Column<JobNodeAndInfo, CommandLink> scheduleColumn = DataGridUtil.commandLinkColumnBuilder(
+                        jobNodeListHelper.buildOpenScheduleCommandLinkFunc(
+                                getView(), this::refresh))
+                .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
+                .build();
+        DataGridUtil.addCommandLinkFieldUpdater(scheduleColumn);
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder((JobNodeAndInfo jobNodeAndInfo) -> GwtNullSafe.requireNonNullElse(
-                                jobNodeAndInfo.getSchedule(),
-                                "N/A"))
-                        .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
-                        .withBrowserEventHandler((context, elem, jobNode, event) -> {
-                            if (jobNode != null && MouseUtil.isPrimary(event)) {
-                                jobNodeListHelper.showSchedule(jobNode, getView(), this::refresh);
-                            }
-                        })
-                        .build(),
+                scheduleColumn,
                 DataGridUtil.headingBuilder("Schedule")
                         .withToolTip("The schedule for this job on this node, if applicable to the job type")
                         .build(),
@@ -316,13 +317,12 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
     }
 
     public void read(final Job job) {
-        if (getJobNameCriteria() == null) {
-            setJobNameCriteria(GwtNullSafe.get(job, Job::getName));
+//        getView().setHeading(GwtNullSafe.get(job, Job::getName));
+        if (dataProvider.getDataDisplays().isEmpty()) {
             dataProvider.addDataDisplay(dataGrid);
-        } else {
-            setJobNameCriteria(GwtNullSafe.get(job, Job::getName));
-            refresh();
         }
+        setJobNameCriteria(GwtNullSafe.get(job, Job::getName));
+        refresh();
     }
 
     private String getJobNameCriteria() {
@@ -353,5 +353,17 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                 return null;
             }
         };
+    }
+
+    private void updateFormGroupHeading() {
+        final String jobName = getJobNameCriteria();
+        final boolean isShowEnabled = showEnabledToggleBtn.getState();
+        final String stateStr = isShowEnabled
+                ? "enabled"
+                : "all";
+        getView().setHeading(GwtNullSafe.getOrElse(
+                jobName,
+                name -> "Scheduling of job '" + jobName + "' on " + stateStr + " nodes",
+                null));
     }
 }

@@ -1,6 +1,7 @@
 package stroom.node.client;
 
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.cell.info.client.CommandLink;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.dispatch.client.RestFactory;
 import stroom.job.shared.Job;
@@ -30,6 +31,8 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
+
+import java.util.function.Function;
 
 public class JobNodeListHelper {
 
@@ -160,16 +163,17 @@ public class JobNodeListHelper {
                 info = JobNodeInfo.empty();
             }
 
-            schedulePresenter.setSchedule(currentSchedule, new ScheduleReferenceTime(
+            final ScheduleReferenceTime referenceTime = new ScheduleReferenceTime(
                     info.getScheduleReferenceTime(),
-                    info.getLastExecutedTime()));
+                    info.getLastExecutedTime());
+            schedulePresenter.setSchedule(currentSchedule, referenceTime);
 
             schedulePresenter.show(schedule -> {
                 JobNodeUtil.setSchedule(jobNode, schedule);
                 restFactory
                         .create(JOB_NODE_RESOURCE)
-                        .call(res ->
-                                res.setSchedule(jobNodeAndInfo.getId(), schedule))
+                        .call(resource ->
+                                resource.setSchedule(jobNodeAndInfo.getId(), schedule))
                         .onSuccess(result ->
                                 GwtNullSafe.run(onSuccessHandler))
                         .taskListener(taskListener)
@@ -274,5 +278,23 @@ public class JobNodeListHelper {
             refreshFunc.run();
         });
         return showEnabledToggleBtn;
+    }
+
+    public Function<JobNodeAndInfo, CommandLink> buildOpenScheduleCommandLinkFunc(
+            final TaskListener taskListener,
+            final Runnable onSuccess) {
+
+        return (final JobNodeAndInfo jobNodeAndInfo) -> {
+            final String schedule = GwtNullSafe.get(jobNodeAndInfo, JobNodeAndInfo::getSchedule);
+
+            if (schedule != null) {
+                return new CommandLink(
+                        schedule,
+                        "Edit schedule",
+                        () -> showSchedule(jobNodeAndInfo, taskListener, onSuccess));
+            } else {
+                return CommandLink.withoutCommand("N/A");
+            }
+        };
     }
 }

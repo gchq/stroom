@@ -1,14 +1,19 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder
         xmlns:ui="urn:ui:com.google.gwt.uibinder"
-        xmlns:g="urn:import:com.google.gwt.user.client.ui">
+        xmlns:g="urn:import:com.google.gwt.user.client.ui"
+        xmlns:form="urn:import:stroom.widget.form.client">
     <g:SimplePanel styleName="max">
         <g:ThinSplitLayoutPanel styleName="max">
             <g:north size="500">
                 <g:SimplePanel ui:field="nodeList" styleName="max dashboard-panel"/>
             </g:north>
             <g:center>
-                <g:SimplePanel ui:field="nodeJobList" styleName="max dashboard-panel"/>
+                <g:FlowPanel styleName="max dashboard-panel form">
+                    <form:FormGroup ui:field="nodeJobListFormGroup" addStyleNames="max">
+                        <g:SimplePanel ui:field="nodeJobList" styleName="max"/>
+                    </form:FormGroup>
+                </g:FlowPanel>
             </g:center>
         </g:ThinSplitLayoutPanel>
     </g:SimplePanel>

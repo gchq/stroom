@@ -1,6 +1,7 @@
 package stroom.node.client.view;
 
 import stroom.node.client.presenter.NodePresenter;
+import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -14,6 +15,8 @@ public class NodeViewImpl extends ViewImpl implements NodePresenter.NodeView {
     private final Widget widget;
     @UiField
     SimplePanel nodeList;
+    @UiField
+    FormGroup nodeJobListFormGroup;
     @UiField
     SimplePanel nodeJobList;
 
@@ -36,6 +39,10 @@ public class NodeViewImpl extends ViewImpl implements NodePresenter.NodeView {
         }
     }
 
+//    @Override
+//    public void setHeading(final String heading) {
+//        nodeJobListFormGroup.setLabel(heading);
+//    }
 
     // --------------------------------------------------------------------------------
 

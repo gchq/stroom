@@ -22,6 +22,7 @@ import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
+import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -40,6 +41,8 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
      * The pager used to change the range of data.
      */
     @UiField
+    FormGroup pagerFormGroup;
+    @UiField
     FlowPanel pagerContainer;
     @UiField
     Pager pager;
@@ -56,7 +59,6 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
     public PagerViewImpl(final Binder binder) {
         // Create the UiBinder.
         widget = binder.createAndBindUi(this);
-
     }
 
     @Override
@@ -68,6 +70,11 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public void setHeading(final String string) {
+        pagerFormGroup.setLabel(string);
     }
 
     @Override

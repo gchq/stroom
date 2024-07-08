@@ -27,6 +27,12 @@ import com.gwtplatform.mvp.client.View;
 
 public interface PagerView extends View, TaskListener {
 
+    /**
+     * Set a form group label for the pager view. If not set it won't take up any
+     * space
+     */
+    void setHeading(final String string);
+
     ButtonView addButton(Preset preset);
 
     void addButton(ButtonView buttonView);
