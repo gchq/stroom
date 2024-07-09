@@ -203,7 +203,10 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> {
         // Schedule.
         final Column<JobNodeAndInfo, CommandLink> scheduleColumn = DataGridUtil.commandLinkColumnBuilder(
                         jobNodeListHelper.buildOpenScheduleCommandLinkFunc(
-                                getView(), this::refresh))
+                                selectionModel,
+                                getView(),
+                                NodeJobListPresenter.this,
+                                this::refresh))
                 .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
                 .build();
         DataGridUtil.addCommandLinkFieldUpdater(scheduleColumn);
@@ -221,7 +224,12 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> {
                                 JobTypeCell::new)
                         .withBrowserEventHandler((context, elem, jobNode, event) -> {
                             if (jobNode != null && MouseUtil.isPrimary(event)) {
-                                jobNodeListHelper.showSchedule(jobNode, getView(), this::refresh);
+                                jobNodeListHelper.showSchedule(
+                                        jobNode,
+                                        selectionModel,
+                                        getView(),
+                                        NodeJobListPresenter.this,
+                                        this::refresh);
                             }
                         })
                         .build(),
@@ -321,9 +329,9 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> {
         final String prefix = isShowEnabled
                 ? "Enabled"
                 : "All";
-        getView().setHeading(GwtNullSafe.getOrElse(
-                nodeName,
-                name -> prefix + " jobs on node '" + name + "'",
-                null));
+        final String heading = nodeName != null
+                ? prefix + " jobs on node '" + nodeName + "'"
+                : null;
+        getView().setHeading(heading);
     }
 }

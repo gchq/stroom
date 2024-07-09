@@ -17,6 +17,7 @@
 
 package stroom.job.impl;
 
+import stroom.job.shared.BatchScheduleRequest;
 import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.GetScheduledTimesRequest;
 import stroom.job.shared.Job;
@@ -83,6 +84,15 @@ class JobNodeService {
 
             AuditUtil.stamp(securityContext, jobNode);
             return jobNodeDao.update(jobNode);
+        });
+    }
+
+    void update(final BatchScheduleRequest batchScheduleRequest) {
+        // Stop Job Nodes being saved with invalid crons.
+        ensureSchedule(batchScheduleRequest.getJobType(), batchScheduleRequest.getSchedule().getExpression());
+
+        securityContext.secure(PermissionNames.MANAGE_JOBS_PERMISSION, () -> {
+            jobNodeDao.updateSchedule(batchScheduleRequest);
         });
     }
 
@@ -289,17 +299,21 @@ class JobNodeService {
 //    }
 
     private void ensureSchedule(final JobNode jobNode) {
+        ensureSchedule(jobNode.getJobType(), jobNode.getSchedule());
+    }
+
+    private void ensureSchedule(final JobType jobType, final String scheduleExpression) {
         // Stop Job Nodes being saved with invalid crons.
-        if (JobType.CRON.equals(jobNode.getJobType())) {
-            if (jobNode.getSchedule() != null) {
+        if (JobType.CRON.equals(jobType)) {
+            if (scheduleExpression != null) {
                 // This will throw a runtime exception if the expression is invalid.
-                new CronTrigger(jobNode.getSchedule());
+                new CronTrigger(scheduleExpression);
             }
         }
-        if (JobType.FREQUENCY.equals(jobNode.getJobType())) {
-            if (jobNode.getSchedule() != null) {
+        if (JobType.FREQUENCY.equals(jobType)) {
+            if (scheduleExpression != null) {
                 // This will throw a runtime exception if the expression is invalid.
-                new FrequencyTrigger(jobNode.getSchedule());
+                new FrequencyTrigger(scheduleExpression);
             }
         }
     }

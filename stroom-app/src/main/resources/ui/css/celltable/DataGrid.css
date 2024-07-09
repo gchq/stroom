@@ -185,6 +185,9 @@
 
 }
 
+/*
+Stop disabled commandLinkCells from having their icon disabled
+*/
 .dataGridDisabledCell {
     color: var(--text-color--disabled);
 }
@@ -202,8 +205,10 @@ Stop disabled commandLinkCells from having their open icon disabled
 by '.dataGridDisabledCell .svgIcon' below. You can use a null command if you
 don't want the open link to appear
 */
+/* .dataGridDisabledCell :not(.commandLinkContainer) .svgIcon,*/
+
 .dataGridDisabledCell .tickBox,
-.dataGridDisabledCell:not(:has .commandLinkContainer) .svgIcon,
+.dataGridDisabledCell .svgIcon,
 .dataGridDisabledCell .svgCell-button.svgCell-icon {
     cursor: default;
     color: #000;

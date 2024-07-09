@@ -73,6 +73,11 @@ public final class MultiSelectionModelImpl<T>
         return selection.getSelectedItems();
     }
 
+    @Override
+    public int getSelectedCount() {
+        return selection.size();
+    }
+
     /**
      * Tests if the specified item is selected.
      */

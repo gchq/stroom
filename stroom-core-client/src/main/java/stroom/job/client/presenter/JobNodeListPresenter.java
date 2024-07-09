@@ -223,7 +223,10 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
         // Schedule.
         final Column<JobNodeAndInfo, CommandLink> scheduleColumn = DataGridUtil.commandLinkColumnBuilder(
                         jobNodeListHelper.buildOpenScheduleCommandLinkFunc(
-                                getView(), this::refresh))
+                                selectionModel,
+                                getView(),
+                                JobNodeListPresenter.this,
+                                this::refresh))
                 .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
                 .build();
         DataGridUtil.addCommandLinkFieldUpdater(scheduleColumn);
@@ -241,7 +244,12 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                                 JobTypeCell::new)
                         .withBrowserEventHandler((context, elem, jobNode, event) -> {
                             if (jobNode != null && MouseUtil.isPrimary(event)) {
-                                jobNodeListHelper.showSchedule(jobNode, getView(), this::refresh);
+                                jobNodeListHelper.showSchedule(
+                                        jobNode,
+                                        selectionModel,
+                                        getView(),
+                                        JobNodeListPresenter.this,
+                                        this::refresh);
                             }
                         })
                         .build(),

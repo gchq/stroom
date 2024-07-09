@@ -2248,10 +2248,16 @@ button.main-menu svg {
     opacity: 0;
 }
 
+/* The icon gets displayed the same whether the row is disabled or not */
 .dataGridCell:hover .docRefLinkContainer .svg-image,
 .docRefLinkContainer:hover .svg-image,
-.commandLinkContainer:hover .svg-image {
+.commandLinkContainer:hover .svg-image,
+.dataGridDisabledCell.dataGridCell:hover .docRefLinkContainer .svg-image,
+.dataGridDisabledCell .docRefLinkContainer:hover .svg-image,
+.dataGridDisabledCell .commandLinkContainer:hover .svg-image {
     opacity: .8;
+    color: var(--text-color);
+    cursor: pointer;
 }
 
 .AnalyticEmailDestinationViewImpl #analyticEmailDestinationSubjectTemplate,

@@ -63,6 +63,9 @@ public class JobNodeAndInfo {
     // Delegate methods from jobNode
     // -----------------------------
 
+    /**
+     * @return {@link JobNode#getId()}
+     */
     @JsonIgnore
     public Integer getId() {
         return GwtNullSafe.get(jobNode, JobNode::getId);

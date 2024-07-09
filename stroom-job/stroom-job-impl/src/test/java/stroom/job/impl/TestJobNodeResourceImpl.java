@@ -1,6 +1,7 @@
 package stroom.job.impl;
 
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNodeInfo;
@@ -331,7 +332,7 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
         when(jobNodeService.fetch(anyInt()))
                 .thenReturn(Optional.of(buildJobNode(1, 1, "node1")));
 
-        when(jobNodeService.update(any()))
+        when(jobNodeService.update(any(JobNode.class)))
                 .then(invocation -> {
                     final JobNode input = invocation.getArgument(0);
 
@@ -366,6 +367,8 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
                 .thenReturn(node.getNodeName());
 
         final DocumentEventLog documentEventLog = createNamedMock(DocumentEventLog.class, node);
+        final StroomEventLoggingService stroomEventLoggingService = createNamedMock(
+                StroomEventLoggingService.class, node);
 
         documentEventLogMap.put(node.getNodeName(), documentEventLog);
 
@@ -374,6 +377,7 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
                 () -> nodeService,
                 () -> nodeInfo,
                 () -> webTargetFactory(),
-                () -> documentEventLog);
+                () -> documentEventLog,
+                () -> stroomEventLoggingService);
     }
 }

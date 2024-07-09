@@ -17,8 +17,11 @@
 package stroom.job.impl;
 
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.job.shared.BatchScheduleRequest;
 import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNodeAndInfo;
@@ -30,6 +33,7 @@ import stroom.job.shared.JobNodeUtil;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
+import stroom.util.NullSafe;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
@@ -40,9 +44,14 @@ import stroom.util.shared.scheduler.Schedule;
 
 import event.logging.AdvancedQuery;
 import event.logging.And;
+import event.logging.ComplexLoggedOutcome;
+import event.logging.Configuration;
+import event.logging.Data;
+import event.logging.MultiObject;
 import event.logging.Query;
 import event.logging.Term;
 import event.logging.TermCondition;
+import event.logging.UpdateEventAction;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.ws.rs.NotFoundException;
@@ -54,6 +63,7 @@ import jakarta.ws.rs.core.Response;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
@@ -66,18 +76,21 @@ class JobNodeResourceImpl implements JobNodeResource {
     private final Provider<NodeInfo> nodeInfoProvider;
     private final Provider<WebTargetFactory> webTargetFactoryProvider;
     private final Provider<DocumentEventLog> documentEventLogProvider;
+    private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
 
     @Inject
     JobNodeResourceImpl(final Provider<JobNodeService> jobNodeServiceProvider,
                         final Provider<NodeService> nodeServiceProvider,
                         final Provider<NodeInfo> nodeInfoProvider,
                         final Provider<WebTargetFactory> webTargetFactoryProvider,
-                        final Provider<DocumentEventLog> documentEventLogProvider) {
+                        final Provider<DocumentEventLog> documentEventLogProvider,
+                        final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider) {
         this.jobNodeServiceProvider = jobNodeServiceProvider;
         this.nodeServiceProvider = nodeServiceProvider;
         this.nodeInfoProvider = nodeInfoProvider;
         this.webTargetFactoryProvider = webTargetFactoryProvider;
         this.documentEventLogProvider = documentEventLogProvider;
+        this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
     }
 
 //    @Override
@@ -252,6 +265,76 @@ class JobNodeResourceImpl implements JobNodeResource {
     public void setSchedule(final Integer id, final Schedule schedule) {
         if (schedule != null) {
             modifyJobNode(id, jobNode -> JobNodeUtil.setSchedule(jobNode, schedule));
+        }
+    }
+
+    @Override
+    public void setScheduleBatch(final BatchScheduleRequest batchScheduleRequest) {
+
+        List<Configuration> beforeList = null;
+        if (NullSafe.nonNull(batchScheduleRequest, BatchScheduleRequest::getSchedule)) {
+            final JobNodeService jobNodeService = jobNodeServiceProvider.get();
+            final Set<Integer> jobNodeIds = batchScheduleRequest.getJobNodeIds();
+            beforeList = jobNodeService.find(new FindJobNodeCriteria())
+                    .getValues()
+                    .stream()
+                    .filter(jobNode -> jobNodeIds.contains(jobNode.getId()))
+                    .map(this::mapJobNodeToConfiguration)
+                    .toList();
+
+            stroomEventLoggingServiceProvider.get()
+                    .loggedWorkBuilder()
+                    .withTypeId(StroomEventLoggingUtil.buildTypeId(
+                            this, "setScheduleBatch"))
+                    .withDescription("Updating schedule for " + jobNodeIds.size() + " nodes")
+                    .withDefaultEventAction(UpdateEventAction.builder()
+                            .withBefore(MultiObject.builder()
+                                    .addConfiguration(beforeList)
+                                    .build())
+                            .build())
+                    .withComplexLoggedAction(updateEventAction -> {
+                        try {
+                            jobNodeService.update(batchScheduleRequest);
+
+                            final List<Configuration> afterList = jobNodeService.find(new FindJobNodeCriteria())
+                                    .getValues()
+                                    .stream()
+                                    .filter(jobNode -> jobNodeIds.contains(jobNode.getId()))
+                                    .map(this::mapJobNodeToConfiguration)
+                                    .toList();
+
+                            final UpdateEventAction eventActionCopy = updateEventAction.newCopyBuilder()
+                                    .withAfter(MultiObject.builder()
+                                            .addConfiguration(afterList)
+                                            .build())
+                                    .build();
+                            return ComplexLoggedOutcome.success(eventActionCopy);
+                        } catch (Exception e) {
+                            LOGGER.debug("Error setting schedule for IDs {}, schedule: {}",
+                                    batchScheduleRequest.getJobNodeIds(), batchScheduleRequest.getSchedule(), e);
+                            throw new RuntimeException(
+                                    LogUtil.message("Error setting schedule for IDs {}, schedule: {}",
+                                            batchScheduleRequest.getJobNodeIds(), batchScheduleRequest.getSchedule()),
+                                    e);
+                        }
+                    })
+                    .runActionAndLog();
+        }
+    }
+
+    private Configuration mapJobNodeToConfiguration(final JobNode jobNode) {
+        if (jobNode != null) {
+            return Configuration.builder()
+                    .withId(String.valueOf(jobNode.getId()))
+                    .withName(jobNode.getJobName() + " on " + jobNode.getNodeName())
+                    .withType(jobNode.getJobType().getDisplayValue())
+                    .addData(Data.builder()
+                            .withName("schedule")
+                            .withValue(jobNode.getSchedule())
+                            .build())
+                    .build();
+        } else {
+            return null;
         }
     }
 

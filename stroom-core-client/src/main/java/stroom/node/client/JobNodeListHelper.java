@@ -1,9 +1,11 @@
 package stroom.node.client;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.info.client.CommandLink;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.dispatch.client.RestFactory;
+import stroom.job.shared.BatchScheduleRequest;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
@@ -23,6 +25,7 @@ import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.cell.client.FieldUpdater;
@@ -32,7 +35,11 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
 
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class JobNodeListHelper {
 
@@ -116,16 +123,30 @@ public class JobNodeListHelper {
     }
 
     public void showSchedule(final JobNodeAndInfo jobNodeAndInfo,
+                             final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel,
                              final TaskListener taskListener,
+                             final HasHandlers hasHandlers,
                              final Runnable onSuccessHandler) {
         restFactory
                 .create(JOB_NODE_RESOURCE)
                 .method(resource ->
                         resource.info(jobNodeAndInfo.getJob().getName(), jobNodeAndInfo.getNodeName()))
                 .onSuccess(jobNodeInfo ->
-                        setSchedule(jobNodeAndInfo, jobNodeInfo, taskListener, onSuccessHandler))
+                        setSchedule(
+                                jobNodeAndInfo,
+                                jobNodeInfo,
+                                selectionModel,
+                                taskListener,
+                                hasHandlers,
+                                onSuccessHandler))
                 .onFailure(throwable ->
-                        setSchedule(jobNodeAndInfo, null, taskListener, onSuccessHandler))
+                        setSchedule(
+                                jobNodeAndInfo,
+                                null,
+                                selectionModel,
+                                taskListener,
+                                hasHandlers,
+                                onSuccessHandler))
                 .taskListener(taskListener)
                 .exec();
     }
@@ -152,7 +173,9 @@ public class JobNodeListHelper {
 
     private void setSchedule(final JobNodeAndInfo jobNodeAndInfo,
                              final JobNodeInfo jobNodeInfo,
+                             final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel,
                              final TaskListener taskListener,
+                             final HasHandlers hasHandlers,
                              final Runnable onSuccessHandler) {
         final JobNode jobNode = jobNodeAndInfo.getJobNode();
         final Schedule currentSchedule = JobNodeUtil.getSchedule(jobNode);
@@ -168,17 +191,63 @@ public class JobNodeListHelper {
                     info.getLastExecutedTime());
             schedulePresenter.setSchedule(currentSchedule, referenceTime);
 
-            schedulePresenter.show(schedule -> {
-                JobNodeUtil.setSchedule(jobNode, schedule);
-                restFactory
-                        .create(JOB_NODE_RESOURCE)
-                        .call(resource ->
-                                resource.setSchedule(jobNodeAndInfo.getId(), schedule))
-                        .onSuccess(result ->
-                                GwtNullSafe.run(onSuccessHandler))
-                        .taskListener(taskListener)
-                        .exec();
-            });
+            final int nodeCount = selectionModel.getSelectedCount();
+            if (nodeCount > 1) {
+                final List<JobNodeAndInfo> selectedItems = selectionModel.getSelectedItems();
+                @SuppressWarnings("SimplifyStreamApiCallChains") final List<JobType> jobTypes = selectedItems.stream()
+                        .map(JobNodeAndInfo::getJobType)
+                        .distinct()
+                        .collect(Collectors.toList());
+                if (jobTypes.size() > 1) {
+                    AlertEvent.fireError(
+                            hasHandlers, "You can only select rows with the same job type.", null);
+                } else if (!Objects.equals(jobTypes.get(0), jobNode.getJobType())) {
+                    AlertEvent.fireError(
+                            hasHandlers, "Job types don't match, '" + jobTypes.get(0) + "' and '"
+                                    + jobNode.getJobType() + "'.", null);
+                } else {
+                    final String msg = "Are you sure you want to change the schedule of job '"
+                            + jobNode.getJobName() + " for " + nodeCount + " nodes?\n" +
+                            "All " + nodeCount + " nodes will be set to the same schedule.\n\n"
+                            + selectedItems.stream()
+                            .map(JobNodeAndInfo::getNodeName)
+                            .sorted()
+                            .collect(Collectors.joining("\n"));
+
+                    ConfirmEvent.fire(hasHandlers, msg, isConfirm -> {
+                        if (isConfirm) {
+                            schedulePresenter.show(schedule -> {
+                                JobNodeUtil.setSchedule(jobNode, schedule);
+                                final Set<Integer> ids = selectedItems.stream()
+                                        .map(JobNodeAndInfo::getId)
+                                        .collect(Collectors.toSet());
+                                final BatchScheduleRequest batchScheduleRequest = new BatchScheduleRequest(
+                                        ids, jobNodeAndInfo.getJobType(), schedule);
+                                restFactory
+                                        .create(JOB_NODE_RESOURCE)
+                                        .call(resource ->
+                                                resource.setScheduleBatch(batchScheduleRequest))
+                                        .onSuccess(result ->
+                                                GwtNullSafe.run(onSuccessHandler))
+                                        .taskListener(taskListener)
+                                        .exec();
+                            });
+                        }
+                    });
+                }
+            } else {
+                schedulePresenter.show(schedule -> {
+                    JobNodeUtil.setSchedule(jobNode, schedule);
+                    restFactory
+                            .create(JOB_NODE_RESOURCE)
+                            .call(resource ->
+                                    resource.setSchedule(jobNodeAndInfo.getId(), schedule))
+                            .onSuccess(result ->
+                                    GwtNullSafe.run(onSuccessHandler))
+                            .taskListener(taskListener)
+                            .exec();
+                });
+            }
         }
     }
 
@@ -281,7 +350,9 @@ public class JobNodeListHelper {
     }
 
     public Function<JobNodeAndInfo, CommandLink> buildOpenScheduleCommandLinkFunc(
+            final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel,
             final TaskListener taskListener,
+            final HasHandlers hasHandlers,
             final Runnable onSuccess) {
 
         return (final JobNodeAndInfo jobNodeAndInfo) -> {
@@ -291,7 +362,13 @@ public class JobNodeListHelper {
                 return new CommandLink(
                         schedule,
                         "Edit schedule",
-                        () -> showSchedule(jobNodeAndInfo, taskListener, onSuccess));
+                        () ->
+                                showSchedule(
+                                        jobNodeAndInfo,
+                                        selectionModel,
+                                        taskListener,
+                                        hasHandlers,
+                                        onSuccess));
             } else {
                 return CommandLink.withoutCommand("N/A");
             }
