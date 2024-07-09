@@ -14,6 +14,7 @@ import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeResource;
 import stroom.job.shared.JobNodeUtil;
 import stroom.job.shared.ScheduleReferenceTime;
+import stroom.node.client.event.JobNodeChangeEvent;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.schedule.client.SchedulePopup;
 import stroom.svg.client.Preset;
@@ -152,6 +153,7 @@ public class JobNodeListHelper {
     }
 
     public FieldUpdater<JobNodeAndInfo, TickBoxState> createEnabledStateFieldUpdater(
+            final HasHandlers handlers,
             final TaskListener taskListener,
             final Runnable onSuccessHandler) {
 
@@ -163,8 +165,10 @@ public class JobNodeListHelper {
                         .create(JOB_NODE_RESOURCE)
                         .call(jobNodeResource ->
                                 jobNodeResource.setEnabled(jobNodeAndInfo.getId(), isEnabled))
-                        .onSuccess(aVoid ->
-                                GwtNullSafe.run(onSuccessHandler))
+                        .onSuccess(aVoid -> {
+                            JobNodeChangeEvent.fire(handlers, jobNodeAndInfo.getJobNode());
+                            GwtNullSafe.run(onSuccessHandler);
+                        })
                         .taskListener(taskListener)
                         .exec();
             }
@@ -193,9 +197,12 @@ public class JobNodeListHelper {
 
             final int nodeCount = selectionModel.getSelectedCount();
             if (nodeCount > 1) {
-                final List<JobNodeAndInfo> selectedItems = selectionModel.getSelectedItems();
-                @SuppressWarnings("SimplifyStreamApiCallChains") final List<JobType> jobTypes = selectedItems.stream()
-                        .map(JobNodeAndInfo::getJobType)
+                final List<JobNode> selectedItems = selectionModel.getSelectedItems()
+                        .stream()
+                        .map(JobNodeAndInfo::getJobNode)
+                        .collect(Collectors.toList());
+                final List<JobType> jobTypes = selectedItems.stream()
+                        .map(JobNode::getJobType)
                         .distinct()
                         .collect(Collectors.toList());
                 if (jobTypes.size() > 1) {
@@ -210,7 +217,7 @@ public class JobNodeListHelper {
                             + jobNode.getJobName() + " for " + nodeCount + " nodes?\n" +
                             "All " + nodeCount + " nodes will be set to the same schedule.\n\n"
                             + selectedItems.stream()
-                            .map(JobNodeAndInfo::getNodeName)
+                            .map(JobNode::getNodeName)
                             .sorted()
                             .collect(Collectors.joining("\n"));
 
@@ -219,7 +226,7 @@ public class JobNodeListHelper {
                             schedulePresenter.show(schedule -> {
                                 JobNodeUtil.setSchedule(jobNode, schedule);
                                 final Set<Integer> ids = selectedItems.stream()
-                                        .map(JobNodeAndInfo::getId)
+                                        .map(JobNode::getId)
                                         .collect(Collectors.toSet());
                                 final BatchScheduleRequest batchScheduleRequest = new BatchScheduleRequest(
                                         ids, jobNodeAndInfo.getJobType(), schedule);
@@ -227,8 +234,10 @@ public class JobNodeListHelper {
                                         .create(JOB_NODE_RESOURCE)
                                         .call(resource ->
                                                 resource.setScheduleBatch(batchScheduleRequest))
-                                        .onSuccess(result ->
-                                                GwtNullSafe.run(onSuccessHandler))
+                                        .onSuccess(result -> {
+                                            JobNodeChangeEvent.fire(hasHandlers, selectedItems);
+                                            GwtNullSafe.run(onSuccessHandler);
+                                        })
                                         .taskListener(taskListener)
                                         .exec();
                             });
@@ -242,8 +251,10 @@ public class JobNodeListHelper {
                             .create(JOB_NODE_RESOURCE)
                             .call(resource ->
                                     resource.setSchedule(jobNodeAndInfo.getId(), schedule))
-                            .onSuccess(result ->
-                                    GwtNullSafe.run(onSuccessHandler))
+                            .onSuccess(result -> {
+                                JobNodeChangeEvent.fire(hasHandlers, jobNode);
+                                GwtNullSafe.run(onSuccessHandler);
+                            })
                             .taskListener(taskListener)
                             .exec();
                 });

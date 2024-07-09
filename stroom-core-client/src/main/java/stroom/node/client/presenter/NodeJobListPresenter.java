@@ -17,6 +17,7 @@ import stroom.job.shared.JobNodeAndInfoListResponse;
 import stroom.job.shared.JobNodeResource;
 import stroom.monitoring.client.JobListPlugin;
 import stroom.node.client.JobNodeListHelper;
+import stroom.node.client.event.JobNodeChangeEvent;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.InlineSvgToggleButton;
@@ -33,7 +34,10 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * Bottom pane of NodePresenter (Nodes tab). Lists jobNodes for a single node.
@@ -71,6 +75,28 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> {
         initTable();
 
         dataProvider = buildDataProvider(eventBus, view, restFactory);
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+
+        // JobNodeListPresenter may change one or more jobNodes
+        registerHandler(getEventBus().addHandler(
+                JobNodeChangeEvent.getType(), event -> {
+//                    GWT.log(NodeJobListPresenter.this.getClass().getSimpleName()
+//                            + " - jobNodes changed: " + event.getJobNodes().size());
+                    if (!Objects.equals(event.getSource().getClass(), NodeJobListPresenter.this.getClass())) {
+                        final Set<String> affectedNodes = event.getJobNodes()
+                                .stream()
+                                .map(JobNode::getNodeName)
+                                .collect(Collectors.toSet());
+                        final String currentNodeName = getNodeNameCriteria();
+                        if (currentNodeName != null && affectedNodes.contains(currentNodeName)) {
+                            refresh();
+                        }
+                    }
+                }));
     }
 
     private RestDataProvider<JobNodeAndInfo, JobNodeAndInfoListResponse> buildDataProvider(
@@ -155,7 +181,7 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> {
                         .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
 //                        .withSorting(FindJobNodeCriteria.FIELD_ID_ENABLED)
                         .withFieldUpdater(jobNodeListHelper.createEnabledStateFieldUpdater(
-                                getView(), this::refresh))
+                                NodeJobListPresenter.this, getView(), this::refresh))
                         .build(),
                 DataGridUtil.headingBuilder("Enabled")
                         .withToolTip("Whether this job is enabled on this node or not. " +
@@ -237,16 +263,6 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> {
                         .build(),
                 ColumnSizeConstants.ICON_COL);
 
-        // Run now icon, always enabled, so you can run disabled jobs
-        dataGrid.addColumn(
-                DataGridUtil.svgPresetColumnBuilder(true, JobNodeListHelper::buildRunIconPreset)
-                        .withBrowserEventHandler(jobNodeListHelper.createExecuteJobNowHandler(
-                                NodeJobListPresenter.this,
-                                getView()))
-                        .build(),
-                DataGridUtil.headingBuilder("Run")
-                        .withToolTip("Execute the job on a node now.")
-                        .build(), 40);
 //
 //        // Max.
 //        dataGrid.addColumn(
@@ -298,6 +314,17 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> {
                                 "if applicable to the job type.")
                         .build(),
                 ColumnSizeConstants.DATE_AND_DURATION_COL);
+
+        // Run now icon, always enabled, so you can run disabled jobs
+        dataGrid.addColumn(
+                DataGridUtil.svgPresetColumnBuilder(true, JobNodeListHelper::buildRunIconPreset)
+                        .withBrowserEventHandler(jobNodeListHelper.createExecuteJobNowHandler(
+                                NodeJobListPresenter.this,
+                                getView()))
+                        .build(),
+                DataGridUtil.headingBuilder("Run")
+                        .withToolTip("Execute the job on a node now.")
+                        .build(), 40);
 
         DataGridUtil.addEndColumn(dataGrid);
     }

@@ -45,9 +45,9 @@ import stroom.util.shared.scheduler.Schedule;
 import event.logging.AdvancedQuery;
 import event.logging.And;
 import event.logging.ComplexLoggedOutcome;
-import event.logging.Configuration;
 import event.logging.Data;
 import event.logging.MultiObject;
+import event.logging.OtherObject;
 import event.logging.Query;
 import event.logging.Term;
 import event.logging.TermCondition;
@@ -271,7 +271,7 @@ class JobNodeResourceImpl implements JobNodeResource {
     @Override
     public void setScheduleBatch(final BatchScheduleRequest batchScheduleRequest) {
 
-        List<Configuration> beforeList = null;
+        List<OtherObject> beforeList = null;
         if (NullSafe.nonNull(batchScheduleRequest, BatchScheduleRequest::getSchedule)) {
             final JobNodeService jobNodeService = jobNodeServiceProvider.get();
             final Set<Integer> jobNodeIds = batchScheduleRequest.getJobNodeIds();
@@ -289,14 +289,14 @@ class JobNodeResourceImpl implements JobNodeResource {
                     .withDescription("Updating schedule for " + jobNodeIds.size() + " nodes")
                     .withDefaultEventAction(UpdateEventAction.builder()
                             .withBefore(MultiObject.builder()
-                                    .addConfiguration(beforeList)
+                                    .addObjects(beforeList)
                                     .build())
                             .build())
                     .withComplexLoggedAction(updateEventAction -> {
                         try {
                             jobNodeService.update(batchScheduleRequest);
 
-                            final List<Configuration> afterList = jobNodeService.find(new FindJobNodeCriteria())
+                            final List<OtherObject> afterList = jobNodeService.find(new FindJobNodeCriteria())
                                     .getValues()
                                     .stream()
                                     .filter(jobNode -> jobNodeIds.contains(jobNode.getId()))
@@ -305,7 +305,7 @@ class JobNodeResourceImpl implements JobNodeResource {
 
                             final UpdateEventAction eventActionCopy = updateEventAction.newCopyBuilder()
                                     .withAfter(MultiObject.builder()
-                                            .addConfiguration(afterList)
+                                            .addObjects(afterList)
                                             .build())
                                     .build();
                             return ComplexLoggedOutcome.success(eventActionCopy);
@@ -322,15 +322,27 @@ class JobNodeResourceImpl implements JobNodeResource {
         }
     }
 
-    private Configuration mapJobNodeToConfiguration(final JobNode jobNode) {
+    private OtherObject mapJobNodeToConfiguration(final JobNode jobNode) {
         if (jobNode != null) {
-            return Configuration.builder()
+            return OtherObject.builder()
                     .withId(String.valueOf(jobNode.getId()))
-                    .withName(jobNode.getJobName() + " on " + jobNode.getNodeName())
-                    .withType(jobNode.getJobType().getDisplayValue())
+                    .withName(jobNode.getJobName())
+                    .withType("JobNode")
                     .addData(Data.builder()
-                            .withName("schedule")
+                            .withName("Schedule")
                             .withValue(jobNode.getSchedule())
+                            .build())
+                    .addData(Data.builder()
+                            .withName("Enabled")
+                            .withValue(String.valueOf(jobNode.isEnabled()))
+                            .build())
+                    .addData(Data.builder()
+                            .withName("JobType")
+                            .withValue(jobNode.getJobType().getDisplayValue())
+                            .build())
+                    .addData(Data.builder()
+                            .withName("Node")
+                            .withValue(jobNode.getNodeName())
                             .build())
                     .build();
         } else {

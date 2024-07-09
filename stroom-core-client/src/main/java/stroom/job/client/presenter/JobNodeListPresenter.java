@@ -34,6 +34,7 @@ import stroom.job.shared.JobNodeAndInfoListResponse;
 import stroom.job.shared.JobNodeResource;
 import stroom.monitoring.client.NodeMonitoringPlugin;
 import stroom.node.client.JobNodeListHelper;
+import stroom.node.client.event.JobNodeChangeEvent;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.InlineSvgToggleButton;
@@ -49,8 +50,11 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Bottom pane of JobPresenter (Jobs tab). Lists jobNodes for a single parent job.
@@ -100,6 +104,28 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
         initTable();
 
         dataProvider = buildDataProvider(eventBus, view, restFactory);
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+
+        // NodeJobListPresenter may change a jobNode
+        registerHandler(getEventBus().addHandler(
+                JobNodeChangeEvent.getType(), event -> {
+//                    GWT.log(JobNodeListPresenter.this.getClass().getSimpleName()
+//                            + " - jobNodes changed: " + event.getJobNodes().size());
+                    if (!Objects.equals(event.getSource().getClass(), JobNodeListPresenter.this.getClass())) {
+                        final Set<String> affectedJobNames = event.getJobNodes()
+                                .stream()
+                                .map(JobNode::getJobName)
+                                .collect(Collectors.toSet());
+                        final String currentJobName = getJobNameCriteria();
+                        if (currentJobName != null && affectedJobNames.contains(currentJobName)) {
+                            refresh();
+                        }
+                    }
+                }));
     }
 
     private RestDataProvider<JobNodeAndInfo, JobNodeAndInfoListResponse> buildDataProvider(
@@ -188,7 +214,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                         .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
                         .withSorting(FindJobNodeCriteria.FIELD_ID_ENABLED)
                         .withFieldUpdater(jobNodeListHelper.createEnabledStateFieldUpdater(
-                                getView(), this::refresh))
+                                JobNodeListPresenter.this, getView(), this::refresh))
                         .build(),
                 DataGridUtil.headingBuilder("Enabled")
                         .withToolTip("Whether this job is enabled on this node or not. " +
@@ -208,7 +234,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                 DataGridUtil.headingBuilder("Node")
                         .withToolTip("The Stroom node the job runs on")
                         .build(),
-                350);
+                300);
 
         // Type
         dataGrid.addResizableColumn(
@@ -256,17 +282,6 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                 DataGridUtil.headingBuilder("")
                         .build(),
                 ColumnSizeConstants.ICON_COL);
-
-        // Run now icon, always enabled, so you can run disabled jobs
-        dataGrid.addColumn(
-                DataGridUtil.svgPresetColumnBuilder(true, JobNodeListHelper::buildRunIconPreset)
-                        .withBrowserEventHandler(jobNodeListHelper.createExecuteJobNowHandler(
-                                JobNodeListPresenter.this,
-                                getView()))
-                        .build(),
-                DataGridUtil.headingBuilder("Run")
-                        .withToolTip("Execute the job on a node now.")
-                        .build(), 40);
 
         // Max.
         dataGrid.addColumn(
@@ -321,6 +336,17 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                         .build(),
                 ColumnSizeConstants.DATE_AND_DURATION_COL);
 
+        // Run now icon, always enabled, so you can run disabled jobs
+        dataGrid.addColumn(
+                DataGridUtil.svgPresetColumnBuilder(true, JobNodeListHelper::buildRunIconPreset)
+                        .withBrowserEventHandler(jobNodeListHelper.createExecuteJobNowHandler(
+                                JobNodeListPresenter.this,
+                                getView()))
+                        .build(),
+                DataGridUtil.headingBuilder("Run")
+                        .withToolTip("Execute the job on a node now.")
+                        .build(), 40);
+
         DataGridUtil.addEndColumn(dataGrid);
     }
 
@@ -353,10 +379,13 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
         return (JobNodeAndInfo jobNodeAndInfo) -> {
             if (jobNodeAndInfo != null) {
                 final String nodeName = jobNodeAndInfo.getNodeName();
+                final String jobName = jobNodeAndInfo.getJobName();
                 return new CommandLink(
                         nodeName,
-                        "Open node '" + nodeName + "' on the Nodes screen.",
-                        () -> nodeMonitoringPluginProvider.get().open(nodeName));
+                        "Open node '" + nodeName + "' and job '" + jobName
+                                + "' on the Nodes screen.",
+                        () -> nodeMonitoringPluginProvider.get()
+                                .open(jobNodeAndInfo.getJobNode()));
             } else {
                 return null;
             }
@@ -374,4 +403,9 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                 name -> "Scheduling of job '" + jobName + "' on " + stateStr + " nodes",
                 null));
     }
+
+//    @Override
+//    public HandlerRegistration addJobNodeChangeHandler(final Handler handler) {
+//        return handler.onChange();
+//    }
 }
