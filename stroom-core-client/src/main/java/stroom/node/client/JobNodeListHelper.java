@@ -26,7 +26,6 @@ import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskListener;
 import stroom.task.client.event.OpenTaskManagerEvent;
 import stroom.util.client.DataGridUtil;
-import stroom.util.client.DataGridUtil.BrowserEventHandler;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.scheduler.Schedule;
@@ -39,14 +38,10 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
 
 import java.util.List;
 import java.util.Objects;
@@ -65,27 +60,36 @@ public class JobNodeListHelper {
     private final SchedulePopup schedulePresenter;
     private final MenuPresenter menuPresenter;
 
-    @Inject
+    private final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel;
+    private final TaskListener taskListener;
+    private final HasHandlers hasHandlers;
+    private final Runnable refreshFunc;
+
     public JobNodeListHelper(final DateTimeFormatter dateTimeFormatter,
                              final RestFactory restFactory,
                              final SchedulePopup schedulePresenter,
-                             final MenuPresenter menuPresenter) {
+                             final MenuPresenter menuPresenter,
+                             final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel,
+                             final TaskListener taskListener,
+                             final HasHandlers hasHandlers,
+                             final Runnable refreshFunc) {
         this.dateTimeFormatter = dateTimeFormatter;
         this.restFactory = restFactory;
         this.schedulePresenter = schedulePresenter;
         this.menuPresenter = menuPresenter;
+        this.selectionModel = selectionModel;
+        this.taskListener = taskListener;
+        this.hasHandlers = hasHandlers;
+        this.refreshFunc = refreshFunc;
     }
 
-    public BrowserEventHandler<JobNodeAndInfo> createExecuteJobNowHandler(final HasHandlers handlers,
-                                                                          final TaskListener taskListener) {
-        return (Context context, Element elem, JobNodeAndInfo jobNodeAndInfo, NativeEvent event) ->
-                executeJobNow(handlers, taskListener, GwtNullSafe.get(jobNodeAndInfo, JobNodeAndInfo::getJobNode));
-    }
+//    public BrowserEventHandler<JobNodeAndInfo> createExecuteJobNowHandler() {
+//        return (Context context, Element elem, JobNodeAndInfo jobNodeAndInfo, NativeEvent event) ->
+//                executeJobNow(hasHandlers, taskListener, GwtNullSafe.get(jobNodeAndInfo, JobNodeAndInfo::getJobNode));
+//    }
 
-    public void executeJobNow(final HasHandlers handlers,
-                              final TaskListener taskListener,
-                              final JobNode jobNode) {
-        ConfirmEvent.fire(handlers,
+    public void executeJobNow(final JobNode jobNode) {
+        ConfirmEvent.fire(hasHandlers,
                 "Are you sure you want to execute job '" + jobNode.getJobName()
                         + "' on node '" + jobNode.getNodeName() + "' now. " +
                         "\n\nThe job will execute shortly, likely within ten seconds. " +
@@ -99,31 +103,15 @@ public class JobNodeListHelper {
                 });
     }
 
-    public void showSchedule(final JobNodeAndInfo jobNodeAndInfo,
-                             final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel,
-                             final TaskListener taskListener,
-                             final HasHandlers hasHandlers,
-                             final Runnable onSuccessHandler) {
+    public void showSchedule(final JobNodeAndInfo jobNodeAndInfo) {
         restFactory
                 .create(JOB_NODE_RESOURCE)
                 .method(resource ->
                         resource.info(jobNodeAndInfo.getJob().getName(), jobNodeAndInfo.getNodeName()))
                 .onSuccess(jobNodeInfo ->
-                        setSchedule(
-                                jobNodeAndInfo,
-                                jobNodeInfo,
-                                selectionModel,
-                                taskListener,
-                                hasHandlers,
-                                onSuccessHandler))
+                        setSchedule(jobNodeAndInfo, jobNodeInfo))
                 .onFailure(throwable ->
-                        setSchedule(
-                                jobNodeAndInfo,
-                                null,
-                                selectionModel,
-                                taskListener,
-                                hasHandlers,
-                                onSuccessHandler))
+                        setSchedule(jobNodeAndInfo, null))
                 .taskListener(taskListener)
                 .exec();
     }
@@ -152,11 +140,7 @@ public class JobNodeListHelper {
     }
 
     private void setSchedule(final JobNodeAndInfo jobNodeAndInfo,
-                             final JobNodeInfo jobNodeInfo,
-                             final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel,
-                             final TaskListener taskListener,
-                             final HasHandlers hasHandlers,
-                             final Runnable onSuccessHandler) {
+                             final JobNodeInfo jobNodeInfo) {
         final JobNode jobNode = jobNodeAndInfo.getJobNode();
         final Schedule currentSchedule = JobNodeUtil.getSchedule(jobNode);
         JobNodeInfo info = jobNodeInfo;
@@ -190,8 +174,8 @@ public class JobNodeListHelper {
                                     + jobNode.getJobType() + "'.", null);
                 } else {
                     final String msg = "Are you sure you want to change the schedule of job '"
-                            + jobNode.getJobName() + " for " + nodeCount + " nodes?\n" +
-                            "All " + nodeCount + " nodes will be set to the same schedule.\n\n"
+                            + jobNode.getJobName() + " for " + nodeCount + " nodes?\n\n" +
+                            "All of the following nodes will be set to the same schedule.\n\n"
                             + selectedItems.stream()
                             .map(JobNode::getNodeName)
                             .sorted()
@@ -212,7 +196,7 @@ public class JobNodeListHelper {
                                                 resource.setScheduleBatch(batchScheduleRequest))
                                         .onSuccess(result -> {
                                             JobNodeChangeEvent.fire(hasHandlers, selectedItems);
-                                            GwtNullSafe.run(onSuccessHandler);
+                                            GwtNullSafe.run(refreshFunc);
                                         })
                                         .taskListener(taskListener)
                                         .exec();
@@ -229,7 +213,7 @@ public class JobNodeListHelper {
                                     resource.setSchedule(jobNodeAndInfo.getId(), schedule))
                             .onSuccess(result -> {
                                 JobNodeChangeEvent.fire(hasHandlers, jobNode);
-                                GwtNullSafe.run(onSuccessHandler);
+                                GwtNullSafe.run(refreshFunc);
                             })
                             .taskListener(taskListener)
                             .exec();
@@ -319,7 +303,7 @@ public class JobNodeListHelper {
         }
     }
 
-    public static InlineSvgToggleButton buildJobFilterButton(final Runnable refreshFunc) {
+    public InlineSvgToggleButton buildJobFilterButton() {
         final InlineSvgToggleButton showEnabledToggleBtn = new InlineSvgToggleButton();
         showEnabledToggleBtn.setSvg(SvgImage.FILTER);
         showEnabledToggleBtn.setTitle(FILTER_BTN_TITLE_OFF);
@@ -336,11 +320,7 @@ public class JobNodeListHelper {
         return showEnabledToggleBtn;
     }
 
-    public Function<JobNodeAndInfo, CommandLink> buildOpenScheduleCommandLinkFunc(
-            final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel,
-            final TaskListener taskListener,
-            final HasHandlers hasHandlers,
-            final Runnable onSuccess) {
+    public Function<JobNodeAndInfo, CommandLink> buildOpenScheduleCommandLinkFunc() {
 
         return (final JobNodeAndInfo jobNodeAndInfo) -> {
             final String schedule = GwtNullSafe.get(jobNodeAndInfo, JobNodeAndInfo::getSchedule);
@@ -350,23 +330,14 @@ public class JobNodeListHelper {
                         schedule,
                         "Edit schedule",
                         () ->
-                                showSchedule(
-                                        jobNodeAndInfo,
-                                        selectionModel,
-                                        taskListener,
-                                        hasHandlers,
-                                        onSuccess));
+                                showSchedule(jobNodeAndInfo));
             } else {
                 return CommandLink.withoutCommand("N/A");
             }
         };
     }
 
-    public List<Item> buildActionMenu(final JobNodeAndInfo jobNodeAndInfo,
-                                      final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel,
-                                      final TaskListener taskListener,
-                                      final HasHandlers hasHandlers,
-                                      final Runnable onEditScheduleSuccess) {
+    public List<Item> buildActionMenu(final JobNodeAndInfo jobNodeAndInfo) {
 
         final JobNode jobNode = GwtNullSafe.get(jobNodeAndInfo, JobNodeAndInfo::getJobNode);
 
@@ -374,21 +345,13 @@ public class JobNodeListHelper {
                 .withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(SvgImage.HISTORY)
                         .text("Edit Schedule")
-                        .command(() -> {
-                            showSchedule(
-                                    jobNodeAndInfo,
-                                    selectionModel,
-                                    taskListener,
-                                    hasHandlers,
-                                    onEditScheduleSuccess);
-                        }))
+                        .command(() ->
+                                showSchedule(jobNodeAndInfo)))
                 .withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(SvgImage.PLAY)
                         .text("Run Job on '" + jobNode.getNodeName() + "' Now")
-                        .command(() -> {
-                            executeJobNow(
-                                    hasHandlers, taskListener, jobNode);
-                        }))
+                        .command(() ->
+                                executeJobNow(jobNode)))
                 .withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(SvgImage.JOBS)
                         .text("Show in Server Tasks (" + jobNode.getNodeName() + ")")
@@ -418,17 +381,9 @@ public class JobNodeListHelper {
                 80);
     }
 
-    public void addScheduleColumn(final MyDataGrid<JobNodeAndInfo> dataGrid,
-                                  final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel,
-                                  final TaskListener taskListener,
-                                  final HasHandlers hasHandlers,
-                                  final Runnable refresh) {
+    public void addScheduleColumn(final MyDataGrid<JobNodeAndInfo> dataGrid) {
         final Column<JobNodeAndInfo, CommandLink> scheduleColumn = DataGridUtil.commandLinkColumnBuilder(
-                        buildOpenScheduleCommandLinkFunc(
-                                selectionModel,
-                                taskListener,
-                                hasHandlers,
-                                refresh))
+                        buildOpenScheduleCommandLinkFunc())
                 .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
                 .build();
         DataGridUtil.addCommandLinkFieldUpdater(scheduleColumn);
@@ -464,12 +419,7 @@ public class JobNodeListHelper {
                 ColumnSizeConstants.DATE_AND_DURATION_COL);
     }
 
-    public void addActionColumn(
-            final MyDataGrid<JobNodeAndInfo> dataGrid,
-            final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel,
-            final TaskListener taskListener,
-            final HasHandlers hasHandlers,
-            final Runnable onEditScheduleSuccess) {
+    public void addActionColumn(final MyDataGrid<JobNodeAndInfo> dataGrid) {
 
         dataGrid.addColumn(
                 DataGridUtil.columnBuilder(
@@ -478,12 +428,7 @@ public class JobNodeListHelper {
                                     selectionModel.setSelected(jobNodeAndInfo);
                                     final PopupPosition popupPosition = new PopupPosition(
                                             event.getClientX() + 10, event.getClientY());
-                                    final List<Item> menuItems = buildActionMenu(
-                                            jobNodeAndInfo,
-                                            selectionModel,
-                                            taskListener,
-                                            hasHandlers,
-                                            onEditScheduleSuccess);
+                                    final List<Item> menuItems = buildActionMenu(jobNodeAndInfo);
                                     menuPresenter.setData(menuItems);
                                     ShowPopupEvent.builder(menuPresenter)
                                             .popupType(PopupType.POPUP)

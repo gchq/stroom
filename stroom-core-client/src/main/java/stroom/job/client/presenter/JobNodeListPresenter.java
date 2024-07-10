@@ -33,10 +33,13 @@ import stroom.job.shared.JobNodeResource;
 import stroom.monitoring.client.NodeMonitoringPlugin;
 import stroom.node.client.JobNodeListHelper;
 import stroom.node.client.event.JobNodeChangeEvent;
+import stroom.preferences.client.DateTimeFormatter;
+import stroom.schedule.client.SchedulePopup;
 import stroom.util.client.DataGridUtil;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -79,24 +82,35 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                                 final EventBus eventBus,
                                 final PagerView view,
                                 final RestFactory restFactory,
-                                final JobNodeListHelper jobNodeListHelper) {
+                                final SchedulePopup schedulePresenter,
+                                final MenuPresenter menuPresenter,
+                                final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
         this.nodeMonitoringPluginProvider = nodeMonitoringPluginProvider;
         this.restFactory = restFactory;
-        this.jobNodeListHelper = jobNodeListHelper;
 
-        dataGrid = new MyDataGrid<>();
-        dataGrid.addDefaultSelectionModel(true);
-        redrawDelayedUpdate = new DelayedUpdate(REDRAW_TIMER_DELAY_MS, dataGrid::redraw);
-        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        this.dataGrid = new MyDataGrid<>();
+        this.dataGrid.addDefaultSelectionModel(true);
+        this.redrawDelayedUpdate = new DelayedUpdate(REDRAW_TIMER_DELAY_MS, dataGrid::redraw);
+        this.selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 
-        showEnabledToggleBtn = JobNodeListHelper.buildJobFilterButton(this::refresh);
+        this.dataProvider = buildDataProvider(eventBus, view, restFactory);
+        this.jobNodeListHelper = new JobNodeListHelper(
+                dateTimeFormatter,
+                restFactory,
+                schedulePresenter,
+                menuPresenter,
+                selectionModel,
+                getView(),
+                JobNodeListPresenter.this,
+                this::refresh);
+
+        this.showEnabledToggleBtn = jobNodeListHelper.buildJobFilterButton();
         view.addButton(showEnabledToggleBtn);
 
+        // Must call this after initialising JobNodeListHelper
         initTable();
-
-        dataProvider = buildDataProvider(eventBus, view, restFactory);
     }
 
     @Override
@@ -231,12 +245,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
         jobNodeListHelper.addTypeColumn(dataGrid);
 
         // Schedule.
-        jobNodeListHelper.addScheduleColumn(
-                dataGrid,
-                selectionModel,
-                getView(),
-                JobNodeListPresenter.this,
-                this::refresh);
+        jobNodeListHelper.addScheduleColumn(dataGrid);
 
         // Max.
         dataGrid.addColumn(
@@ -276,12 +285,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
         jobNodeListHelper.addNextExecutedColumn(dataGrid);
 
         // Action column
-        jobNodeListHelper.addActionColumn(
-                dataGrid,
-                selectionModel,
-                getView(),
-                JobNodeListPresenter.this,
-                this::refresh);
+        jobNodeListHelper.addActionColumn(dataGrid);
 
         DataGridUtil.addEndColumn(dataGrid);
     }
@@ -339,9 +343,4 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                 name -> "Scheduling of job '" + jobName + "' on " + stateStr + " nodes",
                 null));
     }
-
-//    @Override
-//    public HandlerRegistration addJobNodeChangeHandler(final Handler handler) {
-//        return handler.onChange();
-//    }
 }

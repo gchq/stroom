@@ -15,9 +15,12 @@ import stroom.job.shared.JobNodeResource;
 import stroom.monitoring.client.JobListPlugin;
 import stroom.node.client.JobNodeListHelper;
 import stroom.node.client.event.JobNodeChangeEvent;
+import stroom.preferences.client.DateTimeFormatter;
+import stroom.schedule.client.SchedulePopup;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -54,22 +57,32 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> {
     public NodeJobListPresenter(final EventBus eventBus,
                                 final PagerView view,
                                 final RestFactory restFactory,
-                                final JobNodeListHelper jobNodeListHelper,
-                                final Provider<JobListPlugin> jobListPluginProvider) {
+                                final Provider<JobListPlugin> jobListPluginProvider,
+                                final SchedulePopup schedulePresenter,
+                                final MenuPresenter menuPresenter,
+                                final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
-        this.jobNodeListHelper = jobNodeListHelper;
         this.jobListPluginProvider = jobListPluginProvider;
-
-        dataGrid = new MyDataGrid<>();
-        selectionModel = dataGrid.addDefaultSelectionModel(false);
+        this.dataGrid = new MyDataGrid<>();
+        this.selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
+        this.dataProvider = buildDataProvider(eventBus, view, restFactory);
 
-        showEnabledToggleBtn = JobNodeListHelper.buildJobFilterButton(this::refresh);
+        this.jobNodeListHelper = new JobNodeListHelper(
+                dateTimeFormatter,
+                restFactory,
+                schedulePresenter,
+                menuPresenter,
+                selectionModel,
+                getView(),
+                NodeJobListPresenter.this,
+                this::refresh);
+
+        this.showEnabledToggleBtn = jobNodeListHelper.buildJobFilterButton();
         view.addButton(showEnabledToggleBtn);
 
+        // Must call this after initialising JobNodeListHelper
         initTable();
-
-        dataProvider = buildDataProvider(eventBus, view, restFactory);
     }
 
     @Override
@@ -215,12 +228,7 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> {
         jobNodeListHelper.addTypeColumn(dataGrid);
 
         // Schedule.
-        jobNodeListHelper.addScheduleColumn(
-                dataGrid,
-                selectionModel,
-                getView(),
-                NodeJobListPresenter.this,
-                this::refresh);
+        jobNodeListHelper.addScheduleColumn(dataGrid);
 //
         // Last executed.
         jobNodeListHelper.addLastExecutedColumn(dataGrid);
@@ -229,12 +237,7 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> {
         jobNodeListHelper.addNextExecutedColumn(dataGrid);
 
         // Action column
-        jobNodeListHelper.addActionColumn(
-                dataGrid,
-                selectionModel,
-                getView(),
-                NodeJobListPresenter.this,
-                this::refresh);
+        jobNodeListHelper.addActionColumn(dataGrid);
 
         DataGridUtil.addEndColumn(dataGrid);
     }
