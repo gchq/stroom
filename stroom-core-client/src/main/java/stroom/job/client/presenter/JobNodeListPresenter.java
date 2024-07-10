@@ -34,13 +34,13 @@ import stroom.monitoring.client.NodeMonitoringPlugin;
 import stroom.node.client.JobNodeListHelper;
 import stroom.node.client.event.JobNodeChangeEvent;
 import stroom.util.client.DataGridUtil;
+import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -72,12 +72,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
     private final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
     private final InlineSvgToggleButton showEnabledToggleBtn;
 
-    private final Timer redrawTimer = new Timer() {
-        @Override
-        public void run() {
-            dataGrid.redraw();
-        }
-    };
+    private final DelayedUpdate redrawDelayedUpdate;
 
     @Inject
     public JobNodeListPresenter(final Provider<NodeMonitoringPlugin> nodeMonitoringPluginProvider,
@@ -92,6 +87,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
 
         dataGrid = new MyDataGrid<>();
         dataGrid.addDefaultSelectionModel(true);
+        redrawDelayedUpdate = new DelayedUpdate(REDRAW_TIMER_DELAY_MS, dataGrid::redraw);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 
@@ -183,9 +179,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
 
     private void scheduleDataGridRedraw() {
         // Saves the grid being redrawn for every single row in the list
-        if (!redrawTimer.isRunning()) {
-            redrawTimer.schedule(REDRAW_TIMER_DELAY_MS);
-        }
+        redrawDelayedUpdate.update();
     }
 
     private Number getTaskLimit(final JobNodeAndInfo jobNodeAndInfo) {
@@ -235,14 +229,6 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
 
         // Type
         jobNodeListHelper.addTypeColumn(dataGrid);
-//        dataGrid.addResizableColumn(
-//                DataGridUtil.textColumnBuilder(JobNodeListHelper::buildJobTypeStr)
-//                        .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
-//                        .build(),
-//                DataGridUtil.headingBuilder("Type")
-//                        .withToolTip("The type of the job")
-//                        .build(),
-//                80);
 
         // Schedule.
         jobNodeListHelper.addScheduleColumn(
@@ -251,41 +237,6 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                 getView(),
                 JobNodeListPresenter.this,
                 this::refresh);
-//        final Column<JobNodeAndInfo, CommandLink> scheduleColumn = DataGridUtil.commandLinkColumnBuilder(
-//                        jobNodeListHelper.buildOpenScheduleCommandLinkFunc(
-//                                selectionModel,
-//                                getView(),
-//                                JobNodeListPresenter.this,
-//                                this::refresh))
-//                .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
-//                .build();
-//        DataGridUtil.addCommandLinkFieldUpdater(scheduleColumn);
-//        dataGrid.addResizableColumn(
-//                scheduleColumn,
-//                DataGridUtil.headingBuilder("Schedule")
-//                        .withToolTip("The schedule for this job on this node, if applicable to the job type")
-//                        .build(),
-//                250);
-
-        // Job Type Icon, always enabled, so you can edit schedule for disabled jobs
-//        dataGrid.addColumn(
-//                DataGridUtil.columnBuilder((JobNodeAndInfo jobNodeAndInfo) ->
-//                                        GwtNullSafe.requireNonNullElse(jobNodeAndInfo.getJobType(), JobType.UNKNOWN),
-//                                JobTypeCell::new)
-//                        .withBrowserEventHandler((context, elem, jobNode, event) -> {
-//                            if (jobNode != null && MouseUtil.isPrimary(event)) {
-//                                jobNodeListHelper.showSchedule(
-//                                        jobNode,
-//                                        selectionModel,
-//                                        getView(),
-//                                        JobNodeListPresenter.this,
-//                                        this::refresh);
-//                            }
-//                        })
-//                        .build(),
-//                DataGridUtil.headingBuilder("")
-//                        .build(),
-//                ColumnSizeConstants.ICON_COL);
 
         // Max.
         dataGrid.addColumn(
@@ -320,38 +271,9 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
 
         // Last executed.
         jobNodeListHelper.addLastExecutedColumn(dataGrid);
-//        dataGrid.addColumn(
-//                DataGridUtil.textColumnBuilder(jobNodeListHelper::getLastExecutedTimeAsStr)
-//                        .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
-//                        .build(),
-//                DataGridUtil.headingBuilder("Last Executed")
-//                        .withToolTip("The date/time that this job was last executed on this node, " +
-//                                "if applicable to the job type.")
-//                        .build(),
-//                ColumnSizeConstants.DATE_AND_DURATION_COL);
 
         // Next scheduled
         jobNodeListHelper.addNextExecutedColumn(dataGrid);
-//        dataGrid.addColumn(
-//                DataGridUtil.textColumnBuilder(jobNodeListHelper::getNextScheduledTimeAsStr)
-//                        .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
-//                        .build(),
-//                DataGridUtil.headingBuilder("Next Scheduled")
-//                        .withToolTip("The date/time that this job is next scheduled to execute on this node, " +
-//                                "if applicable to the job type.")
-//                        .build(),
-//                ColumnSizeConstants.DATE_AND_DURATION_COL);
-
-        // Run now icon, always enabled, so you can run disabled jobs
-//        dataGrid.addColumn(
-//                DataGridUtil.svgPresetColumnBuilder(true, JobNodeListHelper::buildRunIconPreset)
-//                        .withBrowserEventHandler(jobNodeListHelper.createExecuteJobNowHandler(
-//                                JobNodeListPresenter.this,
-//                                getView()))
-//                        .build(),
-//                DataGridUtil.headingBuilder("Run")
-//                        .withToolTip("Execute the job on a node now.")
-//                        .build(), 40);
 
         // Action column
         jobNodeListHelper.addActionColumn(
