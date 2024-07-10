@@ -117,6 +117,10 @@ public class IndexModule extends AbstractModule {
         HasSystemInfoBinder.create(binder()).bind(IndexSystemInfo.class);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class IndexShardDelete extends RunnableWrapper {
 
         @Inject
@@ -124,6 +128,10 @@ public class IndexModule extends AbstractModule {
             super(indexShardManager::deleteFromDisk);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class IndexShardRetention extends RunnableWrapper {
 
@@ -133,6 +141,10 @@ public class IndexModule extends AbstractModule {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class IndexWriterCacheSweep extends RunnableWrapper {
 
         @Inject
@@ -140,6 +152,10 @@ public class IndexModule extends AbstractModule {
             super(indexShardWriterCache::sweep);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class IndexWriterFlush extends RunnableWrapper {
 
@@ -149,6 +165,10 @@ public class IndexModule extends AbstractModule {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class VolumeStatus extends RunnableWrapper {
 
         @Inject
@@ -157,6 +177,10 @@ public class IndexModule extends AbstractModule {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class IndexShardWriterCacheStartup extends RunnableWrapper {
 
         @Inject
@@ -164,6 +188,10 @@ public class IndexModule extends AbstractModule {
             super(indexShardWriterCache::startup);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class IndexShardWriterCacheShutdown extends RunnableWrapper {
 

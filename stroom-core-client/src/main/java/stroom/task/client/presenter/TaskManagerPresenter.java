@@ -23,6 +23,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.task.client.presenter.TaskManagerPresenter.TaskManagerView;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.TableCell;
@@ -94,7 +95,40 @@ public class TaskManagerPresenter
 
     @Override
     public void changeNameFilter(final String name) {
+        getView().setNameFilter(name);
         listPresenter.setNameFilter(name);
+    }
+
+    public void changeNameFilter(final String nodeName, final String taskName, final String userName) {
+        final StringBuilder sb = new StringBuilder();
+        boolean hasAdded;
+        hasAdded = addField(sb, FindTaskProgressCriteria.FIELD_NODE, nodeName);
+        hasAdded = addField(sb, FindTaskProgressCriteria.FIELD_NAME, taskName) || hasAdded;
+        hasAdded = addField(sb, FindTaskProgressCriteria.FIELD_USER, userName) || hasAdded;
+        if (hasAdded) {
+            changeNameFilter(sb.toString().trim());
+        }
+    }
+
+    private boolean addField(final StringBuilder sb, final String fieldName, final String value) {
+        boolean wasAdded = false;
+        if (GwtNullSafe.isNonBlankString(value)) {
+            //noinspection SizeReplaceableByIsEmpty
+            if (sb.length() > 0) {
+                sb.append(" ");
+            }
+            if (value.contains(" ")) {
+                sb.append("\"");
+            }
+            sb.append(fieldName.toLowerCase())
+                    .append(":")
+                    .append(value);
+            if (value.contains(" ")) {
+                sb.append("\"");
+            }
+            wasAdded = true;
+        }
+        return wasAdded;
     }
 
     @Override
@@ -121,5 +155,7 @@ public class TaskManagerPresenter
         void setList(Widget widget);
 
         void focusFilter();
+
+        void setNameFilter(final String nameFilter);
     }
 }

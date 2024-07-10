@@ -18,6 +18,7 @@ package stroom.task.client.view;
 
 import stroom.task.client.presenter.TaskManagerPresenter;
 import stroom.task.client.presenter.TaskManagerUiHandlers;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -70,6 +71,11 @@ public class TaskManagerViewImpl extends ViewWithUiHandlers<TaskManagerUiHandler
     @Override
     public void focusFilter() {
         nameFilter.focus();
+    }
+
+    @Override
+    public void setNameFilter(final String nameFilter) {
+        this.nameFilter.setText(GwtNullSafe.get(nameFilter, String::trim));
     }
 
 

@@ -2,8 +2,11 @@ package stroom.node.client;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.cell.info.client.ActionCell;
 import stroom.cell.info.client.CommandLink;
 import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.grid.client.MyDataGrid;
 import stroom.dispatch.client.RestFactory;
 import stroom.job.shared.BatchScheduleRequest;
 import stroom.job.shared.Job;
@@ -21,11 +24,19 @@ import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskListener;
+import stroom.task.client.event.OpenTaskManagerEvent;
+import stroom.util.client.DataGridUtil;
 import stroom.util.client.DataGridUtil.BrowserEventHandler;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.menu.client.presenter.Item;
+import stroom.widget.menu.client.presenter.MenuBuilder;
+import stroom.widget.menu.client.presenter.MenuPresenter;
+import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.Cell.Context;
@@ -34,6 +45,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 
 import java.util.List;
@@ -51,76 +63,40 @@ public class JobNodeListHelper {
     private final DateTimeFormatter dateTimeFormatter;
     private final RestFactory restFactory;
     private final SchedulePopup schedulePresenter;
-
-    // nodeName => jobName => jobNodeInfo
-//    private final Map<String, Map<String, JobNodeInfo>> latestNodeInfo = new HashMap<>();
+    private final MenuPresenter menuPresenter;
 
     @Inject
     public JobNodeListHelper(final DateTimeFormatter dateTimeFormatter,
                              final RestFactory restFactory,
-                             final SchedulePopup schedulePresenter) {
+                             final SchedulePopup schedulePresenter,
+                             final MenuPresenter menuPresenter) {
         this.dateTimeFormatter = dateTimeFormatter;
         this.restFactory = restFactory;
         this.schedulePresenter = schedulePresenter;
+        this.menuPresenter = menuPresenter;
     }
-
-//    public void putJobNodeInfo(final JobNode jobNode, final JobNodeInfo jobNodeInfo) {
-//        if (jobNode != null) {
-//            putJobNodeInfo(jobNode.getNodeName(), jobNode.getJobName(), jobNodeInfo);
-//        }
-//    }
-//
-//    public void putJobNodeInfo(final String nodeName,
-//                               final String jobName,
-//                               final JobNodeInfo jobNodeInfo) {
-//        latestNodeInfo.computeIfAbsent(nodeName, k -> new HashMap<>())
-//                .put(jobName, jobNodeInfo);
-//    }
-//
-//    public void removeJobNodeInfo(final String nodeName,
-//                                  final String jobName) {
-//        GwtNullSafe.consume(latestNodeInfo.get(nodeName), map -> map.remove(jobName));
-//    }
-//
-//    public void removeJobNodeInfo(final JobNode jobNode) {
-//        if (jobNode != null) {
-//            GwtNullSafe.consume(latestNodeInfo.get(
-//                            jobNode.getNodeName()),
-//                    map -> map.remove(jobNode.getJobName()));
-//        }
-//    }
-//
-//    public void removeJobNodeInfo(final String nodeName) {
-//        if (nodeName != null) {
-//            latestNodeInfo.remove(nodeName);
-//        }
-//    }
-//
-//    public JobNodeInfo getJobNodeInfo(final JobNode jobNode) {
-//        if (jobNode == null) {
-//            return null;
-//        } else {
-//            return GwtNullSafe.get(
-//                    latestNodeInfo.get(jobNode.getNodeName()),
-//                    map -> map.get(jobNode.getJobName()));
-//        }
-//    }
 
     public BrowserEventHandler<JobNodeAndInfo> createExecuteJobNowHandler(final HasHandlers handlers,
                                                                           final TaskListener taskListener) {
         return (Context context, Element elem, JobNodeAndInfo jobNodeAndInfo, NativeEvent event) ->
-                ConfirmEvent.fire(handlers,
-                        "Are you sure you want to execute job '" + jobNodeAndInfo.getJobName()
-                                + "' on node '" + jobNodeAndInfo.getNodeName() + "' now. " +
-                                "\n\nThe job will execute shortly, likely within ten seconds. " +
-                                "You can check it has run by refreshing the table until the 'Last Executed' " +
-                                "column has been updated.",
-                        ok -> {
-                            restFactory.create(JOB_NODE_RESOURCE)
-                                    .call(resource -> resource.execute(jobNodeAndInfo.getId()))
-                                    .taskListener(taskListener)
-                                    .exec();
-                        });
+                executeJobNow(handlers, taskListener, GwtNullSafe.get(jobNodeAndInfo, JobNodeAndInfo::getJobNode));
+    }
+
+    public void executeJobNow(final HasHandlers handlers,
+                              final TaskListener taskListener,
+                              final JobNode jobNode) {
+        ConfirmEvent.fire(handlers,
+                "Are you sure you want to execute job '" + jobNode.getJobName()
+                        + "' on node '" + jobNode.getNodeName() + "' now. " +
+                        "\n\nThe job will execute shortly, likely within ten seconds. " +
+                        "You can check it has run by refreshing the table until the 'Last Executed' " +
+                        "column has been updated.",
+                ok -> {
+                    restFactory.create(JOB_NODE_RESOURCE)
+                            .call(resource -> resource.execute(jobNode.getId()))
+                            .taskListener(taskListener)
+                            .exec();
+                });
     }
 
     public void showSchedule(final JobNodeAndInfo jobNodeAndInfo,
@@ -384,5 +360,137 @@ public class JobNodeListHelper {
                 return CommandLink.withoutCommand("N/A");
             }
         };
+    }
+
+    public List<Item> buildActionMenu(final JobNodeAndInfo jobNodeAndInfo,
+                                      final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel,
+                                      final TaskListener taskListener,
+                                      final HasHandlers hasHandlers,
+                                      final Runnable onEditScheduleSuccess) {
+
+        final JobNode jobNode = GwtNullSafe.get(jobNodeAndInfo, JobNodeAndInfo::getJobNode);
+
+        return MenuBuilder.builder()
+                .withIconMenuItem(itemBuilder -> itemBuilder
+                        .icon(SvgImage.HISTORY)
+                        .text("Edit Schedule")
+                        .command(() -> {
+                            showSchedule(
+                                    jobNodeAndInfo,
+                                    selectionModel,
+                                    taskListener,
+                                    hasHandlers,
+                                    onEditScheduleSuccess);
+                        }))
+                .withIconMenuItem(itemBuilder -> itemBuilder
+                        .icon(SvgImage.PLAY)
+                        .text("Run Job on '" + jobNode.getNodeName() + "' Now")
+                        .command(() -> {
+                            executeJobNow(
+                                    hasHandlers, taskListener, jobNode);
+                        }))
+                .withIconMenuItem(itemBuilder -> itemBuilder
+                        .icon(SvgImage.JOBS)
+                        .text("Show in Server Tasks (" + jobNode.getNodeName() + ")")
+                        .command(() -> {
+                            OpenTaskManagerEvent.fire(
+                                    hasHandlers,
+                                    jobNode.getNodeName(),
+                                    jobNode.getJobName());
+                        }))
+                .withIconMenuItem(itemBuilder -> itemBuilder
+                        .icon(SvgImage.JOBS)
+                        .text("Show in Server Tasks (All Nodes)")
+                        .command(() -> {
+                            OpenTaskManagerEvent.fire(hasHandlers, jobNode.getJobName());
+                        }))
+                .build();
+    }
+
+    public void addTypeColumn(final MyDataGrid<JobNodeAndInfo> dataGrid) {
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder(JobNodeListHelper::buildJobTypeStr)
+                        .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
+                        .build(),
+                DataGridUtil.headingBuilder("Type")
+                        .withToolTip("The type of the job")
+                        .build(),
+                80);
+    }
+
+    public void addScheduleColumn(final MyDataGrid<JobNodeAndInfo> dataGrid,
+                                  final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel,
+                                  final TaskListener taskListener,
+                                  final HasHandlers hasHandlers,
+                                  final Runnable refresh) {
+        final Column<JobNodeAndInfo, CommandLink> scheduleColumn = DataGridUtil.commandLinkColumnBuilder(
+                        buildOpenScheduleCommandLinkFunc(
+                                selectionModel,
+                                taskListener,
+                                hasHandlers,
+                                refresh))
+                .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
+                .build();
+        DataGridUtil.addCommandLinkFieldUpdater(scheduleColumn);
+        dataGrid.addResizableColumn(
+                scheduleColumn,
+                DataGridUtil.headingBuilder("Schedule")
+                        .withToolTip("The schedule for this job on this node, if applicable to the job type")
+                        .build(),
+                250);
+    }
+
+    public void addLastExecutedColumn(final MyDataGrid<JobNodeAndInfo> dataGrid) {
+        dataGrid.addColumn(
+                DataGridUtil.textColumnBuilder(this::getLastExecutedTimeAsStr)
+                        .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
+                        .build(),
+                DataGridUtil.headingBuilder("Last Executed")
+                        .withToolTip("The date/time that this job was last executed on this node, " +
+                                "if applicable to the job type.")
+                        .build(),
+                ColumnSizeConstants.DATE_AND_DURATION_COL);
+    }
+
+    public void addNextExecutedColumn(final MyDataGrid<JobNodeAndInfo> dataGrid) {
+        dataGrid.addColumn(
+                DataGridUtil.textColumnBuilder(this::getNextScheduledTimeAsStr)
+                        .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
+                        .build(),
+                DataGridUtil.headingBuilder("Next Scheduled")
+                        .withToolTip("The date/time that this job is next scheduled to execute on this node, " +
+                                "if applicable to the job type.")
+                        .build(),
+                ColumnSizeConstants.DATE_AND_DURATION_COL);
+    }
+
+    public void addActionColumn(
+            final MyDataGrid<JobNodeAndInfo> dataGrid,
+            final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel,
+            final TaskListener taskListener,
+            final HasHandlers hasHandlers,
+            final Runnable onEditScheduleSuccess) {
+
+        dataGrid.addColumn(
+                DataGridUtil.columnBuilder(
+                                Function.identity(),
+                                () -> new ActionCell<JobNodeAndInfo>((jobNodeAndInfo, event) -> {
+                                    selectionModel.setSelected(jobNodeAndInfo);
+                                    final PopupPosition popupPosition = new PopupPosition(
+                                            event.getClientX() + 10, event.getClientY());
+                                    final List<Item> menuItems = buildActionMenu(
+                                            jobNodeAndInfo,
+                                            selectionModel,
+                                            taskListener,
+                                            hasHandlers,
+                                            onEditScheduleSuccess);
+                                    menuPresenter.setData(menuItems);
+                                    ShowPopupEvent.builder(menuPresenter)
+                                            .popupType(PopupType.POPUP)
+                                            .popupPosition(popupPosition)
+                                            .fire();
+                                })
+                        )
+                        .build(), "", 40);
     }
 }
