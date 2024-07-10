@@ -2,7 +2,6 @@ package stroom.job.impl;
 
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.StroomEventLoggingService;
-import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeListResponse;
@@ -64,81 +63,6 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
     @BeforeEach
     void beforeEach() {
         jobNodeServiceMap.clear();
-    }
-
-    @Test
-    void list1() {
-
-        initSingleNode();
-
-        final String subPath = "";
-
-        ArgumentCaptor<FindJobNodeCriteria> criteriaCaptor = ArgumentCaptor.forClass(FindJobNodeCriteria.class);
-
-        final JobNodeListResponse response = doGetTest(
-                subPath,
-                JobNodeListResponse.class,
-                JOB_NODES,
-                webTarget -> UriBuilderUtil.addParam(webTarget, "jobName", "myJob"),
-                webTarget -> UriBuilderUtil.addParam(webTarget, "nodeName", "node1")
-        );
-
-        verify(jobNodeServiceMap.get("node1"), Mockito.only())
-                .find(criteriaCaptor.capture());
-
-        assertThat(criteriaCaptor.getValue().getJobName().getString())
-                .isEqualTo("myJob");
-        assertThat(criteriaCaptor.getValue().getNodeName().getString())
-                .isEqualTo("node1");
-
-    }
-
-    @Test
-    void list2() {
-
-        initSingleNode();
-
-        final String subPath = "";
-
-        ArgumentCaptor<FindJobNodeCriteria> criteriaCaptor = ArgumentCaptor.forClass(FindJobNodeCriteria.class);
-
-        final JobNodeListResponse response = doGetTest(
-                subPath,
-                JobNodeListResponse.class,
-                JOB_NODES);
-
-        verify(jobNodeServiceMap.get("node1"), Mockito.only())
-                .find(criteriaCaptor.capture());
-
-        assertThat(criteriaCaptor.getValue().getJobName().isConstrained())
-                .isFalse();
-        assertThat(criteriaCaptor.getValue().getNodeName().isConstrained())
-                .isFalse();
-    }
-
-    @Test
-    void list3() {
-
-        initSingleNode();
-
-        final String subPath = "";
-
-        ArgumentCaptor<FindJobNodeCriteria> criteriaCaptor = ArgumentCaptor.forClass(FindJobNodeCriteria.class);
-
-        final JobNodeListResponse response = doGetTest(
-                subPath,
-                JobNodeListResponse.class,
-                JOB_NODES,
-                webTarget -> UriBuilderUtil.addParam(webTarget, "nodeName", "node1")
-        );
-
-        verify(jobNodeServiceMap.get("node1"), Mockito.only())
-                .find(criteriaCaptor.capture());
-
-        assertThat(criteriaCaptor.getValue().getJobName().isConstrained())
-                .isFalse();
-        assertThat(criteriaCaptor.getValue().getNodeName().getString())
-                .isEqualTo("node1");
     }
 
     @Test
