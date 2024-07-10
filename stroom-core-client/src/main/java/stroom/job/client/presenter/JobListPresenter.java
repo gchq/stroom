@@ -23,6 +23,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
+import stroom.job.client.event.JobChangeEvent;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobResource;
 import stroom.svg.client.SvgPresets;
@@ -128,9 +129,10 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
                                             })
                                             .onSuccess(aVoid -> {
                                                 dataGrid.redrawRow(rowIndex);
-                                                if (changeHandler != null) {
-                                                    changeHandler.accept(job);
-                                                }
+                                                JobChangeEvent.fire(JobListPresenter.this, job);
+//                                                if (changeHandler != null) {
+//                                                    changeHandler.accept(job);
+//                                                }
                                             })
                                             .taskListener(getView())
                                             .exec();

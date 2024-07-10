@@ -6,6 +6,8 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
+import stroom.job.client.event.JobChangeEvent;
+import stroom.job.client.event.JobNodeChangeEvent;
 import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
@@ -14,7 +16,6 @@ import stroom.job.shared.JobNodeAndInfoListResponse;
 import stroom.job.shared.JobNodeResource;
 import stroom.monitoring.client.JobListPlugin;
 import stroom.node.client.JobNodeListHelper;
-import stroom.node.client.event.JobNodeChangeEvent;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.schedule.client.SchedulePopup;
 import stroom.util.client.DataGridUtil;
@@ -88,6 +89,24 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> {
     @Override
     protected void onBind() {
         super.onBind();
+
+        // NodeLisPresenter may change a node
+        // Currently the node state does not affect how the job nodes are displayed
+//        registerHandler(getEventBus().addHandler(
+//                NodeChangeEvent.getType(), event -> {
+//                    final String currentNodeName = getNodeNameCriteria();
+//                    final String affectedNodeName = event.getNodeName();
+//                    if (currentNodeName != null && Objects.equals(currentNodeName, affectedNodeName)) {
+//                        refresh();
+//                    }
+//                }));
+
+        // JobListPresenter may change a job
+        registerHandler(getEventBus().addHandler(
+                JobChangeEvent.getType(), event -> {
+                    // We are likely showing all jobs so just refresh
+                    refresh();
+                }));
 
         // JobNodeListPresenter may change one or more jobNodes
         registerHandler(getEventBus().addHandler(

@@ -23,6 +23,8 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
+import stroom.job.client.event.JobChangeEvent;
+import stroom.job.client.event.JobNodeChangeEvent;
 import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
@@ -32,7 +34,7 @@ import stroom.job.shared.JobNodeAndInfoListResponse;
 import stroom.job.shared.JobNodeResource;
 import stroom.monitoring.client.NodeMonitoringPlugin;
 import stroom.node.client.JobNodeListHelper;
-import stroom.node.client.event.JobNodeChangeEvent;
+import stroom.node.client.event.NodeChangeEvent;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.schedule.client.SchedulePopup;
 import stroom.util.client.DataGridUtil;
@@ -116,6 +118,24 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
     @Override
     protected void onBind() {
         super.onBind();
+
+        // NodeLisPresenter may change a node
+        registerHandler(getEventBus().addHandler(
+                NodeChangeEvent.getType(), event -> {
+                    // We are likely showing all jobs so just refresh
+                    refresh();
+                }));
+
+        // JobListPresenter may change a job
+        registerHandler(getEventBus().addHandler(
+                JobChangeEvent.getType(), event -> {
+                    GWT.log("Handling JobChangeEvent " + event);
+                    final String currentJobName = getJobNameCriteria();
+                    final String affectedJobName = GwtNullSafe.get(event, JobChangeEvent::getJob, Job::getName);
+                    if (currentJobName != null && Objects.equals(currentJobName, affectedJobName)) {
+                        refresh();
+                    }
+                }));
 
         // NodeJobListPresenter may change a jobNode
         registerHandler(getEventBus().addHandler(

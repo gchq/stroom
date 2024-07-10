@@ -8,6 +8,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.node.client.NodeManager;
+import stroom.node.client.event.NodeChangeEvent;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.FetchNodeStatusResponse;
 import stroom.node.shared.FindNodeStatusCriteria;
@@ -290,12 +291,19 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> {
                                 Node::isEnabled))
                         .enabledWhen(NodeListPresenter::isNodeEnabled)
                         .withSorting(FindNodeStatusCriteria.FIELD_ID_ENABLED)
-                        .withFieldUpdater((index, row, value) ->
+                        .withFieldUpdater((index, row, value) -> {
+                            if (row != null) {
+                                final String nodeName = row.getNode().getName();
                                 nodeManager.setEnabled(
-                                        row.getNode().getName(),
+                                        nodeName,
                                         value.toBoolean(),
-                                        result -> refresh(),
-                                        this))
+                                        result -> {
+                                            refresh();
+                                            NodeChangeEvent.fire(NodeListPresenter.this, nodeName);
+                                        },
+                                        this);
+                            }
+                        })
                         .centerAligned()
                         .build(),
                 DataGridUtil.headingBuilder("Enabled")

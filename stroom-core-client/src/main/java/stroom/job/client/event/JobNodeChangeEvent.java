@@ -1,4 +1,4 @@
-package stroom.node.client.event;
+package stroom.job.client.event;
 
 import stroom.job.shared.JobNode;
 import stroom.util.shared.GwtNullSafe;
