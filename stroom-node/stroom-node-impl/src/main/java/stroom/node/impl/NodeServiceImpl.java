@@ -286,6 +286,7 @@ public class NodeServiceImpl implements NodeService {
             if (thisNode == null) {
                 // This will start a new mini transaction to create the node record
                 final Node node = new Node();
+                AuditUtil.stamp(securityContext, node);
                 node.setName(nodeName);
                 updateNodeObj(node);
 
