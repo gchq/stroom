@@ -47,7 +47,6 @@
     <inherits name="stroom.item.Item"/>
     <inherits name="stroom.widget.menu.Menu"/>
     <inherits name="stroom.widget.button.Button"/>
-    <inherits name="stroom.widget.button.Button" />
     <inherits name="stroom.widget.form.Form" />
     <inherits name="stroom.widget.help.Help" />
     <inherits name="stroom.widget.popup.Popup"/>

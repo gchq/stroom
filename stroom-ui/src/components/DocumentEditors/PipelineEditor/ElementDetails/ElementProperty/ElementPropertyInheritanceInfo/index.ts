@@ -1,1 +1,0 @@
-export { ElementPropertyFieldDetails } from "./ElementPropertyInheritanceInfo";

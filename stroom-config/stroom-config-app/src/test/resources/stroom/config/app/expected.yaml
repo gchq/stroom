@@ -1168,7 +1168,6 @@ appConfig:
       title: "Splash Screen"
       version: "v0.1"
     theme:
-      backgroundColour: "#1E88E5"
       labelColours: "TEST1=#FF0000,TEST2=#FF9900"
     welcomeHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from\
       \ multiple systems.</p>"

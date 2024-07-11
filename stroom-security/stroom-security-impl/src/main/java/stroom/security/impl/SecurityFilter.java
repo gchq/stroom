@@ -264,9 +264,8 @@ class SecurityFilter implements Filter {
     private boolean isStaticResource(final HttpServletRequest request) {
         final String url = request.getRequestURL().toString();
 
-        if (url.contains("/s/") ||
-                url.contains("/static/") ||
-                url.endsWith("manifest.json")) { // New UI - For some reason this is requested without a session cookie
+        // Test for internal IdP sign in request.
+        if (url.contains(ResourcePaths.SIGN_IN_PATH)) {
             return true;
         }
 

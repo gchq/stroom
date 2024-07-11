@@ -16,7 +16,10 @@
 
 package stroom.core.servlet;
 
+import stroom.ui.config.shared.ThemeCssUtil;
 import stroom.ui.config.shared.UiConfig;
+import stroom.ui.config.shared.UserPreferences;
+import stroom.ui.config.shared.UserPreferencesService;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
 
@@ -33,13 +36,17 @@ public abstract class AppServlet extends HttpServlet {
     private static final String TITLE = "@TITLE@";
     private static final String ON_CONTEXT_MENU = "@ON_CONTEXT_MENU@";
     private static final String SCRIPT = "@SCRIPT@";
+    private static final String ROOT_CLASS = "@ROOT_CLASS@";
 
     private final UiConfig uiConfig;
+    private final UserPreferencesService userPreferencesService;
 
     private String template;
 
-    AppServlet(final UiConfig uiConfig) {
+    AppServlet(final UiConfig uiConfig,
+               final UserPreferencesService userPreferencesService) {
         this.uiConfig = uiConfig;
+        this.userPreferencesService = userPreferencesService;
     }
 
     private String getHtmlTemplate() {
@@ -57,7 +64,11 @@ public abstract class AppServlet extends HttpServlet {
         final PrintWriter pw = response.getWriter();
         response.setContentType("text/html");
 
+        final UserPreferences userPreferences = userPreferencesService.fetchDefault();
+        final String classNames = ThemeCssUtil.getCurrentPreferenceClasses(userPreferences);
+
         String html = getHtmlTemplate();
+        html = html.replace(ROOT_CLASS, classNames);
         html = html.replace(TITLE, uiConfig.getHtmlTitle());
         html = html.replace(ON_CONTEXT_MENU, uiConfig.getOncontextmenu());
         html = html.replace(SCRIPT, getScript());

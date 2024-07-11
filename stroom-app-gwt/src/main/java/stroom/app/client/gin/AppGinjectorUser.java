@@ -81,6 +81,8 @@ import stroom.search.solr.client.gin.SolrIndexGinjector;
 import stroom.search.solr.client.gin.SolrIndexModule;
 import stroom.security.client.gin.SecurityGinjector;
 import stroom.security.client.gin.SecurityModule;
+import stroom.security.identity.client.gin.ChangePasswordGinjector;
+import stroom.security.identity.client.gin.ChangePasswordModule;
 import stroom.state.client.gin.ScyllaDbGinjector;
 import stroom.state.client.gin.ScyllaDbModule;
 import stroom.state.client.gin.StateStoreGinjector;
@@ -136,6 +138,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         QueryModule.class,
         ScriptModule.class,
         SecurityModule.class,
+        ChangePasswordModule.class,
         ElasticClusterModule.class,
         ElasticIndexModule.class,
         AnalyticsModule.class,
@@ -175,6 +178,7 @@ public interface AppGinjectorUser extends
         UserPreferencesGinjector,
         ScriptGinjector,
         SecurityGinjector,
+        ChangePasswordGinjector,
         AnalyticsGinjector,
         ElasticClusterGinjector,
         ElasticIndexGinjector,

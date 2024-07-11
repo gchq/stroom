@@ -20,16 +20,12 @@ import javax.inject.Singleton;
 @Singleton
 public class ApiKeysPlugin extends MonitoringPlugin<ApiKeysPresenter> {
 
-//    private final AsyncProvider<ApiKeysPresenter> apiKeysPresenterAsyncProvider;
-
     @Inject
     public ApiKeysPlugin(final EventBus eventBus,
                          final ContentManager eventManager,
                          final ClientSecurityContext securityContext,
                          final Provider<ApiKeysPresenter> apiKeysPresenterAsyncProvider) {
         super(eventBus, eventManager, apiKeysPresenterAsyncProvider, securityContext);
-//        super(eventBus, securityContext);
-//        this.apiKeysPresenterAsyncProvider = apiKeysPresenterAsyncProvider;
     }
 
     @Override
@@ -62,24 +58,4 @@ public class ApiKeysPlugin extends MonitoringPlugin<ApiKeysPresenter> {
                 .build();
         event.getMenuItems().addMenuItem(MenuKeys.SECURITY_MENU, apiKeysMenuItem);
     }
-
-//    private void show() {
-//        apiKeysPresenterAsyncProvider.get(new AsyncCallback<ApiKeysPresenter>() {
-//            @Override
-//            public void onSuccess(final ApiKeysPresenter presenter) {
-//                final PopupSize popupSize = PopupSize.resizable(1_100, 800);
-//                ShowPopupEvent.builder(presenter)
-//                        .popupType(PopupType.CLOSE_DIALOG)
-//                        .popupSize(popupSize)
-//                        .caption("Manage API Keys")
-//                        .onShow(e -> presenter.focus())
-//                        .fire();
-//            }
-//
-//            @Override
-//            public void onFailure(final Throwable caught) {
-//
-//            }
-//        });
-//    }
 }

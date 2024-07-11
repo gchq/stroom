@@ -51,7 +51,7 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
 
         view.setUiHandlers(this);
         view.setTypes(Format.TYPES);
-        getView().setTimeZoneIds(timeZones.getIds());
+        timeZones.getIds(ids -> getView().setTimeZoneIds(ids));
     }
 
     public void show(final Column column,

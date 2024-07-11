@@ -1,1 +1,0 @@
-export { XMLSchemaEditor } from "./XMLSchemaEditor";

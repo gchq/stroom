@@ -17,11 +17,11 @@ import java.util.Objects;
 @AutoLogged
 public class UserPreferencesResourceImpl implements UserPreferencesResource {
 
-    private final Provider<UserPreferencesService> preferencesServiceProvider;
+    private final Provider<UserPreferencesServiceImpl> preferencesServiceProvider;
     private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
 
     @Inject
-    UserPreferencesResourceImpl(final Provider<UserPreferencesService> preferencesServiceProvider,
+    UserPreferencesResourceImpl(final Provider<UserPreferencesServiceImpl> preferencesServiceProvider,
                                 final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider) {
 
         this.preferencesServiceProvider = Objects.requireNonNull(preferencesServiceProvider);
@@ -36,7 +36,7 @@ public class UserPreferencesResourceImpl implements UserPreferencesResource {
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
     public boolean update(final UserPreferences userPreferences) {
-        final UserPreferencesService userPreferencesService = preferencesServiceProvider.get();
+        final UserPreferencesServiceImpl userPreferencesService = preferencesServiceProvider.get();
         final UserPreferences beforePreferences = userPreferencesService.fetch();
 
         final StroomEventLoggingService stroomEventLoggingService = stroomEventLoggingServiceProvider.get();

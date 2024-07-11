@@ -16,6 +16,8 @@
 
 package stroom.widget.popup.client.view;
 
+import stroom.svg.shared.SvgImage;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -64,6 +66,11 @@ public class SimplePopup extends AbstractPopupPanel {
 
         setStyleName("simplePopup-popup");
         setWidget(binder.createAndBindUi(this));
+    }
+
+    @Override
+    public void setIcon(final SvgImage icon) {
+        // No icon
     }
 
     @Override

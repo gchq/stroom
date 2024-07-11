@@ -1,6 +1,10 @@
 package stroom.security.identity.account;
 
 import stroom.security.identity.authenticate.CredentialValidationResult;
+import stroom.security.identity.shared.Account;
+import stroom.security.identity.shared.AccountResource;
+import stroom.security.identity.shared.AccountResultPage;
+import stroom.security.identity.shared.FindAccountRequest;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 
@@ -28,7 +32,7 @@ public interface AccountDao {
 
     AccountResultPage list();
 
-    AccountResultPage search(SearchAccountRequest request);
+    AccountResultPage search(FindAccountRequest request);
 
     Account create(Account account, String password);
 

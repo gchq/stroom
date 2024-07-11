@@ -28,13 +28,24 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         this.eventBus = eventBus;
 
         String hostPageBaseUrl = GWT.getHostPageBaseURL();
-        hostPageBaseUrl = hostPageBaseUrl.substring(0, hostPageBaseUrl.lastIndexOf("/"));
-        hostPageBaseUrl = hostPageBaseUrl.substring(0, hostPageBaseUrl.lastIndexOf("/"));
+        hostPageBaseUrl = trimPath(hostPageBaseUrl);
+        hostPageBaseUrl = trimPath(hostPageBaseUrl);
         final String apiUrl = hostPageBaseUrl + "/api/";
         Defaults.setServiceRoot(apiUrl);
         Defaults.setDispatcher(dispatcher);
     }
 
+    private String trimPath(final String hostPageBaseUrl) {
+        int start = hostPageBaseUrl.indexOf("//");
+        if (start != -1) {
+            start++;
+            int index = hostPageBaseUrl.lastIndexOf("/");
+            if (index != -1 && start != index) {
+                return hostPageBaseUrl.substring(0, index);
+            }
+        }
+        return hostPageBaseUrl;
+    }
 
     @Override
     public <T extends DirectRestService> Resource<T> create(final T service) {

@@ -16,6 +16,8 @@
 
 package stroom.widget.popup.client.view;
 
+import stroom.svg.shared.SvgImage;
+
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -26,6 +28,8 @@ public interface Popup {
     void setPopupPosition(int left, int top);
 
     void forceHide(boolean autoClose);
+
+    void setIcon(SvgImage icon);
 
     void setCaption(String caption);
 

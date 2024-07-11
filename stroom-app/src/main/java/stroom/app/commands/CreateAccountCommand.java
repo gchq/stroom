@@ -4,7 +4,7 @@ import stroom.config.app.Config;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.security.identity.account.AccountService;
-import stroom.security.identity.account.CreateAccountRequest;
+import stroom.security.identity.shared.CreateAccountRequest;
 import stroom.security.impl.UserService;
 import stroom.util.logging.LogUtil;
 
