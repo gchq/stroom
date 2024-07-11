@@ -1,7 +1,7 @@
 package stroom.view.impl;
 
 import stroom.datasource.api.v2.DataSourceProvider;
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.IndexField;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
@@ -65,16 +65,17 @@ public class ViewSearchProvider implements SearchProvider, IndexFieldProvider {
     }
 
     @Override
-    public ResultPage<QueryField> getFieldInfo(final FindFieldInfoCriteria criteria) {
+    public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
         final Optional<ResultPage<QueryField>> optional = securityContext.useAsReadResult(() -> {
             // Find the referenced data source.
             final DocRef docRef = getReferencedDataSource(criteria.getDataSourceRef());
             if (docRef != null) {
-                final FindFieldInfoCriteria findFieldInfoCriteria = new FindFieldInfoCriteria(
+                final FindFieldCriteria findFieldInfoCriteria = new FindFieldCriteria(
                         criteria.getPageRequest(),
                         criteria.getSortList(),
                         docRef,
-                        criteria.getStringMatch());
+                        criteria.getStringMatch(),
+                        criteria.getQueryable());
                 final Optional<DataSourceProvider> delegate =
                         dataSourceProviderRegistry.get().getDataSourceProvider(docRef.getType());
                 return delegate.map(dataSourceProvider -> dataSourceProvider.getFieldInfo(findFieldInfoCriteria));
