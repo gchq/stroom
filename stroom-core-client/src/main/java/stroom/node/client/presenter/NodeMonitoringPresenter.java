@@ -43,6 +43,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.NodeMonitoringConfig;
 import stroom.util.client.DataGridUtil;
+import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
@@ -91,6 +92,7 @@ public class NodeMonitoringPresenter
 
     private final Map<String, PingResult> latestPing = new HashMap<>();
     private final FindNodeStatusCriteria findNodeStatusCriteria = new FindNodeStatusCriteria();
+    private final DelayedUpdate redrawDelayedUpdate;
 
     @Inject
     public NodeMonitoringPresenter(final EventBus eventBus,
@@ -102,6 +104,7 @@ public class NodeMonitoringPresenter
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>();
+        this.redrawDelayedUpdate = new DelayedUpdate(dataGrid::redraw);
         view.setDataWidget(dataGrid);
 
         this.nodeManager = nodeManager;
@@ -130,12 +133,12 @@ public class NodeMonitoringPresenter
                             nodeManager.ping(nodeName,
                                     pingMs -> {
                                         latestPing.put(nodeName, PingResult.success(pingMs, nodeMonitoringConfig));
-                                        super.changeData(data);
+                                        scheduleDataGridRedraw();
                                     },
                                     throwable -> {
                                         latestPing.put(nodeName, PingResult.error(
                                                 throwable.getMessage(), nodeMonitoringConfig));
-                                        super.changeData(data);
+                                        scheduleDataGridRedraw();
                                     },
                                     NodeMonitoringPresenter.this);
                         });
@@ -146,6 +149,11 @@ public class NodeMonitoringPresenter
             }
         };
         dataProvider.addDataDisplay(dataGrid);
+    }
+
+    private void scheduleDataGridRedraw() {
+        // Saves the grid being redrawn for every single row in the list
+        redrawDelayedUpdate.update();
     }
 
     /**

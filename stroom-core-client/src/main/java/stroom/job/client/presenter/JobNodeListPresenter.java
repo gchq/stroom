@@ -45,6 +45,7 @@ import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
+import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.scheduler.Schedule;
@@ -82,6 +83,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
 
     private String jobName;
     private final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
+    private final DelayedUpdate redrawDelayedUpdate;
 
     @Inject
     public JobNodeListPresenter(final EventBus eventBus,
@@ -98,6 +100,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
 
         dataGrid = new MyDataGrid<>();
         dataGrid.addDefaultSelectionModel(true);
+        this.redrawDelayedUpdate = new DelayedUpdate(dataGrid::redraw);
         view.setDataWidget(dataGrid);
 
         initTable();
@@ -126,11 +129,11 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                             .method(res -> res.info(row.getJob().getName(), row.getNodeName()))
                             .onSuccess(info -> {
                                 latestNodeInfo.put(row, info);
-                                super.changeData(data);
+                                scheduleDataGridRedraw();
                             })
                             .onFailure(throwable -> {
                                 latestNodeInfo.remove(row);
-                                super.changeData(data);
+                                scheduleDataGridRedraw();
                             })
                             .taskListener(getView())
                             .exec();
@@ -138,6 +141,11 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                 super.changeData(data);
             }
         };
+    }
+
+    private void scheduleDataGridRedraw() {
+        // Saves the grid being redrawn for every single row in the list
+        redrawDelayedUpdate.update();
     }
 
     private void refresh() {
