@@ -34,6 +34,7 @@ import stroom.job.shared.JobNodeAndInfoListResponse;
 import stroom.job.shared.JobNodeResource;
 import stroom.monitoring.client.NodeMonitoringPlugin;
 import stroom.node.client.JobNodeListHelper;
+import stroom.node.client.NodeManager;
 import stroom.node.client.event.NodeChangeEvent;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.schedule.client.SchedulePopup;
@@ -78,6 +79,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
     private final InlineSvgToggleButton showEnabledToggleBtn;
 
     private final DelayedUpdate redrawDelayedUpdate;
+    private final NodeManager nodeManager;
 
     @Inject
     public JobNodeListPresenter(final Provider<NodeMonitoringPlugin> nodeMonitoringPluginProvider,
@@ -86,10 +88,12 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                                 final RestFactory restFactory,
                                 final SchedulePopup schedulePresenter,
                                 final MenuPresenter menuPresenter,
-                                final DateTimeFormatter dateTimeFormatter) {
+                                final DateTimeFormatter dateTimeFormatter,
+                                final NodeManager nodeManager) {
         super(eventBus, view);
         this.nodeMonitoringPluginProvider = nodeMonitoringPluginProvider;
         this.restFactory = restFactory;
+        this.nodeManager = nodeManager;
 
         this.dataGrid = new MyDataGrid<>();
         this.dataGrid.addDefaultSelectionModel(true);
@@ -113,6 +117,17 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
 
         // Must call this after initialising JobNodeListHelper
         initTable();
+        refreshNodeStates();
+    }
+
+    private void refreshNodeStates() {
+        nodeManager.listEnabledNodes(enabledNodeNames -> {
+            jobNodeListHelper.setEnabledNodeNames(enabledNodeNames);
+            // Redraw the grid in case any node states have changed which impacts enabled state of rows.
+            // Don't need to refresh as the grid doesn't use the node table
+            dataGrid.redraw();
+        }, throwable -> {
+        }, getView());
     }
 
     @Override
@@ -123,7 +138,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
         registerHandler(getEventBus().addHandler(
                 NodeChangeEvent.getType(), event -> {
                     // We are likely showing all jobs so just refresh
-                    refresh();
+                    refreshNodeStates();
                 }));
 
         // JobListPresenter may change a job
@@ -233,24 +248,13 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
     private void initTable() {
         DataGridUtil.addColumnSortHandler(dataGrid, findJobNodeCriteria, this::refresh);
 
-        // Enabled.
-        dataGrid.addColumn(
-                DataGridUtil.updatableTickBoxColumnBuilder(JobNodeAndInfo::isEnabled)
-                        .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
-                        .withSorting(FindJobNodeCriteria.FIELD_ID_ENABLED)
-                        .withFieldUpdater(jobNodeListHelper.createEnabledStateFieldUpdater(
-                                JobNodeListPresenter.this, getView(), this::refresh))
-                        .build(),
-                DataGridUtil.headingBuilder("Enabled")
-                        .withToolTip("Whether this job is enabled on this node or not. " +
-                                "The parent job must also be enabled for the job to execute.")
-                        .build(),
-                60);
+        // JobNode Enabled tick box
+        jobNodeListHelper.addEnabledTickBoxColumn(dataGrid, true);
 
         // Node Name
         final Column<JobNodeAndInfo, CommandLink> nodeNameColumn = DataGridUtil.commandLinkColumnBuilder(
                         buildOpenJobNodeCommandLink())
-                .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
+                .enabledWhen(jobNodeListHelper::isJobNodeEnabled)
                 .withSorting(FindJobNodeCriteria.FIELD_ID_NODE)
                 .build();
         DataGridUtil.addCommandLinkFieldUpdater(nodeNameColumn);
@@ -261,16 +265,17 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                         .build(),
                 300);
 
+        // Node State
+        jobNodeListHelper.addNodeStateColumn(dataGrid);
         // Type
         jobNodeListHelper.addTypeColumn(dataGrid);
-
         // Schedule.
         jobNodeListHelper.addScheduleColumn(dataGrid);
 
         // Max.
         dataGrid.addColumn(
                 DataGridUtil.valueSpinnerColumnBuilder(this::getTaskLimit, 1L, 9999L)
-                        .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
+                        .enabledWhen(jobNodeListHelper::isJobNodeEnabled)
                         .withFieldUpdater((rowIndex, jobNodeAndInfo, value) -> {
                             if (jobNodeAndInfo != null) {
                                 jobNodeAndInfo.getJobNode().setTaskLimit(value.intValue());
@@ -290,7 +295,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
         // Current Tasks (Cur).
         dataGrid.addColumn(
                 DataGridUtil.textColumnBuilder(jobNodeListHelper::getCurrentTaskCountAsStr)
-                        .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
+                        .enabledWhen(jobNodeListHelper::isJobNodeEnabled)
                         .rightAligned()
                         .build(),
                 DataGridUtil.headingBuilder("Current Tasks")

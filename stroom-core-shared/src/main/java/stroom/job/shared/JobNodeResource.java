@@ -119,5 +119,5 @@ public interface JobNodeResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Execute job node now",
             operationId = "executeJobNode")
-    void execute(@PathParam("id") Integer id);
+    boolean execute(@PathParam("id") Integer id);
 }

@@ -78,7 +78,7 @@ class TestRestResources {
                     .filter(classInfo -> classInfo.implementsInterface(RestResource.class.getName()))
                     .map(classInfo -> (Class<? extends RestResource>) classInfo.loadClass())
                     .sorted(Comparator.comparing(Class::getName))
-                    .collect(Collectors.toList());
+                    .toList();
 
             LOGGER.info("Found {} classes to test", classes.size());
 
@@ -108,7 +108,7 @@ class TestRestResources {
                     .filter(classInfo -> classInfo.implementsInterface(RestResource.class.getName()))
                     .map(classInfo -> (Class<? extends RestResource>) classInfo.loadClass())
                     .sorted(Comparator.comparing(Class::getName))
-                    .collect(Collectors.toList());
+                    .toList();
 
             LOGGER.info("Found {} classes to test", classes.size());
 
@@ -311,12 +311,9 @@ class TestRestResources {
                                         operation.operationId(),
                                         resourceClass.getName() + "::" + methodSignature.getName());
 
-                                final String existingOperation;
-                                if (existing != null) {
-                                    existingOperation = existing;
-                                } else {
-                                    existingOperation = resourceClass.getName() + "::" + methodSignature.getName();
-                                }
+                                final String existingOperation = existing != null
+                                        ? existing
+                                        : resourceClass.getName() + "::" + methodSignature.getName();
 
                                 if (!existingOperation.equals(resourceClass.getName() + "::" +
                                         methodSignature.getName())) {
@@ -439,9 +436,9 @@ class TestRestResources {
     private void assertFetchDeclared(final Class<? extends RestResource> resourceClass,
                                      final SoftAssertions softAssertions) {
         boolean fetchMethodPresent = Arrays.stream(resourceClass.getMethods())
-                .filter(m -> m.getName().equals("fetch") && m.getParameterCount() == 1).findFirst().isPresent();
+                .anyMatch(m -> m.getName().equals("fetch") && m.getParameterCount() == 1);
         boolean updateOrDeleteMethodPresent = Arrays.stream(resourceClass.getMethods())
-                .filter(m -> m.getName().equals("update") || m.getName().equals("delete")).findFirst().isPresent();
+                .anyMatch(m -> m.getName().equals("update") || m.getName().equals("delete"));
         if (fetchMethodPresent && updateOrDeleteMethodPresent) {
             if (!FetchWithUuid.class.isAssignableFrom(resourceClass) &&
                     !FetchWithIntegerId.class.isAssignableFrom(resourceClass) &&
@@ -484,13 +481,10 @@ class TestRestResources {
                         //Really would like to check for presence of Provider<SecurityContext>
                         //but not possible in Java.
                         // Check for what we can manage, which is a field of type that extends Provider<SecurityContext>
-                        if (field.getType().getGenericSuperclass() instanceof ParameterizedType) {
-                            ParameterizedType providerType = (ParameterizedType) field.getType().getGenericSuperclass();
-
+                        if (field.getType().getGenericSuperclass() instanceof final ParameterizedType providerType) {
                             return Arrays.stream(providerType.getActualTypeArguments())
-                                    .filter(type -> SecurityContext.class.isAssignableFrom(type.getClass()))
-                                    .findAny()
-                                    .isPresent();
+                                    .anyMatch(type ->
+                                            SecurityContext.class.isAssignableFrom(type.getClass()));
                         }
                     }
                     return false;

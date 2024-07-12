@@ -16,15 +16,22 @@
 
 package stroom.job.impl;
 
+import stroom.cluster.api.ClusterNodeManager;
 import stroom.job.api.ScheduledJob;
 import stroom.job.shared.JobNode;
+import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
+import stroom.util.NullSafe;
 import stroom.util.concurrent.UncheckedInterruptedException;
-import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.scheduler.SimpleScheduleExec;
 import stroom.util.scheduler.TriggerFactory;
+import stroom.util.shared.scheduler.Schedule;
+import stroom.util.shared.scheduler.ScheduleType;
 import stroom.util.thread.CustomThreadFactory;
 import stroom.util.thread.StroomThreadGroup;
 
@@ -49,7 +56,7 @@ import java.util.concurrent.locks.ReentrantLock;
 @Singleton
 class ScheduledTaskExecutor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ScheduledTaskExecutor.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ScheduledTaskExecutor.class);
 
     private static final String STROOM_JOB_THREAD_POOL = "Stroom Job#";
 
@@ -63,6 +70,8 @@ class ScheduledTaskExecutor {
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final SecurityContext securityContext;
+    private final ClusterNodeManager clusterNodeManager;
+    private final NodeInfo nodeInfo;
 
     private final AtomicReference<ScheduledExecutorService> scheduledExecutorService = new AtomicReference<>();
     private final boolean enabled;
@@ -74,7 +83,9 @@ class ScheduledTaskExecutor {
                           final Executor executor,
                           final TaskContextFactory taskContextFactory,
                           final JobSystemConfig jobSystemConfig,
-                          final SecurityContext securityContext) {
+                          final SecurityContext securityContext,
+                          final ClusterNodeManager clusterNodeManager,
+                          final NodeInfo nodeInfo) {
         this.scheduledJobsMap = scheduledJobsMap;
         this.jobNodeTrackerCache = jobNodeTrackerCache;
         this.executor = executor;
@@ -82,42 +93,54 @@ class ScheduledTaskExecutor {
         this.securityContext = securityContext;
         this.enabled = jobSystemConfig.isEnabled();
         this.executionInterval = jobSystemConfig.getExecutionIntervalMs();
+        this.clusterNodeManager = clusterNodeManager;
+        this.nodeInfo = nodeInfo;
     }
 
     void startup() {
         if (enabled) {
             LOGGER.info("Starting Stroom Job service");
-            // Create the runnable object that will perform execution on all
-            // scheduled services.
-            final ReentrantLock lock = new ReentrantLock();
-
-            final Runnable runnable = () -> {
-                if (lock.tryLock()) {
-                    try {
-                        securityContext.asProcessingUser(() -> {
-                            Thread.currentThread().setName("Stroom Job - ScheduledExecutor");
-                            execute();
-                        });
-                    } catch (final RuntimeException e) {
-                        LOGGER.error(e.getMessage(), e);
-                    } finally {
-                        lock.unlock();
-                    }
-                } else {
-                    LOGGER.warn("Still trying to execute tasks");
-                }
-            };
 
             // Create the thread pool that we will use to startup, shutdown and execute lifecycle beans asynchronously.
             final CustomThreadFactory threadFactory = new CustomThreadFactory(STROOM_JOB_THREAD_POOL,
                     StroomThreadGroup.instance(), Thread.MIN_PRIORITY + 1);
 
             // Create the executor service that will execute scheduled services.
-            final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1,
-                    threadFactory);
-            scheduledExecutorService.scheduleWithFixedDelay(runnable, 0, executionInterval, TimeUnit.MILLISECONDS);
+            final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(
+                    1, threadFactory);
+
+            // Create the runnable object that will perform execution on all scheduled services.
+            final Runnable runnable = buildExecutionRunnable();
+
+            scheduledExecutorService.scheduleWithFixedDelay(
+                    runnable, 0, executionInterval, TimeUnit.MILLISECONDS);
             this.scheduledExecutorService.set(scheduledExecutorService);
         }
+    }
+
+    private Runnable buildExecutionRunnable() {
+        final ReentrantLock lock = new ReentrantLock();
+        return () -> {
+            if (lock.tryLock()) {
+                try {
+                    securityContext.asProcessingUser(() -> {
+                        Thread.currentThread().setName("Stroom Job - ScheduledExecutor");
+                        execute();
+                    });
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
+                } finally {
+                    lock.unlock();
+                }
+            } else {
+                LOGGER.warn("Still trying to execute tasks");
+            }
+        };
+    }
+
+    private boolean isThisNodeEnabled() {
+        final String thisNodeName = nodeInfo.getThisNodeName();
+        return clusterNodeManager.getClusterState().isEnabled(thisNodeName);
     }
 
     void shutdown() {
@@ -128,7 +151,11 @@ class ScheduledTaskExecutor {
                 // Stop the scheduled executor.
                 scheduledExecutorService.shutdown();
                 try {
-                    scheduledExecutorService.awaitTermination(1, TimeUnit.MINUTES);
+                    final boolean didTerminate = scheduledExecutorService.awaitTermination(
+                            1, TimeUnit.MINUTES);
+                    if (!didTerminate) {
+                        LOGGER.warn("Timed out waiting for executor service to terminate");
+                    }
                 } catch (final InterruptedException e) {
                     LOGGER.error("Waiting termination interrupted!", e);
 
@@ -140,28 +167,66 @@ class ScheduledTaskExecutor {
     }
 
     private void execute() {
+        int managedTaskCount = 0;
+        int unManagedTaskCount = 0;
+        final boolean isThisNodeEnabled = isThisNodeEnabled();
         for (final ScheduledJob scheduledJob : scheduledJobsMap.keySet()) {
-            try {
-                final String taskName = scheduledJob.getName();
-                final ScheduledJobFunction function = create(scheduledJob);
-                if (function != null) {
-                    final Runnable runnable = taskContextFactory.context(taskName, taskContext -> {
-                        try {
-                            final LogExecutionTime logExecutionTime = new LogExecutionTime();
-                            LOGGER.debug("exec() - >>> {}", taskName);
-                            function.run();
-                            LOGGER.debug("exec() - <<< {} took {}", taskName, logExecutionTime);
-                        } catch (final RuntimeException e) {
-                            LOGGER.error("Error calling {}", taskName, e);
+            // Managed jobs don't run on disabled nodes, but un-managed do as they are things
+            // like lock keep-alive and meta flush which still need to happen
+            if (isThisNodeEnabled || !scheduledJob.isManaged()) {
+                try {
+                    final String taskName = scheduledJob.getName();
+                    final ScheduledJobFunction function = create(scheduledJob);
+                    if (function != null) {
+                        if (scheduledJob.isManaged()) {
+                            managedTaskCount++;
+                        } else {
+                            unManagedTaskCount++;
                         }
-                    });
-                    CompletableFuture
-                            .runAsync(runnable, executor)
-                            .whenComplete((r, t) -> function.getRunning().set(false));
+                        final Runnable runnable = taskContextFactory.context(taskName, taskContext -> {
+                            try {
+                                // Run the task
+                                LOGGER.logDurationIfDebugEnabled(
+                                        function, () -> scheduledJobToStr(scheduledJob));
+                            } catch (final RuntimeException e) {
+                                LOGGER.error("Error executing task '{}'", taskName, e);
+                            }
+                        });
+
+                        CompletableFuture
+                                .runAsync(runnable, executor)
+                                .whenComplete((r, t) ->
+                                        function.getRunning().set(false));
+                    }
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
                 }
-            } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
+            } else {
+                LOGGER.debug(() -> LogUtil.message("Ignoring [{}] as this node '{}' is disabled",
+                        scheduledJobToStr(scheduledJob), nodeInfo.getThisNodeName()));
             }
+        }
+        if (LOGGER.isDebugEnabled()
+                && (unManagedTaskCount > 0 || managedTaskCount > 0)) {
+            LOGGER.debug("Initiated {} un-managed and {} managed tasks asynchronously",
+                    unManagedTaskCount, managedTaskCount);
+        }
+    }
+
+    private String scheduledJobToStr(final ScheduledJob scheduledJob) {
+        if (scheduledJob != null) {
+            final String type = scheduledJob.isManaged()
+                    ? "Managed   "
+                    : "Un-managed";
+            final ScheduleType scheduleType = NullSafe.get(scheduledJob.getSchedule(), Schedule::getType);
+            final String expression = NullSafe.get(scheduledJob, ScheduledJob::getSchedule, Schedule::getExpression);
+            return LogUtil.message("{} task '{}' with {} schedule '{}'",
+                    type,
+                    scheduledJob.getName(),
+                    scheduleType.getDisplayValue().toLowerCase(),
+                    expression);
+        } else {
+            return "";
         }
     }
 
@@ -189,7 +254,8 @@ class ScheduledTaskExecutor {
                         if (jobNode == null) {
                             LOGGER.error("Job node tracker has null job node for: " + scheduledJob.getName());
                         } else {
-                            enabled = jobNode.isEnabled() && jobNode.getJob().isEnabled();
+                            enabled = jobNode.getJob().isEnabled()
+                                    && jobNode.isEnabled();
                             scheduler = trackers.getScheduleExec(jobNode);
                         }
                     }

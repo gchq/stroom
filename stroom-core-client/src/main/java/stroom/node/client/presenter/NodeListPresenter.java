@@ -32,6 +32,7 @@ import stroom.widget.util.client.TableBuilder;
 import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -370,11 +371,14 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> {
         }
         final String severityClass = PING_SEVERITY_CLASS_BASE + severityClassSuffix;
 
+        GWT.log("ping: " + ping + ", msg '" + msg + "', severityClass: "
+                + severityClass + ", barWidthPct: " + barWidthPct);
+
         final String text;
         final String title;
         if (msg == null) {
             text = THOUSANDS_FORMATTER.format(ping);
-            title = "Ping: " + ping + "ms";
+            title = "Ping: " + ping + " ms";
         } else {
             text = msg;
             title = msg;

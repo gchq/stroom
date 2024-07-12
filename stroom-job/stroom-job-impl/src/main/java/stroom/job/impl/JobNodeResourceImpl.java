@@ -30,6 +30,7 @@ import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeListResponse;
 import stroom.job.shared.JobNodeResource;
 import stroom.job.shared.JobNodeUtil;
+import stroom.node.api.NodeCallException;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
@@ -133,7 +134,9 @@ class JobNodeResourceImpl implements JobNodeResource {
                 .build();
         try {
 
-            if (findJobNodeCriteria.getNodeName().getString() != null) {
+            final String nodeNameCriteria = findJobNodeCriteria.getNodeName().getString();
+            // No point trying to hit a disabled node for info as it is likely down
+            if (nodeNameCriteria != null) {
                 response = doFindByNode(findJobNodeCriteria);
             } else {
                 response = doFind(findJobNodeCriteria);
@@ -182,19 +185,25 @@ class JobNodeResourceImpl implements JobNodeResource {
     private JobNodeAndInfoListResponse doFindByNode(final FindJobNodeCriteria criteria) {
         final String nodeName = criteria.getNodeName().getString();
 
-        // Criteria are constrained to a single node, so hit that node so we can get its
+        // Criteria are constrained to a single node, so hit that node, so we can get its
         // node info
-        return nodeServiceProvider.get()
-                .remoteRestResult(
-                        nodeName,
-                        JobNodeAndInfoListResponse.class,
-                        () ->
-                                ResourcePaths.buildAuthenticatedApiPath(
-                                        JobNodeResource.BASE_PATH,
-                                        JobNodeResource.FIND_PATH_PART),
-                        () ->
-                                doFind(criteria),
-                        builder -> builder.post(Entity.json(criteria)));
+        try {
+            return nodeServiceProvider.get()
+                    .remoteRestResult(
+                            nodeName,
+                            JobNodeAndInfoListResponse.class,
+                            () ->
+                                    ResourcePaths.buildAuthenticatedApiPath(
+                                            JobNodeResource.BASE_PATH,
+                                            JobNodeResource.FIND_PATH_PART),
+                            () ->
+                                    doFind(criteria),
+                            builder -> builder.post(Entity.json(criteria)));
+        } catch (NodeCallException e) {
+            LOGGER.debug(() -> LogUtil.message("Error calling node {}: {}", nodeName, e.getMessage(), e));
+            // Node likely down so just return the jobNode from the DB without the node's in-mem state
+            return doFind(criteria);
+        }
     }
 
     @Override
@@ -357,20 +366,23 @@ class JobNodeResourceImpl implements JobNodeResource {
 
     @AutoLogged(value = OperationType.PROCESS, verb = "Executing job on node")
     @Override
-    public void execute(final Integer id) {
+    public boolean execute(final Integer id) {
         final JobNodeService jobNodeService = jobNodeServiceProvider.get();
         final JobNode jobNode = jobNodeService.fetch(id)
                 .orElseThrow(NotFoundException::new);
 
         try {
-            nodeServiceProvider.get().remoteRestCall(
+            return nodeServiceProvider.get().remoteRestResult(
                     jobNode.getNodeName(),
+                    Boolean.class,
                     () -> ResourcePaths.buildAuthenticatedApiPath(
                             JobNodeResource.BASE_PATH,
                             String.valueOf(jobNode.getId()),
                             JobNodeResource.EXECUTE_PATH_PART),
-                    () ->
-                            jobNodeService.executeJob(jobNode),
+                    () -> {
+                        jobNodeService.executeJob(jobNode);
+                        return true;
+                    },
                     builder -> builder.post(null));
         } catch (Exception e) {
             LOGGER.error("Error executing job {} on node {}: {}",

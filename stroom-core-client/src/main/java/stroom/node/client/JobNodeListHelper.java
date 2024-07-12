@@ -4,12 +4,14 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.info.client.ActionCell;
 import stroom.cell.info.client.CommandLink;
+import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.dispatch.client.RestFactory;
 import stroom.job.client.event.JobNodeChangeEvent;
 import stroom.job.shared.BatchScheduleRequest;
+import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
@@ -26,6 +28,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskListener;
 import stroom.task.client.event.OpenTaskManagerEvent;
 import stroom.util.client.DataGridUtil;
+import stroom.util.client.DataGridUtil.ColumnBuilder;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.scheduler.Schedule;
@@ -43,6 +46,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.cellview.client.Column;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -65,6 +70,8 @@ public class JobNodeListHelper {
     private final HasHandlers hasHandlers;
     private final Runnable refreshFunc;
 
+    private final Set<String> enabledNodeNames = new HashSet<>();
+
     public JobNodeListHelper(final DateTimeFormatter dateTimeFormatter,
                              final RestFactory restFactory,
                              final SchedulePopup schedulePresenter,
@@ -81,6 +88,19 @@ public class JobNodeListHelper {
         this.taskListener = taskListener;
         this.hasHandlers = hasHandlers;
         this.refreshFunc = refreshFunc;
+    }
+
+    public void setEnabledNodeNames(final Collection<String> enabledNodeNames) {
+        this.enabledNodeNames.clear();
+        GwtNullSafe.consume(enabledNodeNames, this.enabledNodeNames::addAll);
+    }
+
+    public boolean isNodeEnabled(final String nodeName) {
+        if (nodeName == null) {
+            return false;
+        } else {
+            return enabledNodeNames.contains(nodeName);
+        }
     }
 
 //    public BrowserEventHandler<JobNodeAndInfo> createExecuteJobNowHandler() {
@@ -260,12 +280,13 @@ public class JobNodeListHelper {
         }
     }
 
-    public static boolean isJobNodeEnabled(final JobNodeAndInfo jobNodeAndInfo) {
+    public boolean isJobNodeEnabled(final JobNodeAndInfo jobNodeAndInfo) {
         if (jobNodeAndInfo == null) {
             return false;
         } else {
-            // A job node is only enabled if the parent job is also enabled
-            return jobNodeAndInfo.isEnabled()
+            // A job node is only enabled if the node and the parent job is also enabled
+            return isNodeEnabled(GwtNullSafe.get(jobNodeAndInfo, JobNodeAndInfo::getNodeName))
+                    && jobNodeAndInfo.isEnabled()
                     && GwtNullSafe.isTrue(jobNodeAndInfo.getJob(), Job::isEnabled);
         }
     }
@@ -340,18 +361,24 @@ public class JobNodeListHelper {
     public List<Item> buildActionMenu(final JobNodeAndInfo jobNodeAndInfo) {
 
         final JobNode jobNode = GwtNullSafe.get(jobNodeAndInfo, JobNodeAndInfo::getJobNode);
+        final String nodeName = GwtNullSafe.get(jobNodeAndInfo, JobNodeAndInfo::getNodeName);
 
-        return MenuBuilder.builder()
+        final MenuBuilder builder = MenuBuilder.builder()
                 .withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(SvgImage.HISTORY)
                         .text("Edit Schedule")
                         .command(() ->
-                                showSchedule(jobNodeAndInfo)))
-                .withIconMenuItem(itemBuilder -> itemBuilder
-                        .icon(SvgImage.PLAY)
-                        .text("Run Job on '" + jobNode.getNodeName() + "' Now")
-                        .command(() ->
-                                executeJobNow(jobNode)))
+                                showSchedule(jobNodeAndInfo)));
+
+        if (isNodeEnabled(nodeName)) {
+            builder.withIconMenuItem(itemBuilder -> itemBuilder
+                    .icon(SvgImage.PLAY)
+                    .text("Run Job on '" + jobNode.getNodeName() + "' Now")
+                    .command(() ->
+                            executeJobNow(jobNode)));
+        }
+
+        return builder
                 .withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(SvgImage.JOBS)
                         .text("Show in Server Tasks (" + jobNode.getNodeName() + ")")
@@ -370,13 +397,57 @@ public class JobNodeListHelper {
                 .build();
     }
 
+    public void addEnabledTickBoxColumn(final MyDataGrid<JobNodeAndInfo> dataGrid,
+                                        final boolean isSortable) {
+
+        final ColumnBuilder<JobNodeAndInfo, Boolean, TickBoxState, TickBoxCell> builder =
+                DataGridUtil.updatableTickBoxColumnBuilder(
+                                JobNodeAndInfo::isEnabled)
+                        .enabledWhen(this::isJobNodeEnabled)
+                        .withFieldUpdater(createEnabledStateFieldUpdater(
+                                hasHandlers, taskListener, refreshFunc));
+
+        if (isSortable) {
+            builder.withSorting(FindJobNodeCriteria.FIELD_ID_ENABLED);
+        }
+
+        final Column<JobNodeAndInfo, TickBoxState> column = builder.build();
+
+        dataGrid.addColumn(
+                column,
+                DataGridUtil.headingBuilder("Enabled")
+                        .withToolTip("Whether this job is enabled on this node or not. " +
+                                "Both the node and parent job must also be enabled for the job to execute.")
+                        .build(),
+                60);
+    }
+
     public void addTypeColumn(final MyDataGrid<JobNodeAndInfo> dataGrid) {
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(JobNodeListHelper::buildJobTypeStr)
-                        .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
+                        .enabledWhen(this::isJobNodeEnabled)
                         .build(),
                 DataGridUtil.headingBuilder("Type")
-                        .withToolTip("The type of the job")
+                        .withToolTip("The type of the job. Cron, Frequency or Distributed.")
+                        .build(),
+                80);
+    }
+
+    public void addNodeStateColumn(final MyDataGrid<JobNodeAndInfo> dataGrid) {
+        dataGrid.addColumn(
+                DataGridUtil.textColumnBuilder(
+                                (JobNodeAndInfo jobNodeAndInfo) -> {
+                                    final String nodeName = GwtNullSafe.get(
+                                            jobNodeAndInfo, JobNodeAndInfo::getNodeName);
+                                    return isNodeEnabled(nodeName)
+                                            ? "Enabled"
+                                            : "Disabled";
+                                })
+                        .enabledWhen(this::isJobNodeEnabled)
+//                        .withSorting(FindJobNodeCriteria.FIELD_ID_ENABLED)
+                        .build(),
+                DataGridUtil.headingBuilder("Node State")
+                        .withToolTip("Whether this node is enabled or not. Jobs are not executed on disabled nodes.")
                         .build(),
                 80);
     }
@@ -384,7 +455,7 @@ public class JobNodeListHelper {
     public void addScheduleColumn(final MyDataGrid<JobNodeAndInfo> dataGrid) {
         final Column<JobNodeAndInfo, CommandLink> scheduleColumn = DataGridUtil.commandLinkColumnBuilder(
                         buildOpenScheduleCommandLinkFunc())
-                .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
+                .enabledWhen(this::isJobNodeEnabled)
                 .build();
         DataGridUtil.addCommandLinkFieldUpdater(scheduleColumn);
         dataGrid.addResizableColumn(
@@ -392,13 +463,13 @@ public class JobNodeListHelper {
                 DataGridUtil.headingBuilder("Schedule")
                         .withToolTip("The schedule for this job on this node, if applicable to the job type")
                         .build(),
-                250);
+                200);
     }
 
     public void addLastExecutedColumn(final MyDataGrid<JobNodeAndInfo> dataGrid) {
         dataGrid.addColumn(
                 DataGridUtil.textColumnBuilder(this::getLastExecutedTimeAsStr)
-                        .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
+                        .enabledWhen(this::isJobNodeEnabled)
                         .build(),
                 DataGridUtil.headingBuilder("Last Executed")
                         .withToolTip("The date/time that this job was last executed on this node, " +
@@ -410,7 +481,7 @@ public class JobNodeListHelper {
     public void addNextExecutedColumn(final MyDataGrid<JobNodeAndInfo> dataGrid) {
         dataGrid.addColumn(
                 DataGridUtil.textColumnBuilder(this::getNextScheduledTimeAsStr)
-                        .enabledWhen(JobNodeListHelper::isJobNodeEnabled)
+                        .enabledWhen(this::isJobNodeEnabled)
                         .build(),
                 DataGridUtil.headingBuilder("Next Scheduled")
                         .withToolTip("The date/time that this job is next scheduled to execute on this node, " +
