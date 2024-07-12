@@ -51,10 +51,14 @@ plugins {
 apply plugin: 'de.undercouch.download'
 //apply plugin: 'com.vanniktech.dependency.graph.generator'
 
+ext.javaLanguageVersion = 21
+// Adoptium also covers Temurin
+ext.javaVendor = JvmVendorSpec.ADOPTIUM
+
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-        vendor = JvmVendorSpec.ADOPTIUM
+        languageVersion = JavaLanguageVersion.of(javaLanguageVersion)
+        vendor = javaVendor
     }
 }
 
