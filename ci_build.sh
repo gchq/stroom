@@ -428,16 +428,26 @@ check_for_out_of_date_puml_svgs() {
   echo -e "${GREEN}Ensuring all PlantUML generated .svg files are up to date${NC}"
 
   # shellcheck disable=SC2068
+  # Convert any .puml files into .puml.svg if the sha1 hash of the .puml file
+  # does not match that in .puml.sha1 (or .puml.sha1 doesn't exist)
   ${convert_cmd[@]}
 
   # Now see if git thinks there are any differences
   # if so, fail the build as it means the puml has been changed
-  # but the svg has not been regenerated.
+  # but the svg has not been regenerated and checked in.
+  # This is to ensure that the svgs that are checked in to git
+  # are up to date with their puml file.
+  # This is different to stroom-docs which does not check in svg files.
 
   # Example git status --porcelain output:
   #  M stroom-proxy/stroom-proxy-app/doc/storing-data.puml
   #  M stroom-proxy/stroom-proxy-app/doc/storing-data.svg
   # ?? stroom-proxy/stroom-proxy-app/doc/storing-dataX.svg
+
+  # Run the git status so we can see what git thinks has changed
+  echo -e "Checking for any changes to .puml.svg files"
+  git status --porcelain \
+    | grep -Po "(?<=( M|\?\?) ).*\.puml\.svg"
 
   local out_of_date_file_count=0
   # grep the git status output for modified/untracked svg files and
@@ -452,7 +462,7 @@ check_for_out_of_date_puml_svgs() {
       out_of_date_file_count=$((out_of_date_file_count + 1))
     fi
   done < <(git status --porcelain \
-    | grep -Po "(?<=( M|\?\?) ).*\.svg")
+    | grep -Po "(?<=( M|\?\?) ).*\.puml\.svg")
 
   if [[ ${out_of_date_file_count} -gt 0 ]]; then
     echo -e "${RED}ERROR${NC}: ${out_of_date_file_count} PlantUML generated" \
