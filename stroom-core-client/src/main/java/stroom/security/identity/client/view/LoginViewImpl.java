@@ -83,7 +83,8 @@ public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implement
 
     @Override
     public void focus() {
-        password.setFocus(true);
+        userName.setFocus(true);
+        userName.selectAll();
     }
 
     @Override
