@@ -2,7 +2,7 @@ package stroom.index.impl.db;
 
 import stroom.datasource.api.v2.AnalyzerType;
 import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.FindIndexFieldCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.IndexField;
 import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
@@ -227,11 +227,10 @@ class TestIndexFieldDaoImpl {
 
     private List<IndexField> getFields(final DocRef docRef) {
         final ResultPage<IndexField> resultPage = indexFieldDao.findFields(
-                new FindIndexFieldCriteria(
+                new FindFieldCriteria(
                         new PageRequest(),
                         Collections.emptyList(),
-                        docRef,
-                        null));
+                        docRef));
         return resultPage.getValues();
     }
 }
