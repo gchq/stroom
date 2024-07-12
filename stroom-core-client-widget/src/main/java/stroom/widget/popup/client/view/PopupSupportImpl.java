@@ -16,6 +16,7 @@
 
 package stroom.widget.popup.client.view;
 
+import stroom.svg.shared.SvgImage;
 import stroom.task.client.HasTaskListener;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -37,6 +38,7 @@ import java.util.List;
 public class PopupSupportImpl implements PopupSupport {
 
     private Popup popup;
+    private SvgImage icon;
     private String caption;
     private Boolean modal;
 
@@ -50,11 +52,13 @@ public class PopupSupportImpl implements PopupSupport {
 
     public PopupSupportImpl(final View view,
                             final HasTaskListener hasTaskListener,
+                            final SvgImage icon,
                             final String caption,
                             final Boolean modal,
                             final Element... autoHidePartners) {
         setView(view);
         setHasTaskListener(hasTaskListener);
+        setIcon(icon);
         setCaption(caption);
 
         if (modal != null) {
@@ -223,6 +227,14 @@ public class PopupSupportImpl implements PopupSupport {
     }
 
     @Override
+    public void setIcon(final SvgImage icon) {
+        this.icon = icon;
+        if (popup != null) {
+            popup.setIcon(icon);
+        }
+    }
+
+    @Override
     public void setCaption(final String caption) {
         this.caption = caption;
         if (popup != null) {
@@ -352,6 +364,9 @@ public class PopupSupportImpl implements PopupSupport {
             }
         }
 
+        if (icon != null) {
+            popup.setIcon(icon);
+        }
         if (caption != null) {
             popup.setCaption(caption);
         }

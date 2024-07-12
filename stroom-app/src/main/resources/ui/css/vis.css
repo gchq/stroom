@@ -15,13 +15,6 @@
  */
 @import url("theme.css");
 @import url("font.css");
-
-/* Font Awesome */
-@import url("../fonts/FontAwesome/font-awesome.css");
-
-/* Roboto Font */
-@import url("../fonts/Roboto/roboto.css");
-
 @import url("webkit-scrollbar.css");
 
 html, body {

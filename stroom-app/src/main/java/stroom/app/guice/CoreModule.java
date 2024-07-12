@@ -99,6 +99,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.security.impl.db.SecurityDaoModule());
         install(new stroom.servicediscovery.impl.ServiceDiscoveryModule());
         install(new stroom.analytics.rule.impl.AnalyticRuleModule());
+        install(new stroom.state.impl.StateModule());
         install(new stroom.statistics.impl.InternalStatisticsModule());
         install(new stroom.statistics.impl.hbase.entity.StroomStatsStoreModule());
         install(new stroom.statistics.impl.hbase.internal.InternalModule());

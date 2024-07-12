@@ -16,7 +16,6 @@
 
 package stroom.query.common.v2;
 
-import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest;
@@ -26,6 +25,7 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.string.ExceptionStringUtil;

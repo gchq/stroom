@@ -134,6 +134,10 @@ public class NewPropertyViewImpl
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Binder extends UiBinder<Widget, NewPropertyViewImpl> {
 
     }

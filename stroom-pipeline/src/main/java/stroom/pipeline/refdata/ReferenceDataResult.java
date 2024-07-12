@@ -71,7 +71,7 @@ public class ReferenceDataResult implements ErrorReceiver {
         return Optional.ofNullable(refDataValueProxy);
     }
 
-    void addRefDataValueProxy(final RefDataValueProxy refDataValueProxy) {
+    public void addRefDataValueProxy(final RefDataValueProxy refDataValueProxy) {
         Objects.requireNonNull(refDataValueProxy);
         if (this.refDataValueProxy == null) {
             LOGGER.trace("Setting refDataValueProxy to {}", refDataValueProxy);

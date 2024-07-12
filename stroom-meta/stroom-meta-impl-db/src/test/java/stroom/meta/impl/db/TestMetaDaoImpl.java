@@ -389,13 +389,13 @@ class TestMetaDaoImpl {
                 // Find with doc ref.
                 makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
                         .addTerm(createFeedTerm(TEST1_FEED, true))
-                        .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                        .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                         .build(), 20),
 
                 makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
                         .addTerm(createFeedTerm(TEST1_FEED, true))
                         .addTerm(createFeedTerm(TEST2_FEED, true))
-                        .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                        .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                         .build(), 0),
 
                 makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
@@ -406,19 +406,19 @@ class TestMetaDaoImpl {
                 makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
                         .addTerm(createFeedTerm(TEST1_FEED, true))
                         .addTerm(createFeedTerm(TEST2_FEED, false))
-                        .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                        .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                         .build(), 20),
 
                 makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
                         .addTerm(createFeedTerm(TEST1_FEED, false))
                         .addTerm(createFeedTerm(TEST2_FEED, true))
-                        .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                        .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                         .build(), 20),
 
                 makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
                         .addTerm(createFeedTerm(TEST1_FEED, false))
                         .addTerm(createFeedTerm(TEST2_FEED, false))
-                        .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                        .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                         .build(), totalMetaCount),
 
                 makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
@@ -439,8 +439,8 @@ class TestMetaDaoImpl {
                         .build(), 0),
 
                 makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
-                        .addDateTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
-                        .addDateTerm(MetaFields.TYPE, Condition.EQUALS, RAW_STREAM_TYPE_NAME)
+                        .addTextTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
+                        .addTextTerm(MetaFields.TYPE, Condition.EQUALS, RAW_STREAM_TYPE_NAME)
                         .build(), 10),
 
                 // Or tests.
@@ -451,7 +451,7 @@ class TestMetaDaoImpl {
                                         .addTerm(createFeedTerm(TEST1_FEED, true))
                                         .addTerm(createFeedTerm(TEST2_FEED, true))
                                         .build())
-                        .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                        .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                         .build(), totalMetaCount),
 
                 makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
@@ -521,18 +521,18 @@ class TestMetaDaoImpl {
         unlockAllLockedStreams();
 
         ExpressionOperator expression = ExpressionOperator.builder()
-                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, "Unlocked")
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, "Unlocked")
                 .addDateTerm(MetaFields.CREATE_TIME, Condition.GREATER_THAN, "2000-01-01T00:00:00.000Z")
-                .addDateTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.ERROR)
+                .addTextTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.ERROR)
                 .addIdTerm(MetaFields.ID, Condition.EQUALS, myMeta.getId())
                 .build();
         ResultPage<Meta> resultPage = metaDao.find(new FindMetaCriteria(expression));
         assertThat(resultPage.size()).isOne();
 
         expression = ExpressionOperator.builder()
-                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, "Unlocked")
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, "Unlocked")
                 .addDateTerm(MetaFields.CREATE_TIME, Condition.GREATER_THAN, "2000-01-01T00:00:00.000Z")
-                .addDateTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.ERROR)
+                .addTextTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.ERROR)
                 .addIdTerm(MetaFields.ID, Condition.EQUALS, myMeta.getId())
                 .addOperator(
                         ExpressionOperator.builder()
@@ -599,10 +599,10 @@ class TestMetaDaoImpl {
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addOperator(ExpressionOperator.builder().op(Op.OR)
-                        .addDateTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
-                        .addDateTerm(MetaFields.FEED, Condition.EQUALS, TEST2_FEED_NAME)
+                        .addTextTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
+                        .addTextTerm(MetaFields.FEED, Condition.EQUALS, TEST2_FEED_NAME)
                         .build())
-                .addDateTerm(MetaFields.TYPE, Condition.EQUALS, PROCESSED_STREAM_TYPE_NAME)
+                .addTextTerm(MetaFields.TYPE, Condition.EQUALS, PROCESSED_STREAM_TYPE_NAME)
                 .addTerm(MetaFields.REC_WRITE.getFldName(), Condition.EQUALS, "0")
                 .addTerm(MetaFields.REC_READ.getFldName(), Condition.GREATER_THAN_OR_EQUAL_TO, "0")
                 .build();
@@ -637,10 +637,10 @@ class TestMetaDaoImpl {
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addOperator(ExpressionOperator.builder().op(Op.OR)
-                        .addDateTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
-                        .addDateTerm(MetaFields.FEED, Condition.EQUALS, TEST2_FEED_NAME)
+                        .addTextTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
+                        .addTextTerm(MetaFields.FEED, Condition.EQUALS, TEST2_FEED_NAME)
                         .build())
-                .addDateTerm(MetaFields.TYPE, Condition.EQUALS, RAW_STREAM_TYPE_NAME)
+                .addTextTerm(MetaFields.TYPE, Condition.EQUALS, RAW_STREAM_TYPE_NAME)
                 .build();
         resultPage = metaDao.findReprocess(new FindMetaCriteria(expression));
         assertThat(resultPage.size())
@@ -699,8 +699,8 @@ class TestMetaDaoImpl {
         dumpMetaTableToDebug();
 
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addDateTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
-                .addDateTerm(MetaFields.TYPE, Condition.EQUALS, RAW_STREAM_TYPE_NAME)
+                .addTextTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
+                .addTextTerm(MetaFields.TYPE, Condition.EQUALS, RAW_STREAM_TYPE_NAME)
                 .build();
         selectionSummary = metaDao.getSelectionSummary(new FindMetaCriteria(expression));
         assertThat(selectionSummary.getItemCount())
@@ -731,8 +731,8 @@ class TestMetaDaoImpl {
                 .isEqualTo(0);
 
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addDateTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
-                .addDateTerm(MetaFields.TYPE, Condition.EQUALS, RAW_STREAM_TYPE_NAME)
+                .addTextTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
+                .addTextTerm(MetaFields.TYPE, Condition.EQUALS, RAW_STREAM_TYPE_NAME)
                 .build();
         selectionSummary = metaDao.getReprocessSelectionSummary(new FindMetaCriteria(expression));
         assertThat(selectionSummary.getItemCount())
@@ -850,12 +850,12 @@ class TestMetaDaoImpl {
                 .thenReturn(12);
 
         final FindMetaCriteria criteria = new FindMetaCriteria(ExpressionOperator.builder()
-                .addDateTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
+                .addTextTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
                 .build());
 
         final FindMetaCriteria deletedCriteria = new FindMetaCriteria(ExpressionOperator.builder()
-                .addDateTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
-                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.DELETED.getDisplayValue())
+                .addTextTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.DELETED.getDisplayValue())
                 .build());
 
         metaDao.updateStatus(criteria, Status.UNLOCKED, Status.DELETED, Instant.now().toEpochMilli(), false);
@@ -881,16 +881,16 @@ class TestMetaDaoImpl {
                 .thenReturn(2);
 
         final FindMetaCriteria criteria = new FindMetaCriteria(ExpressionOperator.builder()
-                .addDateTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
+                .addTextTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
                 .addIdTerm(MetaFields.REC_READ, Condition.LESS_THAN, 500)
                 .addIdTerm(MetaFields.REC_WRITE, Condition.LESS_THAN, 50)
                 .build());
 
         final FindMetaCriteria deletedCriteria = new FindMetaCriteria(ExpressionOperator.builder()
-                .addDateTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
+                .addTextTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
                 .addIdTerm(MetaFields.REC_READ, Condition.LESS_THAN, 500)
                 .addIdTerm(MetaFields.REC_WRITE, Condition.LESS_THAN, 50)
-                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.DELETED.getDisplayValue())
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.DELETED.getDisplayValue())
                 .build());
 
         metaDao.updateStatus(criteria, Status.UNLOCKED, Status.DELETED, Instant.now().toEpochMilli(), false);
@@ -916,18 +916,18 @@ class TestMetaDaoImpl {
                 .thenReturn(2);
 
         final FindMetaCriteria criteria = new FindMetaCriteria(ExpressionOperator.builder()
-                .addDateTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
+                .addTextTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
                 .addTerm(createPipelineTerm(getPipelineUuid(TEST1_FEED_NAME), true))
                 .addIdTerm(MetaFields.REC_READ, Condition.LESS_THAN, 500)
                 .addIdTerm(MetaFields.REC_WRITE, Condition.LESS_THAN, 50)
                 .build());
 
         final FindMetaCriteria deletedCriteria = new FindMetaCriteria(ExpressionOperator.builder()
-                .addDateTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
+                .addTextTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
                 .addTerm(createPipelineTerm(getPipelineUuid(TEST1_FEED_NAME), true))
                 .addIdTerm(MetaFields.REC_READ, Condition.LESS_THAN, 500)
                 .addIdTerm(MetaFields.REC_WRITE, Condition.LESS_THAN, 50)
-                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.DELETED.getDisplayValue())
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.DELETED.getDisplayValue())
                 .build());
 
         metaDao.updateStatus(criteria, Status.UNLOCKED, Status.DELETED, Instant.now().toEpochMilli(), false);
@@ -953,14 +953,14 @@ class TestMetaDaoImpl {
                 .thenReturn(6);
 
         final FindMetaCriteria criteria = new FindMetaCriteria(ExpressionOperator.builder()
-                .addDateTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
+                .addTextTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
                 .addTerm(createPipelineTerm(getPipelineUuid(TEST1_FEED_NAME), true))
                 .build());
 
         final FindMetaCriteria deletedCriteria = new FindMetaCriteria(ExpressionOperator.builder()
-                .addDateTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
+                .addTextTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
                 .addTerm(createPipelineTerm(getPipelineUuid(TEST1_FEED_NAME), true))
-                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.DELETED.getDisplayValue())
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.DELETED.getDisplayValue())
                 .build());
 
         metaDao.updateStatus(criteria, Status.UNLOCKED, Status.DELETED, Instant.now().toEpochMilli(), false);

@@ -16,6 +16,7 @@
 
 package stroom.widget.popup.client.event;
 
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -37,6 +38,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
     private final PopupType popupType;
     private final PopupPosition popupPosition;
     private final PopupSize popupSize;
+    private final SvgImage icon;
     private final String caption;
     private final ShowPopupEvent.Handler showHandler;
     private final HidePopupRequestEvent.Handler hideRequestHandler;
@@ -48,6 +50,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
                            final PopupType popupType,
                            final PopupPosition popupPosition,
                            final PopupSize popupSize,
+                           final SvgImage icon,
                            final String caption,
                            final ShowPopupEvent.Handler showHandler,
                            final HidePopupRequestEvent.Handler hideRequestHandler,
@@ -58,6 +61,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
         this.popupType = popupType;
         this.popupPosition = popupPosition;
         this.popupSize = popupSize;
+        this.icon = icon;
         this.caption = caption;
         this.showHandler = showHandler;
         this.hideRequestHandler = hideRequestHandler;
@@ -103,6 +107,10 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
         return popupSize;
     }
 
+    public SvgImage getIcon() {
+        return icon;
+    }
+
     public String getCaption() {
         return caption;
     }
@@ -146,6 +154,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
         private PopupType popupType;
         private PopupPosition popupPosition;
         private PopupSize popupSize;
+        private SvgImage icon;
         private String caption;
         private ShowPopupEvent.Handler showHandler;
         private HidePopupRequestEvent.Handler hideRequestHandler;
@@ -169,6 +178,11 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
 
         public Builder popupSize(final PopupSize popupSize) {
             this.popupSize = popupSize;
+            return this;
+        }
+
+        public Builder icon(final SvgImage icon) {
+            this.icon = icon;
             return this;
         }
 
@@ -241,6 +255,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
                     popupType,
                     popupPosition,
                     popupSize,
+                    icon,
                     caption,
                     showHandler,
                     hideRequestHandler,

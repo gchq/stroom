@@ -176,6 +176,8 @@ dependencies {
     implementation project(':stroom-security:stroom-security-openid-api')
     implementation project(':stroom-servicediscovery:stroom-servicediscovery-api')
     implementation project(':stroom-servicediscovery:stroom-servicediscovery-impl')
+    implementation project(':stroom-state:stroom-state-api')
+    implementation project(':stroom-state:stroom-state-impl')
     implementation project(':stroom-statistics:stroom-statistics-api')
     implementation project(':stroom-statistics:stroom-statistics-impl')
     implementation project(':stroom-statistics:stroom-statistics-impl-hbase')
@@ -220,6 +222,11 @@ dependencies {
     implementation libs.logback_classic
     implementation libs.mysql_connector_java
     implementation libs.restygwt
+
+    implementation libs.scylladb_driver_core
+    implementation libs.scylladb_query_builder
+    implementation libs.scylladb_driver_mapper
+
     implementation libs.slf4j_api
     implementation libs.ws_rs_api
 
@@ -331,10 +338,8 @@ jar {
 }
 
 //// We often run out of memory when running the UI builds in parallel so create tasks that will build them one after another.
-//task buildUiPart1(dependsOn: ":stroom-ui:copyYarnBuild") {}
 //task buildUiPart2(dependsOn: ":stroom-app-gwt:gwtCompile") {}
 //task buildUiPart3(dependsOn: ":stroom-dashboard-gwt:gwtCompile") {}
-//buildUiPart1.mustRunAfter  ":stroom-ui:jar"
 //buildUiPart2.mustRunAfter  ":stroom-app-gwt:jar"
 //buildUiPart3.mustRunAfter  ":stroom-dashboard-gwt:jar"
 //buildUiPart2.mustRunAfter buildUiPart1
@@ -343,7 +348,6 @@ jar {
 // Make sure GWT compilation doesn't run before tests.
 //tasks.getByPath(':stroom-app-gwt:gwtClean').mustRunAfter test
 //tasks.getByPath(':stroom-dashboard-gwt:gwtClean').mustRunAfter test
-//tasks.getByPath(':stroom-ui:removeYarnBuild').mustRunAfter test
 
 // Display info to confirm what we are compiling with
 compileJava {
@@ -367,7 +371,6 @@ shadowJar {
     // We want to run the tests before we build the fat jar.
     dependsOn test
     // We want to compile all GWT and React content before we build the fat jar.
-    dependsOn ":stroom-ui:copyYarnBuild"
     dependsOn ":stroom-app-gwt:gwtCompile"
 //    dependsOn ":stroom-dashboard-gwt:gwtCompile"
     // The jar needs to include the swagger.(json|yaml) files that swagger gen produces
@@ -758,15 +761,8 @@ tasks.register('setupSampleDataApplication', JavaExec) {
 // Make sure GWT compilation doesn't run before processResources.
 tasks.getByPath(':stroom-app-gwt:gwtClean').mustRunAfter processResources
 //tasks.getByPath(':stroom-dashboard-gwt:gwtClean').mustRunAfter processResources
-tasks.getByPath(':stroom-ui:removeYarnBuild').mustRunAfter processResources
 
 // We often run out of memory when running the UI builds in parallel so create tasks that will build them one after another.
-//tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter test
-//tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter analyzeClassesDependencies
-//tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter analyzeTestClassesDependencies
-//tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter generateConfigDefaultsYamlFile
-//tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter makeSendExecutable
-//tasks.getByPath(':stroom-app-gwt:gwtCompile').mustRunAfter ':stroom-ui:yarnBuild'
 //tasks.getByPath(':stroom-dashboard-gwt:gwtCompile').mustRunAfter ':stroom-app-gwt:gwtCompile'
 
 // Make the build command create the full distribution
@@ -774,5 +770,38 @@ tasks.build.dependsOn resolve
 tasks.build.dependsOn copyFilesForStroomDockerBuild
 tasks.build.dependsOn shadowJar
 tasks.build.dependsOn buildDistribution
+
+tasks.register('Stroom Node 1 (GWT Super Dev)', JavaExec) {
+    doFirst {
+        // We have to alter the existing jvm args rather than set them so that we don't lose debug args added by
+        // IJ Idea.
+        def jvmArgsCopy = []
+        for (arg in jvmArgs) {
+            jvmArgsCopy.add(arg)
+        }
+        //    -DgwtSuperDevMode=true
+        //    -Xmx4g
+        //    -Devent.logging.validate=true
+        //    --add-opens java.base/java.nio=ALL-UNNAMED
+        //    --add-opens java.base/sun.nio.ch=ALL-UNNAMED
+        //    --add-opens java.base/java.lang=ALL-UNNAMED
+        jvmArgsCopy.add("-DgwtSuperDevMode=true")
+        jvmArgsCopy.add("-Xmx4g")
+        jvmArgsCopy.add("-Devent.logging.validate=true")
+        jvmArgsCopy.add("--add-opens")
+        jvmArgsCopy.add("java.base/java.nio=ALL-UNNAMED")
+        jvmArgsCopy.add("--add-opens")
+        jvmArgsCopy.add("java.base/sun.nio.ch=ALL-UNNAMED")
+        jvmArgsCopy.add("--add-opens")
+        jvmArgsCopy.add("java.base/java.lang=ALL-UNNAMED")
+        jvmArgs = jvmArgsCopy
+    }
+
+    group = 'application'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'stroom.app.App'
+    workingDir = '../'
+    args = ['server', 'local.yml']
+}
 
 // vim: set tabstop=4 shiftwidth=4 expandtab:

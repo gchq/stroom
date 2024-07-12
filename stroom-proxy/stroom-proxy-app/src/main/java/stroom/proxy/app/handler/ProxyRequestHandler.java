@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.time.Instant;
 
 /**
  * Main entry point to handling proxy requests.
@@ -80,7 +81,7 @@ public class ProxyRequestHandler implements RequestHandler {
         LOGGER.debug(() -> "Adding proxy id attribute: " + proxyIdString + ": " + requestUuid);
         attributeMap.put(proxyIdString, requestUuid);
 
-        final long startTimeMs = System.currentTimeMillis();
+        final Instant receivedTime = Instant.now();
         try (final ByteCountInputStream inputStream =
                 new ByteCountInputStream(request.getInputStream())) {
             // Consume the data
@@ -92,12 +93,12 @@ public class ProxyRequestHandler implements RequestHandler {
                             attributeMap,
                             handler,
                             new ProgressHandler("Receiving data"));
-                    stroomStreamProcessor.processRequestHeader(request);
-                    stroomStreamProcessor.processInputStream(inputStream, "");
+                    stroomStreamProcessor.processRequestHeader(request, receivedTime);
+                    stroomStreamProcessor.processInputStream(inputStream, "", receivedTime);
                 });
             });
 
-            final long duration = System.currentTimeMillis() - startTimeMs;
+            final long durationMs = System.currentTimeMillis() - receivedTime.toEpochMilli();
             logStream.log(
                     RECEIVE_LOG,
                     attributeMap,
@@ -105,7 +106,7 @@ public class ProxyRequestHandler implements RequestHandler {
                     request.getRequestURI(),
                     HttpStatus.SC_OK,
                     inputStream.getCount(),
-                    duration);
+                    durationMs);
         } catch (final IOException e) {
             throw StroomStreamException.create(e, attributeMap);
         }

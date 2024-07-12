@@ -102,21 +102,31 @@ public final class XMLUtil {
         prettyPrintXML(reader, writer);
     }
 
-    public static void prettyPrintXML(final Reader reader, final Writer writer) {
+    public static void prettyPrintXML(final XMLReader xmlReader,
+                                      final InputSource inputSource,
+                                      final Writer writer) {
         try {
             final TransformerHandler handler = createTransformerHandler(new FatalErrorListener(), true);
             handler.setResult(new StreamResult(writer));
-
-            final SAXParser parser = PARSER_FACTORY.newSAXParser();
-            final XMLReader xmlReader = parser.getXMLReader();
             xmlReader.setErrorHandler(new FatalErrorHandler());
             xmlReader.setContentHandler(handler);
-            xmlReader.parse(new InputSource(reader));
+            xmlReader.parse(inputSource);
 
-        } catch (final ParserConfigurationException
-                | TransformerConfigurationException
+        } catch (final TransformerConfigurationException
                 | IOException
                 | SAXException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void prettyPrintXML(final Reader reader, final Writer writer) {
+        try {
+            final SAXParser parser = PARSER_FACTORY.newSAXParser();
+            final XMLReader xmlReader = parser.getXMLReader();
+            prettyPrintXML(xmlReader, new InputSource(reader), writer);
+
+        } catch (final ParserConfigurationException
+                       | SAXException e) {
             throw new RuntimeException(e);
         }
     }

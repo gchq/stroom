@@ -809,7 +809,7 @@ class TestMetaServiceImpl {
     private void assertTotalRowCount(final int expectedRowCount, final Status status) {
         FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(ExpressionOperator.builder()
-                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, status.getDisplayValue())
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, status.getDisplayValue())
                 .build());
         final int rowCount = metaDao.count(criteria);
 

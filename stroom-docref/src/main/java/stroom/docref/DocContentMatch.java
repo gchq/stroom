@@ -67,9 +67,19 @@ public class DocContentMatch {
         // Now remove newlines and adjust offset and length to accordingly.
         final StringBuilder sample = new StringBuilder();
         for (int i = sampleStart; i < chars.length; i++) {
-            char c = chars[i];
-            if (c == '\n') {
-                sample.append(' ');
+            final char c = chars[i];
+            if (c == '\r' || c == '\n') {
+                break;
+
+//            if (c == '\r') {
+//                // Omit carriage returns.
+//                if (i < location.getOffset()) {
+//                    offset--;
+//                } else if (i >= location.getOffset() && i <= location.getOffset() + location.getLength()) {
+//                    length--;
+//                }
+//            } else if (c == '\n') {
+//                sample.append(' ');
             } else {
                 sample.append(c);
                 if (sample.length() >= SAMPLE_LENGTH_BEFORE + SAMPLE_LENGTH_AFTER) {

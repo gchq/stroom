@@ -137,7 +137,7 @@ tasks.register('copySources') {
         // Transform code.
         println 'Running eclipse TransformerCLI'
         println('  input: ' + inputProjectPath)
-        println('  outpu: ' + transformedSourceDir)
+        println('  output: ' + transformedSourceDir)
         delete transformedSourceDir
 
         javaexec {

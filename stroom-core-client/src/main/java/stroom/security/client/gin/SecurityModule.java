@@ -16,7 +16,6 @@
 
 package stroom.security.client.gin;
 
-import stroom.changepassword.client.ChangePasswordPlugin;
 import stroom.core.client.gin.PluginModule;
 import stroom.security.client.ApiKeysPlugin;
 import stroom.security.client.CurrentUser;
@@ -59,7 +58,6 @@ public class SecurityModule extends PluginModule {
         bind(LoginManager.class).in(Singleton.class);
 
         bindPlugin(LogoutPlugin.class);
-        bindPlugin(ChangePasswordPlugin.class);
 
         // Users
         bindPlugin(ManageUserPlugin.class);
@@ -89,8 +87,5 @@ public class SecurityModule extends PluginModule {
         bindPresenterWidget(EditApiKeyPresenter.class,
                 EditApiKeyPresenter.EditApiKeyView.class,
                 EditApiKeyViewImpl.class);
-//        bindPresenterWidget(ApiKeysListPresenter.class,
-//                ApiKeysListPresenter.ApiKeysListView.class,
-//                ApiKeysListViewImpl.class);
     }
 }

@@ -17,12 +17,12 @@
 package stroom.query.common.v2;
 
 import stroom.expression.api.DateTimeSettings;
-import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.language.functions.ChildData;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Generator;
 import stroom.query.language.functions.Val;

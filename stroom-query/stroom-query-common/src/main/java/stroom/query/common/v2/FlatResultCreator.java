@@ -16,7 +16,6 @@
 
 package stroom.query.common.v2;
 
-import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.FlatResultBuilder;
@@ -32,6 +31,7 @@ import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.common.v2.format.ColumnFormatter;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ref.ErrorConsumer;

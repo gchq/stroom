@@ -42,7 +42,7 @@ public class GenericRefDataValueSerde implements RefDataValueSerde {
         return new UnknownRefDataValue(byteBuffer);
     }
 
-    public RefDataValue deserialize(final ByteBuffer byteBuffer, final int typeId) {
+    public RefDataValue deserialize(final ByteBuffer byteBuffer, final byte typeId) {
         return refDataValueSerdeFactory.deserialize(byteBuffer, typeId);
     }
 

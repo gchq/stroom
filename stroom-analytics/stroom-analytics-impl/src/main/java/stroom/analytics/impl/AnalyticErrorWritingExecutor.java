@@ -7,7 +7,6 @@ import stroom.task.api.TerminateHandlerFactory;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 

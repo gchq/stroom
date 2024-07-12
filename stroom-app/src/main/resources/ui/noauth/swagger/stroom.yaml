@@ -54,7 +54,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SearchAccountRequest'
+              $ref: '#/components/schemas/FindAccountRequest'
         description: account
         required: true
       responses:
@@ -976,24 +976,6 @@ paths:
       summary: Update a dictionary doc
       tags:
       - API Key
-  /authentication/v1/needsPasswordChange:
-    get:
-      operationId: needsPasswordChange
-      parameters:
-      - in: query
-        name: email
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: boolean
-          description: default response
-      summary: Check if a user's password needs changing.
-      tags:
-      - Authentication
   /authentication/v1/noauth/changePassword:
     post:
       operationId: changePassword
@@ -1042,22 +1024,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PasswordPolicyConfig'
+                $ref: '#/components/schemas/InternalIdpPasswordPolicyConfig'
           description: default response
       summary: Get the password policy
-      tags:
-      - Authentication
-  /authentication/v1/noauth/getAuthenticationState:
-    get:
-      operationId: getAuthenticationState
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthenticationState'
-          description: default response
-      summary: Get the current authentication state
       tags:
       - Authentication
   /authentication/v1/noauth/login:
@@ -1116,26 +1085,6 @@ paths:
                 type: boolean
           description: default response
       summary: Reset a user account using an email address.
-      tags:
-      - Authentication
-  /authentication/v1/resetPassword:
-    post:
-      operationId: resetPassword
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ResetPasswordRequest'
-        description: changePasswordRequest
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ChangePasswordResponse'
-          description: default response
-      summary: Reset an authenticated user's password.
       tags:
       - Authentication
   /authproxy/v1/noauth/fetchClientCredsToken:
@@ -5839,6 +5788,70 @@ paths:
       summary: Update a script doc
       tags:
       - Scripts
+  /scyllaDB/v1/testCluster:
+    post:
+      operationId: testScyllaDB
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScyllaDbDoc'
+        description: scyllaDbDoc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScyllaDbTestResponse'
+          description: default response
+      summary: Test connection to the ScyllaDb instance
+      tags:
+      - ScyllaDB Instances
+  /scyllaDB/v1/{uuid}:
+    get:
+      operationId: fetchScyllaDB
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScyllaDbDoc'
+          description: default response
+      summary: Fetch an ScyllaDb config doc by its UUID
+      tags:
+      - ScyllaDB Instances
+    put:
+      operationId: updateScyllaDB
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScyllaDbDoc'
+        description: doc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScyllaDbDoc'
+          description: default response
+      summary: Update an ScyllaDb config doc
+      tags:
+      - ScyllaDB Instances
   /searchable/v2/destroy:
     post:
       operationId: destroySearchableQuery
@@ -6075,6 +6088,50 @@ paths:
       summary: Submit a search request
       tags:
       - Sql Statistics Query
+  /stateStore/v1/{uuid}:
+    get:
+      operationId: fetchStateStore
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StateDoc'
+          description: default response
+      summary: Fetch an state store doc by its UUID
+      tags:
+      - State Stores
+    put:
+      operationId: updateStateStore
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StateDoc'
+        description: doc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StateDoc'
+          description: default response
+      summary: Update an state store doc
+      tags:
+      - State Stores
   /statistic/rollUp/v1/bitMaskConversion:
     post:
       operationId: statisticBitMaskConversion
@@ -7561,6 +7618,8 @@ components:
           type: string
         description:
           type: string
+        duplicateNotificationConfig:
+          $ref: '#/components/schemas/DuplicateNotificationConfig'
         errorFeed:
           $ref: '#/components/schemas/DocRef'
         languageVersion:
@@ -7778,13 +7837,6 @@ components:
           type: string
         sourceTaskId:
           $ref: '#/components/schemas/TaskId'
-    AuthenticationState:
-      type: object
-      properties:
-        allowPasswordResets:
-          type: boolean
-        userId:
-          type: string
     Automate:
       type: object
       properties:
@@ -8969,10 +9021,12 @@ components:
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
           - DOCUMENT_SCRIPT
+          - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
           - DOCUMENT_SELECT_ALL_OR_NONE
           - DOCUMENT_SIGMA_RULE
           - DOCUMENT_SOLR_INDEX
+          - DOCUMENT_STATE_STORE
           - DOCUMENT_STATISTIC_STORE
           - DOCUMENT_STROOM_STATS_STORE
           - DOCUMENT_SYSTEM
@@ -8994,6 +9048,8 @@ components:
           - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
+          - EYE
+          - EYE_OFF
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
@@ -9023,6 +9079,7 @@ components:
           - HIDE
           - HIDE_MENU
           - HISTORY
+          - INFINITY_LOGO
           - INFO
           - INSERT
           - JOBS
@@ -9205,6 +9262,19 @@ components:
             type: string
         resultPage:
           $ref: '#/components/schemas/ResultPageDuplicateCheckRow'
+    DuplicateNotificationConfig:
+      type: object
+      properties:
+        chooseColumns:
+          type: boolean
+        columnNames:
+          type: array
+          items:
+            type: string
+        rememberNotifications:
+          type: boolean
+        suppressDuplicateNotifications:
+          type: boolean
     ElasticClusterDoc:
       type: object
       properties:
@@ -9582,10 +9652,12 @@ components:
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
           - DOCUMENT_SCRIPT
+          - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
           - DOCUMENT_SELECT_ALL_OR_NONE
           - DOCUMENT_SIGMA_RULE
           - DOCUMENT_SOLR_INDEX
+          - DOCUMENT_STATE_STORE
           - DOCUMENT_STATISTIC_STORE
           - DOCUMENT_STROOM_STATS_STORE
           - DOCUMENT_SYSTEM
@@ -9607,6 +9679,8 @@ components:
           - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
+          - EYE
+          - EYE_OFF
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
@@ -9636,6 +9710,7 @@ components:
           - HIDE
           - HIDE_MENU
           - HISTORY
+          - INFINITY_LOGO
           - INFO
           - INSERT
           - JOBS
@@ -10252,6 +10327,20 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/UserName'
+    FindAccountRequest:
+      type: object
+      properties:
+        pageRequest:
+          $ref: '#/components/schemas/PageRequest'
+        quickFilter:
+          type: string
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaFieldSort'
     FindAnalyticDataShardCriteria:
       type: object
       properties:
@@ -10437,10 +10526,12 @@ components:
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
           - DOCUMENT_SCRIPT
+          - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
           - DOCUMENT_SELECT_ALL_OR_NONE
           - DOCUMENT_SIGMA_RULE
           - DOCUMENT_SOLR_INDEX
+          - DOCUMENT_STATE_STORE
           - DOCUMENT_STATISTIC_STORE
           - DOCUMENT_STROOM_STATS_STORE
           - DOCUMENT_SYSTEM
@@ -10462,6 +10553,8 @@ components:
           - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
+          - EYE
+          - EYE_OFF
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
@@ -10491,6 +10584,7 @@ components:
           - HIDE
           - HIDE_MENU
           - HISTORY
+          - INFINITY_LOGO
           - INFO
           - INSERT
           - JOBS
@@ -10718,10 +10812,12 @@ components:
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
           - DOCUMENT_SCRIPT
+          - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
           - DOCUMENT_SELECT_ALL_OR_NONE
           - DOCUMENT_SIGMA_RULE
           - DOCUMENT_SOLR_INDEX
+          - DOCUMENT_STATE_STORE
           - DOCUMENT_STATISTIC_STORE
           - DOCUMENT_STROOM_STATS_STORE
           - DOCUMENT_SYSTEM
@@ -10743,6 +10839,8 @@ components:
           - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
+          - EYE
+          - EYE_OFF
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
@@ -10772,6 +10870,7 @@ components:
           - HIDE
           - HIDE_MENU
           - HISTORY
+          - INFINITY_LOGO
           - INFO
           - INSERT
           - JOBS
@@ -11443,6 +11542,27 @@ components:
           type: string
         validationRegex:
           type: string
+    InternalIdpPasswordPolicyConfig:
+      type: object
+      properties:
+        allowPasswordResets:
+          type: boolean
+        minimumPasswordLength:
+          type: integer
+          format: int32
+          minimum: 0
+        minimumPasswordStrength:
+          type: integer
+          format: int32
+          maximum: 5
+          minimum: 0
+        passwordComplexityRegex:
+          type: string
+        passwordPolicyMessage:
+          type: string
+      required:
+      - minimumPasswordLength
+      - minimumPasswordStrength
     Job:
       type: object
       properties:
@@ -12105,38 +12225,6 @@ components:
           enum:
           - OPTIONAL
           - MANDATORY
-    PasswordPolicyConfig:
-      type: object
-      properties:
-        allowPasswordResets:
-          type: boolean
-        forcePasswordChangeOnFirstLogin:
-          type: boolean
-        mandatoryPasswordChangeDuration:
-          type: string
-        minimumPasswordLength:
-          type: integer
-          format: int32
-          minimum: 0
-        minimumPasswordStrength:
-          type: integer
-          format: int32
-          maximum: 5
-          minimum: 0
-        neverUsedAccountDeactivationThreshold:
-          type: string
-        passwordComplexityRegex:
-          type: string
-        passwordPolicyMessage:
-          type: string
-        unusedAccountDeactivationThreshold:
-          type: string
-      required:
-      - mandatoryPasswordChangeDuration
-      - minimumPasswordLength
-      - minimumPasswordStrength
-      - neverUsedAccountDeactivationThreshold
-      - unusedAccountDeactivationThreshold
     PermissionChangeEvent:
       type: object
       discriminator:
@@ -12273,10 +12361,12 @@ components:
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
           - DOCUMENT_SCRIPT
+          - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
           - DOCUMENT_SELECT_ALL_OR_NONE
           - DOCUMENT_SIGMA_RULE
           - DOCUMENT_SOLR_INDEX
+          - DOCUMENT_STATE_STORE
           - DOCUMENT_STATISTIC_STORE
           - DOCUMENT_STROOM_STATS_STORE
           - DOCUMENT_SYSTEM
@@ -12298,6 +12388,8 @@ components:
           - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
+          - EYE
+          - EYE_OFF
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
@@ -12327,6 +12419,7 @@ components:
           - HIDE
           - HIDE_MENU
           - HISTORY
+          - INFINITY_LOGO
           - INFO
           - INSERT
           - JOBS
@@ -13250,10 +13343,12 @@ components:
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
           - DOCUMENT_SCRIPT
+          - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
           - DOCUMENT_SELECT_ALL_OR_NONE
           - DOCUMENT_SIGMA_RULE
           - DOCUMENT_SOLR_INDEX
+          - DOCUMENT_STATE_STORE
           - DOCUMENT_STATISTIC_STORE
           - DOCUMENT_STROOM_STATS_STORE
           - DOCUMENT_SYSTEM
@@ -13275,6 +13370,8 @@ components:
           - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
+          - EYE
+          - EYE_OFF
           - FAST_BACKWARD
           - FAST_FORWARD
           - FATAL
@@ -13304,6 +13401,7 @@ components:
           - HIDE
           - HIDE_MENU
           - HISTORY
+          - INFINITY_LOGO
           - INFO
           - INSERT
           - JOBS
@@ -13630,13 +13728,6 @@ components:
           - WARN
           - ERROR
           - FATAL
-    ResetPasswordRequest:
-      type: object
-      properties:
-        confirmNewPassword:
-          type: string
-        newPassword:
-          type: string
     ResourceGeneration:
       type: object
       properties:
@@ -14229,6 +14320,42 @@ components:
           type: string
         version:
           type: string
+    ScyllaDbDoc:
+      type: object
+      properties:
+        connection:
+          type: string
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        description:
+          type: string
+        keyspace:
+          type: string
+        keyspaceCql:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        uuid:
+          type: string
+        version:
+          type: string
+    ScyllaDbTestResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        ok:
+          type: boolean
     Search:
       type: object
       properties:
@@ -14250,20 +14377,6 @@ components:
           type: string
         timeRange:
           $ref: '#/components/schemas/TimeRange'
-    SearchAccountRequest:
-      type: object
-      properties:
-        pageRequest:
-          $ref: '#/components/schemas/PageRequest'
-        quickFilter:
-          type: string
-        sort:
-          type: string
-          writeOnly: true
-        sortList:
-          type: array
-          items:
-            $ref: '#/components/schemas/CriteriaFieldSort'
     SearchApiKeyRequest:
       type: object
       properties:
@@ -14820,6 +14933,73 @@ components:
             format: int32
       xml:
         name: splitLayout
+    StateDoc:
+      type: object
+      properties:
+        condense:
+          type: boolean
+        condenseAge:
+          type: integer
+          format: int32
+        condenseTimeUnit:
+          type: string
+          enum:
+          - NANOSECONDS
+          - MILLISECONDS
+          - SECONDS
+          - MINUTES
+          - HOURS
+          - DAYS
+          - WEEKS
+          - MONTHS
+          - YEARS
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        description:
+          type: string
+        name:
+          type: string
+        retainAge:
+          type: integer
+          format: int32
+        retainForever:
+          type: boolean
+        retainTimeUnit:
+          type: string
+          enum:
+          - NANOSECONDS
+          - MILLISECONDS
+          - SECONDS
+          - MINUTES
+          - HOURS
+          - DAYS
+          - WEEKS
+          - MONTHS
+          - YEARS
+        scyllaDbRef:
+          $ref: '#/components/schemas/DocRef'
+        stateType:
+          type: string
+          enum:
+          - STATE
+          - TEMPORAL_STATE
+          - RANGED_STATE
+          - TEMPORAL_RANGED_STATE
+          - SESSION
+        type:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        uuid:
+          type: string
+        version:
+          type: string
     StatisticField:
       type: object
       properties:
@@ -15558,8 +15738,6 @@ components:
     ThemeConfig:
       type: object
       properties:
-        backgroundColour:
-          type: string
         labelColours:
           type: string
         pageBorder:

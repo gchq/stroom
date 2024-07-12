@@ -11,7 +11,14 @@
             <form:FormGroup identity="suppressDuplicateNotifications" label="Suppress Duplicate Notifications">
                 <tickbox:CustomCheckBox ui:field="suppressDuplicateNotifications"/>
             </form:FormGroup>
+            <form:FormGroup identity="chooseColumns" label="Choose Columns">
+                <tickbox:CustomCheckBox ui:field="chooseColumns"/>
+            </form:FormGroup>
+            <form:FormGroup identity="columns" label="Columns">
+                <g:TextBox ui:field="columns" width="100%"/>
+            </form:FormGroup>
         </g:FlowPanel>
-        <g:SimplePanel ui:field="list" styleName="DuplicateManagementViewImpl dock-max dashboard-panel overflow-hidden"/>
+        <g:SimplePanel ui:field="list"
+                       styleName="DuplicateManagementViewImpl dock-max dashboard-panel overflow-hidden"/>
     </g:FlowPanel>
 </ui:UiBinder>

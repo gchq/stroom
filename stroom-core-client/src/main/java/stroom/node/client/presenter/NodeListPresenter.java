@@ -20,6 +20,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.NodeMonitoringConfig;
 import stroom.util.client.DataGridUtil;
+import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
@@ -75,6 +76,7 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
     private final FindNodeStatusCriteria findNodeStatusCriteria = new FindNodeStatusCriteria();
     private final MultiSelectionModelImpl<NodeStatusResult> selectionModel;
     private final InlineSvgToggleButton autoRefreshButton;
+    private final DelayedUpdate redrawDelayedUpdate;
 
     private Map<String, NodeStatusResult> nodeNameToNodeStatusMap = null;
     private String selectedNodeName = null;
@@ -96,6 +98,7 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
         this.nodeManager = nodeManager;
         this.tooltipPresenter = tooltipPresenter;
         this.dateTimeFormatter = dateTimeFormatter;
+        this.redrawDelayedUpdate = new DelayedUpdate(dataGrid::redraw);
 
         autoRefreshButton = new InlineSvgToggleButton();
         autoRefreshButton.setSvg(SvgImage.AUTO_REFRESH);
@@ -138,12 +141,12 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
                             nodeManager.ping(nodeName,
                                     pingMs -> {
                                         latestPing.put(nodeName, PingResult.success(pingMs, nodeMonitoringConfig));
-                                        super.changeData(data);
+                                        scheduleDataGridRedraw();
                                     },
                                     throwable -> {
                                         latestPing.put(nodeName, PingResult.error(
                                                 throwable.getMessage(), nodeMonitoringConfig));
-                                        super.changeData(data);
+                                        scheduleDataGridRedraw();
                                     },
                                     NodeListPresenter.this);
                         });
@@ -171,6 +174,11 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
                 }
             }
         }));
+    }
+
+    private void scheduleDataGridRedraw() {
+        // Saves the grid being redrawn for every single row in the list
+        redrawDelayedUpdate.update();
     }
 
     public MultiSelectionModel<NodeStatusResult> getSelectionModel() {

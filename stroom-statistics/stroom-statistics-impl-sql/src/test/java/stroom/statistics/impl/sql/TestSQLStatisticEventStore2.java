@@ -337,7 +337,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
             final String dateTerm = fromDateStr + "," + toDateStr;
 
             rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
-            rootOperator.addDateTerm(QueryField.createText(null), Condition.EQUALS, "xxx");
+            rootOperator.addTextTerm(QueryField.createText(null), Condition.EQUALS, "xxx");
 
             final StatisticStoreDoc dataSource = new StatisticStoreDoc();
             dataSource.setName("MyDataSource");

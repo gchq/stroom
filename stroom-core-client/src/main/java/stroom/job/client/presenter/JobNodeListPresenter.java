@@ -237,12 +237,10 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> implement
                                         res.info(jobNodeAndInfo.getJobName(), jobNodeAndInfo.getNodeName()))
                                 .onSuccess(info -> {
                                     jobNodeAndInfo.setJobNodeInfo(info);
-                                    super.changeData(data);
                                     scheduleDataGridRedraw();
                                 })
                                 .onFailure(throwable -> {
                                     jobNodeAndInfo.clearJobNodeInfo();
-                                    super.changeData(data);
                                     scheduleDataGridRedraw();
                                 })
                                 .taskListener(getView())

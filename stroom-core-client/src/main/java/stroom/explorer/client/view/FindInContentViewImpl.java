@@ -32,7 +32,7 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FocusUtil;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -45,7 +45,7 @@ public class FindInContentViewImpl
     private final Widget widget;
 
     @UiField
-    TextBox pattern;
+    TextArea pattern;
     @UiField
     SimplePanel resultContainer;
     @UiField

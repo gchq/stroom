@@ -3,7 +3,7 @@
 <module>
   <!-- Inherit the core Web Toolkit stuff. -->
   <inherits name='com.google.gwt.user.User' />
-  <inherits name="stroom.changepassword.ChangePassword" />
+  <inherits name="stroom.security.identity.Identity" />
 
   <source path="client" />
   <source path="shared" />

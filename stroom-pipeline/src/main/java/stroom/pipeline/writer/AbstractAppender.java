@@ -19,6 +19,7 @@ package stroom.pipeline.writer;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ProcessException;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
@@ -99,6 +100,7 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
         this.footer = footer;
 
         if (output == null) {
+            LOGGER.debug("Creating output");
             output = createOutput();
         }
 
@@ -117,10 +119,15 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
      * Method to allow subclasses to insert segment markers between records.
      */
     private void insertSegmentMarker() throws IOException {
-        output.insertSegmentMarker();
+        LOGGER.debug("insertSegmentMarker - output: {}", output);
+        if (output != null) {
+            output.insertSegmentMarker();
+        }
     }
 
     void writeHeader() throws IOException {
+        LOGGER.debug("Writing footer - output: {}, writtenHeader: {}, header: \n{}",
+                output, writtenHeader, header);
         if (!writtenHeader) {
             if (output != null) {
                 // If we are writing to a zip then start a new zip entry before writing the header.
@@ -148,6 +155,8 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
     }
 
     void writeFooter(final boolean roll) {
+        LOGGER.debug("Writing footer - roll: {}, output: {}, writtenHeader: {}, footer: \n{}",
+                roll, output, writtenHeader, footer);
         if (output != null) {
             if (writtenHeader) {
                 try {
@@ -183,6 +192,7 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
 
     private void closeCurrentOutputStream() {
         try {
+            LOGGER.debug("Closing output: {}", output);
             output.close();
         } catch (final IOException e) {
             error(e.getMessage(), e);
@@ -219,10 +229,9 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
     }
 
     long getCurrentOutputSize() {
-        if (output == null) {
-            return 0L;
-        }
-        return output.getCurrentOutputSize();
+        return output == null
+                ? 0L
+                : output.getCurrentOutputSize();
     }
 
     private Long getSizeBytes() {
@@ -230,11 +239,12 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
             sizeBytes = -1L;
 
             // Set the maximum number of bytes to write before creating a new stream.
-            if (size != null && !size.trim().isEmpty()) {
+            if (!NullSafe.isBlankString(size)) {
                 try {
                     sizeBytes = ModelStringUtil.parseIECByteSizeString(size);
                 } catch (final RuntimeException e) {
-                    errorReceiverProxy.log(Severity.ERROR, null, getElementId(), "Unable to parse size: " + size, null);
+                    errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
+                            "Unable to parse size: " + size, null);
                 }
             }
         }

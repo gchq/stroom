@@ -1120,7 +1120,7 @@
     text-align: center;
 }
 
-.mainViewImpl-max {
+.mainViewImpl {
     position: absolute;
     left: 0px;
     right: 0px;
@@ -1129,6 +1129,7 @@
     overflow: hidden;
 	display: flex;
 	flex-direction: column;
+	background-color: var(--page__background-color);
 }
 
 .mainViewImpl-banner {
@@ -1512,7 +1513,6 @@
     border: 0;
     text-align: left;
     width: auto;
-    height: 43px;
 }
 
 .navigation-logo-image svg {

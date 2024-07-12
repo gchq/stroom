@@ -29,13 +29,21 @@ import java.util.Map;
 
 public class RefDataValueSerdeFactory {
 
-    private static final Map<Integer, RefDataValueSerde> TYPE_TO_SERDE_MAP = ImmutableMap.of(
-            FastInfosetValue.TYPE_ID, new FastInfoSetValueSerde(),
-            StringValue.TYPE_ID, new StringValueSerde(),
-            NullValue.TYPE_ID, new NullValueSerde());
+    private static final RefDataValueSerde[] SERDES;
 
-    public RefDataValueSerde get(final int typeId) {
-        RefDataValueSerde serde = TYPE_TO_SERDE_MAP.get(typeId);
+    static {
+        SERDES = new RefDataValueSerde[4];
+        SERDES[FastInfosetValue.TYPE_ID] = new FastInfoSetValueSerde();
+        SERDES[StringValue.TYPE_ID] = new StringValueSerde();
+        SERDES[NullValue.TYPE_ID] = new NullValueSerde();
+    }
+
+    public RefDataValueSerde get(final byte typeId) {
+        if (typeId < 0 || typeId >= SERDES.length) {
+            throw new RuntimeException("Unexpected typeId " + typeId);
+        }
+
+        RefDataValueSerde serde = SERDES[typeId];
         if (serde == null) {
             throw new RuntimeException("Unexpected typeId " + typeId);
         }
@@ -46,7 +54,7 @@ public class RefDataValueSerdeFactory {
         return get(refDataValue.getTypeId());
     }
 
-    public RefDataValue deserialize(final ByteBuffer byteBuffer, final int typeId) {
+    public RefDataValue deserialize(final ByteBuffer byteBuffer, final byte typeId) {
         return get(typeId).deserialize(byteBuffer);
     }
 }

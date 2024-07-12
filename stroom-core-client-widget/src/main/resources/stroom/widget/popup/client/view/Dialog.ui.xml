@@ -7,6 +7,7 @@
         <g:SimplePanel styleName="dialog-background-behind"/>
         <g:FlowPanel styleName="dialog-background">
             <g:FlowPanel styleName="dialog-titleBar">
+                <g:SimplePanel ui:field="icon" styleName="dialog-icon" />
                 <g:Label ui:field="titleText" styleName="dialog-titleText">Caption</g:Label>
                 <g:SimplePanel styleName="dialog-spinner">
                     <spinner:SpinnerLarge ui:field="spinner"/>

@@ -678,8 +678,8 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         if (reprocess) {
             // Don't select deleted streams.
             final ExpressionOperator statusExpression = ExpressionOperator.builder().op(Op.OR)
-                    .addDateTerm(MetaFields.PARENT_STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
-                    .addDateTerm(MetaFields.PARENT_STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
+                    .addTextTerm(MetaFields.PARENT_STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                    .addTextTerm(MetaFields.PARENT_STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
                     .build();
 
             ExpressionOperator.Builder builder = ExpressionOperator.builder()
@@ -711,8 +711,8 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         } else {
             // Don't select deleted streams.
             final ExpressionOperator statusExpression = ExpressionOperator.builder().op(Op.OR)
-                    .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
-                    .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
+                    .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                    .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
                     .build();
 
             ExpressionOperator.Builder builder = ExpressionOperator.builder()

@@ -326,7 +326,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
 
     public Optional<RefDataValue> get(final Txn<ByteBuffer> txn,
                                       final ByteBuffer keyBuffer,
-                                      final int typeId) {
+                                      final byte typeId) {
         return getAsBytes(txn, keyBuffer)
                 .map(valueBuffer ->
                         valueSerde.deserialize(valueBuffer, typeId));

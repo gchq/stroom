@@ -77,7 +77,7 @@ class TestExpressionMatcher {
     void testEnabledState() {
         // TEST_FEED term is disabled so there should be no match
         final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.OR);
-        builder.addDateTerm(FEED, Condition.EQUALS, "FOO");
+        builder.addTextTerm(FEED, Condition.EQUALS, "FOO");
         final ExpressionTerm disabledTerm = ExpressionTerm.builder()
                 .field(FEED.getFldName())
                 .condition(Condition.EQUALS)
@@ -221,7 +221,7 @@ class TestExpressionMatcher {
 
     private ExpressionOperator createExpression(final Op op, final String feedName) {
         final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(op);
-        builder.addDateTerm(FEED, Condition.EQUALS, feedName);
+        builder.addTextTerm(FEED, Condition.EQUALS, feedName);
         return builder.build();
     }
 

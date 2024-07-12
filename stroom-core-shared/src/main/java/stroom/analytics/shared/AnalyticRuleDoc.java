@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -69,9 +70,13 @@ public class AnalyticRuleDoc extends Doc {
     @JsonProperty
     private final DocRef errorFeed;
     @JsonProperty
+    @Deprecated
     private final boolean rememberNotifications;
     @JsonProperty
+    @Deprecated
     private final boolean suppressDuplicateNotifications;
+    @JsonProperty
+    private final DuplicateNotificationConfig duplicateNotificationConfig;
 
     public AnalyticRuleDoc() {
         description = null;
@@ -86,6 +91,11 @@ public class AnalyticRuleDoc extends Doc {
         errorFeed = null;
         rememberNotifications = false;
         suppressDuplicateNotifications = false;
+        duplicateNotificationConfig = new DuplicateNotificationConfig(
+                false,
+                false,
+                false,
+                Collections.emptyList());
     }
 
     @SuppressWarnings("checkstyle:linelength")
@@ -109,7 +119,8 @@ public class AnalyticRuleDoc extends Doc {
                            @JsonProperty("notifications") final List<NotificationConfig> notifications,
                            @JsonProperty("errorFeed") final DocRef errorFeed,
                            @JsonProperty("rememberNotifications") final boolean rememberNotifications,
-                           @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications) {
+                           @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
+                           @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.languageVersion = languageVersion;
@@ -129,6 +140,16 @@ public class AnalyticRuleDoc extends Doc {
         this.errorFeed = errorFeed;
         this.rememberNotifications = rememberNotifications;
         this.suppressDuplicateNotifications = suppressDuplicateNotifications;
+
+        if (duplicateNotificationConfig == null) {
+            this.duplicateNotificationConfig = new DuplicateNotificationConfig(
+                    rememberNotifications,
+                    suppressDuplicateNotifications,
+                    false,
+                    Collections.emptyList());
+        } else {
+            this.duplicateNotificationConfig = duplicateNotificationConfig;
+        }
     }
 
     /**
@@ -193,12 +214,18 @@ public class AnalyticRuleDoc extends Doc {
         return errorFeed;
     }
 
+    @Deprecated
     public boolean isRememberNotifications() {
         return rememberNotifications;
     }
 
+    @Deprecated
     public boolean isSuppressDuplicateNotifications() {
         return suppressDuplicateNotifications;
+    }
+
+    public DuplicateNotificationConfig getDuplicateNotificationConfig() {
+        return duplicateNotificationConfig;
     }
 
     @Override
@@ -281,8 +308,7 @@ public class AnalyticRuleDoc extends Doc {
         private AnalyticProcessConfig analyticProcessConfig;
         private List<NotificationConfig> notifications = new ArrayList<>();
         private DocRef errorFeed;
-        private boolean rememberNotifications;
-        private boolean suppressDuplicateNotifications;
+        private DuplicateNotificationConfig duplicateNotificationConfig;
 
         public Builder() {
         }
@@ -298,8 +324,7 @@ public class AnalyticRuleDoc extends Doc {
             this.analyticProcessConfig = doc.analyticProcessConfig;
             this.notifications = new ArrayList<>(doc.notifications);
             this.errorFeed = doc.errorFeed;
-            this.rememberNotifications = doc.rememberNotifications;
-            this.suppressDuplicateNotifications = doc.suppressDuplicateNotifications;
+            this.duplicateNotificationConfig = doc.duplicateNotificationConfig;
         }
 
         public Builder description(final String description) {
@@ -347,13 +372,8 @@ public class AnalyticRuleDoc extends Doc {
             return this;
         }
 
-        public Builder rememberNotifications(final boolean rememberNotifications) {
-            this.rememberNotifications = rememberNotifications;
-            return this;
-        }
-
-        public Builder suppressDuplicateNotifications(final boolean suppressDuplicateNotifications) {
-            this.suppressDuplicateNotifications = suppressDuplicateNotifications;
+        public Builder duplicateNotificationConfig(final DuplicateNotificationConfig duplicateNotificationConfig) {
+            this.duplicateNotificationConfig = duplicateNotificationConfig;
             return this;
         }
 
@@ -383,8 +403,9 @@ public class AnalyticRuleDoc extends Doc {
                     null,
                     notifications,
                     errorFeed,
-                    rememberNotifications,
-                    suppressDuplicateNotifications);
+                    false,
+                    false,
+                    duplicateNotificationConfig);
         }
     }
 }

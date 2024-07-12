@@ -16,6 +16,7 @@
 
 package stroom.widget.popup.client.presenter;
 
+import stroom.svg.shared.SvgImage;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -30,6 +31,8 @@ public interface PopupSupport extends DialogActionUiHandlers {
     void hide(HidePopupEvent event);
 
     void setEnabled(boolean enabled);
+
+    void setIcon(SvgImage icon);
 
     void setCaption(String caption);
 }

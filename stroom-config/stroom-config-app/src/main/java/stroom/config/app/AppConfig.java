@@ -33,6 +33,7 @@ import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
+import stroom.state.impl.StateConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.StroomPathConfig;
@@ -98,6 +99,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_SERVICE_DISCOVERY = "serviceDiscovery";
     public static final String PROP_NAME_SESSION_COOKIE = "sessionCookie";
     public static final String PROP_NAME_SOLR = "solr";
+    public static final String PROP_NAME_STATE = "state";
     public static final String PROP_NAME_STATISTICS = "statistics";
     public static final String PROP_NAME_UI = "ui";
     public static final String PROP_NAME_UI_URI = "uiUri";
@@ -141,6 +143,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final ServiceDiscoveryConfig serviceDiscoveryConfig;
     private final SessionCookieConfig sessionCookieConfig;
     private final SolrConfig solrConfig;
+    private final StateConfig stateConfig;
     private final StatisticsConfig statisticsConfig;
     private final StoredQueryConfig storedQueryConfig;
     private final StroomPathConfig pathConfig;
@@ -189,6 +192,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                 new ServiceDiscoveryConfig(),
                 new SessionCookieConfig(),
                 new SolrConfig(),
+                new StateConfig(),
                 new StatisticsConfig(),
                 new StoredQueryConfig(),
                 new StroomPathConfig(),
@@ -236,6 +240,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_SERVICE_DISCOVERY) final ServiceDiscoveryConfig serviceDiscoveryConfig,
                      @JsonProperty(PROP_NAME_SESSION_COOKIE) final SessionCookieConfig sessionCookieConfig,
                      @JsonProperty(PROP_NAME_SOLR) final SolrConfig solrConfig,
+                     @JsonProperty(PROP_NAME_STATE) final StateConfig stateConfig,
                      @JsonProperty(PROP_NAME_STATISTICS) final StatisticsConfig statisticsConfig,
                      @JsonProperty(PROP_NAME_QUERY_HISTORY) final StoredQueryConfig storedQueryConfig,
                      @JsonProperty(PROP_NAME_PATH) final StroomPathConfig pathConfig,
@@ -279,6 +284,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.serviceDiscoveryConfig = serviceDiscoveryConfig;
         this.sessionCookieConfig = sessionCookieConfig;
         this.solrConfig = solrConfig;
+        this.stateConfig = stateConfig;
         this.statisticsConfig = statisticsConfig;
         this.storedQueryConfig = storedQueryConfig;
         this.pathConfig = pathConfig;
@@ -500,6 +506,12 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty(PROP_NAME_SESSION_COOKIE)
     public SessionCookieConfig getSessionCookieConfig() {
         return sessionCookieConfig;
+    }
+
+    @JsonProperty(PROP_NAME_STATE)
+    @JsonPropertyDescription("Configuration for the stroom state service")
+    public StateConfig getStateConfig() {
+        return stateConfig;
     }
 
     @JsonProperty(PROP_NAME_STATISTICS)

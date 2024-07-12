@@ -105,12 +105,10 @@ public class ValueStore {
         // If found use the same key to look up the actual value and return the
         // de-serialised value
 
-        final OptionalInt optTypeId = valueStoreMetaDb.getTypeId(txn, valueStoreKeyBuffer);
-
-        if (optTypeId.isPresent()) {
-            Optional<RefDataValue> optRefDataValue = valueStoreDb.get(txn, valueStoreKeyBuffer, optTypeId.getAsInt());
-
-            if (!optRefDataValue.isPresent()) {
+        final Byte optTypeId = valueStoreMetaDb.getTypeId(txn, valueStoreKeyBuffer);
+        if (optTypeId != null) {
+            Optional<RefDataValue> optRefDataValue = valueStoreDb.get(txn, valueStoreKeyBuffer, optTypeId);
+            if (optRefDataValue.isEmpty()) {
                 throw new RuntimeException("Value should have associated meta record, data likely corrupt");
             }
             return optRefDataValue;
@@ -135,7 +133,7 @@ public class ValueStore {
         }
     }
 
-    public OptionalInt getTypeId(final Txn<ByteBuffer> txn,
+    public Byte getTypeId(final Txn<ByteBuffer> txn,
                                  final ByteBuffer keyBuffer) {
         return valueStoreMetaDb.getTypeId(txn, keyBuffer);
     }
@@ -170,13 +168,12 @@ public class ValueStore {
         // Lookup the passed key in the ValueStoreMetaDb to determine the value type
         // If found use the same key to look up the actual value and return it
         // with the type information.
-        OptionalInt optTypeId = valueStoreMetaDb.getTypeId(txn, valueStoreKeyBuffer);
-        if (optTypeId.isPresent()) {
+        final Byte optTypeId = valueStoreMetaDb.getTypeId(txn, valueStoreKeyBuffer);
+        if (optTypeId != null) {
             final ByteBuffer valueBuffer = valueStoreDb.getAsBytes(txn, valueStoreKeyBuffer)
                     .orElseThrow(() -> new RuntimeException(
                             "If we have a meta entry we should also have a value entry, data may be corrupted"));
-
-            return Optional.of(new TypedByteBuffer(optTypeId.getAsInt(), valueBuffer));
+            return Optional.of(new TypedByteBuffer(optTypeId, valueBuffer));
         } else {
             return Optional.empty();
         }

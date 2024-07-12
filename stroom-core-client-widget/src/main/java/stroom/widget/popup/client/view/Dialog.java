@@ -16,6 +16,7 @@
 
 package stroom.widget.popup.client.view;
 
+import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskListener;
 import stroom.widget.spinner.client.SpinnerLarge;
 import stroom.widget.util.client.MouseUtil;
@@ -48,6 +49,8 @@ public class Dialog extends AbstractPopupPanel implements TaskListener {
     private final int clientLeft;
     private final int clientTop;
 
+    @UiField
+    SimplePanel icon;
     @UiField
     Label titleText;
     @UiField
@@ -110,6 +113,16 @@ public class Dialog extends AbstractPopupPanel implements TaskListener {
         addDomHandler(mouseHandler, MouseDownEvent.getType());
         addDomHandler(mouseHandler, MouseUpEvent.getType());
         addDomHandler(mouseHandler, MouseMoveEvent.getType());
+    }
+
+    @Override
+    public void setIcon(final SvgImage icon) {
+        if (icon != null) {
+            this.icon.getElement().setInnerHTML(icon.getSvg());
+            if (icon.getClassName() != null) {
+                this.icon.getElement().addClassName(icon.getClassName());
+            }
+        }
     }
 
     @Override

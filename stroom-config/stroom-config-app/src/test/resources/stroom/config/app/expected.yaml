@@ -925,6 +925,22 @@ appConfig:
     search:
       maxBooleanClauseCount: 1024
       maxStoredDataQueueSize: 1000
+  state:
+    scyllaDbDocCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT10M"
+      maximumSize: 100
+      refreshAfterWrite: null
+    sessionCache:
+      expireAfterAccess: "PT1H"
+      expireAfterWrite: null
+      maximumSize: 10
+      refreshAfterWrite: null
+    stateDocCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT10M"
+      maximumSize: 100
+      refreshAfterWrite: null
   statistics:
     hbase:
       docRefType: "StroomStatsStore"
@@ -1152,7 +1168,6 @@ appConfig:
       title: "Splash Screen"
       version: "v0.1"
     theme:
-      backgroundColour: "#1E88E5"
       labelColours: "TEST1=#FF0000,TEST2=#FF9900"
     welcomeHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from\
       \ multiple systems.</p>"

@@ -16,10 +16,10 @@
 
 package stroom.query.common.v2;
 
-import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 
 import org.junit.jupiter.api.Test;

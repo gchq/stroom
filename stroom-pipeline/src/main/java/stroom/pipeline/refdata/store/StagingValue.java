@@ -11,9 +11,9 @@ import java.util.function.Supplier;
 public interface StagingValue extends RefDataValue {
 
     int TYPE_ID_OFFSET = 0;
-    int VALUE_HASH_OFFSET = TYPE_ID_OFFSET + Integer.BYTES;
+    int VALUE_HASH_OFFSET = TYPE_ID_OFFSET + Byte.BYTES;
     int VALUE_OFFSET = VALUE_HASH_OFFSET + Long.BYTES;
-    int META_LENGTH = Integer.BYTES + Long.BYTES;
+    int META_LENGTH = Byte.BYTES + Long.BYTES;
 
     /**
      * @return The hash of the value
@@ -23,7 +23,7 @@ public interface StagingValue extends RefDataValue {
     /**
      * @return The type of the value
      */
-    int getTypeId();
+    byte getTypeId();
 
     /**
      * @return The size in bytes

@@ -554,8 +554,8 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                             ExpressionOperator
                                     .builder()
                                     .op(Op.OR)
-                                    .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.toString())
-                                    .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.toString())
+                                    .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.toString())
+                                    .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.toString())
                                     .build())
                     .build();
             final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(findMetaExpression);

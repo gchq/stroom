@@ -218,6 +218,10 @@ include 'stroom-query:stroom-query-impl'
 include 'stroom-query:stroom-query-language'
 include 'stroom-query:stroom-query-language-api'
 
+// State store
+include 'stroom-state:stroom-state-api'
+include 'stroom-state:stroom-state-impl'
+
 // Suggestions
 include 'stroom-suggestions:stroom-suggestions-api'
 include 'stroom-suggestions:stroom-suggestions-impl'
@@ -276,9 +280,6 @@ include 'stroom-task:stroom-task-mock'
 
 // Test project
 include 'stroom-test-common'
-
-// New Stroom UI
-include 'stroom-ui'
 
 // Util
 include 'stroom-util'

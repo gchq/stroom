@@ -26,6 +26,7 @@ import stroom.meta.shared.MetaResource;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.state.shared.StateDoc;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.GwtNullSafe;
 
@@ -65,7 +66,8 @@ public class NewPipelineReferencePresenter
         this.restFactory = restFactory;
         this.uiConfigCache = uiConfigCache;
 
-        pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
+        // TODO : @66 FIX TEMPORARY ABUSE OF PIPELINE REF
+        pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE, StateDoc.DOCUMENT_TYPE);
         pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 
         feedPresenter.setIncludedTypes(FeedDoc.DOCUMENT_TYPE);

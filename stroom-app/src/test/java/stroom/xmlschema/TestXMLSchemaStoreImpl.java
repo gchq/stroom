@@ -70,7 +70,7 @@ class TestXMLSchemaStoreImpl extends AbstractCoreIntegrationTest {
                 .collect(Collectors.joining("\n")));
 
         assertThat(list.size())
-                .isEqualTo(5);
+                .isEqualTo(6);
 
         criteria = new FindXMLSchemaCriteria();
         criteria.setSystemId("file://event-logging-v3.0.0.xsd");
@@ -85,6 +85,6 @@ class TestXMLSchemaStoreImpl extends AbstractCoreIntegrationTest {
         list = xmlSchemaStore.find(criteria).getValues();
         assertThat(list).isNotNull();
         assertThat(list.size())
-                .isEqualTo(5);
+                .isEqualTo(6);
     }
 }

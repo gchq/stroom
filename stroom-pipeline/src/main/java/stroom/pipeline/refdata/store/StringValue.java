@@ -22,6 +22,7 @@ import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 public class StringValue implements RefDataValue {
@@ -30,7 +31,7 @@ public class StringValue implements RefDataValue {
      * MUST not change this else it is stored in the ref store. MUST be unique over all
      * {@link RefDataValue} impls.
      */
-    public static final int TYPE_ID = 0;
+    public static final byte TYPE_ID = 0;
 
     private final String value;
     private volatile Long valueHash = null;
@@ -86,7 +87,7 @@ public class StringValue implements RefDataValue {
     }
 
     @Override
-    public int getTypeId() {
+    public byte getTypeId() {
         return TYPE_ID;
     }
 
