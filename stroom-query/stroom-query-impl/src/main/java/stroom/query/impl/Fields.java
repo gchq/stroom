@@ -58,7 +58,7 @@ public class Fields {
                 boolean hasChildren = false;
                 if (optional.isPresent()) {
                     final FindFieldInfoCriteria criteria = new FindFieldInfoCriteria(
-                            new PageRequest(0, 1),
+                            PageRequest.oneRow(),
                             Collections.emptyList(),
                             optional.get(),
                             request.getStringMatch());

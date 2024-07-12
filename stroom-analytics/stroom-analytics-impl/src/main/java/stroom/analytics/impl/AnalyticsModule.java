@@ -30,6 +30,7 @@ import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.scheduler.CronExpressions;
 
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
@@ -55,6 +56,12 @@ public class AnalyticsModule extends AbstractModule {
                         .name("Analytic Executor: Scheduled Query")
                         .description("Run scheduled index query analytics periodically")
                         .frequencySchedule("10m")
+                        .enabled(false)
+                        .advanced(true))
+                .bindJobTo(ExecutionHistoryRetentionRunnable.class, builder -> builder
+                        .name("Analytic Execution History Retention")
+                        .description("Delete analytic execution history older than configured retention period")
+                        .cronSchedule(CronExpressions.EVERY_DAY_AT_3AM.getExpression())
                         .enabled(false)
                         .advanced(true));
         GuiceUtil.buildMultiBinder(binder(), HasResultStoreInfo.class).addBinding(AnalyticDataStores.class);
@@ -95,18 +102,18 @@ public class AnalyticsModule extends AbstractModule {
         }
     }
 
-//    private static class StreamingAnalyticExecutorRunnable extends RunnableWrapper {
-//
-//        @Inject
-//        StreamingAnalyticExecutorRunnable(final StreamingAnalyticExecutor executor) {
-//            super(executor::exec);
-//        }
-//    }
-
     private static class ScheduledAnalyticExecutorRunnable extends RunnableWrapper {
 
         @Inject
         ScheduledAnalyticExecutorRunnable(final ScheduledQueryAnalyticExecutor executor) {
+            super(executor::exec);
+        }
+    }
+
+    private static class ExecutionHistoryRetentionRunnable extends RunnableWrapper {
+
+        @Inject
+        ExecutionHistoryRetentionRunnable(final ExecutionHistoryRetention executor) {
             super(executor::exec);
         }
     }

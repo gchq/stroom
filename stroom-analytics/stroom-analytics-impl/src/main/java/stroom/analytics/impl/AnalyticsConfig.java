@@ -33,6 +33,8 @@ public class AnalyticsConfig extends AbstractConfig implements IsStroomConfig, H
     private final EmailConfig emailConfig;
     @JsonPropertyDescription("Configuration for caching streaming analytics.")
     private final CacheConfig streamingAnalyticCache;
+    @JsonProperty
+    private final StroomDuration executionHistoryRetention;
 
     public AnalyticsConfig() {
         dbConfig = new AnalyticsDbConfig();
@@ -44,6 +46,7 @@ public class AnalyticsConfig extends AbstractConfig implements IsStroomConfig, H
                 .maximumSize(1000L)
                 .refreshAfterWrite(StroomDuration.ofMinutes(10))
                 .build();
+        executionHistoryRetention = StroomDuration.ofDays(10);
     }
 
     @SuppressWarnings("unused")
@@ -53,13 +56,15 @@ public class AnalyticsConfig extends AbstractConfig implements IsStroomConfig, H
                            @JsonProperty("resultStore") final AnalyticResultStoreConfig resultStoreConfig,
                            @JsonProperty("duplicateCheckStore") final DuplicateCheckStoreConfig duplicateCheckStore,
                            @JsonProperty("emailConfig") final EmailConfig emailConfig,
-                           @JsonProperty("streamingAnalyticCache") final CacheConfig streamingAnalyticCache) {
+                           @JsonProperty("streamingAnalyticCache") final CacheConfig streamingAnalyticCache,
+                           @JsonProperty("executionHistoryRetention") final StroomDuration executionHistoryRetention) {
         this.dbConfig = dbConfig;
         this.timezone = timezone;
         this.resultStoreConfig = resultStoreConfig;
         this.duplicateCheckStore = duplicateCheckStore;
         this.emailConfig = emailConfig;
         this.streamingAnalyticCache = streamingAnalyticCache;
+        this.executionHistoryRetention = executionHistoryRetention;
     }
 
     @Override
@@ -93,6 +98,10 @@ public class AnalyticsConfig extends AbstractConfig implements IsStroomConfig, H
         return streamingAnalyticCache;
     }
 
+    @JsonProperty("executionHistoryRetention")
+    public StroomDuration getExecutionHistoryRetention() {
+        return executionHistoryRetention;
+    }
 
     // --------------------------------------------------------------------------------
 

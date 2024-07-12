@@ -26,6 +26,7 @@ import stroom.pipeline.writer.ExtendedPathCreator;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.io.PathCreator;
+import stroom.util.shared.scheduler.CronExpressions;
 
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
@@ -52,12 +53,12 @@ public class NodeModule extends AbstractModule {
                         .description("Generate Java heap map histogram and record statistic events " +
                                 "for the entries. CAUTION: this will pause the JVM, only enable this if you " +
                                 "understand the consequences!")
-                        .cronSchedule("0 0 * * * ?")
+                        .cronSchedule(CronExpressions.EVERY_HOUR.getExpression())
                         .enabled(false))
                 .bindJobTo(NodeStatus.class, jobBuilder -> jobBuilder
                         .name("Node Status")
                         .description("Job to record status of node (CPU and Memory usage)")
-                        .cronSchedule("0 * * * * ?")
+                        .cronSchedule(CronExpressions.EVERY_MINUTE.getExpression())
                         .advanced(false));
     }
 

@@ -42,7 +42,7 @@ public class DataSourceClient {
                                 final Consumer<QueryField> consumer) {
         if (dataSourceRef != null) {
             final FindFieldInfoCriteria findFieldInfoCriteria = new FindFieldInfoCriteria(
-                    new PageRequest(0, 1),
+                    PageRequest.oneRow(),
                     null,
                     dataSourceRef,
                     StringMatch.equals(fieldName, true));
