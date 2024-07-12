@@ -1985,10 +1985,11 @@ export interface FindElementDocRequest {
   properties?: PipelineProperty[];
 }
 
-export interface FindFieldInfoCriteria {
+export interface FindFieldCriteria {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSourceRef?: DocRef;
   pageRequest?: PageRequest;
+  queryable?: boolean;
   sort?: string;
   sortList?: CriteriaFieldSort[];
   stringMatch?: StringMatch;
@@ -7770,7 +7771,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/dataSource/v1/findFields
      * @secure
      */
-    findDataSourceFields: (data: FindFieldInfoCriteria, params: RequestParams = {}) =>
+    findDataSourceFields: (data: FindFieldCriteria, params: RequestParams = {}) =>
       this.request<any, ResultPageQueryField>({
         path: `/dataSource/v1/findFields`,
         method: "POST",

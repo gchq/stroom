@@ -33,7 +33,7 @@ public class AnalyticsConfig extends AbstractConfig implements IsStroomConfig, H
     private final EmailConfig emailConfig;
     @JsonPropertyDescription("Configuration for caching streaming analytics.")
     private final CacheConfig streamingAnalyticCache;
-    @JsonProperty
+    @JsonPropertyDescription("How long should we retain analytic execution history?")
     private final StroomDuration executionHistoryRetention;
 
     public AnalyticsConfig() {

@@ -1943,7 +1943,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FindFieldInfoCriteria'
+              $ref: '#/components/schemas/FindFieldCriteria'
         description: criteria
         required: true
       responses:
@@ -10333,13 +10333,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PipelineProperty'
-    FindFieldInfoCriteria:
+    FindFieldCriteria:
       type: object
       properties:
         dataSourceRef:
           $ref: '#/components/schemas/DocRef'
         pageRequest:
           $ref: '#/components/schemas/PageRequest'
+        queryable:
+          type: boolean
         sort:
           type: string
           writeOnly: true
