@@ -446,8 +446,10 @@ check_for_out_of_date_puml_svgs() {
 
   # Run the git status so we can see what git thinks has changed
   echo -e "Checking for any changes to .puml.svg files"
+  # OR with true as no match on grep gives non-zero exit
   git status --porcelain \
-    | grep -Po "(?<=( M|\?\?) ).*\.puml\.svg"
+    | grep -Po "(?<=( M|\?\?) ).*\.puml\.svg" \
+    || true
 
   local out_of_date_file_count=0
   # grep the git status output for modified/untracked svg files and
