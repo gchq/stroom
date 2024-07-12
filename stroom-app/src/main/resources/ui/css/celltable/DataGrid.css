@@ -196,9 +196,6 @@ Stop disabled commandLinkCells from having their icon disabled
     color: var(--text-color--disabled);
 }
 
-.dataGridDisabledCell span.nodePingBar-text {
-    color: var(--text-color--disabled);
-}
 
 /*
 Stop disabled commandLinkCells from having their open icon disabled

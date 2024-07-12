@@ -6,6 +6,7 @@ import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
+import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.node.client.NodeManager;
 import stroom.node.client.event.NodeChangeEvent;
@@ -15,12 +16,14 @@ import stroom.node.shared.FindNodeStatusCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeStatusResult;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.NodeMonitoringConfig;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
+import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.HtmlBuilder;
@@ -32,7 +35,7 @@ import stroom.widget.util.client.TableBuilder;
 import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
-import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -48,16 +51,19 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class NodeListPresenter extends MyPresenterWidget<PagerView> {
+public class NodeListPresenter extends MyPresenterWidget<PagerView> implements Refreshable {
 
     private static final NumberFormat THOUSANDS_FORMATTER = NumberFormat.getFormat("#,###");
     private static final String CLASS_BASE = "nodePingBar";
     private static final String PING_BAR_CLASS = CLASS_BASE + "-bar";
     private static final String PING_TEXT_CLASS = CLASS_BASE + "-text";
+    private static final String PING_ERROR_TEXT_CLASS = CLASS_BASE + "-error-text";
     private static final String PING_SEVERITY_CLASS_BASE = CLASS_BASE + "-severity";
     private static final String PING_SEVERITY_CLASS_SUFFIX_HEALTHY = "__healthy";
     private static final String PING_SEVERITY_CLASS_SUFFIX_WARN = "__warn";
     private static final String PING_SEVERITY_CLASS_SUFFIX_MAX = "__max";
+    private static final String AUTO_REFRESH_ON_TITLE = "Turn Auto Refresh Off";
+    private static final String AUTO_REFRESH_OFF_TITLE = "Turn Auto Refresh On";
 
     private final MyDataGrid<NodeStatusResult> dataGrid;
     private final NodeManager nodeManager;
@@ -68,8 +74,11 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> {
     private final Map<String, PingResult> latestPing = new HashMap<>();
     private final FindNodeStatusCriteria findNodeStatusCriteria = new FindNodeStatusCriteria();
     private final MultiSelectionModelImpl<NodeStatusResult> selectionModel;
+    private final InlineSvgToggleButton autoRefreshButton;
+
     private Map<String, NodeStatusResult> nodeNameToNodeStatusMap = null;
     private String selectedNodeName = null;
+    private boolean autoRefresh = true;
 
     @Inject
     public NodeListPresenter(final EventBus eventBus,
@@ -87,6 +96,12 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> {
         this.nodeManager = nodeManager;
         this.tooltipPresenter = tooltipPresenter;
         this.dateTimeFormatter = dateTimeFormatter;
+
+        autoRefreshButton = new InlineSvgToggleButton();
+        autoRefreshButton.setSvg(SvgImage.AUTO_REFRESH);
+        autoRefreshButton.setTitle(AUTO_REFRESH_ON_TITLE);
+        autoRefreshButton.setState(autoRefresh);
+        getView().addButton(autoRefreshButton);
 
         initTableColumns();
         dataProvider = new RestDataProvider<NodeStatusResult, FetchNodeStatusResponse>(eventBus) {
@@ -141,6 +156,23 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> {
         dataProvider.addDataDisplay(dataGrid);
     }
 
+    @Override
+    protected void onBind() {
+        super.onBind();
+
+        registerHandler(autoRefreshButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                autoRefresh = !autoRefresh;
+                if (autoRefresh) {
+                    autoRefreshButton.setTitle(AUTO_REFRESH_ON_TITLE);
+                    internalRefresh();
+                } else {
+                    autoRefreshButton.setTitle(AUTO_REFRESH_OFF_TITLE);
+                }
+            }
+        }));
+    }
+
     public MultiSelectionModel<NodeStatusResult> getSelectionModel() {
         return selectionModel;
     }
@@ -169,7 +201,7 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> {
      * Add the columns to the table.
      */
     private void initTableColumns() {
-        DataGridUtil.addColumnSortHandler(dataGrid, findNodeStatusCriteria, this::refresh);
+        DataGridUtil.addColumnSortHandler(dataGrid, findNodeStatusCriteria, this::internalRefresh);
 
         // Info column.
         final InfoColumn<NodeStatusResult> infoColumn = new InfoColumn<NodeStatusResult>() {
@@ -274,7 +306,7 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> {
                                 nodeManager.setPriority(
                                         nodeStatusResult.getNode().getName(),
                                         value.intValue(),
-                                        result -> refresh(),
+                                        result -> internalRefresh(),
                                         this))
                         .build(),
                 DataGridUtil.headingBuilder("Priority")
@@ -299,7 +331,7 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> {
                                         nodeName,
                                         value.toBoolean(),
                                         result -> {
-                                            refresh();
+                                            internalRefresh();
                                             NodeChangeEvent.fire(NodeListPresenter.this, nodeName);
                                         },
                                         this);
@@ -327,18 +359,13 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> {
         if (pingResult != null) {
             Long ping = pingResult.getPing();
             String pingMsg = null;
-            if (!node.isEnabled()) {
+            if (!node.isEnabled() && ping == null) {
                 // Disabled so bad ping is expected
-                if (ping == null) {
-                    ping = 0L;
-                    pingMsg = "No response from disabled node";
-                }
-            } else if ("No response".equals(pingResult.getError())) {
-                ping = Long.MAX_VALUE;
+                ping = 0L;
                 pingMsg = pingResult.getError();
             } else if (pingResult.getError() != null) {
                 ping = Long.MAX_VALUE;
-                pingMsg = "Error: " + pingResult.getError();
+                pingMsg = pingResult.getError();
             } else if (ping == null || ping < 0) {
                 ping = Long.MAX_VALUE;
                 pingMsg = "Invalid ping value: "
@@ -371,29 +398,56 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> {
         }
         final String severityClass = PING_SEVERITY_CLASS_BASE + severityClassSuffix;
 
-        GWT.log("ping: " + ping + ", msg '" + msg + "', severityClass: "
-                + severityClass + ", barWidthPct: " + barWidthPct);
+//        GWT.log("ping: " + ping + ", msg '" + msg + "', severityClass: "
+//                + severityClass + ", barWidthPct: " + barWidthPct);
 
         final String text;
         final String title;
+        final boolean isErrorMsg;
         if (msg == null) {
-            text = THOUSANDS_FORMATTER.format(ping);
-            title = "Ping: " + ping + " ms";
+            final String pingStr = THOUSANDS_FORMATTER.format(ping);
+            text = pingStr;
+            title = "Ping: " + pingStr + " ms";
+            isErrorMsg = false;
         } else {
-            text = msg;
+            if (msg.startsWith("Unable to connect")
+                    || msg.startsWith("Error calling node")
+                    || msg.startsWith("Request failed")) {
+                text = "Unable to connect";
+            } else {
+                text = "Error";
+            }
             title = msg;
+            isErrorMsg = true;
         }
 
+        final Attribute barWidthAttr = Attribute.style("width:" + barWidthPct + "%");
+        final Attribute textClass = Attribute.className(PING_TEXT_CLASS);
+        final Attribute errorTextClass = Attribute.className(PING_ERROR_TEXT_CLASS);
+        final Attribute barClass = Attribute.className(PING_BAR_CLASS + " " + severityClass);
+        final Attribute barWrapperClass = Attribute.className(PING_BAR_CLASS + "-wrapper");
+        final Attribute titleAttr = Attribute.title(title);
+        final Attribute outerClass = Attribute.className("nodePingBar-outer");
+
         HtmlBuilder htmlBuilder = new HtmlBuilder();
-        htmlBuilder.div(hb1 ->
-                hb1.div(hb2 ->
-                                hb2.span(hb3 -> hb3.append(text),
-                                        Attribute.className(PING_TEXT_CLASS),
-                                        Attribute.title(title)),
-                        Attribute.className(PING_BAR_CLASS + " " + severityClass),
-                        Attribute.style("width:" +
-                                barWidthPct +
-                                "%")), Attribute.className("nodePingBar-outer"));
+        if (isErrorMsg) {
+            // A text div covering the whole of the cell
+            // e.g. ' Unable to connect           '
+            htmlBuilder.div(outerBuilder -> outerBuilder
+                            .div(text, errorTextClass),
+                    outerClass, titleAttr);
+        } else {
+            // A text div for the ping number
+            // A div for the ping bar
+            // e.g. '   23 ===================      '
+            htmlBuilder.div(outerBuilder -> outerBuilder
+                            .div(text, textClass)
+                            .div(barWrapperBuilder ->
+                                            barWrapperBuilder.div(
+                                                    (Consumer<HtmlBuilder>) null, barWidthAttr, barClass),
+                                    barWrapperClass),
+                    outerClass, titleAttr);
+        }
         return htmlBuilder.toSafeHtml();
     }
 
@@ -450,7 +504,14 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> {
         tooltipPresenter.show(SafeHtmlUtils.fromString(caught.getMessage()), popupPosition);
     }
 
-    void refresh() {
+    @Override
+    public void refresh() {
+        if (autoRefresh) {
+            internalRefresh();
+        }
+    }
+
+    private void internalRefresh() {
         dataProvider.refresh();
     }
 

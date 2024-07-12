@@ -4,6 +4,7 @@ import stroom.cell.info.client.CommandLink;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
+import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.job.client.event.JobChangeEvent;
@@ -20,6 +21,7 @@ import stroom.node.client.NodeManager;
 import stroom.node.client.event.NodeChangeEvent;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.schedule.client.SchedulePopup;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.InlineSvgToggleButton;
@@ -27,6 +29,7 @@ import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
@@ -44,9 +47,11 @@ import java.util.stream.Collectors;
 /**
  * Bottom pane of NodePresenter (Nodes tab). Lists jobNodes for a single node.
  */
-public class NodeJobListPresenter extends MyPresenterWidget<PagerView> {
+public class NodeJobListPresenter extends MyPresenterWidget<PagerView> implements Refreshable {
 
     private static final JobNodeResource JOB_NODE_RESOURCE = GWT.create(JobNodeResource.class);
+    private static final String AUTO_REFRESH_ON_TITLE = "Turn Auto Refresh Off";
+    private static final String AUTO_REFRESH_OFF_TITLE = "Turn Auto Refresh On";
 
     private final JobNodeListHelper jobNodeListHelper;
     private final RestDataProvider<JobNodeAndInfo, JobNodeAndInfoListResponse> dataProvider;
@@ -56,6 +61,9 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> {
     private final Provider<JobListPlugin> jobListPluginProvider;
     private final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel;
     private final NodeManager nodeManager;
+    private final InlineSvgToggleButton autoRefreshButton;
+
+    private boolean autoRefresh;
 
     @Inject
     public NodeJobListPresenter(final EventBus eventBus,
@@ -82,10 +90,17 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> {
                 selectionModel,
                 getView(),
                 NodeJobListPresenter.this,
-                this::refresh);
+                this::internalRefresh);
 
         this.showEnabledToggleBtn = jobNodeListHelper.buildJobFilterButton();
         view.addButton(showEnabledToggleBtn);
+
+        autoRefresh = false;
+        autoRefreshButton = new InlineSvgToggleButton();
+        autoRefreshButton.setSvg(SvgImage.AUTO_REFRESH);
+        autoRefreshButton.setTitle(AUTO_REFRESH_OFF_TITLE);
+        autoRefreshButton.setState(autoRefresh);
+        getView().addButton(autoRefreshButton);
 
         // Must call this after initialising JobNodeListHelper
         initTable();
@@ -105,22 +120,31 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> {
     @Override
     protected void onBind() {
         super.onBind();
+
+        registerHandler(autoRefreshButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                autoRefresh = !autoRefresh;
+                if (autoRefresh) {
+                    autoRefreshButton.setTitle(AUTO_REFRESH_ON_TITLE);
+                    internalRefresh();
+                } else {
+                    autoRefreshButton.setTitle(AUTO_REFRESH_OFF_TITLE);
+                }
+            }
+        }));
+
         // NodeLisPresenter may change a node
         // Currently the node state does not affect how the job nodes are displayed
         registerHandler(getEventBus().addHandler(
                 NodeChangeEvent.getType(), event -> {
-                    final String currentNodeName = getNodeNameCriteria();
-                    final String affectedNodeName = event.getNodeName();
-                    if (currentNodeName != null && Objects.equals(currentNodeName, affectedNodeName)) {
-                        refreshNodeStates();
-                    }
+                    refreshNodeStates();
                 }));
 
         // JobListPresenter may change a job
         registerHandler(getEventBus().addHandler(
                 JobChangeEvent.getType(), event -> {
                     // We are likely showing all jobs so just refresh
-                    refresh();
+                    internalRefresh();
                 }));
 
         // JobNodeListPresenter may change one or more jobNodes
@@ -135,7 +159,7 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> {
                                 .collect(Collectors.toSet());
                         final String currentNodeName = getNodeNameCriteria();
                         if (currentNodeName != null && affectedNodes.contains(currentNodeName)) {
-                            refresh();
+                            internalRefresh();
                         }
                     }
                 }));
@@ -199,7 +223,7 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> {
             dataProvider.addDataDisplay(dataGrid);
         }
         setNodeNameCriteria(nodeName);
-        refresh();
+        internalRefresh();
     }
 
     private String getNodeNameCriteria() {
@@ -210,7 +234,14 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> {
         findJobNodeCriteria.getNodeName().setString(nodeName);
     }
 
-    void refresh() {
+    @Override
+    public void refresh() {
+        if (autoRefresh) {
+            internalRefresh();
+        }
+    }
+
+    private void internalRefresh() {
         updateFormGroupHeading();
         dataProvider.refresh();
     }

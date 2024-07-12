@@ -1903,13 +1903,41 @@ button.main-menu svg {
 }
 
 .nodePingBar-outer {
-    padding-left: .25em;
     padding-right: .25em;
+    display: flex;
+    flex-direction: row;
+    column-gap: 0.25em;
+}
+
+.nodePingBar-bar-wrapper {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
 }
 
 .nodePingBar-bar {
-     color: white;
-     height: 100%;
+    color: white;
+    height: 70%;
+    padding-left: .25em;
+}
+
+.nodePingBar-text {
+    padding-left: .25em;
+    width: 3em;
+    flex-grow: 0;
+    text-align: right;
+}
+
+.nodePingBar-error-text {
+    padding-left: .25em;
+    width: 100%;
+    font-weight: 500;
+    color: var(--danger);
+}
+
+.dataGridDisabledCell .nodePingBar-error-text {
+    font-weight: 400;
+    color: var(--text-color--disabled);
 }
 
 .nodePingBar-bar.nodePingBar-severity__healthy {
@@ -1939,14 +1967,17 @@ button.main-menu svg {
      background-color: var(--text-color--disabled);
 }
 
-.dataGridDisabledCell .nodePingBar-bar.nodePingBar-severity__healthy .nodePingBar-text,
+.dataGridDisabledCell .nodePingBar-bar.nodePingBar-severity__healthy .nodePingBar-text {
+    color: var(--text-color--disabled) ;
+}
+
 .dataGridDisabledCell .nodePingBar-bar.nodePingBar-severity__warn .nodePingBar-text,
 .dataGridDisabledCell .nodePingBar-bar.nodePingBar-severity__max .nodePingBar-text {
      color: var(--black);
 }
 
-.nodePingBar-text {
-    padding-left: .25em;
+.dataGridDisabledCell span.nodePingBar-text {
+    color: var(--text-color--disabled) ;
 }
 
 .listContainer {

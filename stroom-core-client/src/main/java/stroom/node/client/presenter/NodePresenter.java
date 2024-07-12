@@ -68,6 +68,7 @@ public class NodePresenter
     @Override
     public void refresh() {
         nodeListPresenter.refresh();
+        nodeJobListPresenter.refresh();
     }
 
     @Override

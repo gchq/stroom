@@ -41,6 +41,10 @@ public class HtmlBuilder {
         return elem(content, "div", attributes);
     }
 
+    public HtmlBuilder div(final String textContent, final Attribute... attributes) {
+        return elem(htmlBuilder -> htmlBuilder.append(textContent), "div", attributes);
+    }
+
     public HtmlBuilder hr() {
         return emptyElement("hr");
     }
@@ -65,7 +69,10 @@ public class HtmlBuilder {
                              final String elementName,
                              final Attribute... attributes) {
         openElement(elementName, attributes);
-        content.accept(this);
+        // Allow for empty elements
+        if (content != null) {
+            content.accept(this);
+        }
         closeElement(elementName);
         return this;
     }

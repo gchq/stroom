@@ -40,6 +40,7 @@ import event.logging.And;
 import event.logging.Query;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.client.SyncInvoker;
 
 import java.util.Comparator;
@@ -220,24 +221,36 @@ class NodeResourceImpl implements NodeResource {
     public Long ping(final String nodeName) {
         final long now = System.currentTimeMillis();
 
-        final Long ping = nodeServiceProvider.get().remoteRestResult(
-                nodeName,
-                Long.class,
-                () -> ResourcePaths.buildAuthenticatedApiPath(
-                        NodeResource.BASE_PATH,
-                        NodeResource.PING_PATH_PART,
-                        nodeName),
-                () ->
-                        // If this is the node that was contacted then just return the latency
-                        // we have incurred within this method.
-                        System.currentTimeMillis() - now,
-                SyncInvoker::get);
+        final Supplier<String> urlSupplier = () -> ResourcePaths.buildAuthenticatedApiPath(
+                NodeResource.BASE_PATH,
+                NodeResource.PING_PATH_PART,
+                nodeName);
+
+        final Long ping;
+        try {
+            ping = nodeServiceProvider.get().remoteRestResult(
+                    nodeName,
+                    Long.class,
+                    urlSupplier,
+                    () ->
+                            // If this is the node that was contacted then just return the latency
+                            // we have incurred within this method.
+                            System.currentTimeMillis() - now,
+                    SyncInvoker::get);
+        } catch (WebApplicationException e) {
+            throw new RuntimeException("Unable to connect to node '" + nodeName + "': "
+                    + e.getMessage());
+        }
 
         Objects.requireNonNull(ping, "Null ping");
         return System.currentTimeMillis() - now;
 
-        // This line for testing in dev
-//        return new Random().nextLong(600L);
+//         These lines for testing in dev
+//        final long ping2 = new Random().nextLong(600L);
+//        if (ping2 > 100 && ping2 < 200) {
+//            throw new RuntimeException("Unable to connect, blah blah blah");
+//        }
+//        return ping2;
     }
 
     @Override
