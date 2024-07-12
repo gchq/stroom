@@ -6,15 +6,20 @@ import stroom.util.shared.scheduler.Schedule;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Set;
 
 @SuppressWarnings("ClassCanBeRecord")
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonPropertyOrder(alphabetic = true)
 public class BatchScheduleRequest {
 
+    @JsonProperty
     private final Set<Integer> jobNodeIds;
+    @JsonProperty
     private final JobType jobType;
+    @JsonProperty
     private final Schedule schedule;
 
     @JsonCreator

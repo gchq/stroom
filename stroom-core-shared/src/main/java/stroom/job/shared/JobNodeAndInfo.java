@@ -13,7 +13,10 @@ import java.util.Objects;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class JobNodeAndInfo {
 
+    @JsonProperty
     private final JobNode jobNode;
+
+    @JsonProperty
     // Can be set lazily
     private JobNodeInfo jobNodeInfo;
 

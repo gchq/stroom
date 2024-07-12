@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.List;
 
@@ -32,6 +33,7 @@ import java.util.List;
  * Criteria object used to fetch a job that matches the parameters specified.
  */
 @JsonInclude(Include.NON_NULL)
+@JsonPropertyOrder(alphabetic = true)
 public class FindJobNodeCriteria extends BaseCriteria {
 
     public static final String FIELD_ID_ID = "Id";
@@ -45,6 +47,7 @@ public class FindJobNodeCriteria extends BaseCriteria {
     private final StringCriteria jobName;
     @JsonProperty
     private final StringCriteria nodeName;
+    @JsonProperty
     private Boolean jobNodeEnabled;
 
     public FindJobNodeCriteria() {
