@@ -8,7 +8,7 @@ import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.EventLink;
 import stroom.annotation.shared.SetAssignedToRequest;
 import stroom.annotation.shared.SetStatusRequest;
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
@@ -58,7 +58,7 @@ public class AnnotationService implements Searchable, AnnotationCreator {
     }
 
     @Override
-    public ResultPage<QueryField> getFieldInfo(final FindFieldInfoCriteria criteria) {
+    public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
         return FieldInfoResultPageBuilder.builder(criteria).addAll(AnnotationFields.FIELDS).build();
     }
 

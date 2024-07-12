@@ -2,7 +2,7 @@ package stroom.pipeline.refdata;
 
 import stroom.bytebuffer.ByteBufferPool;
 import stroom.data.shared.StreamTypeNames;
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
@@ -679,7 +679,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     }
 
     @Override
-    public ResultPage<QueryField> getFieldInfo(final FindFieldInfoCriteria criteria) {
+    public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
         return FieldInfoResultPageBuilder.builder(criteria).addAll(ReferenceDataFields.FIELDS).build();
     }
 

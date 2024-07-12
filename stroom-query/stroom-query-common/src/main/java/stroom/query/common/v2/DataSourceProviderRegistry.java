@@ -1,7 +1,7 @@
 package stroom.query.common.v2;
 
 import stroom.datasource.api.v2.DataSourceProvider;
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.util.logging.LambdaLogger;
@@ -42,7 +42,7 @@ public class DataSourceProviderRegistry {
                 .orElse(null);
     }
 
-    public ResultPage<QueryField> getFieldInfo(final FindFieldInfoCriteria criteria) {
+    public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
         try {
             return getDataSourceProvider(criteria.getDataSourceRef().getType())
                     .map(dsp -> dsp.getFieldInfo(criteria))

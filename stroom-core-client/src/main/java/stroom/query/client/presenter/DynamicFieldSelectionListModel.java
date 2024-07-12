@@ -1,6 +1,6 @@
 package stroom.query.client.presenter;
 
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
@@ -19,7 +19,8 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
 
     private final DataSourceClient dataSourceClient;
     private DocRef dataSourceRef;
-    private FindFieldInfoCriteria lastCriteria;
+    private Boolean queryable;
+    private FindFieldCriteria lastCriteria;
 
     @Inject
     public DynamicFieldSelectionListModel(final DataSourceClient dataSourceClient) {
@@ -34,11 +35,12 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
                               final Consumer<ResultPage<FieldInfoSelectionItem>> consumer) {
         if (dataSourceRef != null) {
             final StringMatch stringMatch = StringMatch.contains(filter);
-            final FindFieldInfoCriteria findFieldInfoCriteria = new FindFieldInfoCriteria(
+            final FindFieldCriteria findFieldInfoCriteria = new FindFieldCriteria(
                     pageRequest,
                     null,
                     dataSourceRef,
-                    stringMatch);
+                    stringMatch,
+                    queryable);
 
             // Only fetch if the request has changed.
             if (!findFieldInfoCriteria.equals(lastCriteria)) {
@@ -72,6 +74,10 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
         this.dataSourceRef = dataSourceRef;
     }
 
+    public void setQueryable(final Boolean queryable) {
+        this.queryable = queryable;
+    }
+
     @Override
     public void reset() {
         lastCriteria = null;
@@ -79,7 +85,7 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
 
     @Override
     public void findFieldByName(final String fieldName, final Consumer<QueryField> consumer) {
-        dataSourceClient.findFieldByName(dataSourceRef, fieldName, consumer);
+        dataSourceClient.findFieldByName(dataSourceRef, fieldName, queryable, consumer);
     }
 
     @Override

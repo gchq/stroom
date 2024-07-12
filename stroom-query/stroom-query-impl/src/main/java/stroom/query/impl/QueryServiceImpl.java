@@ -20,7 +20,7 @@ import stroom.dashboard.impl.SearchResponseMapper;
 import stroom.dashboard.impl.logging.SearchEventLog;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
@@ -514,7 +514,7 @@ class QueryServiceImpl implements QueryService {
     }
 
     @Override
-    public ResultPage<QueryField> findFields(final FindFieldInfoCriteria criteria) {
+    public ResultPage<QueryField> findFields(final FindFieldCriteria criteria) {
         return securityContext.useAsReadResult(() -> dataSourceProviderRegistry.getFieldInfo(criteria));
     }
 
