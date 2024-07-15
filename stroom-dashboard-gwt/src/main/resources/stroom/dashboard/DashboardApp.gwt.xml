@@ -85,6 +85,7 @@
     <!-- Additional -->
     <inherits name="stroom.dashboard.Dashboard"/>
     <inherits name="stroom.expression.Expression"/>
+    <inherits name="stroom.index.Index" />
     <inherits name="stroom.query.Query"/>
     <inherits name="stroom.docstore.DocStore"/>
     <inherits name="stroom.data.retention.DataRetention"/>
@@ -98,7 +99,7 @@
     <inherits name="stroom.pipeline.structure.Structure"/>
     <inherits name="stroom.pipeline.stepping.PipelineStepping"/>
     <inherits name="stroom.feed.Feed"/>
-<!--    <inherits name="stroom.monitoring.Monitoring" />-->
+    <inherits name="stroom.monitoring.Monitoring" />
     <inherits name="stroom.job.Job" />
     <inherits name="stroom.schedule.Schedule" />
     <inherits name="stroom.importexport.ImportExport" />
