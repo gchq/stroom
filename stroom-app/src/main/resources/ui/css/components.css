@@ -1918,7 +1918,7 @@ button.main-menu svg {
 .nodePingBar-bar {
     color: white;
     height: 70%;
-    padding-left: .25em;
+    /*padding-left: .25em;*/
 }
 
 .nodePingBar-text {

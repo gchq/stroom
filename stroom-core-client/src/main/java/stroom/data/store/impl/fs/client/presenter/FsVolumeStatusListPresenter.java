@@ -24,6 +24,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeResource;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
@@ -31,6 +32,7 @@ import stroom.data.store.impl.fs.shared.S3ClientConfig;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.util.client.DataGridUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
@@ -38,9 +40,7 @@ import stroom.util.shared.Selection;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -49,6 +49,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import java.util.OptionalDouble;
 import java.util.OptionalLong;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
 
@@ -94,7 +95,7 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
                     CriteriaUtil.setRange(criteria, range);
                     restFactory
                             .create(FS_VOLUME_RESOURCE)
-                            .method(res -> res.find(criteria))
+                            .method(resource -> resource.find(criteria))
                             .onSuccess(dataConsumer)
                             .onFailure(errorHandler)
                             .taskListener(getView())
@@ -107,126 +108,174 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
         }
     }
 
+    private String getPath(final FsVolume volume) {
+        if (volume == null) {
+            return null;
+        }
+        if (FsVolumeType.S3.equals(volume.getVolumeType())) {
+            return GwtNullSafe.getOrElse(
+                    volume.getS3ClientConfig(),
+                    S3ClientConfig::getBucketName,
+                    S3ClientConfig.DEFAULT_BUCKET_NAME);
+        }
+
+        return volume.getPath();
+    }
+
+    private boolean isEnabled(final FsVolume volume) {
+        final VolumeUseStatus volumeUseStatus = GwtNullSafe.get(volume, FsVolume::getStatus);
+        return VolumeUseStatus.ACTIVE == volumeUseStatus;
+    }
+
     /**
      * Add the columns to the table.
      */
     private void initTableColumns() {
         // Path.
-        final Column<FsVolume, String> volumeColumn = new Column<FsVolume, String>(new TextCell()) {
-            @Override
-            public String getValue(final FsVolume volume) {
-                if (volume == null) {
-                    return null;
-                }
-                if (FsVolumeType.S3.equals(volume.getVolumeType())) {
-                    return GwtNullSafe.getOrElse(
-                            volume.getS3ClientConfig(),
-                            S3ClientConfig::getBucketName,
-                            S3ClientConfig.DEFAULT_BUCKET_NAME);
-                }
-
-                return volume.getPath();
-            }
-        };
-        dataGrid.addResizableColumn(volumeColumn, "Path", 300);
+        dataGrid.addAutoResizableColumn(
+                DataGridUtil.textWithTooltipColumnBuilder(this::getPath, Function.identity())
+                        .enabledWhen(this::isEnabled)
+                        .build(),
+                DataGridUtil.headingBuilder("Path")
+                        .withToolTip("The file system path to the volume.")
+                        .build(), 200);
 
         // Volume type.
-        final Column<FsVolume, String> volumeTypeColumn = new Column<FsVolume, String>(new TextCell()) {
-            @Override
-            public String getValue(final FsVolume row) {
-                if (row == null) {
-                    return null;
-                }
-                return row.getVolumeType().getDisplayValue();
-            }
-        };
-        dataGrid.addResizableColumn(volumeTypeColumn, "Type", 90);
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder(FsVolume::getVolumeType, FsVolumeType::getDisplayValue)
+                        .enabledWhen(this::isEnabled)
+                        .build(),
+                DataGridUtil.headingBuilder("Type")
+                        .withToolTip("The type of file system in use. Either Standard or S3.")
+                        .build(),
+                90);
 
         // Status.
-        final Column<FsVolume, String> streamStatusColumn = new Column<FsVolume, String>(new TextCell()) {
-            @Override
-            public String getValue(final FsVolume volume) {
-                return volume.getStatus().getDisplayValue();
-            }
-        };
-        dataGrid.addResizableColumn(streamStatusColumn, "Status", 90);
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder(FsVolume::getStatus, VolumeUseStatus::getDisplayValue)
+                        .enabledWhen(this::isEnabled)
+                        .build(),
+                DataGridUtil.headingBuilder("Status")
+                        .withToolTip("The status of the volume. One of Active, Inactive or Closed.")
+                        .build(),
+                90);
 
         // Total.
-        final Column<FsVolume, String> totalColumn = new Column<FsVolume, String>(new TextCell()) {
-            @Override
-            public String getValue(final FsVolume volume) {
-                return getSizeString(volume.getCapacityInfo().getTotalCapacityBytes());
-            }
-        };
-        dataGrid.addResizableColumn(totalColumn, "Total", ColumnSizeConstants.SMALL_COL);
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder(
+                                (FsVolume vol) ->
+                                        vol.getCapacityInfo().getTotalCapacityBytes(), this::getSizeString)
+                        .enabledWhen(this::isEnabled)
+                        .rightAligned()
+                        .build(),
+                DataGridUtil.headingBuilder("Total")
+                        .rightAligned()
+                        .withToolTip("The total size of the volume.")
+                        .build(),
+                ColumnSizeConstants.BYTE_SIZE_COL);
 
         // Limit.
-        final Column<FsVolume, String> limitColumn = new Column<FsVolume, String>(
-                new TextCell()) {
-
-            @Override
-            public String getValue(final FsVolume volume) {
-                if (volume.getByteLimit() == null) {
-                    return "";
-                }
-                // Special case for limit as it is user input data so need more precision
-                return ModelStringUtil.formatIECByteSizeString(volume.getByteLimit(),
-                        true,
-                        ModelStringUtil.DEFAULT_SIGNIFICANT_FIGURES);
-            }
-        };
-        dataGrid.addResizableColumn(limitColumn, "Limit", ColumnSizeConstants.SMALL_COL);
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder(this::getLimitAsStr)
+                        .enabledWhen(this::isEnabled)
+                        .rightAligned()
+                        .build(),
+                DataGridUtil.headingBuilder("Limit")
+                        .rightAligned()
+                        .withToolTip("The optional limit set on the volume. The volume will be considered full " +
+                                "when the limit is reached.")
+                        .build(),
+                ColumnSizeConstants.BYTE_SIZE_COL);
 
         // Used.
-        final Column<FsVolume, String> usedColumn = new Column<FsVolume, String>(new TextCell()) {
-            @Override
-            public String getValue(final FsVolume volume) {
-                return getSizeString(volume.getCapacityInfo().getCapacityUsedBytes());
-            }
-        };
-        dataGrid.addResizableColumn(usedColumn, "Used", ColumnSizeConstants.SMALL_COL);
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder(
+                                (FsVolume vol) ->
+                                        vol.getCapacityInfo().getCapacityUsedBytes(), this::getSizeString)
+                        .enabledWhen(this::isEnabled)
+                        .rightAligned()
+                        .build(),
+                DataGridUtil.headingBuilder("Used")
+                        .rightAligned()
+                        .withToolTip("The amount of the volume that is in use.")
+                        .build(),
+                ColumnSizeConstants.BYTE_SIZE_COL);
 
         // Free.
-        final Column<FsVolume, String> freeColumn = new Column<FsVolume, String>(new TextCell()) {
-            @Override
-            public String getValue(final FsVolume volume) {
-                return getSizeString(volume.getCapacityInfo().getFreeCapacityBytes());
-            }
-        };
-        dataGrid.addResizableColumn(freeColumn, "Free", ColumnSizeConstants.SMALL_COL);
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder(
+                                (FsVolume vol) ->
+                                        vol.getCapacityInfo().getFreeCapacityBytes(), this::getSizeString)
+                        .enabledWhen(this::isEnabled)
+                        .rightAligned()
+                        .build(),
+                DataGridUtil.headingBuilder("Free")
+                        .rightAligned()
+                        .withToolTip("The amount of the volume that is free. If a limit is set then only free " +
+                                "space up to the limit is considered.")
+                        .build(),
+                ColumnSizeConstants.BYTE_SIZE_COL);
 
         // Use%.
-        final Column<FsVolume, String> usePercentColumn = new Column<FsVolume, String>(new TextCell()) {
-            @Override
-            public String getValue(final FsVolume volume) {
-                final OptionalDouble optUsedPercent = volume.getCapacityInfo().getUsedCapacityPercent();
-                return optUsedPercent.isPresent()
-                        ? ((long) optUsedPercent.getAsDouble()) + "%"
-                        : "?";
-            }
-        };
-        dataGrid.addResizableColumn(usePercentColumn, "Use%", ColumnSizeConstants.SMALL_COL);
+        dataGrid.addResizableColumn(
+                DataGridUtil.percentBarColumnBuilder(
+                                this::getUsePercentage,
+                                DataGridUtil.DEFAULT_PCT_WARNING_THRESHOLD,
+                                DataGridUtil.DEFAULT_PCT_DANGER_THRESHOLD)
+                        .enabledWhen(this::isEnabled)
+                        .build(),
+                DataGridUtil.headingBuilder("Use%")
+                        .withToolTip("The percentage of the volume that is in use. If a limit is set then the " +
+                                "percentage is relative to the limit.")
+                        .build(),
+                ColumnSizeConstants.SMALL_COL);
 
         // Is Full
-        final Column<FsVolume, String> isFullColumn = new Column<FsVolume, String>(new TextCell()) {
-            @Override
-            public String getValue(final FsVolume volume) {
-                return volume.getCapacityInfo().isFull()
-                        ? "Yes"
-                        : "No";
-            }
-        };
-        dataGrid.addResizableColumn(isFullColumn, "Full", ColumnSizeConstants.SMALL_COL);
+        dataGrid.addResizableColumn(DataGridUtil.redGreenTextColumnBuilder(
+                                (FsVolume vol) -> !vol.getCapacityInfo().isFull(),
+                                "No",
+                                "Yes")
+                        .enabledWhen(this::isEnabled)
+                        .centerAligned()
+                        .build(),
+                DataGridUtil.headingBuilder("Full")
+                        .withToolTip("Whether this volume is full or not.")
+                        .centerAligned()
+                        .build(),
+                50);
 
         // Usage Date.
-        final Column<FsVolume, String> usageDateColumn = new Column<FsVolume, String>(new TextCell()) {
-            @Override
-            public String getValue(final FsVolume volume) {
-                return dateTimeFormatter.format(volume.getVolumeState().getUpdateTimeMs());
-            }
-        };
-        dataGrid.addResizableColumn(usageDateColumn, "Usage Date", ColumnSizeConstants.DATE_COL);
+        dataGrid.addResizableColumn(
+                DataGridUtil.textWithTooltipColumnBuilder((FsVolume vol) ->
+                                        dateTimeFormatter.formatWithDuration(vol.getVolumeState().getUpdateTimeMs()),
+                                Function.identity())
+                        .enabledWhen(this::isEnabled)
+                        .build(),
+                DataGridUtil.headingBuilder("Usage Date")
+                        .centerAligned()
+                        .withToolTip("The date/time this volume was last written to.")
+                        .build(),
+                ColumnSizeConstants.DATE_AND_DURATION_COL);
+
         dataGrid.addEndColumn(new EndColumn<>());
+    }
+
+    private Number getUsePercentage(final FsVolume volume) {
+        final OptionalDouble optUsedPercent = volume.getCapacityInfo()
+                .getUsedCapacityPercent();
+        return optUsedPercent.isPresent()
+                ? optUsedPercent.getAsDouble()
+                : null;
+    }
+
+    public String getLimitAsStr(final FsVolume volume) {
+        if (volume.getByteLimit() == null) {
+            return "";
+        }
+        // Special case for limit as it is user input data so need more precision
+        return ModelStringUtil.formatIECByteSizeString(volume.getByteLimit(),
+                true,
+                ModelStringUtil.DEFAULT_SIGNIFICANT_FIGURES);
     }
 
     private String getSizeString(final OptionalLong optSizeBytes) {

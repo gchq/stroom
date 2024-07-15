@@ -4,6 +4,8 @@ import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.ColourSwatchCell;
 import stroom.cell.info.client.CommandLink;
 import stroom.cell.info.client.CommandLinkCell;
+import stroom.cell.info.client.PercentBarCell;
+import stroom.cell.info.client.RedGreenTextCell;
 import stroom.cell.info.client.SvgCell;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.client.TickBoxCell.DefaultAppearance;
@@ -59,6 +61,9 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class DataGridUtil {
+
+    public static final int DEFAULT_PCT_WARNING_THRESHOLD = 80;
+    public static final int DEFAULT_PCT_DANGER_THRESHOLD = 90;
 
     private static final String DISABLED_CELL_CLASS = "dataGridDisabledCell";
     private static final String LOW_LIGHT_COLOUR = "#666666";
@@ -372,6 +377,57 @@ public class DataGridUtil {
         return new ColumnBuilder<>(cellExtractor, Function.identity(), TextCell::new);
     }
 
+    /**
+     * A simple text cell with the value of the cell also as the hover tool tip value.
+     */
+    public static <T_ROW> ColumnBuilder<T_ROW, String, String, Cell<String>> textWithTooltipColumnBuilder(
+            final Function<T_ROW, String> cellExtractor) {
+        return textWithTooltipColumnBuilder(cellExtractor, Function.identity());
+    }
+
+    /**
+     * A simple text cell with the value of the hover tooltip provided by tooltipFunction, which is
+     * applied to the cell value.
+     */
+    public static <T_ROW> ColumnBuilder<T_ROW, String, String, Cell<String>> textWithTooltipColumnBuilder(
+            final Function<T_ROW, String> cellExtractor,
+            final Function<String, String> tooltipFunction) {
+
+        final Supplier<Cell<String>> cellSupplier = () -> new TextCell() {
+
+            @Override
+            public void render(final Context context, final String data, final SafeHtmlBuilder sb) {
+                if (tooltipFunction != null) {
+                    final String tooltip = tooltipFunction.apply(data);
+                    if (data != null) {
+                        if (tooltip != null) {
+                            sb.appendHtmlConstant("<div title=\"")
+                                    .appendEscaped(tooltip)
+                                    .appendHtmlConstant("\">");
+                        }
+                        sb.append(SafeHtmlUtils.fromString(data));
+                        if (tooltip != null) {
+                            sb.appendHtmlConstant("</div>");
+                        }
+                    }
+                } else {
+                    super.render(context, data, sb);
+                }
+            }
+        };
+
+        return new ColumnBuilder<>(cellExtractor, Function.identity(), cellSupplier);
+    }
+
+    public static <T_ROW> ColumnBuilder<T_ROW, Boolean, Boolean, Cell<Boolean>> redGreenTextColumnBuilder(
+            final Function<T_ROW, Boolean> cellExtractor,
+            final String greenText,
+            final String redText) {
+
+        return new ColumnBuilder<>(cellExtractor, Function.identity(),
+                () -> new RedGreenTextCell(greenText, redText));
+    }
+
     public static <T_ROW> ColumnBuilder<T_ROW, Number, Number, ValueSpinnerCell> valueSpinnerColumnBuilder(
             final Function<T_ROW, Number> cellExtractor, final long minValue, final long maxValue) {
         return new ColumnBuilder<>(
@@ -383,6 +439,25 @@ public class DataGridUtil {
     public static <T_ROW> ColumnBuilder<T_ROW, String, String, ColourSwatchCell> colourSwatchColumnBuilder(
             final Function<T_ROW, String> cssColourExtractor) {
         return new ColumnBuilder<>(cssColourExtractor, Function.identity(), ColourSwatchCell::new);
+    }
+
+    public static <T_ROW> ColumnBuilder<T_ROW, String, String, TextCell> iecByteStringColumnBuilder(
+            final Function<T_ROW, Long> bytesExtractor, final String valueIfNull) {
+
+        final Function<T_ROW, String> bytesAsStrExtractor = row -> {
+            if (row == null || bytesExtractor == null) {
+                return valueIfNull;
+            } else {
+                final Long bytes = bytesExtractor.apply(row);
+                if (bytes == null) {
+                    return valueIfNull;
+                } else {
+                    return ModelStringUtil.formatIECByteSizeString(bytes);
+                }
+            }
+        };
+
+        return new ColumnBuilder<>(bytesAsStrExtractor, Function.identity(), TextCell::new);
     }
 
     /**
@@ -448,6 +523,17 @@ public class DataGridUtil {
             final Function<T_ROW, T_RAW_VAL> cellExtractor,
             final Function<T_RAW_VAL, String> formatter) {
         return new ColumnBuilder<>(cellExtractor, formatter, CopyTextCell::new);
+    }
+
+    public static <T_ROW> ColumnBuilder<T_ROW, Number, Number, Cell<Number>> percentBarColumnBuilder(
+            final Function<T_ROW, Number> cellExtractor,
+            final int warningThreshold,
+            final int dangerThreshold) {
+
+        return new ColumnBuilder<>(
+                cellExtractor,
+                Function.identity(),
+                () -> new PercentBarCell(warningThreshold, dangerThreshold));
     }
 
     /**
@@ -662,61 +748,10 @@ public class DataGridUtil {
             final Column<T_ROW, T_CELL_VAL> column;
             if (isSorted) {
                 // Explicit generics typing for GWT
-                column = new OrderByColumn<T_ROW, T_CELL_VAL>(
-                        cellSupplier.get(),
-                        fieldName,
-                        isIgnoreCaseOrdering) {
-
-                    @Override
-                    public T_CELL_VAL getValue(final T_ROW row) {
-                        return extractFormattedValue(row);
-                    }
-
-                    @Override
-                    public boolean isSortable() {
-                        return isSortableSupplier.getAsBoolean();
-                    }
-
-                    @Override
-                    public String getCellStyleNames(final Context context, final T_ROW object) {
-                        return buildCellStyles(super.getCellStyleNames(context, object), object);
-                    }
-
-                    @Override
-                    public void onBrowserEvent(final Context context,
-                                               final Element elem,
-                                               final T_ROW object,
-                                               final NativeEvent event) {
-                        super.onBrowserEvent(context, elem, object, event);
-                        if (browserEventHandler != null) {
-                            browserEventHandler.handle(context, elem, object, event);
-                        }
-                    }
-                };
+                column = createSortableColumn();
             } else {
                 // Explicit generics typing for GWT
-                column = new Column<T_ROW, T_CELL_VAL>(cellSupplier.get()) {
-                    @Override
-                    public T_CELL_VAL getValue(final T_ROW row) {
-                        return extractFormattedValue(row);
-                    }
-
-                    @Override
-                    public String getCellStyleNames(final Context context, final T_ROW object) {
-                        return buildCellStyles(super.getCellStyleNames(context, object), object);
-                    }
-
-                    @Override
-                    public void onBrowserEvent(final Context context,
-                                               final Element elem,
-                                               final T_ROW object,
-                                               final NativeEvent event) {
-                        super.onBrowserEvent(context, elem, object, event);
-                        if (browserEventHandler != null) {
-                            browserEventHandler.handle(context, elem, object, event);
-                        }
-                    }
-                };
+                column = createNonSortableColumn();
             }
             if (horizontalAlignment != null) {
                 column.setHorizontalAlignment(horizontalAlignment);
@@ -731,6 +766,65 @@ public class DataGridUtil {
             }
 
             return column;
+        }
+
+        private Column<T_ROW, T_CELL_VAL> createNonSortableColumn() {
+            return new Column<T_ROW, T_CELL_VAL>(cellSupplier.get()) {
+                @Override
+                public T_CELL_VAL getValue(final T_ROW row) {
+                    return extractFormattedValue(row);
+                }
+
+                @Override
+                public String getCellStyleNames(final Context context, final T_ROW object) {
+                    return buildCellStyles(super.getCellStyleNames(context, object), object);
+                }
+
+                @Override
+                public void onBrowserEvent(final Context context,
+                                           final Element elem,
+                                           final T_ROW object,
+                                           final NativeEvent event) {
+                    super.onBrowserEvent(context, elem, object, event);
+                    if (browserEventHandler != null) {
+                        browserEventHandler.handle(context, elem, object, event);
+                    }
+                }
+            };
+        }
+
+        private Column<T_ROW, T_CELL_VAL> createSortableColumn() {
+            return new OrderByColumn<T_ROW, T_CELL_VAL>(
+                    cellSupplier.get(),
+                    fieldName,
+                    isIgnoreCaseOrdering) {
+
+                @Override
+                public T_CELL_VAL getValue(final T_ROW row) {
+                    return extractFormattedValue(row);
+                }
+
+                @Override
+                public boolean isSortable() {
+                    return isSortableSupplier.getAsBoolean();
+                }
+
+                @Override
+                public String getCellStyleNames(final Context context, final T_ROW object) {
+                    return buildCellStyles(super.getCellStyleNames(context, object), object);
+                }
+
+                @Override
+                public void onBrowserEvent(final Context context,
+                                           final Element elem,
+                                           final T_ROW object,
+                                           final NativeEvent event) {
+                    super.onBrowserEvent(context, elem, object, event);
+                    if (browserEventHandler != null) {
+                        browserEventHandler.handle(context, elem, object, event);
+                    }
+                }
+            };
         }
     }
 
@@ -776,32 +870,49 @@ public class DataGridUtil {
                 headingText = "";
             }
 
-            if (hasToolTip || hasAlignment) {
+            final Header<SafeHtml> header;
+            String headingStyle = null;
+            if (hasAlignment) {
+                if (HeadingAlignment.CENTER == headingAlignment) {
+                    headingStyle = "center-align";
+                } else if (HeadingAlignment.RIGHT == headingAlignment) {
+                    headingStyle = "right-align";
+                }
+            }
+
+//            if (hasToolTip || hasAlignment) {
+            if (hasToolTip) {
 
                 final SafeHtmlBuilder builder = new SafeHtmlBuilder()
                         .appendHtmlConstant("<span");
-                if (hasToolTip) {
-                    builder.appendHtmlConstant(" title=\"")
-                            .appendEscaped(toolTip)
-                            .appendHtmlConstant("\"");
-                }
-                if (hasAlignment) {
-                    if (HeadingAlignment.CENTER == headingAlignment) {
-                        builder.appendHtmlConstant(" style=\"text-align: center;\"");
-                    } else if (HeadingAlignment.RIGHT == headingAlignment) {
-                        builder.appendHtmlConstant(" style=\"text-align: right;\"");
-                    }
-                }
+//                if (hasToolTip) {
+                builder.appendHtmlConstant(" title=\"")
+                        .appendEscaped(toolTip)
+                        .appendHtmlConstant("\"");
+//                }
+//                if (hasAlignment) {
+//                    if (HeadingAlignment.CENTER == headingAlignment) {
+//                        builder.appendHtmlConstant(" style=\"text-align: center;\"");
+//                        headingStyle = "center-align";
+//                    } else if (HeadingAlignment.RIGHT == headingAlignment) {
+//                        builder.appendHtmlConstant(" style=\"text-align: right;\"");
+//                        headingStyle = "right-align";
+//                    }
+//                }
 
                 final SafeHtml safeHtml = builder
                         .appendHtmlConstant(">")
                         .appendEscaped(headingText)
                         .appendHtmlConstant("</span>")
                         .toSafeHtml();
-                return new SafeHtmlHeader(safeHtml);
+                header = new SafeHtmlHeader(safeHtml);
             } else {
-                return new SafeHtmlHeader(SafeHtmlUtils.fromString(headingText));
+                header = new SafeHtmlHeader(SafeHtmlUtils.fromString(headingText));
             }
+
+            // Apply a class to the header itself
+            GwtNullSafe.consume(headingStyle, header::setHeaderStyleNames);
+            return header;
         }
     }
 
