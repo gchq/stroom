@@ -188,14 +188,15 @@
 /*
 Stop disabled commandLinkCells from having their icon disabled
 */
-.dataGridDisabledCell {
-    color: var(--text-color--disabled);
-}
-
+.dataGridDisabledCell,
 .dataGridDisabledCell .valueSpinner .gwt-TextBox {
     color: var(--text-color--disabled);
 }
 
+.dataGridSelectedRow .dataGridDisabledCell,
+.dataGridSelectedRow .dataGridDisabledCell .valueSpinner .gwt-TextBox {
+    color: var(--text-color--disabled--selected);
+}
 
 /*
 Stop disabled commandLinkCells from having their open icon disabled

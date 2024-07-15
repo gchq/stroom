@@ -120,6 +120,10 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
         pager.getRefreshButton().setRefreshing(taskCount > 0);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Binder extends UiBinder<Widget, PagerViewImpl> {
 
     }

@@ -9,18 +9,24 @@
     height: 100%;
     border-style: solid;
     border-width: 1px;
+    border-color: var(--grey-700);
+}
+
+.dataGridOddRow .percentBarCell-container {
+    background-color: var(--row__background-color--odd);
+}
+
+.dataGridEvenRow .percentBarCell-container {
+    background-color: var(--row__background-color--even);
+}
+
+.dataGridSelectedRowCell.dataGridDisabledCell .percentBarCell-container {
     border-color: var(--text-color--disabled);
 }
 
-/*
-.dataGridSelectedRow .percentBarCell-container {
-    border-color: var(--text-color);
+.dataGridSelectedRowCell .percentBarCell-container {
+    border-color: var(--grey-500);
 }
-
-.dataGridDisabledCell.dataGridSelectedRow .percentBarCell-container {
-    border-color: var(--text-color--disabled);
-}
-*/
 
 .percentBarCell-bar {
     height: 12px;

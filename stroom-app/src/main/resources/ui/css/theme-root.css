@@ -34,6 +34,7 @@
 
     --text-color: #151515;
     --text-color--disabled: #777;
+    --text-color--disabled--selected: #555;
     --text-color--red: var(--red-600);
     --text-color--green: var(--green-600);
     --text-color--red--dark: var(--red-900);

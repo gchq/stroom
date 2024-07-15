@@ -2,6 +2,9 @@ package stroom.cell.info.client;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.safecss.shared.SafeStyles;
+import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -61,8 +64,10 @@ public class PercentBarCell extends AbstractCell<Number> {
                 final String thresholdClassName = getThresholdClassName(pctAsLong);
                 final String title = pctAsLong + "%";
 
+                final SafeStyles widthStyle = SafeStylesUtils.forWidth(pctAsLong, Unit.PCT);
+
                 sb.append(template.percentBar(
-                        thresholdClassName, String.valueOf(pctAsLong), title));
+                        thresholdClassName, widthStyle, title));
             }
         }
     }
@@ -84,10 +89,10 @@ public class PercentBarCell extends AbstractCell<Number> {
     interface Template extends SafeHtmlTemplates {
 
         @Template("<div class=\"percentBarCell percentBarCell-container\" title=\"{2}\">"
-                + "<div class=\"percentBarCell-bar {0}\" style=\"width: {1}%\" />"
+                + "<div class=\"percentBarCell-bar {0}\" style=\"{1}\" />"
                 + "</div>")
         SafeHtml percentBar(final String thresholdClassName,
-                            final String percentage,
+                            final SafeStyles widthStyle,
                             final String title);
     }
 }

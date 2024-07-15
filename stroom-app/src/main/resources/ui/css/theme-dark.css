@@ -30,8 +30,9 @@
     --text-color: #dce4e5;
     --text-color--hover: #e5eaeb;
     --text-color--selected: #fff;
-    --text-color--disabled: #888;
-    --text-color--red: var(--red-700);
+    --text-color--disabled: #999;
+    --text-color--disabled--selected: #ccc;
+    --text-color--red: var(--red-400);
     --text-color--green: var(--green-500);
     --text-color--red--dark: var(--red-900);
     --text-color--green--dark: var(--green-700);
