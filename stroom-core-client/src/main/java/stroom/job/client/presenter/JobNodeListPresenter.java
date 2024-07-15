@@ -33,10 +33,10 @@ import stroom.job.shared.JobNode.JobType;
 import stroom.job.shared.JobNodeAndInfo;
 import stroom.job.shared.JobNodeAndInfoListResponse;
 import stroom.job.shared.JobNodeResource;
-import stroom.monitoring.client.NodeMonitoringPlugin;
 import stroom.node.client.JobNodeListHelper;
 import stroom.node.client.NodeManager;
 import stroom.node.client.event.NodeChangeEvent;
+import stroom.node.client.event.OpenNodeEvent;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.schedule.client.SchedulePopup;
 import stroom.svg.shared.SvgImage;
@@ -52,7 +52,6 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
@@ -72,7 +71,6 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> implement
     private static final String AUTO_REFRESH_ON_TITLE = "Turn Auto Refresh Off";
     private static final String AUTO_REFRESH_OFF_TITLE = "Turn Auto Refresh On";
 
-    private final Provider<NodeMonitoringPlugin> nodeMonitoringPluginProvider;
     private final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel;
     private final RestFactory restFactory;
     private final JobNodeListHelper jobNodeListHelper;
@@ -90,8 +88,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> implement
     private boolean autoRefresh;
 
     @Inject
-    public JobNodeListPresenter(final Provider<NodeMonitoringPlugin> nodeMonitoringPluginProvider,
-                                final EventBus eventBus,
+    public JobNodeListPresenter(final EventBus eventBus,
                                 final PagerView view,
                                 final RestFactory restFactory,
                                 final SchedulePopup schedulePresenter,
@@ -99,7 +96,6 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> implement
                                 final DateTimeFormatter dateTimeFormatter,
                                 final NodeManager nodeManager) {
         super(eventBus, view);
-        this.nodeMonitoringPluginProvider = nodeMonitoringPluginProvider;
         this.restFactory = restFactory;
         this.nodeManager = nodeManager;
 
@@ -382,8 +378,8 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> implement
                         nodeName,
                         "Open node '" + nodeName + "' and job '" + jobName
                                 + "' on the Nodes screen.",
-                        () -> nodeMonitoringPluginProvider.get()
-                                .open(jobNodeAndInfo.getJobNode()));
+                        () -> OpenNodeEvent.fire(
+                                JobNodeListPresenter.this, jobNodeAndInfo.getJobNode()));
             } else {
                 return null;
             }

@@ -19,8 +19,8 @@ package stroom.monitoring.client;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.job.client.event.OpenJobNodeEvent;
 import stroom.job.client.presenter.JobPresenter;
-import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
@@ -45,6 +45,13 @@ public class JobListPlugin extends MonitoringPlugin<JobPresenter> {
                          final Provider<JobPresenter> presenterProvider,
                          final ClientSecurityContext securityContext) {
         super(eventBus, eventManager, presenterProvider, securityContext);
+
+        registerHandler(getEventBus().addHandler(
+                OpenJobNodeEvent.getType(), openJobNodeEvent -> {
+                    final JobNode jobNode = openJobNodeEvent.getJobNode();
+                    final JobPresenter jobPresenter = open();
+                    jobPresenter.setSelected(jobNode);
+                }));
     }
 
     @Override
@@ -70,15 +77,5 @@ public class JobListPlugin extends MonitoringPlugin<JobPresenter> {
     @Override
     protected Action getOpenAction() {
         return Action.GOTO_JOBS;
-    }
-
-    public void open(final Job job) {
-        final JobPresenter jobPresenter = open();
-        jobPresenter.setSelected(job);
-    }
-
-    public void open(final JobNode jobNode) {
-        final JobPresenter jobPresenter = open();
-        jobPresenter.setSelected(jobNode);
     }
 }

@@ -181,7 +181,7 @@ public class JobNodeListHelper {
                         .stream()
                         .map(JobNodeAndInfo::getJobNode)
                         .collect(Collectors.toList());
-                final List<JobType> jobTypes = selectedItems.stream()
+                @SuppressWarnings("SimplifyStreamApiCallChains") final List<JobType> jobTypes = selectedItems.stream()
                         .map(JobNode::getJobType)
                         .distinct()
                         .collect(Collectors.toList());
@@ -362,6 +362,10 @@ public class JobNodeListHelper {
 
         final JobNode jobNode = GwtNullSafe.get(jobNodeAndInfo, JobNodeAndInfo::getJobNode);
         final String nodeName = GwtNullSafe.get(jobNodeAndInfo, JobNodeAndInfo::getNodeName);
+        final boolean canRunNow = GwtNullSafe.test(
+                jobNodeAndInfo,
+                JobNodeAndInfo::getJobType,
+                type -> type == JobType.CRON || type == JobType.FREQUENCY);
 
         final MenuBuilder builder = MenuBuilder.builder()
                 .withIconMenuItem(itemBuilder -> itemBuilder
@@ -370,7 +374,7 @@ public class JobNodeListHelper {
                         .command(() ->
                                 showSchedule(jobNodeAndInfo)));
 
-        if (isNodeEnabled(nodeName)) {
+        if (canRunNow && isNodeEnabled(nodeName)) {
             builder.withIconMenuItem(itemBuilder -> itemBuilder
                     .icon(SvgImage.PLAY)
                     .text("Run Job on '" + jobNode.getNodeName() + "' Now")

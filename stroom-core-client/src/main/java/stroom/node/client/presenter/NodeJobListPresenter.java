@@ -9,13 +9,13 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.job.client.event.JobChangeEvent;
 import stroom.job.client.event.JobNodeChangeEvent;
+import stroom.job.client.event.OpenJobNodeEvent;
 import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNodeAndInfo;
 import stroom.job.shared.JobNodeAndInfoListResponse;
 import stroom.job.shared.JobNodeResource;
-import stroom.monitoring.client.JobListPlugin;
 import stroom.node.client.JobNodeListHelper;
 import stroom.node.client.NodeManager;
 import stroom.node.client.event.NodeChangeEvent;
@@ -33,7 +33,6 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
@@ -58,7 +57,6 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> implement
     private final MyDataGrid<JobNodeAndInfo> dataGrid;
     private final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
     private final InlineSvgToggleButton showEnabledToggleBtn;
-    private final Provider<JobListPlugin> jobListPluginProvider;
     private final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel;
     private final NodeManager nodeManager;
     private final InlineSvgToggleButton autoRefreshButton;
@@ -69,13 +67,11 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> implement
     public NodeJobListPresenter(final EventBus eventBus,
                                 final PagerView view,
                                 final RestFactory restFactory,
-                                final Provider<JobListPlugin> jobListPluginProvider,
                                 final SchedulePopup schedulePresenter,
                                 final MenuPresenter menuPresenter,
                                 final DateTimeFormatter dateTimeFormatter,
                                 final NodeManager nodeManager) {
         super(eventBus, view);
-        this.jobListPluginProvider = jobListPluginProvider;
         this.nodeManager = nodeManager;
         this.dataGrid = new MyDataGrid<>();
         this.selectionModel = dataGrid.addDefaultSelectionModel(false);
@@ -294,14 +290,16 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> implement
         DataGridUtil.addEndColumn(dataGrid);
     }
 
-    private CommandLink openJobNodeAsCommandLink(JobNodeAndInfo jobNodeAndInfo) {
+    private CommandLink openJobNodeAsCommandLink(final JobNodeAndInfo jobNodeAndInfo) {
         if (jobNodeAndInfo != null) {
             final String jobName = jobNodeAndInfo.getJobName();
             final String nodeName = jobNodeAndInfo.getNodeName();
             return new CommandLink(
                     jobName,
                     "Open job '" + jobName + "' on node '" + nodeName + "' on the Jobs screen.",
-                    () -> jobListPluginProvider.get().open(jobNodeAndInfo.getJobNode()));
+                    () -> OpenJobNodeEvent.fire(
+                            NodeJobListPresenter.this,
+                            jobNodeAndInfo.getJobNode()));
         } else {
             return null;
         }

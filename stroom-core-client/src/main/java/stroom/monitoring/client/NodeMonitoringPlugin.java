@@ -21,6 +21,7 @@ import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.job.shared.JobNode;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
+import stroom.node.client.event.OpenNodeEvent;
 import stroom.node.client.presenter.NodePresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -44,6 +45,17 @@ public class NodeMonitoringPlugin extends MonitoringPlugin<NodePresenter> {
                                 final Provider<NodePresenter> presenterProvider,
                                 final ClientSecurityContext securityContext) {
         super(eventBus, eventManager, presenterProvider, securityContext);
+
+        registerHandler(getEventBus().addHandler(
+                OpenNodeEvent.getType(), openNodeEvent -> {
+                    final JobNode jobNode = openNodeEvent.getJobNode();
+                    final NodePresenter nodePresenter = open();
+                    if (jobNode != null) {
+                        nodePresenter.setSelected(jobNode);
+                    } else {
+                        nodePresenter.setSelected(openNodeEvent.getNodeName());
+                    }
+                }));
     }
 
     @Override
@@ -71,13 +83,13 @@ public class NodeMonitoringPlugin extends MonitoringPlugin<NodePresenter> {
         return Action.GOTO_NODES;
     }
 
-    public void open(final String nodeName) {
-        final NodePresenter nodePresenter = open();
-        nodePresenter.setSelected(nodeName);
-    }
-
-    public void open(final JobNode jobNode) {
-        final NodePresenter nodePresenter = open();
-        nodePresenter.setSelected(jobNode);
-    }
+//    private void openNode(final String nodeName) {
+//        final NodePresenter nodePresenter = open();
+//        nodePresenter.setSelected(nodeName);
+//    }
+//
+//    private void openNodeJob(final JobNode jobNode) {
+//        final NodePresenter nodePresenter = open();
+//        nodePresenter.setSelected(jobNode);
+//    }
 }
