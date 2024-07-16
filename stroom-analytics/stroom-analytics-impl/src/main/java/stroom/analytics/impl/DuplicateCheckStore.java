@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 class DuplicateCheckStore {
 
@@ -156,6 +157,7 @@ class DuplicateCheckStore {
 
     public synchronized DuplicateCheckRows fetchData(final FindDuplicateCheckCriteria criteria) {
         final List<DuplicateCheckRow> results = new ArrayList<>();
+        final AtomicLong totalSize = new AtomicLong();
         final List<String> columnNames = new ArrayList<>();
 
         lmdbEnv.read(txn -> {
@@ -171,14 +173,18 @@ class DuplicateCheckStore {
                         results.add(duplicateCheckRowSerde.createDuplicateCheckRow(valBuffer));
                     }
                     count++;
+
+                    // Deliberately allow one
                     if (results.size() >= pageRequest.getLength()) {
                         break;
                     }
                 }
             });
+            totalSize.set(db.count(txn));
         });
 
-        final ResultPage<DuplicateCheckRow> resultPage = ResultPage.createCriterialBasedList(results, criteria);
+        final ResultPage<DuplicateCheckRow> resultPage = ResultPage
+                .createCriterialBasedList(results, criteria, totalSize.get());
         return new DuplicateCheckRows(columnNames, resultPage);
     }
 
