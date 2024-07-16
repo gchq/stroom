@@ -285,6 +285,20 @@ public class GwtNullSafe {
     }
 
     /**
+     * @return True if val is not null and the result of applying getter to value
+     * is non-null and true
+     */
+    public static <T> boolean isTrue(final T val, final Function<T, Boolean> getter) {
+        if (val == null) {
+            return false;
+        } else {
+            Objects.requireNonNull(getter);
+            final Boolean bool = getter.apply(val);
+            return bool != null && bool;
+        }
+    }
+
+    /**
      * @return True if both str and subStr are non-null and str contains subStr
      */
     public static boolean contains(final String str, final String subStr) {

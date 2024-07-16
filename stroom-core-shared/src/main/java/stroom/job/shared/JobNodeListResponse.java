@@ -27,7 +27,7 @@ public class JobNodeListResponse extends ResultPage<JobNode> {
     /**
      * Used for full queries (not bounded).
      */
-    public static JobNodeListResponse createUnboundedJobeNodeResponse(final List<JobNode> realList) {
+    public static JobNodeListResponse createUnboundedJobNodeResponse(final List<JobNode> realList) {
         if (realList != null) {
             return new JobNodeListResponse(realList, createPageResponse(realList));
         } else {

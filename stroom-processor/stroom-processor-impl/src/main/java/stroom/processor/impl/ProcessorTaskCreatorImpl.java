@@ -143,6 +143,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
             // to complete so all task creation is encapsulated by this lock
             LOGGER.debug("Locking cluster to create tasks");
             clusterLockService.tryLock(LOCK_NAME, () -> {
+
                 final LongAdder totalTasksCreated = new LongAdder();
                 final TaskContext taskContext = taskContextFactory.current();
                 createNewTasks(taskContext, totalTasksCreated);

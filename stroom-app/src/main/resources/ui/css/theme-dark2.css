@@ -28,7 +28,8 @@
 
     --text-color: #e6e1dc;
     --text-color--disabled: #666;
-    --text-color--red: var(--red-700);
+    --text-color--disabled--selected: #aaa;
+    --text-color--red: var(--red-400);
     --text-color--green: var(--green-500);
     --text-color--red--dark: var(--red-900);
     --text-color--green--dark: var(--green-700);

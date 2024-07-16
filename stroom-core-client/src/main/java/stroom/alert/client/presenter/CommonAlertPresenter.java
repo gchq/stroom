@@ -70,7 +70,7 @@ public class CommonAlertPresenter
 
         final SafeHtml detail = event.getDetail();
         final int height;
-        if (detail == null || detail.asString().trim().length() == 0) {
+        if (detail == null || detail.asString().trim().isEmpty()) {
             height = 200;
         } else {
             height = 500;
@@ -88,7 +88,7 @@ public class CommonAlertPresenter
                 .height(Size
                         .builder()
 //                        .initial(height)
-                        .min(200)
+//                        .min(200)
                         .resizable(true)
                         .build())
                 .build();

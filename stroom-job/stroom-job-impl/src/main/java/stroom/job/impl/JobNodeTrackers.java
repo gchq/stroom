@@ -12,4 +12,6 @@ public interface JobNodeTrackers {
     List<JobNodeTracker> getDistributedJobNodeTrackers();
 
     SimpleScheduleExec getScheduleExec(JobNode jobNode);
+
+    void triggerImmediateExecution(final JobNode jobNode);
 }

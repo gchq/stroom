@@ -209,7 +209,7 @@ public class IndexVolumeGroupEditPresenter
             this.volumeGroup = volumeGroup;
             getView().setName(volumeGroup.getName());
 
-            final PopupSize popupSize = PopupSize.resizable(1000, 600);
+            final PopupSize popupSize = PopupSize.resizable(1400, 600);
             ShowPopupEvent.builder(this)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
                     .popupSize(popupSize)

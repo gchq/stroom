@@ -304,7 +304,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
             try {
                 // We sometimes want to wait a bit before we try and establish the
                 // cluster state. This is often the case during startup when multiple
-                // nodes start to ping each other which triggers an update but we want
+                // nodes start to ping each other which triggers an update, but we want
                 // to give other nodes some time to start also.
                 if (delay > 0) {
                     Thread.sleep(delay);

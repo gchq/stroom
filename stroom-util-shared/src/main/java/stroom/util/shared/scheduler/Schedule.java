@@ -74,6 +74,10 @@ public class Schedule {
         return new Builder();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Builder {
 
         private ScheduleType type;

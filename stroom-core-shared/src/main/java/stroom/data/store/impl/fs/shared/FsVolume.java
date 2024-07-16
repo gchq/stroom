@@ -330,6 +330,10 @@ public class FsVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
         return volume;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public enum VolumeUseStatus implements HasDisplayValue, HasPrimitiveValue {
         ACTIVE("Active", 0), // Currently being written to.
         INACTIVE("Inactive", 1), // No longer being written to but still accessible for reading.

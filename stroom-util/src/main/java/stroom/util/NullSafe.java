@@ -222,6 +222,20 @@ public class NullSafe {
     }
 
     /**
+     * @return True if val is not null and the result of applying getter to value
+     * is non-null and true
+     */
+    public static <T> boolean isTrue(final T val, final Function<T, Boolean> getter) {
+        if (val == null) {
+            return false;
+        } else {
+            Objects.requireNonNull(getter);
+            final Boolean bool = getter.apply(val);
+            return bool != null && bool;
+        }
+    }
+
+    /**
      * @return The un-boxed value if non-null, else zero.
      */
     public static int getInt(final Integer val) {

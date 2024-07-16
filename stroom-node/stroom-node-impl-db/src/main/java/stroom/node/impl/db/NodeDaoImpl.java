@@ -16,6 +16,7 @@
 
 package stroom.node.impl.db;
 
+import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.node.api.FindNodeCriteria;
 import stroom.node.impl.NodeDao;
@@ -38,35 +39,27 @@ public class NodeDaoImpl implements NodeDao {
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.of(
             FindNodeCriteria.FIELD_ID, NODE.ID,
+            FindNodeCriteria.FIELD_LAST_BOOT_MS, NODE.LAST_BOOT_MS,
+            FindNodeCriteria.FIELD_BUILD_VERSION, NODE.BUILD_VERSION,
             FindNodeCriteria.FIELD_NAME, NODE.NAME);
 
+    private final GenericDao<NodeRecord, Node, Integer> genericDao;
     private final NodeDbConnProvider nodeDbConnProvider;
 
     @Inject
     NodeDaoImpl(final NodeDbConnProvider nodeDbConnProvider) {
         this.nodeDbConnProvider = nodeDbConnProvider;
+        this.genericDao = new GenericDao<>(nodeDbConnProvider, NODE, NODE.ID, Node.class);
     }
 
     @Override
-    public Node create(final Node node) {
-        JooqUtil.context(nodeDbConnProvider, context -> context
-                .insertInto(NODE)
-                .set(NODE.NAME, node.getName())
-                .set(NODE.URL, node.getUrl())
-                .set(NODE.PRIORITY, (short) node.getPriority())
-                .set(NODE.ENABLED, node.isEnabled())
-                .onDuplicateKeyIgnore()
-                .execute());
-
-        return getNode(node.getName());
+    public Node tryCreate(final Node node) {
+        return genericDao.tryCreate(node, NODE.NAME);
     }
 
     @Override
     public Node update(final Node node) {
-        final NodeRecord record = NODE.newRecord();
-        record.from(node);
-        final NodeRecord persistedRecord = JooqUtil.updateWithOptimisticLocking(nodeDbConnProvider, record);
-        return persistedRecord.into(Node.class);
+        return genericDao.update(node);
     }
 
     @Override
@@ -91,11 +84,7 @@ public class NodeDaoImpl implements NodeDao {
 
     @Override
     public Node getNode(final String nodeName) {
-        return JooqUtil.contextResult(nodeDbConnProvider, context -> context
-                        .selectFrom(NODE)
-                        .where(NODE.NAME.eq(nodeName))
-                        .fetchOptional())
-                .map(r -> r.into(Node.class))
+        return genericDao.fetchBy(NODE.NAME, nodeName)
                 .orElse(null);
     }
 }
