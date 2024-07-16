@@ -19,19 +19,16 @@ class SearchExpressionQueryCache {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SearchExpressionQueryCache.class);
 
     private final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory;
-    private final IndexFieldCache indexFieldCache;
     private final Map<String, Analyzer> analyzerMap = new HashMap<>();
     private SearchExpressionQuery luceneQuery;
 
     @Inject
-    SearchExpressionQueryCache(final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory,
-                               final IndexFieldCache indexFieldCache) {
+    SearchExpressionQueryCache(final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory) {
         this.searchExpressionQueryBuilderFactory = searchExpressionQueryBuilderFactory;
-        this.indexFieldCache = indexFieldCache;
     }
 
     SearchExpressionQuery getQuery(final SearchRequest searchRequest,
-                                   final boolean ignoreMissingFields) {
+                                   final IndexFieldCache indexFieldCache) {
         try {
             if (luceneQuery == null) {
                 final SearchExpressionQueryBuilder searchExpressionQueryBuilder =
