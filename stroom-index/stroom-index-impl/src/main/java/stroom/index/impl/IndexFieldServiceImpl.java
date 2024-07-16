@@ -97,7 +97,7 @@ public class IndexFieldServiceImpl implements IndexFieldService {
             }
 
             final FindFieldCriteria findIndexFieldCriteria = new FindFieldCriteria(
-                    new PageRequest(0, 1),
+                    PageRequest.oneRow(),
                     null,
                     docRef,
                     StringMatch.equals(fieldName),

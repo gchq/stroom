@@ -2821,7 +2821,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/FindFieldInfoCriteria"
+                "$ref" : "#/components/schemas/FindFieldCriteria"
               }
             }
           },
@@ -14324,7 +14324,7 @@
           }
         }
       },
-      "FindFieldInfoCriteria" : {
+      "FindFieldCriteria" : {
         "type" : "object",
         "properties" : {
           "dataSourceRef" : {
@@ -14332,6 +14332,9 @@
           },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
+          },
+          "queryable" : {
+            "type" : "boolean"
           },
           "sort" : {
             "type" : "string",

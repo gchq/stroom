@@ -97,7 +97,7 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
         criteria.setComponentId(queryPresenter.getId());
         criteria.setSort(FindStoredQueryCriteria.FIELD_TIME, true, false);
         criteria.setFavourite(false);
-        criteria.setPageRequest(new PageRequest(0, 100));
+        criteria.setPageRequest(PageRequest.createDefault());
 
         restFactory
                 .create(STORED_QUERY_RESOURCE)

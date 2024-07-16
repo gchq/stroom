@@ -104,7 +104,7 @@ public class MockIndexFieldService implements IndexFieldService {
     @Override
     public IndexField getIndexField(final DocRef docRef, final String fieldName) {
         final FindFieldCriteria findIndexFieldCriteria = new FindFieldCriteria(
-                new PageRequest(0, 1),
+                PageRequest.oneRow(),
                 null,
                 docRef,
                 StringMatch.equals(fieldName),
