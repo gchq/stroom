@@ -5305,38 +5305,6 @@
         "tags" : [ "Jobs" ]
       }
     },
-    "/jobNode/v1" : {
-      "get" : {
-        "operationId" : "listJobNodes",
-        "parameters" : [ {
-          "in" : "query",
-          "name" : "jobName",
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "in" : "query",
-          "name" : "nodeName",
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ResultPageJobNode"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Lists job nodes",
-        "tags" : [ "Jobs (Node)" ]
-      }
-    },
     "/jobNode/v1/find" : {
       "post" : {
         "operationId" : "findJobNodes",
@@ -5356,7 +5324,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ResultPageJobNode"
+                  "$ref" : "#/components/schemas/JobNodeAndInfoListResponse"
                 }
               }
             },
@@ -5399,6 +5367,32 @@
         "tags" : [ "Jobs (Node)" ]
       }
     },
+    "/jobNode/v1/schedule" : {
+      "put" : {
+        "operationId" : "setJobNodeScheduleBatch",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/BatchScheduleRequest"
+              }
+            }
+          },
+          "description" : "schedule",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : { }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Sets the schedule of multiple job nodes",
+        "tags" : [ "Jobs (Node)" ]
+      }
+    },
     "/jobNode/v1/{id}/enabled" : {
       "put" : {
         "operationId" : "setJobNodeEnabled",
@@ -5434,6 +5428,34 @@
         "tags" : [ "Jobs (Node)" ]
       }
     },
+    "/jobNode/v1/{id}/execute" : {
+      "post" : {
+        "operationId" : "executeJobNode",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Execute job node now",
+        "tags" : [ "Jobs (Node)" ]
+      }
+    },
     "/jobNode/v1/{id}/schedule" : {
       "put" : {
         "operationId" : "setJobNodeSchedule",
@@ -5465,7 +5487,7 @@
             "description" : "default response"
           }
         },
-        "summary" : "Sets the schedule job node",
+        "summary" : "Sets the schedule of a job node",
         "tags" : [ "Jobs (Node)" ]
       }
     },
@@ -11556,6 +11578,26 @@
           }
         }
       },
+      "BatchScheduleRequest" : {
+        "type" : "object",
+        "properties" : {
+          "jobNodeIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            },
+            "uniqueItems" : true
+          },
+          "jobType" : {
+            "type" : "string",
+            "enum" : [ "UNKNOWN", "CRON", "FREQUENCY", "DISTRIBUTED" ]
+          },
+          "schedule" : {
+            "$ref" : "#/components/schemas/Schedule"
+          }
+        }
+      },
       "BuildInfo" : {
         "type" : "object",
         "properties" : {
@@ -14573,6 +14615,9 @@
           "jobName" : {
             "$ref" : "#/components/schemas/StringCriteria"
           },
+          "jobNodeEnabled" : {
+            "type" : "boolean"
+          },
           "nodeName" : {
             "$ref" : "#/components/schemas/StringCriteria"
           },
@@ -15565,6 +15610,31 @@
           }
         }
       },
+      "JobNodeAndInfo" : {
+        "type" : "object",
+        "properties" : {
+          "jobNode" : {
+            "$ref" : "#/components/schemas/JobNode"
+          },
+          "jobNodeInfo" : {
+            "$ref" : "#/components/schemas/JobNodeInfo"
+          }
+        }
+      },
+      "JobNodeAndInfoListResponse" : {
+        "type" : "object",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/JobNodeAndInfo"
+            }
+          }
+        }
+      },
       "JobNodeInfo" : {
         "type" : "object",
         "properties" : {
@@ -15573,6 +15643,10 @@
             "format" : "int32"
           },
           "lastExecutedTime" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "nextScheduledTime" : {
             "type" : "integer",
             "format" : "int64"
           },
@@ -16007,6 +16081,9 @@
       "Node" : {
         "type" : "object",
         "properties" : {
+          "buildVersion" : {
+            "type" : "string"
+          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -16020,6 +16097,10 @@
           "id" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "lastBootMs" : {
+            "type" : "integer",
+            "format" : "int64"
           },
           "name" : {
             "type" : "string"
@@ -18134,21 +18215,6 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/Job"
-            }
-          }
-        }
-      },
-      "ResultPageJobNode" : {
-        "type" : "object",
-        "description" : "A page of results.",
-        "properties" : {
-          "pageResponse" : {
-            "$ref" : "#/components/schemas/PageResponse"
-          },
-          "values" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/JobNode"
             }
           }
         }
