@@ -174,7 +174,7 @@ class DuplicateCheckStore {
                     }
                     count++;
 
-                    // Deliberately allow one
+                    // Once we have enough results break.
                     if (results.size() >= pageRequest.getLength()) {
                         break;
                     }

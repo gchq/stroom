@@ -172,7 +172,7 @@ public class ResultPage<T> implements Serializable {
 
     protected static <T> PageResponse createPageResponse(final List<T> realList,
                                                          final PageRequest pageRequest) {
-        boolean exact = true;
+        boolean moreToFollow = false;
         Long totalSize = null;
         final long offset = pageRequest != null && pageRequest.getOffset() != null
                 ? pageRequest.getOffset()
@@ -182,9 +182,9 @@ public class ResultPage<T> implements Serializable {
             // All our queries are + 1 on the limit so that we know there is
             // more to come
             final int overflow = realList.size() - pageRequest.getLength();
-            exact = overflow == 0;
+            moreToFollow = overflow > 0;
 
-            if (!exact) {
+            if (moreToFollow) {
                 if (overflow > 1) {
                     // Here we check that if the query was supposed to be limited
                     // make sure we have
@@ -210,7 +210,7 @@ public class ResultPage<T> implements Serializable {
                 offset,
                 realList.size(),
                 totalSize,
-                exact);
+                !moreToFollow);
     }
 
     protected static <T> PageResponse createPageResponse(final List<T> realList,

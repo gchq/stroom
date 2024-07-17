@@ -137,6 +137,7 @@ public class ActivityServiceImpl implements ActivityService {
             return QuickFilterResultPage.createCriterialBasedList(
                     filteredActivities,
                     new FindActivityCriteria(),
+                    filteredActivities.size(),
                     fullyQualifiedInput);
         });
     }
