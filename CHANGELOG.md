@@ -13,6 +13,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#4357** : Fix result paging for analytic duplicate check stores.
+
+* Issue **#4347** : Filter queryable fields for dashboard query expressions.
+
+* Issue **#4350** : Add analytic execution history retention job.
+
+* Issue **#4351** : Improve query event logging.
+
+* Issue **#4357** : Fix result paging for analytic duplicate check stores.
+
+* Issue **#4358** : Fix streaming analytic field matches.
+
+
 ## [v7.5-beta.6] - 2024-07-16
 
 * Improve styling of Jobs screen so disabled jobs/nodes are greyed out.

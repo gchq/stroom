@@ -22,6 +22,7 @@ import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.scheduler.CronTrigger;
 import stroom.util.scheduler.FrequencyTrigger;
+import stroom.util.shared.scheduler.CronExpressions;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -72,7 +73,7 @@ class TestRollingFileDestination {
                 pathCreator,
                 "test",
                 null,
-                new CronTrigger("0 * * * * ?"),
+                new CronTrigger(CronExpressions.EVERY_MINUTE.getExpression()),
                 100,
                 time,
                 "test.tmp",

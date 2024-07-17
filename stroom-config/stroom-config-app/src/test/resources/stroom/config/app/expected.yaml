@@ -48,6 +48,7 @@ appConfig:
         port: 2525
         transport: "plain"
         username: null
+    executionHistoryRetention: "P10D"
     resultStore:
       lmdb:
         localDir: "lmdb/analytic_store"

@@ -1,6 +1,6 @@
 package stroom.query.client;
 
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.datasource.shared.DataSourceResource;
 import stroom.dispatch.client.RestFactory;
@@ -29,7 +29,7 @@ public class DataSourceClient {
         this.restFactory = restFactory;
     }
 
-    public void findFields(final FindFieldInfoCriteria findFieldInfoCriteria,
+    public void findFields(final FindFieldCriteria findFieldInfoCriteria,
                            final Consumer<ResultPage<QueryField>> consumer,
                            final TaskListener taskListener) {
         restFactory
@@ -42,14 +42,16 @@ public class DataSourceClient {
 
     public void findFieldByName(final DocRef dataSourceRef,
                                 final String fieldName,
+                                final Boolean queryable,
                                 final Consumer<QueryField> consumer,
                                 final TaskListener taskListener) {
         if (dataSourceRef != null) {
-            final FindFieldInfoCriteria findFieldInfoCriteria = new FindFieldInfoCriteria(
-                    new PageRequest(0, 1),
+            final FindFieldCriteria findFieldInfoCriteria = new FindFieldCriteria(
+                    PageRequest.oneRow(),
                     null,
                     dataSourceRef,
-                    StringMatch.equals(fieldName, true));
+                    StringMatch.equals(fieldName, true),
+                    queryable);
             restFactory
                     .create(DATA_SOURCE_RESOURCE)
                     .method(res -> res.findFields(findFieldInfoCriteria))

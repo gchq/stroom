@@ -75,7 +75,7 @@ public class ScheduledProcessingPresenter
                 .schedule(Schedule
                         .builder()
                         .type(ScheduleType.CRON)
-                        .expression(CronExpressions.EVERY_DAY.getExpression())
+                        .expression(CronExpressions.EVERY_DAY_AT_MIDNIGHT.getExpression())
                         .build())
                 .scheduleBounds(ScheduleBounds
                         .builder()

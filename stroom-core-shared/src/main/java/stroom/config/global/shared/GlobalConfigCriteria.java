@@ -32,7 +32,7 @@ public class GlobalConfigCriteria extends BaseCriteria {
     }
 
     public GlobalConfigCriteria(final String quickFilterInput) {
-        super(new PageRequest(0, Integer.MAX_VALUE), new ArrayList<>());
+        super(PageRequest.unlimited(), new ArrayList<>());
         this.quickFilterInput = quickFilterInput;
     }
 

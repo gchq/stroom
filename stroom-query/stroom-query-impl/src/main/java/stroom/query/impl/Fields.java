@@ -1,6 +1,6 @@
 package stroom.query.impl;
 
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch.MatchType;
@@ -57,11 +57,12 @@ public class Fields {
                 // Figure out if there are children.
                 boolean hasChildren = false;
                 if (optional.isPresent()) {
-                    final FindFieldInfoCriteria criteria = new FindFieldInfoCriteria(
-                            new PageRequest(0, 1),
+                    final FindFieldCriteria criteria = new FindFieldCriteria(
+                            PageRequest.oneRow(),
                             Collections.emptyList(),
                             optional.get(),
-                            request.getStringMatch());
+                            request.getStringMatch(),
+                            null);
                     hasChildren = queryService.findFields(criteria).size() > 0;
                 }
 
@@ -74,12 +75,13 @@ public class Fields {
 
             } else if (request.getParentPath().startsWith(FIELDS_PARENT) && optional.isPresent()) {
                 // Figure out if there are children.
-                final FindFieldInfoCriteria criteria = new FindFieldInfoCriteria(
+                final FindFieldCriteria criteria = new FindFieldCriteria(
                         new PageRequest(request.getPageRequest().getOffset(),
                                 request.getPageRequest().getLength() + 1),
                         request.getSortList(),
                         optional.get(),
-                        request.getStringMatch());
+                        request.getStringMatch(),
+                        null);
                 final ResultPage<QueryField> resultPage = queryService.findFields(criteria);
                 resultConsumer.skip(resultPage.getPageStart());
                 resultPage.getValues().forEach(fieldInfo -> {
@@ -103,11 +105,12 @@ public class Fields {
         final Optional<DocRef> optional = Optional.ofNullable(request.getDataSourceRef())
                 .or(() -> queryService.getReferencedDataSource(request.getText()));
         optional.ifPresent(docRef -> {
-            final FindFieldInfoCriteria criteria = new FindFieldInfoCriteria(
+            final FindFieldCriteria criteria = new FindFieldCriteria(
                     pageRequest,
                     request.getSortList(),
                     docRef,
-                    request.getStringMatch());
+                    request.getStringMatch(),
+                    null);
 
             final ResultPage<QueryField> resultPage = queryService.findFields(criteria);
             resultPage.getValues().forEach(fieldInfo -> resultList.add(createCompletionValue(fieldInfo)));
