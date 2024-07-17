@@ -40,6 +40,7 @@ public class TimeRangeSelector extends Composite implements HasValue<TimeRange>,
                     setValue(timeRangePopup.getValue(), true);
                 }
                 popup.hide();
+                request.getCancelHandler().run();
             }
         };
         final OkCancelContent okCancelContent = new OkCancelContent(hideRequestUiHandlers);
