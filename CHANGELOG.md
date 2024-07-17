@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.4.9] - 2024-07-17
+
+* Issue **#4357** : Fix result paging for analytic duplicate check stores.
+
+
 ## [v7.4.8] - 2024-07-16
 
 * Issue **#4347** : Filter queryable fields for dashboard query expressions.
@@ -682,7 +687,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4.8...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4.9...HEAD
+[v7.4.9]: https://github.com/gchq/stroom/compare/v7.4.8...v7.4.9
 [v7.4.8]: https://github.com/gchq/stroom/compare/v7.4.7...v7.4.8
 [v7.4.7]: https://github.com/gchq/stroom/compare/v7.4.6...v7.4.7
 [v7.4.6]: https://github.com/gchq/stroom/compare/v7.4.5...v7.4.6
