@@ -36,6 +36,7 @@
     --text-color--green: var(--green-500);
     --text-color--red--dark: var(--red-900);
     --text-color--green--dark: var(--green-700);
+
     /* Headings, e.g. in markdown documentation, info tooltips, meta info */
     --heading-color: var(--blue-300);
     /* <code> blocks, e.g. in markdown */
@@ -56,10 +57,6 @@
 
     --tooltip__background-color: #1a1d21;
     --tooltip__text-color: var(--text-color);
-    /*
-    --tooltip__background-color: #adadad;
-    --tooltip__text-color: #000;
-    */
 
     --button__background-image: none;
     --button__background-color: #333436;
@@ -231,11 +228,11 @@
     --navigation__background-color--selected-hovered: rgb(0,120,199);
     --navigation__background-color--focussed: rgba(0,120,199,.5);
     --navigation__background-color--selected--focussed: rgb(0,120,199);
+
     --navigation__title__background-color: var(--navigation__background-color);
     --navigation__text-color: var(--text-color);
     --navigation__text-color--selected: var(--text-color--selected);
     --navigation__text-color--no-match: #7b7b7b;
-    --navigation__border-color: #27252c;
     --logo-color: var(--white);
 
     /* Specific */
