@@ -1542,26 +1542,6 @@ paths:
       summary: Download a query
       tags:
       - Dashboards
-  /dashboard/v1/downloadSearchResults:
-    post:
-      operationId: downloadDashboardSearchResultsLocal
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DownloadSearchResultsRequest'
-        description: request
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResourceGeneration'
-          description: default response
-      summary: Download search results
-      tags:
-      - Dashboards
   /dashboard/v1/downloadSearchResults/{nodeName}:
     post:
       operationId: downloadDashboardSearchResultsNode
@@ -1588,29 +1568,9 @@ paths:
       summary: Download search results
       tags:
       - Dashboards
-  /dashboard/v1/search:
-    post:
-      operationId: dashboardSearch
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DashboardSearchRequest'
-        description: request
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DashboardSearchResponse'
-          description: default response
-      summary: Perform a new search or get new results
-      tags:
-      - Dashboards
   /dashboard/v1/search/{nodeName}:
     post:
-      operationId: dashboardSearch_1
+      operationId: dashboardSearch
       parameters:
       - in: path
         name: nodeName
@@ -1943,7 +1903,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FindFieldInfoCriteria'
+              $ref: '#/components/schemas/FindFieldCriteria'
         description: criteria
         required: true
       responses:
@@ -5042,26 +5002,6 @@ paths:
       summary: Finds processor task summaries
       tags:
       - Processor Tasks
-  /query/v1/downloadSearchResults:
-    post:
-      operationId: downloadQuerySearchResultsLocal
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DownloadQueryResultsRequest'
-        description: request
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResourceGeneration'
-          description: default response
-      summary: Download search results
-      tags:
-      - Queries
   /query/v1/downloadSearchResults/{nodeName}:
     post:
       operationId: downloadQuerySearchResultsNode
@@ -5157,26 +5097,6 @@ paths:
                 $ref: '#/components/schemas/ResultPageQueryHelpRow'
           description: default response
       summary: Fetch all (optionally filtered) query help items
-      tags:
-      - Queries
-  /query/v1/search:
-    post:
-      operationId: querySearchLocal
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/QuerySearchRequest'
-        description: request
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DashboardSearchResponse'
-          description: default response
-      summary: Perform a new search or get new results
       tags:
       - Queries
   /query/v1/search/{nodeName}:
@@ -10333,13 +10253,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PipelineProperty'
-    FindFieldInfoCriteria:
+    FindFieldCriteria:
       type: object
       properties:
         dataSourceRef:
           $ref: '#/components/schemas/DocRef'
         pageRequest:
           $ref: '#/components/schemas/PageRequest'
+        queryable:
+          type: boolean
         sort:
           type: string
           writeOnly: true
