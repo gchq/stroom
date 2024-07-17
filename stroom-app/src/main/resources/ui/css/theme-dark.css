@@ -229,7 +229,6 @@
     --navigation__background-color--focussed: rgba(0,120,199,.5);
     --navigation__background-color--selected--focussed: rgb(0,120,199);
 
-    --navigation__title__background-color: var(--navigation__background-color);
     --navigation__text-color: var(--text-color);
     --navigation__text-color--selected: var(--text-color--selected);
     --navigation__text-color--no-match: #7b7b7b;
