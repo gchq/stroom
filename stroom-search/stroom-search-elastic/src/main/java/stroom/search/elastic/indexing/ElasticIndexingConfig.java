@@ -18,7 +18,7 @@ public class ElasticIndexingConfig extends AbstractConfig implements IsStroomCon
     public ElasticIndexingConfig() {
         maxNestedElementDepth = 10;
         initialRetryBackoffPeriodMs = 1000;
-        retryCount = 10;
+        retryCount = 5;
     }
 
     @SuppressWarnings("unused")

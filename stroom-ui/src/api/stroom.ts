@@ -3040,6 +3040,9 @@ export interface Meta {
   /** @format int64 */
   processorTaskId?: number;
   processorUuid?: string;
+
+  /** @format int64 */
+  reprocessedStreamId?: number;
   status?: "UNLOCKED" | "LOCKED" | "DELETED";
 
   /** @format int64 */

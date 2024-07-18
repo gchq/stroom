@@ -43,29 +43,32 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.SlicedScroll;
+import co.elastic.clients.elasticsearch._types.Time;
+import co.elastic.clients.elasticsearch._types.query_dsl.FieldAndFormat;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch.core.ScrollResponse;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.Highlight;
+import co.elastic.clients.elasticsearch.core.search.Hit;
+import co.elastic.clients.elasticsearch.core.search.SourceConfig;
+import co.elastic.clients.json.JsonData;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
-import org.elasticsearch.action.search.ClearScrollRequest;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.search.SearchScrollRequest;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.document.DocumentField;
-import org.elasticsearch.common.text.Text;
-import org.elasticsearch.core.TimeValue;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.search.Scroll;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
-import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
-import org.elasticsearch.search.slice.SliceBuilder;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonNumber;
+import jakarta.json.JsonString;
+import jakarta.json.JsonValue;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -99,8 +102,8 @@ public class ElasticSearchTaskHandler {
 
     public void search(final TaskContext taskContext,
                        final ElasticIndexDoc elasticIndex,
-                       final QueryBuilder queryBuilder,
-                       final HighlightBuilder highlightBuilder,
+                       final Query queryBuilder,
+                       final Highlight highlightBuilder,
                        final Coprocessors coprocessors,
                        final ResultStore resultStore,
                        final ValuesConsumer valuesConsumer,
@@ -139,8 +142,8 @@ public class ElasticSearchTaskHandler {
 
     private CompletableFuture<Void> executeSearch(final TaskContext parentContext,
                                                   final ElasticIndexDoc elasticIndex,
-                                                  final QueryBuilder queryBuilder,
-                                                  final HighlightBuilder highlightBuilder,
+                                                  final Query queryBuilder,
+                                                  final Highlight highlightBuilder,
                                                   final Coprocessors coprocessors,
                                                   final ResultStore resultStore,
                                                   final ValuesConsumer valuesConsumer,
@@ -186,68 +189,77 @@ public class ElasticSearchTaskHandler {
     }
 
     private void searchSlice(final ElasticIndexDoc elasticIndex,
-                             final QueryBuilder queryBuilder,
-                             final HighlightBuilder highlightBuilder,
+                             final Query queryBuilder,
+                             final Highlight highlightBuilder,
                              final Coprocessors coprocessors,
                              final ResultStore resultStore,
                              final ValuesConsumer valuesConsumer,
                              final ErrorConsumer errorConsumer,
                              final AtomicLong hitCount,
-                             final RestHighLevelClient elasticClient,
+                             final ElasticsearchClient elasticClient,
                              final int slice,
                              final TaskContext taskContext) {
         try {
-            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder()
+            final long scrollSeconds = elasticSearchConfigProvider.get().getScrollDuration().getDuration().getSeconds();
+            final Time scrollTime = Time.of(t -> t.time(String.format("%ds", scrollSeconds)));
+            final SearchRequest.Builder searchRequestBuilder = new SearchRequest.Builder()
+                    .index(elasticIndex.getIndexName())
                     .query(queryBuilder)
-                    .fetchSource(false)
-                    .size(elasticIndex.getSearchScrollSize());
+                    .size(elasticIndex.getSearchScrollSize())
+                    .scroll(scrollTime)
+                    .source(SourceConfig.of(sc -> sc
+                            .fetch(false)
+                    ));
 
             if (elasticSearchConfigProvider.get().getHighlight()) {
-                searchSourceBuilder.highlighter(highlightBuilder);
+                searchRequestBuilder.highlight(highlightBuilder);
             }
 
             // Limit the returned fields to what the values consumers require
             final FieldIndex fieldIndex = coprocessors.getFieldIndex();
-            for (String field : fieldIndex.getFields()) {
-                searchSourceBuilder.fetchField(field);
-            }
+            final String[] fieldNames = coprocessors.getFieldIndex().getFields();
+            searchRequestBuilder.fields(Arrays.stream(fieldNames)
+                    .map(fieldName -> FieldAndFormat.of(f -> f.field(fieldName)))
+                    .toList()
+            );
 
             // Number of slices needs to be > 1 else an exception is raised
             if (elasticIndex.getSearchSlices() > 1) {
-                searchSourceBuilder.slice(new SliceBuilder(slice, elasticIndex.getSearchSlices()));
+                searchRequestBuilder.slice(SlicedScroll.of(s -> s
+                        .id(String.valueOf(slice))
+                        .max(elasticIndex.getSearchSlices())
+                ));
             }
 
-            final long scrollSeconds = elasticSearchConfigProvider.get().getScrollDuration().getDuration().getSeconds();
-            final Scroll scroll = new Scroll(TimeValue.timeValueSeconds(scrollSeconds));
-            final SearchRequest searchRequest = new SearchRequest(elasticIndex.getIndexName())
-                    .source(searchSourceBuilder)
-                    .scroll(scroll);
-
-            SearchResponse searchResponse = elasticClient.search(searchRequest, RequestOptions.DEFAULT);
-            String scrollId = searchResponse.getScrollId();
+            SearchResponse<ObjectNode> searchResponse = elasticClient.search(searchRequestBuilder.build(),
+                    ObjectNode.class);
+            String scrollId = searchResponse.scrollId();
 
             // Retrieve the initial result batch
-            SearchHit[] searchHits = searchResponse.getHits().getHits();
-            processResultBatch(fieldIndex, resultStore, valuesConsumer, errorConsumer, hitCount, searchHits);
-            int totalHitCount = searchHits.length;
+            List<Hit<ObjectNode>> searchHits = searchResponse.hits().hits();
+            long totalHitCount = 0L;
 
             // Continue requesting results until we have all results
-            while (!taskContext.isTerminated() && searchHits.length > 0) {
-                SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId).scroll(scroll);
-                searchResponse = elasticClient.scroll(scrollRequest, RequestOptions.DEFAULT);
-                searchHits = searchResponse.getHits().getHits();
-
+            while (!taskContext.isTerminated() && !searchHits.isEmpty()) {
+                totalHitCount += searchHits.size();
                 processResultBatch(fieldIndex, resultStore, valuesConsumer, errorConsumer, hitCount, searchHits);
 
-                totalHitCount += searchHits.length;
-                final Integer finalTotalHitCount = totalHitCount;
-                taskContext.info(() -> LogUtil.message("Processed {} hits", finalTotalHitCount));
+                final long totalHits = totalHitCount;
+                taskContext.info(() -> LogUtil.message("Processed {} hits", totalHits));
+
+                final ScrollResponse<ObjectNode> scrollResponse = elasticClient.scroll(s -> s
+                        .scrollId(scrollId)
+                        .scroll(scrollTime),
+                        ObjectNode.class
+                );
+
+                searchHits = scrollResponse.hits().hits();
             }
 
+            LOGGER.info("Search completed for index doc {}, {} hits returned", elasticIndex.getName(), totalHitCount);
+
             // Close the scroll context as we're done streaming results
-            ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
-            clearScrollRequest.addScrollId(scrollId);
-            elasticClient.clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
+            elasticClient.clearScroll(s -> s.scrollId(scrollId));
         } catch (final UncheckedInterruptedException e) {
             throw e;
         } catch (final IOException | RuntimeException e) {
@@ -268,21 +280,19 @@ public class ElasticSearchTaskHandler {
                                     final ValuesConsumer valuesConsumer,
                                     final ErrorConsumer errorConsumer,
                                     final AtomicLong hitCount,
-                                    final SearchHit[] searchHits) {
+                                    final List<Hit<ObjectNode>> searchHits) {
         try {
-            for (final SearchHit searchHit : searchHits) {
+            for (final Hit<ObjectNode> searchHit : searchHits) {
                 hitCount.incrementAndGet();
 
                 // Add highlights
                 if (elasticSearchConfigProvider.get().getHighlight()) {
-                    for (final HighlightField highlightField : searchHit.getHighlightFields().values()) {
-                        resultStore.addHighlights(Arrays.stream(highlightField.getFragments())
-                                .map(Text::string)
-                                .collect(Collectors.toSet()));
+                    for (final List<String> highlightField : searchHit.highlight().values()) {
+                        resultStore.addHighlights(Set.copyOf(highlightField));
                     }
                 }
 
-                final Map<String, DocumentField> mapSearchHit = searchHit.getFields();
+                final Map<String, JsonData> mapSearchHit = searchHit.fields();
                 Val[] values = null;
 
                 for (final String fieldName : fieldIndex.getFields()) {
@@ -330,16 +340,46 @@ public class ElasticSearchTaskHandler {
     /**
      * Locate the value of the doc field by its full path
      */
-    private Object getFieldValue(final Map<String, DocumentField> searchHitMap, final String fieldName) {
+    private Object getFieldValue(final Map<String, JsonData> searchHitMap, final String fieldName) {
         if (fieldName == null || !searchHitMap.containsKey(fieldName)) {
             return null;
         }
 
-        DocumentField docField = searchHitMap.get(fieldName);
-        if (docField.getValues().size() > 1) {
-            return docField.getValues();
+        JsonArray docField = searchHitMap.get(fieldName).toJson().asJsonArray();
+        if (docField.size() > 1) {
+            return docField.stream()
+                    .map(this::jsonValueToNative)
+                    .collect(Collectors.toList());
         } else {
-            return docField.getValue();
+            return jsonValueToNative(docField.get(0));
+        }
+    }
+
+    private Object jsonValueToNative(final JsonValue jsonValue) {
+        if (jsonValue == null) {
+            return null;
+        }
+
+        switch (jsonValue.getValueType()) {
+            case NULL:
+                return null;
+            case FALSE:
+                return false;
+            case TRUE:
+                return true;
+            case NUMBER:
+                final JsonNumber jsonNumber = (JsonNumber) jsonValue;
+                if (jsonNumber.isIntegral()) {
+                    return jsonNumber.longValue();
+                } else {
+                    return jsonNumber.doubleValue();
+                }
+            case STRING:
+                return ((JsonString) jsonValue).getString();
+            case OBJECT:
+                return jsonValue.asJsonObject().toString();
+            default:
+                return jsonValue.toString();
         }
     }
 

@@ -27,11 +27,10 @@ import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.FetchWithUuid;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.core.InfoResponse;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.client.core.MainResponse;
 
 @AutoLogged
 class ElasticClusterResourceImpl implements ElasticClusterResource, FetchWithUuid<ElasticClusterDoc> {
@@ -77,22 +76,22 @@ class ElasticClusterResourceImpl implements ElasticClusterResource, FetchWithUui
         try {
             final ElasticConnectionConfig connectionConfig = cluster.getConnection();
             final ElasticClientConfig elasticClientConfig = elasticConfigProvider.get().getClientConfig();
-            final RestHighLevelClient elasticClient = new ElasticClientFactory()
+            final ElasticsearchClient elasticClient = new ElasticClientFactory()
                     .create(connectionConfig, elasticClientConfig);
 
-            MainResponse response = elasticClient.info(RequestOptions.DEFAULT);
+            InfoResponse response = elasticClient.info();
 
             final StringBuilder sb = new StringBuilder()
                     .append("Cluster URLs: ")
                     .append(connectionConfig.getConnectionUrls())
                     .append("\nCluster name: ")
-                    .append(response.getClusterName())
+                    .append(response.clusterName())
                     .append("\nCluster UUID: ")
-                    .append(response.getClusterUuid())
+                    .append(response.clusterUuid())
                     .append("\nNode name: ")
-                    .append(response.getNodeName())
+                    .append(response.name())
                     .append("\nVersion: ")
-                    .append(response.getVersion().getNumber());
+                    .append(response.version().number());
 
             return new ElasticClusterTestResponse(true, sb.toString());
 
