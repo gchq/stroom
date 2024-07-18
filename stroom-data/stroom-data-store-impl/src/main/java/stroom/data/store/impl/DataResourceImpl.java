@@ -20,6 +20,7 @@ import stroom.data.shared.DataInfoSection;
 import stroom.data.shared.DataResource;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.shared.UploadDataRequest;
+import stroom.data.store.api.DataService;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
@@ -46,6 +47,7 @@ import jakarta.inject.Provider;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @AutoLogged
@@ -112,6 +114,16 @@ class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSec
                 .getResultAndLog();
 
         return resourceKey;
+    }
+
+    @Override
+    public Map<String, String> metaAttributes(final long id) {
+        final Map<String, String> result;
+        try {
+            return dataServiceProvider.get().metaAttributes(id);
+        } catch (final RuntimeException e) {
+            throw EntityServiceExceptionUtil.create(e);
+        }
     }
 
     @Override

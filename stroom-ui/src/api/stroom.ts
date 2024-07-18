@@ -7579,6 +7579,23 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Data
+     * @name GetDataMetaAttributes
+     * @summary Get extended attributes for a data item
+     * @request POST:/data/v1/{id}/metaAttributes
+     * @secure
+     */
+    getDataMetaAttributes: (id: number, params: RequestParams = {}) =>
+      this.request<any, Record<string, string>>({
+        path: `/data/v1/${id}/metaAttributes`,
+        method: "POST",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data
      * @name GetChildStreamTypes
      * @summary List child types for a stream
      * @request GET:/data/v1/{id}/parts/{partNo}/child-types

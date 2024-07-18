@@ -8,6 +8,7 @@ dependencies {
     implementation project(':stroom-docref')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-cluster:stroom-cluster-task-api')
+    implementation project(':stroom-data:stroom-data-store-api')
     implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
