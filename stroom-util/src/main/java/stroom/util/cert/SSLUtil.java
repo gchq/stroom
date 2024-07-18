@@ -138,10 +138,8 @@ public class SSLUtil {
     public static void applySSLConfiguration(final HttpURLConnection connection,
                                              final SSLSocketFactory sslSocketFactory,
                                              final SSLConfig sslConfig) {
-        if (connection instanceof HttpsURLConnection) {
+        if (connection instanceof final HttpsURLConnection httpsConnection) {
             LOGGER.debug(() -> "Connection for " + connection.getURL() + " is HTTPS");
-
-            final HttpsURLConnection httpsConnection = (HttpsURLConnection) connection;
 
             if (sslSocketFactory == null) {
                 throw new RuntimeException(LogUtil.message(

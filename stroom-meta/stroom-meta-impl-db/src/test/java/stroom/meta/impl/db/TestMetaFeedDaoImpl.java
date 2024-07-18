@@ -24,6 +24,8 @@ import stroom.docrefinfo.mock.MockDocRefInfoModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.mock.MockTaskModule;
 import stroom.test.common.util.db.DbTestModule;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import com.google.inject.Guice;
 import jakarta.inject.Inject;
@@ -40,6 +42,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestMetaFeedDaoImpl {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestMetaFeedDaoImpl.class);
+
     private static final String BANANA = "BANANA";
     private static final String MANGO = "MANGO";
     private static final String CUSTARD_APPLE = "CUSTARD_APPLE";
@@ -54,21 +58,25 @@ class TestMetaFeedDaoImpl {
 
     @BeforeEach
     void setup() {
-        Guice.createInjector(
-                        new MetaTestModule(),
-                        new MetaDbModule(),
-                        new MetaDaoModule(),
-                        new MockClusterLockModule(),
-                        new MockSecurityContextModule(),
-                        new MockTaskModule(),
-                        new MockCollectionModule(),
-                        new MockDocRefInfoModule(),
-                        new MockWordListProviderModule(),
-                        new CacheModule(),
-                        new DbTestModule())
-                .injectMembers(this);
+        LOGGER.logDurationIfDebugEnabled(() -> {
+            Guice.createInjector(
+                            new MetaTestModule(),
+                            new MetaDbModule(),
+                            new MetaDaoModule(),
+                            new MockClusterLockModule(),
+                            new MockSecurityContextModule(),
+                            new MockTaskModule(),
+                            new MockCollectionModule(),
+                            new MockDocRefInfoModule(),
+                            new MockWordListProviderModule(),
+                            new CacheModule(),
+                            new DbTestModule())
+                    .injectMembers(this);
+        }, "createInjector");
         // Delete everything
-        cleanup.cleanup();
+        LOGGER.logDurationIfDebugEnabled(() -> {
+            cleanup.cleanup();
+        }, "cleanup");
     }
 
     @Test
@@ -91,14 +99,20 @@ class TestMetaFeedDaoImpl {
     @Test
     void testDuplicateCreate() {
         String feedName = "TEST";
-        Optional<Integer> id1 = feedDao.create(feedName);
-        Optional<Integer> id2 = feedDao.create(feedName);
+        final Optional<Integer> id1 = feedDao.get(feedName);
+        final Optional<Integer> id2 = feedDao.tryCreate(feedName);
+        final Optional<Integer> id3 = feedDao.tryCreate(feedName);
 
-        assertThat(id1).isNotEmpty();
-        assertThat(id2).isEmpty();
+        assertThat(id1).isEmpty();
+        assertThat(id2).isNotEmpty();
+        assertThat(id3).isNotEmpty();
 
-        id2 = Optional.ofNullable(feedDao.getOrCreate(feedName));
-        assertThat(id1).isEqualTo(id2);
+        assertThat(id3).isEqualTo(id2);
+
+        final Optional<Integer> id4 = Optional.ofNullable(feedDao.getOrCreate(feedName));
+        final Optional<Integer> id5 = Optional.ofNullable(feedDao.getOrCreate(feedName));
+        assertThat(id4).isEqualTo(id3);
+        assertThat(id5).isEqualTo(id4);
     }
 
     @Test
@@ -157,9 +171,9 @@ class TestMetaFeedDaoImpl {
         setupFruitFeeds();
 
         final Map<String, Integer> feedToIdsMap = feedDao.find(List.of(
-                        BANANA,
-                        MANGO,
-                        CUSTARD_APPLE));
+                BANANA,
+                MANGO,
+                CUSTARD_APPLE));
 
         assertThat(feedToIdsMap)
                 .hasSize(3)

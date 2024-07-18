@@ -13,6 +13,92 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.4.9] - 2024-07-17
+
+* Issue **#4357** : Fix result paging for analytic duplicate check stores.
+
+
+## [v7.4.8] - 2024-07-16
+
+* Issue **#4347** : Filter queryable fields for dashboard query expressions.
+
+* Issue **#4350** : Add analytic execution history retention job.
+
+* Issue **#4351** : Improve query event logging.
+
+* Issue **#4357** : Fix result paging for analytic duplicate check stores.
+
+* Issue **#4358** : Fix streaming analytic field matches.
+
+
+## [v7.4.7] - 2024-07-10
+
+* Fix lag on Jobs screen when changing the selected job in the top pane.
+
+
+## [v7.4.6] - 2024-07-08
+
+* Issue **#4348** : Fix error with `IN DICTIONARY` term in rule when the dictionary is empty/blank.
+
+
+## [v7.4.5] - 2024-07-03
+
+* Issue **#4305** : Don't show warnings on the Server Tasks screen for disabled nodes. Append `(Disabled)` to the node name for disabled nodes in case a disabled node is still running tasks. Changed the position of the warning icon to the right of the wrap icon so it is the right-most icon.
+
+* Make the expand/collapse all icons on Server Tasks and Data Retention Impact Summary consistent with those on the Explorer tree.
+
+* Add properties `httpHeadersStreamMetaDataAllowList` and `httpHeadersStreamMetaDataDenyList` to `HttpAppender` to allow fine grained control of what stream meta keys are sent to the HTTP destination as HTTP headers and `.meta` entries.
+
+* Change `/datafeed` receipt to always set `ReceivedTime` to `now()`. If it was already set (e.g. by proxy) then that value is added to `ReceivedTimeHistory` along with the latest `ReceivedTime`. This can be used to see the latency between proxy receipt and stroom receipt. This is similar to how `ReceivedPath` works.
+
+* Make long descriptions on the Edit Property (pipeline element property) screen wrap onto multiple lines.
+
+* Issue **#4317** : Fix explicit `Feed` header being ignored when `compression` is `true` on `HttpAppender`.
+
+* Issue **#4331** : Fix `java.lang.IllegalStateException` errors when using HTTPAppender.
+
+* Issue **#4330** : Fix NPE in HTTPAppender when the destination errors.
+
+* Improve description text for HttpAppender properties. Also add validation of some property values.
+
+* Add property `useContentEncodingHeader` to HttpAppender to allow the user to choose between using the stroom bespoke `Compression` and HTTP standard `Content-Encoding` headers.
+
+* When using zip compression with HttpAppender, make the .meta file also respect the various HTTP header pipeline element properties.
+
+
+## [v7.4.4] - 2024-06-17
+
+* Fix verification of the `signer` key in the JWS headers when authentication is handled by an AWS load balancer. If you use AWS load balancers for authentication you must add the partial ARN(s) of your load balancer(s) to the property `stroom.security.authentication.openId.expectedSignerPrefixes`.
+
+* Issue **#4313** : Add debug for authentication exceptions.
+
+* Issue **#4322** : Fix Feed Doc Cache entry invalidation when a new feed is created.
+
+
+## [v7.4.3] - 2024-06-17
+
+* Add debug logging to HttpAppender.
+
+
+## [v7.4.2] - 2024-06-14
+
+* Issue **#4306** : Fix inability to update config props that have previously been set to a non-default and then back to a default value.
+
+* Issue **#2897** : Add more debug logging to the reference lookup code.
+
+
+## [v7.4.1] - 2024-06-05
+
+* Issue **#4307** : Fix stuck search.
+
+
+## [v7.4.0] - 2024-06-05
+
+* Issue **#4303** : Change DSParser to catch and handle StackOverflowError as an ERROR and with a better message.
+
+* Issue **#4281** : Fix recent items dialog throwing an error when there are favourites in the explorer tree.
+
+
 ## [v7.4-beta.16] - 2024-05-28
 
 * Issue **#4298** : Improve duplicate management.
@@ -601,7 +687,17 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.16...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4.9...HEAD
+[v7.4.9]: https://github.com/gchq/stroom/compare/v7.4.8...v7.4.9
+[v7.4.8]: https://github.com/gchq/stroom/compare/v7.4.7...v7.4.8
+[v7.4.7]: https://github.com/gchq/stroom/compare/v7.4.6...v7.4.7
+[v7.4.6]: https://github.com/gchq/stroom/compare/v7.4.5...v7.4.6
+[v7.4.5]: https://github.com/gchq/stroom/compare/v7.4.4...v7.4.5
+[v7.4.4]: https://github.com/gchq/stroom/compare/v7.4.3...v7.4.4
+[v7.4.3]: https://github.com/gchq/stroom/compare/v7.4.2...v7.4.3
+[v7.4.2]: https://github.com/gchq/stroom/compare/v7.4.1...v7.4.2
+[v7.4.1]: https://github.com/gchq/stroom/compare/v7.4.0...v7.4.1
+[v7.4.0]: https://github.com/gchq/stroom/compare/v7.4-beta.16...v7.4.0
 [v7.4-beta.16]: https://github.com/gchq/stroom/compare/v7.4-beta.15...v7.4-beta.16
 [v7.4-beta.15]: https://github.com/gchq/stroom/compare/v7.4-beta.14...v7.4-beta.15
 [v7.4-beta.14]: https://github.com/gchq/stroom/compare/v7.4-beta.13...v7.4-beta.14

@@ -23,23 +23,26 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
     }
 
     @JsonCreator
-    public ProxyOpenIdConfig(@JsonProperty(PROP_NAME_IDP_TYPE) final IdpType identityProviderType,
-                             @JsonProperty(PROP_NAME_CONFIGURATION_ENDPOINT) final String openIdConfigurationEndpoint,
-                             @JsonProperty("issuer") final String issuer,
-                             @JsonProperty("authEndpoint") final String authEndpoint,
-                             @JsonProperty("tokenEndpoint") final String tokenEndpoint,
-                             @JsonProperty("jwksUri") final String jwksUri,
-                             @JsonProperty("logoutEndpoint") final String logoutEndpoint,
-                             @JsonProperty("logoutRedirectParamName") final String logoutRedirectParamName,
-                             @JsonProperty("formTokenRequest") final boolean formTokenRequest,
-                             @JsonProperty("clientId") final String clientId,
-                             @JsonProperty("clientSecret") final String clientSecret,
-                             @JsonProperty("requestScopes") final List<String> requestScopes,
-                             @JsonProperty("clientCredentialsScopes") final List<String> clientCredentialsScopes,
-                             @JsonProperty("validateAudience") final boolean validateAudience,
-                             @JsonProperty("validIssuers") final Set<String> validIssuers,
-                             @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim,
-                             @JsonProperty("userDisplayNameClaim") final String userDisplayNameClaim) {
+    public ProxyOpenIdConfig(
+            @JsonProperty(PROP_NAME_IDP_TYPE) final IdpType identityProviderType,
+            @JsonProperty(PROP_NAME_CONFIGURATION_ENDPOINT) final String openIdConfigurationEndpoint,
+            @JsonProperty("issuer") final String issuer,
+            @JsonProperty("authEndpoint") final String authEndpoint,
+            @JsonProperty("tokenEndpoint") final String tokenEndpoint,
+            @JsonProperty("jwksUri") final String jwksUri,
+            @JsonProperty("logoutEndpoint") final String logoutEndpoint,
+            @JsonProperty("logoutRedirectParamName") final String logoutRedirectParamName,
+            @JsonProperty("formTokenRequest") final boolean formTokenRequest,
+            @JsonProperty("clientId") final String clientId,
+            @JsonProperty("clientSecret") final String clientSecret,
+            @JsonProperty("requestScopes") final List<String> requestScopes,
+            @JsonProperty("clientCredentialsScopes") final List<String> clientCredentialsScopes,
+            @JsonProperty("validateAudience") final boolean validateAudience,
+            @JsonProperty("validIssuers") final Set<String> validIssuers,
+            @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim,
+            @JsonProperty("userDisplayNameClaim") final String userDisplayNameClaim,
+            @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes) {
+
         super(identityProviderType,
                 openIdConfigurationEndpoint,
                 issuer,
@@ -56,7 +59,8 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
                 validateAudience,
                 validIssuers,
                 uniqueIdentityClaim,
-                userDisplayNameClaim);
+                userDisplayNameClaim,
+                expectedSignerPrefixes);
     }
 
     @JsonIgnore
@@ -105,6 +109,7 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
                 isValidateAudience(),
                 getValidIssuers(),
                 getUniqueIdentityClaim(),
-                getUserDisplayNameClaim());
+                getUserDisplayNameClaim(),
+                getExpectedSignerPrefixes());
     }
 }

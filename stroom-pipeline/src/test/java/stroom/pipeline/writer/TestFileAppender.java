@@ -62,7 +62,7 @@ class TestFileAppender extends StroomUnitTest {
                 lockedOutput.outFile))) {
             final ZipArchiveEntry entry1 = zipArchiveInputStream.getNextZipEntry();
             assertThat(entry1).isNotNull();
-            assertThat(entry1.getName()).isEqualTo("001.dat");
+            assertThat(entry1.getName()).isEqualTo("0000000001.dat");
             final byte[] bytes = zipArchiveInputStream.readAllBytes();
             assertThat(new String(bytes, StandardCharsets.UTF_8)).isEqualTo("header__data__footer");
 

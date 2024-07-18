@@ -1752,29 +1752,27 @@ public class MetaDaoImpl implements MetaDao {
         final long fromMs = Objects.requireNonNull(period.getFromMs());
         // Exclusive
         final long toMs = Objects.requireNonNull(period.getToMs());
+        final String feedName = effectiveMetaDataCriteria.getFeed();
+        final String typeName = effectiveMetaDataCriteria.getType();
 
         // Debatable whether we should throw an exception if the feed/type don't exist
-        final Optional<Integer> optFeedId = feedDao.get(effectiveMetaDataCriteria.getFeed());
+        final Optional<Integer> optFeedId = feedDao.get(feedName);
         if (optFeedId.isEmpty()) {
             LOGGER.debug("Feed {} not found in the {} table.",
-                    effectiveMetaDataCriteria.getFeed(), META_FEED.NAME);
+                    feedName, META_FEED.NAME);
             return Collections.emptyList();
         }
         final int feedId = optFeedId.get();
 
-        final Optional<Integer> optTypeId = metaTypeDao.get(effectiveMetaDataCriteria.getType());
+        final Optional<Integer> optTypeId = metaTypeDao.get(typeName);
         if (optTypeId.isEmpty()) {
-            LOGGER.warn("Meta Type {} not found in the database", effectiveMetaDataCriteria.getType());
+            LOGGER.warn("Meta Type {} not found in the database", typeName);
             return Collections.emptyList();
         }
         final int typeId = optTypeId.get();
 
         final Function<Record2<Long, Long>, EffectiveMeta> mapper = rec ->
-                new EffectiveMeta(
-                        rec.get(meta.ID),
-                        effectiveMetaDataCriteria.getFeed(),
-                        effectiveMetaDataCriteria.getType(),
-                        rec.get(meta.EFFECTIVE_TIME));
+                new EffectiveMeta(rec.get(meta.ID), feedName, typeName, rec.get(meta.EFFECTIVE_TIME));
 
         final List<EffectiveMeta> streamsInOrBelowRange = JooqUtil.contextResult(metaDbConnProvider,
                 context -> {
@@ -1802,8 +1800,11 @@ public class MetaDaoImpl implements MetaDao {
                             .map(mapper::apply);
                 });
 
-        LOGGER.debug(() -> LogUtil.message("returning {} streams for criteria: {}",
-                streamsInOrBelowRange.size(), effectiveMetaDataCriteria));
+        LOGGER.debug(() -> LogUtil.message("returning {} effective streams for feedId: {}, typeId: {}, criteria: {}",
+                streamsInOrBelowRange.size(),
+                feedId,
+                typeId,
+                effectiveMetaDataCriteria));
 
         return streamsInOrBelowRange;
     }

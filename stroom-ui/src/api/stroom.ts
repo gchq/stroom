@@ -1985,10 +1985,11 @@ export interface FindElementDocRequest {
   properties?: PipelineProperty[];
 }
 
-export interface FindFieldInfoCriteria {
+export interface FindFieldCriteria {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSourceRef?: DocRef;
   pageRequest?: PageRequest;
+  queryable?: boolean;
   sort?: string;
   sortList?: CriteriaFieldSort[];
   stringMatch?: StringMatch;
@@ -7409,25 +7410,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Dashboards
-     * @name DownloadDashboardSearchResultsLocal
-     * @summary Download search results
-     * @request POST:/dashboard/v1/downloadSearchResults
-     * @secure
-     */
-    downloadDashboardSearchResultsLocal: (data: DownloadSearchResultsRequest, params: RequestParams = {}) =>
-      this.request<any, ResourceGeneration>({
-        path: `/dashboard/v1/downloadSearchResults`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Dashboards
      * @name DownloadDashboardSearchResultsNode
      * @summary Download search results
      * @request POST:/dashboard/v1/downloadSearchResults/{nodeName}
@@ -7453,29 +7435,10 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @tags Dashboards
      * @name DashboardSearch
      * @summary Perform a new search or get new results
-     * @request POST:/dashboard/v1/search
-     * @secure
-     */
-    dashboardSearch: (data: DashboardSearchRequest, params: RequestParams = {}) =>
-      this.request<any, DashboardSearchResponse>({
-        path: `/dashboard/v1/search`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Dashboards
-     * @name DashboardSearch1
-     * @summary Perform a new search or get new results
      * @request POST:/dashboard/v1/search/{nodeName}
      * @secure
      */
-    dashboardSearch1: (nodeName: string, data: DashboardSearchRequest, params: RequestParams = {}) =>
+    dashboardSearch: (nodeName: string, data: DashboardSearchRequest, params: RequestParams = {}) =>
       this.request<any, DashboardSearchResponse>({
         path: `/dashboard/v1/search/${nodeName}`,
         method: "POST",
@@ -7773,7 +7736,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/dataSource/v1/findFields
      * @secure
      */
-    findDataSourceFields: (data: FindFieldInfoCriteria, params: RequestParams = {}) =>
+    findDataSourceFields: (data: FindFieldCriteria, params: RequestParams = {}) =>
       this.request<any, ResultPageQueryField>({
         path: `/dataSource/v1/findFields`,
         method: "POST",
@@ -10604,25 +10567,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Queries
-     * @name DownloadQuerySearchResultsLocal
-     * @summary Download search results
-     * @request POST:/query/v1/downloadSearchResults
-     * @secure
-     */
-    downloadQuerySearchResultsLocal: (data: DownloadQueryResultsRequest, params: RequestParams = {}) =>
-      this.request<any, ResourceGeneration>({
-        path: `/query/v1/downloadSearchResults`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Queries
      * @name DownloadQuerySearchResultsNode
      * @summary Download search results
      * @request POST:/query/v1/downloadSearchResults/{nodeName}
@@ -10705,25 +10649,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     fetchHelpItems: (data: QueryHelpRequest, params: RequestParams = {}) =>
       this.request<any, ResultPageQueryHelpRow>({
         path: `/query/v1/helpItems`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Queries
-     * @name QuerySearchLocal
-     * @summary Perform a new search or get new results
-     * @request POST:/query/v1/search
-     * @secure
-     */
-    querySearchLocal: (data: QuerySearchRequest, params: RequestParams = {}) =>
-      this.request<any, DashboardSearchResponse>({
-        path: `/query/v1/search`,
         method: "POST",
         body: data,
         secure: true,

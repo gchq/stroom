@@ -20,7 +20,7 @@ import stroom.dashboard.impl.SearchResponseMapper;
 import stroom.dashboard.impl.logging.SearchEventLog;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
@@ -56,7 +56,6 @@ import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResultPage;
 import stroom.util.string.ExceptionStringUtil;
-import stroom.view.api.ViewStore;
 
 import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
@@ -86,7 +85,6 @@ class QueryServiceImpl implements QueryService {
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
     private final DataSourceProviderRegistry dataSourceProviderRegistry;
-    private final ViewStore viewStore;
     private final ResultStoreManager searchResponseCreatorManager;
     private final NodeInfo nodeInfo;
     private final SearchRequestFactory searchRequestFactory;
@@ -101,7 +99,6 @@ class QueryServiceImpl implements QueryService {
                      final ExecutorProvider executorProvider,
                      final TaskContextFactory taskContextFactory,
                      final DataSourceProviderRegistry dataSourceProviderRegistry,
-                     final ViewStore viewStore,
                      final ResultStoreManager searchResponseCreatorManager,
                      final NodeInfo nodeInfo,
                      final SearchRequestFactory searchRequestFactory,
@@ -114,7 +111,6 @@ class QueryServiceImpl implements QueryService {
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
         this.dataSourceProviderRegistry = dataSourceProviderRegistry;
-        this.viewStore = viewStore;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.nodeInfo = nodeInfo;
         this.searchRequestFactory = searchRequestFactory;
@@ -424,9 +420,10 @@ class QueryServiceImpl implements QueryService {
                 LOGGER.debug(() -> "Error processing search " + searchRequest, e);
 
                 if (queryKey == null) {
-                    // FIXME : FIX
-                    // searchEventLog
-                    // .search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo(), e);
+                    searchEventLog.search(searchRequest.getQuery(),
+                            searchRequest.getQueryContext().getQueryInfo(),
+                            searchRequest.getQueryContext().getParams(),
+                            e);
                 }
 
                 result = new DashboardSearchResponse(
@@ -442,9 +439,10 @@ class QueryServiceImpl implements QueryService {
                 LOGGER.debug(() -> "Error processing search " + searchRequest, e);
 
                 if (queryKey == null) {
-                    // FIXME : FIX
-                    // searchEventLog
-                    // .search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo(), e);
+                    searchEventLog.search(searchRequest.getQuery(),
+                            searchRequest.getQueryContext().getQueryInfo(),
+                            searchRequest.getQueryContext().getParams(),
+                            e);
                 }
 
                 result = new DashboardSearchResponse(
@@ -514,7 +512,7 @@ class QueryServiceImpl implements QueryService {
     }
 
     @Override
-    public ResultPage<QueryField> findFields(final FindFieldInfoCriteria criteria) {
+    public ResultPage<QueryField> findFields(final FindFieldCriteria criteria) {
         return securityContext.useAsReadResult(() -> dataSourceProviderRegistry.getFieldInfo(criteria));
     }
 

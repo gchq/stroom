@@ -25,6 +25,7 @@ import stroom.meta.mock.MockMetaService;
 import stroom.util.date.DateUtil;
 import stroom.util.scheduler.CronTrigger;
 import stroom.util.scheduler.FrequencyTrigger;
+import stroom.util.shared.scheduler.CronExpressions;
 
 import org.junit.jupiter.api.Test;
 
@@ -65,7 +66,7 @@ class TestRollingStreamDestination {
         final StreamKey streamKey = new StreamKey("test", StreamTypeNames.EVENTS, false);
         final RollingStreamDestination rollingStreamDestination = new RollingStreamDestination(streamKey,
                 null,
-                new CronTrigger("0 * * * * ?"),
+                new CronTrigger(CronExpressions.EVERY_MINUTE.getExpression()),
                 100,
                 time,
                 streamStore,

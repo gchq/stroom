@@ -64,7 +64,7 @@ public class FindInContentPresenter
     private final RestFactory restFactory;
 
     private FindInContentRequest currentQuery = new FindInContentRequest(
-            new PageRequest(0, 100),
+            PageRequest.createDefault(),
             null,
             StringMatch.any());
     private boolean initialised;

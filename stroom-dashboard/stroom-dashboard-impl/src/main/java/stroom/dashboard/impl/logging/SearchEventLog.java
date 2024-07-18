@@ -36,6 +36,11 @@ public interface SearchEventLog {
                 List<Param> params,
                 Exception ex);
 
+    void search(String query,
+                String queryInfo,
+                List<Param> params,
+                Exception ex);
+
     void batchSearch(DocRef dataSourceRef,
                      ExpressionOperator expression,
                      String queryInfo,
@@ -57,11 +62,4 @@ public interface SearchEventLog {
     void downloadResults(DownloadSearchResultsRequest downloadSearchResultsRequest,
                          Long resultCount,
                          Exception ex);
-
-    void search(String type,
-                DocRef dataSourceRef,
-                ExpressionOperator expression,
-                String queryInfo,
-                List<Param> params,
-                Exception ex);
 }
