@@ -37,6 +37,7 @@ import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Tag(name = "Data")
@@ -58,6 +59,13 @@ public interface DataResource extends RestResource, DirectRestService {
             summary = "Upload data",
             operationId = "uploadData")
     ResourceKey upload(@Parameter(description = "request", required = true) UploadDataRequest request);
+
+    @POST
+    @Path("{id}/metaAttributes")
+    @Operation(
+            summary = "Get extended attributes for a data item",
+            operationId = "getDataMetaAttributes")
+    Map<String, String> metaAttributes(@PathParam("id") long id);
 
     @GET
     @Path("{id}/info")

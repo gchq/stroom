@@ -46,6 +46,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(LogFunction.class);
         bindFunction(MetaFunction.class);
         bindFunction(MetaKeysFunction.class);
+        bindFunction(MetaAttributesFunction.class);
         bindFunction(NumericIPFunction.class);
         bindFunction(IPInCidrFunction.class);
         bindFunction(ParseUriFunction.class);
@@ -468,6 +469,20 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
                     0,
                     new SequenceType[]{},
                     ArrayItemType.SINGLE_ARRAY,
+                    functionCallProvider);
+        }
+    }
+
+    private static class MetaAttributesFunction extends StroomExtensionFunctionDefinition<MetaAttribute> {
+
+        @Inject
+        MetaAttributesFunction(final Provider<MetaAttribute> functionCallProvider) {
+            super(
+                    "meta-attribute",
+                    1,
+                    1,
+                    new SequenceType[]{SequenceType.SINGLE_STRING},
+                    SequenceType.OPTIONAL_STRING,
                     functionCallProvider);
         }
     }
