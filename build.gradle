@@ -127,7 +127,7 @@ ext.versions = [
         aws               : '2.20.157',
         bnd               : '7.0.0',
         curator           : '4.2.0', // Curator 4 works with ZK 3.4.x in soft compatibility mode, i.e. you must exlude its dep on ZK and explicitly add one for 3.4.x
-        dropwizard        : '4.0.4', // used to set the dropwizard-bom version, that controls lots of dependency versions
+        dropwizard        : '4.0.7', // used to set the dropwizard-bom version, that controls lots of dependency versions
         elasticsearch     : '7.17.14',
         httpcore          : '4.4.16', // Transient dependency of Elasticsearch
         flyway            : '10.0.0',
