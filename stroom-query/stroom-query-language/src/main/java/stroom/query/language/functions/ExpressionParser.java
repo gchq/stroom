@@ -98,7 +98,7 @@ public class ExpressionParser {
             return parse(expressionContext, fieldIndex, tokenGroup.getChildren());
 
         } catch (final Throwable e) {
-            LOGGER.error(() -> "Error parsing expression: " + input);
+            LOGGER.debug(() -> "Error parsing expression: " + input);
             throw e;
         }
     }
@@ -123,7 +123,7 @@ public class ExpressionParser {
             return expression;
 
         } catch (final Throwable e) {
-            LOGGER.error(() -> "Error parsing expression: " + getTokenString(tokens));
+            LOGGER.debug(() -> "Error parsing expression: " + getTokenString(tokens));
             throw e;
         }
     }

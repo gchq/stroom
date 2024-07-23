@@ -27,7 +27,7 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class AbstractExpressionParserTest {
+public abstract class AbstractExpressionParserTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractExpressionParserTest.class);
 
@@ -382,6 +382,10 @@ public class AbstractExpressionParserTest {
             assertThat(out.getClass()).isEqualTo(expectedOutput.getClass());
         });
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     protected static class TestCase {
 
