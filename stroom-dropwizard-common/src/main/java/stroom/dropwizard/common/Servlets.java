@@ -123,12 +123,16 @@ public class Servlets {
                 isUnauthenticated = false;
             }
 
+            // datafeed is a special case. It does bypass auth, but uses its own auth mechanism,
+            // so we don't want to give impression it has no auth in the logs
+            final String suffix = isUnauthenticated && !fullPathSpec.contains("datafeed")
+                    ? " (Unauthenticated)"
+                    : "";
+
             LOGGER.info("\t{} => {}{}",
                     StringUtils.rightPad(servletName, maxNameLength, " "),
                     fullPathSpec,
-                    (isUnauthenticated
-                            ? " (Unauthenticated)"
-                            : ""));
+                    suffix);
 
             final ServletHolder servletHolder;
             try {

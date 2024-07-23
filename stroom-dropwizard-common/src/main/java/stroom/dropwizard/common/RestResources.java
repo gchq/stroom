@@ -93,7 +93,7 @@ public class RestResources {
                 .stream()
                 .flatMap(this::getAllMethodPathsForResource)
                 .forEach(path -> {
-                    LOGGER.info("Registering API path {} as unauthenticated", path);
+                    LOGGER.debug("Registering API path {} as unauthenticated", path);
                     authenticationBypassCheckerImpl.registerUnauthenticatedApiPath(path);
                 });
     }
