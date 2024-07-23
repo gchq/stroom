@@ -225,5 +225,12 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
             }
             return hashCode;
         }
+
+        @Override
+        public String toString() {
+            return "DocRefCacheKey{" +
+                    "docRef=" + docRef +
+                    '}';
+        }
     }
 }

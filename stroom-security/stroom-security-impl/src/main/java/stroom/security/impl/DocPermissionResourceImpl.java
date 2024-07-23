@@ -202,7 +202,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                                     permissionState.getTopLevelOwnerUuid(), userCache, true)
                                     + ".");
                             for (final DocRef docRef : descendantsWithMultipleOwners) {
-                                impactDetail.add(indent(getDocIdentity(docRef.getUuid()), 1, false)
+                                impactDetail.add(indent(getDocIdentity(docRef), 1, false)
                                         + " with existing owners:");
                                 permissionState.getCurrentOwnerUuids(docRef.getUuid())
                                         .stream()
@@ -599,7 +599,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 
         if (!securityContextProvider.get().hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.OWNER)) {
             messages.add(LogUtil.message("You need to be the owner of {} to change its permissions.",
-                    getDocIdentity(docRef.getUuid())));
+                    getDocIdentity(docRef)));
         }
 
         final Set<String> effectiveOwnerUuids = permissionState.requestedTopLevelOwnerUuids;
@@ -610,7 +610,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
         if (isOwnerChanging
                 && !securityContextProvider.get().hasAppPermission(changeOwnerPermName)) {
             messages.add(LogUtil.message("{} permission is required to change the ownership of {}",
-                    changeOwnerPermName, getDocIdentity(docRef.getUuid())));
+                    changeOwnerPermName, getDocIdentity(docRef)));
         }
 
         // We can't validate the descendants as they may not have any owners due to legacy behaviour
@@ -622,7 +622,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
             if (effectiveOwnerUuids.isEmpty()) {
                 messages.add(LogUtil.message("{} must have exactly one owner. " +
                                 "Requested changes would result in no owners.{}",
-                        getDocIdentity(currentDocumentPermissions.getDocUuid()),
+                        getDocIdentity(docRef),
                         permMsg));
             } else if (effectiveOwnerUuids.size() > 1) {
                 final UserService userService = userServiceProvider.get();
@@ -634,7 +634,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                         .collect(Collectors.joining(", "));
                 messages.add(LogUtil.message("{} must have exactly one owner. " +
                                 "Requested changes would result in the following owners [{}].{}",
-                        getDocIdentity(currentDocumentPermissions.getDocUuid()),
+                        getDocIdentity(docRef),
                         effectiveOwnersStr,
                         permMsg));
             }
@@ -802,11 +802,11 @@ class DocPermissionResourceImpl implements DocPermissionResource {
             // Check if this doc already has the right owner
             if (cleanAllPermsFirst || permissionState.isOwnerChanging(docUuid)) {
                 LOGGER.debug(() -> LogUtil.message("Setting owner of doc {} to {}",
-                        getDocIdentity(docUuid), permissionState.getTopLevelOwnerUuid()));
+                        getDocIdentity(docRef), permissionState.getTopLevelOwnerUuid()));
                 documentPermissionServiceImpl.setDocumentOwner(docUuid, permissionState.getTopLevelOwnerUuid());
             } else {
                 LOGGER.debug(() -> LogUtil.message("Owner of doc {} is already {}",
-                        getDocIdentity(docUuid), permissionState.getTopLevelOwnerUuid()));
+                        getDocIdentity(docRef), permissionState.getTopLevelOwnerUuid()));
             }
         }
     }
@@ -1058,13 +1058,13 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                 .toList();
     }
 
-    private String getDocIdentity(final String docUuid) {
-        final DocRef docRef = DocRef.builder()
-                .uuid(docUuid)
-                .build();
+    private String getDocIdentity(final DocRef docRef) {
+        if (docRef == null) {
+            return null;
+        }
         final DocRef decoratedDocRef = docRefInfoServiceProvider.get().decorate(docRef);
         if (decoratedDocRef == null) {
-            return LogUtil.message("Document/folder {} ", docUuid);
+            return LogUtil.message("Document/folder {} ", docRef.getUuid());
         } else {
             return LogUtil.message("{} '{}' ({})",
                     decoratedDocRef.getType(),
