@@ -2,9 +2,9 @@ import stroom.datasource.api.v2.FieldType;
 import stroom.search.elastic.shared.ElasticNativeTypes;
 import stroom.search.elastic.shared.UnsupportedTypeException;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -32,7 +32,17 @@ public class TestElasticIndexFieldType {
     public void testIsNumeric() throws UnsupportedTypeException {
         assertTrue(FieldType.INTEGER.isNumeric());
         assertTrue(FieldType.LONG.isNumeric());
-        assertFalse(FieldType.FLOAT.isNumeric());
-        assertFalse(FieldType.DOUBLE.isNumeric());
+        assertTrue(FieldType.FLOAT.isNumeric());
+        assertTrue(FieldType.DOUBLE.isNumeric());
+    }
+
+    @Test
+    void testNotFound() {
+        Assertions.assertThatThrownBy(() -> {
+                    ElasticNativeTypes.fromNativeType("name", "foo");
+                })
+                .isInstanceOf(UnsupportedTypeException.class)
+                .hasMessageContaining("name")
+                .hasMessageContaining("foo");
     }
 }

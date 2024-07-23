@@ -43,11 +43,12 @@ public class ElasticNativeTypes {
      */
     public static FieldType fromNativeType(final String fieldName, final String nativeType)
             throws UnsupportedTypeException {
-        if (NATIVE_TYPE_MAP.containsKey(nativeType)) {
-            return NATIVE_TYPE_MAP.get(nativeType);
-        }
+        final FieldType fieldType = NATIVE_TYPE_MAP.get(nativeType);
 
-        throw new UnsupportedTypeException("Field '" + fieldName + "' has an unsupported mapping type '" +
-                nativeType + "'");
+        if (fieldType == null) {
+            throw new UnsupportedTypeException("Field '" + fieldName + "' has an unsupported mapping type '" +
+                    nativeType + "'");
+        }
+        return fieldType;
     }
 }
