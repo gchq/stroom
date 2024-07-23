@@ -1545,17 +1545,20 @@
         "tags" : [ "Authentication" ]
       }
     },
-    "/authentication/v1/noauth/reset/{email}" : {
-      "get" : {
+    "/authentication/v1/noauth/reset" : {
+      "post" : {
         "operationId" : "resetEmail",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "email",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          },
+          "description" : "email",
+          "required" : true
+        },
         "responses" : {
           "default" : {
             "content" : {
@@ -1925,25 +1928,6 @@
           }
         },
         "summary" : "Fetch the extended UI configuration",
-        "tags" : [ "Global Config" ]
-      }
-    },
-    "/config/v1/noauth/fetchUiConfig" : {
-      "get" : {
-        "operationId" : "fetchUiConfig",
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/UiConfig"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Fetch the UI configuration",
         "tags" : [ "Global Config" ]
       }
     },
