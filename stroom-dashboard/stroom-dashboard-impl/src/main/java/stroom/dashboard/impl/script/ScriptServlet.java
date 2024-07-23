@@ -37,9 +37,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * <p>
- * SERVLET that reports status of Stroom for scripting purposes.
- * </p>
+ * Provides access to {@link ScriptDoc}s for the visualisations
  */
 class ScriptServlet extends HttpServlet implements IsServlet {
 
@@ -58,7 +56,7 @@ class ScriptServlet extends HttpServlet implements IsServlet {
 
     @Override
     protected void doGet(final HttpServletRequest request, final HttpServletResponse response) {
-        // Elevate the users permissions for the duration of this task so they can read the script if
+        // Elevate the users permissions for the duration of this task, so they can read the script if
         // they have 'use' permission.
         securityContext.useAsRead(() -> {
             try {

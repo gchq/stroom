@@ -26,7 +26,13 @@ import java.util.Set;
 
 public class DashboardServlet extends AppServlet implements IsServlet {
 
-    private static final Set<String> PATH_SPECS = Set.of("/dashboard");
+    static final String PATH_PART = "/dashboard";
+
+    /**
+     * Note: {@link RedirectServlet} will re-direct to here to support legacy servlet paths,
+     * i.e. /stroom/dashboard/xxx
+     */
+    private static final Set<String> PATH_SPECS = Set.of(PATH_PART);
 
     @Inject
     DashboardServlet(final UiConfig uiConfig,

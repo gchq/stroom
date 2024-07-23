@@ -11,7 +11,6 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
@@ -68,14 +67,14 @@ public interface AuthenticationResource extends RestResource, DirectRestService 
             @Parameter(description = "changePasswordRequest", required = true)
             @NotNull ChangePasswordRequest changePasswordRequest);
 
-    @GET
-    @Path("/noauth/reset/{email}")
+    @POST
+    @Path("/noauth/reset")
     @NotNull
     @Operation(
             summary = "Reset a user account using an email address.",
             operationId = "resetEmail")
     Boolean resetEmail(
-            @PathParam("email") String emailAddress);
+            @Parameter(description = "email", required = true) @NotNull String emailAddress);
 
     @GET
     @Path("/noauth/fetchPasswordPolicy")

@@ -22,6 +22,7 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.DefaultTaskListener;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 import com.google.gwt.user.client.Window;
@@ -49,7 +50,7 @@ public class HelpPlugin extends Plugin {
             if (result != null) {
                 IconMenuItem helpMenuItem;
                 final String helpUrl = result.getHelpUrl();
-                if (helpUrl != null && helpUrl.trim().length() > 0) {
+                if (GwtNullSafe.isNonBlankString(helpUrl)) {
                     helpMenuItem = new IconMenuItem.Builder()
                             .priority(1)
                             .icon(SvgImage.HELP)
@@ -72,7 +73,8 @@ public class HelpPlugin extends Plugin {
                 .priority(2)
                 .icon(SvgImage.OPERATOR)
                 .text("API Specification")
-                .command(() -> Window.open("/stroom/noauth/swagger-ui", "_blank", ""))
+                .command(() ->
+                        Window.open("/swagger-ui", "_blank", ""))
                 .build();
         event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU, apiMenuItem);
     }

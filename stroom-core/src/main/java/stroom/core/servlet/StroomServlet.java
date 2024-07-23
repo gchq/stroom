@@ -26,7 +26,7 @@ import java.util.Set;
 
 public class StroomServlet extends AppServlet implements IsServlet {
 
-    private static final Set<String> PATH_SPECS = Set.of("/");
+    private static final Set<String> PATH_SPECS = Set.of("");  // Empty string == exact match on context root, ie. /
 
     @Inject
     StroomServlet(final UiConfig uiConfig,

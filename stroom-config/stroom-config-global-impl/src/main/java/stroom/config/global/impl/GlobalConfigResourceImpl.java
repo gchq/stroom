@@ -25,6 +25,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.rest.RestUtil;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.Unauthenticated;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Strings;
@@ -272,15 +273,8 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         }
     }
 
-    // This one gets called by the React UI
-    @AutoLogged(OperationType.UNLOGGED) // Called constantly by UI code not user. No need to log.
-    @Timed
-    @Override
-    public UiConfig fetchUiConfig() {
-        return uiConfig.get();
-    }
-
     // This one gets called by the GWT UI
+    @Unauthenticated
     @AutoLogged(OperationType.UNLOGGED) // Called constantly by UI code not user. No need to log.
     @Timed
     @Override
