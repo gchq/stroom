@@ -45,7 +45,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -206,7 +205,7 @@ class SecurityFilter implements Filter {
                             "fullPath: {}, servletPath: {}", servletName, fullPath, servletPath);
                     response.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
 
-                } else if (ResourcePaths.ROOT_PATH.equals(servletPath)) {
+                } else {
                     // No identity found and not an unauthenticated servlet/api so assume it is
                     // a UI request. Thus instigate an OpenID authentication flow
                     try {
@@ -234,11 +233,11 @@ class SecurityFilter implements Filter {
                         LOGGER.error(e.getMessage(), e);
                         throw e;
                     }
-                } else {
-                    final int statusCode = Status.NOT_FOUND.getStatusCode();
-                    LOGGER.debug("Unexpected servletName: {}, fullPath: {}, servletPath: {}, returning {}",
-                            servletName, fullPath, servletPath, statusCode);
-                    response.setStatus(statusCode);
+//                } else {
+//                    final int statusCode = Status.NOT_FOUND.getStatusCode();
+//                    LOGGER.debug("Unexpected servletName: {}, fullPath: {}, servletPath: {}, returning {}",
+//                            servletName, fullPath, servletPath, statusCode);
+//                    response.setStatus(statusCode);
                 }
             }
         }
