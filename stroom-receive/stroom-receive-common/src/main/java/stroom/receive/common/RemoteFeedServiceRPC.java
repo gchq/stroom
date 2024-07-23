@@ -16,7 +16,7 @@ import java.util.Set;
 public class RemoteFeedServiceRPC implements IsServlet {
 
     private static final Set<String> PATH_SPECS = Set.of(
-            ResourcePaths.addUnauthenticatedPrefix("/remoting/remotefeedservice.rpc"));
+            ResourcePaths.addLegacyUnauthenticatedServletPrefix("/remoting/remotefeedservice.rpc"));
 
     private final FeedStatusService feedStatusService;
 

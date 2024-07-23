@@ -1,12 +1,14 @@
 package stroom.dropwizard.common;
 
 import stroom.util.ConsoleColour;
+import stroom.util.NullSafe;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.Unauthenticated;
 
 import io.dropwizard.core.setup.Environment;
 import jakarta.inject.Inject;
@@ -16,6 +18,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -24,7 +28,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class RestResources {
 
@@ -32,12 +38,15 @@ public class RestResources {
 
     private final Environment environment;
     private final Map<RestResourcesBinder.ResourceType, Provider<RestResource>> providerMap;
+    private final AuthenticationBypassCheckerImpl authenticationBypassCheckerImpl;
 
     @Inject
     RestResources(final Environment environment,
-                  final Map<RestResourcesBinder.ResourceType, Provider<RestResource>> providerMap) {
+                  final Map<RestResourcesBinder.ResourceType, Provider<RestResource>> providerMap,
+                  final AuthenticationBypassCheckerImpl authenticationBypassCheckerImpl) {
         this.environment = environment;
         this.providerMap = providerMap;
+        this.authenticationBypassCheckerImpl = authenticationBypassCheckerImpl;
     }
 
     public void register() {
@@ -64,12 +73,124 @@ public class RestResources {
                             getResourcePath(resourceClass).orElse(""));
                 })
                 .sorted(Comparator.comparing(ResourceProvider::resourcePath))
-                .filter(resourceProvider -> filter(maxNameLength, allPaths, resourceProvider))
+                .filter(resourceProvider ->
+                        filter(maxNameLength, allPaths, resourceProvider))
                 .collect(Collectors.toList());
 
+        registerUnauthenticatedPaths(resourceProviders);
+
+        // Binds a guice provider for the resource class to the class using jersey's HK2 dependency
+        // injection framework
         environment.jersey().register(new HK2toGuiceModule(resourceProviders));
+
+        // Now register all the resource classes
         resourceProviders.forEach(resourceProvider ->
                 environment.jersey().register(resourceProvider.resourceClass()));
+    }
+
+    private void registerUnauthenticatedPaths(final List<ResourceProvider> resourceProviders) {
+        NullSafe.list(resourceProviders)
+                .stream()
+                .flatMap(this::getAllMethodPathsForResource)
+                .forEach(path -> {
+                    LOGGER.info("Registering API path {} as unauthenticated", path);
+                    authenticationBypassCheckerImpl.registerUnauthenticatedApiPath(path);
+                });
+    }
+
+    private Stream<String> getAllMethodPathsForResource(final ResourceProvider resourceProvider) {
+        final Class<?> clazz = resourceProvider.resourceClass;
+        final String resourcePath = resourceProvider.resourcePath;
+
+        final boolean isWholeClassUnauthenticated = NullSafe.isTrue(getFromClassOrSuper(clazz, clazz2 ->
+                clazz2.isAnnotationPresent(Unauthenticated.class)
+                        ? true
+                        : null));
+
+        final List<String> unauthenticatedPaths = new ArrayList<>();
+        for (final Method method : clazz.getMethods()) {
+            final boolean isMethodUnauthenticated;
+            if (isWholeClassUnauthenticated) {
+                isMethodUnauthenticated = true;
+            } else {
+                isMethodUnauthenticated = NullSafe.isTrue(getFromMethodOrSuper(clazz, method, method2 -> {
+                    final boolean hasAnnotation = method2.isAnnotationPresent(Unauthenticated.class);
+                    return hasAnnotation
+                            ? true
+                            : null;
+                }));
+            }
+
+            if (isMethodUnauthenticated) {
+                final Path pathAnno = getFromMethodOrSuper(clazz, method, method2 ->
+                        method2.getAnnotation(Path.class));
+                if (pathAnno != null) {
+                    String methodPath = pathAnno.value();
+                    final int braceIdx = methodPath.indexOf("{");
+                    if (braceIdx != -1) {
+                        // e.g. 'noauth/reset/{email}' becomes 'noauth/reset/'
+                        methodPath = methodPath.substring(0, braceIdx);
+                    }
+                    final String path = ResourcePaths.buildPath(resourcePath, methodPath);
+                    unauthenticatedPaths.add(path);
+                }
+            }
+        }
+        return unauthenticatedPaths.stream();
+    }
+
+    static <T> T getFromClassOrSuper(final Class<?> clazz, Function<Class<?>, T> getter) {
+        Objects.requireNonNull(getter);
+
+        T val = getter.apply(clazz);
+
+        if (val == null) {
+            // try each iface in turn
+            val = Arrays.stream(clazz.getInterfaces())
+                    .map(getter)
+                    .filter(Objects::nonNull)
+                    .findFirst()
+                    .orElse(null);
+        }
+        return val;
+    }
+
+    static <T> T getFromMethodOrSuper(final Class<?> clazz,
+                                      final Method method,
+                                      final Function<Method, T> getter) {
+        Objects.requireNonNull(getter);
+        T val = getter.apply(method);
+        if (val == null) {
+            final Class<?> restInterface = Arrays.stream(clazz.getInterfaces())
+                    .filter(iface ->
+                            Arrays.asList(iface.getInterfaces()).contains(RestResource.class))
+                    .findAny()
+                    .orElse(null);
+            if (restInterface == null) {
+                return null;
+            } else {
+                // now find the same method on the interface
+                final Optional<Method> optIfaceMethod = Arrays.stream(restInterface.getMethods())
+                        .filter(ifaceMethod -> areMethodsEqual(method, ifaceMethod))
+                        .findAny();
+
+                val = optIfaceMethod.map(getter)
+                        .orElse(null);
+            }
+        }
+        return val;
+    }
+
+    private static boolean areMethodsEqual(final Method method1, final Method method2) {
+        if (method1.equals(method2)) {
+            return true;
+        } else {
+            return method1.getName().equals(method2.getName())
+                    && method1.getReturnType().equals(method2.getReturnType())
+                    && method1.getGenericReturnType().equals(method2.getGenericReturnType())
+                    && Arrays.equals(method1.getParameterTypes(), method2.getParameterTypes())
+                    && Arrays.equals(method1.getGenericParameterTypes(), method2.getGenericParameterTypes());
+        }
     }
 
     private Optional<String> getResourcePath(final Class<?> restResourceClass) {

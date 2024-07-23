@@ -33,8 +33,13 @@ public class SwaggerUiServlet extends HttpServlet implements IsServlet {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SwaggerUiServlet.class);
 
-    private static final Set<String> PATH_SPECS = Set.of(
-            ResourcePaths.addUnauthenticatedPrefix("/swagger-ui"));
+    static final String PATH_PART = "/swagger-ui";
+
+    /**
+     * Note: {@link RedirectServlet} will re-direct to here to support legacy servlet paths,
+     * i.e. /stroom/noauth/swagger-ui/xxx
+     */
+    private static final Set<String> PATH_SPECS = Set.of(PATH_PART);
 
     private static final String TITLE = "@TITLE@";
     private static final String SWAGGER_SPEC_URL_TAG = "@SWAGGER_SPEC_URL@";
@@ -62,8 +67,8 @@ public class SwaggerUiServlet extends HttpServlet implements IsServlet {
 
             String html = getHtmlTemplate();
             html = html.replace(TITLE, uiConfig.getHtmlTitle());
-            html = html.replace(SWAGGER_SPEC_URL_TAG, getSwaggerSpecUrl());
-            html = html.replace(SWAGGER_UI_REL_DIR_TAG, "swagger-ui-dist");
+            html = html.replace(SWAGGER_SPEC_URL_TAG, getSwaggerSpecFileUrl());
+            html = html.replace(SWAGGER_UI_REL_DIR_TAG, "ui/noauth/swagger-ui-dist");
 
             printWriter.write(html);
         } catch (final IOException e) {
@@ -100,9 +105,10 @@ public class SwaggerUiServlet extends HttpServlet implements IsServlet {
         return template;
     }
 
-    private String getSwaggerSpecUrl() {
+    private String getSwaggerSpecFileUrl() {
         return uriFactory.publicUri(
-                ResourcePaths.buildUnauthenticatedServletPath("swagger/stroom.json")).toString();
+                        ResourcePaths.addUnauthenticatedUiPrefix("swagger", "stroom.json"))
+                .toString();
     }
 
 }

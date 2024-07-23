@@ -7,24 +7,18 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsServlet;
 import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.ServletAuthenticationChecker;
 import stroom.util.shared.Unauthenticated;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import io.dropwizard.core.setup.Environment;
-import io.vavr.Tuple;
-import io.vavr.Tuple3;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.servlet.Servlet;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jetty.http.pathmap.PathMappings;
-import org.eclipse.jetty.http.pathmap.PathSpec;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -35,40 +29,27 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Singleton
-public class Servlets implements ServletAuthenticationChecker {
+public class Servlets {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Servlets.class);
 
     private static final String SERVLET_PATH_KEY = "servletPath";
 
-    private static final String UNAUTHENTICATED_PATH_PREFIX = ResourcePaths.buildUnauthenticatedServletPath();
-
     private final Environment environment;
     private final Set<IsServlet> servlets;
-    private final List<PathSpec> unauthenticatedPathSpecs = new ArrayList<>();
+    private final AuthenticationBypassCheckerImpl authenticationBypassCheckerImpl;
 
     @Inject
-    Servlets(final Environment environment, final Set<IsServlet> servlets) {
+    Servlets(final Environment environment,
+             final Set<IsServlet> servlets,
+             final AuthenticationBypassCheckerImpl authenticationBypassCheckerImpl) {
         this.environment = environment;
         this.servlets = servlets;
+        this.authenticationBypassCheckerImpl = authenticationBypassCheckerImpl;
     }
 
     public void register() {
         final ServletContextHandler servletContextHandler = environment.getApplicationContext();
-
-        // Get all the path specs for unauthenticated servlets, so we can test paths to see
-        // if they are unauthenticated
-        servlets.stream()
-                .filter(servlet ->
-                        servlet.getClass().isAnnotationPresent(Unauthenticated.class))
-                .flatMap(servlet ->
-                        servlet.getPathSpecs().stream())
-                .map(ResourcePaths::buildServletPath)
-                .map(PathMappings::asPathSpec)
-                .forEach(unauthenticatedPathSpecs::add);
-
-        LOGGER.debug(() -> LogUtil.message("unauthenticatedPathSpecs:\n{}",
-                LogUtil.toPaddedMultiLine("  ", unauthenticatedPathSpecs)));
 
         // Check for duplicate servlet path specs, assumes they are globally unique
         final List<String> duplicatePaths = servlets.stream()
@@ -104,59 +85,64 @@ public class Servlets implements ServletAuthenticationChecker {
                                     final String name = servlet.getClass().getName();
                                     Objects.requireNonNull(partialPathSpec);
                                     final String fullPathSpec = ResourcePaths.buildServletPath(partialPathSpec);
-                                    return Tuple.of(servlet, name, fullPathSpec);
+                                    return new ServletInfo(servlet, name, fullPathSpec);
                                 }))
-                .sorted(Comparator.comparing(Tuple3::_3))
-                .forEach(tuple3 -> {
-                    final IsServlet isServlet = tuple3._1();
-                    final String name = tuple3._2();
-                    final String fullPathSpec = tuple3._3();
+                .sorted(Comparator.comparing(ServletInfo::fullPathSpec))
+                .forEach(servletInfo -> {
 
-                    addServlet(servletContextHandler, allPaths, maxNameLength, isServlet, name, fullPathSpec);
+                    addServlet(
+                            servletContextHandler,
+                            allPaths,
+                            maxNameLength,
+                            servletInfo.servlet,
+                            servletInfo.name,
+                            servletInfo.fullPathSpec);
                 });
-    }
-
-    @Override
-    public boolean isUnauthenticatedPath(final String servletPath) {
-        if (servletPath == null) {
-            return false;
-        } else {
-            return unauthenticatedPathSpecs.stream()
-                    .anyMatch(pathSpec ->
-                                    pathSpec.matches(servletPath));
-        }
     }
 
     private void addServlet(final ServletContextHandler servletContextHandler,
                             final Set<String> allPaths,
                             final int maxNameLength,
-                            final IsServlet isServlet,
-                            final String name,
+                            final IsServlet servlet,
+                            final String servletName,
                             final String fullPathSpec) {
+
 
         if (allPaths.contains(fullPathSpec)) {
             LOGGER.error("\t{} => {}   {}",
-                    StringUtils.rightPad(name, maxNameLength, " "),
+                    StringUtils.rightPad(servletName, maxNameLength, " "),
                     fullPathSpec,
                     ConsoleColour.red("**Duplicate path**"));
             throw new RuntimeException(LogUtil.message("Duplicate servlet path {}", fullPathSpec));
         } else {
-            LOGGER.info("\t{} => {}",
-                    StringUtils.rightPad(name, maxNameLength, " "),
-                    fullPathSpec);
-        }
+            final boolean isUnauthenticated;
+            if (servlet.getClass().isAnnotationPresent(Unauthenticated.class)) {
+                isUnauthenticated = true;
+                authenticationBypassCheckerImpl.registerUnauthenticatedServletName(servletName);
+            } else {
+                isUnauthenticated = false;
+            }
 
-        final ServletHolder servletHolder;
-        try {
-            servletHolder = new ServletHolder(name, (Servlet) isServlet);
-        } catch (ClassCastException e) {
-            throw new RuntimeException(LogUtil.message("Injected class {} is not a Servlet",
-                    isServlet.getClass().getName()));
-        }
-        servletContextHandler.addServlet(servletHolder, fullPathSpec);
-        allPaths.add(fullPathSpec);
+            LOGGER.info("\t{} => {}{}",
+                    StringUtils.rightPad(servletName, maxNameLength, " "),
+                    fullPathSpec,
+                    (isUnauthenticated
+                            ? " (Unauthenticated)"
+                            : ""));
 
-        registerHealthCheck(isServlet, fullPathSpec);
+            final ServletHolder servletHolder;
+            try {
+                servletHolder = new ServletHolder(servletName, (Servlet) servlet);
+            } catch (ClassCastException e) {
+                throw new RuntimeException(LogUtil.message("Injected class {} is not a Servlet",
+                        servlet.getClass().getName()));
+            }
+
+            servletContextHandler.addServlet(servletHolder, fullPathSpec);
+            allPaths.add(fullPathSpec);
+
+            registerHealthCheck(servlet, fullPathSpec);
+        }
     }
 
     private void registerHealthCheck(final IsServlet servlet,
@@ -212,5 +198,16 @@ public class Servlets implements ServletAuthenticationChecker {
         } else {
             // Servlet doesn't have a health check
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record ServletInfo(
+            IsServlet servlet,
+            String name,
+            String fullPathSpec) {
+
     }
 }

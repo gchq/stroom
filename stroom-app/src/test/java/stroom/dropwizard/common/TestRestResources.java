@@ -11,6 +11,7 @@ import stroom.util.shared.FetchWithLongId;
 import stroom.util.shared.FetchWithTemplate;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.Unauthenticated;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Strings;
@@ -57,6 +58,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 class TestRestResources {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestRestResources.class);
@@ -77,6 +80,8 @@ class TestRestResources {
                     .stream()
                     .filter(classInfo -> classInfo.implementsInterface(RestResource.class.getName()))
                     .map(classInfo -> (Class<? extends RestResource>) classInfo.loadClass())
+                    .filter(clazz ->
+                            !clazz.getName().contains("Test"))
                     .sorted(Comparator.comparing(Class::getName))
                     .toList();
 
@@ -155,6 +160,69 @@ class TestRestResources {
 //            LOGGER.info("Methods:\n{}", stringBuilder);
             System.out.println(stringBuilder);
         }
+    }
+
+    @Test
+    void testGetFromMethodOrSuper_onSuper() {
+
+        final Method methodOne = Arrays.stream(MyClassOne.class.getMethods())
+                .filter(method -> method.getName().equals("methodOne"))
+                .findAny()
+                .orElse(null);
+
+        assertThat(methodOne)
+                .isNotNull();
+
+        final Boolean result = RestResources.getFromMethodOrSuper(MyClassOne.class, methodOne, method -> {
+            return method.isAnnotationPresent(Unauthenticated.class)
+                    ? true
+                    : null;
+        });
+
+        assertThat(result)
+                .isEqualTo(true);
+    }
+
+    @Test
+    void testGetFromMethodOrSuper_onClass() {
+
+        final Method methodTwo = Arrays.stream(MyClassOne.class.getMethods())
+                .filter(method -> method.getName().equals("methodTwo"))
+                .findAny()
+                .orElse(null);
+
+        assertThat(methodTwo)
+                .isNotNull();
+
+        final Boolean result = RestResources.getFromMethodOrSuper(MyClassOne.class, methodTwo, method -> {
+            return method.isAnnotationPresent(Unauthenticated.class)
+                    ? true
+                    : null;
+        });
+
+        assertThat(result)
+                .isEqualTo(true);
+    }
+
+    @Test
+    void testGetFromMethodOrSuper_notPresent() {
+
+        final Method methodThree = Arrays.stream(MyClassOne.class.getMethods())
+                .filter(method -> method.getName().equals("methodThree"))
+                .findAny()
+                .orElse(null);
+
+        assertThat(methodThree)
+                .isNotNull();
+
+        final Boolean result = RestResources.getFromMethodOrSuper(MyClassOne.class, methodThree, method -> {
+            return method.isAnnotationPresent(Unauthenticated.class)
+                    ? true
+                    : null;
+        });
+
+        assertThat(result)
+                .isNull();
     }
 
     private String getMethodSig(final Class<?> clazz,
@@ -630,6 +698,43 @@ class TestRestResources {
                     "name='" + name + '\'' +
                     ", parameterTypes=" + Arrays.toString(parameterTypes) +
                     '}';
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private interface MyInterfaceOne extends RestResource {
+
+        @Unauthenticated
+        String methodOne();
+
+        String methodTwo();
+
+        String methodThree();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class MyClassOne implements MyInterfaceOne {
+
+        @Override
+        public String methodOne() {
+            return null;
+        }
+
+        @Unauthenticated
+        @Override
+        public String methodTwo() {
+            return null;
+        }
+
+        @Override
+        public String methodThree() {
+            return null;
         }
     }
 }

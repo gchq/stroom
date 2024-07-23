@@ -24,6 +24,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsServlet;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.UserName;
 
 import jakarta.inject.Inject;
@@ -45,7 +46,10 @@ class SessionListServlet extends HttpServlet implements IsServlet {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SessionListServlet.class);
 
-    private static final Set<String> PATH_SPECS = Set.of("/sessionList");
+    public static final String PATH_PART = "/sessionList";
+    private static final Set<String> PATH_SPECS = Set.of(
+            PATH_PART,
+            ResourcePaths.addLegacyAuthenticatedServletPrefix(PATH_PART));
 
     private final SecurityContext securityContext;
     private final SessionListService sessionListService;

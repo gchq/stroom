@@ -51,10 +51,12 @@ public class ReceiveDataServlet extends HttpServlet implements IsServlet {
     // have a pair of aliases without 'noauth' in them.
     // This is somewhat inconsistent with our other servlets so far from ideal.
     private static final Set<String> PATH_SPECS = Set.of(
-            ResourcePaths.addUnauthenticatedPrefix(DATA_FEED_PATH_PART),
-            ResourcePaths.addUnauthenticatedPrefix(DATA_FEED_PATH_PART, "/*"),
             DATA_FEED_PATH_PART,
-            DATA_FEED_PATH_PART + "/*");
+            DATA_FEED_PATH_PART + "/*",
+            ResourcePaths.addLegacyUnauthenticatedServletPrefix(DATA_FEED_PATH_PART),
+            ResourcePaths.addLegacyUnauthenticatedServletPrefix(DATA_FEED_PATH_PART, "/*"),
+            ResourcePaths.addLegacyAuthenticatedServletPrefix(DATA_FEED_PATH_PART),
+            ResourcePaths.addLegacyAuthenticatedServletPrefix(DATA_FEED_PATH_PART, "/*"));
 
     private final Provider<RequestHandler> requestHandlerProvider;
     private final CertificateExtractor certificateExtractor;

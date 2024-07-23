@@ -22,9 +22,12 @@ import stroom.proxy.app.event.EventResource;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
+import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.AuthenticationBypassChecker;
 import stroom.util.shared.ResourcePaths;
 
 import jakarta.inject.Inject;
@@ -35,6 +38,7 @@ import jakarta.servlet.FilterConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletMapping;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.ws.rs.HttpMethod;
@@ -62,6 +66,7 @@ public class ProxySecurityFilter implements Filter {
     private final Provider<ProxyConfig> proxyConfigProvider;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final UserIdentityFactory userIdentityFactory;
+    private final AuthenticationBypassChecker authenticationBypassChecker;
 
     private Pattern pattern = null;
 
@@ -70,12 +75,14 @@ public class ProxySecurityFilter implements Filter {
                                final Provider<FeedStatusConfig> feedStatusConfigProvider,
                                final Provider<ProxyConfig> proxyConfigProvider,
                                final DefaultOpenIdCredentials defaultOpenIdCredentials,
-                               final UserIdentityFactory userIdentityFactory) {
+                               final UserIdentityFactory userIdentityFactory,
+                               final AuthenticationBypassChecker authenticationBypassChecker) {
         this.contentSyncConfigProvider = contentSyncConfigProvider;
         this.feedStatusConfigProvider = feedStatusConfigProvider;
         this.proxyConfigProvider = proxyConfigProvider;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.userIdentityFactory = userIdentityFactory;
+        this.authenticationBypassChecker = authenticationBypassChecker;
     }
 
     @Override
@@ -115,26 +122,36 @@ public class ProxySecurityFilter implements Filter {
 
             throws IOException, ServletException {
 
-        final String servletPath = request.getServletPath().toLowerCase();
-        final String fullPath = request.getRequestURI().toLowerCase();
+        final String servletPath = request.getServletPath();
+        final String fullPath = request.getRequestURI();
+        final String servletName = NullSafe.get(request.getHttpServletMapping(), HttpServletMapping::getServletName);
 
-        LOGGER.debug("Filtering fullPath: {}, servletPath: {}", fullPath, servletPath);
+        LOGGER.debug(() ->
+                LogUtil.message("Filtering request uri: {}, servletPath: {}, servletName: {}",
+                        request.getRequestURI(),
+                        request.getServletPath(),
+                        NullSafe.get(request.getHttpServletMapping(), HttpServletMapping::getServletName)));
 
-        // TODO: 05/12/2022 Need to fugure out how we deal with chained proxies where the distant
+        // TODO: 05/12/2022 Need to figure out how we deal with chained proxies where the distant
         //  proxies can only see the downstream and not the IDP.
 
         if (request.getMethod().equalsIgnoreCase(HttpMethod.OPTIONS)) {
             // We need to allow CORS preflight requests
+            LOGGER.debug("Passing on OPTIONS request to next filter, servletName: {}, fullPath: {}, servletPath: {}",
+                    servletName, fullPath, servletPath);
             chain.doFilter(request, response);
 
         } else if (ignoreUri(request.getRequestURI())) {
             // Allow some URIs to bypass authentication checks
+            LOGGER.debug("Ignored URI, servletName: {}, fullPath: {}, servletPath: {}",
+                    servletName, fullPath, servletPath);
             chain.doFilter(request, response);
 
-        } else if (shouldBypassAuthentication(fullPath)) {
-            // /noauth/ paths skip auth here but may handle it themselves
+        } else if (shouldBypassAuthentication(request, fullPath, servletPath, servletName)) {
+            // Unauthenticated paths skip auth here but may handle it themselves
+            LOGGER.debug("Bypassed URI, servletName: {}, fullPath: {}, servletPath: {}",
+                    servletName, fullPath, servletPath);
             chain.doFilter(request, response);
-
         } else {
             final boolean isApiRequest = fullPath.contains(ResourcePaths.API_ROOT_PATH);
 
@@ -213,8 +230,28 @@ public class ProxySecurityFilter implements Filter {
         return jws;
     }
 
-    private boolean shouldBypassAuthentication(final String fullPath) {
-        return fullPath.contains(ResourcePaths.NO_AUTH + "/");
+    private boolean shouldBypassAuthentication(final HttpServletRequest servletRequest,
+                                               final String fullPath,
+                                               final String servletPath,
+                                               final String servletName) {
+        final boolean shouldBypass;
+        if (servletPath == null) {
+            shouldBypass = false;
+        } else {
+            shouldBypass = authenticationBypassChecker.isUnauthenticated(servletName, servletPath, fullPath);
+        }
+
+        if (LOGGER.isDebugEnabled()) {
+            if (shouldBypass) {
+                LOGGER.debug("Bypassing authentication for servletName: {}, fullPath: {}, servletPath: {}",
+                        NullSafe.get(
+                                servletRequest.getHttpServletMapping(),
+                                HttpServletMapping::getServletName),
+                        fullPath,
+                        servletPath);
+            }
+        }
+        return shouldBypass;
     }
 
     @Override
