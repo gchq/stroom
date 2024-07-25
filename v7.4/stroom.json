@@ -2527,6 +2527,37 @@
         "tags" : [ "Data" ]
       }
     },
+    "/data/v1/{id}/metaAttributes" : {
+      "post" : {
+        "operationId" : "getDataMetaAttributes",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "additionalProperties" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Get extended attributes for a data item",
+        "tags" : [ "Data" ]
+      }
+    },
     "/data/v1/{id}/parts/{partNo}/child-types" : {
       "get" : {
         "operationId" : "getChildStreamTypes",
