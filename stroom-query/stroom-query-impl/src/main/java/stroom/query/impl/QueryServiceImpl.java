@@ -361,7 +361,8 @@ class QueryServiceImpl implements QueryService {
                 sampleQuery,
                 null,
                 dateTimeSettings,
-                searchRequest.isIncremental());
+                searchRequest.isIncremental(),
+                searchRequest.getTimeout());
         final ExpressionContext expressionContext = expressionContextFactory.createContext(sampleRequest);
         SearchRequest mappedRequest = searchRequestFactory.create(query, sampleRequest, expressionContext);
 
