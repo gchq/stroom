@@ -13,6 +13,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.4.10] - 2024-07-25
+
+* Issue **#3960** : Migrate to Elasticsearch Java API Client.
+
+* Issue **#4385** : Fix error when trying to change permissions on a folder with no current owner.
+
+* Issue **#4384** : Stop logging to ERROR when stroomQL contains a malformed function.
+
+* Issue **#4389** : Fix the Query table re-drawing too frequently.
+
+
 ## [v7.4.9] - 2024-07-17
 
 * Issue **#4357** : Fix result paging for analytic duplicate check stores.
@@ -687,7 +698,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4.9...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4.10...HEAD
+[v7.4.10]: https://github.com/gchq/stroom/compare/v7.4.9...v7.4.10
 [v7.4.9]: https://github.com/gchq/stroom/compare/v7.4.8...v7.4.9
 [v7.4.8]: https://github.com/gchq/stroom/compare/v7.4.7...v7.4.8
 [v7.4.7]: https://github.com/gchq/stroom/compare/v7.4.6...v7.4.7
