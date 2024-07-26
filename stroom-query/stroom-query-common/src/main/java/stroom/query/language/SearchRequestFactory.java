@@ -34,6 +34,7 @@ import stroom.query.language.token.TokenType;
 import stroom.query.language.token.Tokeniser;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 
@@ -87,8 +88,8 @@ public class SearchRequestFactory {
 
         private ExpressionContext expressionContext;
         private final FieldIndex fieldIndex;
-        private final Map<String, Expression> expressionMap;
-        private final Set<String> addedFields = new HashSet<>();
+        private final Map<CIKey, Expression> expressionMap;
+        private final Set<CIKey> addedFields = new HashSet<>();
         private final List<AbstractToken> additionalFields = new ArrayList<>();
         private boolean inHaving;
 
@@ -789,10 +790,10 @@ public class SearchRequestFactory {
 
             // Ensure StreamId and EventId fields exist if there is no grouping.
             if (groupDepth == 0) {
-                if (!addedFields.contains(FieldIndex.FALLBACK_STREAM_ID_FIELD_NAME)) {
+                if (!addedFields.contains(FieldIndex.FALLBACK_STREAM_ID_FIELD_KEY)) {
                     tableSettingsBuilder.addColumns(buildSpecialColumn(FieldIndex.FALLBACK_STREAM_ID_FIELD_NAME));
                 }
-                if (!addedFields.contains(FieldIndex.FALLBACK_EVENT_ID_FIELD_NAME)) {
+                if (!addedFields.contains(FieldIndex.FALLBACK_EVENT_ID_FIELD_KEY)) {
                     tableSettingsBuilder.addColumns(buildSpecialColumn(FieldIndex.FALLBACK_EVENT_ID_FIELD_NAME));
                 }
             }
@@ -800,7 +801,7 @@ public class SearchRequestFactory {
             // Add missing fields if needed.
             for (final AbstractToken token : additionalFields) {
                 final String fieldName = token.getUnescapedText();
-                if (!addedFields.contains(fieldName)) {
+                if (!addedFields.contains(CIKey.of(fieldName))) {
                     final String id = "__" + fieldName.replaceAll("\\s", "_") + "__";
                     addField(token,
                             id,
@@ -844,7 +845,7 @@ public class SearchRequestFactory {
         }
 
         public Column buildSpecialColumn(final String name) {
-            addedFields.add(name);
+            addedFields.add(CIKey.of(name));
             return Column.builder()
                     .id(name)
                     .name(name)
@@ -960,7 +961,7 @@ public class SearchRequestFactory {
             final ExpressionParser expressionParser = new ExpressionParser(new ParamFactory(expressionMap));
             try {
                 final Expression expression = expressionParser.parse(expressionContext, fieldIndex, expressionTokens);
-                expressionMap.put(variable, expression);
+                expressionMap.put(CIKey.of(variable), expression);
             } catch (final ParseException e) {
                 throw new TokenException(keywordGroup, e.getMessage());
             }
@@ -1059,8 +1060,8 @@ public class SearchRequestFactory {
                               final Map<String, Integer> groupMap,
                               final Map<String, Filter> filterMap,
                               final TableSettings.Builder tableSettingsBuilder) {
-            addedFields.add(fieldName);
-            Expression expression = expressionMap.get(fieldName);
+            addedFields.add(CIKey.of(fieldName));
+            Expression expression = expressionMap.get(CIKey.of(fieldName));
             if (expression == null) {
                 ExpressionParser expressionParser = new ExpressionParser(new ParamFactory(expressionMap));
                 try {

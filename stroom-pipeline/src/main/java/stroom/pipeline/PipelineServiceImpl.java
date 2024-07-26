@@ -146,7 +146,7 @@ public class PipelineServiceImpl implements PipelineService {
     @Override
     public List<String> findUuidsByName(final String nameFilter) {
         return securityContext.secureResult(() ->
-                pipelineStore.findByName(nameFilter, true)
+                pipelineStore.findByName(nameFilter, true, false)
                         .stream()
                         .map(DocRef::getUuid)
                         .collect(Collectors.toList()));

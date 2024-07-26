@@ -33,14 +33,18 @@ public class MockDocRefInfoService implements DocRefInfoService {
     }
 
     @Override
-    public List<DocRef> findByName(final String type, final String nameFilter, final boolean allowWildCards) {
+    public List<DocRef> findByName(final String type,
+                                   final String nameFilter,
+                                   final boolean allowWildCards,
+                                   final boolean isCaseSensitive) {
         return Collections.emptyList();
     }
 
     @Override
     public List<DocRef> findByNames(final String type,
                                     final List<String> nameFilters,
-                                    final boolean allowWildCards) {
+                                    final boolean allowWildCards,
+                                    final boolean isCaseSensitive) {
         return Collections.emptyList();
     }
 

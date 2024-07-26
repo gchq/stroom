@@ -100,7 +100,7 @@ public class IndexFieldServiceImpl implements IndexFieldService {
                     PageRequest.oneRow(),
                     null,
                     docRef,
-                    StringMatch.equals(fieldName),
+                    StringMatch.equalsIgnoreCase(fieldName),
                     null);
             final ResultPage<IndexField> resultPage = findFields(findIndexFieldCriteria);
             if (resultPage.size() > 0) {

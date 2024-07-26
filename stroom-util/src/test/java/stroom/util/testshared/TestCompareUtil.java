@@ -27,13 +27,13 @@ class TestCompareUtil {
 
     @Test
     void testStringCompare() {
-        assertThat(CompareUtil.compareString(null, null)).isEqualTo(0);
-        assertThat(CompareUtil.compareString("A", "A")).isEqualTo(0);
-        assertThat(CompareUtil.compareString("A", "a")).isEqualTo(0);
-        assertThat(CompareUtil.compareString("A", "B")).isEqualTo(-1);
-        assertThat(CompareUtil.compareString("B", "a")).isEqualTo(1);
-        assertThat(CompareUtil.compareString("B", null)).isEqualTo(1);
-        assertThat(CompareUtil.compareString(null, "B")).isEqualTo(-1);
+        assertThat(CompareUtil.compareStringIgnoreCase(null, null)).isEqualTo(0);
+        assertThat(CompareUtil.compareStringIgnoreCase("A", "A")).isEqualTo(0);
+        assertThat(CompareUtil.compareStringIgnoreCase("A", "a")).isEqualTo(0);
+        assertThat(CompareUtil.compareStringIgnoreCase("A", "B")).isEqualTo(-1);
+        assertThat(CompareUtil.compareStringIgnoreCase("B", "a")).isEqualTo(1);
+        assertThat(CompareUtil.compareStringIgnoreCase("B", null)).isEqualTo(1);
+        assertThat(CompareUtil.compareStringIgnoreCase(null, "B")).isEqualTo(-1);
     }
 
     @Test

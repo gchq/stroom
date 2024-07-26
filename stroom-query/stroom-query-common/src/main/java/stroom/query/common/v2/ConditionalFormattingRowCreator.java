@@ -10,6 +10,7 @@ import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.string.CIKey;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -77,15 +78,15 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
                       final Item item) {
         Row row = null;
 
-        final Map<String, Object> fieldIdToValueMap = new HashMap<>();
+        final Map<CIKey, Object> fieldIdToValueMap = new HashMap<>();
         final List<String> stringValues = new ArrayList<>(columns.size());
         int i = 0;
         for (final Column column : columns) {
             final Val val = item.getValue(i);
             final String string = fieldFormatter.format(column, val);
             stringValues.add(string);
-            fieldIdToValueMap.put(column.getId(), string);
-            fieldIdToValueMap.put(column.getName(), string);
+            fieldIdToValueMap.put(CIKey.of(column.getId()), string);
+            fieldIdToValueMap.put(CIKey.of(column.getName()), string);
             i++;
         }
 

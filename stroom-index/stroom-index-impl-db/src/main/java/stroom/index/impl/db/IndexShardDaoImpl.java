@@ -452,7 +452,7 @@ class IndexShardDaoImpl implements IndexShardDao {
         }
 
         private List<String> getIndexUuids(final List<String> indexNames) {
-            return indexStore.findByNames(indexNames, true)
+            return indexStore.findByNames(indexNames, true, false)
                     .stream()
                     .map(DocRef::getUuid)
                     .collect(Collectors.toList());

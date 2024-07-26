@@ -193,7 +193,7 @@ public class ScheduledQueryAnalyticExecutor {
                 .builder()
                 .ownerDocRef(analytic.asDocRef())
                 .enabled(true)
-                .nodeName(StringMatch.equals(nodeInfo.getThisNodeName()))
+                .nodeName(StringMatch.equalsIgnoreCase(nodeInfo.getThisNodeName()))
                 .build();
 
         final ResultPage<ExecutionSchedule> executionSchedules = executionScheduleDao.fetchExecutionSchedule(request);

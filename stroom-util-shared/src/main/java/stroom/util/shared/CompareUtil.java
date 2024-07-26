@@ -66,7 +66,7 @@ public final class CompareUtil {
         return l1.compareTo(l2);
     }
 
-    public static int compareString(final String l1, final String l2) {
+    public static int compareStringIgnoreCase(final String l1, final String l2) {
         if (l1 == null && l2 == null) {
             return 0;
         }
@@ -229,7 +229,8 @@ public final class CompareUtil {
 
     /**
      * Provides a way to name a {@link Comparator} to aid with debugging/logging
-     * @param name The name for the comparator.
+     *
+     * @param name       The name for the comparator.
      * @param comparator The comparator that is delegated to.
      */
     public static <T> Comparator<T> name(final String name, final Comparator<T> comparator) {

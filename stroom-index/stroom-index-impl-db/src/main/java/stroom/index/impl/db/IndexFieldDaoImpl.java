@@ -71,11 +71,15 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
         });
     }
 
-    private Optional<Integer> getFieldSource(final DocRef docRef,
-                                             final boolean lockFieldSource) {
+    private Optional<Integer> getFieldSource(final DocRef docRef) {
 
         return JooqUtil.contextResult(queryDatasourceDbConnProvider, context ->
-                getFieldSource(context, docRef, lockFieldSource));
+                getFieldSource(context, docRef, false));
+    }
+
+    private Optional<Integer> getFieldSourceWithLock(final DSLContext context,
+                                                     final DocRef docRef) {
+        return getFieldSource(context, docRef, true);
     }
 
     private Optional<Integer> getFieldSource(final DSLContext context,
@@ -127,7 +131,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                     JooqUtil.transaction(queryDatasourceDbConnProvider, txnContext -> {
                         // Get a record lock on the field source, so we are the only thread
                         // that can mutate the index fields for that source, else we can get a deadlock.
-                        final int fieldSourceId = getFieldSource(txnContext, docRef, true)
+                        final int fieldSourceId = getFieldSourceWithLock(txnContext, docRef)
                                 .orElseThrow(() -> new RuntimeException("No field source found for " + docRef));
 
                         // Establish which fields are already there, so we don't need to touch them.
@@ -166,7 +170,8 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                         }
                         LOGGER.debug("{} fields to upsert on {}", fieldCount, docRef);
                         if (fieldCount > 0) {
-                            // The update part doesn't update anything, intentiaonally
+                            // The update part doesn't update anything, intentionally, as we are not changing
+                            // records, just silently ignoring ones that are already there
                             c.onDuplicateKeyUpdate()
                                     .set(INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID, fieldSourceId)
                                     .execute();
@@ -197,7 +202,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
 
     @Override
     public ResultPage<IndexField> findFields(final FindFieldCriteria criteria) {
-        final Optional<Integer> optional = getFieldSource(criteria.getDataSourceRef(), false);
+        final Optional<Integer> optional = getFieldSource(criteria.getDataSourceRef());
 
         if (optional.isEmpty()) {
             return ResultPage.createCriterialBasedList(Collections.emptyList(), criteria);

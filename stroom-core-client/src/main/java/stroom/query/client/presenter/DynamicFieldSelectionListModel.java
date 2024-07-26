@@ -34,7 +34,7 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
                               final PageRequest pageRequest,
                               final Consumer<ResultPage<FieldInfoSelectionItem>> consumer) {
         if (dataSourceRef != null) {
-            final StringMatch stringMatch = StringMatch.contains(filter);
+            final StringMatch stringMatch = StringMatch.containsIgnoreCase(filter);
             final FindFieldCriteria findFieldInfoCriteria = new FindFieldCriteria(
                     pageRequest,
                     null,

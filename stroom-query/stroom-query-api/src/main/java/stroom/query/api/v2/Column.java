@@ -17,6 +17,7 @@
 package stroom.query.api.v2;
 
 import stroom.docref.HasDisplayValue;
+import stroom.util.shared.string.CIKey;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -77,6 +78,9 @@ public final class Column implements HasDisplayValue {
     @JsonProperty
     private final Boolean special;
 
+    @JsonIgnore
+    private transient final CIKey caseInsensitiveName;
+
     @JsonCreator
     public Column(@JsonProperty("id") final String id,
                   @JsonProperty("name") final String name,
@@ -90,6 +94,8 @@ public final class Column implements HasDisplayValue {
                   @JsonProperty("special") final Boolean special) {
         this.id = id;
         this.name = name;
+        // Saves us building a CIKey every time we need to look up the columns name
+        this.caseInsensitiveName = CIKey.of(name);
         this.expression = expression;
         this.sort = sort;
         this.filter = filter;
@@ -118,6 +124,11 @@ public final class Column implements HasDisplayValue {
 
     public String getName() {
         return name;
+    }
+
+    @JsonIgnore
+    public CIKey getNameAsCIKey() {
+        return caseInsensitiveName;
     }
 
     public String getExpression() {

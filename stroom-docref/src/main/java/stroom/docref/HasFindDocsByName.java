@@ -17,7 +17,7 @@ public interface HasFindDocsByName {
     default List<DocRef> findByName(final String name) {
         // GWT so no List.of()
         return name != null
-                ? findByNames(Collections.singletonList(name), false)
+                ? findByNames(Collections.singletonList(name), false, true)
                 : Collections.emptyList();
     }
 
@@ -25,10 +25,12 @@ public interface HasFindDocsByName {
      * Find by case-sensitive match on the name.
      * If allowWildCards is true '*' can be used to denote a 0-many char wild card.
      */
-    default List<DocRef> findByName(final String name, final boolean allowWildCards) {
+    default List<DocRef> findByName(final String name,
+                                    final boolean allowWildCards,
+                                    final boolean isCaseSensitive) {
         // GWT so no List.of()
         return name != null
-                ? findByNames(Collections.singletonList(name), allowWildCards)
+                ? findByNames(Collections.singletonList(name), allowWildCards, isCaseSensitive)
                 : Collections.emptyList();
     }
 
@@ -37,5 +39,5 @@ public interface HasFindDocsByName {
      * If allowWildCards is true '*' can be used to denote a 0-many char wild card.
      * Finds all docRefs associated with any of the names, i.e. an OR.
      */
-    List<DocRef> findByNames(List<String> names, boolean allowWildCards);
+    List<DocRef> findByNames(List<String> names, boolean allowWildCards, final boolean isCaseSensitive);
 }

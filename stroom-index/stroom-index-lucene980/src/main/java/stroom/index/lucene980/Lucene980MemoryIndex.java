@@ -9,6 +9,7 @@ import stroom.search.extraction.FieldValue;
 import stroom.search.impl.SearchException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 import org.apache.lucene980.analysis.Analyzer;
@@ -36,13 +37,13 @@ class Lucene980MemoryIndex implements stroom.search.extraction.MemoryIndex {
     @Override
     public boolean match(final SearchRequest searchRequest, final List<FieldValue> fieldValues) {
         final MemoryIndex memoryIndex = new MemoryIndex();
-        final Map<String, IndexField> indexFieldMap = new HashMap<>();
+        final Map<CIKey, IndexField> indexFieldMap = new HashMap<>();
         for (final FieldValue fieldValue : fieldValues) {
             final IndexField indexField = fieldValue.field();
             final LuceneIndexField luceneIndexField = LuceneIndexField
                     .fromIndexField(indexField);
 
-            indexFieldMap.put(indexField.getFldName(), indexField);
+            indexFieldMap.put(CIKey.of(indexField.getFldName()), indexField);
 
             if (luceneIndexField.isIndexed()) {
                 final Analyzer fieldAnalyzer = searchExpressionQueryCache.getAnalyser(luceneIndexField);
@@ -54,7 +55,8 @@ class Lucene980MemoryIndex implements stroom.search.extraction.MemoryIndex {
         }
 
         // See if this set of fields matches the rule expression.
-        final IndexFieldCache indexFieldCache = (key, fieldName) -> indexFieldMap.get(fieldName);
+        final IndexFieldCache indexFieldCache = (key, fieldName) ->
+                indexFieldMap.get(CIKey.of(fieldName));
         return matchQuery(searchRequest, memoryIndex, indexFieldCache);
     }
 

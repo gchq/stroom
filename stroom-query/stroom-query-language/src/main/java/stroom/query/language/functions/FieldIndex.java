@@ -16,6 +16,9 @@
 
 package stroom.query.language.functions;
 
+import stroom.util.NullSafe;
+import stroom.util.shared.string.CIKey;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +37,18 @@ public class FieldIndex {
     public static final String FALLBACK_STREAM_ID_FIELD_NAME = "StreamId";
     public static final String FALLBACK_EVENT_ID_FIELD_NAME = "EventId";
 
-    private final Map<String, Integer> fieldToPos = new ConcurrentHashMap<>();
+    public static final CIKey DEFAULT_TIME_FIELD_KEY = CIKey.of(DEFAULT_TIME_FIELD_NAME);
+    public static final CIKey FALLBACK_TIME_FIELD_KEY = CIKey.of(FALLBACK_TIME_FIELD_NAME);
+    public static final CIKey DEFAULT_STREAM_ID_FIELD_KEY = CIKey.of(
+            DEFAULT_STREAM_ID_FIELD_NAME);
+    public static final CIKey DEFAULT_EVENT_ID_FIELD_KEY = CIKey.of(
+            DEFAULT_EVENT_ID_FIELD_NAME);
+    public static final CIKey FALLBACK_STREAM_ID_FIELD_KEY = CIKey.of(
+            FALLBACK_STREAM_ID_FIELD_NAME);
+    public static final CIKey FALLBACK_EVENT_ID_FIELD_KEY = CIKey.of(
+            FALLBACK_EVENT_ID_FIELD_NAME);
+
+    private final Map<CIKey, Integer> fieldToPos = new ConcurrentHashMap<>();
 
     private final List<String> fieldList = new ArrayList<>();
     private volatile String[] posToField = new String[0];
@@ -44,7 +58,13 @@ public class FieldIndex {
     private Integer eventIdFieldIndex;
 
     public int create(final String fieldName) {
-        return fieldToPos.computeIfAbsent(fieldName, k -> addField(fieldName));
+        return fieldToPos.computeIfAbsent(CIKey.of(fieldName), k ->
+                addField(fieldName));
+    }
+
+    private int create(final CIKey caseInsensitiveFieldName) {
+        return fieldToPos.computeIfAbsent(caseInsensitiveFieldName, k ->
+                addField(caseInsensitiveFieldName.get()));
     }
 
     private synchronized int addField(final String fieldName) {
@@ -54,7 +74,11 @@ public class FieldIndex {
     }
 
     public Integer getPos(final String fieldName) {
-        return fieldToPos.get(fieldName);
+        return fieldToPos.get(CIKey.of(fieldName));
+    }
+
+    private Integer getPos(final CIKey caseInsensitiveFieldName) {
+        return fieldToPos.get(caseInsensitiveFieldName);
     }
 
     public String getField(final int pos) {
@@ -74,7 +98,11 @@ public class FieldIndex {
     }
 
     public Stream<Entry<String, Integer>> stream() {
-        return fieldToPos.entrySet().stream();
+        return fieldToPos.entrySet()
+                .stream()
+                .map(entry -> Map.entry(
+                        NullSafe.get(entry.getKey(), CIKey::get),
+                        entry.getValue()));
     }
 
     public int getWindowTimeFieldIndex() {
@@ -88,8 +116,8 @@ public class FieldIndex {
     public int getTimeFieldIndex() {
         if (timeFieldIndex == null) {
             timeFieldIndex =
-                    Optional.ofNullable(getPos(DEFAULT_TIME_FIELD_NAME))
-                            .or(() -> Optional.ofNullable(getPos(FALLBACK_TIME_FIELD_NAME)))
+                    Optional.ofNullable(getPos(DEFAULT_TIME_FIELD_KEY))
+                            .or(() -> Optional.ofNullable(getPos(FALLBACK_TIME_FIELD_KEY)))
                             .orElse(-1);
         }
         return timeFieldIndex;
@@ -106,13 +134,13 @@ public class FieldIndex {
     public int getStreamIdFieldIndex() {
         if (streamIdFieldIndex == null) {
             streamIdFieldIndex =
-                    Optional.ofNullable(getPos(DEFAULT_STREAM_ID_FIELD_NAME))
+                    Optional.ofNullable(getPos(DEFAULT_STREAM_ID_FIELD_KEY))
                             .or(() -> Optional.ofNullable(
-                                    getPos(FALLBACK_STREAM_ID_FIELD_NAME)))
+                                    getPos(FALLBACK_STREAM_ID_FIELD_KEY)))
                             .or(() -> {
-                                create(FALLBACK_STREAM_ID_FIELD_NAME);
+                                create(FALLBACK_STREAM_ID_FIELD_KEY);
                                 return Optional.ofNullable(
-                                        getPos(FALLBACK_STREAM_ID_FIELD_NAME));
+                                        getPos(FALLBACK_STREAM_ID_FIELD_KEY));
                             })
                             .orElse(-1);
         }
@@ -130,13 +158,13 @@ public class FieldIndex {
     public int getEventIdFieldIndex() {
         if (eventIdFieldIndex == null) {
             eventIdFieldIndex =
-                    Optional.ofNullable(getPos(DEFAULT_EVENT_ID_FIELD_NAME))
+                    Optional.ofNullable(getPos(DEFAULT_EVENT_ID_FIELD_KEY))
                             .or(() -> Optional.ofNullable(
-                                    getPos(FALLBACK_EVENT_ID_FIELD_NAME)))
+                                    getPos(FALLBACK_EVENT_ID_FIELD_KEY)))
                             .or(() -> {
-                                create(FALLBACK_EVENT_ID_FIELD_NAME);
+                                create(FALLBACK_EVENT_ID_FIELD_KEY);
                                 return Optional.ofNullable(
-                                        getPos(FALLBACK_EVENT_ID_FIELD_NAME));
+                                        getPos(FALLBACK_EVENT_ID_FIELD_KEY));
                             }).orElse(-1);
         }
         return eventIdFieldIndex;

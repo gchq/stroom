@@ -52,6 +52,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.Metrics;
 import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.string.CIKey;
 import stroom.util.shared.time.SimpleDuration;
 
 import com.esotericsoftware.kryo.io.ByteBufferInput;
@@ -238,7 +239,7 @@ public class LmdbDataStore implements DataStore {
     public void accept(final Val[] values) {
         // Filter incoming data.
         final StoredValues storedValues = valueReferenceIndex.createStoredValues();
-        Map<String, Object> fieldIdToValueMap = null;
+        Map<CIKey, Object> fieldIdToValueMap = null;
         for (final CompiledColumn compiledColumn : compiledColumnArray) {
             final Generator generator = compiledColumn.getGenerator();
             if (generator != null) {
@@ -256,7 +257,7 @@ public class LmdbDataStore implements DataStore {
                     if (fieldIdToValueMap == null) {
                         fieldIdToValueMap = new HashMap<>();
                     }
-                    fieldIdToValueMap.put(compiledColumn.getColumn().getName(),
+                    fieldIdToValueMap.put(CIKey.of(compiledColumn.getColumn().getName()),
                             string);
                 }
             }

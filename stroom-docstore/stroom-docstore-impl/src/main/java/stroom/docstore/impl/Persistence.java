@@ -33,11 +33,12 @@ public interface Persistence {
      */
     default List<DocRef> find(final String type,
                               final String nameFilter,
-                              final boolean allowWildCards) {
+                              final boolean allowWildCards,
+                              final boolean isCaseSensitive) {
         // Default impl that does all filtering in java. Not efficient for DB impls.
         return nameFilter == null
                 ? Collections.emptyList()
-                : find(type, List.of(nameFilter), allowWildCards);
+                : find(type, List.of(nameFilter), allowWildCards, isCaseSensitive);
     }
 
     /**
@@ -46,7 +47,8 @@ public interface Persistence {
      */
     default List<DocRef> find(final String type,
                               final List<String> nameFilters,
-                              final boolean allowWildCards) {
+                              final boolean allowWildCards,
+                              final boolean isCaseSensitive) {
         // Default impl that does all filtering in java. Not efficient for DB impls.
         if (NullSafe.isEmptyCollection(nameFilters)) {
             return Collections.emptyList();
@@ -57,12 +59,15 @@ public interface Persistence {
                         final Predicate<DocRef> predicate;
                         if (allowWildCards && PatternUtil.containsWildCards(nameFilter)) {
                             final Pattern pattern = PatternUtil.createPatternFromWildCardFilter(
-                                    nameFilter, true);
+                                    nameFilter, true, isCaseSensitive);
                             predicate = docRef ->
                                     pattern.matcher(docRef.getName()).matches();
-                        } else {
+                        } else if (isCaseSensitive) {
                             predicate = docRef ->
                                     nameFilter.equals(docRef.getName());
+                        } else {
+                            predicate = docRef ->
+                                    nameFilter.equalsIgnoreCase(docRef.getName());
                         }
                         return predicate;
                     })

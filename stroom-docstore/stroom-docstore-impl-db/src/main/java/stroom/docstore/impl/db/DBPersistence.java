@@ -1,5 +1,6 @@
 package stroom.docstore.impl.db;
 
+import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.RWLockFactory;
@@ -184,15 +185,22 @@ public class DBPersistence implements Persistence {
     @Override
     public List<DocRef> find(final String type,
                              final String nameFilter,
-                             final boolean allowWildCards) {
+                             final boolean allowWildCards,
+                             final boolean isCaseSensitive) {
         final List<DocRef> list = new ArrayList<>();
 
         final String nameFilterSqlValue = allowWildCards
                 ? PatternUtil.createSqlLikeStringFromWildCardFilter(nameFilter)
                 : nameFilter;
-        final String condition = allowWildCards
-                ? "like"
-                : "=";
+
+        // By default the collation in mysql is case-insensitive
+        String condition = isCaseSensitive
+                ? "collate " + JooqUtil.CASE_SENSITIVE_COLLATION_NAME + " "
+                : "";
+
+        condition = allowWildCards
+                ? condition + "like"
+                : condition + "=";
 
         try (final Connection connection = dataSource.getConnection()) {
             final String sql = LogUtil.message("""

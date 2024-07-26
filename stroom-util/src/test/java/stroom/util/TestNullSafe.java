@@ -72,7 +72,33 @@ class TestNullSafe {
                 Level1::getNonNullLevel2,
                 nonNullLevel1.getNonNullLevel2()))
                 .isTrue();
+        assertThat(NullSafe.equals(null, Level1::getNonNullLevel2, null))
+                .isTrue();
     }
+
+    @TestFactory
+    Stream<DynamicTest> testEqualsIgnoreCase1() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple2<AtomicReference<String>, String>>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    final AtomicReference<String> ref = testCase.getInput()._1;
+                    final String other = testCase.getInput()._2;
+                    return NullSafe.equalsIgnoreCase(ref, AtomicReference::get, other);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(null, "foo"), false)
+                .addCase(Tuple.of(new AtomicReference<>(), "foo"), false)
+                .addCase(Tuple.of(new AtomicReference<>("bar"), "foo"), false)
+                .addCase(Tuple.of(new AtomicReference<>("foo"), "foo"), true)
+                .addCase(Tuple.of(new AtomicReference<>("FOO"), "foo"), true)
+                .addCase(Tuple.of(new AtomicReference<>("foo"), "FOO"), true)
+                .addCase(Tuple.of(null, null), true)
+                .addCase(Tuple.of(new AtomicReference<>(), null), false)
+                .build();
+    }
+
 
     @Test
     void testEquals2() {

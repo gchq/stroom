@@ -4,4 +4,9 @@ dependencies {
     implementation libs.jackson_annotations
     implementation libs.jaxb_api
     implementation libs.swagger_annotations
+
+    testImplementation project(':stroom-test-common')
+
+    testImplementation libs.assertj_core
+    testImplementation libs.junit_jupiter_api
 }

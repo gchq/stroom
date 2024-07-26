@@ -19,6 +19,7 @@ import stroom.util.shared.Selection;
 import stroom.util.shared.StringCriteria;
 import stroom.util.string.PatternUtil;
 
+import org.jooq.Collation;
 import org.jooq.Condition;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
@@ -65,12 +66,23 @@ public final class JooqUtil {
     private static final String DEFAULT_ID_FIELD_NAME = "id";
     private static final Boolean RENDER_SCHEMA = false;
 
+    /**
+     * The collation to use if you want case sensitivity. By default, our tables use {@code utf8mb4_0900_ai_ci}.
+     */
+    public static final String CASE_SENSITIVE_COLLATION_NAME = "utf8mb4_0900_as_cs";
+    public static final Collation CASE_SENSITIVE_COLLATION = DSL.collation(CASE_SENSITIVE_COLLATION_NAME);
+
     private JooqUtil() {
         // Utility class.
     }
 
     public static void disableJooqLogoInLogs() {
         System.getProperties().setProperty("org.jooq.no-logo", "true");
+    }
+
+    public static Field<String> withCaseSensitiveCollation(final Field<String> field) {
+        return NullSafe.get(field,
+                field2 -> field2.collate(CASE_SENSITIVE_COLLATION_NAME));
     }
 
     private static Settings createSettings(final boolean isExecuteWithOptimisticLocking) {

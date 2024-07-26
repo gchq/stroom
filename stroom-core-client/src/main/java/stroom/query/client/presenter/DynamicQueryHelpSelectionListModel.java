@@ -59,7 +59,7 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
             parentId = "";
         }
 
-        final StringMatch stringMatch = StringMatch.contains(filter);
+        final StringMatch stringMatch = StringMatch.containsIgnoreCase(filter);
         final CriteriaFieldSort sort = new CriteriaFieldSort(
                 FindFieldCriteria.SORT_BY_NAME,
                 false,

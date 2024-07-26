@@ -1112,7 +1112,11 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     private List<String> getPipelineUuidsByName(final List<String> pipelineNames) {
         // Can't cache this in a simple map due to pipes being renamed, but
         // docRefInfoService should cache most of this anyway.
-        return docRefInfoService.findByNames(PipelineDoc.DOCUMENT_TYPE, pipelineNames, true)
+        return docRefInfoService.findByNames(
+                        PipelineDoc.DOCUMENT_TYPE,
+                        pipelineNames,
+                        true,
+                        false)
                 .stream()
                 .map(DocRef::getUuid)
                 .collect(Collectors.toList());

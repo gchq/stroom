@@ -28,6 +28,7 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -59,7 +60,7 @@ public class IndexFieldCacheImpl implements IndexFieldCache, Clearable {
 
     private IndexField create(final Key key) {
         return securityContext.asProcessingUserResult(() ->
-                indexFieldProviders.getIndexField(key.docRef, key.fieldName));
+                indexFieldProviders.getIndexField(key.docRef, key.fieldName.get()));
     }
 
     @Override
@@ -82,31 +83,126 @@ public class IndexFieldCacheImpl implements IndexFieldCache, Clearable {
         cache.clear();
     }
 
-    private static class Key {
+
+    // --------------------------------------------------------------------------------
+
+    // Pkg private for testing
+    static class Key {
 
         private final DocRef docRef;
-        private final String fieldName;
+        // field names are case-insensitive
+        private final CIKey fieldName;
+
+        private int hash = 0;
+        /**
+         * Set to true if the hash has been calculated and found to be zero,
+         * to distinguish from the default value for hash.
+         */
+        private boolean hashIsZero = false;
 
         public Key(final DocRef docRef, final String fieldName) {
             this.docRef = docRef;
-            this.fieldName = fieldName;
+            this.fieldName = CIKey.of(fieldName);
+        }
+
+        public DocRef getDocRef() {
+            return docRef;
+        }
+
+        public String getFieldName() {
+            return fieldName.get();
         }
 
         @Override
-        public boolean equals(final Object o) {
-            if (this == o) {
+        public boolean equals(final Object object) {
+            if (this == object) {
                 return true;
             }
-            if (o == null || getClass() != o.getClass()) {
+            if (object == null || getClass() != object.getClass()) {
                 return false;
             }
-            final Key key = (Key) o;
-            return Objects.equals(docRef, key.docRef) && Objects.equals(fieldName, key.fieldName);
+            final Key key = (Key) object;
+            return Objects.equals(docRef, key.docRef)
+                    && Objects.equals(fieldName, key.fieldName);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(docRef, fieldName);
+            int hash = this.hash;
+            // Lazily cache the hash
+            if (hash == 0 && !hashIsZero) {
+                // Case-insensitive hash
+                hash = Objects.hash(docRef, fieldName);
+                if (hash == 0) {
+                    hashIsZero = true;
+                } else {
+                    this.hash = hash;
+                }
+            }
+            return hash;
+        }
+
+        @Override
+        public String toString() {
+            return "'" + fieldName + "' - " + docRef;
         }
     }
+
+//    // Pkg private for testing
+//    static class Key {
+//
+//        private final DocRef docRef;
+//        // field names are case-insensitive
+//        private final String fieldName;
+//
+//        private int hash = 0;
+//        /**
+//         * Set to true if the hash has been calculated and found to be zero,
+//         * to distinguish from the default value for hash.
+//         */
+//        private boolean hashIsZero = false;
+//
+//        public Key(final DocRef docRef, final String fieldName) {
+//            this.docRef = docRef;
+//            this.fieldName = fieldName;
+//        }
+//
+//        // CUSTOM EQUALS METHOD!!! - case-insensitive on fieldName
+//        @Override
+//        public boolean equals(final Object object) {
+//            if (this == object) {
+//                return true;
+//            }
+//            if (object == null || getClass() != object.getClass()) {
+//                return false;
+//            }
+//            final Key that = (Key) object;
+//            // CUSTOM EQUALS METHOD!!! - case-insensitive on fieldName
+//            return Objects.equals(docRef, that.docRef)
+//                    && fieldName != null
+//                    ? fieldName.equalsIgnoreCase(that.fieldName)
+//                    : that.fieldName == null;
+//        }
+//
+//        @Override
+//        public int hashCode() {
+//            int hash = this.hash;
+//            // Lazily cache the hash
+//            if (hash == 0 && !hashIsZero) {
+//                // Case-insensitive hash
+//                hash = Objects.hash(docRef, NullSafe.get(fieldName, String::toLowerCase));
+//                if (hash == 0) {
+//                    hashIsZero = true;
+//                } else {
+//                    this.hash = hash;
+//                }
+//            }
+//            return hash;
+//        }
+//
+//        @Override
+//        public String toString() {
+//            return "'" + fieldName + "' - " + docRef;
+//        }
+//    }
 }
