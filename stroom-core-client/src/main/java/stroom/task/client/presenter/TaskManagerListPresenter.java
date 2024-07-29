@@ -589,7 +589,6 @@ public class TaskManagerListPresenter
             }
 
             if (!Objects.equals(filter, criteria.getNameFilter())) {
-
                 // This is a new filter so reset all the expander states
                 treeAction.reset();
                 criteria.setNameFilter(filter);

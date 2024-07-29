@@ -8,9 +8,9 @@ public class Size {
     private boolean resizable;
 
     private Size(final Integer initial,
-                final Integer min,
-                final Integer max,
-                final boolean resizable) {
+                 final Integer min,
+                 final Integer max,
+                 final boolean resizable) {
         this.initial = initial;
         this.min = min;
         this.max = max;
@@ -52,6 +52,10 @@ public class Size {
     public static Builder builder() {
         return new Builder();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static final class Builder {
 

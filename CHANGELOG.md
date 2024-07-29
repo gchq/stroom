@@ -13,6 +13,47 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.5-beta.8] - 2024-07-23
+
+* Change API endpoint `/Authentication/v1/noauth/reset` from GET to POST and from a path parameter to a POST body.
+
+* Fix various issues relating to unauthenticated servlets. Add new servlet paths e.g. `/stroom/XXX` becomes `/XXX` and `/stroom/XXX`. The latter will be removed in some future release. Notable new servlet paths are `/dashboard`, `/status`, `/swagger-ui`, `/echo`, `/debug`, `/datafeed`, `/sessionList`.
+
+* Change `sessionList` servlet to require manage users permission.
+
+
+## [v7.5-beta.7] - 2024-07-17
+
+* Issue **#4360** : Fix quick time settings popup.
+
+* Issue **#4357** : Fix result paging for analytic duplicate check stores.
+
+* Issue **#4347** : Filter queryable fields for dashboard query expressions.
+
+* Issue **#4350** : Add analytic execution history retention job.
+
+* Issue **#4351** : Improve query event logging.
+
+* Issue **#4357** : Fix result paging for analytic duplicate check stores.
+
+* Issue **#4358** : Fix streaming analytic field matches.
+
+
+## [v7.5-beta.6] - 2024-07-16
+
+* Improve styling of Jobs screen so disabled jobs/nodes are greyed out.
+
+* Add _Next Scheduled_ column to the detail pane of the Job screen.
+
+* Add _Build Version_ and _Up Date_ columns to the Nodes screen. Also change the styling of the _Ping_ column so an enabled node with no ping stands out while a disabled node does not. Also change the row styling for disabled nodes.
+
+* Add a Run now icon to the jobs screen to execute a job on a node immediately.
+
+* Change the FS Volume and Index Volume tables to low-light CLOSED/INACTIVE volumes. Add tooltips to the path and last updated columns. Change the _Use%_ column to a percentage bar. Add red/green colouring to the _Full_ column values.
+
+* Issue **#4327** : Add a Jobs pane to the Nodes screen to view jobs by node. Add linking between job nodes on the Nodes screen and the Jobs screen.
+
+
 ## [v7.5-beta.5] - 2024-07-11
 
 * Fix lag on Jobs screen when changing the selected job in the top pane.
@@ -678,7 +719,10 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-beta.5...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-beta.8...HEAD
+[v7.5-beta.8]: https://github.com/gchq/stroom/compare/v7.5-beta.7...v7.5-beta.8
+[v7.5-beta.7]: https://github.com/gchq/stroom/compare/v7.5-beta.6...v7.5-beta.7
+[v7.5-beta.6]: https://github.com/gchq/stroom/compare/v7.5-beta.5...v7.5-beta.6
 [v7.5-beta.5]: https://github.com/gchq/stroom/compare/v7.5-beta.4...v7.5-beta.5
 [v7.5-beta.4]: https://github.com/gchq/stroom/compare/v7.5-beta.3...v7.5-beta.4
 [v7.5-beta.3]: https://github.com/gchq/stroom/compare/v7.5-beta.2...v7.5-beta.3

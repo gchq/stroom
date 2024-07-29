@@ -19,6 +19,7 @@ package stroom.data.store.impl.fs;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.util.RunnableWrapper;
+import stroom.util.shared.scheduler.CronExpressions;
 
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
@@ -33,17 +34,17 @@ public class FsDataStoreJobsModule extends AbstractModule {
                         .name(PhysicalDeleteExecutor.TASK_NAME)
                         .description("Physically delete meta data and associated files that have been logically " +
                                 "deleted based on age of delete (stroom.data.store.deletePurgeAge)")
-                        .cronSchedule("0 0 0 * * ?")
+                        .cronSchedule(CronExpressions.EVERY_DAY_AT_MIDNIGHT.getExpression())
                         .advanced(false))
                 .bindJobTo(OrphanFileFinder.class, builder -> builder
                         .name(FsOrphanFileFinderExecutor.TASK_NAME)
                         .description("Job to find files that do not exist in the meta store")
-                        .cronSchedule("0 0 0 * * ?")
+                        .cronSchedule(CronExpressions.EVERY_DAY_AT_MIDNIGHT.getExpression())
                         .enabled(false))
                 .bindJobTo(OrphanMetaFinder.class, builder -> builder
                         .name(FsOrphanMetaFinderExecutor.TASK_NAME)
                         .description("Job to find items in the meta store that have no associated data")
-                        .cronSchedule("0 0 0 * * ?")
+                        .cronSchedule(CronExpressions.EVERY_DAY_AT_MIDNIGHT.getExpression())
                         .enabled(false));
     }
 

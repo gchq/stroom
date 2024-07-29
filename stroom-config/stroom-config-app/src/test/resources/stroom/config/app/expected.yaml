@@ -48,6 +48,7 @@ appConfig:
         port: 2525
         transport: "plain"
         username: null
+    executionHistoryRetention: "P10D"
     resultStore:
       lmdb:
         localDir: "lmdb/analytic_store"
@@ -1129,11 +1130,11 @@ appConfig:
     defaultMaxResults: "1000000,100,10,1"
     helpSubPathDocumentation: "/user-guide/content/documentation/"
     helpSubPathExpressions: "/user-guide/dashboards/expressions/"
-    helpSubPathJobs: "/user-guide/jobs/"
+    helpSubPathJobs: "/reference-section/jobs/"
     helpSubPathProperties: "/user-guide/properties/"
     helpSubPathQuickFilter: "/user-guide/finding-things/"
     helpSubPathStroomQueryLanguage: "/user-guide/dashboards/stroom-query-language/"
-    helpUrl: "https://gchq.github.io/stroom-docs/7.4/docs"
+    helpUrl: "https://gchq.github.io/stroom-docs/7.5/docs"
     htmlTitle: "Stroom"
     namePattern: "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$"
     nestedIndexFieldsDelimiterPattern: "[.:]"

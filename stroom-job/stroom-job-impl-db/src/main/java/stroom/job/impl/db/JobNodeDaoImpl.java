@@ -4,12 +4,17 @@ import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.job.impl.JobNodeDao;
 import stroom.job.impl.db.jooq.tables.records.JobNodeRecord;
+import stroom.job.shared.BatchScheduleRequest;
 import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.job.shared.JobNodeListResponse;
+import stroom.security.api.SecurityContext;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.HasIntCrud;
+import stroom.util.shared.scheduler.Schedule;
 
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotNull;
@@ -18,11 +23,13 @@ import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -31,8 +38,11 @@ import static stroom.job.impl.db.jooq.Tables.JOB_NODE;
 
 public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JobNodeDaoImpl.class);
+
     private static final Map<String, Field<?>> FIELD_MAP = Map.of(
             FindJobNodeCriteria.FIELD_ID_ID, JOB_NODE.ID,
+            FindJobNodeCriteria.FIELD_JOB_NAME, JOB.NAME,
             FindJobNodeCriteria.FIELD_ID_NODE, JOB_NODE.NODE_NAME,
             FindJobNodeCriteria.FIELD_ID_ENABLED, JOB_NODE.ENABLED,
             FindJobNodeCriteria.FIELD_ID_LAST_EXECUTED, JOB_NODE.UPDATE_TIME_MS);
@@ -79,16 +89,20 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
 
     private final JobDbConnProvider jobDbConnProvider;
     private final GenericDao<JobNodeRecord, JobNode, Integer> genericDao;
+    private final SecurityContext securityContext;
 
     @Inject
-    JobNodeDaoImpl(final JobDbConnProvider jobDbConnProvider) {
+    JobNodeDaoImpl(final JobDbConnProvider jobDbConnProvider,
+                   final SecurityContext securityContext) {
+
         this.jobDbConnProvider = jobDbConnProvider;
-        genericDao = new GenericDao<>(
+        this.genericDao = new GenericDao<>(
                 jobDbConnProvider,
                 JOB_NODE,
                 JOB_NODE.ID,
                 JOB_NODE_TO_RECORD_MAPPER,
                 RECORD_TO_JOB_NODE_MAPPER);
+        this.securityContext = securityContext;
     }
 
     @Override
@@ -132,7 +146,8 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
     public JobNodeListResponse find(FindJobNodeCriteria criteria) {
         final Collection<Condition> conditions = JooqUtil.conditions(
                 JooqUtil.getStringCondition(JOB.NAME, criteria.getJobName()),
-                JooqUtil.getStringCondition(JOB_NODE.NODE_NAME, criteria.getNodeName()));
+                JooqUtil.getStringCondition(JOB_NODE.NODE_NAME, criteria.getNodeName()),
+                JooqUtil.getBooleanCondition(JOB_NODE.ENABLED, criteria.getJobNodeEnabled()));
 
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria, JOB_NODE.NODE_NAME);
 
@@ -152,6 +167,25 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
                     jobNode.setJob(job);
                     return jobNode;
                 });
-        return JobNodeListResponse.createUnboundedJobeNodeResponse(list);
+        return JobNodeListResponse.createUnboundedJobNodeResponse(list);
+    }
+
+    public void updateSchedule(final BatchScheduleRequest batchScheduleRequest) {
+        final Schedule schedule = batchScheduleRequest.getSchedule();
+        final String expression = schedule.getExpression();
+        final Set<Integer> jobNodeIds = batchScheduleRequest.getJobNodeIds();
+
+        final long updateMs = Instant.now().toEpochMilli();
+        final String updateUser = securityContext.getUserIdentityForAudit();
+
+        final Integer count = JooqUtil.contextResult(jobDbConnProvider, context -> context
+                .update(JOB_NODE)
+                .set(JOB_NODE.SCHEDULE, expression)
+                .set(JOB_NODE.UPDATE_TIME_MS, updateMs)
+                .set(JOB_NODE.UPDATE_USER, updateUser)
+                .where(JOB_NODE.ID.in(jobNodeIds))
+                .execute());
+
+        LOGGER.debug("Updated {} rows with expression '{}', ids: {}", count, expression, jobNodeIds);
     }
 }

@@ -32,6 +32,11 @@ public interface MultiSelectionModel<T> {
     List<T> getSelectedItems();
 
     /**
+     * Gets the number of selected items
+     */
+    int getSelectedCount();
+
+    /**
      * Tests if the specified item is selected.
      */
     boolean isSelected(final T item);

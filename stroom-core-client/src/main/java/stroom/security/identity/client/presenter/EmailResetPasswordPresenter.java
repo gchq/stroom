@@ -88,7 +88,8 @@ public class EmailResetPasswordPresenter extends MyPresenterWidget<EmailResetPas
     private void resetPassword(final HidePopupRequestEvent event) {
         restFactory
                 .create(RESOURCE)
-                .method(res -> res.resetEmail(getView().getEmail()))
+                .method(resource ->
+                        resource.resetEmail(getView().getEmail()))
                 .onSuccess(r -> {
                     if (r) {
                         AlertEvent.fireInfo(
@@ -108,6 +109,10 @@ public class EmailResetPasswordPresenter extends MyPresenterWidget<EmailResetPas
                 .taskListener(this)
                 .exec();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface EmailResetPasswordView extends View, Focus, HasUiHandlers<HideRequestUiHandlers> {
 

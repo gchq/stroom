@@ -32,6 +32,13 @@ public interface ResourcePaths {
     String API_ROOT_PATH = "/api";
 
     /**
+     * Used as the base path for all servlets. This is because in earlier versions
+     * servlets were all under /stroom because the React UI was using /. We could move
+     * them all down to / but that is a breaking API change.
+     */
+    String SERVLET_BASE_PATH = "/stroom";
+
+    /**
      * Path part for unauthenticated servlets
      */
     String NO_AUTH = "/noauth";
@@ -52,8 +59,24 @@ public interface ResourcePaths {
     String V3 = "/v3";
 
 
-    static String addUnauthenticatedPrefix(final String... parts) {
+    static String addLegacyUnauthenticatedServletPrefix(final String... parts) {
         return new Builder()
+                .addPathPart(SERVLET_BASE_PATH)
+                .addPathPart(NO_AUTH)
+                .addPathParts(parts)
+                .build();
+    }
+
+    static String addLegacyAuthenticatedServletPrefix(final String... parts) {
+        return new Builder()
+                .addPathPart(SERVLET_BASE_PATH)
+                .addPathParts(parts)
+                .build();
+    }
+
+    static String addUnauthenticatedUiPrefix(final String... parts) {
+        return new Builder()
+                .addPathPart(UI_PATH)
                 .addPathPart(NO_AUTH)
                 .addPathParts(parts)
                 .build();

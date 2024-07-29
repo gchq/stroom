@@ -131,7 +131,7 @@ public class SchedulePopup
                 .get(this.scheduleReferenceTime, ScheduleReferenceTime::getScheduleReferenceTime);
         final Long lastExecutedTime = GwtNullSafe
                 .get(this.scheduleReferenceTime, ScheduleReferenceTime::getLastExecutedTime);
-        if (currentString != null && currentString.trim().length() > 0 && scheduleType != null) {
+        if (!GwtNullSafe.isBlankString(currentString) && scheduleType != null) {
             final Schedule schedule = createSchedule();
             final GetScheduledTimesRequest request = new GetScheduledTimesRequest(
                     schedule,

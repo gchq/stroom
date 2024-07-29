@@ -1,7 +1,7 @@
 package stroom.query.client.presenter;
 
 import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
@@ -47,7 +47,7 @@ public class DynamicColumnSelectionListModel
     private final DataSourceClient dataSourceClient;
     private final ClientSecurityContext clientSecurityContext;
     private DocRef dataSourceRef;
-    private FindFieldInfoCriteria lastCriteria;
+    private FindFieldCriteria lastCriteria;
     private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
 
     @Inject
@@ -68,11 +68,12 @@ public class DynamicColumnSelectionListModel
         final String parentPath = getParentPath(parent);
         if (dataSourceRef != null) {
             final StringMatch stringMatch = StringMatch.contains(filter);
-            final FindFieldInfoCriteria findFieldInfoCriteria = new FindFieldInfoCriteria(
+            final FindFieldCriteria findFieldInfoCriteria = new FindFieldCriteria(
                     pageRequest,
                     null,
                     dataSourceRef,
-                    stringMatch);
+                    stringMatch,
+                    null);
 
             // Only fetch if the request has changed.
             lastCriteria = findFieldInfoCriteria;

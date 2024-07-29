@@ -34,8 +34,10 @@ public class EchoServlet extends HttpServlet implements IsServlet {
 
     private static final long serialVersionUID = -2569496543022536282L;
 
+    public static final String PATH_PART = "/echo";
     private static final Set<String> PATH_SPECS = Set.of(
-            ResourcePaths.addUnauthenticatedPrefix("/echo"));
+            PATH_PART,
+            ResourcePaths.addLegacyUnauthenticatedServletPrefix(PATH_PART));
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {

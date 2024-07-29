@@ -22,6 +22,7 @@ import org.jooq.Condition;
 import org.jooq.OrderField;
 import org.jooq.Record;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -405,5 +406,13 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
             }
         });
         return list;
+    }
+
+    @Override
+    public void deleteOldExecutionHistory(final Instant age) {
+        JooqUtil.context(analyticsDbConnProvider, context -> context
+                .deleteFrom(EXECUTION_HISTORY)
+                .where(EXECUTION_HISTORY.EXECUTION_TIME_MS.lt(age.toEpochMilli()))
+                .execute());
     }
 }

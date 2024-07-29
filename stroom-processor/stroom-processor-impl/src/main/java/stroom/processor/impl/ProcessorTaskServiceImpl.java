@@ -17,7 +17,7 @@
 package stroom.processor.impl;
 
 
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
@@ -93,7 +93,7 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
     }
 
     @Override
-    public ResultPage<QueryField> getFieldInfo(final FindFieldInfoCriteria criteria) {
+    public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
         return FieldInfoResultPageBuilder.builder(criteria).addAll(ProcessorTaskFields.getFields()).build();
     }
 

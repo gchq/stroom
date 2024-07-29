@@ -33,6 +33,7 @@ import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.scheduler.CronExpressions;
 
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
@@ -80,11 +81,11 @@ public class SolrSearchModule extends AbstractModule {
                         .name("Solr Index Retention")
                         .description("Logically delete indexed documents in Solr indexes based on the specified " +
                                 "deletion query")
-                        .cronSchedule("0 0 2 * * ?"))
+                        .cronSchedule(CronExpressions.EVERY_DAY_AT_2AM.getExpression()))
                 .bindJobTo(SolrIndexOptimiseExecutorJob.class, builder -> builder
                         .name("Solr Index Optimise")
                         .description("Optimise Solr indexes")
-                        .cronSchedule("0 0 3 * * ?"));
+                        .cronSchedule(CronExpressions.EVERY_DAY_AT_3AM.getExpression()));
     }
 
     private static class DataRetention extends RunnableWrapper {

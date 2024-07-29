@@ -103,13 +103,7 @@ class QueryResourceImpl implements QueryResource {
         return queryServiceProvider.get().validateQuery(query);
     }
 
-    @AutoLogged(OperationType.UNLOGGED)
-    @Override
-    public ResourceGeneration downloadSearchResults(final DownloadQueryResultsRequest request) {
-        return queryServiceProvider.get().downloadSearchResults(request);
-    }
-
-    @AutoLogged(OperationType.UNLOGGED)
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
     public ResourceGeneration downloadSearchResults(final String nodeName, final DownloadQueryResultsRequest request) {
         try {
@@ -134,13 +128,7 @@ class QueryResourceImpl implements QueryResource {
         }
     }
 
-    @AutoLogged(OperationType.UNLOGGED)
-    @Override
-    public DashboardSearchResponse search(final QuerySearchRequest request) {
-        return queryServiceProvider.get().search(request);
-    }
-
-    @AutoLogged(OperationType.UNLOGGED)
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
     public DashboardSearchResponse search(final String nodeName, final QuerySearchRequest request) {
         try {

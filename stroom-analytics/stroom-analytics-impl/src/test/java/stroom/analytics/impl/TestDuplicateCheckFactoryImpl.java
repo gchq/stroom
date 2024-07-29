@@ -18,7 +18,9 @@ package stroom.analytics.impl;
 
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.DuplicateCheckRows;
 import stroom.analytics.shared.DuplicateNotificationConfig;
+import stroom.analytics.shared.FindDuplicateCheckCriteria;
 import stroom.analytics.shared.NotificationConfig;
 import stroom.analytics.shared.NotificationDestinationType;
 import stroom.analytics.shared.NotificationStreamDestination;
@@ -38,6 +40,7 @@ import stroom.query.language.functions.FieldIndex;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
+import stroom.util.shared.PageRequest;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -106,6 +109,31 @@ class TestDuplicateCheckFactoryImpl {
                 assertThat(duplicateCheck2.check(row)).isFalse();
             }
         }
+    }
+
+    @Test
+    void testFetchData() {
+        final String analyticRuleUuid = "test";
+
+        final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
+        try (final DuplicateCheck duplicateCheck = createDuplicateCheck(duplicateCheckFactory, analyticRuleUuid)) {
+            for (int i = 0; i < 223; i++) {
+                final Row row = new Row("test" + i, List.of("test" + i), 0, "", "");
+                assertThat(duplicateCheck.check(row)).isTrue();
+                assertThat(duplicateCheck.check(row)).isFalse();
+            }
+        }
+
+        final FindDuplicateCheckCriteria criteria = new FindDuplicateCheckCriteria(
+                PageRequest.createDefault(),
+                null,
+                analyticRuleUuid,
+                null);
+        final DuplicateCheckRows rows = duplicateCheckFactory.fetchData(criteria);
+        assertThat(rows.getColumnNames().size()).isOne();
+        assertThat(rows.getResultPage().size()).isEqualTo(100);
+        assertThat(rows.getResultPage().getPageStart()).isEqualTo(0);
+        assertThat(rows.getResultPage().getPageResponse().getTotal()).isEqualTo(223);
     }
 
     private DuplicateCheckFactoryImpl createDuplicateCheckFactory() {

@@ -32,6 +32,7 @@ import stroom.security.identity.shared.InternalIdpPasswordPolicyConfig;
 import stroom.security.identity.shared.LoginRequest;
 import stroom.security.identity.shared.LoginResponse;
 import stroom.util.servlet.HttpServletRequestHolder;
+import stroom.util.shared.Unauthenticated;
 
 import com.codahale.metrics.annotation.Timed;
 import event.logging.AuthenticateAction;
@@ -73,6 +74,7 @@ class AuthenticationResourceImpl implements AuthenticationResource {
         this.httpServletRequestHolderProvider = httpServletRequestHolderProvider;
     }
 
+    @Unauthenticated
     @Timed
     @Override
     public LoginResponse login(final LoginRequest loginRequest) {
@@ -123,6 +125,7 @@ class AuthenticationResourceImpl implements AuthenticationResource {
     /**
      * Called as part of logout flow when using internal identity provider.
      */
+    @Unauthenticated
     @Timed
     @Override
     public Boolean logout(final String postLogoutRedirectUri) {
@@ -162,6 +165,7 @@ class AuthenticationResourceImpl implements AuthenticationResource {
         }
     }
 
+    @Unauthenticated
     @Override
     public ConfirmPasswordResponse confirmPassword(final ConfirmPasswordRequest confirmPasswordRequest) {
         final HttpServletRequest request = httpServletRequestHolderProvider.get().get();
@@ -169,6 +173,7 @@ class AuthenticationResourceImpl implements AuthenticationResource {
         return service.confirmPassword(request, confirmPasswordRequest);
     }
 
+    @Unauthenticated
     @Override
     public ChangePasswordResponse changePassword(final ChangePasswordRequest changePasswordRequest) {
         final HttpServletRequest request = httpServletRequestHolderProvider.get().get();
@@ -233,6 +238,7 @@ class AuthenticationResourceImpl implements AuthenticationResource {
         }
     }
 
+    @Unauthenticated
     @Timed
     @Override
     public Boolean resetEmail(final String emailAddress) throws NoSuchUserException {
@@ -268,6 +274,7 @@ class AuthenticationResourceImpl implements AuthenticationResource {
         }
     }
 
+    @Unauthenticated
     @Override
     public InternalIdpPasswordPolicyConfig fetchPasswordPolicy() {
         final PasswordPolicyConfig passwordPolicyConfig = serviceProvider.get().getPasswordPolicy();

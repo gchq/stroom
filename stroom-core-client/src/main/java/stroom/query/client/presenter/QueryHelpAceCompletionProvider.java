@@ -59,7 +59,7 @@ public class QueryHelpAceCompletionProvider
                              final AceCompletionCallback callback) {
         final CompletionsRequest completionsRequest =
                 new CompletionsRequest(
-                        new PageRequest(0, 100),
+                        PageRequest.createDefault(),
                         null,
                         dataSourceRef,
                         editor.getText(),

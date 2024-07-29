@@ -47,7 +47,7 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
 //    private static final SafeHtml arrowUpHtml = SvgImageUtil.toSafeHtml(
 //            SvgImage.ARROW_UP, "valueSpinner-arrow", "valueSpinner-arrowUp");
 
-//    private static final SafeHtml arrowDownHtml =
+    //    private static final SafeHtml arrowDownHtml =
 //            SafeHtmlUtils.fromTrustedString("<div class=\"valueSpinner-arrow valueSpinner-arrowDown\">" +
 //                    SvgImage.ARROW_DOWN.getSvg() +
 //                    "</div>");
@@ -183,7 +183,7 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
                         spinner.start(constraints, true, 0, input);
                     } else {
                         final String constrainedValue = constrainValue(constraints, input.getValue());
-                        spinner.start(constraints, true, Long.valueOf(constrainedValue), input);
+                        spinner.start(constraints, true, Long.parseLong(constrainedValue), input);
                     }
                 }
             } else if (downArrow != null && downArrow.isOrHasChild(target)) {
@@ -211,7 +211,7 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
 
                     final InputElement input = getInputElement(parent);
                     final String constrainedValue = constrainValue(constraints, input.getValue());
-                    spinner.start(constraints, false, Long.valueOf(constrainedValue), input);
+                    spinner.start(constraints, false, Long.parseLong(constrainedValue), input);
                 }
             }
         }
@@ -422,6 +422,10 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
         return maxStep;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     interface Template extends SafeHtmlTemplates {
 
         @Template("<div class=\"valueSpinner\">" +
@@ -430,6 +434,10 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
                 "</div>")
         SafeHtml input(String value, SafeHtml imgUp, SafeHtml imgDown);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     /**
      * The {@code ViewData} for this cell.

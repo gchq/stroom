@@ -133,7 +133,6 @@ public class DataRetentionImpactPresenter
 
         initColumns();
 
-
         dataProvider.addDataDisplay(dataGrid);
         dataProvider.setListUpdater(this::refreshSourceData);
     }

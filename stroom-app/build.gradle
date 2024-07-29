@@ -349,6 +349,24 @@ jar {
 //tasks.getByPath(':stroom-app-gwt:gwtClean').mustRunAfter test
 //tasks.getByPath(':stroom-dashboard-gwt:gwtClean').mustRunAfter test
 
+// Display info to confirm what we are compiling with
+compileJava {
+    doLast {
+        def compiler = javaToolchains.compilerFor {
+            languageVersion = JavaLanguageVersion.of(javaLanguageVersion)
+            vendor = javaVendor
+        }
+        def compilerMeta = compiler.get().metadata
+        println """
+            |=============================================================
+            |Compiling with:
+            |  Vendor:  ${compilerMeta.vendor} (${javaVendor})
+            |  Version: ${compilerMeta.javaRuntimeVersion}
+            |  Path:    ${compilerMeta.installationPath}
+            |=============================================================""".stripMargin()
+    }
+}
+
 shadowJar {
     // We want to run the tests before we build the fat jar.
     dependsOn test
@@ -752,5 +770,38 @@ tasks.build.dependsOn resolve
 tasks.build.dependsOn copyFilesForStroomDockerBuild
 tasks.build.dependsOn shadowJar
 tasks.build.dependsOn buildDistribution
+
+tasks.register('Stroom Node 1 (GWT Super Dev)', JavaExec) {
+    doFirst {
+        // We have to alter the existing jvm args rather than set them so that we don't lose debug args added by
+        // IJ Idea.
+        def jvmArgsCopy = []
+        for (arg in jvmArgs) {
+            jvmArgsCopy.add(arg)
+        }
+        //    -DgwtSuperDevMode=true
+        //    -Xmx4g
+        //    -Devent.logging.validate=true
+        //    --add-opens java.base/java.nio=ALL-UNNAMED
+        //    --add-opens java.base/sun.nio.ch=ALL-UNNAMED
+        //    --add-opens java.base/java.lang=ALL-UNNAMED
+        jvmArgsCopy.add("-DgwtSuperDevMode=true")
+        jvmArgsCopy.add("-Xmx4g")
+        jvmArgsCopy.add("-Devent.logging.validate=true")
+        jvmArgsCopy.add("--add-opens")
+        jvmArgsCopy.add("java.base/java.nio=ALL-UNNAMED")
+        jvmArgsCopy.add("--add-opens")
+        jvmArgsCopy.add("java.base/sun.nio.ch=ALL-UNNAMED")
+        jvmArgsCopy.add("--add-opens")
+        jvmArgsCopy.add("java.base/java.lang=ALL-UNNAMED")
+        jvmArgs = jvmArgsCopy
+    }
+
+    group = 'application'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'stroom.app.App'
+    workingDir = '../'
+    args = ['server', 'local.yml']
+}
 
 // vim: set tabstop=4 shiftwidth=4 expandtab:

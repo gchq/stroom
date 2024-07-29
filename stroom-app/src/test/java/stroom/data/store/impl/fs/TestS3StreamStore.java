@@ -185,7 +185,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
                 .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(expression);
-        findMetaCriteria.setPageRequest(new PageRequest(0, 1));
+        findMetaCriteria.setPageRequest(PageRequest.oneRow());
         testCriteria(findMetaCriteria, 1);
     }
 
@@ -348,7 +348,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
                 .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(expression);
-        findMetaCriteria.setPageRequest(new PageRequest(0, 100));
+        findMetaCriteria.setPageRequest(PageRequest.createDefault());
         findMetaCriteria.setSort(MetaFields.CREATE_TIME.getFldName());
 //        findStreamCriteria.setStreamIdRange(new IdRange(0L, 1L));
 

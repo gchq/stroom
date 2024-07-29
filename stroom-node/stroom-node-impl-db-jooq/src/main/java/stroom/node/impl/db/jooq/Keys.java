@@ -4,20 +4,20 @@
 package stroom.node.impl.db.jooq;
 
 
-import stroom.node.impl.db.jooq.tables.Node;
-import stroom.node.impl.db.jooq.tables.records.NodeRecord;
-
 import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
+
+import stroom.node.impl.db.jooq.tables.Node;
+import stroom.node.impl.db.jooq.tables.records.NodeRecord;
 
 
 /**
  * A class modelling foreign key relationships and constraints of tables in
  * stroom.
  */
-@SuppressWarnings({ "all", "unchecked", "rawtypes" })
+@SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
 public class Keys {
 
     // -------------------------------------------------------------------------
