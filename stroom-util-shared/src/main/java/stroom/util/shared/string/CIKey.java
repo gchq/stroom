@@ -5,6 +5,10 @@ import java.util.Objects;
 /**
  * Useful as a case-insensitive cache key that retains the case of the
  * original string at the cost of wrapping it in another object.
+ * <p>
+ * {@link CIKey#equals(Object)} and {@link CIKey#hashCode()} are performed on
+ * the lower-case form of {@code key}.
+ * </p>
  */
 public class CIKey {
 
@@ -52,7 +56,7 @@ public class CIKey {
 
     @Override
     public int hashCode() {
-        // String lazily caches its hashcode so no need for us to
+        // String lazily caches its hashcode so no need for us to do it too
         return lowerKey != null
                 ? lowerKey.hashCode()
                 : 0;
