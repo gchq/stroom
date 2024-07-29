@@ -79,7 +79,7 @@ public final class Column implements HasDisplayValue {
     private final Boolean special;
 
     @JsonIgnore
-    private transient final CIKey caseInsensitiveName;
+    private final transient CIKey caseInsensitiveName;
 
     @JsonCreator
     public Column(@JsonProperty("id") final String id,
