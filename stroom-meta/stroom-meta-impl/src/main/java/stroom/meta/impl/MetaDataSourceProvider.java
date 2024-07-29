@@ -37,7 +37,7 @@ public class MetaDataSourceProvider implements DataSourceProvider {
     }
 
     @Override
-    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
+    public DocRef fetchDefaultExtractionPipeline(final DocRef docRef) {
         return null;
     }
 }

@@ -14,6 +14,11 @@ public class DefaultHideRequestUiHandlers implements HideRequestUiHandlers {
 
     @Override
     public void hideRequest(final HideRequest request) {
-        HidePopupRequestEvent.builder(presenterWidget).autoClose(request.isAutoClose()).ok(request.isOk()).fire();
+        HidePopupRequestEvent
+                .builder(presenterWidget)
+                .autoClose(request.isAutoClose())
+                .ok(request.isOk())
+                .cancelHandler(request.getCancelHandler())
+                .fire();
     }
 }

@@ -16,6 +16,7 @@
 
 package stroom.index.impl;
 
+import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
@@ -66,8 +67,9 @@ public class IndexModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
                 .addBinding(IndexStoreImpl.class);
-
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(IndexStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
                 .addBinding(IndexStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Searchable.class)
@@ -116,6 +118,10 @@ public class IndexModule extends AbstractModule {
         HasSystemInfoBinder.create(binder()).bind(IndexSystemInfo.class);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class IndexShardDelete extends RunnableWrapper {
 
         @Inject
@@ -123,6 +129,10 @@ public class IndexModule extends AbstractModule {
             super(indexShardManager::deleteFromDisk);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class IndexShardRetention extends RunnableWrapper {
 
@@ -132,6 +142,10 @@ public class IndexModule extends AbstractModule {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class IndexWriterCacheSweep extends RunnableWrapper {
 
         @Inject
@@ -139,6 +153,10 @@ public class IndexModule extends AbstractModule {
             super(indexShardWriterCache::sweep);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class IndexWriterFlush extends RunnableWrapper {
 
@@ -148,6 +166,10 @@ public class IndexModule extends AbstractModule {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class VolumeStatus extends RunnableWrapper {
 
         @Inject
@@ -156,6 +178,10 @@ public class IndexModule extends AbstractModule {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class IndexShardWriterCacheStartup extends RunnableWrapper {
 
         @Inject
@@ -163,6 +189,10 @@ public class IndexModule extends AbstractModule {
             super(indexShardWriterCache::startup);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class IndexShardWriterCacheShutdown extends RunnableWrapper {
 

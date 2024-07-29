@@ -17,13 +17,12 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.ChooserPresenter.ChooserView;
-import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
-import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -32,6 +31,8 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+
+import java.util.function.Supplier;
 
 class ChooserViewImpl extends ViewWithUiHandlers<ChooserUiHandlers> implements ChooserView {
 
@@ -49,17 +50,13 @@ class ChooserViewImpl extends ViewWithUiHandlers<ChooserUiHandlers> implements C
     private final Widget widget;
 
     @Inject
-    ChooserViewImpl(final Binder binder,
-                    final UiConfigCache uiConfigCache) {
+    ChooserViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+    }
 
-        // Only deals in lists of strings so no field defs required.
-        uiConfigCache.get()
-                .onSuccess(uiConfig ->
-                        nameFilter.registerPopupTextProvider(() ->
-                                QuickFilterTooltipUtil.createTooltip(
-                                        "Choose Item Quick Filter",
-                                        uiConfig.getHelpUrlQuickFilter())));
+    @Override
+    public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
+        nameFilter.registerPopupTextProvider(popupTextSupplier);
     }
 
     @Override

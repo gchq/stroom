@@ -82,7 +82,7 @@ public class AnalyticDataShardsPresenter
         registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> update()));
         registerHandler(queryToolbarPresenter.addTimeRangeChangeHandler(e -> update()));
         registerHandler(analyticDataShardListPresenter.getSelectionModel().addSelectionHandler(e -> update()));
-        registerHandler(tablePresenter.addRangeChangeHandler(e -> update()));
+        registerHandler(tablePresenter.addRefreshRequestHandler(e -> update()));
     }
 
     private void update() {
@@ -112,6 +112,7 @@ public class AnalyticDataShardsPresenter
                         queryToolbarPresenter.onError(Collections.singletonList(t.getMessage()));
                         queryToolbarPresenter.onSearching(false);
                     })
+                    .taskListener(this)
                     .exec();
         }
     }

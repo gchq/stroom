@@ -73,49 +73,51 @@ class ProcessorDaoImpl implements ProcessorDao {
         // behaves as a getOrCreate method.
         // TODO This should be replaced with JooqUtil.tryCreate as ANY error in the sql will be
         //  ignored, not just key duplicates.
-        return JooqUtil.contextResult(processorDbConnProvider, context -> {
-            final Optional<ProcessorRecord> optional = context
-                    .insertInto(PROCESSOR,
-                            PROCESSOR.CREATE_TIME_MS,
-                            PROCESSOR.CREATE_USER,
-                            PROCESSOR.UPDATE_TIME_MS,
-                            PROCESSOR.UPDATE_USER,
-                            PROCESSOR.UUID,
-                            PROCESSOR.TASK_TYPE,
-                            PROCESSOR.PIPELINE_UUID,
-                            PROCESSOR.ENABLED,
-                            PROCESSOR.DELETED)
-                    .values(processor.getCreateTimeMs(),
-                            processor.getCreateUser(),
-                            processor.getUpdateTimeMs(),
-                            processor.getUpdateUser(),
-                            processor.getUuid(),
-                            processor.getProcessorType().getDisplayValue(),
-                            processor.getPipelineUuid(),
-                            processor.isEnabled(),
-                            processor.isDeleted())
-                    .onDuplicateKeyIgnore()
-                    .returning(PROCESSOR.ID)
-                    .fetchOptional();
+        return JooqUtil.contextResult(
+                        processorDbConnProvider,
+                        context -> {
+                            final Optional<ProcessorRecord> optional = context
+                                    .insertInto(PROCESSOR,
+                                            PROCESSOR.CREATE_TIME_MS,
+                                            PROCESSOR.CREATE_USER,
+                                            PROCESSOR.UPDATE_TIME_MS,
+                                            PROCESSOR.UPDATE_USER,
+                                            PROCESSOR.UUID,
+                                            PROCESSOR.TASK_TYPE,
+                                            PROCESSOR.PIPELINE_UUID,
+                                            PROCESSOR.ENABLED,
+                                            PROCESSOR.DELETED)
+                                    .values(processor.getCreateTimeMs(),
+                                            processor.getCreateUser(),
+                                            processor.getUpdateTimeMs(),
+                                            processor.getUpdateUser(),
+                                            processor.getUuid(),
+                                            processor.getProcessorType().getDisplayValue(),
+                                            processor.getPipelineUuid(),
+                                            processor.isEnabled(),
+                                            processor.isDeleted())
+                                    .onDuplicateKeyIgnore()
+                                    .returning(PROCESSOR.ID)
+                                    .fetchOptional();
 
-            if (optional.isPresent()) {
-                final Integer id = optional.get().getId();
-                return context
-                        .select()
-                        .from(PROCESSOR)
-                        .where(PROCESSOR.ID.eq(id))
-                        .fetchOptional();
-            }
+                            if (optional.isPresent()) {
+                                final Integer id = optional.get().getId();
+                                return context
+                                        .select()
+                                        .from(PROCESSOR)
+                                        .where(PROCESSOR.ID.eq(id))
+                                        .fetchOptional();
+                            }
 
-            return context
-                    .select()
-                    .from(PROCESSOR)
-                    .where(PROCESSOR.PIPELINE_UUID.eq(processor.getPipelineUuid()))
-                    .and(PROCESSOR.TASK_TYPE.eq(processor.getProcessorType().getDisplayValue()))
-                    .fetchOptional();
-        })
-        .map(RECORD_TO_PROCESSOR_MAPPER)
-        .orElse(null);
+                            return context
+                                    .select()
+                                    .from(PROCESSOR)
+                                    .where(PROCESSOR.PIPELINE_UUID.eq(processor.getPipelineUuid()))
+                                    .and(PROCESSOR.TASK_TYPE.eq(processor.getProcessorType().getDisplayValue()))
+                                    .fetchOptional();
+                        })
+                .map(RECORD_TO_PROCESSOR_MAPPER)
+                .orElse(null);
     }
 
     @Override
@@ -182,8 +184,7 @@ class ProcessorDaoImpl implements ProcessorDao {
                         .execute());
                 totalCount.addAndGet(count);
             } catch (final DataAccessException e) {
-                if (e.getCause() != null && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
-                    final var sqlEx = (SQLIntegrityConstraintViolationException) e.getCause();
+                if (e.getCause() instanceof final SQLIntegrityConstraintViolationException sqlEx) {
                     LOGGER.debug("Expected constraint violation exception: " + sqlEx.getMessage(), e);
                 } else {
                     throw e;

@@ -181,10 +181,10 @@ class TestProcessorTaskQueueManager extends AbstractCoreIntegrationTest {
                 .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                 .expression(ExpressionOperator.builder()
                         .addOperator(ExpressionOperator.builder().op(Op.OR)
-                                .addDateTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName1)
-                                .addDateTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName2)
+                                .addTextTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName1)
+                                .addTextTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName2)
                                 .build())
-                        .addDateTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .addTextTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
                 .build();
 

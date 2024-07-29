@@ -76,7 +76,7 @@ public class ExpressionUtil {
 
     public static ExpressionOperator equalsText(final QueryField field, final String value) {
         return ExpressionOperator.builder()
-                .addDateTerm(field, Condition.EQUALS, value)
+                .addTextTerm(field, Condition.EQUALS, value)
                 .build();
     }
 

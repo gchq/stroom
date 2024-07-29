@@ -19,6 +19,7 @@ package stroom.analytics.impl;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.DuplicateCheckRows;
+import stroom.analytics.shared.DuplicateNotificationConfig;
 import stroom.analytics.shared.FindDuplicateCheckCriteria;
 import stroom.analytics.shared.NotificationConfig;
 import stroom.analytics.shared.NotificationDestinationType;
@@ -27,7 +28,6 @@ import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.docref.DocRef;
-import stroom.expression.api.ExpressionContext;
 import stroom.lmdb.LmdbLibrary;
 import stroom.lmdb.LmdbLibraryConfig;
 import stroom.lmdb2.LmdbEnvDirFactory;
@@ -35,6 +35,7 @@ import stroom.query.api.v2.Column;
 import stroom.query.api.v2.Row;
 import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.DuplicateCheckStoreConfig;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
@@ -155,6 +156,12 @@ class TestDuplicateCheckFactoryImpl {
 
     private DuplicateCheck createDuplicateCheck(final DuplicateCheckFactoryImpl duplicateCheckFactory,
                                                 final String ruleUUID) {
+        final DuplicateNotificationConfig duplicateNotificationConfig = new DuplicateNotificationConfig(
+                true,
+                true,
+                false,
+                Collections.emptyList());
+
         final AnalyticRuleDoc analyticRuleDoc = AnalyticRuleDoc.builder()
                 .uuid(ruleUUID)
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
@@ -162,8 +169,7 @@ class TestDuplicateCheckFactoryImpl {
                 .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
                 .notifications(createNotificationConfig())
                 .errorFeed(new DocRef("Feed", "error"))
-                .rememberNotifications(true)
-                .suppressDuplicateNotifications(true)
+                .duplicateNotificationConfig(duplicateNotificationConfig)
                 .build();
 
         final Column column = Column

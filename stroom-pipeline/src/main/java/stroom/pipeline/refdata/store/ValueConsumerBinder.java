@@ -17,7 +17,7 @@ public class ValueConsumerBinder {
         return new ValueConsumerBinder(binder);
     }
 
-    public <F extends RefDataValueConsumer.Factory> ValueConsumerBinder bind(final Integer id, final Class<F> handler) {
+    public <F extends RefDataValueConsumer.Factory> ValueConsumerBinder bind(final byte id, final Class<F> handler) {
         mapBinder.addBinding(new ValueConsumerId(id)).to(handler);
         return this;
     }

@@ -17,7 +17,7 @@
 package stroom.data.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.util.shared.ResultPage;
 
@@ -83,7 +83,7 @@ public abstract class RestDataProvider<R, T extends ResultPage<R>> extends Async
 
     protected abstract void exec(final Range range,
                                  final Consumer<T> dataConsumer,
-                                 final Consumer<RestError> errorConsumer);
+                                 final RestErrorHandler restErrorHandler);
 
     @Override
     public void fireEvent(final GwtEvent<?> event) {

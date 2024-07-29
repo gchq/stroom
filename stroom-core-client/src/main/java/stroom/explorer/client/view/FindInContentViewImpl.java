@@ -19,7 +19,9 @@ package stroom.explorer.client.view;
 import stroom.explorer.client.presenter.FindInContentPresenter.FindInContentView;
 import stroom.explorer.client.presenter.FindInContentUiHandlers;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.TaskListener;
 import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.spinner.client.SpinnerLarge;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -27,9 +29,10 @@ import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FocusUtil;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -42,7 +45,7 @@ public class FindInContentViewImpl
     private final Widget widget;
 
     @UiField
-    TextBox pattern;
+    TextArea pattern;
     @UiField
     SimplePanel resultContainer;
     @UiField
@@ -50,7 +53,9 @@ public class FindInContentViewImpl
     @UiField
     InlineSvgToggleButton toggleRegex;
     @UiField
-    SimplePanel textContainer;
+    FlowPanel textContainer;
+    @UiField
+    SpinnerLarge spinner;
 
     @Inject
     public FindInContentViewImpl(final Binder binder) {
@@ -82,7 +87,7 @@ public class FindInContentViewImpl
 
     @Override
     public void setTextView(final View view) {
-        textContainer.setWidget(view.asWidget());
+        textContainer.add(view.asWidget());
     }
 
     @Override
@@ -113,6 +118,10 @@ public class FindInContentViewImpl
         getUiHandlers().changePattern(pattern.getText(), toggleMatchCase.getState(), toggleRegex.getState());
     }
 
+    @Override
+    public TaskListener getTaskListener() {
+        return spinner;
+    }
 
     // --------------------------------------------------------------------------------
 

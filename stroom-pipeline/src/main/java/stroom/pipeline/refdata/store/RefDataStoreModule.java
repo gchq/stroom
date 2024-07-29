@@ -101,6 +101,10 @@ public class RefDataStoreModule extends AbstractModule {
                         .cronSchedule(CronExpressions.EVERY_DAY_AT_2AM.getExpression()));
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class RefDataPurge extends RunnableWrapper {
 
         private static final Logger LOGGER = LoggerFactory.getLogger(RefDataPurge.class);
@@ -111,6 +115,7 @@ public class RefDataStoreModule extends AbstractModule {
 
             super(() -> {
                 try {
+                    LOGGER.info("Running job '{}'", JOB_NAME);
                     refDataStoreFactory.purgeOldData();
                 } catch (TaskTerminatedException e) {
                     LOGGER.debug("Reference Data Purge terminated", e);

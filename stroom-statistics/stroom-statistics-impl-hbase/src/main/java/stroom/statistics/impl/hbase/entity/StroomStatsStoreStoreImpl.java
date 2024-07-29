@@ -17,11 +17,8 @@
 
 package stroom.statistics.impl.hbase.entity;
 
-import stroom.docref.DocContentHighlights;
-import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docref.StringMatch;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
@@ -199,14 +196,7 @@ class StroomStatsStoreStoreImpl implements StroomStatsStoreStore {
     }
 
     @Override
-    public List<DocContentMatch> findByContent(final StringMatch filter) {
-        return store.findByContent(filter);
-    }
-
-    @Override
-    public DocContentHighlights fetchHighlights(final DocRef docRef,
-                                                final String extension,
-                                                final StringMatch filter) {
-        return store.fetchHighlights(docRef, extension, filter);
+    public Map<String, String> getIndexableData(final DocRef docRef) {
+        return store.getIndexableData(docRef);
     }
 }

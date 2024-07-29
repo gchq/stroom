@@ -19,7 +19,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-public class ScheduledProcessingPresenter extends MyPresenterWidget<ScheduledProcessingView> {
+public class ScheduledProcessingPresenter
+        extends MyPresenterWidget<ScheduledProcessingView> {
 
     private static final ExecutionScheduleResource EXECUTION_SCHEDULE_RESOURCE =
             GWT.create(ExecutionScheduleResource.class);
@@ -110,6 +111,7 @@ public class ScheduledProcessingPresenter extends MyPresenterWidget<ScheduledPro
                     null);
 
         } else {
+            scheduledProcessEditPresenter.setTaskListener(this);
             scheduledProcessEditPresenter.show(newSchedule, executionSchedule -> {
                 if (executionSchedule != null) {
                     restFactory
@@ -119,6 +121,7 @@ public class ScheduledProcessingPresenter extends MyPresenterWidget<ScheduledPro
                                 scheduledProcessListPresenter.refresh();
                                 scheduledProcessListPresenter.setSelected(created);
                             })
+                            .taskListener(this)
                             .exec();
                 }
             });
@@ -128,6 +131,7 @@ public class ScheduledProcessingPresenter extends MyPresenterWidget<ScheduledPro
     public void edit() {
         final ExecutionSchedule selected = scheduledProcessListPresenter.getSelected();
         if (selected != null) {
+            scheduledProcessEditPresenter.setTaskListener(this);
             scheduledProcessEditPresenter.show(selected, executionSchedule -> {
                 if (executionSchedule != null) {
                     restFactory
@@ -137,6 +141,7 @@ public class ScheduledProcessingPresenter extends MyPresenterWidget<ScheduledPro
                                 scheduledProcessListPresenter.refresh();
                                 scheduledProcessListPresenter.setSelected(updated);
                             })
+                            .taskListener(this)
                             .exec();
                 }
             });
@@ -150,6 +155,7 @@ public class ScheduledProcessingPresenter extends MyPresenterWidget<ScheduledPro
                     .create(EXECUTION_SCHEDULE_RESOURCE)
                     .method(res -> res.deleteExecutionSchedule(selected))
                     .onSuccess(success -> scheduledProcessListPresenter.refresh())
+                    .taskListener(this)
                     .exec();
         }
     }

@@ -149,7 +149,7 @@
 .inline-svg-button.icon-button.on svg {
     --icon-colour__black: var(--icon-colour__black__on);
     --icon-colour__white: var(--icon-colour__white__on);
-    color: var(--app__background-color);
+    color: var(--page__background-color);
 }
 
 .stroom-button-fab .face--disabled {

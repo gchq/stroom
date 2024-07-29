@@ -52,6 +52,10 @@ public class ClusterState {
         return enabledActiveNodes.containsKey(nodeName);
     }
 
+    public boolean isEnabled(final String nodeName) {
+        return enabledNodes.containsKey(nodeName);
+    }
+
     public Set<String> getEnabledNodes() {
         return enabledNodes.keySet();
     }

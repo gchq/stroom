@@ -46,7 +46,7 @@ public class OffHeapRefDataValueProxyConsumer
         return refDataValueProxy.consumeBytes(typedByteBuffer -> {
 
             // find out what type of value we are dealing with
-            final int typeId = typedByteBuffer.getTypeId();
+            final byte typeId = typedByteBuffer.getTypeId();
 
             // work out which byteBufferConsumer to use based on the typeId in the value byteBuffer
             final RefDataValueByteBufferConsumer.Factory consumerFactory = typeToByteBufferConsumerFactoryMap.get(

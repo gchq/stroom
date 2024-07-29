@@ -68,8 +68,6 @@ dependencies {
     implementation project(':stroom-gwt')
     implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-api')
-    implementation project(':stroom-security:stroom-security-client')
-    implementation project(':stroom-security:stroom-security-client-api')
 
     // These source deps are all needed for the GWT transpiling to javascript
     implementation libs.gin
@@ -104,8 +102,6 @@ def clientProjects = [
     project(':stroom-docref'),
     project(':stroom-query:stroom-query-api'),
     project(':stroom-query:stroom-query-language-api'),
-    project(':stroom-security:stroom-security-client'),
-    project(':stroom-security:stroom-security-client-api'),
     project(':stroom-util-shared'),
 ]
 
@@ -141,7 +137,7 @@ tasks.register('copySources') {
         // Transform code.
         println 'Running eclipse TransformerCLI'
         println('  input: ' + inputProjectPath)
-        println('  outpu: ' + transformedSourceDir)
+        println('  output: ' + transformedSourceDir)
         delete transformedSourceDir
 
         javaexec {

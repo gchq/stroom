@@ -22,21 +22,23 @@ import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.index.shared.IndexVolumeFields;
 import stroom.index.shared.IndexVolumeResource;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.task.client.TaskListener;
+import stroom.util.client.DataGridUtil;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -45,6 +47,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import java.util.OptionalDouble;
 import java.util.OptionalLong;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
 
@@ -80,115 +83,154 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
      */
     private void initTableColumns() {
         // Node.
-        final Column<IndexVolume, String> nodeColumn = new Column<IndexVolume, String>(new TextCell()) {
-            @Override
-            public String getValue(final IndexVolume volume) {
-                return volume.getNodeName();
-            }
-        };
-        dataGrid.addResizableColumn(nodeColumn, IndexVolumeFields.FIELD_NODE_NAME, 90);
+        dataGrid.addResizableColumn(DataGridUtil.textWithTooltipColumnBuilder(IndexVolume::getNodeName)
+                        .enabledWhen(this::isEnabled)
+                        .build(),
+                DataGridUtil.headingBuilder(IndexVolumeFields.FIELD_NODE_NAME)
+                        .withToolTip("The node that this index volume is owned by.")
+                        .build(),
+                90);
 
         // Path.
-        final Column<IndexVolume, String> volumeColumn = new Column<IndexVolume, String>(new TextCell()) {
-            @Override
-            public String getValue(final IndexVolume volume) {
-                return volume.getPath();
-            }
-        };
-        dataGrid.addResizableColumn(volumeColumn, IndexVolumeFields.FIELD_PATH, 300);
+        dataGrid.addAutoResizableColumn(
+                DataGridUtil.textWithTooltipColumnBuilder(IndexVolume::getPath, Function.identity())
+                        .enabledWhen(this::isEnabled)
+                        .build(),
+                DataGridUtil.headingBuilder(IndexVolumeFields.FIELD_PATH)
+                        .withToolTip("The file system path to the volume.")
+                        .build(), 200);
 
         // State.
-        final Column<IndexVolume, String> streamStatusColumn = new Column<IndexVolume, String>(new TextCell()) {
-            @Override
-            public String getValue(final IndexVolume volume) {
-                return volume.getState().getDisplayValue();
-            }
-        };
-        dataGrid.addResizableColumn(streamStatusColumn, "State", 90);
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder(IndexVolume::getState, VolumeUseState::getDisplayValue)
+                        .enabledWhen(this::isEnabled)
+                        .build(),
+                DataGridUtil.headingBuilder("Status")
+                        .withToolTip("The status of the volume. One of Active, Inactive or Closed.")
+                        .build(),
+                90);
 
         // Total.
-        final Column<IndexVolume, String> totalColumn = new Column<IndexVolume, String>(new TextCell()) {
-            @Override
-            public String getValue(final IndexVolume volume) {
-                return getSizeString(volume.getCapacityInfo().getTotalCapacityBytes());
-            }
-        };
-        dataGrid.addResizableColumn(totalColumn, "Total", ColumnSizeConstants.SMALL_COL);
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder(
+                                (IndexVolume vol) ->
+                                        vol.getCapacityInfo().getTotalCapacityBytes(), this::getSizeString)
+                        .enabledWhen(this::isEnabled)
+                        .rightAligned()
+                        .build(),
+                DataGridUtil.headingBuilder("Total")
+                        .rightAligned()
+                        .withToolTip("The total size of the volume.")
+                        .build(),
+                ColumnSizeConstants.BYTE_SIZE_COL);
 
         // Limit.
-        final Column<IndexVolume, String> limitColumn = new Column<IndexVolume, String>(new TextCell()) {
-            @Override
-            public String getValue(final IndexVolume volume) {
-                if (volume.getBytesLimit() == null) {
-                    return "";
-                }
-                // Special case for limit as it is user input data so need more precision
-                return ModelStringUtil.formatIECByteSizeString(volume.getBytesLimit(),
-                        true,
-                        ModelStringUtil.DEFAULT_SIGNIFICANT_FIGURES);
-            }
-        };
-        dataGrid.addResizableColumn(limitColumn, "Limit", ColumnSizeConstants.SMALL_COL);
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder(this::getLimitAsStr)
+                        .enabledWhen(this::isEnabled)
+                        .rightAligned()
+                        .build(),
+                DataGridUtil.headingBuilder("Limit")
+                        .rightAligned()
+                        .withToolTip("The optional limit set on the volume. The volume will be considered full " +
+                                "when the limit is reached.")
+                        .build(),
+                ColumnSizeConstants.BYTE_SIZE_COL);
 
         // Used.
-        final Column<IndexVolume, String> usedColumn = new Column<IndexVolume, String>(new TextCell()) {
-            @Override
-            public String getValue(final IndexVolume volume) {
-                return getSizeString(volume.getCapacityInfo().getCapacityUsedBytes());
-            }
-        };
-        dataGrid.addResizableColumn(usedColumn, "Used", ColumnSizeConstants.SMALL_COL);
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder(
+                                (IndexVolume vol) ->
+                                        vol.getCapacityInfo().getCapacityUsedBytes(), this::getSizeString)
+                        .enabledWhen(this::isEnabled)
+                        .rightAligned()
+                        .build(),
+                DataGridUtil.headingBuilder("Used")
+                        .rightAligned()
+                        .withToolTip("The amount of the volume that is in use.")
+                        .build(),
+                ColumnSizeConstants.BYTE_SIZE_COL);
 
         // Free.
-        final Column<IndexVolume, String> freeColumn = new Column<IndexVolume, String>(new TextCell()) {
-            @Override
-            public String getValue(final IndexVolume volume) {
-                return getSizeString(volume.getCapacityInfo().getFreeCapacityBytes());
-            }
-        };
-        dataGrid.addResizableColumn(freeColumn, "Free", ColumnSizeConstants.SMALL_COL);
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder(
+                                (IndexVolume vol) ->
+                                        vol.getCapacityInfo().getFreeCapacityBytes(), this::getSizeString)
+                        .enabledWhen(this::isEnabled)
+                        .rightAligned()
+                        .build(),
+                DataGridUtil.headingBuilder("Free")
+                        .rightAligned()
+                        .withToolTip("The amount of the volume that is free. If a limit is set then only free " +
+                                "space up to the limit is considered.")
+                        .build(),
+                ColumnSizeConstants.BYTE_SIZE_COL);
 
         // Use%.
-        final Column<IndexVolume, String> usePercentColumn = new Column<IndexVolume, String>(new TextCell()) {
-            @Override
-            public String getValue(final IndexVolume volume) {
-                final OptionalDouble optUsedCapacityPercent = volume.getCapacityInfo().getUsedCapacityPercent();
-                return optUsedCapacityPercent.isPresent()
-                        ? ((long) optUsedCapacityPercent.getAsDouble()) + "%"
-                        : "?";
-            }
-        };
-        dataGrid.addResizableColumn(usePercentColumn, "Use%", ColumnSizeConstants.SMALL_COL);
+        dataGrid.addResizableColumn(
+                DataGridUtil.percentBarColumnBuilder(
+                                this::getUsePercentage,
+                                DataGridUtil.DEFAULT_PCT_WARNING_THRESHOLD,
+                                DataGridUtil.DEFAULT_PCT_DANGER_THRESHOLD)
+                        .enabledWhen(this::isEnabled)
+                        .build(),
+                DataGridUtil.headingBuilder("Use%")
+                        .withToolTip("The percentage of the volume that is in use. If a limit is set then the " +
+                                "percentage is relative to the limit.")
+                        .build(),
+                ColumnSizeConstants.SMALL_COL);
 
         // Is Full
-        final Column<IndexVolume, String> isFullColumn = new Column<IndexVolume, String>(new TextCell()) {
-            @Override
-            public String getValue(final IndexVolume volume) {
-                return volume.getCapacityInfo().isFull()
-                        ? "Yes"
-                        : "No";
-            }
-        };
-        dataGrid.addResizableColumn(isFullColumn, "Full", ColumnSizeConstants.SMALL_COL);
+        dataGrid.addResizableColumn(DataGridUtil.redGreenTextColumnBuilder(
+                                (IndexVolume vol) -> !vol.getCapacityInfo().isFull(),
+                                "No",
+                                "Yes")
+                        .enabledWhen(this::isEnabled)
+                        .centerAligned()
+                        .build(),
+                DataGridUtil.headingBuilder("Full")
+                        .withToolTip("Whether this volume is full or not.")
+                        .centerAligned()
+                        .build(),
+                50);
 
         // Usage Date.
-        final Column<IndexVolume, String> usageDateColumn = new Column<IndexVolume, String>(new TextCell()) {
-            @Override
-            public String getValue(final IndexVolume volume) {
-                return dateTimeFormatter.format(volume.getUpdateTimeMs());
-            }
-        };
-        dataGrid.addResizableColumn(usageDateColumn, "Usage Date", ColumnSizeConstants.DATE_COL);
+        dataGrid.addResizableColumn(
+                DataGridUtil.textWithTooltipColumnBuilder((IndexVolume vol) ->
+                                        dateTimeFormatter.formatWithDuration(vol.getUpdateTimeMs()),
+                                Function.identity())
+                        .enabledWhen(this::isEnabled)
+                        .build(),
+                DataGridUtil.headingBuilder("Usage Date")
+                        .centerAligned()
+                        .withToolTip("The date/time this volume was last written to.")
+                        .build(),
+                ColumnSizeConstants.DATE_AND_DURATION_COL);
+
         dataGrid.addEndColumn(new EndColumn<>());
     }
 
-    private String getLimitSizeString(final OptionalLong optSizeBytes) {
-        return optSizeBytes != null && optSizeBytes.isPresent()
-                ? ModelStringUtil.formatIECByteSizeString(
-                optSizeBytes.getAsLong(),
+    private Number getUsePercentage(final IndexVolume volume) {
+        final OptionalDouble optUsedPercent = volume.getCapacityInfo()
+                .getUsedCapacityPercent();
+        return optUsedPercent.isPresent()
+                ? optUsedPercent.getAsDouble()
+                : null;
+    }
+
+    private boolean isEnabled(final IndexVolume volume) {
+        final VolumeUseState volumeUseState = GwtNullSafe.get(volume, IndexVolume::getState);
+        return VolumeUseState.ACTIVE == volumeUseState;
+    }
+
+    public String getLimitAsStr(final IndexVolume volume) {
+        if (volume.getBytesLimit() == null) {
+            return "";
+        }
+        // Special case for limit as it is user input data so need more precision
+        return ModelStringUtil.formatIECByteSizeString(volume.getBytesLimit(),
                 true,
-                ModelStringUtil.DEFAULT_SIGNIFICANT_FIGURES)
-                : "?";
+                ModelStringUtil.DEFAULT_SIGNIFICANT_FIGURES);
     }
 
     private String getSizeString(final OptionalLong optSizeBytes) {
@@ -212,7 +254,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<IndexVolume>> dataConsumer,
-                                final Consumer<RestError> errorConsumer) {
+                                final RestErrorHandler errorHandler) {
                 CriteriaUtil.setRange(criteria, range);
                 restFactory
                         .create(INDEX_VOLUME_RESOURCE)
@@ -223,10 +265,15 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
                                 consumer.accept(result);
                             }
                         })
-                        .onFailure(errorConsumer)
+                        .onFailure(errorHandler)
+                        .taskListener(getView())
                         .exec();
             }
         };
         dataProvider.addDataDisplay(dataGrid);
+    }
+
+    public TaskListener getTaskListener() {
+        return getView();
     }
 }

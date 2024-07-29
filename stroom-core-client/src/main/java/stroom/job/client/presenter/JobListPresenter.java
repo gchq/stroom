@@ -17,30 +17,24 @@
 package stroom.job.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.cell.info.client.InfoHelpLinkColumn;
-import stroom.cell.tickbox.client.TickBoxCell;
-import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
+import stroom.job.client.event.JobChangeEvent;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobResource;
-import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.util.client.DataGridUtil;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
-import stroom.widget.util.client.TableUtil;
 
-import com.google.gwt.cell.client.SafeHtmlCell;
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
@@ -51,136 +45,182 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+/**
+ * Top pane of JobPresenter (Jobs tab). Lists jobs (i.e. the parent job)
+ */
 public class JobListPresenter extends MyPresenterWidget<PagerView> {
 
     private static final JobResource JOB_RESOURCE = GWT.create(JobResource.class);
 
     private final MultiSelectionModelImpl<Job> selectionModel;
+    private Consumer<Job> changeHandler = null;
 
     @Inject
     public JobListPresenter(final EventBus eventBus,
                             final PagerView view,
                             final RestFactory restFactory,
-                            final UiConfigCache clientPropertyCache) {
+                            final UiConfigCache uiConfigCache) {
         super(eventBus, view);
 
         final MyDataGrid<Job> dataGrid = new MyDataGrid<>();
         dataGrid.setMultiLine(true);
-        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 
-        // Enabled.
-        final Column<Job, TickBoxState> enabledColumn = new Column<Job, TickBoxState>(
-                TickBoxCell.create(false, false)) {
+        final RestDataProvider<Job, ResultPage<Job>> dataProvider = createDataProvider(
+                eventBus,
+                view,
+                restFactory);
+
+        initColumns(restFactory, uiConfigCache, dataGrid);
+
+        dataProvider.addDataDisplay(dataGrid);
+    }
+
+    private static RestDataProvider<Job, ResultPage<Job>> createDataProvider(final EventBus eventBus,
+                                                                             final PagerView view,
+                                                                             final RestFactory restFactory) {
+        return new RestDataProvider<Job, ResultPage<Job>>(eventBus) {
+            @Override
+            protected void exec(final Range range,
+                                final Consumer<ResultPage<Job>> dataConsumer,
+                                final RestErrorHandler restErrorHandler) {
+                restFactory
+                        .create(JOB_RESOURCE)
+                        .method(JobResource::list)
+                        .onSuccess(dataConsumer)
+                        .onFailure(restErrorHandler)
+                        .taskListener(view)
+                        .exec();
+            }
 
             @Override
-            public TickBoxState getValue(final Job row) {
-                if (row != null) {
-                    return TickBoxState.fromBoolean(row.isEnabled());
+            protected void changeData(final ResultPage<Job> data) {
+                final List<Job> rtnList = new ArrayList<>();
+                boolean addedGap = false;
+                for (int i = 0; i < data.size(); i++) {
+                    rtnList.add(data.getValues().get(i));
+                    if (data.getValues().get(i).isAdvanced() && !addedGap) {
+                        // Add a gap between the non-advanced and advanced jobs
+                        rtnList.add(i, null);
+                        addedGap = true;
+                    }
                 }
-                return null;
+
+                final ResultPage<Job> modifiedData = new ResultPage<>(rtnList);
+                super.changeData(modifiedData);
             }
         };
-        enabledColumn.setFieldUpdater((index, row, value) -> {
-            row.setEnabled(value.toBoolean());
-            restFactory
-                    .create(JOB_RESOURCE)
-                    .call(res -> res.setEnabled(row.getId(), value.toBoolean()))
-                    .exec();
-        });
-        dataGrid.addColumn(enabledColumn, "Enabled", 80);
+    }
 
-        // Job name.
-        dataGrid.addResizableColumn(new Column<Job, String>(new TextCell()) {
-            @Override
-            public String getValue(final Job row) {
-                return TableUtil.getString(row, Job::getName);
-            }
-        }, "Job", 200);
+    private void initColumns(final RestFactory restFactory,
+                             final UiConfigCache uiConfigCache,
+                             final MyDataGrid<Job> dataGrid) {
+        // Enabled.
+        dataGrid.addResizableColumn(
+                DataGridUtil.updatableTickBoxColumnBuilder(Job::isEnabled)
+                        .withFieldUpdater(
+                                (rowIndex, job, tickBoxState) -> {
+                                    job.setEnabled(tickBoxState.toBoolean());
+                                    restFactory
+                                            .create(JOB_RESOURCE)
+                                            .call(res -> {
+                                                res.setEnabled(job.getId(), tickBoxState.toBoolean());
+                                            })
+                                            .onSuccess(aVoid -> {
+                                                dataGrid.redrawRow(rowIndex);
+                                                JobChangeEvent.fire(JobListPresenter.this, job);
+//                                                if (changeHandler != null) {
+//                                                    changeHandler.accept(job);
+//                                                }
+                                            })
+                                            .taskListener(getView())
+                                            .exec();
+                                }
+                        )
+                        .build(),
+                DataGridUtil.headingBuilder("Enabled")
+                        .withToolTip("Whether this job is enabled. " +
+                                "The parent job and the node must both be enabled for the job to execute.")
+                        .build(),
+                60);
+
+        // Job name, allow for null rows
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder((Job job) -> GwtNullSafe.get(job, Job::getName))
+                        .enabledWhen(job -> GwtNullSafe.isTrue(job, Job::isEnabled))
+                        .build(),
+                DataGridUtil.headingBuilder("Job")
+                        .withToolTip("The name of the job")
+                        .build(),
+                350);
 
         // Help
-        dataGrid.addColumn(new InfoHelpLinkColumn<Job>() {
-            @Override
-            public Preset getValue(final Job row) {
-                if (row != null) {
-                    return SvgPresets.HELP;
-                }
-                return null;
-            }
-
-            @Override
-            protected void showHelp(final Job row) {
-
-                clientPropertyCache.get()
-                        .onSuccess(result -> {
-                            final String helpUrl = result.getHelpUrlJobs();
-                            if (helpUrl != null && helpUrl.trim().length() > 0) {
-                                // This is a bit fragile as if the headings change in the docs then the anchors
-                                // wont work
-                                final String url = helpUrl + formatAnchor(row.getName());
-                                Window.open(url, "_blank", "");
-                            } else {
-                                AlertEvent.fireError(
-                                        JobListPresenter.this,
-                                        "Help is not configured!",
-                                        null);
-                            }
+        dataGrid.addColumn(
+                DataGridUtil.svgPresetColumnBuilder(true, (Job job) -> SvgPresets.HELP)
+                        .enabledWhen(job -> GwtNullSafe.isTrue(job, Job::isEnabled))
+                        .withBrowserEventHandler((context, elem, row, event) -> {
+                            showHelp(uiConfigCache, row);
                         })
-                        .onFailure(caught ->
-                                AlertEvent.fireError(
-                                        JobListPresenter.this,
-                                        caught.getMessage(),
-                                        null));
-            }
+                        .build(),
+                "<br/>", ColumnSizeConstants.ICON_COL);
 
-        }, "<br/>", 20);
+        // Description col, allow for null rows
+        dataGrid.addAutoResizableColumn(
+                DataGridUtil.textColumnBuilder((Job job) -> GwtNullSafe.get(job, Job::getDescription))
+                        .enabledWhen(job -> GwtNullSafe.isTrue(job, Job::isEnabled))
+                        .build(),
+                DataGridUtil.headingBuilder("Description")
+                        .withToolTip("The description of the job")
+                        .build(),
+                300);
 
-        dataGrid.addAutoResizableColumn(new Column<Job, SafeHtml>(new SafeHtmlCell()) {
-            @Override
-            public SafeHtml getValue(final Job row) {
-                return TableUtil.getSafeHtml(row, Job::getDescription);
-            }
-        }, "Description", 200);
-
-        dataGrid.addEndColumn(new EndColumn<>());
-
-        final RestDataProvider<Job, ResultPage<Job>> dataProvider =
-                new RestDataProvider<Job, ResultPage<Job>>(eventBus) {
-
-                    @Override
-                    protected void exec(final Range range,
-                                        final Consumer<ResultPage<Job>> dataConsumer,
-                                        final Consumer<RestError> errorConsumer) {
-                        restFactory
-                                .create(JOB_RESOURCE)
-                                .method(JobResource::list)
-                                .onSuccess(dataConsumer)
-                                .onFailure(errorConsumer)
-                                .exec();
-                    }
-
-                    @Override
-                    protected void changeData(final ResultPage<Job> data) {
-                        final List<Job> rtnList = new ArrayList<>();
-
-                        boolean addedGap = false;
-                        for (int i = 0; i < data.size(); i++) {
-                            rtnList.add(data.getValues().get(i));
-                            if (data.getValues().get(i).isAdvanced() && !addedGap) {
-                                // Add a gap between the non-advanced and advanced jobs
-                                rtnList.add(i, null);
-                                addedGap = true;
-                            }
-                        }
-
-                        final ResultPage<Job> modifiedData = new ResultPage<>(rtnList);
-                        super.changeData(modifiedData);
-                    }
-                };
-        dataProvider.addDataDisplay(dataGrid);
+        DataGridUtil.addEndColumn(dataGrid);
     }
 
     public MultiSelectionModel<Job> getSelectionModel() {
         return selectionModel;
     }
+
+    public void setChangeHandler(Consumer<Job> changeHandler) {
+        this.changeHandler = changeHandler;
+    }
+
+
+    /**
+     * @param name The name of the job
+     * @return The name formatted as a markdown anchor, i.e. "My Job" => "#my-job"
+     */
+    private String formatAnchor(String name) {
+        return "#" + name.replace(" ", "-")
+                .toLowerCase();
+    }
+
+    private void showHelp(final UiConfigCache uiConfigCache, final Job row) {
+        uiConfigCache.get(result -> {
+            if (result != null) {
+                final String helpUrl = result.getHelpUrlJobs();
+                if (!GwtNullSafe.isBlankString(helpUrl)) {
+                    // This is a bit fragile as if the headings change in the docs then the anchors
+                    // wont work
+                    final String url = helpUrl + formatAnchor(row.getName());
+                    Window.open(url, "_blank", "");
+                } else {
+                    AlertEvent.fireError(
+                            JobListPresenter.this,
+                            "Help is not configured!",
+                            null);
+                }
+            }
+        }, getView());
+    }
+
+    public void setSelected(final Job job) {
+        if (job != null) {
+            selectionModel.setSelected(job);
+        } else {
+            selectionModel.clear();
+        }
+    }
+
 }

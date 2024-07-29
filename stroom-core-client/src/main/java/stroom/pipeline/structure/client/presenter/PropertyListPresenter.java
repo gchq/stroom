@@ -355,7 +355,6 @@ public class PropertyListPresenter
                         refresh();
                     }
                 }
-
                 e.hide();
             };
 
@@ -434,6 +433,7 @@ public class PropertyListPresenter
 
                         setData(propertyList);
                     })
+                    .taskListener(getView())
                     .exec();
         } else {
             setData(propertyList);

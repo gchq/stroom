@@ -151,15 +151,6 @@ td {
 	line-height: initial;
 }
 
-.stroom-background {
-	width: 100%;
-	height: 100%;
-	background-attachment: scroll !important;
-	background-position: 0 0 !important;
-	background-repeat: repeat !important;
-	opacity: 1 !important;
-}
-
 .app-panel {
 	position: absolute;
 	top: 0px;
@@ -180,6 +171,7 @@ td {
     display: flex;
     justify-content: center;
     align-items: center;
+    line-height: normal;
 }
 
 #loadingBox {
@@ -223,7 +215,6 @@ td {
     width:100%;
     height:100%;
     color: #fff;
-    background-color: var(--blue-500);
 }
 
 #logo svg {
@@ -918,8 +909,11 @@ input:focus-visible {
   border: thin solid var(--focus-border) !important;
   box-shadow: var(--focus-shadow);
 }
+select.invalid:focus-visible,
+input.invalid:focus-visible {
+  box-shadow: var(--focus-shadow--invalid);
+}
 select.invalid,
 input.invalid {
   border: thin solid var(--focus-border--invalid) !important;
-  box-shadow: var(--focus-shadow--invalid);
 }

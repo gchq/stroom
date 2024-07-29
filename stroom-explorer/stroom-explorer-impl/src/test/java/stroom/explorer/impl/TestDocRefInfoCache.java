@@ -1,11 +1,8 @@
 package stroom.explorer.impl;
 
 import stroom.cache.impl.CacheManagerImpl;
-import stroom.docref.DocContentHighlights;
-import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docref.StringMatch;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.api.DocumentActionHandlers;
 import stroom.docstore.api.DocumentType;
@@ -224,18 +221,6 @@ class TestDocRefInfoCache {
 
 
     private static class MyFolderExplorerActionHandler implements ExplorerActionHandler {
-
-        @Override
-        public List<DocContentMatch> findByContent(final StringMatch filter) {
-            return null;
-        }
-
-        @Override
-        public DocContentHighlights fetchHighlights(final DocRef docRef,
-                                                    final String extension,
-                                                    final StringMatch filter) {
-            return null;
-        }
 
         @Override
         public Set<DocRef> listDocuments() {

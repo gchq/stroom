@@ -193,7 +193,7 @@ public class TestTaskAssignmentPerformance extends StroomIntegrationTest {
                 PageRequest.oneRow(),
                 Collections.emptyList(),
                 new StringCriteria(JobNames.DATA_PROCESSOR),
-                null));
+                null, null));
         final JobNode jobNode = response.getFirst();
         jobNode.setEnabled(true);
         jobNodeDao.update(jobNode);
@@ -225,7 +225,7 @@ public class TestTaskAssignmentPerformance extends StroomIntegrationTest {
         final QueryData findStreamQueryData = QueryData.builder()
                 .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                 .expression(ExpressionOperator.builder()
-                        .addDateTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .addTextTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
                 .build();
 

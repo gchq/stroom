@@ -150,9 +150,30 @@
 }
 
 /* Close button */
+.curveTab .curveTab-close-wrapper {
+    position: relative;
+    width: 22px;
+    height: 22px;
+}
+
+.curveTab .curveTab-spinner {
+    position: absolute;
+}
+
+.curveTab .curveTab-spinner svg {
+    color: var(--curve-tab__svg-color);
+	opacity: 0.8;
+}
+
 .curveTab .curveTab-close {
-    display: flex;
+    position: absolute;
     opacity: 0;
+    top: 2px;
+    left: -1px;
+}
+
+.curveTab:hover .curveTab-spinner {
+	opacity: 0;
 }
 
 .curveTab:hover .curveTab-close {
@@ -394,7 +415,8 @@
 }
 
 .docRefLinkCopy,
-.docRefLinkOpen {
+.docRefLinkOpen,
+.commandLinkOpen {
     cursor: pointer;
 }
 
@@ -616,6 +638,11 @@
     align-content: center;
     align-items: center;
     justify-content: flex-end;
+}
+
+.pager-heading {
+
+
 }
 
 .pager-label {
@@ -1093,7 +1120,7 @@
     text-align: center;
 }
 
-.mainViewImpl-max {
+.mainViewImpl {
     position: absolute;
     left: 0px;
     right: 0px;
@@ -1102,6 +1129,7 @@
     overflow: hidden;
 	display: flex;
 	flex-direction: column;
+	background-color: var(--page__background-color);
 }
 
 .mainViewImpl-banner {
@@ -1470,11 +1498,9 @@
 .navigation-title-bar {
     display: flex;
     justify-content: space-between;
-    background-color: var(--navigation__title__background-color);
 }
 
 .navigation .explorerTreeViewImpl-nameFilterPanel {
-    background-color: var(--navigation__title__background-color);
 }
 
 .navigation-logo {
@@ -1485,7 +1511,6 @@
     border: 0;
     text-align: left;
     width: auto;
-    height: 43px;
 }
 
 .navigation-logo-image svg {
@@ -1579,14 +1604,20 @@ button.main-menu svg {
     background-color: var(--row__background-color--hovered);
 }
 
-.navigation-header-buttons {
+.navigation-toolbar {
     flex-grow: 0;
     flex-shrink: 0;
     display: flex;
     align-items: center;
     margin: 0.25rem;
     margin-top: 0;
-    justify-content: flex-end;
+}
+
+.navigation-header-buttons {
+    flex-grow: 1;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
 }
 
 .form-control-border {
@@ -1659,6 +1690,11 @@ button.main-menu svg {
     margin-top: 0.3em;
 }
 
+.dashboard-panel > .form-group label.form-group-label:not(:empty) {
+    margin-top: 0.3em;
+    margin-left: 0.2em;
+}
+
 /* The invalid-feedback divs add a 0.25em margin-top even when empty so removing it pending
    us doing something with client side validation */
 .form-group .invalid-feedback {
@@ -1675,6 +1711,10 @@ button.main-menu svg {
     gap: var(--control__gap--horizontal);
     align-items: center;
     margin-bottom: 0.25rem;
+}
+
+.form-group-label-container:has(> label.form-group-label:empty) {
+    margin-bottom: 0em;
 }
 
 .form-group-description-container {
@@ -1861,13 +1901,41 @@ button.main-menu svg {
 }
 
 .nodePingBar-outer {
-    padding-left: .25em;
     padding-right: .25em;
+    display: flex;
+    flex-direction: row;
+    column-gap: 0.25em;
+}
+
+.nodePingBar-bar-wrapper {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
 }
 
 .nodePingBar-bar {
-     color: white;
-     height: 100%;
+    color: white;
+    height: 70%;
+    /*padding-left: .25em;*/
+}
+
+.nodePingBar-text {
+    padding-left: .25em;
+    width: 3em;
+    flex-grow: 0;
+    text-align: right;
+}
+
+.nodePingBar-error-text {
+    padding-left: .25em;
+    width: 100%;
+    font-weight: 500;
+    color: var(--danger);
+}
+
+.dataGridDisabledCell .nodePingBar-error-text {
+    font-weight: 400;
+    color: var(--text-color--disabled);
 }
 
 .nodePingBar-bar.nodePingBar-severity__healthy {
@@ -1891,8 +1959,23 @@ button.main-menu svg {
      color: var(--black);
 }
 
-.nodePingBar-text {
-    padding-left: .25em;
+.dataGridDisabledCell .nodePingBar-bar.nodePingBar-severity__healthy,
+.dataGridDisabledCell .nodePingBar-bar.nodePingBar-severity__warn,
+.dataGridDisabledCell .nodePingBar-bar.nodePingBar-severity__max {
+     background-color: var(--text-color--disabled);
+}
+
+.dataGridDisabledCell .nodePingBar-bar.nodePingBar-severity__healthy .nodePingBar-text {
+    color: var(--text-color--disabled) ;
+}
+
+.dataGridDisabledCell .nodePingBar-bar.nodePingBar-severity__warn .nodePingBar-text,
+.dataGridDisabledCell .nodePingBar-bar.nodePingBar-severity__max .nodePingBar-text {
+     color: var(--black);
+}
+
+.dataGridDisabledCell span.nodePingBar-text {
+    color: var(--text-color--disabled) ;
 }
 
 .listContainer {
@@ -1912,6 +1995,10 @@ button.main-menu svg {
 
 .find-buttons .icon-button .face {
     color: var(--control__text-color);
+}
+
+.FindCellTable {
+    table-layout: fixed;
 }
 
 .findCell {
@@ -1938,15 +2025,20 @@ button.main-menu svg {
 .findCell-sample {
     display: flex;
     flex-grow: 1;
-    white-space: nowrap;
     overflow: hidden;
+    white-space: pre;
+}
+
+.findCell-highlight {
+	background-color: yellow;
+	color: black;
 }
 
 .findCell-name {
     display: flex;
     flex-grow: 0;
     align-items: end;
-    white-space: nowrap;
+    white-space: pre;
     color: var(--navigation__text-color);
 }
 
@@ -2173,19 +2265,28 @@ button.main-menu svg {
     margin-bottom: 0px;
 }
 
-.docRefLinkContainer {
+.docRefLinkContainer,
+.commandLinkContainer {
     display: flex;
     gap: 0.5rem;
     align-items: center;
 }
 
-.docRefLinkContainer .svg-image {
+.docRefLinkContainer .svg-image,
+.commandLinkContainer .svg-image {
     opacity: 0;
 }
 
+/* The icon gets displayed the same whether the row is disabled or not */
 .dataGridCell:hover .docRefLinkContainer .svg-image,
-.docRefLinkContainer:hover .svg-image {
+.docRefLinkContainer:hover .svg-image,
+.commandLinkContainer:hover .svg-image,
+.dataGridDisabledCell.dataGridCell:hover .docRefLinkContainer .svg-image,
+.dataGridDisabledCell .docRefLinkContainer:hover .svg-image,
+.dataGridDisabledCell .commandLinkContainer:hover .svg-image {
     opacity: .8;
+    color: var(--text-color);
+    cursor: pointer;
 }
 
 .AnalyticEmailDestinationViewImpl #analyticEmailDestinationSubjectTemplate,

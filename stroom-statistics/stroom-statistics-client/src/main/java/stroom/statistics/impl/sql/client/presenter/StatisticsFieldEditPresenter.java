@@ -47,19 +47,17 @@ public class StatisticsFieldEditPresenter
 
         final StatisticsFieldEditPresenter thisPresenter = this;
 
-        clientPropertyCache.get()
-                .onSuccess(result -> {
-                    String fieldNamePattern = result.getNamePattern();
+        clientPropertyCache.get(result -> {
+            if (result != null) {
+                String fieldNamePattern = result.getNamePattern();
 
-                    if (fieldNamePattern == null || fieldNamePattern.isEmpty()) {
-                        fieldNamePattern = DEFAULT_NAME_PATTERN_VALUE;
-                    }
+                if (fieldNamePattern == null || fieldNamePattern.isEmpty()) {
+                    fieldNamePattern = DEFAULT_NAME_PATTERN_VALUE;
+                }
 
-                    thisPresenter.setFieldNamePattern(fieldNamePattern);
-                })
-                .onFailure(caught -> AlertEvent.fireError(StatisticsFieldEditPresenter.this,
-                        caught.getMessage(),
-                        null));
+                thisPresenter.setFieldNamePattern(fieldNamePattern);
+            }
+        }, this);
     }
 
     public void read(final StatisticField field, final List<StatisticField> otherFields) {

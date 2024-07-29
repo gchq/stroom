@@ -34,6 +34,7 @@ import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.task.client.DefaultTaskListener;
 
 import com.google.gwt.core.client.GWT;
 import com.google.web.bindery.event.shared.EventBus;
@@ -70,42 +71,39 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
 
     @Override
     public void onBegin(final BeginPipelineSteppingEvent event) {
-        if (event.getPipelineRef() != null) {
-            choosePipeline(event.getPipelineRef(),
-                    event.getStepType(),
-                    event.getStepLocation(),
-                    event.getChildStreamType());
-        } else {
-            // If we don't have a pipeline id then try to guess one for the
-            // supplied stream.
-            restFactory
-                    .create(STEPPING_RESOURCE)
-                    .method(res -> res.getPipelineForStepping(new GetPipelineForMetaRequest(
-                            event.getStepLocation().getMetaId(),
-                            event.getChildStreamId())))
-                    .onSuccess(result ->
-                            choosePipeline(
-                                    result,
-                                    event.getStepType(),
-                                    event.getStepLocation(),
-                                    event.getChildStreamType()))
-                    .exec();
-        }
-    }
-
-    private void choosePipeline(final DocRef initialPipelineRef,
-                                final StepType stepType,
-                                final StepLocation stepLocation,
-                                final String childStreamType) {
         final DocSelectionPopup chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Step With");
         chooser.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
         chooser.setRequiredPermissions(DocumentPermissionNames.READ);
 
-        if (initialPipelineRef != null) {
-            chooser.setSelectedEntityReference(initialPipelineRef);
+        final Runnable onShow;
+        if (event.getPipelineRef() != null) {
+            onShow = () -> chooser.setSelectedEntityReference(event.getPipelineRef());
+        } else {
+            // If we don't have a pipeline id then try to guess one for the
+            // supplied stream.
+            onShow = () -> restFactory
+                    .create(STEPPING_RESOURCE)
+                    .method(res -> res.getPipelineForStepping(new GetPipelineForMetaRequest(
+                            event.getStepLocation().getMetaId(),
+                            event.getChildStreamId())))
+                    .onSuccess(chooser::setSelectedEntityReference)
+                    .taskListener(chooser)
+                    .exec();
         }
 
+        choosePipeline(chooser,
+                event.getStepType(),
+                event.getStepLocation(),
+                event.getChildStreamType(),
+                onShow);
+    }
+
+    private void choosePipeline(final DocSelectionPopup chooser,
+                                final StepType stepType,
+                                final StepLocation stepLocation,
+                                final String childStreamType,
+                                final Runnable onShow) {
         chooser.show(pipeline -> {
             if (pipeline != null) {
                 final FindMetaCriteria findMetaCriteria = FindMetaCriteria.createFromId(
@@ -123,9 +121,10 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
                                         childStreamType);
                             }
                         })
+                        .taskListener(new DefaultTaskListener(this))
                         .exec();
             }
-        });
+        }, onShow);
     }
 
     private void openEditor(final DocRef pipeline,

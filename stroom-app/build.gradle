@@ -176,6 +176,8 @@ dependencies {
     implementation project(':stroom-security:stroom-security-openid-api')
     implementation project(':stroom-servicediscovery:stroom-servicediscovery-api')
     implementation project(':stroom-servicediscovery:stroom-servicediscovery-impl')
+    implementation project(':stroom-state:stroom-state-api')
+    implementation project(':stroom-state:stroom-state-impl')
     implementation project(':stroom-statistics:stroom-statistics-api')
     implementation project(':stroom-statistics:stroom-statistics-impl')
     implementation project(':stroom-statistics:stroom-statistics-impl-hbase')
@@ -220,6 +222,11 @@ dependencies {
     implementation libs.logback_classic
     implementation libs.mysql_connector_java
     implementation libs.restygwt
+
+    implementation libs.scylladb_driver_core
+    implementation libs.scylladb_query_builder
+    implementation libs.scylladb_driver_mapper
+
     implementation libs.slf4j_api
     implementation libs.ws_rs_api
 
@@ -331,10 +338,8 @@ jar {
 }
 
 //// We often run out of memory when running the UI builds in parallel so create tasks that will build them one after another.
-//task buildUiPart1(dependsOn: ":stroom-ui:copyYarnBuild") {}
 //task buildUiPart2(dependsOn: ":stroom-app-gwt:gwtCompile") {}
 //task buildUiPart3(dependsOn: ":stroom-dashboard-gwt:gwtCompile") {}
-//buildUiPart1.mustRunAfter  ":stroom-ui:jar"
 //buildUiPart2.mustRunAfter  ":stroom-app-gwt:jar"
 //buildUiPart3.mustRunAfter  ":stroom-dashboard-gwt:jar"
 //buildUiPart2.mustRunAfter buildUiPart1
@@ -343,13 +348,29 @@ jar {
 // Make sure GWT compilation doesn't run before tests.
 //tasks.getByPath(':stroom-app-gwt:gwtClean').mustRunAfter test
 //tasks.getByPath(':stroom-dashboard-gwt:gwtClean').mustRunAfter test
-//tasks.getByPath(':stroom-ui:removeYarnBuild').mustRunAfter test
+
+// Display info to confirm what we are compiling with
+compileJava {
+    doLast {
+        def compiler = javaToolchains.compilerFor {
+            languageVersion = JavaLanguageVersion.of(javaLanguageVersion)
+            vendor = javaVendor
+        }
+        def compilerMeta = compiler.get().metadata
+        println """
+            |=============================================================
+            |Compiling with:
+            |  Vendor:  ${compilerMeta.vendor} (${javaVendor})
+            |  Version: ${compilerMeta.javaRuntimeVersion}
+            |  Path:    ${compilerMeta.installationPath}
+            |=============================================================""".stripMargin()
+    }
+}
 
 shadowJar {
     // We want to run the tests before we build the fat jar.
     dependsOn test
     // We want to compile all GWT and React content before we build the fat jar.
-    dependsOn ":stroom-ui:copyYarnBuild"
     dependsOn ":stroom-app-gwt:gwtCompile"
 //    dependsOn ":stroom-dashboard-gwt:gwtCompile"
     // The jar needs to include the swagger.(json|yaml) files that swagger gen produces
@@ -740,15 +761,8 @@ tasks.register('setupSampleDataApplication', JavaExec) {
 // Make sure GWT compilation doesn't run before processResources.
 tasks.getByPath(':stroom-app-gwt:gwtClean').mustRunAfter processResources
 //tasks.getByPath(':stroom-dashboard-gwt:gwtClean').mustRunAfter processResources
-tasks.getByPath(':stroom-ui:removeYarnBuild').mustRunAfter processResources
 
 // We often run out of memory when running the UI builds in parallel so create tasks that will build them one after another.
-//tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter test
-//tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter analyzeClassesDependencies
-//tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter analyzeTestClassesDependencies
-//tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter generateConfigDefaultsYamlFile
-//tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter makeSendExecutable
-//tasks.getByPath(':stroom-app-gwt:gwtCompile').mustRunAfter ':stroom-ui:yarnBuild'
 //tasks.getByPath(':stroom-dashboard-gwt:gwtCompile').mustRunAfter ':stroom-app-gwt:gwtCompile'
 
 // Make the build command create the full distribution

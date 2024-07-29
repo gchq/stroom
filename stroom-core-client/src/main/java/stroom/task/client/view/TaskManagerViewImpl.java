@@ -18,13 +18,11 @@ package stroom.task.client.view;
 
 import stroom.task.client.presenter.TaskManagerPresenter;
 import stroom.task.client.presenter.TaskManagerUiHandlers;
-import stroom.task.shared.FindTaskProgressCriteria;
-import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
-import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
-import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -32,6 +30,8 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+
+import java.util.function.Supplier;
 
 public class TaskManagerViewImpl extends ViewWithUiHandlers<TaskManagerUiHandlers>
         implements TaskManagerPresenter.TaskManagerView {
@@ -44,29 +44,18 @@ public class TaskManagerViewImpl extends ViewWithUiHandlers<TaskManagerUiHandler
     SimplePanel listContainer;
 
     @Inject
-    public TaskManagerViewImpl(final Binder binder, final UiConfigCache uiConfigCache) {
+    public TaskManagerViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-
-        uiConfigCache.get()
-                .onSuccess(uiConfig ->
-                        nameFilter.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
-                                "Server Tasks Quick Filter",
-                                builder -> builder
-                                        .row(
-                                                TableCell.data(
-                                                        "Matched tasks are displayed in black, un-matched but " +
-                                                                "related tasks are displayed in grey.", 2))
-                                        .row(
-                                                TableCell.data("All relations of a matched task will be " +
-                                                        "included in the results.", 2))
-                                        .row(),
-                                FindTaskProgressCriteria.FIELD_DEFINITIONS,
-                                uiConfig.getHelpUrlQuickFilter())));
     }
 
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
+        nameFilter.registerPopupTextProvider(popupTextSupplier);
     }
 
     @UiHandler("nameFilter")
@@ -82,6 +71,11 @@ public class TaskManagerViewImpl extends ViewWithUiHandlers<TaskManagerUiHandler
     @Override
     public void focusFilter() {
         nameFilter.focus();
+    }
+
+    @Override
+    public void setNameFilter(final String nameFilter) {
+        this.nameFilter.setText(GwtNullSafe.get(nameFilter, String::trim));
     }
 
 

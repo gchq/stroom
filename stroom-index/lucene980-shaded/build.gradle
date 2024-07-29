@@ -16,6 +16,7 @@ dependencies {
     implementation "org.apache.lucene:lucene-core:9.8.0"
     implementation "org.apache.lucene:lucene-memory:9.8.0"
     implementation "org.apache.lucene:lucene-queryparser:9.8.0"
+    implementation "org.apache.lucene:lucene-highlighter:9.8.0"
 }
 
 tasks.register('lucene980ShadowJar', ShadowJar) {

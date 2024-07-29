@@ -54,9 +54,10 @@ public class ServletModule extends AbstractModule {
 
         ServletBinder.create(binder())
                 // authenticated servlets
+                .bind(RedirectServlet.class)
                 .bind(DashboardServlet.class)
-                .bind(DynamicCSSServlet.class)
                 .bind(StroomServlet.class)
+                .bind(SignInServlet.class)
                 // unauthenticated servlets (i.e. run as proc user)
                 .bind(ReceiveDataServlet.class)
                 .bind(DebugServlet.class)

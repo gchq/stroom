@@ -17,6 +17,7 @@
 package stroom.view.impl;
 
 import stroom.datasource.api.v2.DataSourceProvider;
+import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.explorer.api.ExplorerActionHandler;
@@ -38,8 +39,9 @@ public class ViewModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
                 .addBinding(ViewStoreImpl.class);
-
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(ViewStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
                 .addBinding(ViewStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)

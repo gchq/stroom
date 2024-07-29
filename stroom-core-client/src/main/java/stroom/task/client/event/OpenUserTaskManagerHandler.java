@@ -20,5 +20,5 @@ import com.google.gwt.event.shared.EventHandler;
 
 public interface OpenUserTaskManagerHandler extends EventHandler {
 
-    void onOpen(OpenTaskManagerEvent event);
+    void onOpen(OpenUserTaskManagerEvent event);
 }

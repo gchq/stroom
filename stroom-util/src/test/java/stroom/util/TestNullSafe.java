@@ -26,6 +26,7 @@ import org.junit.jupiter.api.TestFactory;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -1108,6 +1109,32 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testForEach() {
+        final AtomicInteger counter = new AtomicInteger(0);
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Iterable<?>>() {
+                })
+                .withOutputType(int.class)
+                .withTestFunction(testCase -> {
+                    NullSafe.forEach(testCase.getInput(), item -> {
+                        counter.incrementAndGet();
+                    });
+                    return counter.get();
+                })
+                .withSimpleEqualityAssertion()
+                .withBeforeTestCaseAction(() -> counter.set(0))
+                .addCase(null, 0)
+                .addCase(Collections.emptyList(), 0)
+                .addCase(Set.of(1, 2, 3), 3)
+                .addCase(List.of("1", "2", "3"), 3)
+                .addCase(Arrays.asList(null, "2", null), 1)
+                .addCase(Arrays.asList(null, null, null), 0)
+                .build();
+    }
+
+
+    @TestFactory
     Stream<DynamicTest> testStream_array() {
         final AtomicInteger counter = new AtomicInteger(0);
         return TestUtil.buildDynamicTestStream()
@@ -1292,6 +1319,29 @@ class TestNullSafe {
                 .addCase(null, false)
                 .addCase(false, false)
                 .addCase(true, true)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testIsTrue2() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple2<
+                        AtomicReference<Boolean>,
+                        Function<AtomicReference<Boolean>, Boolean>>>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    final AtomicReference<Boolean> ref = testCase.getInput()._1;
+                    final Function<AtomicReference<Boolean>, Boolean> func = testCase.getInput()._2;
+                    return NullSafe.isTrue(ref, func);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(null, null), false)
+                .addThrowsCase(Tuple.of(new AtomicReference<>(), null), NullPointerException.class)
+                .addThrowsCase(Tuple.of(new AtomicReference<>(false), null), NullPointerException.class)
+                .addThrowsCase(Tuple.of(new AtomicReference<>(false), null), NullPointerException.class)
+                .addCase(Tuple.of(new AtomicReference<>(false), AtomicReference::get), false)
+                .addCase(Tuple.of(new AtomicReference<>(true), AtomicReference::get), true)
                 .build();
     }
 

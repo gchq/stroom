@@ -110,20 +110,9 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
 
     private void add() {
         final NewIndexVolumeGroupPresenter presenter = newIndexVolumeGroupPresenterProvider.get();
-        presenter.show("", name -> {
-            if (name != null) {
-                restFactory
-                        .create(INDEX_VOLUME_GROUP_RESOURCE)
-                        .method(res -> res.create(name))
-                        .onSuccess(indexVolumeGroup -> {
-                            edit(indexVolumeGroup);
-                            presenter.hide();
-                            refresh();
-                        })
-                        .exec();
-            } else {
-                presenter.hide();
-            }
+        presenter.show("", indexVolumeGroup -> {
+            edit(indexVolumeGroup);
+            refresh();
         });
     }
 
@@ -134,18 +123,14 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
                     .create(INDEX_VOLUME_GROUP_RESOURCE)
                     .method(res -> res.fetch(volume.getId()))
                     .onSuccess(this::edit)
+                    .taskListener(this)
                     .exec();
         }
     }
 
     private void edit(final IndexVolumeGroup indexVolumeGroup) {
         final IndexVolumeGroupEditPresenter editor = editProvider.get();
-        editor.show(indexVolumeGroup, "Edit Volume Group - " + indexVolumeGroup.getName(), result -> {
-            if (result != null) {
-                refresh();
-            }
-            editor.hide();
-        });
+        editor.show(indexVolumeGroup, "Edit Volume Group - " + indexVolumeGroup.getName(), result -> refresh());
     }
 
     private void delete() {
@@ -164,6 +149,7 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
                                         .create(INDEX_VOLUME_GROUP_RESOURCE)
                                         .method(res -> res.delete(volume.getId()))
                                         .onSuccess(response -> refresh())
+                                        .taskListener(this)
                                         .exec();
                             }
                         }

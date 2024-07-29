@@ -10,12 +10,18 @@ import stroom.query.shared.QueryHelpRequest;
 import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpType;
 import stroom.query.shared.QueryResource;
+import stroom.task.client.HasTaskListener;
+import stroom.task.client.TaskListener;
+import stroom.task.client.TaskListenerImpl;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Collections;
 import java.util.List;
@@ -23,13 +29,16 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
-public class DynamicQueryHelpSelectionListModel implements SelectionListModel<QueryHelpRow, QueryHelpSelectionItem> {
+public class DynamicQueryHelpSelectionListModel
+        implements SelectionListModel<QueryHelpRow, QueryHelpSelectionItem>, HasTaskListener, HasHandlers {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
     private static final String NONE_TITLE = "[ none ]";
 
+    private final EventBus eventBus;
     private final RestFactory restFactory;
+    private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
 
     private DocRef dataSourceRef;
     private String query;
@@ -38,7 +47,9 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
     private SelectionList<QueryHelpRow, QueryHelpSelectionItem> selectionList;
 
     @Inject
-    public DynamicQueryHelpSelectionListModel(final RestFactory restFactory) {
+    public DynamicQueryHelpSelectionListModel(final EventBus eventBus,
+                                              final RestFactory restFactory) {
+        this.eventBus = eventBus;
         this.restFactory = restFactory;
     }
 
@@ -106,6 +117,7 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
                             consumer.accept(resultPage);
                         }
                     })
+                    .taskListener(taskListener)
                     .exec();
         }
     }
@@ -158,5 +170,15 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
 
     public void setShowAll(final boolean showAll) {
         this.showAll = showAll;
+    }
+
+    @Override
+    public void setTaskListener(final TaskListener taskListener) {
+        this.taskListener.setTaskListener(taskListener);
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> gwtEvent) {
+        eventBus.fireEvent(gwtEvent);
     }
 }

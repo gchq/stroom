@@ -22,6 +22,6 @@ import stroom.importexport.api.ImportExportActionHandler;
 import stroom.util.shared.Document;
 
 public interface DocumentStore<D extends Document>
-        extends ExplorerActionHandler, ImportExportActionHandler, DocumentActionHandler<D> {
+        extends ExplorerActionHandler, ImportExportActionHandler, DocumentActionHandler<D>, ContentIndexable {
 
 }

@@ -19,6 +19,7 @@ package stroom.analytics.client.presenter;
 
 import stroom.analytics.client.presenter.DuplicateManagementPresenter.DuplicateManagementView;
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.DuplicateNotificationConfig;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.DocumentEditPresenter;
@@ -27,6 +28,9 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class DuplicateManagementPresenter
         extends DocumentEditPresenter<DuplicateManagementView, AnalyticRuleDoc>
@@ -51,17 +55,32 @@ public class DuplicateManagementPresenter
 
     @Override
     protected void onRead(final DocRef docRef, final AnalyticRuleDoc document, final boolean readOnly) {
-        getView().setRememberNotifications(document.isRememberNotifications());
-        getView().setSuppressDuplicateNotifications(document.isSuppressDuplicateNotifications());
+        final DuplicateNotificationConfig duplicateNotificationConfig = document.getDuplicateNotificationConfig();
+        getView().setRememberNotifications(duplicateNotificationConfig.isRememberNotifications());
+        getView().setSuppressDuplicateNotifications(duplicateNotificationConfig.isSuppressDuplicateNotifications());
+        getView().setChooseColumns(duplicateNotificationConfig.isChooseColumns());
+        getView().setColumns(String.join(", ", duplicateNotificationConfig.getColumnNames()));
         duplicateManagementListPresenter.read(docRef);
     }
 
     @Override
     protected AnalyticRuleDoc onWrite(final AnalyticRuleDoc document) {
+        final String[] arr = getView().getColumns().split(",");
+        final List<String> columns = new ArrayList<>(arr.length);
+        for (final String col : arr) {
+            final String trimmed = col.trim();
+            if (trimmed.length() > 0) {
+                columns.add(trimmed);
+            }
+        }
+        final DuplicateNotificationConfig duplicateNotificationConfig =
+                new DuplicateNotificationConfig(getView().isRememberNotifications(),
+                        getView().isSuppressDuplicateNotifications(),
+                        getView().isChooseColumns(),
+                        columns);
         return document
                 .copy()
-                .rememberNotifications(getView().isRememberNotifications())
-                .suppressDuplicateNotifications(getView().isSuppressDuplicateNotifications())
+                .duplicateNotificationConfig(duplicateNotificationConfig)
                 .build();
     }
 
@@ -74,6 +93,14 @@ public class DuplicateManagementPresenter
         void setSuppressDuplicateNotifications(boolean suppressDuplicateNotifications);
 
         boolean isSuppressDuplicateNotifications();
+
+        void setChooseColumns(boolean chooseColumns);
+
+        boolean isChooseColumns();
+
+        void setColumns(String columns);
+
+        String getColumns();
 
         void setListView(View view);
     }

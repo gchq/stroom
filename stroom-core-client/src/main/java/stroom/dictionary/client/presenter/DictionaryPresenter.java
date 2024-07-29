@@ -128,6 +128,7 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
                     .create(DICTIONARY_RESOURCE)
                     .method(res -> res.download(docRef))
                     .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
+                    .taskListener(this)
                     .exec();
         }));
     }

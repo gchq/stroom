@@ -133,7 +133,6 @@ public class DataRetentionImpactPresenter
 
         initColumns();
 
-
         dataProvider.addDataDisplay(dataGrid);
         dataProvider.setListUpdater(this::refreshSourceData);
     }
@@ -188,6 +187,7 @@ public class DataRetentionImpactPresenter
                     updateButtonStates();
                     AlertEvent.fireErrorFromException(this, error.getException(), null);
                 })
+                .taskListener(this)
                 .exec();
     }
 
@@ -209,6 +209,7 @@ public class DataRetentionImpactPresenter
                         updateButtonStates();
                         AlertEvent.fireErrorFromException(this, error.getException(), null);
                     })
+                    .taskListener(this)
                     .exec();
         }
     }

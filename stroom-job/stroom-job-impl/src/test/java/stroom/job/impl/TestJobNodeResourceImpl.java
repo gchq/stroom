@@ -1,7 +1,7 @@
 package stroom.job.impl;
 
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.job.shared.FindJobNodeCriteria;
+import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeListResponse;
@@ -39,7 +39,7 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
     private static final JobNode JOB_NODE_1 = buildJobNode(1, 1, "node1");
     private static final JobNode JOB_NODE_2 = buildJobNode(2, 1, "node2");
 
-    private static final JobNodeListResponse JOB_NODES = JobNodeListResponse.createUnboundedJobeNodeResponse(List.of(
+    private static final JobNodeListResponse JOB_NODES = JobNodeListResponse.createUnboundedJobNodeResponse(List.of(
             JOB_NODE_1,
             JOB_NODE_2));
 
@@ -66,87 +66,13 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
     }
 
     @Test
-    void list1() {
-
-        initSingleNode();
-
-        final String subPath = "";
-
-        ArgumentCaptor<FindJobNodeCriteria> criteriaCaptor = ArgumentCaptor.forClass(FindJobNodeCriteria.class);
-
-        final JobNodeListResponse response = doGetTest(
-                subPath,
-                JobNodeListResponse.class,
-                JOB_NODES,
-                webTarget -> UriBuilderUtil.addParam(webTarget, "jobName", "myJob"),
-                webTarget -> UriBuilderUtil.addParam(webTarget, "nodeName", "node1")
-        );
-
-        verify(jobNodeServiceMap.get("node1"), Mockito.only())
-                .find(criteriaCaptor.capture());
-
-        assertThat(criteriaCaptor.getValue().getJobName().getString())
-                .isEqualTo("myJob");
-        assertThat(criteriaCaptor.getValue().getNodeName().getString())
-                .isEqualTo("node1");
-
-    }
-
-    @Test
-    void list2() {
-
-        initSingleNode();
-
-        final String subPath = "";
-
-        ArgumentCaptor<FindJobNodeCriteria> criteriaCaptor = ArgumentCaptor.forClass(FindJobNodeCriteria.class);
-
-        final JobNodeListResponse response = doGetTest(
-                subPath,
-                JobNodeListResponse.class,
-                JOB_NODES);
-
-        verify(jobNodeServiceMap.get("node1"), Mockito.only())
-                .find(criteriaCaptor.capture());
-
-        assertThat(criteriaCaptor.getValue().getJobName().isConstrained())
-                .isFalse();
-        assertThat(criteriaCaptor.getValue().getNodeName().isConstrained())
-                .isFalse();
-    }
-
-    @Test
-    void list3() {
-
-        initSingleNode();
-
-        final String subPath = "";
-
-        ArgumentCaptor<FindJobNodeCriteria> criteriaCaptor = ArgumentCaptor.forClass(FindJobNodeCriteria.class);
-
-        final JobNodeListResponse response = doGetTest(
-                subPath,
-                JobNodeListResponse.class,
-                JOB_NODES,
-                webTarget -> UriBuilderUtil.addParam(webTarget, "nodeName", "node1")
-        );
-
-        verify(jobNodeServiceMap.get("node1"), Mockito.only())
-                .find(criteriaCaptor.capture());
-
-        assertThat(criteriaCaptor.getValue().getJobName().isConstrained())
-                .isFalse();
-        assertThat(criteriaCaptor.getValue().getNodeName().getString())
-                .isEqualTo("node1");
-    }
-
-    @Test
     void info_sameNode() {
         initNodes();
 
         final String subPath = JobNodeResource.INFO_PATH_PART;
 
-        final JobNodeInfo expectedResponse = new JobNodeInfo(BASE_PORT, 2L, 3L);
+        final JobNodeInfo expectedResponse = new JobNodeInfo(
+                BASE_PORT, 2L, 3L, 4L);
 
         final JobNodeInfo response = doGetTest(
                 subPath,
@@ -170,7 +96,8 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
 
         final String subPath = JobNodeResource.INFO_PATH_PART;
 
-        final JobNodeInfo expectedResponse = new JobNodeInfo(BASE_PORT + 1, 2L, 3L);
+        final JobNodeInfo expectedResponse = new JobNodeInfo(
+                BASE_PORT + 1, 2L, 3L, 4L);
 
         final JobNodeInfo response = doGetTest(
                 subPath,
@@ -320,7 +247,8 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
 
         // Use the port as a unique task count
         when(jobNodeService.getInfo(any()))
-                .thenReturn(new JobNodeInfo(node.getPort(), 2L, 3L));
+                .thenReturn(new JobNodeInfo(
+                        node.getPort(), 2L, 3L, 4L));
 
         when(jobNodeService.find(any()))
                 .thenReturn(JOB_NODES);
@@ -328,11 +256,12 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
         when(jobNodeService.fetch(anyInt()))
                 .thenReturn(Optional.of(buildJobNode(1, 1, "node1")));
 
-        when(jobNodeService.update(any()))
+        when(jobNodeService.update(any(JobNode.class)))
                 .then(invocation -> {
                     final JobNode input = invocation.getArgument(0);
 
-                    final JobNode output = buildJobNode(input.getId(), input.getVersion() + 1, input.getNodeName());
+                    final JobNode output = buildJobNode(
+                            input.getId(), input.getVersion() + 1, input.getNodeName());
                     output.setTaskLimit(input.getTaskLimit());
                     output.setSchedule(input.getSchedule());
                     output.setEnabled(input.isEnabled());
@@ -362,6 +291,8 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
                 .thenReturn(node.getNodeName());
 
         final DocumentEventLog documentEventLog = createNamedMock(DocumentEventLog.class, node);
+        final StroomEventLoggingService stroomEventLoggingService = createNamedMock(
+                StroomEventLoggingService.class, node);
 
         documentEventLogMap.put(node.getNodeName(), documentEventLog);
 
@@ -370,6 +301,7 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
                 () -> nodeService,
                 () -> nodeInfo,
                 () -> webTargetFactory(),
-                () -> documentEventLog);
+                () -> documentEventLog,
+                () -> stroomEventLoggingService);
     }
 }

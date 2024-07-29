@@ -5,6 +5,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.expression.api.UserTimeZone;
 import stroom.expression.api.UserTimeZone.Use;
+import stroom.task.client.TaskListener;
+import stroom.ui.config.shared.ThemeCssUtil;
 import stroom.ui.config.shared.Themes;
 import stroom.ui.config.shared.Themes.ThemeType;
 import stroom.ui.config.shared.UserPreferences;
@@ -17,12 +19,8 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.RootPanel;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.StringJoiner;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -35,9 +33,6 @@ public class UserPreferencesManager {
     private final RestFactory restFactory;
     private final CurrentPreferences currentPreferences;
 
-    private static final Map<String, String> densityMap = new HashMap<>();
-    private static final Map<String, String> fontMap = new HashMap<>();
-    private static final Map<String, String> fontSizeMap = new HashMap<>();
     private UserPreferences currentUserPreferences;
 
     @Inject
@@ -45,52 +40,46 @@ public class UserPreferencesManager {
                                   final CurrentPreferences currentPreferences) {
         this.restFactory = restFactory;
         this.currentPreferences = currentPreferences;
-
-        densityMap.put("Comfortable", "stroom-density-comfortable");
-        densityMap.put("Compact", "stroom-density-compact");
-
-        fontMap.put("Arial", "stroom-font-arial");
-        fontMap.put("Open Sans", "stroom-font-open-sans");
-        fontMap.put("Roboto", "stroom-font-roboto");
-        fontMap.put("Tahoma", "stroom-font-tahoma");
-        fontMap.put("Verdana", "stroom-font-verdana");
-
-        fontSizeMap.put("Small", "stroom-font-size-small");
-        fontSizeMap.put("Medium", "stroom-font-size-medium");
-        fontSizeMap.put("Large", "stroom-font-size-large");
     }
 
-    public void fetch(final Consumer<UserPreferences> consumer) {
+    public void fetch(final Consumer<UserPreferences> consumer, final TaskListener taskListener) {
         restFactory
                 .create(PREFERENCES_RESOURCE)
                 .method(UserPreferencesResource::fetch)
                 .onSuccess(consumer)
+                .taskListener(taskListener)
                 .exec();
     }
 
     public void update(final UserPreferences userPreferences,
-                       final Consumer<Boolean> consumer) {
+                       final Consumer<Boolean> consumer,
+                       final TaskListener taskListener) {
         restFactory
                 .create(PREFERENCES_RESOURCE)
                 .method(res -> res.update(userPreferences))
                 .onSuccess(consumer)
+                .taskListener(taskListener)
                 .exec();
     }
 
     public void setDefaultUserPreferences(final UserPreferences userPreferences,
-                                          final Consumer<UserPreferences> consumer) {
+                                          final Consumer<UserPreferences> consumer,
+                                          final TaskListener taskListener) {
         restFactory
                 .create(PREFERENCES_RESOURCE)
                 .method(res -> res.setDefaultUserPreferences(userPreferences))
                 .onSuccess(consumer)
+                .taskListener(taskListener)
                 .exec();
     }
 
-    public void resetToDefaultUserPreferences(final Consumer<UserPreferences> consumer) {
+    public void resetToDefaultUserPreferences(final Consumer<UserPreferences> consumer,
+                                              final TaskListener taskListener) {
         restFactory
                 .create(PREFERENCES_RESOURCE)
                 .method(UserPreferencesResource::resetToDefaultUserPreferences)
                 .onSuccess(consumer)
+                .taskListener(taskListener)
                 .exec();
     }
 
@@ -181,30 +170,7 @@ public class UserPreferencesManager {
      * @return A space delimited list of css classes for theme, density, font and font size.
      */
     public String getCurrentPreferenceClasses() {
-        final StringJoiner classJoiner = new StringJoiner(" ")
-                .add("stroom");
-
-        if (currentUserPreferences != null) {
-            GwtNullSafe.consume(currentUserPreferences.getTheme(), theme ->
-                    classJoiner.add(Themes.getClassName(theme)));
-
-            if (GwtNullSafe.requireNonNullElse(currentUserPreferences.getEnableTransparency(), true)) {
-                classJoiner.add("transparency");
-            }
-
-            Optional.ofNullable(currentUserPreferences.getDensity())
-                    .map(densityMap::get)
-                    .ifPresent(classJoiner::add);
-
-            Optional.ofNullable(currentUserPreferences.getFont())
-                    .map(fontMap::get)
-                    .ifPresent(classJoiner::add);
-
-            Optional.ofNullable(currentUserPreferences.getFontSize())
-                    .map(fontSizeMap::get)
-                    .ifPresent(classJoiner::add);
-        }
-        return classJoiner.toString();
+        return ThemeCssUtil.getCurrentPreferenceClasses(currentUserPreferences);
     }
 
     public List<String> getThemes() {
@@ -212,10 +178,7 @@ public class UserPreferencesManager {
     }
 
     public List<String> getFonts() {
-        return fontMap.keySet()
-                .stream()
-                .sorted()
-                .collect(Collectors.toList());
+        return ThemeCssUtil.getFonts();
     }
 
     public List<String> getEditorThemes(final ThemeType themeType) {

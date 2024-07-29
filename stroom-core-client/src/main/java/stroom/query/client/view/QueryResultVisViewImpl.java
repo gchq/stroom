@@ -17,31 +17,27 @@
 package stroom.query.client.view;
 
 import stroom.dashboard.client.vis.VisFrame;
-import stroom.dashboard.client.vis.VisUiHandlers;
+import stroom.data.pager.client.RefreshButton;
 import stroom.query.client.presenter.QueryResultVisPresenter.QueryResultVisView;
-import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.InlineSvgButton;
-import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+import com.gwtplatform.mvp.client.ViewImpl;
 
-public class QueryResultVisViewImpl extends ViewWithUiHandlers<VisUiHandlers>
-        implements QueryResultVisView {
+public class QueryResultVisViewImpl extends ViewImpl implements QueryResultVisView {
 
     private final FlowPanel widget;
     private final SimplePanel visContainer;
     private final SimplePanel messagePanel;
     private final Label message;
+    private final RefreshButton refreshButton;
 
     private VisFrame visFrame;
 
@@ -58,14 +54,9 @@ public class QueryResultVisViewImpl extends ViewWithUiHandlers<VisUiHandlers>
         visContainer = new SimplePanel();
         visContainer.setStyleName("queryVis-innerLayout");
 
-        final SpinnerSmall spinnerSmall = new SpinnerSmall();
-        spinnerSmall.setStyleName("dashboardVis-smallSpinner");
-        spinnerSmall.setTitle("Pause Update");
-
-        final InlineSvgButton pause = new InlineSvgButton();
-        pause.addStyleName("dashboardVis-pause");
-        pause.setSvg(SvgImage.PAUSE);
-        pause.setTitle("Resume Update");
+        refreshButton = new RefreshButton();
+        refreshButton.addStyleName("dashboardVis-refresh");
+        refreshButton.setAllowPause(true);
 
         widget = new FlowPanel() {
             @Override
@@ -92,20 +83,8 @@ public class QueryResultVisViewImpl extends ViewWithUiHandlers<VisUiHandlers>
         };
         widget.setStyleName("queryVis-outerLayout"); //("dashboardVis-outerLayout");
         widget.add(visContainer);
-        widget.add(spinnerSmall);
-        widget.add(pause);
+        widget.add(refreshButton);
         widget.add(messagePanel);
-
-        spinnerSmall.addDomHandler(event -> {
-            if (getUiHandlers() != null) {
-                getUiHandlers().onPause();
-            }
-        }, ClickEvent.getType());
-        pause.addDomHandler(event -> {
-            if (getUiHandlers() != null) {
-                getUiHandlers().onPause();
-            }
-        }, ClickEvent.getType());
     }
 
     @Override
@@ -114,21 +93,8 @@ public class QueryResultVisViewImpl extends ViewWithUiHandlers<VisUiHandlers>
     }
 
     @Override
-    public void setRefreshing(final boolean refreshing) {
-        if (refreshing) {
-            widget.addStyleName("refreshing");
-        } else {
-            widget.removeStyleName("refreshing");
-        }
-    }
-
-    @Override
-    public void setPaused(final boolean paused) {
-        if (paused) {
-            widget.addStyleName("paused");
-        } else {
-            widget.removeStyleName("paused");
-        }
+    public RefreshButton getRefreshButton() {
+        return refreshButton;
     }
 
     public void setVisFrame(final VisFrame visFrame) {

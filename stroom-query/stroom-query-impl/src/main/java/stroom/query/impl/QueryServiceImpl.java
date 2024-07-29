@@ -26,7 +26,6 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.expression.api.DateTimeSettings;
-import stroom.expression.api.ExpressionContext;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.Param;
@@ -41,6 +40,7 @@ import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.language.SearchRequestFactory;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.token.TokenException;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryContext;
@@ -361,7 +361,8 @@ class QueryServiceImpl implements QueryService {
                 sampleQuery,
                 null,
                 dateTimeSettings,
-                searchRequest.isIncremental());
+                searchRequest.isIncremental(),
+                searchRequest.getTimeout());
         final ExpressionContext expressionContext = expressionContextFactory.createContext(sampleRequest);
         SearchRequest mappedRequest = searchRequestFactory.create(query, sampleRequest, expressionContext);
 

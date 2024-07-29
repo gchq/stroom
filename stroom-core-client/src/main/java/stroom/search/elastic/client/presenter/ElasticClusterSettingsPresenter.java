@@ -26,6 +26,7 @@ import stroom.search.elastic.client.presenter.ElasticClusterSettingsPresenter.El
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticClusterResource;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
+import stroom.task.client.TaskListener;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -47,8 +48,7 @@ public class ElasticClusterSettingsPresenter
     public ElasticClusterSettingsPresenter(
             final EventBus eventBus,
             final ElasticClusterSettingsView view,
-            final RestFactory restFactory
-    ) {
+            final RestFactory restFactory) {
         super(eventBus, view);
 
         this.restFactory = restFactory;
@@ -66,7 +66,7 @@ public class ElasticClusterSettingsPresenter
     }
 
     @Override
-    public void onTestConnection() {
+    public void onTestConnection(final TaskListener taskListener) {
         final ElasticClusterDoc cluster = onWrite(new ElasticClusterDoc());
         restFactory
                 .create(ELASTIC_CLUSTER_RESOURCE)
@@ -78,6 +78,7 @@ public class ElasticClusterSettingsPresenter
                         AlertEvent.fireError(this, "Connection Failure", result.getMessage(), null);
                     }
                 })
+                .taskListener(taskListener)
                 .exec();
     }
 

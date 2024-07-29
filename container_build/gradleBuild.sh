@@ -125,15 +125,6 @@ main() {
     -x buildDistribution
   echo "::endgroup::"
 
-  echo "::group::React UI build"
-  echo -e "${GREEN}Do the React UI build${NC}"
-  ./gradlew \
-    "${GRADLE_ARGS[@]}" \
-    --scan \
-    --stacktrace \
-    stroom-ui:copyYarnBuild
-  echo "::endgroup::"
-
   echo "::group::GWT UI build"
   echo -e "${GREEN}Do the GWT UI build${NC}"
   ./gradlew \
@@ -169,7 +160,6 @@ main() {
     copyFilesForStroomDockerBuild \
     copyFilesForProxyDockerBuild \
     -x test \
-    -x stroom-ui:copyYarnBuild \
     -x stroom-app-gwt:gwtCompile \
     -x stroom-dashboard-gwt:gwtCompile
   echo "::endgroup::"

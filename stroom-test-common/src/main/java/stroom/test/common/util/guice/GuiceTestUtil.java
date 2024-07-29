@@ -6,6 +6,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import com.google.inject.Binder;
 import com.google.inject.Binding;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -19,6 +20,7 @@ import com.google.inject.spi.LinkedKeyBinding;
 import com.google.inject.spi.ProviderBinding;
 import com.google.inject.spi.ProviderInstanceBinding;
 import com.google.inject.spi.ProviderKeyBinding;
+import org.mockito.Mockito;
 
 import java.lang.annotation.Annotation;
 import java.util.Collections;
@@ -52,6 +54,23 @@ public class GuiceTestUtil {
     private GuiceTestUtil() {
     }
 
+    /**
+     * Binds classToMock to a {@link Mockito} mock of that class
+     * <p>
+     * Consider using {@link AbstractTestModule#bindMock(Class)} instead.
+     * </p>
+     *
+     * @return The mock instance in case you want to add behaviour to it.
+     */
+    public static <T> T bindMock(final Binder binder, final Class<T> classToMock) {
+        Objects.requireNonNull(binder);
+        Objects.requireNonNull(classToMock);
+
+        final T mock = Mockito.mock(classToMock);
+        binder.bind(classToMock)
+                .toInstance(mock);
+        return mock;
+    }
 
     public static String dumpGuiceModuleHierarchy(final com.google.inject.Module... modules) {
         final Map<String, ModuleInfo> allModuleInfoMap = buildModuleInfoMap(modules);

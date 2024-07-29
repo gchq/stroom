@@ -32,8 +32,12 @@
     --focus-border--secondary: var(--pink-500);
     --focus-shadow--secondary: inset 0 1px 1px rgba(var(--black-rgb), .075), 0 0 8px rgba(var(--pink-500-rgb), .6); /* pink-500*/
 
+    /* Main body text colour in the app */
     --text-color: #151515;
+    --text-color--hover: #111;
+    --text-color--selected: #000;
     --text-color--disabled: #777;
+    --text-color--disabled--selected: #555;
     --text-color--red: var(--red-600);
     --text-color--green: var(--green-600);
     --text-color--red--dark: var(--red-900);
@@ -60,7 +64,7 @@
     --tooltip__background-color: var(--grey-300);
     --tooltip__text-color: #000;
 
-    --button__background-image: none; /*linear-gradient(#ffffff 0px, #fbfbfa 10px, #f6f5f5 0px, #e9e7e6); */
+    --button__background-image: none;
     --button__background-color: #f6f5f5;
     --button__border-color: #918e8c;
     --button__image-color: #918e8c;
@@ -98,6 +102,7 @@
     --pipeline-element-box__text-color: #666;
     --pipeline-element-box__text-color--selected: #000;
     --pipeline-element-box__border-color: #918e8c;
+    --pipeline-element-box__border-color--selected: #717e7c;
     --pipeline-element-box__border-color--info: #378cff;
     --pipeline-element-box__border-color--warn: yellow;
     --pipeline-element-box__border-color--error: orangered;
@@ -144,9 +149,9 @@
      */
 
     /* Page */
-    --app__background-color-rgb: 255, 255, 255;
-    --app__background-color: rgb(var(--app__background-color-rgb));
-    --page__background-color: var(--app__background-color);
+    --app__background-color: rgb(30, 136, 229);
+    --page__background-color-rgb: 255, 255, 255;
+    --page__background-color: rgb(var(--page__background-color-rgb));
     --page__text-color: rgba(0, 0, 0, 0.8);
 
     /* Splitter */
@@ -235,7 +240,6 @@
     --navigation__background-color--focussed: var(--row__background-color--focussed);
     --navigation__background-color--selected--focussed: var(--row__background-color--selected--focussed);
 
-    --navigation__title__background-color: var(--white);
     --navigation__text-color: var(--text-color);
     --navigation__text-color--selected: var(--row__text-color--selected);
     --navigation__text-color--no-match: #767676;
@@ -248,7 +252,7 @@
     --table__odd-row__background-color: rgba(var(--black-rgb), .05);
 
     /* Dialog */
-    --dialog__background-color-rgb: var(--app__background-color-rgb);
+    --dialog__background-color-rgb: var(--page__background-color-rgb);
     --dialog__background-color: rgb(var(--dialog__background-color-rgb));
     --dialog__border-color: rgba(var(--black-rgb), .3);
     --dialog__shadow: 0 0 20px 5px rgba(0, 0, 0, .5);
@@ -287,5 +291,5 @@
     --vis-tip__background-color: rgba(30, 30, 30, 0.8);
     --vis-tip-text__color: #bbb;
 
-    --iframe__border-color: #C5CDE2;
+    --iframe__border-color: #c5cde2;
 }

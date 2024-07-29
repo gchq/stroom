@@ -13,12 +13,20 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
-## [v7.4.9] - 2024-07-17
+## [v7.5-beta.8] - 2024-07-23
+
+* Change API endpoint `/Authentication/v1/noauth/reset` from GET to POST and from a path parameter to a POST body.
+
+* Fix various issues relating to unauthenticated servlets. Add new servlet paths e.g. `/stroom/XXX` becomes `/XXX` and `/stroom/XXX`. The latter will be removed in some future release. Notable new servlet paths are `/dashboard`, `/status`, `/swagger-ui`, `/echo`, `/debug`, `/datafeed`, `/sessionList`.
+
+* Change `sessionList` servlet to require manage users permission.
+
+
+## [v7.5-beta.7] - 2024-07-17
+
+* Issue **#4360** : Fix quick time settings popup.
 
 * Issue **#4357** : Fix result paging for analytic duplicate check stores.
-
-
-## [v7.4.8] - 2024-07-16
 
 * Issue **#4347** : Filter queryable fields for dashboard query expressions.
 
@@ -31,17 +39,26 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#4358** : Fix streaming analytic field matches.
 
 
-## [v7.4.7] - 2024-07-10
+## [v7.5-beta.6] - 2024-07-16
+
+* Improve styling of Jobs screen so disabled jobs/nodes are greyed out.
+
+* Add _Next Scheduled_ column to the detail pane of the Job screen.
+
+* Add _Build Version_ and _Up Date_ columns to the Nodes screen. Also change the styling of the _Ping_ column so an enabled node with no ping stands out while a disabled node does not. Also change the row styling for disabled nodes.
+
+* Add a Run now icon to the jobs screen to execute a job on a node immediately.
+
+* Change the FS Volume and Index Volume tables to low-light CLOSED/INACTIVE volumes. Add tooltips to the path and last updated columns. Change the _Use%_ column to a percentage bar. Add red/green colouring to the _Full_ column values.
+
+* Issue **#4327** : Add a Jobs pane to the Nodes screen to view jobs by node. Add linking between job nodes on the Nodes screen and the Jobs screen.
+
+
+## [v7.5-beta.5] - 2024-07-11
 
 * Fix lag on Jobs screen when changing the selected job in the top pane.
 
-
-## [v7.4.6] - 2024-07-08
-
 * Issue **#4348** : Fix error with `IN DICTIONARY` term in rule when the dictionary is empty/blank.
-
-
-## [v7.4.5] - 2024-07-03
 
 * Issue **#4305** : Don't show warnings on the Server Tasks screen for disabled nodes. Append `(Disabled)` to the node name for disabled nodes in case a disabled node is still running tasks. Changed the position of the warning icon to the right of the wrap icon so it is the right-most icon.
 
@@ -66,7 +83,27 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * When using zip compression with HttpAppender, make the .meta file also respect the various HTTP header pipeline element properties.
 
 
-## [v7.4.4] - 2024-06-17
+## [v7.5-beta.4] - 2024-06-28
+
+* Issue **#4339** : Allow user selection of analytic duplicate columns.
+
+
+## [v7.5-beta.3] - 2024-06-27
+
+* Issue **#2126** : Add experimental state store.
+
+* Issue **#4305** : Don't show warnings on the Server Tasks screen for disabled nodes. Append `(Disabled)` to the node name for disabled nodes in case a disabled node is still running tasks. Changed the position of the warning icon to the right of the wrap icon so it is the right-most icon.
+
+* Make the expand/collapse all icons on Server Tasks and Data Retention Impact Summary consistent with those on the Explorer tree.
+
+* Issue **#4334** : Popup explorer text on mouse hover.
+
+
+## [v7.5-beta.2] - 2024-06-17
+
+* Issue **#4278** : Make document deletion also delete the permission records for that document. Also run migration `V07_04_00_005__Orphaned_Doc_Perms` which will delete all document permissions (in table `doc_permission`) for docs that are not a folder, not the System doc, are not a valid doc (i.e. in the `doc` table) and are not a pipeline filter. Deleted document permission records will first be copied to a backup table `doc_permission_backup_V07_04_00_005`. 
+
+* Change document Copy and Move to check that the user has Owner permission (or admin) on the document being copied/moved if the permissions mode is None, Destination or Combined. This is because those modes will change the permissions which is something only an Owner/admin can do.
 
 * Fix verification of the `signer` key in the JWS headers when authentication is handled by an AWS load balancer. If you use AWS load balancers for authentication you must add the partial ARN(s) of your load balancer(s) to the property `stroom.security.authentication.openId.expectedSignerPrefixes`.
 
@@ -74,29 +111,24 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#4322** : Fix Feed Doc Cache entry invalidation when a new feed is created.
 
-
-## [v7.4.3] - 2024-06-17
-
 * Add debug logging to HttpAppender.
-
-
-## [v7.4.2] - 2024-06-14
 
 * Issue **#4306** : Fix inability to update config props that have previously been set to a non-default and then back to a default value.
 
 * Issue **#2897** : Add more debug logging to the reference lookup code.
 
-
-## [v7.4.1] - 2024-06-05
-
 * Issue **#4307** : Fix stuck search.
-
-
-## [v7.4.0] - 2024-06-05
 
 * Issue **#4303** : Change DSParser to catch and handle StackOverflowError as an ERROR and with a better message.
 
 * Issue **#4281** : Fix recent items dialog throwing an error when there are favourites in the explorer tree.
+
+
+## [v7.5-beta.1] - 2024-06-04
+
+* Issue **#3989** : Improve pause behaviour in dashboards and general presentation of `busy` state throughout UI.
+
+* Issue **#2111** : Add index assistance to find content feature.
 
 
 ## [v7.4-beta.16] - 2024-05-28
@@ -687,31 +719,13 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4.9...HEAD
-[v7.4.9]: https://github.com/gchq/stroom/compare/v7.4.8...v7.4.9
-[v7.4.8]: https://github.com/gchq/stroom/compare/v7.4.7...v7.4.8
-[v7.4.7]: https://github.com/gchq/stroom/compare/v7.4.6...v7.4.7
-[v7.4.6]: https://github.com/gchq/stroom/compare/v7.4.5...v7.4.6
-[v7.4.5]: https://github.com/gchq/stroom/compare/v7.4.4...v7.4.5
-[v7.4.4]: https://github.com/gchq/stroom/compare/v7.4.3...v7.4.4
-[v7.4.3]: https://github.com/gchq/stroom/compare/v7.4.2...v7.4.3
-[v7.4.2]: https://github.com/gchq/stroom/compare/v7.4.1...v7.4.2
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-beta.8...HEAD
+[v7.5-beta.8]: https://github.com/gchq/stroom/compare/v7.5-beta.7...v7.5-beta.8
+[v7.5-beta.7]: https://github.com/gchq/stroom/compare/v7.5-beta.6...v7.5-beta.7
+[v7.5-beta.6]: https://github.com/gchq/stroom/compare/v7.5-beta.5...v7.5-beta.6
+[v7.5-beta.5]: https://github.com/gchq/stroom/compare/v7.5-beta.4...v7.5-beta.5
+[v7.5-beta.4]: https://github.com/gchq/stroom/compare/v7.5-beta.3...v7.5-beta.4
+[v7.5-beta.3]: https://github.com/gchq/stroom/compare/v7.5-beta.2...v7.5-beta.3
+[v7.5-beta.2]: https://github.com/gchq/stroom/compare/v7.5-beta.1...v7.5-beta.2
+[v7.5-beta.1]: https://github.com/gchq/stroom/compare/v7.4-beta.16...v7.5-beta.1
 [v7.4.1]: https://github.com/gchq/stroom/compare/v7.4.0...v7.4.1
-[v7.4.0]: https://github.com/gchq/stroom/compare/v7.4-beta.16...v7.4.0
-[v7.4-beta.16]: https://github.com/gchq/stroom/compare/v7.4-beta.15...v7.4-beta.16
-[v7.4-beta.15]: https://github.com/gchq/stroom/compare/v7.4-beta.14...v7.4-beta.15
-[v7.4-beta.14]: https://github.com/gchq/stroom/compare/v7.4-beta.13...v7.4-beta.14
-[v7.4-beta.13]: https://github.com/gchq/stroom/compare/v7.4-beta.12...v7.4-beta.13
-[v7.4-beta.12]: https://github.com/gchq/stroom/compare/v7.4-beta.11...v7.4-beta.12
-[v7.4-beta.11]: https://github.com/gchq/stroom/compare/v7.4-beta.10...v7.4-beta.11
-[v7.4-beta.10]: https://github.com/gchq/stroom/compare/v7.4-beta.9...v7.4-beta.10
-[v7.4-beta.9]: https://github.com/gchq/stroom/compare/v7.4-beta.8...v7.4-beta.9
-[v7.4-beta.8]: https://github.com/gchq/stroom/compare/v7.4-beta.7...v7.4-beta.8
-[v7.4-beta.7]: https://github.com/gchq/stroom/compare/v7.4-beta.6...v7.4-beta.7
-[v7.4-beta.6]: https://github.com/gchq/stroom/compare/v7.4-beta.5...v7.4-beta.6
-[v7.4-beta.5]: https://github.com/gchq/stroom/compare/v7.4-beta.4...v7.4-beta.5
-[v7.4-beta.4]: https://github.com/gchq/stroom/compare/v7.4-beta.3...v7.4-beta.4
-[v7.4-beta.3]: https://github.com/gchq/stroom/compare/v7.4-beta.2...v7.4-beta.3
-[v7.4-beta.2]: https://github.com/gchq/stroom/compare/v7.4-beta.1...v7.4-beta.2
-[v7.4-beta.1]: https://github.com/gchq/stroom/compare/v7.3-beta.11...v7.4-beta.1
-[v7.2.2]: https://github.com/gchq/stroom/compare/v7.2.1...v7.2.2

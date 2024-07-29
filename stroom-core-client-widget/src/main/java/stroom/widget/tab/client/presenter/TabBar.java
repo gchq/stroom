@@ -18,6 +18,7 @@ package stroom.widget.tab.client.presenter;
 
 import stroom.widget.menu.client.presenter.ShowMenuEvent.HasShowMenuHandlers;
 import stroom.widget.tab.client.event.HasRequestCloseTabHandlers;
+import stroom.widget.tab.client.view.AbstractTab;
 
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.user.client.ui.Focus;
@@ -47,4 +48,6 @@ public interface TabBar extends
     boolean isTabHidden(TabData tab);
 
     void refresh();
+
+    AbstractTab getTab(TabData tabData);
 }

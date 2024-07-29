@@ -19,7 +19,7 @@ public class ByteBufferConsumerBinder {
         return new ByteBufferConsumerBinder(binder);
     }
 
-    public <F extends RefDataValueByteBufferConsumer.Factory> ByteBufferConsumerBinder bind(final Integer id,
+    public <F extends RefDataValueByteBufferConsumer.Factory> ByteBufferConsumerBinder bind(final byte id,
                                                                                             final Class<F> handler) {
         mapBinder.addBinding(new ByteBufferConsumerId(id)).to(handler);
         return this;

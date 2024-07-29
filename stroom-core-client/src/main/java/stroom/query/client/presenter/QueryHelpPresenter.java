@@ -24,6 +24,7 @@ import stroom.item.client.SelectionList;
 import stroom.query.client.presenter.QueryHelpPresenter.QueryHelpView;
 import stroom.query.shared.InsertType;
 import stroom.query.shared.QueryHelpRow;
+import stroom.task.client.TaskListener;
 import stroom.util.client.ClipboardUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -208,6 +209,13 @@ public class QueryHelpPresenter
     public void setShowAll(final boolean showAll) {
         model.setShowAll(showAll);
         keyedAceCompletionProvider.setShowAll(showAll);
+    }
+
+    @Override
+    public void setTaskListener(final TaskListener taskListener) {
+        model.setTaskListener(taskListener);
+        keyedAceCompletionProvider.setTaskListener(taskListener);
+        detailProvider.setTaskListener(taskListener);
     }
 
     public interface QueryHelpView extends View, HasUiHandlers<QueryHelpUiHandlers> {

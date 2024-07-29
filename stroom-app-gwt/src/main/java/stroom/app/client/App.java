@@ -17,10 +17,12 @@
 package stroom.app.client;
 
 import stroom.app.client.gin.AppGinjectorUser;
+import stroom.dispatch.client.QuietTaskListener;
 import stroom.preferences.client.UserPreferencesManager;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Window;
 import com.gwtplatform.mvp.client.DelayedBindRegistry;
 
 import java.util.Arrays;
@@ -57,23 +59,29 @@ public class App implements EntryPoint {
 //            Window.alert("ERROR: " + stringBuilder);
 //        });
 
-        final UserPreferencesManager userPreferencesManager = ginjector.getPreferencesManager();
-        userPreferencesManager.fetch(preferences -> {
-            userPreferencesManager.setCurrentPreferences(preferences);
+        final String path = Window.Location.getPath();
+        if (path.contains("signIn")) {
+            ginjector.getLoginPresenter().get().forceReveal();
 
-            // Show the application panel.
-            ginjector.getCorePresenter().get().forceReveal();
+        } else {
+            final UserPreferencesManager userPreferencesManager = ginjector.getPreferencesManager();
+            userPreferencesManager.fetch(preferences -> {
+                userPreferencesManager.setCurrentPreferences(preferences);
 
-            // Register all plugins that will respond to
+                // Show the application panel.
+                ginjector.getCorePresenter().get().forceReveal();
 
-            // Start the login manager. This will attempt to auto login with PKI and
-            // will therefore start the rest of the application.
-            ginjector.getLoginManager().fetchUserAndPermissions();
+                // Register all plugins that will respond to
 
-            // Remember how places were used in case we want to use URLs and history
-            // at some point.
-            // ginjector.getPlaceManager().revealCurrentPlace();
-        });
+                // Start the login manager. This will attempt to auto login with PKI and
+                // will therefore start the rest of the application.
+                ginjector.getLoginManager().fetchUserAndPermissions();
+
+                // Remember how places were used in case we want to use URLs and history
+                // at some point.
+                // ginjector.getPlaceManager().revealCurrentPlace();
+            }, new QuietTaskListener());
+        }
     }
 
     private void appendStackTraces(final Throwable e, final StringBuilder stringBuilder) {

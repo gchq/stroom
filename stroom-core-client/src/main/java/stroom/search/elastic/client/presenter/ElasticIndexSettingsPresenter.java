@@ -33,6 +33,7 @@ import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexResource;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.task.client.TaskListener;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -106,6 +107,7 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
                         AlertEvent.fireError(this, "Connection Failure", result.getMessage(), null);
                     }
                 })
+                .taskListener(this)
                 .exec();
     }
 
@@ -145,6 +147,12 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
         index.setRetentionExpression(editExpressionPresenter.write());
         index.setDefaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference());
         return index;
+    }
+
+    @Override
+    public synchronized void setTaskListener(final TaskListener taskListener) {
+        super.setTaskListener(taskListener);
+        fieldSelectionBoxModel.setTaskListener(taskListener);
     }
 
     public interface ElasticIndexSettingsView

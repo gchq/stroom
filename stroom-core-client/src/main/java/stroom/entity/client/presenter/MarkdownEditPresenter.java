@@ -199,22 +199,19 @@ public class MarkdownEditPresenter
     }
 
     private void showHelp() {
-        uiConfigCache.get()
-                .onSuccess(result -> {
-                    final String helpUrl = result.getHelpUrlDocumentation();
-                    if (!GwtNullSafe.isBlankString(helpUrl)) {
-                        Window.open(helpUrl, "_blank", "");
-                    } else {
-                        AlertEvent.fireError(
-                                MarkdownEditPresenter.this,
-                                "Help is not configured!",
-                                null);
-                    }
-                })
-                .onFailure(caught -> AlertEvent.fireError(
-                        MarkdownEditPresenter.this,
-                        caught.getMessage(),
-                        null));
+        uiConfigCache.get(result -> {
+            if (result != null) {
+                final String helpUrl = result.getHelpUrlDocumentation();
+                if (!GwtNullSafe.isBlankString(helpUrl)) {
+                    Window.open(helpUrl, "_blank", "");
+                } else {
+                    AlertEvent.fireError(
+                            MarkdownEditPresenter.this,
+                            "Help is not configured!",
+                            null);
+                }
+            }
+        }, this);
     }
 
     private void updateMarkdownOnIFramePresenter() {
@@ -229,7 +226,6 @@ public class MarkdownEditPresenter
 //        setEditMode(this.editMode);
         updateEditState();
     }
-
 
     // --------------------------------------------------------------------------------
 

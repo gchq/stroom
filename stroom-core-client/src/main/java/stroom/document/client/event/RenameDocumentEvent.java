@@ -18,32 +18,32 @@
 package stroom.document.client.event;
 
 import stroom.explorer.shared.ExplorerNode;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 public class RenameDocumentEvent extends GwtEvent<RenameDocumentEvent.Handler> {
 
     private static Type<Handler> TYPE;
-    private final PresenterWidget<?> presenter;
+    private final HidePopupRequestEvent hidePopupRequestEvent;
     private final ExplorerNode explorerNode;
     private final String docName;
 
-    private RenameDocumentEvent(final PresenterWidget<?> presenter,
+    private RenameDocumentEvent(final HidePopupRequestEvent hidePopupRequestEvent,
                                 final ExplorerNode explorerNode,
                                 final String docName) {
-        this.presenter = presenter;
+        this.hidePopupRequestEvent = hidePopupRequestEvent;
         this.explorerNode = explorerNode;
         this.docName = docName;
     }
 
     public static void fire(final HasHandlers handlers,
-                            final PresenterWidget<?> presenter,
+                            final HidePopupRequestEvent hidePopupRequestEvent,
                             final ExplorerNode docRef,
                             final String docName) {
-        handlers.fireEvent(new RenameDocumentEvent(presenter, docRef, docName));
+        handlers.fireEvent(new RenameDocumentEvent(hidePopupRequestEvent, docRef, docName));
     }
 
     public static Type<Handler> getType() {
@@ -63,8 +63,8 @@ public class RenameDocumentEvent extends GwtEvent<RenameDocumentEvent.Handler> {
         handler.onRename(this);
     }
 
-    public PresenterWidget<?> getPresenter() {
-        return presenter;
+    public HidePopupRequestEvent getHidePopupRequestEvent() {
+        return hidePopupRequestEvent;
     }
 
     public ExplorerNode getExplorerNode() {

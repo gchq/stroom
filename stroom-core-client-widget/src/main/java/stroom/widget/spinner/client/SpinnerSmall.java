@@ -16,20 +16,54 @@
 
 package stroom.widget.spinner.client;
 
+import stroom.svg.shared.SvgImage;
+import stroom.task.client.TaskListener;
+
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Widget;
 
-public class SpinnerSmall extends Composite {
+public class SpinnerSmall extends Widget implements TaskListener {
 
-    private static final Binder uiBinder = GWT.create(Binder.class);
+    private int taskCount;
 
     public SpinnerSmall() {
-        initWidget(uiBinder.createAndBindUi(this));
+        final Element spinningInner = DOM.createDiv();
+        spinningInner.setClassName("spinning-inner");
+        spinningInner.setInnerHTML(SvgImage.SPINNER_SPINNING.getSvg());
+        spinningInner.setTitle("Loading...");
+        final Element spinningOuter = DOM.createDiv();
+        spinningOuter.appendChild(spinningInner);
+        spinningOuter.setClassName("spinning-outer");
+        final Element spinnerSmall = DOM.createDiv();
+        spinnerSmall.appendChild(spinningOuter);
+        spinnerSmall.setClassName("SpinnerSmall");
+        setElement(spinnerSmall);
     }
 
-    interface Binder extends UiBinder<Widget, SpinnerSmall> {
+    public void setRefreshing(boolean refreshing) {
+        if (refreshing) {
+            addStyleName("refreshing");
+        } else {
+            removeStyleName("refreshing");
+        }
+    }
 
+    @Override
+    public void incrementTaskCount() {
+        taskCount++;
+        setRefreshing(taskCount > 0);
+    }
+
+    @Override
+    public void decrementTaskCount() {
+        taskCount--;
+
+        if (taskCount < 0) {
+            GWT.log("Negative task count");
+        }
+
+        setRefreshing(taskCount > 0);
     }
 }

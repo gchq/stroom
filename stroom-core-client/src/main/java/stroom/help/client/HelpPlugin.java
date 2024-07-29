@@ -16,12 +16,13 @@
 
 package stroom.help.client;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.DefaultTaskListener;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 import com.google.gwt.user.client.Window;
@@ -45,34 +46,35 @@ public class HelpPlugin extends Plugin {
     public void onReveal(final BeforeRevealMenubarEvent event) {
         super.onReveal(event);
 
-        clientPropertyCache.get()
-                .onSuccess(result -> {
-                    IconMenuItem helpMenuItem;
-                    final String helpUrl = result.getHelpUrl();
-                    if (helpUrl != null && helpUrl.trim().length() > 0) {
-                        helpMenuItem = new IconMenuItem.Builder()
-                                .priority(1)
-                                .icon(SvgImage.HELP)
-                                .text("Help")
-                                .command(() -> Window.open(helpUrl, "_blank", ""))
-                                .build();
-                    } else {
-                        helpMenuItem = new IconMenuItem.Builder()
-                                .priority(1)
-                                .icon(SvgImage.HELP)
-                                .text("Help is not configured!")
-                                .build();
-                    }
+        clientPropertyCache.get(result -> {
+            if (result != null) {
+                IconMenuItem helpMenuItem;
+                final String helpUrl = result.getHelpUrl();
+                if (GwtNullSafe.isNonBlankString(helpUrl)) {
+                    helpMenuItem = new IconMenuItem.Builder()
+                            .priority(1)
+                            .icon(SvgImage.HELP)
+                            .text("Help")
+                            .command(() -> Window.open(helpUrl, "_blank", ""))
+                            .build();
+                } else {
+                    helpMenuItem = new IconMenuItem.Builder()
+                            .priority(1)
+                            .icon(SvgImage.HELP)
+                            .text("Help is not configured!")
+                            .build();
+                }
 
-                    event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU, helpMenuItem);
-                })
-                .onFailure(caught -> AlertEvent.fireError(HelpPlugin.this, caught.getMessage(), null));
+                event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU, helpMenuItem);
+            }
+        }, new DefaultTaskListener(this));
 
         final IconMenuItem apiMenuItem = new IconMenuItem.Builder()
                 .priority(2)
                 .icon(SvgImage.OPERATOR)
                 .text("API Specification")
-                .command(() -> Window.open("/stroom/noauth/swagger-ui", "_blank", ""))
+                .command(() ->
+                        Window.open("/swagger-ui", "_blank", ""))
                 .build();
         event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU, apiMenuItem);
     }

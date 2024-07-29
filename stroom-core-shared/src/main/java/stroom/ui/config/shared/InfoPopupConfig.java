@@ -17,6 +17,9 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class InfoPopupConfig extends AbstractConfig implements IsStroomConfig {
 
+    private static final String DEFAULT_QUERY_INFO_POPUP_TITLE = "Please Provide Query Info";
+    private static final String DEFAULT_QUERY_INFO_VALIDATION_REGEX = "^[\\s\\S]{3,}$";
+
     @JsonProperty
     @JsonPropertyDescription("If you would like users to provide some query info when performing a query " +
             "set this property to true.")
@@ -33,8 +36,8 @@ public class InfoPopupConfig extends AbstractConfig implements IsStroomConfig {
 
     public InfoPopupConfig() {
         enabled = false;
-        title = "Please Provide Query Info";
-        validationRegex = "^[\\s\\S]{3,}$";
+        title = DEFAULT_QUERY_INFO_POPUP_TITLE;
+        validationRegex = DEFAULT_QUERY_INFO_VALIDATION_REGEX;
     }
 
     @JsonCreator

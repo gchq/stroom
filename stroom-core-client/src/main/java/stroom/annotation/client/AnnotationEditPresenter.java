@@ -37,7 +37,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.UserName;
 import stroom.widget.button.client.Button;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -150,6 +150,7 @@ public class AnnotationEditPresenter
                     .create(annotationResource)
                     .method(res -> res.getStatus(filter))
                     .onSuccess(consumer)
+                    .taskListener(this)
                     .exec();
         });
 
@@ -161,6 +162,7 @@ public class AnnotationEditPresenter
                     .onSuccess(userNames -> consumer.accept(userNames.stream()
                             .sorted(Comparator.comparing(UserName::getUserIdentityForAudit))
                             .collect(Collectors.toList())))
+                    .taskListener(this)
                     .exec();
         });
 
@@ -170,6 +172,7 @@ public class AnnotationEditPresenter
                     .create(annotationResource)
                     .method(res -> res.getComment(filter))
                     .onSuccess(consumer)
+                    .taskListener(this)
                     .exec();
         });
     }
@@ -196,6 +199,7 @@ public class AnnotationEditPresenter
                 .create(annotationResource)
                 .method(res -> res.getComment(null))
                 .onSuccess(values -> getView().setHasCommentValues(values != null && !values.isEmpty()))
+                .taskListener(this)
                 .exec();
     }
 
@@ -261,7 +265,7 @@ public class AnnotationEditPresenter
     }
 
     private void changeStatus(final String selected) {
-        HidePopupEvent.builder(statusPresenter).fire();
+        HidePopupRequestEvent.builder(statusPresenter).fire();
 
         if (hasChanged(currentStatus, selected)) {
             setStatus(selected);
@@ -283,7 +287,7 @@ public class AnnotationEditPresenter
     }
 
     private void changeAssignedTo(final UserName selected) {
-        HidePopupEvent.builder(assignedToPresenter).fire();
+        HidePopupRequestEvent.builder(assignedToPresenter).fire();
 
         if (hasChanged(currentAssignedTo, selected)) {
             setAssignedTo(selected);
@@ -312,7 +316,7 @@ public class AnnotationEditPresenter
     private void changeComment(final String selected) {
         if (selected != null && hasChanged(getView().getComment(), selected)) {
             getView().setComment(getView().getComment() + selected);
-            HidePopupEvent.builder(commentPresenter).fire();
+            HidePopupRequestEvent.builder(commentPresenter).fire();
         }
     }
 
@@ -326,6 +330,7 @@ public class AnnotationEditPresenter
                         AnnotationEditPresenter.this,
                         caught.getMessage(),
                         null))
+                .taskListener(this)
                 .exec();
     }
 
@@ -359,6 +364,7 @@ public class AnnotationEditPresenter
                         .create(annotationResource)
                         .method(res -> res.get(annotation.getId()))
                         .onSuccess(this::edit)
+                        .taskListener(this)
                         .exec();
             }
         }
@@ -421,6 +427,7 @@ public class AnnotationEditPresenter
                             setStatus(values.get(0));
                         }
                     })
+                    .taskListener(this)
                     .exec();
         }
 
@@ -465,7 +472,7 @@ public class AnnotationEditPresenter
                         if (link != null) {
                             final Hyperlink hyperlink = Hyperlink.create(link);
                             if (hyperlink != null) {
-                                HyperlinkEvent.fire(this, hyperlink);
+                                HyperlinkEvent.fire(this, hyperlink, this);
                             }
                         }
                     }
@@ -933,6 +940,7 @@ public class AnnotationEditPresenter
                             .create(annotationResource)
                             .method(res -> res.get(annotationDetail.getAnnotation().getId()))
                             .onSuccess(this::updateHistory)
+                            .taskListener(this)
                             .exec();
                 }
             });

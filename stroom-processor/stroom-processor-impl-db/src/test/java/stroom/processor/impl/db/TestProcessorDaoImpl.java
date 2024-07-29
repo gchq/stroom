@@ -5,6 +5,8 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.TaskStatus;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -14,12 +16,14 @@ import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
 import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 
+@ExtendWith(MockitoExtension.class)
 class TestProcessorDaoImpl extends AbstractProcessorTest {
 
     Processor processor1;
     Processor processor2;
     ProcessorFilter processorFilter1;
     ProcessorFilter processorFilter2;
+
 
     @Test
     void testLogicalDeleteByProcessorId() {

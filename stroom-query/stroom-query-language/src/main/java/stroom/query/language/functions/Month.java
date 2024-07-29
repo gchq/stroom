@@ -16,8 +16,6 @@
 
 package stroom.query.language.functions;
 
-import stroom.expression.api.ExpressionContext;
-
 import java.time.ZonedDateTime;
 
 @SuppressWarnings("unused") //Used by FunctionFactory

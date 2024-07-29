@@ -102,3 +102,9 @@
 	font-weight: bold;
 	border: solid 1px rgb(33 150 243);
 }
+
+.expressionItemBox-disabled .termEditor-label.fieldType {
+	border: solid 1px var(--control__border-color--disabled);
+	background-color: var(--control__background-color--disabled);
+	color: var(--control__text-color--disabled);
+}

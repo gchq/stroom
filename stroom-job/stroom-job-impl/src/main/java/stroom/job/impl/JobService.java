@@ -90,7 +90,7 @@ class JobService {
                 () -> jobDao.find(findJobCriteria));
         results.getValues().forEach(this::decorate);
 
-        if (findJobCriteria.getSortList().size() > 0) {
+        if (!findJobCriteria.getSortList().isEmpty()) {
             final CriteriaFieldSort sort = findJobCriteria.getSortList().get(0);
             if (sort.getId().equals(FindJobCriteria.FIELD_ADVANCED)) {
                 results.getValues().sort(Comparator.comparing(Job::isAdvanced).thenComparing(Job::getName));
@@ -104,7 +104,7 @@ class JobService {
         return jobDao.fetch(id).map(this::decorate);
     }
 
-    private Job decorate(final Job job) {
+    Job decorate(final Job job) {
         job.setDescription(jobDescriptionMap.get(job.getName()));
         job.setAdvanced(jobAdvancedSet.contains(job.getName()));
         return job;

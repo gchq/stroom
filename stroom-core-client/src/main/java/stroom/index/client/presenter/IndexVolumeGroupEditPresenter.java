@@ -19,6 +19,7 @@ package stroom.index.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolume;
@@ -32,7 +33,7 @@ import stroom.query.api.v2.ExpressionUtil;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DelayedUpdate;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -116,10 +117,12 @@ public class IndexVolumeGroupEditPresenter
                                             .onSuccess(response -> delayedUpdate.update())
                                             .onFailure(throwable -> {
                                             })
+                                            .taskListener(this)
                                             .exec()
                             ),
                     throwable -> {
-                    });
+                    },
+                    volumeStatusListPresenter.getTaskListener());
 
         }));
     }
@@ -136,6 +139,7 @@ public class IndexVolumeGroupEditPresenter
                     .create(INDEX_VOLUME_RESOURCE)
                     .method(res -> res.fetch(volume.getId()))
                     .onSuccess(result -> editVolume(result, "Edit Volume"))
+                    .taskListener(volumeStatusListPresenter.getTaskListener())
                     .exec();
         }
     }
@@ -146,8 +150,7 @@ public class IndexVolumeGroupEditPresenter
             if (result != null) {
                 volumeStatusListPresenter.refresh();
             }
-            editor.hide();
-        });
+        }, volumeStatusListPresenter.getTaskListener());
     }
 
     private void delete() {
@@ -166,6 +169,7 @@ public class IndexVolumeGroupEditPresenter
                                         .create(INDEX_VOLUME_RESOURCE)
                                         .method(res -> res.delete(volume.getId()))
                                         .onSuccess(response -> volumeStatusListPresenter.refresh())
+                                        .taskListener(this)
                                         .exec();
                             }
                         }
@@ -179,7 +183,9 @@ public class IndexVolumeGroupEditPresenter
         deleteButton.setEnabled(enabled);
     }
 
-    void show(final IndexVolumeGroup volumeGroup, final String title, final Consumer<IndexVolumeGroup> consumer) {
+    void show(final IndexVolumeGroup volumeGroup,
+              final String title,
+              final Consumer<IndexVolumeGroup> consumer) {
         if (!opening) {
             opening = true;
             final ExpressionOperator expression = ExpressionUtil.equalsId(IndexVolumeFields.GROUP_ID,
@@ -203,27 +209,31 @@ public class IndexVolumeGroupEditPresenter
             this.volumeGroup = volumeGroup;
             getView().setName(volumeGroup.getName());
 
-            final PopupSize popupSize = PopupSize.resizable(1000, 600);
+            final PopupSize popupSize = PopupSize.resizable(1400, 600);
             ShowPopupEvent.builder(this)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
                     .popupSize(popupSize)
                     .caption(title)
                     .onShow(e -> getView().focus())
-                    .onHideRequest(event -> {
-                        if (event.isOk()) {
+                    .onHideRequest(e -> {
+                        if (e.isOk()) {
                             volumeGroup.setName(getView().getName());
                             try {
                                 doWithGroupNameValidation(getView().getName(), volumeGroup.getId(), () ->
-                                        createVolumeGroup(consumer, volumeGroup));
-                            } catch (final RuntimeException e) {
+                                        createVolumeGroup(consumer, volumeGroup, e), e);
+                            } catch (final RuntimeException ex) {
                                 AlertEvent.fireError(
                                         IndexVolumeGroupEditPresenter.this,
-                                        e.getMessage(),
-                                        null);
+                                        ex.getMessage(),
+                                        e::reset);
                             }
                         } else {
-                            consumer.accept(null);
+                            e.hide();
                         }
+                    })
+                    .onHide(e -> {
+                        open = false;
+                        opening = false;
                     })
                     .fire();
         }
@@ -231,12 +241,13 @@ public class IndexVolumeGroupEditPresenter
 
     private void doWithGroupNameValidation(final String groupName,
                                            final Integer groupId,
-                                           final Runnable work) {
+                                           final Runnable work,
+                                           final HidePopupRequestEvent event) {
         if (groupName == null || groupName.isEmpty()) {
             AlertEvent.fireError(
                     IndexVolumeGroupEditPresenter.this,
                     "You must provide a name for the index volume group.",
-                    null);
+                    event::reset);
         } else {
             restFactory
                     .create(INDEX_VOLUME_GROUP_RESOURCE)
@@ -248,28 +259,30 @@ public class IndexVolumeGroupEditPresenter
                                     "Group name '"
                                             + groupName
                                             + "' is already in use by another group.",
-                                    null);
+                                    event::reset);
                         } else {
                             work.run();
                         }
                     })
+                    .onFailure(RestErrorHandler.forPopup(this, event))
+                    .taskListener(this)
                     .exec();
         }
     }
 
     private void createVolumeGroup(final Consumer<IndexVolumeGroup> consumer,
-                                   final IndexVolumeGroup volumeGroup) {
+                                   final IndexVolumeGroup volumeGroup,
+                                   final HidePopupRequestEvent event) {
         restFactory
                 .create(INDEX_VOLUME_GROUP_RESOURCE)
                 .method(res -> res.update(volumeGroup.getId(), volumeGroup))
-                .onSuccess(consumer)
+                .onSuccess(r -> {
+                    consumer.accept(r);
+                    event.hide();
+                })
+                .onFailure(RestErrorHandler.forPopup(this, event))
+                .taskListener(this)
                 .exec();
-    }
-
-    void hide() {
-        HidePopupEvent.builder(this).fire();
-        open = false;
-        opening = false;
     }
 
     public interface IndexVolumeGroupEditView extends View, Focus {

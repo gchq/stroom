@@ -1,14 +1,11 @@
 package stroom.analytics.impl;
 
-import stroom.analytics.api.NotificationState;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.search.extraction.FieldValueExtractor;
 import stroom.search.extraction.MemoryIndex;
 import stroom.search.extraction.ProcessLifecycleAware;
-
-import java.util.List;
 
 public class StreamingAnalyticFieldListConsumer extends AbstractAnalyticFieldListConsumer {
 

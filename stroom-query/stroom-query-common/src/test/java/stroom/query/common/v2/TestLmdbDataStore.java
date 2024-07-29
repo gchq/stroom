@@ -17,7 +17,6 @@
 package stroom.query.common.v2;
 
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
-import stroom.expression.api.ExpressionContext;
 import stroom.lmdb.LmdbLibrary;
 import stroom.lmdb.LmdbLibraryConfig;
 import stroom.lmdb2.LmdbEnv;
@@ -36,6 +35,7 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValLong;

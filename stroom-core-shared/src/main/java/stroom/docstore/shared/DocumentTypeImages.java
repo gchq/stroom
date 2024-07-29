@@ -1,5 +1,7 @@
 package stroom.docstore.shared;
 
+import stroom.state.shared.ScyllaDbDoc;
+import stroom.state.shared.StateDoc;
 import stroom.svg.shared.SvgImage;
 
 public class DocumentTypeImages {
@@ -42,10 +44,14 @@ public class DocumentTypeImages {
                 return SvgImage.DOCUMENT_SCRIPT;
 //            case "searchable":
 //                return SvgImage.DOCUMENT_searchable;
+            case ScyllaDbDoc.DOCUMENT_TYPE:
+                return SvgImage.DOCUMENT_SCYLLA_DB;
             case "SelectAllOrNone":
                 return SvgImage.DOCUMENT_SELECT_ALL_OR_NONE;
             case "SolrIndex":
                 return SvgImage.DOCUMENT_SOLR_INDEX;
+            case StateDoc.DOCUMENT_TYPE:
+                return SvgImage.DOCUMENT_STATE_STORE;
             case "StatisticStore":
                 return SvgImage.DOCUMENT_STATISTIC_STORE;
             case "StroomStatsStore":

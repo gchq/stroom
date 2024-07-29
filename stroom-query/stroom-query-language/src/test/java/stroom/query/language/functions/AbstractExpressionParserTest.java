@@ -1,6 +1,5 @@
 package stroom.query.language.functions;
 
-import stroom.expression.api.ExpressionContext;
 import stroom.query.language.functions.ref.KryoDataReader;
 import stroom.query.language.functions.ref.KryoDataWriter;
 import stroom.query.language.functions.ref.StoredValues;

@@ -22,6 +22,8 @@ import stroom.query.client.presenter.TextUiHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.FabButton;
 import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.spinner.client.SpinnerLarge;
+import stroom.widget.spinner.client.SpinnerSmall;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -45,6 +47,8 @@ public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements 
     ClassificationLabel classification;
     @UiField
     FabButton steppingButton;
+    @UiField
+    SpinnerLarge spinner;
 
     @Inject
     public TextViewImpl(final Binder binder, final ClassificationLabel classification) {
@@ -57,6 +61,7 @@ public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements 
         close.setEnabled(true);
 
         widget = binder.createAndBindUi(this);
+        spinner.setVisible(false);
         steppingButton.setIcon(SvgImage.STEPPING);
     }
 
@@ -78,6 +83,16 @@ public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements 
     @Override
     public void setSteppingVisible(final boolean visible) {
         steppingButton.setVisible(visible);
+    }
+
+    @Override
+    public void incrementTaskCount() {
+        spinner.incrementTaskCount();
+    }
+
+    @Override
+    public void decrementTaskCount() {
+        spinner.decrementTaskCount();
     }
 
     @UiHandler("close")

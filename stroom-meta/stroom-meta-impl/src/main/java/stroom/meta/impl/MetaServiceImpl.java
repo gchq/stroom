@@ -610,7 +610,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
         return ExpressionOperator.builder()
                 .addIdTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, id)
-                .addDateTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTextTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 
@@ -623,7 +623,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
         return ExpressionOperator.builder()
                 .addIdTerm(MetaFields.PARENT_ID, ExpressionTerm.Condition.EQUALS, id)
-                .addDateTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTextTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 

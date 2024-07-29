@@ -26,6 +26,7 @@ import stroom.explorer.impl.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.importexport.impl.ExportConfig;
+import stroom.index.impl.ContentIndexConfig;
 import stroom.index.impl.IndexConfig;
 import stroom.index.impl.IndexFieldDbConfig;
 import stroom.index.impl.selection.VolumeConfig;
@@ -44,6 +45,7 @@ import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
+import stroom.state.impl.StateConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.config.PropertyUtil.Prop;
@@ -921,6 +923,7 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_CLUSTER) final ClusterConfig clusterConfig,
                 @JsonProperty(PROP_NAME_CLUSTER_LOCK) final ClusterLockConfig clusterLockConfig,
                 @JsonProperty(PROP_NAME_COMMON_DB_DETAILS) final CommonDbConfig commonDbConfig,
+                @JsonProperty(PROP_NAME_CONTENT_INDEX) final ContentIndexConfig contentIndexConfig,
                 @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT) final ContentPackImportConfig contentPackImportConfig,
                 @JsonProperty(PROP_NAME_CORE) final LegacyConfig legacyConfig,
                 @JsonProperty(PROP_NAME_DATA) final DataConfig dataConfig,
@@ -948,6 +951,7 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_SERVICE_DISCOVERY) final ServiceDiscoveryConfig serviceDiscoveryConfig,
                 @JsonProperty(PROP_NAME_SESSION_COOKIE) final SessionCookieConfig sessionCookieConfig,
                 @JsonProperty(PROP_NAME_SOLR) final SolrConfig solrConfig,
+                @JsonProperty(PROP_NAME_STATE) final StateConfig stateConfig,
                 @JsonProperty(PROP_NAME_STATISTICS) final StatisticsConfig statisticsConfig,
                 @JsonProperty(PROP_NAME_QUERY_HISTORY) final StoredQueryConfig storedQueryConfig,
                 @JsonProperty(PROP_NAME_PATH) final StroomPathConfig pathConfig,
@@ -978,6 +982,7 @@ class TestConfigMapper {
                     clusterConfig,
                     clusterLockConfig,
                     commonDbConfig,
+                    contentIndexConfig,
                     contentPackImportConfig,
                     legacyConfig,
                     dataConfig,
@@ -1005,6 +1010,7 @@ class TestConfigMapper {
                     serviceDiscoveryConfig,
                     sessionCookieConfig,
                     solrConfig,
+                    stateConfig,
                     statisticsConfig,
                     storedQueryConfig,
                     pathConfig,

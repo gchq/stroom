@@ -157,6 +157,8 @@ public class StroomStatsStoreFieldListPresenter extends DocumentEditPresenter<Pa
                         refresh();
                         e.hide();
                         DirtyEvent.fire(StroomStatsStoreFieldListPresenter.this, true);
+                    } else {
+                        e.reset();
                     }
                 } else {
                     e.hide();
@@ -188,6 +190,8 @@ public class StroomStatsStoreFieldListPresenter extends DocumentEditPresenter<Pa
                             refresh();
                             e.hide();
                             DirtyEvent.fire(StroomStatsStoreFieldListPresenter.this, true);
+                        } else {
+                            e.reset();
                         }
                     } else {
                         e.hide();

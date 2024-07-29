@@ -27,7 +27,7 @@ import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.svg.client.SvgPresets;
@@ -80,7 +80,7 @@ public class DuplicateManagementListPresenter
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<DuplicateCheckRow>> dataConsumer,
-                                final Consumer<RestError> errorConsumer) {
+                                final RestErrorHandler errorHandler) {
                 CriteriaUtil.setRange(criteria, range);
                 if (criteria.getAnalyticDocUuid() != null) {
                     CriteriaUtil.setRange(criteria, range);
@@ -91,6 +91,8 @@ public class DuplicateManagementListPresenter
                                 updateColumns(result.getColumnNames());
                                 dataConsumer.accept(result.getResultPage());
                             })
+                            .onFailure(errorHandler)
+                            .taskListener(getView())
                             .exec();
                 }
             }
@@ -176,6 +178,7 @@ public class DuplicateManagementListPresenter
                                     .create(DUPLICATE_CHECK_RESOURCE)
                                     .method(res -> res.delete(request))
                                     .onSuccess(r -> refresh())
+                                    .taskListener(getView())
                                     .exec();
                         }
                     });

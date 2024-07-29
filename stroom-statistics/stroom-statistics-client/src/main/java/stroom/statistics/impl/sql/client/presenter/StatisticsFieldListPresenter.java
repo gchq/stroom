@@ -154,6 +154,8 @@ public class StatisticsFieldListPresenter extends DocumentEditPresenter<PagerVie
                         refresh();
                         e.hide();
                         DirtyEvent.fire(StatisticsFieldListPresenter.this, true);
+                    } else {
+                        e.reset();
                     }
                 } else {
                     e.hide();
@@ -184,6 +186,8 @@ public class StatisticsFieldListPresenter extends DocumentEditPresenter<PagerVie
                             refresh();
                             e.hide();
                             DirtyEvent.fire(StatisticsFieldListPresenter.this, true);
+                        } else {
+                            e.reset();
                         }
                     } else {
                         e.hide();

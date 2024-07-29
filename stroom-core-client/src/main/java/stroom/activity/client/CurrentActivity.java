@@ -19,6 +19,7 @@ package stroom.activity.client;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityResource;
 import stroom.dispatch.client.RestFactory;
+import stroom.task.client.TaskListener;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -51,7 +52,7 @@ public class CurrentActivity implements HasHandlers {
         this.restFactory = restFactory;
     }
 
-    public void getActivity(final Consumer<Activity> consumer) {
+    public void getActivity(final Consumer<Activity> consumer, final TaskListener taskListener) {
         if (fetched) {
             consumer.accept(currentActivity);
         } else {
@@ -63,11 +64,12 @@ public class CurrentActivity implements HasHandlers {
                         fetched = true;
                         consumer.accept(a);
                     })
+                    .taskListener(taskListener)
                     .exec();
         }
     }
 
-    public void setActivity(final Activity activity) {
+    public void setActivity(final Activity activity, final TaskListener taskListener) {
         restFactory
                 .create(ACTIVITY_RESOURCE)
                 .method(res -> res.setCurrentActivity(activity))
@@ -76,6 +78,7 @@ public class CurrentActivity implements HasHandlers {
                     fetched = true;
                     ActivityChangedEvent.fire(this, a);
                 })
+                .taskListener(taskListener)
                 .exec();
     }
 

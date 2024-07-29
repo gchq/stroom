@@ -30,7 +30,7 @@ public interface DataSourceProvider {
 
     ResultPage<QueryField> getFieldInfo(FindFieldCriteria criteria);
 
-    Optional<String> fetchDocumentation(DocRef dataSourceRef);
+    Optional<String> fetchDocumentation(DocRef docRef);
 
-    DocRef fetchDefaultExtractionPipeline(DocRef dataSourceRef);
+    DocRef fetchDefaultExtractionPipeline(DocRef docRef);
 }

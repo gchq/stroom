@@ -19,7 +19,7 @@ package stroom.task.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeManager;
-import stroom.task.client.event.OpenTaskManagerEvent;
+import stroom.task.client.event.OpenUserTaskManagerEvent;
 import stroom.task.client.event.OpenUserTaskManagerHandler;
 import stroom.task.client.presenter.UserTaskManagerPresenter.UserTaskManagerProxy;
 import stroom.task.client.presenter.UserTaskManagerPresenter.UserTaskManagerView;
@@ -41,7 +41,7 @@ import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.Presenter;
+import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
@@ -54,7 +54,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class UserTaskManagerPresenter
-        extends Presenter<UserTaskManagerView, UserTaskManagerProxy>
+        extends MyPresenter<UserTaskManagerView, UserTaskManagerProxy>
         implements OpenUserTaskManagerHandler, UserTaskUiHandlers {
 
     private static final TaskResource TASK_RESOURCE = GWT.create(TaskResource.class);
@@ -74,7 +74,6 @@ public class UserTaskManagerPresenter
 
     private final TaskManagerTreeAction treeAction = new TaskManagerTreeAction();
     private final DelayedUpdate delayedUpdate = new DelayedUpdate(this::update);
-
 
     @Inject
     public UserTaskManagerPresenter(final EventBus eventBus,
@@ -101,7 +100,7 @@ public class UserTaskManagerPresenter
 
     @ProxyEvent
     @Override
-    public void onOpen(final OpenTaskManagerEvent event) {
+    public void onOpen(final OpenUserTaskManagerEvent event) {
         setData(null);
         refreshTimer.scheduleRepeating(1000);
         refreshing.clear();
@@ -126,7 +125,8 @@ public class UserTaskManagerPresenter
         nodeManager.listAllNodes(
                 this::refresh,
                 throwable -> {
-                });
+                },
+                this);
     }
 
     private void refresh(final List<String> nodeNames) {
@@ -147,6 +147,7 @@ public class UserTaskManagerPresenter
                             delayedUpdate.update();
                             refreshing.remove(nodeName);
                         })
+                        .taskListener(this)
                         .exec();
             }
         }
@@ -216,6 +217,7 @@ public class UserTaskManagerPresenter
             restFactory
                     .create(TASK_RESOURCE)
                     .method(res -> res.terminate(taskProgress.getNodeName(), request))
+                    .taskListener(this)
                     .exec();
         });
     }

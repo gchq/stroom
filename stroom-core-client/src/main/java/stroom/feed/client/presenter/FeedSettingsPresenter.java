@@ -39,11 +39,13 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
-public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsView, FeedDoc> {
+public class FeedSettingsPresenter
+        extends DocumentEditPresenter<FeedSettingsView, FeedDoc> {
 
     private static final FeedResource FEED_RESOURCE = GWT.create(FeedResource.class);
     private static final FsVolumeGroupResource VOLUME_GROUP_RESOURCE = GWT.create(FsVolumeGroupResource.class);
 
+    private final DataTypeUiManager dataTypeUiManager;
     private final RestFactory restFactory;
 
     @Inject
@@ -52,29 +54,24 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
                                  final DataTypeUiManager dataTypeUiManager,
                                  final RestFactory restFactory) {
         super(eventBus, view);
+        this.dataTypeUiManager = dataTypeUiManager;
         this.restFactory = restFactory;
 
         updateEncodings();
         updateVolumeGroups();
-
+        updateTypes();
         view.getFeedStatus().addItems(FeedStatus.values());
-        dataTypeUiManager.getTypes(list -> {
-            view.getReceivedType().clear();
-            if (list != null && !list.isEmpty()) {
-                view.getReceivedType().addItems(list);
-                final FeedDoc feed = getEntity();
-                if (feed != null) {
-                    view.getReceivedType().setValue(feed.getStreamType());
-                }
-            }
-        });
+    }
 
+    @Override
+    protected void onBind() {
+        super.onBind();
         // Add listeners for dirty events.
         final ValueChangeHandler<Boolean> checkHandler = event -> setDirty(true);
-        registerHandler(view.getClassification().addValueChangeHandler(e -> setDirty(true)));
-        registerHandler(view.getReference().addValueChangeHandler(checkHandler));
-        registerHandler(view.getDataEncoding().addValueChangeHandler(event -> {
-            final String dataEncoding = ensureEncoding(view.getDataEncoding().getValue());
+        registerHandler(getView().getClassification().addValueChangeHandler(e -> setDirty(true)));
+        registerHandler(getView().getReference().addValueChangeHandler(checkHandler));
+        registerHandler(getView().getDataEncoding().addValueChangeHandler(event -> {
+            final String dataEncoding = ensureEncoding(getView().getDataEncoding().getValue());
             getView().getDataEncoding().setValue(dataEncoding);
 
             if (!EqualsUtil.isEquals(dataEncoding, getEntity().getEncoding())) {
@@ -82,8 +79,8 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
                 setDirty(true);
             }
         }));
-        registerHandler(view.getContextEncoding().addValueChangeHandler(event -> {
-            final String contextEncoding = ensureEncoding(view.getContextEncoding().getValue());
+        registerHandler(getView().getContextEncoding().addValueChangeHandler(event -> {
+            final String contextEncoding = ensureEncoding(getView().getContextEncoding().getValue());
             getView().getContextEncoding().setValue(contextEncoding);
 
             if (!EqualsUtil.isEquals(contextEncoding, getEntity().getContextEncoding())) {
@@ -91,9 +88,9 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
                 getEntity().setContextEncoding(contextEncoding);
             }
         }));
-        registerHandler(view.getFeedStatus().addValueChangeHandler(event -> setDirty(true)));
-        registerHandler(view.getReceivedType().addValueChangeHandler(event -> {
-            final String streamType = view.getReceivedType().getValue();
+        registerHandler(getView().getFeedStatus().addValueChangeHandler(event -> setDirty(true)));
+        registerHandler(getView().getReceivedType().addValueChangeHandler(event -> {
+            final String streamType = getView().getReceivedType().getValue();
             getView().getReceivedType().setValue(streamType);
 
             if (!EqualsUtil.isEquals(streamType, getEntity().getStreamType())) {
@@ -101,8 +98,8 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
                 getEntity().setStreamType(streamType);
             }
         }));
-        registerHandler(view.getVolumeGroup().addValueChangeHandler(event -> {
-            final String volumeGroup = view.getVolumeGroup().getValue();
+        registerHandler(getView().getVolumeGroup().addValueChangeHandler(event -> {
+            final String volumeGroup = getView().getVolumeGroup().getValue();
             if (!EqualsUtil.isEquals(volumeGroup, getEntity().getVolumeGroup())) {
                 setDirty(true);
                 getEntity().setVolumeGroup(volumeGroup);
@@ -131,6 +128,7 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
                         getView().getContextEncoding().setValue(ensureEncoding(feed.getContextEncoding()));
                     }
                 })
+                .taskListener(this)
                 .exec();
     }
 
@@ -152,7 +150,21 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
                         getView().getVolumeGroup().setValue(feed.getVolumeGroup());
                     }
                 })
+                .taskListener(this)
                 .exec();
+    }
+
+    private void updateTypes() {
+        dataTypeUiManager.getTypes(list -> {
+            getView().getReceivedType().clear();
+            if (list != null && !list.isEmpty()) {
+                getView().getReceivedType().addItems(list);
+                final FeedDoc feed = getEntity();
+                if (feed != null) {
+                    getView().getReceivedType().setValue(feed.getStreamType());
+                }
+            }
+        }, this);
     }
 
     @Override

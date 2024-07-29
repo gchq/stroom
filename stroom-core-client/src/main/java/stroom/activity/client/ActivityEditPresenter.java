@@ -23,10 +23,11 @@ import stroom.activity.shared.Activity.Prop;
 import stroom.activity.shared.ActivityResource;
 import stroom.activity.shared.ActivityValidationResult;
 import stroom.alert.client.event.AlertEvent;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -48,15 +49,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
+public class ActivityEditPresenter
+        extends MyPresenterWidget<ActivityEditView> {
 
     private static final ActivityResource ACTIVITY_RESOURCE = GWT.create(ActivityResource.class);
 
     private final RestFactory restFactory;
-
-    private boolean activityRecordingEnabled;
-    private String activityEditorTitle;
-    private String activityEditorBody;
+    private final UiConfigCache uiConfigCache;
 
     private Activity activity;
 
@@ -67,45 +66,41 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
                                  final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         this.restFactory = restFactory;
-
-        uiConfigCache.get()
-                .onSuccess(result -> {
-                    final ActivityConfig activityConfig = result.getActivity();
-                    activityRecordingEnabled = activityConfig.isEnabled();
-                    activityEditorTitle = activityConfig.getEditorTitle();
-                    activityEditorBody = activityConfig.getEditorBody();
-                })
-                .onFailure(caught ->
-                        AlertEvent.fireError(ActivityEditPresenter.this, caught.getMessage(), null));
+        this.uiConfigCache = uiConfigCache;
     }
 
-    public void show(final Activity activity, final Consumer<Activity> consumer) {
+    public void show(final Activity activity,
+                     final Consumer<Activity> consumer) {
         this.activity = activity;
-        if (activityRecordingEnabled) {
-            getView().getHtml().setHTML(activityEditorBody);
+        uiConfigCache.get(result -> {
+            if (result != null) {
+                final ActivityConfig activityConfig = result.getActivity();
+                final boolean activityRecordingEnabled = activityConfig.isEnabled();
+                final String activityEditorTitle = activityConfig.getEditorTitle();
+                final String activityEditorBody = activityConfig.getEditorBody();
 
-            final PopupSize popupSize = PopupSize.resizable(640, 480);
-            ShowPopupEvent.builder(this)
-                    .popupType(PopupType.OK_CANCEL_DIALOG)
-                    .popupSize(popupSize)
-                    .caption(activityEditorTitle)
-                    .modal(true)
-                    .onShow(e -> read())
-                    .onHideRequest(e -> {
-                        if (e.isOk()) {
-                            write(consumer);
-                        } else {
-                            consumer.accept(activity);
-                            e.hide();
-                        }
-                    })
-                    .fire();
-        }
-    }
+                if (activityRecordingEnabled) {
+                    getView().getHtml().setHTML(activityEditorBody);
 
-    private void hide() {
-        HidePopupEvent.builder(this)
-                .fire();
+                    final PopupSize popupSize = PopupSize.resizable(640, 480);
+                    ShowPopupEvent.builder(this)
+                            .popupType(PopupType.OK_CANCEL_DIALOG)
+                            .popupSize(popupSize)
+                            .caption(activityEditorTitle)
+                            .modal(true)
+                            .onShow(e -> read())
+                            .onHideRequest(e -> {
+                                if (e.isOk()) {
+                                    write(consumer, e);
+                                } else {
+                                    consumer.accept(activity);
+                                    e.hide();
+                                }
+                            })
+                            .fire();
+                }
+            }
+        }, this);
     }
 
     protected void read() {
@@ -131,7 +126,7 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
                     if ("checkbox".equalsIgnoreCase(inputElement.getType())
                             || "radio".equalsIgnoreCase(inputElement.getType())) {
                         try {
-                            inputElement.setChecked(Boolean.valueOf(value));
+                            inputElement.setChecked(Boolean.parseBoolean(value));
                         } catch (final RuntimeException e) {
                             // Ignore.
                         }
@@ -182,7 +177,8 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
         }
     }
 
-    protected void write(final Consumer<Activity> consumer) {
+    protected void write(final Consumer<Activity> consumer,
+                         final HidePopupRequestEvent event) {
         final List<Element> inputElements = new ArrayList<>();
         findInputElements(getView().getHtml().getElement().getChildNodes(), inputElements);
 
@@ -216,19 +212,22 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
         restFactory
                 .create(ACTIVITY_RESOURCE)
                 .method(res -> res.validate(activity))
-                .onSuccess(result -> afterValidation(result, details, consumer))
+                .onSuccess(result -> afterValidation(result, details, consumer, event))
+                .onFailure(RestErrorHandler.forPopup(this, event))
+                .taskListener(this)
                 .exec();
     }
 
     private void afterValidation(final ActivityValidationResult validationResult,
                                  final ActivityDetails details,
-                                 final Consumer<Activity> consumer) {
+                                 final Consumer<Activity> consumer,
+                                 final HidePopupRequestEvent event) {
         if (!validationResult.isValid()) {
             AlertEvent.fireWarn(
                     ActivityEditPresenter.this,
                     "Validation Error",
                     validationResult.getMessages(),
-                    null);
+                    event::reset);
 
         } else {
             // Save the activity.
@@ -240,24 +239,31 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
                             activity = result;
                             activity.setDetails(details);
 
-                            update(activity, details, consumer);
+                            update(activity, details, consumer, event);
                         })
+                        .onFailure(RestErrorHandler.forPopup(this, event))
+                        .taskListener(this)
                         .exec();
             } else {
-                update(activity, details, consumer);
+                update(activity, details, consumer, event);
             }
         }
     }
 
-    private void update(final Activity activity, final ActivityDetails details, final Consumer<Activity> consumer) {
+    private void update(final Activity activity,
+                        final ActivityDetails details,
+                        final Consumer<Activity> consumer,
+                        final HidePopupRequestEvent event) {
         restFactory
                 .create(ACTIVITY_RESOURCE)
                 .method(res -> res.update(activity.getId(), activity))
                 .onSuccess(result -> {
                     ActivityEditPresenter.this.activity = result;
                     consumer.accept(result);
-                    hide();
+                    event.hide();
                 })
+                .onFailure(RestErrorHandler.forPopup(this, event))
+                .taskListener(this)
                 .exec();
     }
 

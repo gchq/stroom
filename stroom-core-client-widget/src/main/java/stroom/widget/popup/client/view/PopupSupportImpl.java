@@ -16,6 +16,8 @@
 
 package stroom.widget.popup.client.view;
 
+import stroom.svg.shared.SvgImage;
+import stroom.task.client.HasTaskListener;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -24,7 +26,6 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupSupport;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.popup.client.presenter.Size;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
@@ -37,20 +38,27 @@ import java.util.List;
 public class PopupSupportImpl implements PopupSupport {
 
     private Popup popup;
+    private SvgImage icon;
     private String caption;
     private Boolean modal;
 
     private View view;
+    private HasTaskListener hasTaskListener;
     private HidePopupRequestEvent.Handler hideRequestHandler;
     private HidePopupEvent.Handler hideHandler;
     private List<Element> autoHidePartners;
     private DialogButtons dialogButtons;
+    private DialogActionUiHandlers dialogActionHandler;
 
     public PopupSupportImpl(final View view,
+                            final HasTaskListener hasTaskListener,
+                            final SvgImage icon,
                             final String caption,
                             final Boolean modal,
                             final Element... autoHidePartners) {
         setView(view);
+        setHasTaskListener(hasTaskListener);
+        setIcon(icon);
         setCaption(caption);
 
         if (modal != null) {
@@ -69,10 +77,6 @@ public class PopupSupportImpl implements PopupSupport {
             autoHidePartners = new ArrayList<>();
         }
         autoHidePartners.add(element);
-    }
-
-    public List<Element> getAutoHidePartners() {
-        return autoHidePartners;
     }
 
     @Override
@@ -178,21 +182,21 @@ public class PopupSupportImpl implements PopupSupport {
         return id;
     }
 
-    private int getSize(final int current, Size size) {
-        int newSize = current;
-        if (size != null) {
-            if (size.getInitial() == null) {
-                size.setInitial(current);
-            }
-
-            if (size.getMin() == null) {
-                size.setMin(Math.min(current, size.getInitial()));
-            }
-
-            newSize = Math.max(size.getMin(), size.getInitial());
-        }
-        return newSize;
-    }
+//    private int getSize(final int current, Size size) {
+//        int newSize = current;
+//        if (size != null) {
+//            if (size.getInitial() == null) {
+//                size.setInitial(current);
+//            }
+//
+//            if (size.getMin() == null) {
+//                size.setMin(Math.min(current, size.getInitial()));
+//            }
+//
+//            newSize = Math.max(size.getMin(), size.getInitial());
+//        }
+//        return newSize;
+//    }
 
     @Override
     public void hideRequest(final HidePopupRequestEvent event) {
@@ -223,6 +227,14 @@ public class PopupSupportImpl implements PopupSupport {
     }
 
     @Override
+    public void setIcon(final SvgImage icon) {
+        this.icon = icon;
+        if (popup != null) {
+            popup.setIcon(icon);
+        }
+    }
+
+    @Override
     public void setCaption(final String caption) {
         this.caption = caption;
         if (popup != null) {
@@ -239,73 +251,122 @@ public class PopupSupportImpl implements PopupSupport {
                               final HideRequestUiHandlers uiHandlers) {
         Popup popup = null;
 
+        dialogActionHandler = action -> uiHandlers.hideRequest(
+                new HideRequest(action, null));
+
         if (popupSize != null) {
             switch (popupType) {
-                case POPUP:
-                    popup = new SimplePopup(uiHandlers);
+                case POPUP: {
+                    popup = new SimplePopup(dialogActionHandler);
                     popup.setContent(view.asWidget());
                     break;
-                case DIALOG:
-                    popup = new ResizableDialog(uiHandlers, popupSize, popupType);
-                    popup.setContent(view.asWidget());
+                }
+                case DIALOG: {
+                    final ResizableDialog resizableDialog = new ResizableDialog(dialogActionHandler, popupSize);
+                    hasTaskListener.setTaskListener(resizableDialog);
+                    resizableDialog.setContent(view.asWidget());
+                    popup = resizableDialog;
+
                     break;
-                case CLOSE_DIALOG:
-                    popup = new ResizableDialog(uiHandlers, popupSize, popupType);
+                }
+                case CLOSE_DIALOG: {
                     final ResizableCloseContent closeContent = new ResizableCloseContent(uiHandlers);
-                    dialogButtons = closeContent;
                     closeContent.setContent(view.asWidget());
-                    popup.setContent(closeContent);
+                    dialogButtons = closeContent;
+                    dialogActionHandler = closeContent;
+
+                    final ResizableDialog resizableDialog = new ResizableDialog(closeContent, popupSize);
+                    hasTaskListener.setTaskListener(resizableDialog);
+                    resizableDialog.setContent(closeContent);
+                    popup = resizableDialog;
+
                     break;
-                case OK_CANCEL_DIALOG:
-                    popup = new ResizableDialog(uiHandlers, popupSize, popupType);
+                }
+                case OK_CANCEL_DIALOG: {
                     final ResizableOkCancelContent okCancelContent = new ResizableOkCancelContent(uiHandlers);
-                    dialogButtons = okCancelContent;
                     okCancelContent.setContent(view.asWidget());
-                    popup.setContent(okCancelContent);
+                    dialogActionHandler = okCancelContent;
+                    dialogButtons = okCancelContent;
+
+                    final ResizableDialog resizableDialog = new ResizableDialog(okCancelContent, popupSize);
+                    hasTaskListener.setTaskListener(resizableDialog);
+                    resizableDialog.setContent(okCancelContent);
+                    popup = resizableDialog;
+
                     break;
-                case ACCEPT_REJECT_DIALOG:
-                    popup = new ResizableDialog(uiHandlers, popupSize, popupType);
+                }
+                case ACCEPT_REJECT_DIALOG: {
                     final ResizableAcceptRejectContent acceptRejectContent = new ResizableAcceptRejectContent(
                             uiHandlers);
-                    dialogButtons = acceptRejectContent;
                     acceptRejectContent.setContent(view.asWidget());
-                    popup.setContent(acceptRejectContent);
+                    dialogActionHandler = acceptRejectContent;
+                    dialogButtons = acceptRejectContent;
+
+                    final ResizableDialog resizableDialog = new ResizableDialog(acceptRejectContent, popupSize);
+                    hasTaskListener.setTaskListener(resizableDialog);
+                    resizableDialog.setContent(acceptRejectContent);
+                    popup = resizableDialog;
+
                     break;
+                }
             }
         } else {
             switch (popupType) {
-                case POPUP:
-                    popup = new SimplePopup(uiHandlers);
+                case POPUP: {
+                    popup = new SimplePopup(dialogActionHandler);
                     popup.setContent(view.asWidget());
                     break;
-                case DIALOG:
-                    popup = new Dialog(uiHandlers, popupType);
+                }
+                case DIALOG: {
+                    popup = new Dialog(dialogActionHandler);
                     popup.setContent(view.asWidget());
                     break;
-                case CLOSE_DIALOG:
-                    popup = new Dialog(uiHandlers, popupType);
+                }
+                case CLOSE_DIALOG: {
                     final CloseContent closeContent = new CloseContent(uiHandlers);
-                    dialogButtons = closeContent;
                     closeContent.setContent(view.asWidget());
-                    popup.setContent(closeContent);
+                    dialogActionHandler = closeContent;
+                    dialogButtons = closeContent;
+
+                    final Dialog dialog = new Dialog(closeContent);
+                    hasTaskListener.setTaskListener(dialog);
+                    dialog.setContent(closeContent);
+                    popup = dialog;
+
                     break;
-                case OK_CANCEL_DIALOG:
-                    popup = new Dialog(uiHandlers, popupType);
+                }
+                case OK_CANCEL_DIALOG: {
                     final OkCancelContent okCancelContent = new OkCancelContent(uiHandlers);
-                    dialogButtons = okCancelContent;
                     okCancelContent.setContent(view.asWidget());
-                    popup.setContent(okCancelContent);
+                    dialogActionHandler = okCancelContent;
+                    dialogButtons = okCancelContent;
+
+                    final Dialog dialog = new Dialog(okCancelContent);
+                    hasTaskListener.setTaskListener(dialog);
+                    dialog.setContent(okCancelContent);
+                    popup = dialog;
+
                     break;
-                case ACCEPT_REJECT_DIALOG:
-                    popup = new Dialog(uiHandlers, popupType);
+                }
+                case ACCEPT_REJECT_DIALOG: {
                     final AcceptRejectContent acceptRejectContent = new AcceptRejectContent(uiHandlers);
-                    dialogButtons = acceptRejectContent;
                     acceptRejectContent.setContent(view.asWidget());
-                    popup.setContent(acceptRejectContent);
+                    dialogActionHandler = acceptRejectContent;
+                    dialogButtons = acceptRejectContent;
+
+                    final Dialog dialog = new Dialog(acceptRejectContent);
+                    hasTaskListener.setTaskListener(dialog);
+                    dialog.setContent(acceptRejectContent);
+                    popup = dialog;
+
                     break;
+                }
             }
         }
 
+        if (icon != null) {
+            popup.setIcon(icon);
+        }
         if (caption != null) {
             popup.setCaption(caption);
         }
@@ -315,5 +376,16 @@ public class PopupSupportImpl implements PopupSupport {
 
     private void setView(final View view) {
         this.view = view;
+    }
+
+    private void setHasTaskListener(final HasTaskListener hasTaskListener) {
+        this.hasTaskListener = hasTaskListener;
+    }
+
+    @Override
+    public void onDialogAction(final DialogAction action) {
+        if (dialogActionHandler != null) {
+            dialogActionHandler.onDialogAction(action);
+        }
     }
 }

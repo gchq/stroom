@@ -39,8 +39,9 @@ import com.gwtplatform.mvp.client.View;
 import java.util.ArrayList;
 import java.util.List;
 
-public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresenter.QueryHistoryView> implements
-        HidePopupRequestEvent.Handler {
+public class QueryHistoryPresenter
+        extends MyPresenterWidget<QueryHistoryPresenter.QueryHistoryView>
+        implements HidePopupRequestEvent.Handler {
 
     private static final StoredQueryResource STORED_QUERY_RESOURCE = GWT.create(StoredQueryResource.class);
 
@@ -141,6 +142,7 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
                                 .fire();
                     }
                 })
+                .taskListener(this)
                 .exec();
     }
 

@@ -443,7 +443,7 @@ public class ProcessorFilterImportExportHandlerImpl
     public Set<DocRef> getDependencies(final DocRef docRef) {
         final DependencyRemapper dependencyRemapper = new DependencyRemapper();
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addDateTerm(ProcessorFilterFields.UUID, ExpressionTerm.Condition.EQUALS, docRef.getUuid()).build();
+                .addTextTerm(ProcessorFilterFields.UUID, ExpressionTerm.Condition.EQUALS, docRef.getUuid()).build();
         final ExpressionCriteria criteria = new ExpressionCriteria(expression);
         final ResultPage<ProcessorFilter> page = processorFilterService.find(criteria);
         if (page != null && page.getValues() != null) {

@@ -18,7 +18,7 @@
 package stroom.search.elastic.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -29,6 +29,7 @@ import stroom.search.elastic.client.presenter.ElasticIndexPresenter;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexResource;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.task.client.TaskListener;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -68,12 +69,14 @@ public class ElasticIndexPlugin extends DocumentPlugin<ElasticIndexDoc> {
     @Override
     public void load(final DocRef docRef,
                      final Consumer<ElasticIndexDoc> resultConsumer,
-                     final Consumer<RestError> errorConsumer) {
+                     final RestErrorHandler errorHandler,
+                     final TaskListener taskListener) {
         restFactory
                 .create(ELASTIC_INDEX_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
+                .onFailure(errorHandler)
+                .taskListener(taskListener)
                 .exec();
     }
 
@@ -81,12 +84,14 @@ public class ElasticIndexPlugin extends DocumentPlugin<ElasticIndexDoc> {
     public void save(final DocRef docRef,
                      final ElasticIndexDoc document,
                      final Consumer<ElasticIndexDoc> resultConsumer,
-                     final Consumer<RestError> errorConsumer) {
+                     final RestErrorHandler errorHandler,
+                     final TaskListener taskListener) {
         restFactory
                 .create(ELASTIC_INDEX_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
+                .onFailure(errorHandler)
+                .taskListener(taskListener)
                 .exec();
     }
 

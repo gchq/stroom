@@ -36,6 +36,9 @@ import stroom.monitoring.client.DatabaseTablesMonitoringPlugin;
 import stroom.monitoring.client.JobListPlugin;
 import stroom.monitoring.client.NodeMonitoringPlugin;
 import stroom.node.client.ManageGlobalPropertiesPlugin;
+import stroom.node.client.presenter.NodePresenter;
+import stroom.node.client.presenter.NodePresenter.NodeView;
+import stroom.node.client.view.NodeViewImpl;
 import stroom.schedule.client.SchedulePopup;
 import stroom.schedule.client.SchedulePopup.ScheduleView;
 import stroom.schedule.client.ScheduleViewImpl;
@@ -69,6 +72,11 @@ public class MonitoringModule extends PluginModule {
 
         // Node management.
         bindPlugin(NodeMonitoringPlugin.class);
+
+        bindPresenterWidget(
+                NodePresenter.class,
+                NodeView.class,
+                NodeViewImpl.class);
 
         bindPlugin(ManageFsVolumesPlugin.class);
         bindPlugin(ManageIndexVolumesPlugin.class);

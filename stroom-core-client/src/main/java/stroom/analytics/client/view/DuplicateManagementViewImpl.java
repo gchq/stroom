@@ -25,6 +25,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -41,11 +42,16 @@ public class DuplicateManagementViewImpl
     @UiField
     CustomCheckBox suppressDuplicateNotifications;
     @UiField
+    CustomCheckBox chooseColumns;
+    @UiField
+    TextBox columns;
+    @UiField
     SimplePanel list;
 
     @Inject
     public DuplicateManagementViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        columns.setEnabled(false);
     }
 
     @Override
@@ -74,6 +80,27 @@ public class DuplicateManagementViewImpl
     }
 
     @Override
+    public void setChooseColumns(final boolean chooseColumns) {
+        this.chooseColumns.setValue(chooseColumns);
+        columns.setEnabled(chooseColumns);
+    }
+
+    @Override
+    public boolean isChooseColumns() {
+        return chooseColumns.getValue();
+    }
+
+    @Override
+    public void setColumns(final String columns) {
+        this.columns.setValue(columns);
+    }
+
+    @Override
+    public String getColumns() {
+        return columns.getValue();
+    }
+
+    @Override
     public void setListView(final View view) {
         list.setWidget(view.asWidget());
     }
@@ -85,6 +112,17 @@ public class DuplicateManagementViewImpl
 
     @UiHandler("suppressDuplicateNotifications")
     public void onSuppressDuplicateNotifications(final ValueChangeEvent<Boolean> event) {
+        getUiHandlers().onDirty();
+    }
+
+    @UiHandler("chooseColumns")
+    public void onChooseColumns(final ValueChangeEvent<Boolean> event) {
+        getUiHandlers().onDirty();
+        columns.setEnabled(chooseColumns.getValue());
+    }
+
+    @UiHandler("columns")
+    public void onColumns(final ValueChangeEvent<String> event) {
         getUiHandlers().onDirty();
     }
 

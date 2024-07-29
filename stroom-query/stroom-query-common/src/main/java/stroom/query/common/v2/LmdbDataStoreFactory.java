@@ -1,7 +1,6 @@
 package stroom.query.common.v2;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
-import stroom.expression.api.ExpressionContext;
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.LmdbEnvDir;
@@ -9,6 +8,7 @@ import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.NullSafe;

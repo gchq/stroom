@@ -241,6 +241,20 @@ public class NullSafe {
     }
 
     /**
+     * @return True if val is not null and the result of applying getter to value
+     * is non-null and true
+     */
+    public static <T> boolean isTrue(final T val, final Function<T, Boolean> getter) {
+        if (val == null) {
+            return false;
+        } else {
+            Objects.requireNonNull(getter);
+            final Boolean bool = getter.apply(val);
+            return bool != null && bool;
+        }
+    }
+
+    /**
      * @return The un-boxed value if non-null, else zero.
      */
     public static int getInt(final Integer val) {
@@ -457,7 +471,21 @@ public class NullSafe {
     }
 
     /**
-     * Returns the passed list if it is non-null else returns an empty list.
+     * Equivalent to {@link Iterable#forEach(Consumer)}, except consumer is only called for each non-null
+     * item in the iterable. If iterable or consumer are null it is a no-op.
+     */
+    public static <T> void forEach(final Iterable<T> iterable, final Consumer<? super T> consumer) {
+        if (iterable != null && consumer != null) {
+            for (final T item : iterable) {
+                if (item != null) {
+                    consumer.accept(item);
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns the passed list if it is non-null else returns an immutable empty list.
      */
     public static <L extends List<T>, T> List<T> list(final L list) {
         return list != null
@@ -482,7 +510,6 @@ public class NullSafe {
      * @return A non-null list of items. List should be assumed to be immutable.
      */
     @SafeVarargs
-    @SuppressWarnings("varargs")
     public static <T> List<T> asList(final T... items) {
         return items == null || items.length == 0
                 ? Collections.emptyList()
@@ -495,6 +522,7 @@ public class NullSafe {
      *
      * @return A non-null unmodifiable set of items.
      */
+    @SafeVarargs
     public static <T> Set<T> asSet(final T... items) {
         return items == null || items.length == 0
                 ? Collections.emptySet()

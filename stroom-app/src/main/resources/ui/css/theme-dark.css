@@ -30,11 +30,13 @@
     --text-color: #dce4e5;
     --text-color--hover: #e5eaeb;
     --text-color--selected: #fff;
-    --text-color--disabled: #888;
-    --text-color--red: var(--red-700);
+    --text-color--disabled: #999;
+    --text-color--disabled--selected: #ccc;
+    --text-color--red: var(--red-400);
     --text-color--green: var(--green-500);
     --text-color--red--dark: var(--red-900);
     --text-color--green--dark: var(--green-700);
+
     /* Headings, e.g. in markdown documentation, info tooltips, meta info */
     --heading-color: var(--blue-300);
     /* <code> blocks, e.g. in markdown */
@@ -55,10 +57,6 @@
 
     --tooltip__background-color: #1a1d21;
     --tooltip__text-color: var(--text-color);
-    /*
-    --tooltip__background-color: #adadad;
-    --tooltip__text-color: #000;
-    */
 
     --button__background-image: none;
     --button__background-color: #333436;
@@ -140,9 +138,9 @@
      */
 
     /* Page */
-    --app__background-color-rgb: 34, 37, 44;
-    --app__background-color: rgb(var(--app__background-color-rgb));
-    --page__background-color: var(--app__background-color);
+    --app__background-color: #020202;
+    --page__background-color-rgb: 34, 37, 44;
+    --page__background-color: rgb(var(--page__background-color-rgb));
     --page__text-color: var(--text-color);
 
     /* Splitter */
@@ -230,11 +228,10 @@
     --navigation__background-color--selected-hovered: rgb(0,120,199);
     --navigation__background-color--focussed: rgba(0,120,199,.5);
     --navigation__background-color--selected--focussed: rgb(0,120,199);
-    --navigation__title__background-color: var(--navigation__background-color);
+
     --navigation__text-color: var(--text-color);
     --navigation__text-color--selected: var(--text-color--selected);
     --navigation__text-color--no-match: #7b7b7b;
-    --navigation__border-color: #27252c;
     --logo-color: var(--white);
 
     /* Specific */
@@ -244,7 +241,7 @@
     --table__odd-row__background-color: rgba(var(--black-rgb), .2);
 
     /* Dialog */
-    --dialog__background-color-rgb: var(--app__background-color-rgb);
+    --dialog__background-color-rgb: var(--page__background-color-rgb);
     --dialog__background-color: rgb(var(--dialog__background-color-rgb));
     --dialog__border-color: #2c2f35;
     --dialog__shadow: 0 0 20px 5px rgba(0, 0, 0, .8);

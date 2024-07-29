@@ -45,8 +45,10 @@ public class StatusServlet extends HttpServlet implements IsServlet {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StatusServlet.class);
 
+    public static final String PATH_PART = "/status";
     private static final Set<String> PATH_SPECS = Set.of(
-            ResourcePaths.addUnauthenticatedPrefix("/status"));
+            PATH_PART,
+            ResourcePaths.addLegacyUnauthenticatedServletPrefix(PATH_PART));
 
     private final Provider<BuildInfo> buildInfoProvider;
 

@@ -1,5 +1,6 @@
 package stroom.widget.help.client.presenter;
 
+import stroom.svg.shared.SvgImage;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.view.AbstractPopupPanel;
@@ -64,7 +65,8 @@ public class HelpManager {
             // PopupPanel's constructor takes 'auto-hide' as its boolean parameter.
             // If this is set, the panel closes itself automatically when the user
             // clicks outside of it.
-            super(true, false, PopupType.POPUP);
+            super(e -> {
+            }, true, false);
 
             setWidget(new HTMLPanel(content));
         }
@@ -80,13 +82,13 @@ public class HelpManager {
         }
 
         @Override
-        public void setCaption(final String caption) {
-            // No caption
+        public void setIcon(final SvgImage icon) {
+            // No icon
         }
 
         @Override
-        protected void onCloseAction() {
-            super.hide(true);
+        public void setCaption(final String caption) {
+            // No caption
         }
     }
 }

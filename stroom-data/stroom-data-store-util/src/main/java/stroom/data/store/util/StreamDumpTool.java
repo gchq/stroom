@@ -161,11 +161,11 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         }
 
         if (feedName != null) {
-            builder.addDateTerm(MetaFields.FEED, Condition.EQUALS, feedName);
+            builder.addTextTerm(MetaFields.FEED, Condition.EQUALS, feedName);
         }
 
         if (streamType != null) {
-            builder.addDateTerm(MetaFields.TYPE, Condition.EQUALS, streamType);
+            builder.addTextTerm(MetaFields.TYPE, Condition.EQUALS, streamType);
         }
 
         final FindMetaCriteria criteria = new FindMetaCriteria();

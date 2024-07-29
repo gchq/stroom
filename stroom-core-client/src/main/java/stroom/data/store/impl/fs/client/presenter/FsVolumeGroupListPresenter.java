@@ -23,7 +23,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
-import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.util.shared.ResultPage;
@@ -67,13 +67,14 @@ public class FsVolumeGroupListPresenter extends MyPresenterWidget<PagerView> {
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<FsVolumeGroup>> dataConsumer,
-                                final Consumer<RestError> errorConsumer) {
+                                final RestErrorHandler errorHandler) {
                 CriteriaUtil.setRange(criteria, range);
                 restFactory
                         .create(FS_VOLUME_GROUP_RESOURCE)
                         .method(res -> res.find(criteria))
                         .onSuccess(dataConsumer)
-                        .onFailure(errorConsumer)
+                        .onFailure(errorHandler)
+                        .taskListener(view)
                         .exec();
             }
         };

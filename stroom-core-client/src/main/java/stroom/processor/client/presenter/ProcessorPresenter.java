@@ -50,7 +50,8 @@ import com.gwtplatform.mvp.client.View;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.ProcessorView>
+public class ProcessorPresenter
+        extends MyPresenterWidget<ProcessorPresenter.ProcessorView>
         implements HasDocumentRead<Object> {
 
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
@@ -299,6 +300,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                                 edit(loadedFilter, null, processorFilterRow.getOwnerDisplayName());
                             }
                         })
+                        .taskListener(this)
                         .exec();
             }
         }
@@ -343,6 +345,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                             .create(PROCESSOR_FILTER_RESOURCE)
                             .method(res -> res.delete(processorFilterRow.getProcessorFilter().getId()))
                             .onSuccess(res -> processorListPresenter.refresh())
+                            .taskListener(this)
                             .exec();
                 }
             });
@@ -378,6 +381,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                     }
                     refresh(processorFilter, ownerDisplayName);
                 })
+                .taskListener(this)
                 .exec();
     }
 

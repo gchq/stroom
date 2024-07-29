@@ -528,10 +528,8 @@ class DynamicTestBuilder {
                 final TestCase<I, O> testCase = testCases.get(i);
                 final I input = testCase.getInput();
                 if (inputs.contains(input)) {
-                    LOGGER.warn("Test case {} ('{}') has the same input has another case: {}",
-                            (i + 1), testCase.getName(), valueToStr(input));
-//                    Assertions.fail(LogUtil.message("Test case {} has the same input has another case: {}",
-//                            (i + 1), valueToStr(input)));
+                    LOGGER.warn("Test case {} has the same input has another case: {}",
+                            (i + 1), valueToStr(input));
                 }
                 inputs.add(input);
             }

@@ -40,6 +40,7 @@ import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryResource;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.TaskListener;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.AnalyticUiDefaultConfig;
 import stroom.util.shared.time.SimpleDuration;
@@ -56,7 +57,9 @@ import java.util.List;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 
-public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, QueryDoc> implements HasToolbar {
+public class QueryDocEditPresenter
+        extends DocumentEditPresenter<QueryEditView, QueryDoc>
+        implements HasToolbar {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
     private static final AnalyticRuleResource ANALYTIC_RULE_RESOURCE = GWT.create(AnalyticRuleResource.class);
@@ -108,39 +111,42 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
     }
 
     private void createRule() {
-        uiConfigCache.get().onSuccess(uiConfig -> {
-            final AnalyticUiDefaultConfig analyticUiDefaultConfig = uiConfig.getAnalyticUiDefaultConfig();
-            if (analyticUiDefaultConfig.getDefaultErrorFeed() == null) {
-                AlertEvent.fireError(this, "No default error feed configured", null);
-            } else if (analyticUiDefaultConfig.getDefaultDestinationFeed() == null) {
-                AlertEvent.fireError(this, "No default destination feed configured", null);
-            } else if (analyticUiDefaultConfig.getDefaultNode() == null) {
-                AlertEvent.fireError(this, "No default processing node configured", null);
-            } else {
-                final String query = queryEditPresenter.getQuery();
-                final TimeRange timeRange = queryEditPresenter.getTimeRange();
-                restFactory
-                        .create(QUERY_RESOURCE)
-                        .method(res -> res.validateQuery(query))
-                        .onSuccess(validateExpressionResult -> {
-                            if (!validateExpressionResult.isOk()) {
-                                AlertEvent.fireError(this,
-                                        validateExpressionResult.getString(),
-                                        null);
-                            } else {
-                                AnalyticProcessType analyticProcessType = AnalyticProcessType.STREAMING;
-                                if (validateExpressionResult.isGroupBy()) {
-                                    analyticProcessType = AnalyticProcessType.SCHEDULED_QUERY;
+        uiConfigCache.get(uiConfig -> {
+            if (uiConfig != null) {
+                final AnalyticUiDefaultConfig analyticUiDefaultConfig = uiConfig.getAnalyticUiDefaultConfig();
+                if (analyticUiDefaultConfig.getDefaultErrorFeed() == null) {
+                    AlertEvent.fireError(this, "No default error feed configured", null);
+                } else if (analyticUiDefaultConfig.getDefaultDestinationFeed() == null) {
+                    AlertEvent.fireError(this, "No default destination feed configured", null);
+                } else if (analyticUiDefaultConfig.getDefaultNode() == null) {
+                    AlertEvent.fireError(this, "No default processing node configured", null);
+                } else {
+                    final String query = queryEditPresenter.getQuery();
+                    final TimeRange timeRange = queryEditPresenter.getTimeRange();
+                    restFactory
+                            .create(QUERY_RESOURCE)
+                            .method(res -> res.validateQuery(query))
+                            .onSuccess(validateExpressionResult -> {
+                                if (!validateExpressionResult.isOk()) {
+                                    AlertEvent.fireError(this,
+                                            validateExpressionResult.getString(),
+                                            null);
+                                } else {
+                                    AnalyticProcessType analyticProcessType = AnalyticProcessType.STREAMING;
+                                    if (validateExpressionResult.isGroupBy()) {
+                                        analyticProcessType = AnalyticProcessType.SCHEDULED_QUERY;
+                                    }
+                                    createRule(analyticUiDefaultConfig, query, timeRange, analyticProcessType);
                                 }
-                                createRule(analyticUiDefaultConfig, query, timeRange, analyticProcessType);
-                            }
-                        })
-                        .onFailure(restError -> {
-                            AlertEvent.fireErrorFromException(this, restError.getException(), null);
-                        })
-                        .exec();
+                            })
+                            .onFailure(restError -> {
+                                AlertEvent.fireErrorFromException(this, restError.getException(), null);
+                            })
+                            .taskListener(this)
+                            .exec();
+                }
             }
-        });
+        }, this);
     }
 
     private void createRule(final AnalyticUiDefaultConfig analyticUiDefaultConfig,
@@ -167,6 +173,7 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                             true,
                             newDocumentConsumer);
                 })
+                .taskListener(this)
                 .exec();
     }
 
@@ -191,6 +198,7 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                             createDefaultStreamingRule(ruleDocRef, doc, analyticUiDefaultConfig, query, timeRange);
                     }
                 })
+                .taskListener(this)
                 .exec();
     }
 
@@ -295,6 +303,7 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                         ruleDocRef,
                         true,
                         false))
+                .taskListener(this)
                 .exec();
     }
 
@@ -318,7 +327,17 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
         super.onClose();
     }
 
-    void startStop() {
-        queryEditPresenter.startStop();
+    void start() {
+        queryEditPresenter.start();
+    }
+
+    void stop() {
+        queryEditPresenter.stop();
+    }
+
+    @Override
+    public void setTaskListener(final TaskListener taskListener) {
+        super.setTaskListener(taskListener);
+        queryEditPresenter.setTaskListener(taskListener);
     }
 }

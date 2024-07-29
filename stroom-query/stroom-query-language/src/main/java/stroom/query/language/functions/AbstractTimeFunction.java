@@ -17,7 +17,6 @@
 package stroom.query.language.functions;
 
 import stroom.expression.api.DateTimeSettings;
-import stroom.expression.api.ExpressionContext;
 import stroom.query.language.token.Param;
 
 import java.text.ParseException;

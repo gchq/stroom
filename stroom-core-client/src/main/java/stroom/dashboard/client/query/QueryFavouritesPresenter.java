@@ -30,7 +30,7 @@ import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.PageRequest;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -44,7 +44,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesPresenter.QueryFavouritesView> {
+public class QueryFavouritesPresenter
+        extends MyPresenterWidget<QueryFavouritesPresenter.QueryFavouritesView> {
 
     private static final StoredQueryResource STORED_QUERY_RESOURCE = GWT.create(StoredQueryResource.class);
 
@@ -105,31 +106,25 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
         registerHandler(selectionModel.addDoubleSelectHandler(event -> hide()));
         registerHandler(createButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
-                namePresenter.show("", "Create New Favourite", entityName -> {
-                    final Query query = Query.builder()
-                            .dataSource(currentDataSource)
-                            .expression(currentExpression)
-                            .build();
-                    final StoredQuery queryEntity = new StoredQuery();
-                    queryEntity.setQuery(query);
-                    queryEntity.setDashboardUuid(currentDashboardUuid);
-                    queryEntity.setComponentId(queryPresenter.getId());
-                    queryEntity.setName(entityName);
-                    queryEntity.setFavourite(true);
+                final Query query = Query.builder()
+                        .dataSource(currentDataSource)
+                        .expression(currentExpression)
+                        .build();
+                final StoredQuery queryEntity = new StoredQuery();
+                queryEntity.setQuery(query);
+                queryEntity.setDashboardUuid(currentDashboardUuid);
+                queryEntity.setComponentId(queryPresenter.getId());
+                queryEntity.setName("");
+                queryEntity.setFavourite(true);
 
-                    create(queryEntity);
-                });
+                namePresenter.show(queryEntity, result -> refresh(false));
             }
         }));
         registerHandler(editButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
                 final StoredQuery query = selectionModel.getSelectedObject();
                 if (query != null) {
-                    namePresenter.show(query.getName(), "Rename Favourite", entityName -> {
-                        query.setName(entityName);
-                        query.setFavourite(true);
-                        update(query);
-                    });
+                    namePresenter.show(query, result -> refresh(false));
                 }
             }
         }));
@@ -195,33 +190,12 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
                                 .fire();
                     }
                 })
+                .taskListener(this)
                 .exec();
     }
 
     private void hide() {
-        HidePopupEvent.builder(this).fire();
-    }
-
-    private void create(final StoredQuery query) {
-        restFactory
-                .create(STORED_QUERY_RESOURCE)
-                .method(res -> res.create(query))
-                .onSuccess(result -> {
-                    refresh(false);
-                    namePresenter.hide();
-                })
-                .exec();
-    }
-
-    private void update(final StoredQuery query) {
-        restFactory
-                .create(STORED_QUERY_RESOURCE)
-                .method(res -> res.update(query))
-                .onSuccess(result -> {
-                    refresh(false);
-                    namePresenter.hide();
-                })
-                .exec();
+        HidePopupRequestEvent.builder(this).fire();
     }
 
     private void delete(final StoredQuery query) {
@@ -229,6 +203,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
                 .create(STORED_QUERY_RESOURCE)
                 .method(res -> res.delete(query))
                 .onSuccess(result -> refresh(false))
+                .taskListener(this)
                 .exec();
     }
 

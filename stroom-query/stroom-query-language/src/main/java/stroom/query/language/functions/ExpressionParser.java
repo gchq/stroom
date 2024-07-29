@@ -16,7 +16,6 @@
 
 package stroom.query.language.functions;
 
-import stroom.expression.api.ExpressionContext;
 import stroom.query.language.token.AbstractToken;
 import stroom.query.language.token.FunctionGroup;
 import stroom.query.language.token.KeywordGroup;

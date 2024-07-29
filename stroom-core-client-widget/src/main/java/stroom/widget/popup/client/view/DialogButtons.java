@@ -18,7 +18,7 @@ package stroom.widget.popup.client.view;
 
 import com.google.gwt.user.client.ui.Focus;
 
-public interface DialogButtons extends Focus {
+public interface DialogButtons extends Focus, DialogActionUiHandlers {
 
     void setEnabled(boolean enabled);
 }

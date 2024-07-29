@@ -1,0 +1,4 @@
+ext.moduleName = 'stroom.state.api'
+
+dependencies {
+}

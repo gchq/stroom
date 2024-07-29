@@ -146,11 +146,11 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addDateTerm(MetaFields.CREATE_TIME, Condition.BETWEEN, createYearPeriod(2014))
                 .addDateTerm(MetaFields.EFFECTIVE_TIME, Condition.BETWEEN, createYearPeriod(2014))
-                .addDateTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
+                .addTextTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
                 .addIdTerm(MetaFields.PARENT_ID, Condition.EQUALS, 1)
                 .addIdTerm(MetaFields.ID, Condition.EQUALS, 1)
-                .addDateTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
-                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTextTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         testCriteria(new FindMetaCriteria(expression), 0);
     }
@@ -169,10 +169,10 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     void testFeedFindAll() throws IOException {
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addOperator(ExpressionOperator.builder().op(Op.OR)
-                        .addDateTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
-                        .addDateTerm(MetaFields.FEED, Condition.EQUALS, FEED2)
+                        .addTextTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
+                        .addTextTerm(MetaFields.FEED, Condition.EQUALS, FEED2)
                         .build())
-                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         testCriteria(new FindMetaCriteria(expression), 2);
     }
@@ -181,10 +181,10 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     void testFeedFindSome() throws IOException {
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addOperator(ExpressionOperator.builder().op(Op.OR)
-                        .addDateTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
-                        .addDateTerm(MetaFields.FEED, Condition.EQUALS, FEED2)
+                        .addTextTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
+                        .addTextTerm(MetaFields.FEED, Condition.EQUALS, FEED2)
                         .build())
-                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(expression);
         findMetaCriteria.setPageRequest(PageRequest.oneRow());
@@ -194,11 +194,11 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     @Test
     void testFeedFindNone() throws IOException {
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addDateTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
+                .addTextTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
                 .addOperator(ExpressionOperator.builder().op(Op.NOT)
-                        .addDateTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
+                        .addTextTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
                         .build())
-                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         testCriteria(new FindMetaCriteria(expression), 0);
     }
@@ -206,8 +206,8 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     @Test
     void testFeedFindOne() throws IOException {
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addDateTerm(MetaFields.FEED, Condition.EQUALS, FEED2)
-                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTextTerm(MetaFields.FEED, Condition.EQUALS, FEED2)
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         testCriteria(new FindMetaCriteria(expression), 1);
     }
@@ -341,13 +341,13 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 .addDateTerm(MetaFields.STATUS_TIME,
                         Condition.BETWEEN,
                         createToDateWithOffset(System.currentTimeMillis(), 1))
-                .addDateTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
+                .addTextTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
                 .addIdTerm(MetaFields.PARENT_ID, Condition.EQUALS, 1)
                 .addIdTerm(MetaFields.ID, Condition.EQUALS, 1)
 //                .addTerm(StreamDataSource.PIPELINE, Condition.EQUALS, "1")
 //                .addTerm(StreamDataSource.STREAM_PROCESSOR_ID, Condition.EQUALS, "1")
-                .addDateTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
-                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTextTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(expression);
         findMetaCriteria.setPageRequest(PageRequest.createDefault());
@@ -407,7 +407,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 "Expecting to find at least 1 with no criteria").isTrue();
 
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         assertThat(metaService.find(new FindMetaCriteria(expression)).size() >= 1).as(
                 "Expecting to find at least 1 with UNLOCKED criteria").isTrue();

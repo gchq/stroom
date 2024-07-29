@@ -17,26 +17,18 @@
 package stroom.query.client.view;
 
 import stroom.query.client.presenter.QueryResultTablePresenter.QueryResultTableView;
-import stroom.query.client.presenter.TableUiHandlers;
-import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.InlineSvgButton;
-import stroom.widget.spinner.client.SpinnerSmall;
 
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+import com.gwtplatform.mvp.client.ViewImpl;
 
-public class QueryResultTableViewImpl extends ViewWithUiHandlers<TableUiHandlers>
-        implements QueryResultTableView {
+public class QueryResultTableViewImpl extends ViewImpl implements QueryResultTableView {
 
     private final Widget widget;
-    private final SpinnerSmall spinnerSmall;
-    private final InlineSvgButton pause;
 
     @UiField
     FlowPanel layout;
@@ -44,29 +36,6 @@ public class QueryResultTableViewImpl extends ViewWithUiHandlers<TableUiHandlers
     @Inject
     public QueryResultTableViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-
-        spinnerSmall = new SpinnerSmall();
-        spinnerSmall.setStyleName("dashboardTable-smallSpinner");
-        spinnerSmall.setTitle("Pause Update");
-
-        pause = new InlineSvgButton();
-        pause.addStyleName("dashboardTable-pause");
-        pause.setSvg(SvgImage.PAUSE);
-        pause.setTitle("Resume Update");
-
-        layout.add(spinnerSmall);
-        layout.add(pause);
-
-        spinnerSmall.addDomHandler(event -> {
-            if (getUiHandlers() != null) {
-                getUiHandlers().onPause();
-            }
-        }, ClickEvent.getType());
-        pause.addDomHandler(event -> {
-            if (getUiHandlers() != null) {
-                getUiHandlers().onPause();
-            }
-        }, ClickEvent.getType());
     }
 
     @Override
@@ -77,24 +46,6 @@ public class QueryResultTableViewImpl extends ViewWithUiHandlers<TableUiHandlers
     @Override
     public void setTableView(final View view) {
         layout.add(view.asWidget());
-    }
-
-    @Override
-    public void setRefreshing(final boolean refreshing) {
-        if (refreshing) {
-            layout.addStyleName("refreshing");
-        } else {
-            layout.removeStyleName("refreshing");
-        }
-    }
-
-    @Override
-    public void setPaused(final boolean paused) {
-        if (paused) {
-            layout.addStyleName("paused");
-        } else {
-            layout.removeStyleName("paused");
-        }
     }
 
     public interface Binder extends UiBinder<Widget, QueryResultTableViewImpl> {

@@ -1,6 +1,7 @@
 package stroom.config.global.impl;
 
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.ui.config.shared.UserPreferencesService;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasHealthCheckBinder;
@@ -24,6 +25,7 @@ public class GlobalConfigModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
                 .addBinding(AppConfigMonitor.class);
 
+        bind(UserPreferencesService.class).to(UserPreferencesServiceImpl.class);
         RestResourcesBinder.create(binder())
                 .bind(GlobalConfigResourceImpl.class);
         RestResourcesBinder.create(binder())

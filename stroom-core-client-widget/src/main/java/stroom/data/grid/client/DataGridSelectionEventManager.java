@@ -3,6 +3,7 @@ package stroom.data.grid.client;
 import stroom.data.client.event.SelectAllEvent;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.task.client.DefaultTaskListener;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.util.client.AbstractSelectionEventManager;
 import stroom.widget.util.client.DoubleSelectTester;
@@ -91,7 +92,8 @@ public class DataGridSelectionEventManager<T>
                     final Hyperlink hyperlink = Hyperlink.create(link);
                     if (hyperlink != null) {
                         consumed = true;
-                        HyperlinkEvent.fire(dataGrid, hyperlink);
+                        // TODO : Don't use the default task listener here.
+                        HyperlinkEvent.fire(dataGrid, hyperlink, new DefaultTaskListener(this));
                     }
                 }
             }

@@ -22,7 +22,7 @@ import java.util.Set;
 public class ProxyQueueMonitoringServlet extends HttpServlet implements IsServlet {
 
     private static final Set<String> PATH_SPECS = Set.of(
-            ResourcePaths.addUnauthenticatedPrefix("/queues"));
+            ResourcePaths.addLegacyUnauthenticatedServletPrefix("/queues"));
 
     private final Provider<QueueMonitors> queueMonitorsProvider;
     private final Provider<SqliteJooqHelper> sqliteJooqHelperProvider;

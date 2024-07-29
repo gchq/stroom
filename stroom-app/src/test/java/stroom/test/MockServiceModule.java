@@ -20,6 +20,7 @@ import stroom.resource.impl.MockResourceModule;
 import stroom.security.impl.UserService;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.security.shared.User;
+import stroom.state.impl.MockStateModule;
 import stroom.statistics.mock.MockInternalStatisticsModule;
 import stroom.task.impl.MockTaskModule;
 import stroom.util.entityevent.EntityEventBus;
@@ -85,6 +86,7 @@ public class MockServiceModule extends AbstractModule {
         install(new stroom.test.MockTestControlModule());
         install(new MockServletModule());
         install(new MockXmlSchemaModule());
+        install(new MockStateModule());
 
         final UserService mockUserService = mock(UserService.class);
         when(mockUserService.loadByUuid(any())).then((Answer<User>) invocation -> {

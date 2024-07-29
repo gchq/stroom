@@ -19,6 +19,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.cluster.task.impl.ClusterTaskModule());
         install(new stroom.config.global.impl.ConfigProvidersModule());
         install(new stroom.config.global.impl.GlobalConfigModule());
+        install(new stroom.contentindex.ContentIndexModule());
         install(new stroom.core.dataprocess.PipelineStreamTaskModule());
         install(new stroom.core.db.DbStatusModule());
         install(new stroom.core.entity.event.EntityEventModule());
@@ -98,6 +99,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.security.impl.db.SecurityDaoModule());
         install(new stroom.servicediscovery.impl.ServiceDiscoveryModule());
         install(new stroom.analytics.rule.impl.AnalyticRuleModule());
+        install(new stroom.state.impl.StateModule());
         install(new stroom.statistics.impl.InternalStatisticsModule());
         install(new stroom.statistics.impl.hbase.entity.StroomStatsStoreModule());
         install(new stroom.statistics.impl.hbase.internal.InternalModule());

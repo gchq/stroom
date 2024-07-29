@@ -22,12 +22,14 @@ import stroom.document.client.event.RenameDocumentEvent;
 import stroom.document.client.event.ShowRenameDocumentDialogEvent;
 import stroom.entity.client.presenter.NameDocumentPresenter.NameDocumentProxy;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.widget.popup.client.event.DialogEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.popup.client.view.DefaultHideRequestUiHandlers;
+import stroom.widget.popup.client.view.DialogAction;
+import stroom.widget.popup.client.view.DialogActionUiHandlers;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -42,7 +44,8 @@ public class NameDocumentPresenter
         extends MyPresenter<NameDocumentView, NameDocumentProxy>
         implements ShowRenameDocumentDialogEvent.Handler,
         HidePopupRequestEvent.Handler,
-        HidePopupEvent.Handler {
+        HidePopupEvent.Handler,
+        DialogActionUiHandlers {
 
     private List<ExplorerNode> explorerNodeList;
     private ExplorerNode entity;
@@ -50,7 +53,7 @@ public class NameDocumentPresenter
     @Inject
     public NameDocumentPresenter(final EventBus eventBus, final NameDocumentView view, final NameDocumentProxy proxy) {
         super(eventBus, view, proxy);
-        view.setUiHandlers(new DefaultHideRequestUiHandlers(this));
+        view.setUiHandlers(this);
     }
 
     @ProxyEvent
@@ -99,10 +102,10 @@ public class NameDocumentPresenter
 
             if (entityName == null || entityName.length() == 0) {
                 AlertEvent.fireWarn(NameDocumentPresenter.this,
-                        "You must provide a new name for " + entity.getDisplayValue(), null);
+                        "You must provide a new name for " + entity.getDisplayValue(), e::reset);
             } else {
                 RenameDocumentEvent.fire(NameDocumentPresenter.this,
-                        NameDocumentPresenter.this,
+                        e,
                         entity,
                         entityName);
             }
@@ -115,6 +118,11 @@ public class NameDocumentPresenter
     public void onHide(final HidePopupEvent e) {
         // If there are any more entities that are to be renamed then go through the whole process again.
         renameNextEntity();
+    }
+
+    @Override
+    public void onDialogAction(final DialogAction action) {
+        DialogEvent.fire(this, this, action);
     }
 
     @ProxyCodeSplit

@@ -16,11 +16,13 @@
 
 package stroom.widget.popup.client.presenter;
 
+import stroom.svg.shared.SvgImage;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.view.DialogActionUiHandlers;
 
-public interface PopupSupport {
+public interface PopupSupport extends DialogActionUiHandlers {
 
     void show(ShowPopupEvent event);
 
@@ -29,6 +31,8 @@ public interface PopupSupport {
     void hide(HidePopupEvent event);
 
     void setEnabled(boolean enabled);
+
+    void setIcon(SvgImage icon);
 
     void setCaption(String caption);
 }

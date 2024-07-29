@@ -23,7 +23,7 @@ import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DeleteDocumentEvent;
@@ -41,6 +41,7 @@ import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuBuilder;
@@ -69,7 +70,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
+public class DependenciesPresenter
+        extends MyPresenterWidget<PagerView> {
 
     private static final ContentResource CONTENT_RESOURCE = GWT.create(ContentResource.class);
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
@@ -107,13 +109,14 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<Dependency>> dataConsumer,
-                                final Consumer<RestError> errorConsumer) {
+                                final RestErrorHandler errorHandler) {
                 CriteriaUtil.setRange(criteria, range);
                 restFactory
                         .create(CONTENT_RESOURCE)
                         .method(res -> res.fetchDependencies(criteria))
                         .onSuccess(dataConsumer)
-                        .onFailure(errorConsumer)
+                        .onFailure(errorHandler)
+                        .taskListener(view)
                         .exec();
             }
         };
@@ -140,8 +143,9 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                 COL_WIDTH_TYPE);
 
         // From (Name)
-        final Column<Dependency, CommandLink> fromNameColumn = DataGridUtil.commandLinkColumnBuilder((Dependency row) ->
-                        getName(row, Dependency::getFrom, true))
+        final Column<Dependency, CommandLink> fromNameColumn = DataGridUtil.commandLinkColumnBuilder(
+                        (Dependency row) ->
+                                getName(row, Dependency::getFrom, true))
                 .withSorting(DependencyCriteria.FIELD_FROM_NAME, true)
                 .build();
         DataGridUtil.addCommandLinkFieldUpdater(fromNameColumn);
@@ -263,7 +267,8 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                 DependenciesPresenter.this,
                 Collections.singletonList(docRef),
                 true,
-                result -> refresh());
+                result -> refresh(),
+                this);
     }
 
     private void onShowDependencies(final DocRef docRef, final DependencyType dependencyType) {
@@ -303,6 +308,7 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                             "ProcessorFilter",
                             SvgImage.FILTER);
                 })
+                .taskListener(this)
                 .exec();
     }
 
@@ -312,9 +318,15 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
         final DocRef docRef = docRefExtractor.apply(row);
         if (docRef != null) {
             if (from || (openableTypes.contains(docRef.getType()) && row.isOk())) {
-                return new CommandLink(docRef.getName(), () -> onOpenDoc(docRef));
+                final String name = GwtNullSafe.requireNonNullElseGet(
+                        docRef.getName(),
+                        docRef::getUuid);
+                return new CommandLink(
+                        docRef.getName(),
+                        "Open " + docRef.getType() + " '" + name + "'",
+                        () -> onOpenDoc(docRef));
             } else {
-                return new CommandLink(docRef.getName(), null);
+                return CommandLink.withoutCommand(docRef.getName());
             }
         } else {
             return null;
