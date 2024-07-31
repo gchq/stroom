@@ -1,6 +1,6 @@
 package stroom.index.impl;
 
-import stroom.datasource.api.v2.FindIndexFieldCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
@@ -48,7 +48,7 @@ public class IndexFieldServiceImpl implements IndexFieldService {
     }
 
     @Override
-    public ResultPage<IndexField> findFields(final FindIndexFieldCriteria criteria) {
+    public ResultPage<IndexField> findFields(final FindFieldCriteria criteria) {
         if (criteria.getDataSourceRef() != null && !loadedIndexes.contains(criteria.getDataSourceRef())) {
             transferFieldsToDB(criteria.getDataSourceRef());
             loadedIndexes.add(criteria.getDataSourceRef());
@@ -96,11 +96,12 @@ public class IndexFieldServiceImpl implements IndexFieldService {
                 return null;
             }
 
-            final FindIndexFieldCriteria findIndexFieldCriteria = new FindIndexFieldCriteria(
-                    new PageRequest(0, 1),
+            final FindFieldCriteria findIndexFieldCriteria = new FindFieldCriteria(
+                    PageRequest.oneRow(),
                     null,
                     docRef,
-                    StringMatch.equals(fieldName));
+                    StringMatch.equals(fieldName),
+                    null);
             final ResultPage<IndexField> resultPage = findFields(findIndexFieldCriteria);
             if (resultPage.size() > 0) {
                 return resultPage.getFirst();

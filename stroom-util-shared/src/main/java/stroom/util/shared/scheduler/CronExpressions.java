@@ -27,7 +27,7 @@ public class CronExpressions {
             new CronExpression("Every 12 Hours", "0 0 /12 * * ?");
 
 
-    public static final CronExpression EVERY_DAY =
+    public static final CronExpression EVERY_DAY_AT_MIDNIGHT =
             new CronExpression("Every Day At Midnight", "0 0 0 * * ?");
     public static final CronExpression EVERY_DAY_AT_2AM =
             new CronExpression("Every Day At 2AM", "0 0 2 * * ?");
@@ -62,7 +62,7 @@ public class CronExpressions {
     };
 
     public static final CronExpression[] DAY = new CronExpression[]{
-            EVERY_DAY,
+            EVERY_DAY_AT_MIDNIGHT,
             EVERY_DAY_AT_2AM,
             EVERY_DAY_AT_3AM,
             EVERY_DAY_AT_MIDDAY
@@ -86,7 +86,7 @@ public class CronExpressions {
             EVERY_2_HOURS,
             EVERY_6_HOURS,
             EVERY_12_HOURS,
-            EVERY_DAY,
+            EVERY_DAY_AT_MIDNIGHT,
             EVERY_DAY_AT_2AM,
             EVERY_DAY_AT_3AM,
             EVERY_DAY_AT_MIDDAY,

@@ -79,6 +79,11 @@ class TestDistributedTaskFetcher extends StroomUnitTest {
                 public SimpleScheduleExec getScheduleExec(final JobNode jobNode1) {
                     return scheduler;
                 }
+
+                @Override
+                public void triggerImmediateExecution(final JobNode jobNode) {
+                    throw new UnsupportedOperationException("Not expected to be called in this test");
+                }
             };
 
             final NodeInfo nodeInfo = new MockNodeInfo();

@@ -1,6 +1,6 @@
 package stroom.searchable.api;
 
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
@@ -14,7 +14,7 @@ public interface Searchable {
 
     DocRef getDocRef();
 
-    ResultPage<QueryField> getFieldInfo(FindFieldInfoCriteria criteria);
+    ResultPage<QueryField> getFieldInfo(FindFieldCriteria criteria);
 
     Optional<String> fetchDocumentation(DocRef docRef);
 

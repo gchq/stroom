@@ -229,7 +229,8 @@ public final class CompareUtil {
 
     /**
      * Provides a way to name a {@link Comparator} to aid with debugging/logging
-     * @param name The name for the comparator.
+     *
+     * @param name       The name for the comparator.
      * @param comparator The comparator that is delegated to.
      */
     public static <T> Comparator<T> name(final String name, final Comparator<T> comparator) {

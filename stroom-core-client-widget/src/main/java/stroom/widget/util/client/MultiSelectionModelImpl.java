@@ -57,7 +57,7 @@ public final class MultiSelectionModelImpl<T>
         });
         this.selection = selection;
 
-        if (changes.size() > 0) {
+        if (!changes.isEmpty()) {
             fireSelectionChangeEvent();
             fireChange(selectionType);
         } else if (selectionType.isDoubleSelect() || selectionType.isRightClick()) {
@@ -71,6 +71,11 @@ public final class MultiSelectionModelImpl<T>
     @Override
     public List<T> getSelectedItems() {
         return selection.getSelectedItems();
+    }
+
+    @Override
+    public int getSelectedCount() {
+        return selection.size();
     }
 
     /**

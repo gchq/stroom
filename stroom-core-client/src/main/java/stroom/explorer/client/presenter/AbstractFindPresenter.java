@@ -49,7 +49,7 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
     private ExplorerTreeFilter lastFilter;
 
     private FindRequest currentQuery = new FindRequest(
-            new PageRequest(0, 100),
+            PageRequest.createDefault(),
             null,
             null);
     private boolean initialised;

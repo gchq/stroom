@@ -135,7 +135,7 @@ public class GlobalConfigService {
 
             final PageRequest pageRequest = criteria.getPageRequest() != null
                     ? criteria.getPageRequest()
-                    : new PageRequest(0, Integer.MAX_VALUE);
+                    : PageRequest.unlimited();
 
             final Optional<Comparator<ConfigProperty>> optConfigPropertyComparator = buildComparator(criteria);
 
@@ -168,7 +168,7 @@ public class GlobalConfigService {
 
     public ListConfigResponse list() {
         return list(new GlobalConfigCriteria(
-                new PageRequest(0, Integer.MAX_VALUE),
+                PageRequest.unlimited(),
                 Collections.emptyList(),
                 null));
     }

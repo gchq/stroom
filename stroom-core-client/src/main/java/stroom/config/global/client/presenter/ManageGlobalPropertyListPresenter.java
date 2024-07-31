@@ -99,7 +99,7 @@ public class ManageGlobalPropertyListPresenter
     private final NameFilterTimer nameFilterTimer = new NameFilterTimer();
 
     private final GlobalConfigCriteria criteria = new GlobalConfigCriteria(
-            new PageRequest(0, Integer.MAX_VALUE),
+            PageRequest.unlimited(),
             new ArrayList<>(),
             null);
 

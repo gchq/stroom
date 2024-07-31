@@ -5,7 +5,7 @@ import stroom.data.retention.api.DataRetentionTracker;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
@@ -133,7 +133,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                 DocumentPermission.VIEW,
                 FEED_FIELDS);
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(secureExpression);
-        findMetaCriteria.setPageRequest(new PageRequest(0, 1));
+        findMetaCriteria.setPageRequest(PageRequest.oneRow());
         final List<Meta> list = find(findMetaCriteria).getValues();
         if (list == null || list.size() == 0) {
             return null;
@@ -285,7 +285,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     @Override
-    public ResultPage<QueryField> getFieldInfo(final FindFieldInfoCriteria criteria) {
+    public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
         if (!MetaFields.STREAM_STORE_DOC_REF.equals(criteria.getDataSourceRef())) {
             return ResultPage.empty();
         }

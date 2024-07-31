@@ -7,6 +7,7 @@ import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.analytics.shared.ExecutionTracker;
 import stroom.util.shared.ResultPage;
 
+import java.time.Instant;
 import java.util.Optional;
 
 public interface ExecutionScheduleDao {
@@ -32,4 +33,6 @@ public interface ExecutionScheduleDao {
     void addExecutionHistory(ExecutionHistory executionHistory);
 
     ExecutionTracker fetchTracker(ExecutionSchedule schedule);
+
+    void deleteOldExecutionHistory(Instant age);
 }

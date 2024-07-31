@@ -40,6 +40,7 @@ import event.logging.ExportEventAction;
 import event.logging.File;
 import event.logging.MultiObject;
 import event.logging.Purpose;
+import event.logging.Query;
 import event.logging.SearchEventAction;
 import event.logging.util.EventLoggingUtil;
 import jakarta.inject.Inject;
@@ -98,6 +99,26 @@ public class SearchEventLogImpl implements SearchEventLog {
                 queryInfo,
                 params,
                 e));
+    }
+
+    @Override
+    public void search(final String query,
+                       final String queryInfo,
+                       final List<Param> params,
+                       final Exception ex) {
+        securityContext.insecure(() -> {
+            try {
+                search("Search",
+                        getDescription("Search", null),
+                        DataSources.builder().addDataSource("Unknown").build(),
+                        Query.builder().withRaw(query).build(),
+                        queryInfo,
+                        params,
+                        ex);
+            } catch (final RuntimeException e2) {
+                LOGGER.error(ex.getMessage(), e2);
+            }
+        });
     }
 
     @Override
@@ -195,39 +216,73 @@ public class SearchEventLogImpl implements SearchEventLog {
         });
     }
 
-    @Override
-    public void search(final String type,
-                       final DocRef dataSourceRef,
-                       final ExpressionOperator expression,
-                       final String queryInfo,
-                       final List<Param> params,
-                       final Exception e) {
+    private void search(final String type,
+                        final DocRef dataSourceRef,
+                        final ExpressionOperator expression,
+                        final String queryInfo,
+                        final List<Param> params,
+                        final Exception e) {
         securityContext.insecure(() -> {
             try {
-                String dataSourceName = getDataSourceName(dataSourceRef);
-                if (dataSourceName == null || dataSourceName.isEmpty()) {
-                    dataSourceName = "NULL";
-                }
-                final ExpressionOperator deReferencedExpression = ExpressionUtil.replaceExpressionParameters(
-                        expression,
-                        params);
-
-                eventLoggingService.log(
-                        type,
-                        type + "ing data source \"" + dataSourceRef.toInfoString(),
-                        getPurpose(queryInfo),
-                        SearchEventAction.builder()
-                                .withDataSources(DataSources.builder()
-                                        .addDataSource(dataSourceName)
-                                        .build())
-                                .withQuery(StroomEventLoggingUtil.convertExpression(deReferencedExpression))
-                                .addData(buildDataFromParams(params))
-                                .withOutcome(EventLoggingUtil.createOutcome(e))
-                                .build());
+                search(type,
+                        getDescription(type, dataSourceRef),
+                        getDataSources(dataSourceRef),
+                        getQuery(expression, params),
+                        queryInfo,
+                        params,
+                        e);
             } catch (final RuntimeException e2) {
                 LOGGER.error(e.getMessage(), e2);
             }
         });
+    }
+
+    private void search(final String type,
+                        final String description,
+                        final DataSources dataSources,
+                        final Query query,
+                        final String queryInfo,
+                        final List<Param> params,
+                        final Exception e) {
+        try {
+            eventLoggingService.log(
+                    type,
+                    description,
+                    getPurpose(queryInfo),
+                    SearchEventAction.builder()
+                            .withDataSources(dataSources)
+                            .withQuery(query)
+                            .addData(buildDataFromParams(params))
+                            .withOutcome(EventLoggingUtil.createOutcome(e))
+                            .build());
+        } catch (final RuntimeException e2) {
+            LOGGER.error(e.getMessage(), e2);
+        }
+    }
+
+    private String getDescription(final String type, final DocRef dataSourceRef) {
+        if (dataSourceRef != null) {
+            return type + "ing data source \"" + dataSourceRef.toInfoString();
+        }
+        return type + "ing data source";
+    }
+
+    private DataSources getDataSources(final DocRef dataSourceRef) {
+        String dataSourceName = getDataSourceName(dataSourceRef);
+        if (dataSourceName == null || dataSourceName.isEmpty()) {
+            dataSourceName = "NULL";
+        }
+        return DataSources.builder()
+                .addDataSource(dataSourceName)
+                .build();
+    }
+
+    private Query getQuery(final ExpressionOperator expression,
+                           final List<Param> params) {
+        final ExpressionOperator deReferencedExpression = ExpressionUtil.replaceExpressionParameters(
+                expression,
+                params);
+        return StroomEventLoggingUtil.convertExpression(deReferencedExpression);
     }
 
     private Iterable<Data> buildDataFromParams(final List<Param> params) {

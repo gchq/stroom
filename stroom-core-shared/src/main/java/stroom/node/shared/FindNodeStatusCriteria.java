@@ -17,6 +17,8 @@ public class FindNodeStatusCriteria extends BaseCriteria {
     public static final String FIELD_ID_URL = "URL";
     public static final String FIELD_ID_PRIORITY = "Priority";
     public static final String FIELD_ID_ENABLED = "Enabled";
+    public static final String FIELD_ID_BUILD_VERSION = "BuildVersion";
+    public static final String FIELD_ID_LAST_BOOT_MS = "LastBootMs";
 
     public FindNodeStatusCriteria() {
         super();

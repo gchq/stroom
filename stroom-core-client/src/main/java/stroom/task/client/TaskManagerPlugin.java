@@ -24,6 +24,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.event.OpenTaskManagerEvent;
 import stroom.task.client.presenter.TaskManagerPresenter;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
@@ -43,6 +44,14 @@ public class TaskManagerPlugin extends MonitoringPlugin<TaskManagerPresenter> {
                              final Provider<TaskManagerPresenter> presenterProvider,
                              final ClientSecurityContext securityContext) {
         super(eventBus, eventManager, presenterProvider, securityContext);
+
+        registerHandler(getEventBus().addHandler(OpenTaskManagerEvent.getType(), event -> {
+            final TaskManagerPresenter taskManagerPresenter = open();
+            taskManagerPresenter.changeNameFilter(
+                    event.getNodeName(),
+                    event.getTaskName(),
+                    event.getUserName());
+        }));
     }
 
     @Override

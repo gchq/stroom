@@ -142,7 +142,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
                 final String userId = optionalUserId.get();
                 final Optional<Account> optionalAccount = accountDao.get(userId);
                 if (optionalAccount.isEmpty()) {
-                    // There's no user so we can't let them have access.
+                    // There's no user, so we can't let them have access.
                     return new AuthStatusImpl(new BadRequestException(userId,
                             AuthenticateOutcomeReason.INCORRECT_USERNAME,
                             "An account for the userId does not exist (userId = " +

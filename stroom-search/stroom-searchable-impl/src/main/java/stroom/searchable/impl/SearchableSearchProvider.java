@@ -1,6 +1,6 @@
 package stroom.searchable.impl;
 
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
@@ -79,7 +79,7 @@ class SearchableSearchProvider implements SearchProvider {
     }
 
     @Override
-    public ResultPage<QueryField> getFieldInfo(final FindFieldInfoCriteria criteria) {
+    public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
         final Optional<ResultPage<QueryField>> optional = securityContext.useAsReadResult(() -> {
             final Searchable searchable = searchableProvider.get(criteria.getDataSourceRef());
             if (searchable != null) {
@@ -170,11 +170,10 @@ class SearchableSearchProvider implements SearchProvider {
 
         final ExpressionCriteria criteria = new ExpressionCriteria(expression);
 
-        final FindFieldInfoCriteria findFieldInfoCriteria = new FindFieldInfoCriteria(
+        final FindFieldCriteria findFieldInfoCriteria = new FindFieldCriteria(
                 new PageRequest(0, 1000),
                 null,
-                docRef,
-                null);
+                docRef);
         final ResultPage<QueryField> resultPage = searchable.getFieldInfo(findFieldInfoCriteria);
         final Runnable runnable = taskContextFactory.context(taskName, taskContext -> {
             final AtomicBoolean destroyed = new AtomicBoolean();

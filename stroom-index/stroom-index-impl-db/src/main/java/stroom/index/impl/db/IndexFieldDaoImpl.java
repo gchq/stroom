@@ -18,7 +18,7 @@ package stroom.index.impl.db;
 
 import stroom.datasource.api.v2.AnalyzerType;
 import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.FindIndexFieldCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.IndexField;
 import stroom.db.util.JooqUtil;
 import stroom.db.util.StringMatchConditionUtil;
@@ -38,6 +38,7 @@ import org.jooq.DSLContext;
 import org.jooq.exception.DataAccessException;
 
 import java.sql.SQLTransactionRollbackException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -193,16 +194,20 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
     }
 
     @Override
-    public ResultPage<IndexField> findFields(final FindIndexFieldCriteria criteria) {
+    public ResultPage<IndexField> findFields(final FindFieldCriteria criteria) {
         final Optional<Integer> optional = getFieldSource(criteria.getDataSourceRef(), false);
 
         if (optional.isEmpty()) {
             return ResultPage.createCriterialBasedList(Collections.emptyList(), criteria);
         }
 
-        final Condition condition = StringMatchConditionUtil.getCondition(
-                INDEX_FIELD.NAME,
-                criteria.getStringMatch());
+        final List<Condition> conditions = new ArrayList<>();
+        conditions.add(INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID.eq(optional.get()));
+        conditions.add(StringMatchConditionUtil.getCondition(INDEX_FIELD.NAME, criteria.getStringMatch()));
+        if (criteria.getQueryable() != null) {
+            conditions.add(INDEX_FIELD.INDEXED.eq(criteria.getQueryable()));
+        }
+
         final int offset = JooqUtil.getOffset(criteria.getPageRequest());
         final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
 
@@ -216,8 +221,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                                 INDEX_FIELD.TERM_POSITIONS,
                                 INDEX_FIELD.CASE_SENSITIVE)
                         .from(INDEX_FIELD)
-                        .where(INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID.eq(optional.get()))
-                        .and(condition)
+                        .where(conditions)
                         .orderBy(INDEX_FIELD.NAME)
                         .limit(offset, limit)
                         .fetch())

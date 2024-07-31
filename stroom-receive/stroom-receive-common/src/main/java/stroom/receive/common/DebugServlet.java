@@ -34,8 +34,10 @@ public class DebugServlet extends HttpServlet implements IsServlet {
 
     private static final long serialVersionUID = 5785836851738107760L;
 
+    public static final String PATH_PART = "/debug";
     private static final Set<String> PATH_SPECS = Set.of(
-            ResourcePaths.addUnauthenticatedPrefix("/debug"));
+            PATH_PART,
+            ResourcePaths.addLegacyUnauthenticatedServletPrefix(PATH_PART));
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {

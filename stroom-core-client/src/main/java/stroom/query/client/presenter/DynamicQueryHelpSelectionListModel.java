@@ -1,6 +1,6 @@
 package stroom.query.client.presenter;
 
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
@@ -72,7 +72,7 @@ public class DynamicQueryHelpSelectionListModel
 
         final StringMatch stringMatch = StringMatch.contains(filter);
         final CriteriaFieldSort sort = new CriteriaFieldSort(
-                FindFieldInfoCriteria.SORT_BY_NAME,
+                FindFieldCriteria.SORT_BY_NAME,
                 false,
                 true);
         final QueryHelpRequest request = new QueryHelpRequest(

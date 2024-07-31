@@ -18,8 +18,7 @@
 package stroom.search.impl;
 
 import stroom.datasource.api.v2.ConditionSet;
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
-import stroom.datasource.api.v2.FindIndexFieldCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.IndexField;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
@@ -88,7 +87,7 @@ public class LuceneSearchProvider implements SearchProvider {
     }
 
     @Override
-    public ResultPage<QueryField> getFieldInfo(final FindFieldInfoCriteria criteria) {
+    public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
         return securityContext.useAsReadResult(() -> {
             final DocRef docRef = criteria.getDataSourceRef();
 
@@ -98,12 +97,7 @@ public class LuceneSearchProvider implements SearchProvider {
                 return ResultPage.createCriterialBasedList(Collections.emptyList(), criteria);
             }
 
-            final FindIndexFieldCriteria findIndexFieldCriteria = new FindIndexFieldCriteria(
-                    criteria.getPageRequest(),
-                    criteria.getSortList(),
-                    criteria.getDataSourceRef(),
-                    criteria.getStringMatch());
-            final ResultPage<IndexField> resultPage = indexFieldService.findFields(findIndexFieldCriteria);
+            final ResultPage<IndexField> resultPage = indexFieldService.findFields(criteria);
             final List<QueryField> queryFields = resultPage
                     .getValues()
                     .stream()

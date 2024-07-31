@@ -205,6 +205,19 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
         return optional.map(recordToObjectMapper);
     }
 
+    public <T_KEY_TYPE> Optional<T_OBJ_TYPE> fetchBy(final TableField<T_REC_TYPE, T_KEY_TYPE> keyField,
+                                                     final T_KEY_TYPE key) {
+
+        LAMBDA_LOGGER.debug(() -> LogUtil.message("Fetching {} with {} {}",
+                table.getName(), keyField.getName(), key));
+
+        final Optional<T_REC_TYPE> optional = JooqUtil.contextResult(connectionProvider, context -> context
+                .selectFrom(table)
+                .where(keyField.eq(key))
+                .fetchOptional());
+        return optional.map(recordToObjectMapper);
+    }
+
     public T_OBJ_TYPE update(final DSLContext context, final T_OBJ_TYPE object) {
         final T_REC_TYPE record = objectToRecord(object);
         LAMBDA_LOGGER.debug(() -> LogUtil.message("Updating a {} with id {}",

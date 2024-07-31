@@ -32,6 +32,8 @@ import java.util.List;
 public class FindNodeCriteria extends FindNamedEntityCriteria {
 
     public static final String FIELD_ID = "Id";
+    public static final String FIELD_BUILD_VERSION = "BuildVersion";
+    public static final String FIELD_LAST_BOOT_MS = "LastBootMs";
 
     @JsonProperty("enabled")
     private Boolean isEnabled = null;

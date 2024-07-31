@@ -1491,26 +1491,6 @@ paths:
       summary: Download a query
       tags:
       - Dashboards
-  /dashboard/v1/downloadSearchResults:
-    post:
-      operationId: downloadDashboardSearchResultsLocal
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DownloadSearchResultsRequest'
-        description: request
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResourceGeneration'
-          description: default response
-      summary: Download search results
-      tags:
-      - Dashboards
   /dashboard/v1/downloadSearchResults/{nodeName}:
     post:
       operationId: downloadDashboardSearchResultsNode
@@ -1537,29 +1517,9 @@ paths:
       summary: Download search results
       tags:
       - Dashboards
-  /dashboard/v1/search:
-    post:
-      operationId: dashboardSearch
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DashboardSearchRequest'
-        description: request
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DashboardSearchResponse'
-          description: default response
-      summary: Perform a new search or get new results
-      tags:
-      - Dashboards
   /dashboard/v1/search/{nodeName}:
     post:
-      operationId: dashboardSearch_1
+      operationId: dashboardSearch
       parameters:
       - in: path
         name: nodeName
@@ -1892,7 +1852,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FindFieldInfoCriteria'
+              $ref: '#/components/schemas/FindFieldCriteria'
         description: criteria
         required: true
       responses:
@@ -3639,28 +3599,6 @@ paths:
       summary: Sets the enabled status of the job
       tags:
       - Jobs
-  /jobNode/v1:
-    get:
-      operationId: listJobNodes
-      parameters:
-      - in: query
-        name: jobName
-        schema:
-          type: string
-      - in: query
-        name: nodeName
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResultPageJobNode'
-          description: default response
-      summary: Lists job nodes
-      tags:
-      - Jobs (Node)
   /jobNode/v1/find:
     post:
       operationId: findJobNodes
@@ -3676,7 +3614,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResultPageJobNode'
+                $ref: '#/components/schemas/JobNodeAndInfoListResponse'
           description: default response
       summary: Finds job nodes matching criteria and sort order
       tags:
@@ -3701,6 +3639,24 @@ paths:
                 $ref: '#/components/schemas/JobNodeInfo'
           description: default response
       summary: Gets current info for a job node
+      tags:
+      - Jobs (Node)
+  /jobNode/v1/schedule:
+    put:
+      operationId: setJobNodeScheduleBatch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchScheduleRequest'
+        description: schedule
+        required: true
+      responses:
+        default:
+          content:
+            application/json: {}
+          description: default response
+      summary: Sets the schedule of multiple job nodes
       tags:
       - Jobs (Node)
   /jobNode/v1/{id}/enabled:
@@ -3728,6 +3684,26 @@ paths:
       summary: Sets the enabled status of the job node
       tags:
       - Jobs (Node)
+  /jobNode/v1/{id}/execute:
+    post:
+      operationId: executeJobNode
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Execute job node now
+      tags:
+      - Jobs (Node)
   /jobNode/v1/{id}/schedule:
     put:
       operationId: setJobNodeSchedule
@@ -3750,7 +3726,7 @@ paths:
           content:
             application/json: {}
           description: default response
-      summary: Sets the schedule job node
+      summary: Sets the schedule of a job node
       tags:
       - Jobs (Node)
   /jobNode/v1/{id}/taskLimit:
@@ -4922,26 +4898,6 @@ paths:
       summary: Finds processor task summaries
       tags:
       - Processor Tasks
-  /query/v1/downloadSearchResults:
-    post:
-      operationId: downloadQuerySearchResultsLocal
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DownloadQueryResultsRequest'
-        description: request
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResourceGeneration'
-          description: default response
-      summary: Download search results
-      tags:
-      - Queries
   /query/v1/downloadSearchResults/{nodeName}:
     post:
       operationId: downloadQuerySearchResultsNode
@@ -5037,26 +4993,6 @@ paths:
                 $ref: '#/components/schemas/ResultPageQueryHelpRow'
           description: default response
       summary: Fetch all (optionally filtered) query help items
-      tags:
-      - Queries
-  /query/v1/search:
-    post:
-      operationId: querySearchLocal
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/QuerySearchRequest'
-        description: request
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DashboardSearchResponse'
-          description: default response
-      summary: Perform a new search or get new results
       tags:
       - Queries
   /query/v1/search/{nodeName}:
@@ -7739,6 +7675,24 @@ components:
             type: string
         docRef:
           $ref: '#/components/schemas/DocRef'
+    BatchScheduleRequest:
+      type: object
+      properties:
+        jobNodeIds:
+          type: array
+          items:
+            type: integer
+            format: int32
+          uniqueItems: true
+        jobType:
+          type: string
+          enum:
+          - UNKNOWN
+          - CRON
+          - FREQUENCY
+          - DISTRIBUTED
+        schedule:
+          $ref: '#/components/schemas/Schedule'
     BuildInfo:
       type: object
       properties:
@@ -10281,13 +10235,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PipelineProperty'
-    FindFieldInfoCriteria:
+    FindFieldCriteria:
       type: object
       properties:
         dataSourceRef:
           $ref: '#/components/schemas/DocRef'
         pageRequest:
           $ref: '#/components/schemas/PageRequest'
+        queryable:
+          type: boolean
         sort:
           type: string
           writeOnly: true
@@ -10560,6 +10516,8 @@ components:
       properties:
         jobName:
           $ref: '#/components/schemas/StringCriteria'
+        jobNodeEnabled:
+          type: boolean
         nodeName:
           $ref: '#/components/schemas/StringCriteria'
         pageRequest:
@@ -11462,6 +11420,22 @@ components:
         version:
           type: integer
           format: int32
+    JobNodeAndInfo:
+      type: object
+      properties:
+        jobNode:
+          $ref: '#/components/schemas/JobNode'
+        jobNodeInfo:
+          $ref: '#/components/schemas/JobNodeInfo'
+    JobNodeAndInfoListResponse:
+      type: object
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobNodeAndInfo'
     JobNodeInfo:
       type: object
       properties:
@@ -11469,6 +11443,9 @@ components:
           type: integer
           format: int32
         lastExecutedTime:
+          type: integer
+          format: int64
+        nextScheduledTime:
           type: integer
           format: int64
         scheduleReferenceTime:
@@ -11807,6 +11784,8 @@ components:
     Node:
       type: object
       properties:
+        buildVersion:
+          type: string
         createTimeMs:
           type: integer
           format: int64
@@ -11817,6 +11796,9 @@ components:
         id:
           type: integer
           format: int32
+        lastBootMs:
+          type: integer
+          format: int64
         name:
           type: string
         priority:
@@ -13782,16 +13764,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Job'
-    ResultPageJobNode:
-      type: object
-      description: A page of results.
-      properties:
-        pageResponse:
-          $ref: '#/components/schemas/PageResponse'
-        values:
-          type: array
-          items:
-            $ref: '#/components/schemas/JobNode'
     ResultPageMetaRow:
       type: object
       description: A page of results.

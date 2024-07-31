@@ -54,6 +54,7 @@ public class ServletModule extends AbstractModule {
 
         ServletBinder.create(binder())
                 // authenticated servlets
+                .bind(RedirectServlet.class)
                 .bind(DashboardServlet.class)
                 .bind(StroomServlet.class)
                 .bind(SignInServlet.class)

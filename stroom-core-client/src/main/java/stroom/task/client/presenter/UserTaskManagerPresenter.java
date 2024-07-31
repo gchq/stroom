@@ -19,7 +19,7 @@ package stroom.task.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeManager;
-import stroom.task.client.event.OpenTaskManagerEvent;
+import stroom.task.client.event.OpenUserTaskManagerEvent;
 import stroom.task.client.event.OpenUserTaskManagerHandler;
 import stroom.task.client.presenter.UserTaskManagerPresenter.UserTaskManagerProxy;
 import stroom.task.client.presenter.UserTaskManagerPresenter.UserTaskManagerView;
@@ -100,7 +100,7 @@ public class UserTaskManagerPresenter
 
     @ProxyEvent
     @Override
-    public void onOpen(final OpenTaskManagerEvent event) {
+    public void onOpen(final OpenUserTaskManagerEvent event) {
         setData(null);
         refreshTimer.scheduleRepeating(1000);
         refreshing.clear();

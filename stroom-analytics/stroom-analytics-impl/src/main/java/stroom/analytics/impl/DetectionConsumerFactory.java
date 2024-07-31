@@ -6,8 +6,10 @@ import stroom.analytics.shared.NotificationConfig;
 import stroom.analytics.shared.NotificationDestinationType;
 import stroom.analytics.shared.NotificationEmailDestination;
 import stroom.analytics.shared.NotificationStreamDestination;
+import stroom.pipeline.ErrorWriterProxy;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -20,14 +22,17 @@ public class DetectionConsumerFactory {
 
     private final Provider<DetectionsWriter> detectionsWriterProvider;
     private final Provider<EmailSender> emailSenderProvider;
+    private final Provider<ErrorWriterProxy> errorWriterProxyProvider;
     private final NotificationStateService notificationStateService;
 
     @Inject
     public DetectionConsumerFactory(final Provider<DetectionsWriter> detectionsWriterProvider,
                                     final Provider<EmailSender> emailSenderProvider,
+                                    final Provider<ErrorWriterProxy> errorWriterProxyProvider,
                                     final NotificationStateService notificationStateService) {
         this.detectionsWriterProvider = detectionsWriterProvider;
         this.emailSenderProvider = emailSenderProvider;
+        this.errorWriterProxyProvider = errorWriterProxyProvider;
         this.notificationStateService = notificationStateService;
     }
 
@@ -133,7 +138,15 @@ public class DetectionConsumerFactory {
                                 notificationStateService.getState(analyticRuleDoc, notificationConfig);
                         notificationState.enableIfPossible();
                         if (notificationState.incrementAndCheckEnabled()) {
-                            emailSenderProvider.get().send(emailDestination, detection);
+                            try {
+                                emailSenderProvider.get().send(emailDestination, detection);
+                            } catch (final RuntimeException e) {
+                                errorWriterProxyProvider.get().log(
+                                        Severity.ERROR,
+                                        null,
+                                        "Email Notification",
+                                        e.getMessage());
+                            }
                         }
                     }
 

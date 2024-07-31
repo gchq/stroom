@@ -44,6 +44,7 @@ import stroom.pipeline.refdata.store.onheapstore.StringValueConsumer;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.HasSystemInfoBinder;
+import stroom.util.shared.scheduler.CronExpressions;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
@@ -97,8 +98,12 @@ public class RefDataStoreModule extends AbstractModule {
                         .name(RefDataPurge.JOB_NAME)
                         .description("Purge old and partial reference data loads from the off heap store as " +
                                 "configured by 'purgeAge'.")
-                        .cronSchedule("0 0 2 * * ?"));
+                        .cronSchedule(CronExpressions.EVERY_DAY_AT_2AM.getExpression()));
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class RefDataPurge extends RunnableWrapper {
 
@@ -110,6 +115,7 @@ public class RefDataStoreModule extends AbstractModule {
 
             super(() -> {
                 try {
+                    LOGGER.info("Running job '{}'", JOB_NAME);
                     refDataStoreFactory.purgeOldData();
                 } catch (TaskTerminatedException e) {
                     LOGGER.debug("Reference Data Purge terminated", e);

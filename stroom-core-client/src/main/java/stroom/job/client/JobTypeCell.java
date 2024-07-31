@@ -36,7 +36,11 @@ public class JobTypeCell extends AbstractInputCell<JobType, JobType> {
      */
     public JobTypeCell() {
         super("change", "click");
-        button = SvgImageUtil.toSafeHtml(SvgImage.HISTORY, "svgIcon icon-colour__blue").asString();
+        button = SvgImageUtil.toSafeHtml(
+                        "Edit Schedule",
+                        SvgImage.HISTORY,
+                        "svgIcon icon-colour__blue")
+                .asString();
     }
 
     @Override

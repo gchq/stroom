@@ -11,6 +11,7 @@ import stroom.util.shared.FetchWithLongId;
 import stroom.util.shared.FetchWithTemplate;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.Unauthenticated;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Strings;
@@ -57,6 +58,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 class TestRestResources {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestRestResources.class);
@@ -77,8 +80,10 @@ class TestRestResources {
                     .stream()
                     .filter(classInfo -> classInfo.implementsInterface(RestResource.class.getName()))
                     .map(classInfo -> (Class<? extends RestResource>) classInfo.loadClass())
+                    .filter(clazz ->
+                            !clazz.getName().contains("Test"))
                     .sorted(Comparator.comparing(Class::getName))
-                    .collect(Collectors.toList());
+                    .toList();
 
             LOGGER.info("Found {} classes to test", classes.size());
 
@@ -108,7 +113,7 @@ class TestRestResources {
                     .filter(classInfo -> classInfo.implementsInterface(RestResource.class.getName()))
                     .map(classInfo -> (Class<? extends RestResource>) classInfo.loadClass())
                     .sorted(Comparator.comparing(Class::getName))
-                    .collect(Collectors.toList());
+                    .toList();
 
             LOGGER.info("Found {} classes to test", classes.size());
 
@@ -155,6 +160,69 @@ class TestRestResources {
 //            LOGGER.info("Methods:\n{}", stringBuilder);
             System.out.println(stringBuilder);
         }
+    }
+
+    @Test
+    void testGetFromMethodOrSuper_onSuper() {
+
+        final Method methodOne = Arrays.stream(MyClassOne.class.getMethods())
+                .filter(method -> method.getName().equals("methodOne"))
+                .findAny()
+                .orElse(null);
+
+        assertThat(methodOne)
+                .isNotNull();
+
+        final Boolean result = RestResources.getFromMethodOrSuper(MyClassOne.class, methodOne, method -> {
+            return method.isAnnotationPresent(Unauthenticated.class)
+                    ? true
+                    : null;
+        });
+
+        assertThat(result)
+                .isEqualTo(true);
+    }
+
+    @Test
+    void testGetFromMethodOrSuper_onClass() {
+
+        final Method methodTwo = Arrays.stream(MyClassOne.class.getMethods())
+                .filter(method -> method.getName().equals("methodTwo"))
+                .findAny()
+                .orElse(null);
+
+        assertThat(methodTwo)
+                .isNotNull();
+
+        final Boolean result = RestResources.getFromMethodOrSuper(MyClassOne.class, methodTwo, method -> {
+            return method.isAnnotationPresent(Unauthenticated.class)
+                    ? true
+                    : null;
+        });
+
+        assertThat(result)
+                .isEqualTo(true);
+    }
+
+    @Test
+    void testGetFromMethodOrSuper_notPresent() {
+
+        final Method methodThree = Arrays.stream(MyClassOne.class.getMethods())
+                .filter(method -> method.getName().equals("methodThree"))
+                .findAny()
+                .orElse(null);
+
+        assertThat(methodThree)
+                .isNotNull();
+
+        final Boolean result = RestResources.getFromMethodOrSuper(MyClassOne.class, methodThree, method -> {
+            return method.isAnnotationPresent(Unauthenticated.class)
+                    ? true
+                    : null;
+        });
+
+        assertThat(result)
+                .isNull();
     }
 
     private String getMethodSig(final Class<?> clazz,
@@ -311,12 +379,9 @@ class TestRestResources {
                                         operation.operationId(),
                                         resourceClass.getName() + "::" + methodSignature.getName());
 
-                                final String existingOperation;
-                                if (existing != null) {
-                                    existingOperation = existing;
-                                } else {
-                                    existingOperation = resourceClass.getName() + "::" + methodSignature.getName();
-                                }
+                                final String existingOperation = existing != null
+                                        ? existing
+                                        : resourceClass.getName() + "::" + methodSignature.getName();
 
                                 if (!existingOperation.equals(resourceClass.getName() + "::" +
                                         methodSignature.getName())) {
@@ -439,9 +504,9 @@ class TestRestResources {
     private void assertFetchDeclared(final Class<? extends RestResource> resourceClass,
                                      final SoftAssertions softAssertions) {
         boolean fetchMethodPresent = Arrays.stream(resourceClass.getMethods())
-                .filter(m -> m.getName().equals("fetch") && m.getParameterCount() == 1).findFirst().isPresent();
+                .anyMatch(m -> m.getName().equals("fetch") && m.getParameterCount() == 1);
         boolean updateOrDeleteMethodPresent = Arrays.stream(resourceClass.getMethods())
-                .filter(m -> m.getName().equals("update") || m.getName().equals("delete")).findFirst().isPresent();
+                .anyMatch(m -> m.getName().equals("update") || m.getName().equals("delete"));
         if (fetchMethodPresent && updateOrDeleteMethodPresent) {
             if (!FetchWithUuid.class.isAssignableFrom(resourceClass) &&
                     !FetchWithIntegerId.class.isAssignableFrom(resourceClass) &&
@@ -484,13 +549,10 @@ class TestRestResources {
                         //Really would like to check for presence of Provider<SecurityContext>
                         //but not possible in Java.
                         // Check for what we can manage, which is a field of type that extends Provider<SecurityContext>
-                        if (field.getType().getGenericSuperclass() instanceof ParameterizedType) {
-                            ParameterizedType providerType = (ParameterizedType) field.getType().getGenericSuperclass();
-
+                        if (field.getType().getGenericSuperclass() instanceof final ParameterizedType providerType) {
                             return Arrays.stream(providerType.getActualTypeArguments())
-                                    .filter(type -> SecurityContext.class.isAssignableFrom(type.getClass()))
-                                    .findAny()
-                                    .isPresent();
+                                    .anyMatch(type ->
+                                            SecurityContext.class.isAssignableFrom(type.getClass()));
                         }
                     }
                     return false;
@@ -636,6 +698,43 @@ class TestRestResources {
                     "name='" + name + '\'' +
                     ", parameterTypes=" + Arrays.toString(parameterTypes) +
                     '}';
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private interface MyInterfaceOne extends RestResource {
+
+        @Unauthenticated
+        String methodOne();
+
+        String methodTwo();
+
+        String methodThree();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class MyClassOne implements MyInterfaceOne {
+
+        @Override
+        public String methodOne() {
+            return null;
+        }
+
+        @Unauthenticated
+        @Override
+        public String methodTwo() {
+            return null;
+        }
+
+        @Override
+        public String methodThree() {
+            return null;
         }
     }
 }

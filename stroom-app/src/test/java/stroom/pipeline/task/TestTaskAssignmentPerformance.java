@@ -182,7 +182,7 @@ public class TestTaskAssignmentPerformance extends StroomIntegrationTest {
         });
 
         final ResultPage<Job> jobs = jobDao.find(new FindJobCriteria(
-                new PageRequest(0, 1),
+                PageRequest.oneRow(),
                 Collections.emptyList(),
                 new StringCriteria(JobNames.DATA_PROCESSOR)));
         final Job job = jobs.getFirst();
@@ -190,10 +190,10 @@ public class TestTaskAssignmentPerformance extends StroomIntegrationTest {
         jobDao.update(job);
 
         final JobNodeListResponse response = jobNodeDao.find(new FindJobNodeCriteria(
-                new PageRequest(0, 1),
+                PageRequest.oneRow(),
                 Collections.emptyList(),
                 new StringCriteria(JobNames.DATA_PROCESSOR),
-                null));
+                null, null));
         final JobNode jobNode = response.getFirst();
         jobNode.setEnabled(true);
         jobNodeDao.update(jobNode);

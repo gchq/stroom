@@ -157,6 +157,10 @@ public class LmdbDb {
         }
     }
 
+    public long count(final ReadTxn txn) {
+        return dbi.stat(txn.get()).entries;
+    }
+
     public long count() {
         return readResult(txn -> dbi.stat(txn).entries);
     }

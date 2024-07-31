@@ -7,6 +7,12 @@ import stroom.util.shared.scheduler.ScheduleType;
 public class JobNodeUtil {
 
     public static void setSchedule(final JobNode jobNode, final Schedule schedule) {
+        final JobType jobType = getJobType(schedule);
+        jobNode.setJobType(jobType);
+        jobNode.setSchedule(schedule.getExpression());
+    }
+
+    public static JobType getJobType(final Schedule schedule) {
         JobType jobType = JobType.UNKNOWN;
         if (schedule.getType() != null) {
             switch (schedule.getType()) {
@@ -20,8 +26,7 @@ public class JobNodeUtil {
                 }
             }
         }
-        jobNode.setJobType(jobType);
-        jobNode.setSchedule(schedule.getExpression());
+        return jobType;
     }
 
     public static Schedule getSchedule(final JobNode jobNode) {

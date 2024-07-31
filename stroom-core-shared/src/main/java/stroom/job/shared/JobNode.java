@@ -1,12 +1,14 @@
 package stroom.job.shared;
 
 
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -150,6 +152,16 @@ public class JobNode implements HasAuditInfo, HasIntegerId {
         this.job = job;
     }
 
+    /**
+     * Convenience method for {@link Job#getName()}.
+     *
+     * @return The job name
+     */
+    @JsonIgnore
+    public String getJobName() {
+        return GwtNullSafe.get(job, Job::getName);
+    }
+
     public JobType getJobType() {
         return jobType;
     }
@@ -189,6 +201,10 @@ public class JobNode implements HasAuditInfo, HasIntegerId {
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     @Schema
     public enum JobType implements HasPrimitiveValue {

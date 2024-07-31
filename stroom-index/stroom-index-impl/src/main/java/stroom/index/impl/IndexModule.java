@@ -32,6 +32,7 @@ import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasSystemInfoBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.scheduler.CronExpressions;
 
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
@@ -89,7 +90,7 @@ public class IndexModule extends AbstractModule {
                 .bindJobTo(IndexShardDelete.class, builder -> builder
                         .name("Index Shard Delete")
                         .description("Job to delete index shards from disk that have been marked as deleted")
-                        .cronSchedule("0 0 0 * * ?"))
+                        .cronSchedule(CronExpressions.EVERY_DAY_AT_MIDNIGHT.getExpression()))
                 .bindJobTo(IndexShardRetention.class, builder -> builder
                         .name("Index Shard Retention")
                         .description("Job to set index shards to have a status of deleted that have past their " +
@@ -117,6 +118,10 @@ public class IndexModule extends AbstractModule {
         HasSystemInfoBinder.create(binder()).bind(IndexSystemInfo.class);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class IndexShardDelete extends RunnableWrapper {
 
         @Inject
@@ -124,6 +129,10 @@ public class IndexModule extends AbstractModule {
             super(indexShardManager::deleteFromDisk);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class IndexShardRetention extends RunnableWrapper {
 
@@ -133,6 +142,10 @@ public class IndexModule extends AbstractModule {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class IndexWriterCacheSweep extends RunnableWrapper {
 
         @Inject
@@ -140,6 +153,10 @@ public class IndexModule extends AbstractModule {
             super(indexShardWriterCache::sweep);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class IndexWriterFlush extends RunnableWrapper {
 
@@ -149,6 +166,10 @@ public class IndexModule extends AbstractModule {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class VolumeStatus extends RunnableWrapper {
 
         @Inject
@@ -157,6 +178,10 @@ public class IndexModule extends AbstractModule {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class IndexShardWriterCacheStartup extends RunnableWrapper {
 
         @Inject
@@ -164,6 +189,10 @@ public class IndexModule extends AbstractModule {
             super(indexShardWriterCache::startup);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class IndexShardWriterCacheShutdown extends RunnableWrapper {
 

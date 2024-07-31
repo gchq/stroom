@@ -24,7 +24,7 @@ import stroom.core.client.presenter.CorePresenter;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
-import stroom.task.client.event.OpenTaskManagerEvent;
+import stroom.task.client.event.OpenUserTaskManagerEvent;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.widget.menu.client.presenter.Item;
@@ -162,7 +162,7 @@ public class MainPresenter
         registerHandler(view.getSpinner().addClickHandler(event -> {
             if (click) {
                 click = false;
-                OpenTaskManagerEvent.fire(MainPresenter.this);
+                OpenUserTaskManagerEvent.fire(MainPresenter.this);
 
             } else {
                 final Timer clickTimer = new Timer() {

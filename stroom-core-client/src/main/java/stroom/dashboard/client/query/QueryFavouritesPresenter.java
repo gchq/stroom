@@ -160,7 +160,7 @@ public class QueryFavouritesPresenter
         criteria.setComponentId(queryPresenter.getId());
         criteria.setSort(FindStoredQueryCriteria.FIELD_NAME, false, true);
         criteria.setFavourite(true);
-        criteria.setPageRequest(new PageRequest(0, 100));
+        criteria.setPageRequest(PageRequest.createDefault());
 
         restFactory
                 .create(STORED_QUERY_RESOURCE)

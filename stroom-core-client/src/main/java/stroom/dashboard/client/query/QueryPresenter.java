@@ -454,6 +454,8 @@ public class QueryPresenter
 
     private void loadedDataSource(final DocRef dataSourceRef) {
         fieldSelectionBoxModel.setDataSourceRef(dataSourceRef);
+        // We only want queryable fields.
+        fieldSelectionBoxModel.setQueryable(true);
         expressionPresenter.init(restFactory, dataSourceRef, fieldSelectionBoxModel);
 
         final EqualsBuilder builder = new EqualsBuilder();

@@ -1,7 +1,7 @@
 package stroom.meta.impl;
 
 import stroom.datasource.api.v2.DataSourceProvider;
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.meta.shared.MetaFields;
@@ -27,7 +27,7 @@ public class MetaDataSourceProvider implements DataSourceProvider {
     }
 
     @Override
-    public ResultPage<QueryField> getFieldInfo(final FindFieldInfoCriteria criteria) {
+    public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
         if (!MetaFields.STREAM_STORE_DOC_REF.equals(criteria.getDataSourceRef())) {
             return ResultPage.empty();
         }

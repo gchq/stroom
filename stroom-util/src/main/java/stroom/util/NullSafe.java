@@ -167,6 +167,13 @@ public class NullSafe {
     }
 
     /**
+     * @return True if str is non-null and not blank
+     */
+    public static boolean isNonBlankString(final String str) {
+        return str != null && !str.isBlank();
+    }
+
+    /**
      * @return str if it is non-null and non-blank, else return other
      */
     public static String nonBlankStringElse(final String str, final String other) {
@@ -192,10 +199,40 @@ public class NullSafe {
     }
 
     /**
+     * @return True if str is non-null and not empty
+     */
+    public static boolean isNonEmptyString(final String str) {
+        return str != null && !str.isEmpty();
+    }
+
+    /**
+     * @return str trimmed or an empty string if str is null
+     */
+    public static String trim(final String str) {
+        return str != null
+                ? str.trim()
+                : "";
+    }
+
+    /**
      * @return True if val is not null and true
      */
     public static boolean isTrue(final Boolean val) {
         return val != null && val;
+    }
+
+    /**
+     * @return True if val is not null and the result of applying getter to value
+     * is non-null and true
+     */
+    public static <T> boolean isTrue(final T val, final Function<T, Boolean> getter) {
+        if (val == null) {
+            return false;
+        } else {
+            Objects.requireNonNull(getter);
+            final Boolean bool = getter.apply(val);
+            return bool != null && bool;
+        }
     }
 
     /**

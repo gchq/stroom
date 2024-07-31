@@ -3,6 +3,7 @@ package stroom.proxy.app.servlet;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.IsServlet;
+import stroom.util.shared.ResourcePaths;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -17,7 +18,10 @@ import java.util.Set;
 
 public class ProxyWelcomeServlet extends HttpServlet implements IsServlet {
 
-    private static final Set<String> PATH_SPECS = Set.of("/ui");
+    public static final String PATH_PART = "/ui";
+    private static final Set<String> PATH_SPECS = Set.of(
+            PATH_PART,
+            ResourcePaths.addLegacyAuthenticatedServletPrefix(PATH_PART));
 
     private final Provider<BuildInfo> buildInfoProvider;
 

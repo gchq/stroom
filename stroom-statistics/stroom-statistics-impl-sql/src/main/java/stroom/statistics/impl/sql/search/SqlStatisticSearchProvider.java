@@ -2,7 +2,7 @@ package stroom.statistics.impl.sql.search;
 
 import stroom.datasource.api.v2.ConditionSet;
 import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionUtil;
@@ -82,7 +82,7 @@ public class SqlStatisticSearchProvider implements SearchProvider {
     }
 
     @Override
-    public ResultPage<QueryField> getFieldInfo(final FindFieldInfoCriteria criteria) {
+    public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
         final FieldInfoResultPageBuilder builder = FieldInfoResultPageBuilder.builder(criteria);
         final StatisticStoreDoc entity = statisticStoreCache.getStatisticsDataSource(criteria.getDataSourceRef());
         if (entity != null) {

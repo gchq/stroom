@@ -12,6 +12,7 @@ import stroom.security.openid.api.OpenIdConfigurationResponse;
 import stroom.security.openid.api.PublicJsonWebKeyProvider;
 import stroom.security.openid.api.TokenResponse;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.Unauthenticated;
 
 import com.codahale.metrics.annotation.Timed;
 import event.logging.AuthenticateAction;
@@ -64,6 +65,7 @@ class OpenIdResourceImpl implements OpenIdResource {
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
     }
 
+    @Unauthenticated
     @Timed
     @Override
     @AutoLogged(OperationType.MANUALLY_LOGGED)
@@ -123,6 +125,7 @@ class OpenIdResourceImpl implements OpenIdResource {
         throw new RedirectionException(Status.TEMPORARY_REDIRECT, result.getUri());
     }
 
+    @Unauthenticated
     @Timed
     @Override
     @AutoLogged(OperationType.UNLOGGED)
@@ -164,6 +167,7 @@ class OpenIdResourceImpl implements OpenIdResource {
         }
     }
 
+    @Unauthenticated
     @Timed
     @Override
     @AutoLogged(OperationType.MANUALLY_LOGGED)
@@ -193,6 +197,7 @@ class OpenIdResourceImpl implements OpenIdResource {
                 }).getResultAndLog();
     }
 
+    @Unauthenticated
     @Timed
     @Override
     @AutoLogged(OperationType.UNLOGGED)

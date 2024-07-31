@@ -154,6 +154,7 @@ public class LoginPresenter extends MyPresenter<LoginView, LoginProxy> implement
     @Override
     protected void revealInParent() {
         RevealRootContentEvent.fire(this, this);
+        getView().focus();
         loading.getStyle().setOpacity(0);
     }
 
