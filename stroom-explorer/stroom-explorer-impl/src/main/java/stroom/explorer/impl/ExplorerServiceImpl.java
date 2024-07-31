@@ -51,7 +51,7 @@ import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.Suggestions;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.suggestions.api.SuggestionsQueryHandler;
 import stroom.svg.shared.SvgImage;
 import stroom.util.NullSafe;
@@ -274,7 +274,7 @@ class ExplorerServiceImpl
         loggerFunc.accept(LogUtil.message(
                 template,
                 duration,
-                securityContext.getUserIdentityForAudit(),
+                securityContext.getUserRef(),
                 criteria.getMinDepth(),
                 filter.getIncludedTypes(),
                 filter.getTags(),
@@ -502,7 +502,7 @@ class ExplorerServiceImpl
         if (children != null) {
             children.forEach(childDocRef -> {
                 if (childDocRef.getType().equals(type)) {
-                    if (securityContext.hasDocumentPermission(childDocRef.getUuid(), DocumentPermissionNames.USE)) {
+                    if (securityContext.hasDocumentPermission(childDocRef, DocumentPermission.USE)) {
                         refs.add(childDocRef);
                     }
                 }
@@ -870,7 +870,7 @@ class ExplorerServiceImpl
         // Create the document.
         try {
             // Check that the user is allowed to create an item of this type in the destination folder.
-            checkCreatePermission(getUUID(folderRef), type);
+            checkCreatePermission(folderRef, type);
             // Create an item of the specified type in the destination folder.
             // This should fire a CREATE entity event
             result = handler.createDocument(name);
@@ -993,7 +993,7 @@ class ExplorerServiceImpl
                 checkOwnershipForCopy(sourceNode, permissionInheritance);
 
                 // Check that the user is allowed to create an item of this type in the destination folder.
-                checkCreatePermission(getUUID(destinationFolderRef), sourceNode.getType());
+                checkCreatePermission(destinationFolderRef, sourceNode.getType());
 
                 // Find out names of other items in the destination folder.
                 final Set<String> otherDestinationChildrenNames = explorerNodeService.getChildren(destinationFolderRef)
@@ -1110,9 +1110,9 @@ class ExplorerServiceImpl
                 checkOwnershipForMove(explorerNode, permissionInheritance);
 
                 // Check that the user is allowed to create an item of this type in the destination folder.
-                checkCreatePermission(getUUID(folderRef), explorerNode.getType());
+                checkCreatePermission(folderRef, explorerNode.getType());
                 // Move the item.
-                result = handler.moveDocument(explorerNode.getUuid());
+                result = handler.moveDocument(explorerNode.getDocRef());
                 explorerEventLog.move(explorerNode.getDocRef(), folderRef, permissionInheritance, null);
                 resultNodes.add(ExplorerNode.builder()
                         .docRef(result)
@@ -1143,8 +1143,8 @@ class ExplorerServiceImpl
                                        final PermissionInheritance permissionInheritance) {
         if (allowsPermissionChange(permissionInheritance)) {
 
-            if (!securityContext.hasDocumentPermission(node.getUuid(), DocumentPermissionNames.OWNER)) {
-                throw new PermissionException(securityContext.getUserIdentityForAudit(),
+            if (!securityContext.hasDocumentPermission(node.getDocRef(), DocumentPermission.OWNER)) {
+                throw new PermissionException(securityContext.getUserRef(),
                         "You must have 'Owner' permission on the document to move it with permission mode '"
                                 + permissionInheritance.getDisplayValue() + "'.");
             }
@@ -1154,8 +1154,8 @@ class ExplorerServiceImpl
     private void checkOwnershipForCopy(final ExplorerNode node,
                                        final PermissionInheritance permissionInheritance) {
         if (allowsPermissionChange(permissionInheritance)) {
-            if (!securityContext.hasDocumentPermission(node.getUuid(), DocumentPermissionNames.OWNER)) {
-                throw new PermissionException(securityContext.getUserIdentityForAudit(),
+            if (!securityContext.hasDocumentPermission(node.getDocRef(), DocumentPermission.OWNER)) {
+                throw new PermissionException(securityContext.getUserRef(),
                         "You must have 'Owner' permission on the document to copy it with permission mode '"
                                 + permissionInheritance.getDisplayValue() + "'.");
             }
@@ -1250,7 +1250,7 @@ class ExplorerServiceImpl
         DocRef result;
 
         try {
-            result = handler.renameDocument(explorerNode.getUuid(), docName);
+            result = handler.renameDocument(explorerNode.getDocRef(), docName);
             explorerEventLog.rename(explorerNode.getDocRef(), docName, null);
         } catch (final RuntimeException e) {
             explorerEventLog.rename(explorerNode.getDocRef(), docName, e);
@@ -1316,11 +1316,11 @@ class ExplorerServiceImpl
                 } else {
                     final ExplorerActionHandler handler = explorerActionHandlers.getHandler(explorerNode.getType());
                     try {
-                        handler.deleteDocument(explorerNode.getUuid());
+                        handler.deleteDocument(explorerNode.getDocRef());
                         explorerEventLog.delete(explorerNode.getDocRef(), null);
 
                         // Delete all perms associated with this doc
-                        documentPermissionService.deleteDocumentPermissions(explorerNode.getUuid());
+                        documentPermissionService.removeAllDocumentPermissions(explorerNode.getDocRef());
                         deleted.add(explorerNode);
                         resultDocRefs.add(explorerNode);
 
@@ -1418,8 +1418,8 @@ class ExplorerServiceImpl
         final UnmodifiableTreeModel masterTreeModel = explorerTreeModel.getModel();
 
         // Filter the model by user permissions.
-        final Set<String> requiredPermissions = new HashSet<>();
-        requiredPermissions.add(DocumentPermissionNames.READ);
+        final Set<DocumentPermission> requiredPermissions = new HashSet<>();
+        requiredPermissions.add(DocumentPermission.VIEW);
 
         final Set<String> visibleTypes = new HashSet<>();
         addTypes(null, masterTreeModel, visibleTypes, requiredPermissions);
@@ -1430,7 +1430,7 @@ class ExplorerServiceImpl
     private boolean addTypes(final ExplorerNode parent,
                              final UnmodifiableTreeModel treeModel,
                              final Set<String> types,
-                             final Set<String> requiredPermissions) {
+                             final Set<DocumentPermission> requiredPermissions) {
         boolean added = false;
 
         final List<ExplorerNode> children = treeModel.getChildren(parent);
@@ -1463,29 +1463,22 @@ class ExplorerServiceImpl
                 .collect(Collectors.toList());
     }
 
-    private String getUUID(final DocRef docRef) {
-        return Optional.ofNullable(docRef)
-                .map(DocRef::getUuid)
-                .orElse(null);
-    }
-
-    private void checkCreatePermission(final String folderUUID, final String type) {
+    private void checkCreatePermission(final DocRef folderRef, final String documentType) {
         // Only allow administrators to create documents with no folder.
-        if (folderUUID == null) {
+        if (folderRef == null) {
             if (!securityContext.isAdmin()) {
-                throw new PermissionException(securityContext.getUserIdentityForAudit(),
+                throw new PermissionException(securityContext.getUserRef(),
                         "Only administrators can create root level entries");
             }
         } else {
-            if (!securityContext.hasDocumentPermission(folderUUID,
-                    DocumentPermissionNames.getDocumentCreatePermission(type))) {
-                final String folderName = Optional.ofNullable(explorerTreeModel.getModel().getNode(folderUUID))
+            if (!securityContext.hasDocumentCreatePermission(folderRef, documentType)) {
+                final String folderName = Optional.ofNullable(explorerTreeModel.getModel().getNode(folderRef.getUuid()))
                         .map(ExplorerNode::getName)
                         .filter(name -> !name.isEmpty())
-                        .map(name -> "'" + name + "' (" + folderUUID + ")")
-                        .orElse(folderUUID);
-                throw new PermissionException(securityContext.getUserIdentityForAudit(),
-                        "You do not have permission to create " + type + " in folder " + folderName);
+                        .map(name -> "'" + name + "' (" + folderRef + ")")
+                        .orElse(folderRef.getName());
+                throw new PermissionException(securityContext.getUserRef(),
+                        "You do not have permission to create " + documentType + " in folder " + folderName);
             }
         }
     }

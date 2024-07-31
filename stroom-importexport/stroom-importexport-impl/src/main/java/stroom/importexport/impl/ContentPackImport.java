@@ -16,16 +16,16 @@
 
 package stroom.importexport.impl;
 
-import stroom.importexport.shared.ImportSettings;
-import stroom.security.api.SecurityContext;
-import stroom.security.api.UserIdentity;
-import stroom.util.NullSafe;
-import stroom.util.io.FileUtil;
-import stroom.util.io.PathCreator;
-
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.importexport.shared.ImportSettings;
+import stroom.security.api.ContentPackUserService;
+import stroom.security.api.SecurityContext;
+import stroom.util.NullSafe;
+import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
+import stroom.util.shared.UserRef;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -46,6 +46,7 @@ public class ContentPackImport {
     private final ImportExportService importExportService;
     private final ContentPackImportConfig config;
     private final SecurityContext securityContext;
+    private final ContentPackUserService contentPackUserService;
     private final PathCreator pathCreator;
 
     @SuppressWarnings("unused")
@@ -53,10 +54,12 @@ public class ContentPackImport {
     ContentPackImport(final ImportExportService importExportService,
                       final ContentPackImportConfig config,
                       final SecurityContext securityContext,
+                      final ContentPackUserService contentPackUserService,
                       final PathCreator pathCreator) {
         this.importExportService = importExportService;
         this.config = config;
         this.securityContext = securityContext;
+        this.contentPackUserService = contentPackUserService;
         this.pathCreator = pathCreator;
     }
 
@@ -77,15 +80,14 @@ public class ContentPackImport {
             return;
         }
 
-        // TODO once subjectId is made globally unique we can get rid of this
         final boolean isGroup = switch (config.getImportAsType()) {
             case USER -> false;
             case GROUP -> true;
         };
 
-        final UserIdentity userIdentity = securityContext.getIdentityBySubjectId(
+        final UserRef userRef = contentPackUserService.getUserRef(
                 importAsSubjectId, isGroup);
-        if (userIdentity == null) {
+        if (userRef == null) {
             LOGGER.error("A {} cannot be found with subject ID: '{}'.",
                     (isGroup
                             ? "group"
@@ -97,9 +99,9 @@ public class ContentPackImport {
         LOGGER.info("Configured import dir is '" + importDirStr + "'");
         final Path resolvedPath = pathCreator.toAppPath(importDirStr);
         LOGGER.info("Importing content as user '{}', from configured dir: {}, resolved dir: '{}'",
-                userIdentity.getCombinedName(), importDirStr, resolvedPath);
+                userRef, importDirStr, resolvedPath);
 
-        securityContext.asUser(userIdentity, () ->
+        securityContext.asUser(userRef, () ->
                 doImport(resolvedPath));
     }
 

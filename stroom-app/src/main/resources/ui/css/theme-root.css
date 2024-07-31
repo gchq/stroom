@@ -146,7 +146,7 @@
     /* Page */
     --app__background-color: rgb(30, 136, 229);
     --page__background-color-rgb: 255, 255, 255;
-    --page__background-color: var(--page__background-color);
+    --page__background-color: rgb(var(--page__background-color-rgb));
     --page__text-color: rgba(0, 0, 0, 0.8);
 
     /* Splitter */

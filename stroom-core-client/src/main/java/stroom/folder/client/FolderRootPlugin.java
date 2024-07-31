@@ -26,7 +26,7 @@ import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskListener;
 import stroom.widget.tab.client.presenter.TabData;
@@ -97,8 +97,8 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
 //    }
 
     protected FolderRootPresenter createEditor() {
-        if (securityContext.hasAppPermission(PermissionNames.VIEW_DATA_PERMISSION) || securityContext.hasAppPermission(
-                PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
+        if (securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION) ||
+                securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION)) {
             return editorProvider.get();
         }
 

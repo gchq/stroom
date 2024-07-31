@@ -1,32 +1,43 @@
 package stroom.security.impl;
 
-import java.util.Collection;
-import java.util.Map;
+import stroom.docref.DocRef;
+import stroom.security.shared.DocumentPermission;
+import stroom.util.shared.UserRef;
+
+import java.util.BitSet;
+import java.util.List;
 import java.util.Set;
 
 public interface DocumentPermissionDao {
 
-    Set<String> getPermissionsForDocumentForUser(String docUuid, String userUuid);
-
-    BasicDocPermissions getPermissionsForDocument(String docUuid);
-
-    Map<String, BasicDocPermissions> getPermissionsForDocuments(Collection<String> docUuids);
-
-    Set<String> getDocumentOwnerUuids(String documentUuid);
-
     UserDocumentPermissions getPermissionsForUser(String userUuid);
 
-    void addPermission(String docRefUuid, String userUuid, String permission);
+    DocumentPermission getPermission(String documentUuid, String userUuid);
 
-    void removePermission(String docRefUuid, String userUuid, String permission);
+    void setPermission(String documentUuid, String userUuid, DocumentPermission permission);
 
-    void removePermissions(String docRefUuid, String userUuid, Set<String> permissions);
+    void clearPermission(String documentUuid, String userUuid);
 
-    void clearDocumentPermissionsForUser(String docRefUuid, String userUuid);
+    void removeAllDocumentPermissions(String documentUuid);
 
-    void clearDocumentPermissionsForDoc(String docRefUuid);
+    List<Integer> getDocumentCreatePermissions(String documentUuid, String userUuid);
 
-    void clearDocumentPermissionsForDocs(Set<String> docRefUuids);
+    void addDocumentCreatePermission(String documentUuid, String userUuid, String documentType);
 
-    void setOwner(String docRefUuid, String ownerUuid);
+    void removeDocumentCreatePermission(String documentUuid, String userUuid, String documentType);
+
+    void clearDocumentCreatePermissions(String documentUuid, String userUuid);
+
+    void removeAllDocumentCreatePermissions(String documentUuid);
+
+//
+//    void clearDocumentPermissionsForDoc(String documentUuid);
+//
+//    void clearDocumentPermissionsForDocs(Set<String> documentUuids);
+//
+//    int getDocumentTypeId(String documentType);
+
+    void copyDocumentPermissions(String sourceDocUuid, String destDocUuid);
+
+    void copyDocumentCreatePermissions(String sourceDocUuid, String destDocUuid);
 }

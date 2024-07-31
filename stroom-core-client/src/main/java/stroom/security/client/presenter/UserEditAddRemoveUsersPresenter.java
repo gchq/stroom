@@ -25,6 +25,7 @@ import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.UserRef;
 import stroom.widget.button.client.ButtonView;
 
 import com.google.gwt.core.client.GWT;
@@ -48,7 +49,7 @@ public class UserEditAddRemoveUsersPresenter
     private final ButtonView addButton;
     private final ButtonView removeButton;
 
-    private User relatedUser;
+    private UserRef relatedUser;
 
     @Inject
     public UserEditAddRemoveUsersPresenter(final EventBus eventBus,
@@ -75,9 +76,9 @@ public class UserEditAddRemoveUsersPresenter
         registerHandler(addButton.addClickHandler(event -> {
 
             final Consumer<User> consumer = user -> {
-                final Set<User> addSet = new HashSet<>();
-                addSet.add(user);
-                final ChangeSet<User> changedLinkedUsers = new ChangeSet<>(addSet, null);
+                final Set<UserRef> addSet = new HashSet<>();
+                addSet.add(user.asRef());
+                final ChangeSet<UserRef> changedLinkedUsers = new ChangeSet<>(addSet, null);
                 final ChangeUserRequest request = new ChangeUserRequest(relatedUser,
                         changedLinkedUsers,
                         null);
@@ -104,9 +105,9 @@ public class UserEditAddRemoveUsersPresenter
         registerHandler(removeButton.addClickHandler(event -> {
             final User selected = getSelectionModel().getSelected();
             if (selected != null) {
-                final Set<User> removeSet = new HashSet<>();
-                removeSet.add(selected);
-                final ChangeSet<User> changedLinkedUsers = new ChangeSet<>(null, removeSet);
+                final Set<UserRef> removeSet = new HashSet<>();
+                removeSet.add(selected.asRef());
+                final ChangeSet<UserRef> changedLinkedUsers = new ChangeSet<>(null, removeSet);
                 final ChangeUserRequest request = new ChangeUserRequest(relatedUser, changedLinkedUsers, null);
 
                 restFactory
@@ -124,11 +125,10 @@ public class UserEditAddRemoveUsersPresenter
         removeButton.setEnabled(getSelectionModel().getSelected() != null);
     }
 
-    public void setUser(final User relatedUser) {
+    public void setUser(final UserRef relatedUser) {
         this.relatedUser = relatedUser;
 
         final FindUserCriteria findUserCriteria = new FindUserCriteria();
-        findUserCriteria.setRelatedUser(relatedUser);
 
         if (relatedUser.isGroup()) {
             addButton.setTitle("Add User to Group");
@@ -139,11 +139,5 @@ public class UserEditAddRemoveUsersPresenter
         }
 
         setup(findUserCriteria);
-    }
-
-    @Override
-    public boolean includeAdditionalUserInfo() {
-        // If relatedUser is a group then we are listing users and vice versa
-        return relatedUser == null || relatedUser.isGroup();
     }
 }

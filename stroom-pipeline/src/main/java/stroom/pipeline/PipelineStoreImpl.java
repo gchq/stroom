@@ -91,27 +91,27 @@ public class PipelineStoreImpl implements PipelineStore {
     }
 
     @Override
-    public DocRef moveDocument(final String uuid) {
-        return store.moveDocument(uuid);
+    public DocRef moveDocument(final DocRef docRef) {
+        return store.moveDocument(docRef);
     }
 
     @Override
-    public DocRef renameDocument(final String uuid, final String name) {
-        return store.renameDocument(uuid, name);
+    public DocRef renameDocument(final DocRef docRef, final String name) {
+        return store.renameDocument(docRef, name);
     }
 
     @Override
-    public void deleteDocument(final String uuid) {
+    public void deleteDocument(final DocRef docRef) {
         // First we need to logically delete any child processors
         // which will in turn also logically delete any associated processor filters
-        processorServiceProvider.get().deleteByPipelineUuid(uuid);
+        processorServiceProvider.get().deleteByPipelineUuid(docRef.getUuid());
 
-        store.deleteDocument(uuid);
+        store.deleteDocument(docRef);
     }
 
     @Override
-    public DocRefInfo info(String uuid) {
-        return store.info(uuid);
+    public DocRefInfo info(DocRef docRef) {
+        return store.info(docRef);
     }
 
     @Override

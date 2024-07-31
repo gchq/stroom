@@ -28,10 +28,8 @@ import stroom.security.client.presenter.DocumentPermissionsPresenter.DocumentPer
 import stroom.security.shared.ChangeDocumentPermissionsRequest;
 import stroom.security.shared.ChangeDocumentPermissionsRequest.Cascade;
 import stroom.security.shared.Changes;
-import stroom.security.shared.CopyPermissionsFromParentRequest;
 import stroom.security.shared.DocPermissionResource;
-import stroom.security.shared.DocumentPermissions;
-import stroom.security.shared.FetchAllDocumentPermissionsRequest;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.Button;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -39,8 +37,6 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
-import stroom.widget.tab.client.presenter.LinkTabsPresenter;
-import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.client.GWT;
@@ -49,12 +45,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -63,163 +54,104 @@ public class DocumentPermissionsPresenter
 
     private static final DocPermissionResource DOC_PERMISSION_RESOURCE = GWT.create(DocPermissionResource.class);
 
-    private static final Map<String, List<String>> ALL_PERMISSIONS_CACHE = new HashMap<>();
-
-    private final LinkTabsPresenter tabPresenter;
+    //    private final DocumentTypePermissions documentTypePermissions;
     private final RestFactory restFactory;
     private final Provider<DocumentPermissionsTabPresenter> documentPermissionsListPresenterProvider;
     private final Provider<FolderPermissionsTabPresenter> folderPermissionsListPresenterProvider;
 
-    private Changes changes = new Changes(new HashMap<>(), new HashMap<>());
+    private Changes changes = new Changes();
 
-    // This is the working model of permissions that gets modified as changes are made
-    private DocumentPermissions documentPermissions = null;
     // The permissions initially received from the server before any client side changes are made.
     // This is map will be set on show then will not change
-    private Map<String, Set<String>> initialPermissions = null;
+//    private Map<String, DocumentPermissionSet> initialPermissions = null;
 
     @Inject
     public DocumentPermissionsPresenter(
             final EventBus eventBus,
             final DocumentPermissionsView view,
-            final LinkTabsPresenter tabPresenter,
             final RestFactory restFactory,
             final Provider<DocumentPermissionsTabPresenter> documentPermissionsListPresenterProvider,
             final Provider<FolderPermissionsTabPresenter> folderPermissionsListPresenterProvider) {
 
         super(eventBus, view);
-        this.tabPresenter = tabPresenter;
         this.restFactory = restFactory;
+//        this.documentTypePermissions = documentTypePermissions;
         this.documentPermissionsListPresenterProvider = documentPermissionsListPresenterProvider;
         this.folderPermissionsListPresenterProvider = folderPermissionsListPresenterProvider;
-
-        view.setTabsView(tabPresenter.getView());
-    }
-
-    private void getAllPermissions(final String docType, final Consumer<List<String>> consumer) {
-        final List<String> cached = ALL_PERMISSIONS_CACHE.get(docType);
-        if (cached != null) {
-            consumer.accept(cached);
-        } else {
-            restFactory
-                    .create(DOC_PERMISSION_RESOURCE)
-                    .method(res -> res.getPermissionForDocType(docType))
-                    .onSuccess(permissions -> {
-                        ALL_PERMISSIONS_CACHE.put(docType, permissions);
-                        consumer.accept(permissions);
-                    })
-                    .taskListener(this)
-                    .exec();
-        }
     }
 
     public void show(final ExplorerNode explorerNode) {
-        getAllPermissions(explorerNode.getType(), allPermissions -> {
-            getView().setCascadeVisible(DocumentTypes.isFolder(explorerNode.getType()));
-            final DocumentPermissionsTabPresenter usersPresenter = getTabPresenter(explorerNode);
-            final DocumentPermissionsTabPresenter groupsPresenter = getTabPresenter(explorerNode);
+        getView().setCascadeVisible(DocumentTypes.isFolder(explorerNode.getType()));
+        final DocumentPermissionsTabPresenter usersPresenter = getTabPresenter(explorerNode);
 
-            final TabData groups = tabPresenter.addTab("Groups", groupsPresenter);
-            tabPresenter.addTab("Users", usersPresenter);
-            tabPresenter.changeSelectedTab(groups);
+        getView().setPermissionsView(usersPresenter.getView());
 
-            getView().getCopyPermissionsFromParentButton()
-                    .addClickHandler(buildCopyPermissionsFromParentClickHandler(
-                            explorerNode,
-                            allPermissions,
-                            usersPresenter,
-                            groupsPresenter));
-            // If we're looking at the root node then we can't copy from the parent because there isn't one.
-            if (DocumentTypes.isSystem(explorerNode.getType())) {
-                getView().getCopyPermissionsFromParentButton().setEnabled(false);
-            }
+        getView().getCopyPermissionsFromParentButton()
+                .addClickHandler(buildCopyPermissionsFromParentClickHandler(
+                        explorerNode,
+                        DocumentPermission.LIST,
+                        usersPresenter));
+        // If we're looking at the root node then we can't copy from the parent because there isn't one.
+        if (DocumentTypes.isSystem(explorerNode.getType())) {
+            getView().getCopyPermissionsFromParentButton().setEnabled(false);
+        }
 
-            final DocRef docRef = explorerNode.getDocRef();
-            final PopupSize popupSize = DocumentTypes.isFolder(explorerNode.getType())
-                    ? getFolderPopupSize()
-                    : getDocumentPopupSize();
+        final DocRef docRef = explorerNode.getDocRef();
+        final PopupSize popupSize = DocumentTypes.isFolder(explorerNode.getType())
+                ? getFolderPopupSize()
+                : getDocumentPopupSize();
 
-            ShowPopupEvent.builder(this)
-                    .popupType(PopupType.OK_CANCEL_DIALOG)
-                    .popupSize(popupSize)
-                    .caption("Set " + explorerNode.getType() + " Permissions")
-                    .onShow(e -> groupsPresenter.focus())
-                    .onHideRequest(e -> onHideRequest(e, docRef))
-                    .fire();
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Set Permissions For '" + explorerNode.getName() + "'")
+                .onShow(e -> usersPresenter.focus())
+                .onHideRequest(e -> onHideRequest(e, docRef))
+                .fire();
 
-            restFactory
-                    .create(DOC_PERMISSION_RESOURCE)
-                    .method(res -> res.fetchAllDocumentPermissions(
-                            new FetchAllDocumentPermissionsRequest(explorerNode.getDocRef())))
-                    .onSuccess(documentPermissions -> {
-                        this.documentPermissions = documentPermissions;
-                        // Take a deep copy of documentPermissions before the user mutates it with client side
-                        // changes
-                        this.initialPermissions = Collections.unmodifiableMap(
-                                DocumentPermissions.copyPermsMap(documentPermissions.getPermissions()));
-                        usersPresenter.setDocumentPermissions(
-                                allPermissions,
-                                documentPermissions,
-                                false,
-                                changes);
-                        groupsPresenter.setDocumentPermissions(
-                                allPermissions,
-                                documentPermissions,
-                                true,
-                                changes);
-                    })
-                    .taskListener(this)
-                    .exec();
-        });
+//            usersPresenter.setDocumentPermissions(docRef, allPermissions, changes);
     }
 
     private ClickHandler buildCopyPermissionsFromParentClickHandler(
             final ExplorerNode explorerNode,
-            final List<String> allPermissions,
-            final DocumentPermissionsTabPresenter usersPresenter,
-            final DocumentPermissionsTabPresenter groupsPresenter) {
+            final List<DocumentPermission> allPermissions,
+            final DocumentPermissionsTabPresenter usersPresenter) {
 
         return event -> {
-            restFactory
-                    .create(DOC_PERMISSION_RESOURCE)
-                    .method(res -> res.copyPermissionFromParent(
-                            new CopyPermissionsFromParentRequest(explorerNode.getDocRef())))
-                    .onSuccess(parentDocPermissions -> {
-                        // We want to wipe existing permissions on the server, which means creating REMOVES
-                        // for all the perms that we started with except those that are also on the parent.
-                        final Map<String, Set<String>> permissionsToRemove = DocumentPermissions.excludePermissions(
-                                initialPermissions,
-                                parentDocPermissions.getPermissions());
-                        final Map<String, Set<String>> permissionsToAdd = DocumentPermissions.excludePermissions(
-                                parentDocPermissions.getPermissions(),
-                                initialPermissions);
-                        // Now create the ADDs and REMOVEs for the effective changes.
-                        changes = new Changes(permissionsToAdd, permissionsToRemove);
-
-                        // We need to set the document permissions so that what's been changed is visible.
-                        usersPresenter.setDocumentPermissions(
-                                allPermissions,
-                                parentDocPermissions,
-                                false,
-                                changes);
-                        groupsPresenter.setDocumentPermissions(
-                                allPermissions,
-                                parentDocPermissions,
-                                true,
-                                changes);
-
-//                        GWT.log("After copyFromParent:"
-//                                + "\ninitialPermissions:\n"
-//                                + DocumentPermissions.permsMapToStr(initialPermissions)
-//                                + "\nparentDocPermissions:\n"
-//                                + DocumentPermissions.permsMapToStr(parentDocPermissions.getPermissions())
-//                                + "\nADDs:\n"
-//                                + DocumentPermissions.permsMapToStr(permissionsToAdd)
-//                                + "\nREMOVEs:\n"
-//                                + DocumentPermissions.permsMapToStr(permissionsToRemove));
-                    })
-                    .taskListener(this)
-                    .exec();
+//            restFactory
+//                    .create(DOC_PERMISSION_RESOURCE)
+//                    .method(res -> res.copyPermissionFromParent(
+//                            new CopyPermissionsFromParentRequest(explorerNode.getDocRef())))
+//                    .onSuccess(parentDocPermissions -> {
+//                        // We want to wipe existing permissions on the server, which means creating REMOVES
+//                        // for all the perms that we started with except those that are also on the parent.
+//                        final Map<String, Set<String>> permissionsToRemove = DocumentPermissions.excludePermissions(
+//                                initialPermissions,
+//                                parentDocPermissions.getPermissions());
+//                        final Map<String, Set<String>> permissionsToAdd = DocumentPermissions.excludePermissions(
+//                                parentDocPermissions.getPermissions(),
+//                                initialPermissions);
+//                        // Now create the ADDs and REMOVEs for the effective changes.
+//                        changes = new Changes(permissionsToAdd, permissionsToRemove);
+//
+//                        // We need to set the document permissions so that what's been changed is visible.
+//                        usersPresenter.setDocumentPermissions(
+//                                allPermissions,
+//                                parentDocPermissions,
+//                                changes);
+//
+////                        GWT.log("After copyFromParent:"
+////                                + "\ninitialPermissions:\n"
+////                                + DocumentPermissions.permsMapToStr(initialPermissions)
+////                                + "\nparentDocPermissions:\n"
+////                                + DocumentPermissions.permsMapToStr(parentDocPermissions.getPermissions())
+////                                + "\nADDs:\n"
+////                                + DocumentPermissions.permsMapToStr(permissionsToAdd)
+////                                + "\nREMOVEs:\n"
+////                                + DocumentPermissions.permsMapToStr(permissionsToRemove));
+//                    })
+//                    .taskListener(this)
+//                    .exec();
         };
     }
 
@@ -332,7 +264,7 @@ public class DocumentPermissionsPresenter
 
     public interface DocumentPermissionsView extends View {
 
-        void setTabsView(View view);
+        void setPermissionsView(View view);
 
         SelectionBox<Cascade> getCascade();
 

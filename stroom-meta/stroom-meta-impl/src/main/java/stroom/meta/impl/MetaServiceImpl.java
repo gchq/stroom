@@ -32,14 +32,15 @@ import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 import stroom.util.time.TimePeriod;
 
 import jakarta.inject.Inject;
@@ -129,7 +130,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     @Override
     public Meta getMeta(final long id, final boolean anyStatus) {
         final ExpressionOperator secureExpression = addPermissionConstraints(getIdExpression(id, anyStatus),
-                DocumentPermissionNames.READ,
+                DocumentPermission.VIEW,
                 FEED_FIELDS);
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(secureExpression);
         findMetaCriteria.setPageRequest(new PageRequest(0, 1));
@@ -150,7 +151,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                 currentStatus,
                 newStatus,
                 now,
-                DocumentPermissionNames.UPDATE);
+                DocumentPermission.EDIT);
         if (result > 0) {
             return meta
                     .copy()
@@ -179,7 +180,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                              final Status currentStatus,
                              final Status newStatus,
                              final long statusTime,
-                             final String permission) {
+                             final DocumentPermission permission) {
         final ExpressionOperator expression = getIdExpression(id, true);
         final ExpressionOperator secureExpression = addPermissionConstraints(expression, permission, FEED_FIELDS);
         final FindMetaCriteria criteria = new FindMetaCriteria(secureExpression);
@@ -191,9 +192,9 @@ public class MetaServiceImpl implements MetaService, Searchable {
     public int updateStatus(final FindMetaCriteria criteria, final Status currentStatus, final Status newStatus) {
         return securityContext.secureResult(() -> {
             // Decide which permission is needed for this update as logical deletes require delete permissions.
-            final String permission = Status.DELETED.equals(newStatus)
-                    ? DocumentPermissionNames.DELETE
-                    : DocumentPermissionNames.UPDATE;
+            final DocumentPermission permission = Status.DELETED.equals(newStatus)
+                    ? DocumentPermission.DELETE
+                    : DocumentPermission.EDIT;
             ExpressionOperator expression = criteria.getExpression();
 
             final Predicate<ExpressionTerm> termPredicate = term ->
@@ -230,14 +231,14 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     @Override
     public int delete(final long id) {
-        return securityContext.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () ->
+        return securityContext.secureResult(AppPermission.DELETE_DATA_PERMISSION, () ->
                 doLogicalDelete(id, true));
     }
 
     @Override
     public int delete(final List<DataRetentionRuleAction> ruleActions,
                       final TimePeriod period) {
-        return securityContext.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.DELETE_DATA_PERMISSION, () -> {
             if (ruleActions != null && !ruleActions.isEmpty()) {
                 return metaDao.logicalDelete(ruleActions, period);
             } else {
@@ -248,7 +249,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     @Override
     public int delete(final long id, final boolean lockCheck) {
-        return securityContext.secureResult(PermissionNames.DELETE_DATA_PERMISSION,
+        return securityContext.secureResult(AppPermission.DELETE_DATA_PERMISSION,
                 () -> doLogicalDelete(id, lockCheck));
     }
 
@@ -275,7 +276,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                 null,
                 Status.DELETED,
                 now,
-                DocumentPermissionNames.DELETE);
+                DocumentPermission.DELETE);
     }
 
     @Override
@@ -285,6 +286,9 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     @Override
     public ResultPage<QueryField> getFieldInfo(final FindFieldInfoCriteria criteria) {
+        if (!MetaFields.STREAM_STORE_DOC_REF.equals(criteria.getDataSourceRef())) {
+            return ResultPage.empty();
+        }
         return FieldInfoResultPageBuilder.builder(criteria).addAll(MetaFields.getAllFields()).build();
     }
 
@@ -304,7 +308,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                        final ValuesConsumer consumer) {
         LOGGER.logDurationIfTraceEnabled(() -> {
             final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(),
-                    DocumentPermissionNames.READ,
+                    DocumentPermission.VIEW,
                     FEED_FIELDS);
             criteria.setExpression(expression);
             metaDao.search(criteria, fieldIndex, consumer);
@@ -373,7 +377,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     private ResultPage<Meta> secureFind(final FindMetaCriteria criteria) {
         final ExpressionOperator expression = addPermissionConstraints(
                 criteria.getExpression(),
-                DocumentPermissionNames.READ,
+                DocumentPermission.VIEW,
                 FEED_FIELDS);
         criteria.setExpression(expression);
         return metaDao.find(criteria);
@@ -408,7 +412,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     private ResultPage<Meta> simpleFind(final ExpressionOperator expression) {
         final FindMetaCriteria criteria = new FindMetaCriteria(expression);
         final ExpressionOperator secureExpression = addPermissionConstraints(expression,
-                DocumentPermissionNames.READ,
+                DocumentPermission.VIEW,
                 FEED_FIELDS);
         criteria.setExpression(secureExpression);
         return metaDao.find(criteria);
@@ -517,7 +521,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     @Override
     public ResultPage<Meta> findReprocess(final FindMetaCriteria criteria) {
         final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(),
-                DocumentPermissionNames.READ,
+                DocumentPermission.VIEW,
                 ALL_FEED_FIELDS);
         criteria.setExpression(expression);
         return metaDao.findReprocess(criteria);
@@ -547,7 +551,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     @Override
     public SelectionSummary getSelectionSummary(final FindMetaCriteria criteria) {
         final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(),
-                DocumentPermissionNames.READ,
+                DocumentPermission.VIEW,
                 FEED_FIELDS);
         criteria.setExpression(expression);
         return metaDao.getSelectionSummary(criteria);
@@ -556,7 +560,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     @Override
     public SelectionSummary getReprocessSelectionSummary(final FindMetaCriteria criteria) {
         final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(),
-                DocumentPermissionNames.READ,
+                DocumentPermission.VIEW,
                 ALL_FEED_FIELDS);
         criteria.setExpression(expression);
         return metaDao.getReprocessSelectionSummary(criteria);
@@ -628,7 +632,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     private ExpressionOperator addPermissionConstraints(final ExpressionOperator expression,
-                                                        final String permission,
+                                                        final DocumentPermission permission,
                                                         final List<String> fields) {
         return metaSecurityFilter.map(msf -> {
             final ExpressionOperator filter = msf
@@ -669,9 +673,9 @@ public class MetaServiceImpl implements MetaService, Searchable {
     public List<DataRetentionDeleteSummary> getRetentionDeleteSummary(final String queryId,
                                                                       final DataRetentionRules rules,
                                                                       final FindDataRetentionImpactCriteria criteria) {
-        return securityContext.secureResult(PermissionNames.MANAGE_POLICIES_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.MANAGE_POLICIES_PERMISSION, () -> {
 
-            final String userId = securityContext.getSubjectId();
+            final UserRef userRef = securityContext.getUserRef();
 
             List<DataRetentionDeleteSummary> summaries;
             try {
@@ -680,7 +684,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                                 "Data retention Delete Summary Query", taskContext -> {
 
                                     LOGGER.debug("Starting task {}", taskContext.getTaskId());
-                                    userQueryRegistry.registerQuery(userId, queryId, taskContext.getTaskId());
+                                    userQueryRegistry.registerQuery(userRef, queryId, taskContext.getTaskId());
 
                                     // TODO remove, here for dev testing to add a big delay for cancellation testing
 //                            try {
@@ -713,7 +717,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                     }
                 }
             } finally {
-                userQueryRegistry.deRegisterQuery(userId, queryId);
+                userQueryRegistry.deRegisterQuery(userRef, queryId);
             }
             return summaries;
         });
@@ -721,8 +725,8 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     @Override
     public boolean cancelRetentionDeleteSummary(final String queryId) {
-        return securityContext.secureResult(PermissionNames.MANAGE_POLICIES_PERMISSION, () ->
-                userQueryRegistry.terminateQuery(securityContext.getSubjectId(), queryId, taskManager));
+        return securityContext.secureResult(AppPermission.MANAGE_POLICIES_PERMISSION, () ->
+                userQueryRegistry.terminateQuery(securityContext.getUserRef(), queryId, taskManager));
     }
 
     @Override

@@ -4,14 +4,10 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
-             xmlns:item="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max dock-container-vertical form">
         <form:FormGroup identity="owner" label="Owner">
-            <g:FlowPanel styleName="max dock-container-vertical">
-                <g:Label ui:field="ownerLabel" addStyleNames="w-100"/>
-                <item:SelectionBox ui:field="ownerSelectionBox" addStyleNames="w-100"/>
-            </g:FlowPanel>
+            <g:SimplePanel ui:field="owner" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="name" label="API Key Name">
             <g:TextBox ui:field="nameTextBox" addStyleNames="w-100"/>
@@ -23,8 +19,8 @@
             <g:FlowPanel styleName="max dock-container-vertical">
                 <g:TextArea ui:field="apiKeyTextArea" addStyleNames="w-100"/>
                 <g:FlowPanel styleName="max dock-container-horizontal align-center">
-                    <b:ButtonPanel ui:field="apiKeyButtonPanel" />
-                    <g:Label ui:field="copyToClipboardLabel" />
+                    <b:ButtonPanel ui:field="apiKeyButtonPanel"/>
+                    <g:Label ui:field="copyToClipboardLabel"/>
                 </g:FlowPanel>
             </g:FlowPanel>
         </form:FormGroup>

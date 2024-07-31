@@ -17,8 +17,8 @@
 package stroom.security.client.presenter;
 
 import stroom.security.client.presenter.GroupEditPresenter.UserGroupEditView;
-import stroom.security.shared.User;
 import stroom.task.client.TaskListener;
+import stroom.util.shared.UserRef;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -48,7 +48,7 @@ public class GroupEditPresenter
         view.setAppPermissionsView(appPermissionsPresenter.getView());
     }
 
-    public void show(final User userRef, final Runnable closeRunnable) {
+    public void show(final UserRef userRef, final Runnable closeRunnable) {
         read(userRef);
 
         final PopupSize popupSize = PopupSize.builder()
@@ -75,7 +75,7 @@ public class GroupEditPresenter
                 .fire();
     }
 
-    private void read(User userRef) {
+    private void read(UserRef userRef) {
         addRemoveUsersPresenter.setUser(userRef);
         appPermissionsPresenter.setUser(userRef);
     }

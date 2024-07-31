@@ -16,17 +16,17 @@
 
 package stroom.processor.shared;
 
-import stroom.docref.DocRef;
-import stroom.docref.HasUuid;
-import stroom.pipeline.shared.PipelineDoc;
-import stroom.util.shared.HasAuditInfo;
-import stroom.util.shared.HasIntegerId;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import stroom.docref.DocRef;
+import stroom.docref.HasUuid;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasIntegerId;
+import stroom.util.shared.UserRef;
 
 import java.util.Comparator;
 import java.util.Objects;
@@ -83,6 +83,8 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
     private String pipelineUuid;
     @JsonProperty
     private String pipelineName;
+    @JsonProperty
+    private UserRef runAsUser;
 
     @JsonProperty
     private Processor processor;
@@ -133,6 +135,7 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
                            @JsonProperty("processorUuid") final String processorUuid,
                            @JsonProperty("pipelineUuid") final String pipelineUuid,
                            @JsonProperty("pipelineName") final String pipelineName,
+                           @JsonProperty("runAsUser") UserRef runAsUser,
                            @JsonProperty("minMetaCreateTimeMs") final Long minMetaCreateTimeMs,
                            @JsonProperty("maxMetaCreateTimeMs") final Long maxMetaCreateTimeMs) {
         this.id = id;
@@ -161,6 +164,7 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
                 : processorType;
         this.processorUuid = processorUuid;
         this.pipelineName = pipelineName;
+        this.runAsUser = runAsUser;
         this.minMetaCreateTimeMs = minMetaCreateTimeMs;
         this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
     }
@@ -309,6 +313,27 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
         return new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid, pipelineName);
     }
 
+    public void setRunAsUser(final UserRef runAsUser) {
+        this.runAsUser = runAsUser;
+    }
+
+    public UserRef getRunAsUser() {
+        return runAsUser;
+    }
+
+    @JsonIgnore
+    public String getRunAsUserUuid() {
+        if (runAsUser == null) {
+            return null;
+        }
+        return runAsUser.getUuid();
+    }
+
+    @JsonIgnore
+    public void setRunAsUserUuid(final String runAsUserUuid) {
+        runAsUser = UserRef.builder().uuid(runAsUserUuid).build();
+    }
+
     public void setProcessor(final Processor processor) {
         this.processor = processor;
 
@@ -414,7 +439,6 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
         return sb.toString();
     }
 
-
     @Override
     public String toString() {
         return "ProcessorFilter{" +
@@ -427,9 +451,15 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
                 ", uuid='" + uuid + '\'' +
                 ", data='" + data + '\'' +
                 ", queryData=" + queryData +
+                ", processorType=" + processorType +
+                ", processorUuid='" + processorUuid + '\'' +
+                ", pipelineUuid='" + pipelineUuid + '\'' +
+                ", pipelineName='" + pipelineName + '\'' +
+                ", runAsUser='" + runAsUser + '\'' +
                 ", processor=" + processor +
                 ", processorFilterTracker=" + processorFilterTracker +
                 ", priority=" + priority +
+                ", maxProcessingTasks=" + maxProcessingTasks +
                 ", reprocess=" + reprocess +
                 ", enabled=" + enabled +
                 ", deleted=" + deleted +
@@ -483,6 +513,7 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
         private String processorUuid;
         private String pipelineUuid;
         private String pipelineName;
+        private UserRef runAsUser;
         private Processor processor;
         private ProcessorFilterTracker processorFilterTracker;
 
@@ -518,6 +549,7 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
             this.processorUuid = filter.processorUuid;
             this.pipelineUuid = filter.pipelineUuid;
             this.pipelineName = filter.pipelineName;
+            this.runAsUser = filter.runAsUser;
             this.processor = filter.processor;
             this.processorFilterTracker = filter.processorFilterTracker;
             this.priority = filter.priority;
@@ -594,6 +626,11 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
             return this;
         }
 
+        public Builder runAsUser(final UserRef runAsUser) {
+            this.runAsUser = runAsUser;
+            return this;
+        }
+
         public Builder processor(final Processor processor) {
             this.processor = processor;
             return this;
@@ -661,6 +698,7 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
                     processorUuid,
                     pipelineUuid,
                     pipelineName,
+                    runAsUser,
                     minMetaCreateTimeMs,
                     maxMetaCreateTimeMs);
         }

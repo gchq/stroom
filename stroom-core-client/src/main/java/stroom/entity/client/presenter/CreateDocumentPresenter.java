@@ -17,25 +17,6 @@
 
 package stroom.entity.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
-import stroom.document.client.event.CreateDocumentEvent;
-import stroom.document.client.event.ShowCreateDocumentDialogEvent;
-import stroom.entity.client.presenter.CreateDocumentPresenter.CreateDocumentProxy;
-import stroom.entity.client.presenter.CreateDocumentPresenter.CreateDocumentView;
-import stroom.explorer.client.presenter.EntityTreePresenter;
-import stroom.explorer.shared.DocumentTypes;
-import stroom.explorer.shared.ExplorerNode;
-import stroom.explorer.shared.PermissionInheritance;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.task.client.TaskListener;
-import stroom.widget.popup.client.event.DialogEvent;
-import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.popup.client.view.DialogAction;
-import stroom.widget.popup.client.view.DialogActionUiHandlers;
-
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -45,6 +26,24 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
+import stroom.alert.client.event.AlertEvent;
+import stroom.document.client.event.CreateDocumentEvent;
+import stroom.document.client.event.ShowCreateDocumentDialogEvent;
+import stroom.entity.client.presenter.CreateDocumentPresenter.CreateDocumentProxy;
+import stroom.entity.client.presenter.CreateDocumentPresenter.CreateDocumentView;
+import stroom.explorer.client.presenter.EntityTreePresenter;
+import stroom.explorer.shared.DocumentTypes;
+import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.PermissionInheritance;
+import stroom.security.shared.DocumentPermission;
+import stroom.task.client.TaskListener;
+import stroom.widget.popup.client.event.DialogEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.popup.client.view.DialogAction;
+import stroom.widget.popup.client.view.DialogActionUiHandlers;
 
 import java.util.function.Consumer;
 
@@ -73,7 +72,7 @@ public class CreateDocumentPresenter
         view.setFolderView(entityTreePresenter.getView());
 
         entityTreePresenter.setIncludedTypes(DocumentTypes.FOLDER_TYPES);
-        entityTreePresenter.setRequiredPermissions(DocumentPermissionNames.USE, DocumentPermissionNames.READ);
+        entityTreePresenter.setRequiredPermissions(DocumentPermission.USE, DocumentPermission.VIEW);
     }
 
     @ProxyEvent

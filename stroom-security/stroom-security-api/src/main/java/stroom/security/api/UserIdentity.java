@@ -1,10 +1,7 @@
 package stroom.security.api;
 
 import stroom.util.shared.HasAuditableUserIdentity;
-import stroom.util.shared.SimpleUserName;
-import stroom.util.shared.UserName;
 
-import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -35,28 +32,16 @@ public interface UserIdentity extends HasAuditableUserIdentity {
         return Optional.empty();
     }
 
-    /**
-     * A value for use in the UI.
-     * If there is no {@code displayName}, this will return {@code name}.
-     * If {@code displayName} is the same as {@code name}, this will return {@code name}.
-     * Else it will return 'displayName (name)'.
-     */
-    default String getCombinedName() {
-        // This logic is replicated in UserName
-        final String id = getSubjectId();
-        final String displayName = getDisplayName();
-        if (displayName == null) {
-            return id;
-        } else if (Objects.equals(id, displayName)) {
-            return displayName;
-        } else {
-            return displayName + " (" + id + ")";
-        }
-    }
-
     @Override
     default String getUserIdentityForAudit() {
-        return HasAuditableUserIdentity.fromUserNames(getSubjectId(), getDisplayName());
+        final String subjectId = getSubjectId();
+        final String displayName = getDisplayName();
+        // GWT so no Objects.requireNonNullElse()
+        if (displayName != null) {
+            return displayName;
+        } else {
+            return subjectId;
+        }
     }
 
     // TODO: 28/11/2022 Potentially worth introducing scopes, e.g. a datafeed scope so only tokens
@@ -70,16 +55,16 @@ public interface UserIdentity extends HasAuditableUserIdentity {
 //    default Set<String> getScopes() {
 //        return Collections.emptySet();
 //    };
-
-    default UserName asUserName() {
-        final String subjectId = getSubjectId();
-        String displayName = getDisplayName();
-        if (Objects.equals(displayName, subjectId)) {
-            displayName = null;
-        }
-        return new SimpleUserName(
-                subjectId,
-                displayName,
-                getFullName().orElse(null));
-    }
+//
+//    default UserName asUserName() {
+//        final String subjectId = getSubjectId();
+//        String displayName = getDisplayName();
+//        if (Objects.equals(displayName, subjectId)) {
+//            displayName = null;
+//        }
+//        return new SimpleUserName(
+//                subjectId,
+//                displayName,
+//                getFullName().orElse(null));
+//    }
 }

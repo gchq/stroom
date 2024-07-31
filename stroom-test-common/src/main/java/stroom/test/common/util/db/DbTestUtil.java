@@ -1,5 +1,12 @@
 package stroom.test.common.util.db;
 
+import com.wix.mysql.EmbeddedMysql;
+import com.wix.mysql.config.Charset;
+import com.wix.mysql.config.DownloadConfig;
+import com.wix.mysql.config.MysqldConfig;
+import com.wix.mysql.distribution.Version;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import stroom.config.common.AbstractDbConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.ConnectionConfig;
@@ -15,34 +22,14 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import com.wix.mysql.EmbeddedMysql;
-import com.wix.mysql.config.Charset;
-import com.wix.mysql.config.DownloadConfig;
-import com.wix.mysql.config.MysqldConfig;
-import com.wix.mysql.distribution.Version;
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
-
+import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.Set;
-import java.util.UUID;
+import java.sql.*;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -52,7 +39,6 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import javax.sql.DataSource;
 
 public class DbTestUtil {
 
@@ -731,7 +717,10 @@ public class DbTestUtil {
             try (final ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
                     final String name = resultSet.getString(1);
-                    tables.add(name);
+                    // `permission_doc_id` is a table of static reference values so leave it alone.
+                    if (!"permission_doc_id".equalsIgnoreCase(name)) {
+                        tables.add(name);
+                    }
                 }
             }
         } catch (final SQLException e) {

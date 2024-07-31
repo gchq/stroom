@@ -1,19 +1,18 @@
 package stroom.security.client;
 
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.ApiKeysPresenter;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
-
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Singleton;
 
@@ -37,8 +36,8 @@ public class ApiKeysPlugin extends MonitoringPlugin<ApiKeysPresenter> {
     }
 
     @Override
-    protected String getRequiredAppPermission() {
-        return PermissionNames.MANAGE_API_KEYS;
+    protected AppPermission getRequiredAppPermission() {
+        return AppPermission.MANAGE_API_KEYS;
     }
 
     @Override

@@ -16,6 +16,8 @@
 
 package stroom.data.store.impl;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import stroom.data.shared.DataInfoSection;
 import stroom.data.shared.DataInfoSection.Entry;
 import stroom.data.shared.UploadDataRequest;
@@ -27,12 +29,7 @@ import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaService;
-import stroom.meta.shared.DataRetentionFields;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaExpressionUtil;
-import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.MetaRow;
+import stroom.meta.shared.*;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.PipelineDataCache;
@@ -40,15 +37,11 @@ import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.pipeline.state.CurrentUserHolder;
-import stroom.pipeline.state.FeedHolder;
-import stroom.pipeline.state.MetaDataHolder;
-import stroom.pipeline.state.MetaHolder;
-import stroom.pipeline.state.PipelineHolder;
+import stroom.pipeline.state.*;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
 import stroom.task.api.TaskContextFactory;
 import stroom.ui.config.shared.SourceConfig;
 import stroom.util.NullSafe;
@@ -58,23 +51,11 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
-import stroom.util.shared.Message;
-import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.PermissionException;
-import stroom.util.shared.ResourceGeneration;
-import stroom.util.shared.ResourceKey;
-import stroom.util.shared.ResultPage;
-
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
+import stroom.util.shared.*;
 
 import java.nio.file.Path;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 class DataServiceImpl implements DataService {
@@ -144,7 +125,7 @@ class DataServiceImpl implements DataService {
 
     @Override
     public ResourceGeneration download(final FindMetaCriteria criteria) {
-        return securityContext.secureResult(PermissionNames.EXPORT_DATA_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.EXPORT_DATA_PERMISSION, () -> {
             // Import file.
             final ResourceKey resourceKey = resourceStore.createTempFile("StroomData.zip");
             final Path file = resourceStore.getTempFile(resourceKey);
@@ -161,7 +142,7 @@ class DataServiceImpl implements DataService {
                     settings);
 
             if (result.getRecordsWritten() == 0) {
-                if (result.getMessageList() != null && result.getMessageList().size() > 0) {
+                if (result.getMessageList() != null && !result.getMessageList().isEmpty()) {
                     throw new RuntimeException("Download failed with errors: " +
                             result.getMessageList().stream()
                                     .map(Message::getMessage)
@@ -182,12 +163,12 @@ class DataServiceImpl implements DataService {
                 .orElseThrow(() ->
                         new RuntimeException("Unable to find feed document with name " + request.getFeedName()));
 
-        if (!securityContext.hasDocumentPermission(feedDocRef.getUuid(), DocumentPermissionNames.UPDATE)) {
-            throw new PermissionException(securityContext.getUserIdentityForAudit(),
+        if (!securityContext.hasDocumentPermission(feedDocRef, DocumentPermission.EDIT)) {
+            throw new PermissionException(securityContext.getUserRef(),
                     "You do not have permission to update feed " + request.getFeedName());
         }
 
-        return securityContext.secureResult(PermissionNames.IMPORT_DATA_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.IMPORT_DATA_PERMISSION, () -> {
             try {
                 // Import file.
                 final Path file = resourceStore.getTempFile(request.getKey());
@@ -272,11 +253,11 @@ class DataServiceImpl implements DataService {
     @Override
     public AbstractFetchDataResult fetch(final FetchDataRequest request) {
         try {
-            final String permissionName = request.getPipeline() != null
-                    ? PermissionNames.VIEW_DATA_WITH_PIPELINE_PERMISSION
-                    : PermissionNames.VIEW_DATA_PERMISSION;
+            final AppPermission appPermission = request.getPipeline() != null
+                    ? AppPermission.VIEW_DATA_WITH_PIPELINE_PERMISSION
+                    : AppPermission.VIEW_DATA_PERMISSION;
 
-            return securityContext.secureResult(permissionName, () ->
+            return securityContext.secureResult(appPermission, () ->
                     dataFetcher.getData(request));
         } catch (final RuntimeException e) {
             LOGGER.debug(LogUtil.message("Error fetching data {}", request), e);
@@ -287,10 +268,8 @@ class DataServiceImpl implements DataService {
     @Override
     public Set<String> getChildStreamTypes(final long id, final long partNo) {
         try {
-            final String permissionName = PermissionNames.VIEW_DATA_PERMISSION;
-
-            return securityContext.secureResult(permissionName, () -> {
-
+            final AppPermission permission = AppPermission.VIEW_DATA_PERMISSION;
+            return securityContext.secureResult(permission, () -> {
                 final Set<String> childTypes = dataFetcher.getAvailableChildStreamTypes(id, partNo);
                 LOGGER.debug(() ->
                         LogUtil.message("childTypes {}",

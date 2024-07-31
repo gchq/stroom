@@ -1,5 +1,8 @@
 package stroom.analytics.impl;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import stroom.analytics.rule.impl.AnalyticRuleStore;
 import stroom.analytics.shared.AnalyticDataShard;
 import stroom.analytics.shared.AnalyticRuleDoc;
@@ -12,35 +15,16 @@ import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.LmdbEnvDir;
 import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.node.api.NodeInfo;
-import stroom.query.api.v2.FindResultStoreCriteria;
-import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.ParamUtil;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.Result;
-import stroom.query.api.v2.ResultRequest;
-import stroom.query.api.v2.ResultStoreInfo;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchRequestSource;
+import stroom.query.api.v2.*;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
-import stroom.query.api.v2.TableResult;
-import stroom.query.api.v2.TableSettings;
-import stroom.query.api.v2.TimeFilter;
-import stroom.query.common.v2.AbstractResultStoreConfig;
-import stroom.query.common.v2.AnalyticResultStoreConfig;
-import stroom.query.common.v2.DataStoreSettings;
-import stroom.query.common.v2.DateExpressionParser;
-import stroom.query.common.v2.ErrorConsumerImpl;
-import stroom.query.common.v2.ExpressionContextFactory;
-import stroom.query.common.v2.HasResultStoreInfo;
-import stroom.query.common.v2.LmdbDataStore;
-import stroom.query.common.v2.TableResultCreator;
+import stroom.query.common.v2.*;
 import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
@@ -49,21 +33,10 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 import stroom.view.shared.ViewDoc;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -316,20 +289,19 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         final Set<AnalyticRuleDoc> currentRules = getCurrentRules();
         currentRules.forEach(analyticRuleDoc -> {
             try {
+                final DocRef docRef = analyticRuleDoc.asDocRef();
                 final SearchRequest searchRequest = analyticRuleSearchRequestHelper.create(analyticRuleDoc);
                 final String componentId = getComponentId(searchRequest);
                 final String dir = getAnalyticStoreDir(searchRequest.getKey(), componentId);
                 final Path path = analyticResultStoreDir.resolve(dir);
                 if (Files.isDirectory(path)) {
-                    if (securityContext.hasDocumentPermission(
-                            analyticRuleDoc.getUuid(), DocumentPermissionNames.READ)) {
-
+                    if (securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
                         list.add(new ResultStoreInfo(
                                 new SearchRequestSource(SourceType.TABLE_BUILDER_ANALYTIC,
-                                        analyticRuleDoc.getUuid(),
+                                        docRef,
                                         null),
                                 searchRequest.getKey(),
-                                analyticRuleDoc.getCreateUser(),
+                                null,
                                 analyticRuleDoc.getCreateTimeMs(),
                                 nodeInfo.getThisNodeName(),
                                 FileUtil.getByteSize(path),
@@ -382,7 +354,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
             final Path path = analyticResultStoreDir.resolve(dir);
             if (Files.isDirectory(path)) {
                 if (securityContext.hasDocumentPermission(
-                        analyticRuleDoc.getUuid(), DocumentPermissionNames.READ)) {
+                        analyticRuleDoc.asDocRef(), DocumentPermission.VIEW)) {
 
                     long createTime = 0;
                     try {

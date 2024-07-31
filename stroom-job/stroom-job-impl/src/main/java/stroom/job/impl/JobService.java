@@ -21,7 +21,7 @@ import stroom.job.api.DistributedTaskFactoryDescription;
 import stroom.job.api.ScheduledJob;
 import stroom.job.shared.Job;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.util.AuditUtil;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.ResultPage;
@@ -73,7 +73,7 @@ class JobService {
     }
 
     Job update(final Job job) {
-        return securityContext.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.MANAGE_JOBS_PERMISSION, () -> {
             final Optional<Job> before = fetch(job.getId());
 
             // We always want to update a job instance even if we have a stale version.
@@ -86,7 +86,7 @@ class JobService {
     }
 
     ResultPage<Job> find(final FindJobCriteria findJobCriteria) {
-        final ResultPage<Job> results = securityContext.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION,
+        final ResultPage<Job> results = securityContext.secureResult(AppPermission.MANAGE_JOBS_PERMISSION,
                 () -> jobDao.find(findJobCriteria));
         results.getValues().forEach(this::decorate);
 
@@ -115,7 +115,7 @@ class JobService {
                               final Set<String> includeJobs,
                               final Set<String> excludeJobs) {
         return securityContext.secureResult(
-                PermissionNames.MANAGE_JOBS_PERMISSION,
+                AppPermission.MANAGE_JOBS_PERMISSION,
                 () -> jobDao.setJobsEnabled(nodeName, enabled, includeJobs, excludeJobs));
     }
 }

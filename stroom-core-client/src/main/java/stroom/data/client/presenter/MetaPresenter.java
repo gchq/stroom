@@ -42,7 +42,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.shared.ExpressionResource;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
@@ -130,13 +130,13 @@ public class MetaPresenter
         dataPresenter.setBeginSteppingHandler(this);
 
         // Process
-        if (securityContext.hasAppPermission(PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
+        if (securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION)) {
             streamListProcess = metaListPresenter.add(SvgPresets.PROCESS);
             streamRelationListProcess = metaRelationListPresenter.add(SvgPresets.PROCESS);
         }
 
         // Delete, Undelete, DE-duplicate
-        if (securityContext.hasAppPermission(PermissionNames.DELETE_DATA_PERMISSION)) {
+        if (securityContext.hasAppPermission(AppPermission.DELETE_DATA_PERMISSION)) {
             streamListDelete = metaListPresenter.add(SvgPresets.DELETE);
             streamListDelete.setEnabled(false);
             streamRelationListDelete = metaRelationListPresenter.add(SvgPresets.DELETE);
@@ -151,13 +151,13 @@ public class MetaPresenter
         streamListInfo = metaListPresenter.add(SvgPresets.INFO.title("Selection summary"));
 
         // Download
-        if (securityContext.hasAppPermission(PermissionNames.EXPORT_DATA_PERMISSION)) {
+        if (securityContext.hasAppPermission(AppPermission.EXPORT_DATA_PERMISSION)) {
             streamListDownload = metaListPresenter.add(SvgPresets.DOWNLOAD);
             streamRelationListDownload = metaRelationListPresenter.add(SvgPresets.DOWNLOAD);
         }
 
         // Upload
-        if (securityContext.hasAppPermission(PermissionNames.IMPORT_DATA_PERMISSION)) {
+        if (securityContext.hasAppPermission(AppPermission.IMPORT_DATA_PERMISSION)) {
             streamListUpload = metaListPresenter.add(SvgPresets.UPLOAD);
         }
 

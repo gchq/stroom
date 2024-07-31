@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 )
 @JsonSubTypes({
         @JsonSubTypes.Type(value = StringEntryValue.class, name = "string"),
-        @JsonSubTypes.Type(value = UserNameEntryValue.class, name = "user")
+        @JsonSubTypes.Type(value = UserRefEntryValue.class, name = "user")
 })
 public interface EntryValue {
 

@@ -1,5 +1,11 @@
 package stroom.security.impl.apikey;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.core.HttpHeaders;
+import org.apache.commons.codec.digest.DigestUtils;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.StroomCache;
 import stroom.security.api.SecurityContext;
@@ -8,25 +14,14 @@ import stroom.security.common.impl.JwtUtil;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.BasicUserIdentity;
 import stroom.security.impl.HashedApiKeyParts;
-import stroom.security.shared.ApiKeyResultPage;
-import stroom.security.shared.CreateHashedApiKeyRequest;
-import stroom.security.shared.CreateHashedApiKeyResponse;
-import stroom.security.shared.FindApiKeyCriteria;
-import stroom.security.shared.HashedApiKey;
-import stroom.security.shared.PermissionNames;
+import stroom.security.impl.UserCache;
+import stroom.security.shared.*;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.PermissionException;
-import stroom.util.shared.UserName;
-
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.ws.rs.core.HttpHeaders;
-import org.apache.commons.codec.digest.DigestUtils;
+import stroom.util.shared.UserRef;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -47,17 +42,20 @@ public class ApiKeyService {
     private final ApiKeyGenerator apiKeyGenerator;
     private final StroomCache<String, Optional<UserIdentity>> apiKeyToAuthenticatedUserCache;
     private final Provider<AuthenticationConfig> authenticationConfigProvider;
+    private final UserCache userCache;
 
     @Inject
     public ApiKeyService(final ApiKeyDao apiKeyDao,
                          final SecurityContext securityContext,
                          final ApiKeyGenerator apiKeyGenerator,
                          final CacheManager cacheManager,
-                         final Provider<AuthenticationConfig> authenticationConfigProvider) {
+                         final Provider<AuthenticationConfig> authenticationConfigProvider,
+                         final UserCache userCache) {
         this.apiKeyDao = apiKeyDao;
         this.securityContext = securityContext;
         this.apiKeyGenerator = apiKeyGenerator;
         this.authenticationConfigProvider = authenticationConfigProvider;
+        this.userCache = userCache;
 
         apiKeyToAuthenticatedUserCache = cacheManager.createLoadingCache(
                 CACHE_NAME,
@@ -66,7 +64,7 @@ public class ApiKeyService {
     }
 
     public ApiKeyResultPage find(final FindApiKeyCriteria criteria) {
-        return securityContext.secureResult(PermissionNames.MANAGE_API_KEYS, () -> {
+        return securityContext.secureResult(AppPermission.MANAGE_API_KEYS, () -> {
             checkAdditionalPerms(criteria.getOwner());
             return apiKeyDao.find(criteria);
         });
@@ -123,7 +121,9 @@ public class ApiKeyService {
                 return Optional.empty();
             } else {
                 final HashedApiKey apiKey = optApiKey.get();
-                final Optional<UserIdentity> optUserIdentity = Optional.of(apiKey.getOwner())
+                final Optional<User> optionalUser = Optional.ofNullable(apiKey.getOwner()).flatMap(userCache::getByRef);
+                final Optional<UserIdentity> optUserIdentity = optionalUser
+                        .map(User::asRef)
                         .map(BasicUserIdentity::new);
                 LOGGER.debug("optUserIdentity: {}", optUserIdentity);
                 return optUserIdentity;
@@ -132,7 +132,7 @@ public class ApiKeyService {
     }
 
     public Optional<HashedApiKey> fetch(final int id) {
-        return securityContext.secureResult(PermissionNames.MANAGE_API_KEYS, () -> {
+        return securityContext.secureResult(AppPermission.MANAGE_API_KEYS, () -> {
             final Optional<HashedApiKey> optApiKey = apiKeyDao.fetch(id);
 
             optApiKey.ifPresent(apiKey ->
@@ -144,7 +144,7 @@ public class ApiKeyService {
     public CreateHashedApiKeyResponse create(final CreateHashedApiKeyRequest createHashedApiKeyRequest) {
         Objects.requireNonNull(createHashedApiKeyRequest);
 
-        return securityContext.secureResult(PermissionNames.MANAGE_API_KEYS, () -> {
+        return securityContext.secureResult(AppPermission.MANAGE_API_KEYS, () -> {
             checkAdditionalPerms(createHashedApiKeyRequest.getOwner());
             // We want both a unique prefix and hash so keep generating new keys till we
             // get one that is unique on both
@@ -225,7 +225,7 @@ public class ApiKeyService {
     }
 
     public HashedApiKey update(final HashedApiKey apiKey) {
-        return securityContext.secureResult(PermissionNames.MANAGE_API_KEYS, () -> {
+        return securityContext.secureResult(AppPermission.MANAGE_API_KEYS, () -> {
             checkAdditionalPerms(apiKey.getOwner());
             final HashedApiKey apiKeyBefore = apiKeyDao.fetch(apiKey.getId())
                     .orElseThrow(() -> new RuntimeException("API Key not found with ID " + apiKey.getId()));
@@ -238,7 +238,7 @@ public class ApiKeyService {
     }
 
     public boolean delete(final int id) {
-        return securityContext.secureResult(PermissionNames.MANAGE_API_KEYS, () -> {
+        return securityContext.secureResult(AppPermission.MANAGE_API_KEYS, () -> {
             final Optional<HashedApiKey> optApiKey = fetch(id);
             if (optApiKey.isPresent()) {
                 final HashedApiKey apiKey = optApiKey.get();
@@ -265,10 +265,10 @@ public class ApiKeyService {
     }
 
     public int deleteBatch(final Collection<Integer> ids) {
-        return securityContext.secureResult(PermissionNames.MANAGE_API_KEYS, () -> {
+        return securityContext.secureResult(AppPermission.MANAGE_API_KEYS, () -> {
             // Would be quicker to delete en-mass, but deleting multiple won't happen that often
             // and this deals with cache invalidation and extra perm checks
-            final int deleteCount = NullSafe.stream(ids)
+            return NullSafe.stream(ids)
                     .mapToInt(id -> {
                         final boolean didDelete = delete(id);
                         return didDelete
@@ -276,30 +276,26 @@ public class ApiKeyService {
                                 : 0;
                     })
                     .sum();
-            return deleteCount;
         });
     }
 
     String computeApiKeyHash(final String apiKeyStr) {
         Objects.requireNonNull(apiKeyStr);
 
-        final String sha256 = DigestUtils.sha3_256Hex(apiKeyStr.trim())
+        return DigestUtils
+                .sha3_256Hex(apiKeyStr.trim())
                 .trim();
-        return sha256;
     }
 
-    private void checkAdditionalPerms(final UserName owner) {
-
+    private void checkAdditionalPerms(final UserRef owner) {
         if (!securityContext.isAdmin()) {
-            if (owner == null
-                    || (!Objects.equals(securityContext.getSubjectId(), owner.getSubjectId())
-                    && !Objects.equals(securityContext.getUserUuid(), owner.getUuid()))) {
+            if (owner == null || !Objects.equals(securityContext.getUserRef(), owner)) {
                 // logged-in user is not the same as the owner of the key(s) so more perms needed
-                if (!securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
+                if (!securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
                     throw new PermissionException(
-                            securityContext.getUserIdentityForAudit(),
+                            securityContext.getUserRef(),
                             LogUtil.message("'{}' permission is additionally required to manage " +
-                                    "the API keys of other users.", PermissionNames.MANAGE_USERS_PERMISSION));
+                                    "the API keys of other users.", AppPermission.MANAGE_USERS_PERMISSION));
                 }
             }
         }

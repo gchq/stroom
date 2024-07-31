@@ -48,12 +48,9 @@ import stroom.explorer.shared.FindInContentRequest;
 import stroom.explorer.shared.FindInContentResult;
 import stroom.explorer.shared.FindRequest;
 import stroom.explorer.shared.FindResult;
-import stroom.security.api.DocumentPermissionService;
-import stroom.security.user.api.UserNameService;
 import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.UserName;
 
 import com.google.common.base.Strings;
 import event.logging.ComplexLoggedOutcome;
@@ -65,9 +62,7 @@ import jakarta.inject.Provider;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class ExplorerResourceImpl implements ExplorerResource {
@@ -77,24 +72,18 @@ class ExplorerResourceImpl implements ExplorerResource {
     private final Provider<DocRefInfoService> docRefInfoServiceProvider;
     private final Provider<ExplorerNodePermissionsService> explorerNodePermissionsServiceProvider;
     private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
-    private final Provider<DocumentPermissionService> documentPermissionServiceProvider;
-    private final Provider<UserNameService> userNameServiceProvider;
 
     @Inject
     ExplorerResourceImpl(final Provider<ExplorerService> explorerServiceProvider,
                          final Provider<ExplorerNodeService> explorerNodeServiceProvider,
                          final Provider<DocRefInfoService> docRefInfoServiceProvider,
                          final Provider<ExplorerNodePermissionsService> explorerNodePermissionsServiceProvider,
-                         final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
-                         final Provider<DocumentPermissionService> documentPermissionServiceProvider,
-                         final Provider<UserNameService> userNameServiceProvider) {
+                         final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider) {
         this.explorerServiceProvider = explorerServiceProvider;
         this.explorerNodeServiceProvider = explorerNodeServiceProvider;
         this.docRefInfoServiceProvider = docRefInfoServiceProvider;
         this.explorerNodePermissionsServiceProvider = explorerNodePermissionsServiceProvider;
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
-        this.documentPermissionServiceProvider = documentPermissionServiceProvider;
-        this.userNameServiceProvider = userNameServiceProvider;
     }
 
     @Override
@@ -169,16 +158,7 @@ class ExplorerResourceImpl implements ExplorerResource {
         } else {
             final ExplorerNode explorerNode = explorerServiceProvider.get().getFromDocRef(docRef)
                     .orElseThrow(() -> new RuntimeException("No explorerNode for " + docRef));
-            final UserNameService userNameService = userNameServiceProvider.get();
-
-            final Set<UserName> owners = NullSafe.stream(documentPermissionServiceProvider.get()
-                            .getDocumentOwnerUuids(explorerNode.getUuid()))
-                    .map(userNameService::getByUuid)
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .collect(Collectors.toSet());
-
-            return new ExplorerNodeInfo(explorerNode, docRefInfo, owners);
+            return new ExplorerNodeInfo(explorerNode, docRefInfo);
         }
     }
 

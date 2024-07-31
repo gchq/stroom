@@ -19,23 +19,24 @@ package stroom.security.impl.event;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import stroom.docref.DocRef;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ClearDocumentPermissionsEvent implements PermissionChangeEvent {
 
     @JsonProperty
-    private final String documentUuid;
+    private final DocRef docRef;
 
     @JsonCreator
-    public ClearDocumentPermissionsEvent(@JsonProperty("documentUuid") final String documentUuid) {
-        this.documentUuid = documentUuid;
+    public ClearDocumentPermissionsEvent(@JsonProperty("docRef") final DocRef docRef) {
+        this.docRef = docRef;
     }
 
-    public static void fire(final PermissionChangeEventBus eventBus, final String documentUuid) {
-        eventBus.fire(new ClearDocumentPermissionsEvent(documentUuid));
+    public static void fire(final PermissionChangeEventBus eventBus, final DocRef docRef) {
+        eventBus.fire(new ClearDocumentPermissionsEvent(docRef));
     }
 
-    public String getDocumentUuid() {
-        return documentUuid;
+    public DocRef getDocRef() {
+        return docRef;
     }
 }

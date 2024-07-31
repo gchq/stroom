@@ -18,6 +18,7 @@ package stroom.dashboard.impl;
 
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
+import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableComponentSettings;
@@ -135,7 +136,11 @@ public class SearchRequestTestData {
                         SearchRequestSource
                                 .builder()
                                 .sourceType(SourceType.DASHBOARD_UI)
-                                .ownerDocUuid("dashboardUuid")
+                                .ownerDocRef(DocRef
+                                        .builder()
+                                        .type(DashboardDoc.DOCUMENT_TYPE)
+                                        .uuid("dashboardUuid")
+                                        .build())
                                 .componentId(componentId)
                                 .build())
                 .search(search)

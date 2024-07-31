@@ -16,64 +16,53 @@
 
 package stroom.security.client.presenter;
 
-import stroom.security.shared.Changes;
-import stroom.security.shared.DocumentPermissions;
-import stroom.security.shared.User;
-
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.ArrayList;
-import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 public class FolderPermissionsTabPresenter
         extends DocumentPermissionsTabPresenter {
 
-    private final PermissionsListPresenter createPermissionsListPresenter;
+    private final DocumentCreatePermissionsListPresenter createPermissionsListPresenter;
 
     @Inject
     public FolderPermissionsTabPresenter(final EventBus eventBus,
                                          final FolderPermissionsTabView view,
                                          final DocumentUserListPresenter userListPresenter,
-                                         final PermissionsListPresenter permissionsListPresenter,
-                                         final PermissionsListPresenter createPermissionsListPresenter,
-                                         final Provider<SelectGroupPresenter> selectUserPresenterProvider,
+                                         final DocumentCreatePermissionsListPresenter createPermissionsListPresenter,
                                          final Provider<SelectUserPresenter> userNameListPresenterProvider) {
         super(eventBus,
                 view,
                 userListPresenter,
-                permissionsListPresenter,
-                selectUserPresenterProvider,
                 userNameListPresenterProvider);
         this.createPermissionsListPresenter = createPermissionsListPresenter;
         view.setCreatePermissionsView(createPermissionsListPresenter.getView());
     }
 
-    @Override
-    protected void setCurrentUser(final User user) {
-        super.setCurrentUser(user);
-
-        createPermissionsListPresenter.setCurrentUser(user);
-    }
-
-    @Override
-    public void setDocumentPermissions(final List<String> allPermissions,
-                                       final DocumentPermissions documentPermissions,
-                                       final boolean group,
-                                       final Changes changes) {
-        super.setDocumentPermissions(allPermissions, documentPermissions, group, changes);
-
-        final List<String> permissions = new ArrayList<>();
-        for (final String permission : allPermissions) {
-            if (permission.startsWith("Create")) {
-                permissions.add(permission);
-            }
-        }
-
-        createPermissionsListPresenter.setDocumentPermissions(documentPermissions, permissions, changes);
-    }
+//    @Override
+//    protected void setCurrentUser(final User user) {
+//        super.setCurrentUser(user);
+//
+//        createPermissionsListPresenter.setCurrentUser(user);
+//    }
+//
+//    @Override
+//    public void setDocumentPermissions(final List<String> allPermissions,
+//                                       final DocumentPermissions documentPermissions,
+//                                       final Changes changes) {
+//        super.setDocumentPermissions(allPermissions, documentPermissions, changes);
+//
+//        final List<String> permissions = new ArrayList<>();
+//        for (final String permission : allPermissions) {
+//            if (permission.startsWith("Create")) {
+//                permissions.add(permission);
+//            }
+//        }
+//
+//        createPermissionsListPresenter.setDocumentPermissions(documentPermissions, permissions, changes);
+//    }
 
 
     // --------------------------------------------------------------------------------

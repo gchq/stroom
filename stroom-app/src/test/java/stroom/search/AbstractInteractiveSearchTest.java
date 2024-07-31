@@ -17,24 +17,19 @@
 
 package stroom.search;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import org.junit.jupiter.api.Test;
 import stroom.annotation.api.AnnotationFields;
 import stroom.dictionary.impl.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexConstants;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.*;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.Format;
-import stroom.query.api.v2.ParamSubstituteUtil;
-import stroom.query.api.v2.Query;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.Row;
-import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
-import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.EventRef;
 import stroom.query.common.v2.EventRefs;
 import stroom.search.impl.EventSearchTask;
@@ -43,15 +38,7 @@ import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
 import stroom.task.impl.ExecutorProviderImpl;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import org.junit.jupiter.api.Test;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
@@ -324,7 +311,7 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
 
         test(and, 15);
 
-        dictionaryStore.deleteDocument(dic.getUuid());
+        dictionaryStore.deleteDocument(docRef);
     }
 
     /**
@@ -348,8 +335,8 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
 
         test(and, 10);
 
-        dictionaryStore.deleteDocument(dic1.getUuid());
-        dictionaryStore.deleteDocument(dic2.getUuid());
+        dictionaryStore.deleteDocument(docRef1);
+        dictionaryStore.deleteDocument(docRef2);
     }
 
     /**
@@ -373,8 +360,8 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
 
         test(and, 10);
 
-        dictionaryStore.deleteDocument(dic1.getUuid());
-        dictionaryStore.deleteDocument(dic2.getUuid());
+        dictionaryStore.deleteDocument(docRef1);
+        dictionaryStore.deleteDocument(docRef2);
     }
 
     /**

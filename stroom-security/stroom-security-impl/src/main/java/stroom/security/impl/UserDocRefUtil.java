@@ -17,19 +17,29 @@
 package stroom.security.impl;
 
 import stroom.docref.DocRef;
+import stroom.util.shared.UserRef;
 
 final class UserDocRefUtil {
+
     public static final String USER = "User";
 
     private UserDocRefUtil() {
         // Utility class.
     }
 
-    static DocRef createDocRef(final String userUuid) {
-        if (userUuid == null) {
+    static DocRef createDocRef(final UserRef userRef) {
+        if (userRef == null || userRef.getUuid() == null) {
             return null;
         }
 
-        return new DocRef(USER, userUuid, null);
+        return new DocRef(USER, userRef.getUuid(), null);
+    }
+
+    static UserRef createUserRef(final DocRef docRef) {
+        if (docRef == null || docRef.getUuid() == null) {
+            return null;
+        }
+
+        return UserRef.builder().uuid(docRef.getUuid()).build();
     }
 }

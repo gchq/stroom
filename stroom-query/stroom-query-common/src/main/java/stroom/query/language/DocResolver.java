@@ -1,14 +1,13 @@
 package stroom.query.language;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 import java.util.List;
 import java.util.Locale;

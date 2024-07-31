@@ -24,7 +24,7 @@ import stroom.security.identity.db.jooq.tables.records.TokenTypeRecord;
  * A class modelling foreign key relationships and constraints of tables in
  * stroom.
  */
-@SuppressWarnings({ "all", "unchecked", "rawtypes" })
+@SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
 public class Keys {
 
     // -------------------------------------------------------------------------

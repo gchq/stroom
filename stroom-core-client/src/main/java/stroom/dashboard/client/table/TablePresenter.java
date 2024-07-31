@@ -77,7 +77,7 @@ import stroom.query.client.presenter.DynamicColumnSelectionListModel.ColumnSelec
 import stroom.query.client.presenter.TableRow;
 import stroom.query.client.presenter.TimeZones;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.svg.client.SvgPresets;
 import stroom.task.client.TaskListener;
 import stroom.ui.config.client.UiConfigCache;
@@ -199,11 +199,13 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         // Download
         downloadButton = pagerView.addButton(SvgPresets.DOWNLOAD);
-        downloadButton.setVisible(securityContext.hasAppPermission(PermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
+        downloadButton.setVisible(securityContext
+                .hasAppPermission(AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
 
         // Annotate
         annotateButton = pagerView.addButton(SvgPresets.ANNOTATE);
-        annotateButton.setVisible(securityContext.hasAppPermission(PermissionNames.ANNOTATIONS));
+        annotateButton.setVisible(securityContext
+                .hasAppPermission(AppPermission.ANNOTATIONS));
         annotateButton.setEnabled(false);
 
         columnsManager = new ColumnsManager(

@@ -1,5 +1,14 @@
 package stroom.app.commands;
 
+import com.google.inject.Injector;
+import event.logging.CreateEventAction;
+import event.logging.Outcome;
+import io.dropwizard.core.setup.Bootstrap;
+import jakarta.inject.Inject;
+import net.sourceforge.argparse4j.inf.Namespace;
+import net.sourceforge.argparse4j.inf.Subparser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.config.app.Config;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
@@ -10,17 +19,7 @@ import stroom.security.shared.CreateHashedApiKeyResponse;
 import stroom.security.shared.User;
 import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.UserName;
-
-import com.google.inject.Injector;
-import event.logging.CreateEventAction;
-import event.logging.Outcome;
-import io.dropwizard.core.setup.Bootstrap;
-import jakarta.inject.Inject;
-import net.sourceforge.argparse4j.inf.Namespace;
-import net.sourceforge.argparse4j.inf.Subparser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.shared.UserRef;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -121,7 +120,7 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
         final String outputPath = namespace.getString(OUTPUT_FILE_PATH_ARG_NAME);
 
         userService.getUserBySubjectId(userId)
-                .map(User::asUserName)
+                .map(User::asRef)
                 .ifPresentOrElse(
                         userName -> {
                             final CreateHashedApiKeyResponse response = createApiKey(namespace, userName);
@@ -146,7 +145,7 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
     }
 
     private CreateHashedApiKeyResponse createApiKey(final Namespace namespace,
-                                                    final UserName userName) {
+                                                    final UserRef userRef) {
         final String apiKeyName = namespace.getString(API_KEY_NAME_ARG_NAME);
         if (NullSafe.isBlankString(apiKeyName)) {
             throw new RuntimeException("A name must be provided for the API key");
@@ -155,7 +154,7 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
         if (lifetimeDays != null && lifetimeDays <= 0) {
             throw new RuntimeException(EXPIRY_DAYS_ARG_NAME + " must be greater than zero.");
         }
-        LOGGER.info("Creating API key for user '{}'", userName.getUserIdentityForAudit());
+        LOGGER.info("Creating API key for user '{}'", userRef.toInfoString());
 
         // Service will give us a default expire time if null
         final Long expireTimeEpochMs = NullSafe.get(
@@ -168,7 +167,7 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
                 "Created by 'create_api_key' command.");
 
         final CreateHashedApiKeyResponse response = apiKeyService.create(new CreateHashedApiKeyRequest(
-                userName,
+                userRef,
                 expireTimeEpochMs,
                 apiKeyName,
                 comments,
@@ -195,11 +194,11 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
 
                 final File fileInfo = new File(path);
                 LOGGER.info("Wrote API key for user '{}' to file '{}'",
-                        createHashedApiKeyResponse.getHashedApiKey().getOwner().getUserIdentityForAudit(),
+                        createHashedApiKeyResponse.getHashedApiKey().getOwner().toInfoString(),
                         fileInfo.getAbsolutePath());
             } catch (IOException e) {
                 LOGGER.error("API key for user '{}' could not be written to file. {}",
-                        createHashedApiKeyResponse.getHashedApiKey().getOwner().getUserIdentityForAudit(),
+                        createHashedApiKeyResponse.getHashedApiKey().getOwner().toInfoString(),
                         LogUtil.exceptionMessage(e));
 
                 // Destroy the created API key
@@ -209,7 +208,7 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
         } else {
             // Output API key to standard out
             LOGGER.info("Generated API key for user '{}': '{}'",
-                    createHashedApiKeyResponse.getHashedApiKey().getOwner().getUserIdentityForAudit(),
+                    createHashedApiKeyResponse.getHashedApiKey().getOwner().toInfoString(),
                     createHashedApiKeyResponse.getApiKey());
         }
 

@@ -16,13 +16,13 @@
 
 package stroom.activity.shared;
 
-import stroom.util.shared.HasAuditInfo;
-import stroom.util.shared.HasIntegerId;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasIntegerId;
+import stroom.util.shared.UserRef;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,9 +46,7 @@ public class Activity implements HasAuditInfo, HasIntegerId {
     @JsonProperty
     private String updateUser;
     @JsonProperty
-    private String userId;
-    @JsonProperty
-    private String json;
+    private UserRef userRef;
     @JsonProperty
     private ActivityDetails details;
 
@@ -58,16 +56,14 @@ public class Activity implements HasAuditInfo, HasIntegerId {
                     final String createUser,
                     final Long updateTimeMs,
                     final String updateUser,
-                    final String userId,
-                    final String json) {
+                    final UserRef userRef) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
         this.createUser = createUser;
         this.updateTimeMs = updateTimeMs;
         this.updateUser = updateUser;
-        this.userId = userId;
-        this.json = json;
+        this.userRef = userRef;
         this.details = new ActivityDetails(new ArrayList<>());
     }
 
@@ -78,8 +74,7 @@ public class Activity implements HasAuditInfo, HasIntegerId {
                     @JsonProperty("createUser") final String createUser,
                     @JsonProperty("updateTimeMs") final Long updateTimeMs,
                     @JsonProperty("updateUser") final String updateUser,
-                    @JsonProperty("userId") final String userId,
-                    @JsonProperty("json") final String json,
+                    @JsonProperty("userRef") final UserRef userRef,
                     @JsonProperty("details") ActivityDetails details) {
         this.id = id;
         this.version = version;
@@ -87,14 +82,12 @@ public class Activity implements HasAuditInfo, HasIntegerId {
         this.createUser = createUser;
         this.updateTimeMs = updateTimeMs;
         this.updateUser = updateUser;
-        this.userId = userId;
-        this.json = json;
+        this.userRef = userRef;
         this.details = details;
     }
 
     public static Activity create() {
         return new Activity(
-                null,
                 null,
                 null,
                 null,
@@ -150,20 +143,12 @@ public class Activity implements HasAuditInfo, HasIntegerId {
         this.updateUser = updateUser;
     }
 
-    public String getUserId() {
-        return userId;
+    public UserRef getUserRef() {
+        return userRef;
     }
 
-    public void setUserId(final String userId) {
-        this.userId = userId;
-    }
-
-    public String getJson() {
-        return json;
-    }
-
-    public void setJson(final String json) {
-        this.json = json;
+    public void setUserRef(final UserRef userRef) {
+        this.userRef = userRef;
     }
 
     public ActivityDetails getDetails() {
@@ -180,6 +165,92 @@ public class Activity implements HasAuditInfo, HasIntegerId {
             return details.toString();
         } else {
             return "Undefined Activity Details";
+        }
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private Integer id;
+        private Integer version;
+        private Long createTimeMs;
+        private String createUser;
+        private Long updateTimeMs;
+        private String updateUser;
+        private UserRef userRef;
+        private ActivityDetails details;
+
+        private Builder() {
+        }
+
+        private Builder(final Activity activity) {
+            this.id = activity.id;
+            this.version = activity.version;
+            this.createTimeMs = activity.createTimeMs;
+            this.createUser = activity.createUser;
+            this.updateTimeMs = activity.updateTimeMs;
+            this.updateUser = activity.updateUser;
+            this.userRef = activity.userRef;
+            this.details = activity.details;
+        }
+
+        public Builder id(final Integer id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder version(final Integer version) {
+            this.version = version;
+            return this;
+        }
+
+        public Builder createTimeMs(final Long createTimeMs) {
+            this.createTimeMs = createTimeMs;
+            return this;
+        }
+
+        public Builder createUser(final String createUser) {
+            this.createUser = createUser;
+            return this;
+        }
+
+        public Builder updateTimeMs(final Long updateTimeMs) {
+            this.updateTimeMs = updateTimeMs;
+            return this;
+        }
+
+        public Builder updateUser(final String updateUser) {
+            this.updateUser = updateUser;
+            return this;
+        }
+
+        public Builder userRef(final UserRef userRef) {
+            this.userRef = userRef;
+            return this;
+        }
+
+        public Builder details(final ActivityDetails details) {
+            this.details = details;
+            return this;
+        }
+
+        public Activity build() {
+            return new Activity(
+                    id,
+                    version,
+                    createTimeMs,
+                    createUser,
+                    updateTimeMs,
+                    updateUser,
+                    userRef,
+                    details);
         }
     }
 

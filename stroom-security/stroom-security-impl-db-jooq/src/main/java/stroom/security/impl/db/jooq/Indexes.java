@@ -4,23 +4,25 @@
 package stroom.security.impl.db.jooq;
 
 
-import stroom.security.impl.db.jooq.tables.DocPermission;
-
 import org.jooq.Index;
 import org.jooq.OrderField;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
 
+import stroom.security.impl.db.jooq.tables.PermissionDoc;
+import stroom.security.impl.db.jooq.tables.PermissionDocCreate;
+
 
 /**
  * A class modelling indexes of tables in stroom.
  */
-@SuppressWarnings({ "all", "unchecked", "rawtypes" })
+@SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
 public class Indexes {
 
     // -------------------------------------------------------------------------
     // INDEX definitions
     // -------------------------------------------------------------------------
 
-    public static final Index DOC_PERMISSION_DOC_PERMISSION_DOC_UUID = Internal.createIndex(DSL.name("doc_permission_doc_uuid"), DocPermission.DOC_PERMISSION, new OrderField[] { DocPermission.DOC_PERMISSION.DOC_UUID }, false);
+    public static final Index PERMISSION_DOC_CREATE_PERMISSION_DOC_CREATE_DOC_UUID = Internal.createIndex(DSL.name("permission_doc_create_doc_uuid"), PermissionDocCreate.PERMISSION_DOC_CREATE, new OrderField[] { PermissionDocCreate.PERMISSION_DOC_CREATE.DOC_UUID }, false);
+    public static final Index PERMISSION_DOC_PERMISSION_DOC_DOC_UUID = Internal.createIndex(DSL.name("permission_doc_doc_uuid"), PermissionDoc.PERMISSION_DOC, new OrderField[] { PermissionDoc.PERMISSION_DOC.DOC_UUID }, false);
 }

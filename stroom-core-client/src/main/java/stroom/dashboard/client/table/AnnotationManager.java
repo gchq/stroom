@@ -16,18 +16,16 @@
 
 package stroom.dashboard.client.table;
 
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import stroom.annotation.client.ChangeAssignedToPresenter;
 import stroom.annotation.client.ChangeStatusPresenter;
-import stroom.annotation.client.ShowAnnotationEvent;
-import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.EventId;
 import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.TableComponentSettings;
-import stroom.dispatch.client.QuietTaskListener;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.Column;
 import stroom.query.client.presenter.TableRow;
-import stroom.security.shared.UserNameResource;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -36,15 +34,11 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.util.client.Rect;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
-
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 public class AnnotationManager {
 
@@ -237,29 +231,29 @@ public class AnnotationManager {
     }
 
     private void createAnnotation(final List<EventId> eventIdList) {
-        final String title = getValue(tableComponentSettings, selectedItems, "title");
-        final String subject = getValue(tableComponentSettings, selectedItems, "subject");
-        final String status = getValue(tableComponentSettings, selectedItems, "status");
-        final String assignedTo = getValue(tableComponentSettings, selectedItems, "assignedTo");
-        final String comment = getValue(tableComponentSettings, selectedItems, "comment");
-
-        // assignedTo is a display name so have to convert it back to a unique username
-        final UserNameResource userNameResource = GWT.create(UserNameResource.class);
-        restFactory
-                .create(userNameResource)
-                .method(res -> res.getByDisplayName(assignedTo))
-                .onSuccess(optUserName -> {
-                    final Annotation annotation = new Annotation();
-                    annotation.setTitle(title);
-                    annotation.setSubject(subject);
-                    annotation.setStatus(status);
-                    annotation.setAssignedTo(optUserName);
-                    annotation.setComment(comment);
-
-                    ShowAnnotationEvent.fire(changeStatusPresenter, annotation, eventIdList);
-                })
-                .taskListener(new QuietTaskListener())
-                .exec();
+//        final String title = getValue(tableComponentSettings, selectedItems, "title");
+//        final String subject = getValue(tableComponentSettings, selectedItems, "subject");
+//        final String status = getValue(tableComponentSettings, selectedItems, "status");
+////        final String assignedTo = getValue(tableComponentSettings, selectedItems, "assignedTo");
+//        final String comment = getValue(tableComponentSettings, selectedItems, "comment");
+//
+////        // assignedTo is a display name so have to convert it back to a unique username
+////        final UserNameResource userNameResource = GWT.create(UserNameResource.class);
+////        restFactory
+////                .create(userNameResource)
+////                .method(res -> res.getByDisplayName(assignedTo))
+////                .onSuccess(optUserName -> {
+//                    final Annotation annotation = new Annotation();
+//                    annotation.setTitle(title);
+//                    annotation.setSubject(subject);
+//                    annotation.setStatus(status);
+////                    annotation.setAssignedTo(optUserName);
+//                    annotation.setComment(comment);
+//
+//                    ShowAnnotationEvent.fire(changeStatusPresenter, annotation, eventIdList);
+////                })
+////                .taskListener(new QuietTaskListener())
+////                .exec();
     }
 
     private void changeStatus(final List<Long> annotationIdList) {

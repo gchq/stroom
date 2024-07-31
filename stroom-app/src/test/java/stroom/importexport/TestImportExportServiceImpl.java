@@ -147,10 +147,10 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         importExportService.exportConfig(docRefs, resourceStore.getTempFile(exportConfig));
 
         // Delete it and check
-        pipelineStore.deleteDocument(tran2.getUuid());
+        pipelineStore.deleteDocument(tran2.asDocRef());
         assertThat(pipelineStore.list().size()).isEqualTo(startTranslationSize - 1);
 
-        feedStore.deleteDocument(eventFeedNode.getUuid());
+        feedStore.deleteDocument(eventFeedNode.getDocRef());
         assertThat(feedStore.list().size()).isEqualTo(startFeedSize - 1);
 
         // Import

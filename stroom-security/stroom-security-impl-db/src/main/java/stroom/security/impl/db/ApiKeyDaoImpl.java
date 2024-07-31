@@ -1,5 +1,12 @@
 package stroom.security.impl.db;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.jooq.Record;
+import org.jooq.*;
+import org.jooq.exception.DataAccessException;
+import org.jooq.impl.DSL;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.security.api.SecurityContext;
@@ -9,27 +16,14 @@ import stroom.security.impl.apikey.ApiKeyDao;
 import stroom.security.impl.apikey.ApiKeyService.DuplicateHashException;
 import stroom.security.impl.apikey.ApiKeyService.DuplicatePrefixException;
 import stroom.security.impl.db.jooq.tables.records.ApiKeyRecord;
-import stroom.security.shared.ApiKeyResultPage;
-import stroom.security.shared.CreateHashedApiKeyRequest;
-import stroom.security.shared.FindApiKeyCriteria;
-import stroom.security.shared.HashedApiKey;
+import stroom.security.shared.User;
+import stroom.security.shared.*;
 import stroom.util.NullSafe;
 import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.UserName;
-
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.jooq.Condition;
-import org.jooq.Field;
-import org.jooq.Name;
-import org.jooq.OrderField;
-import org.jooq.Record;
-import org.jooq.exception.DataAccessException;
-import org.jooq.impl.DSL;
+import stroom.util.shared.UserRef;
 
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.Instant;
@@ -163,34 +157,34 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
 
         final ApiKeyRecord apiKeyRecord;
         try {
-            apiKeyRecord = JooqUtil.contextResult(securityDbConnProvider, context ->
-                    context.insertInto(API_KEY,
-                                    API_KEY.VERSION,
-                                    API_KEY.CREATE_TIME_MS,
-                                    API_KEY.CREATE_USER,
-                                    API_KEY.UPDATE_TIME_MS,
-                                    API_KEY.UPDATE_USER,
-                                    API_KEY.FK_OWNER_UUID,
-                                    API_KEY.API_KEY_HASH,
-                                    API_KEY.API_KEY_PREFIX,
-                                    API_KEY.EXPIRES_ON_MS,
-                                    API_KEY.NAME,
-                                    API_KEY.COMMENTS,
-                                    API_KEY.ENABLED)
-                            .values(version,
-                                    nowMs,
-                                    userIdentityForAudit,
-                                    nowMs,
-                                    userIdentityForAudit,
-                                    Objects.requireNonNull(createHashedApiKeyRequest.getOwner().getUuid()),
-                                    hashedApiKeyParts.apiKeyHash(),
-                                    hashedApiKeyParts.apiKeyPrefix(),
-                                    createHashedApiKeyRequest.getExpireTimeMs(),
-                                    createHashedApiKeyRequest.getName(),
-                                    createHashedApiKeyRequest.getComments(),
-                                    createHashedApiKeyRequest.getEnabled())
-                            .returning(API_KEY.ID)
-                            .fetchOne()
+            apiKeyRecord = JooqUtil.contextResult(securityDbConnProvider, context -> context
+                    .insertInto(API_KEY)
+                    .columns(API_KEY.VERSION,
+                            API_KEY.CREATE_TIME_MS,
+                            API_KEY.CREATE_USER,
+                            API_KEY.UPDATE_TIME_MS,
+                            API_KEY.UPDATE_USER,
+                            API_KEY.FK_OWNER_UUID,
+                            API_KEY.API_KEY_HASH,
+                            API_KEY.API_KEY_PREFIX,
+                            API_KEY.EXPIRES_ON_MS,
+                            API_KEY.NAME,
+                            API_KEY.COMMENTS,
+                            API_KEY.ENABLED)
+                    .values(version,
+                            nowMs,
+                            userIdentityForAudit,
+                            nowMs,
+                            userIdentityForAudit,
+                            Objects.requireNonNull(createHashedApiKeyRequest.getOwner().getUuid()),
+                            hashedApiKeyParts.apiKeyHash(),
+                            hashedApiKeyParts.apiKeyPrefix(),
+                            createHashedApiKeyRequest.getExpireTimeMs(),
+                            createHashedApiKeyRequest.getName(),
+                            createHashedApiKeyRequest.getComments(),
+                            createHashedApiKeyRequest.getEnabled())
+                    .returning(API_KEY.ID)
+                    .fetchOne()
             );
         } catch (DataAccessException e) {
             final Throwable rootCause = ExceptionUtils.getRootCause(e);
@@ -230,7 +224,7 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
                 throw new RuntimeException(LogUtil.message(
                         "An API key already exists for user '{}' with API Key Name '{}'. " +
                                 "A user's API keys must all have unique names.",
-                        apiKey.getOwner().getUserIdentityForAudit(), apiKey.getName()));
+                        apiKey.getOwner().toInfoString(), apiKey.getName()));
             } else {
                 throw e;
             }
@@ -263,7 +257,7 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
         record.set(API_KEY.CREATE_USER, apiKey.getCreateUser());
         record.set(API_KEY.UPDATE_TIME_MS, apiKey.getUpdateTimeMs());
         record.set(API_KEY.UPDATE_USER, apiKey.getUpdateUser());
-        record.set(API_KEY.FK_OWNER_UUID, NullSafe.get(apiKey.getOwner(), UserName::getUuid));
+        record.set(API_KEY.FK_OWNER_UUID, NullSafe.get(apiKey.getOwner(), UserRef::getUuid));
         record.set(API_KEY.API_KEY_HASH, apiKey.getApiKeyHash());
         record.set(API_KEY.API_KEY_PREFIX, apiKey.getApiKeyPrefix());
         record.set(API_KEY.EXPIRES_ON_MS, apiKey.getExpireTimeMs());
@@ -275,7 +269,7 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
 
     private HashedApiKey mapRecordToApiKey(final Record record) {
         final String ownerUuid = record.get(API_KEY.FK_OWNER_UUID);
-        final UserName owner = userCache.getByUuid(ownerUuid)
+        final User owner = userCache.getByUuid(ownerUuid)
                 .orElseThrow(() -> new RuntimeException(LogUtil.message(
                         "User with uuid {} not found", ownerUuid)));
 
@@ -286,7 +280,7 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
                 .withCreateUser(record.get(API_KEY.CREATE_USER))
                 .withUpdateTimeMs(record.get(API_KEY.UPDATE_TIME_MS))
                 .withUpdateUser(record.get(API_KEY.UPDATE_USER))
-                .withOwner(owner)
+                .withOwner(owner.asRef())
                 .withApiKeyHash(record.get(API_KEY.API_KEY_HASH))
                 .withApiKeyPrefix(record.get(API_KEY.API_KEY_PREFIX))
                 .withExpireTimeMs(record.get(API_KEY.EXPIRES_ON_MS))

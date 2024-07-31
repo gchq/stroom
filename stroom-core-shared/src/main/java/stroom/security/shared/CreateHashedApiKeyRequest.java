@@ -1,12 +1,11 @@
 package stroom.security.shared;
 
-import stroom.util.shared.UserName;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import stroom.util.shared.UserRef;
 
 import java.util.Objects;
 
@@ -15,7 +14,7 @@ import java.util.Objects;
 public class CreateHashedApiKeyRequest {
 
     @JsonProperty
-    private final UserName owner;
+    private final UserRef owner;
     @JsonProperty
     private final Long expireTimeMs;
     @JsonProperty
@@ -26,7 +25,7 @@ public class CreateHashedApiKeyRequest {
     private final boolean enabled;
 
     @JsonCreator
-    public CreateHashedApiKeyRequest(@JsonProperty("owner") final UserName owner,
+    public CreateHashedApiKeyRequest(@JsonProperty("owner") final UserRef owner,
                                      @JsonProperty("expireTimeMs") final Long expireTimeMs,
                                      @JsonProperty("name") final String name,
                                      @JsonProperty("comments") final String comments,
@@ -60,7 +59,7 @@ public class CreateHashedApiKeyRequest {
         return builder;
     }
 
-    public UserName getOwner() {
+    public UserRef getOwner() {
         return owner;
     }
 
@@ -116,7 +115,7 @@ public class CreateHashedApiKeyRequest {
 
     public static final class Builder {
 
-        private UserName owner;
+        private UserRef owner;
         private Long expireTimeMs;
         private String name;
         private String comments;
@@ -129,7 +128,7 @@ public class CreateHashedApiKeyRequest {
             return new Builder();
         }
 
-        public Builder withOwner(final UserName val) {
+        public Builder withOwner(final UserRef val) {
             owner = val;
             return this;
         }

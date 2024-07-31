@@ -2,13 +2,14 @@ package stroom.security.impl.db;
 
 import stroom.security.impl.TestModule;
 import stroom.security.impl.UserDao;
+import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.util.AuditUtil;
+import stroom.util.shared.ResultPage;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import jakarta.inject.Inject;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,7 +17,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -26,8 +26,6 @@ class TestUserDaoImpl {
 
     @Inject
     private UserDao userDao;
-    @Inject
-    private Injector injector;
     @Inject
     private SecurityDbConnProvider securityDbConnProvider;
 
@@ -55,14 +53,13 @@ class TestUserDaoImpl {
         final User userCreated = createUser(userName, false);
         assertThat(userCreated).isNotNull();
         final Optional<User> foundByUuid = userDao.getByUuid(userCreated.getUuid());
-        final Optional<User> foundByName = userDao.getBySubjectId(userName);
-        final Optional<User> foundById = userDao.getById(userCreated.getId());
+        final Optional<User> foundByName = userDao.getUserBySubjectId(userName);
 
         // Then
         assertThat(userCreated.getUuid()).isNotNull();
         assertThat(userCreated.isGroup()).isFalse();
 
-        Stream.of(foundByUuid, foundByName, foundById)
+        Stream.of(foundByUuid, foundByName)
                 .forEach(u -> {
                     assertThat(u).isPresent();
                     assertThat(u.map(User::getUuid).get()).isEqualTo(userCreated.getUuid());
@@ -74,23 +71,22 @@ class TestUserDaoImpl {
     @Test
     void createUserGroup() {
         // Given
-        final String userName = String.format("SomeTestPerson_%s", UUID.randomUUID());
+        final String groupName = String.format("SomeTestGroup_%s", UUID.randomUUID());
 
         // When
-        final User userCreated = createUser(userName, true);
+        final User userCreated = createUser(groupName, true);
         assertThat(userCreated).isNotNull();
         final Optional<User> foundByUuid = userDao.getByUuid(userCreated.getUuid());
-        final Optional<User> foundByName = userDao.getBySubjectId(userName);
-        final Optional<User> foundById = userDao.getById(userCreated.getId());
+        final Optional<User> foundByName = userDao.getGroupByName(groupName);
 
         // Then
         assertThat(userCreated.getUuid()).isNotNull();
         assertThat(userCreated.isGroup()).isTrue();
 
-        Stream.of(foundByUuid, foundByName, foundById).forEach(u -> {
+        Stream.of(foundByUuid, foundByName).forEach(u -> {
             assertThat(u).isPresent();
             assertThat(u.map(User::getUuid).get()).isEqualTo(userCreated.getUuid());
-            assertThat(u.map(User::getSubjectId).get()).isEqualTo(userName);
+            assertThat(u.map(User::getSubjectId).get()).isEqualTo(groupName);
             assertThat(u.map(User::isGroup).get()).isTrue();
         });
     }
@@ -102,9 +98,9 @@ class TestUserDaoImpl {
 
         // When
         final User userCreated = createUser(userName, false);
-        final Optional<User> userFoundBeforeDelete = userDao.getById(userCreated.getId());
+        final Optional<User> userFoundBeforeDelete = userDao.getByUuid(userCreated.getUuid());
         userDao.delete(userCreated.getUuid());
-        final Optional<User> userFoundAfterDelete = userDao.getById(userCreated.getId());
+        final Optional<User> userFoundAfterDelete = userDao.getByUuid(userCreated.getUuid());
 
         // Then
         assertThat(userCreated).isNotNull();
@@ -117,7 +113,7 @@ class TestUserDaoImpl {
         // Given
         final List<String> userNames = IntStream.range(0, 3)
                 .mapToObj(i -> String.format("SomePerson_%s", UUID.randomUUID()))
-                .collect(Collectors.toList());
+                .toList();
         final String groupName = String.format("SomeGroup_%s", UUID.randomUUID());
 
         // When
@@ -125,8 +121,9 @@ class TestUserDaoImpl {
         final List<User> users = userNames.stream()
                 .map(name -> createUser(name, false))
                 .peek(u -> userDao.addUserToGroup(u.getUuid(), group.getUuid()))
-                .collect(Collectors.toList());
-        final List<User> usersInGroup = userDao.findUsersInGroup(group.getUuid(), null);
+                .toList();
+        final ResultPage<User> usersInGroup = userDao
+                .findUsersInGroup(group.getUuid(), new FindUserCriteria());
 
         // Then
         userNames.forEach(userName -> {
@@ -146,7 +143,7 @@ class TestUserDaoImpl {
         final List<String> groupNames = IntStream.range(0, 3)
                 .mapToObj(i -> String.format("SomeGroup_%s", UUID.randomUUID()))
                 .toList();
-        final String userNameToTest = userNames.get(0);
+        final String userNameToTest = userNames.getFirst();
 
         // When
         final List<User> users = userNames.stream()
@@ -161,18 +158,32 @@ class TestUserDaoImpl {
                 .peek(g -> users.forEach(
                         u -> userDao.addUserToGroup(u.getUuid(), g.getUuid())))
                 .toList();
-        final List<User> groupsForUserToTest = userDao.findGroupsForUser(userToTest.getUuid(), null);
+        final ResultPage<User> groupsForUserToTest = userDao
+                .findGroupsForUser(userToTest.getUuid(), new FindUserCriteria());
 
         // Then
         groupNames.forEach(groupName -> assertThat(groupsForUserToTest.stream()
                 .anyMatch(g -> groupName.equals(g.getSubjectId())))
                 .isTrue());
+
+        // Try adding all of the users to the same groups again.
+        groups.forEach(g -> users.forEach(
+                u -> userDao.addUserToGroup(u.getUuid(), g.getUuid())));
+
+        final ResultPage<User> groupsForUserToTest2 = userDao
+                .findGroupsForUser(userToTest.getUuid(), new FindUserCriteria());
+
+        // Then
+        groupNames.forEach(groupName -> assertThat(groupsForUserToTest2.stream()
+                .anyMatch(g -> groupName.equals(g.getSubjectId())))
+                .isTrue());
+
     }
 
     @Test
     void getBySubjectId_notFound() {
 
-        final Optional<User> optUser = userDao.getBySubjectId("foo");
+        final Optional<User> optUser = userDao.getUserBySubjectId("foo");
 
         assertThat(optUser)
                 .isEmpty();
@@ -182,17 +193,17 @@ class TestUserDaoImpl {
     void getBySubjectId_foundOne_user() {
 
         final User user = createUser("foo", false);
-        final Optional<User> optUser = userDao.getBySubjectId("foo");
+        final Optional<User> optUser = userDao.getUserBySubjectId("foo");
 
         assertThat(optUser)
                 .contains(user);
     }
 
     @Test
-    void getBySubjectId_foundOne_group() {
+    void getGroupByName_foundOne_group() {
 
         final User grp = createUser("grp4", true);
-        final Optional<User> optUser = userDao.getBySubjectId("grp4");
+        final Optional<User> optUser = userDao.getGroupByName("grp4");
 
         assertThat(optUser)
                 .contains(grp);
@@ -200,15 +211,11 @@ class TestUserDaoImpl {
 
     @Test
     void getBySubjectId_foundMultiple() {
+        final User user = createUser("foo", false);
+        final User group = createUser("foo", true);
 
-        createUser("foo", false);
-        createUser("foo", true);
-
-        Assertions.assertThatThrownBy(
-                        () -> {
-                            userDao.getBySubjectId("foo");
-                        }).isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Found more than one user/group");
+        assertThat(userDao.getUserBySubjectId("foo").orElse(null)).isEqualTo(user);
+        assertThat(userDao.getGroupByName("foo").orElse(null)).isEqualTo(group);
     }
 
     private User createUser(final String name, boolean group) {

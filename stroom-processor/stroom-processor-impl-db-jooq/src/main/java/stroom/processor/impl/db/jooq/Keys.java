@@ -4,6 +4,12 @@
 package stroom.processor.impl.db.jooq;
 
 
+import org.jooq.ForeignKey;
+import org.jooq.TableField;
+import org.jooq.UniqueKey;
+import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
+
 import stroom.processor.impl.db.jooq.tables.Processor;
 import stroom.processor.impl.db.jooq.tables.ProcessorFeed;
 import stroom.processor.impl.db.jooq.tables.ProcessorFilter;
@@ -17,18 +23,12 @@ import stroom.processor.impl.db.jooq.tables.records.ProcessorNodeRecord;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorRecord;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorTaskRecord;
 
-import org.jooq.ForeignKey;
-import org.jooq.TableField;
-import org.jooq.UniqueKey;
-import org.jooq.impl.DSL;
-import org.jooq.impl.Internal;
-
 
 /**
  * A class modelling foreign key relationships and constraints of tables in
  * stroom.
  */
-@SuppressWarnings({ "all", "unchecked", "rawtypes" })
+@SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
 public class Keys {
 
     // -------------------------------------------------------------------------
@@ -36,7 +36,7 @@ public class Keys {
     // -------------------------------------------------------------------------
 
     public static final UniqueKey<ProcessorRecord> KEY_PROCESSOR_PRIMARY = Internal.createUniqueKey(Processor.PROCESSOR, DSL.name("KEY_processor_PRIMARY"), new TableField[] { Processor.PROCESSOR.ID }, true);
-    public static final UniqueKey<ProcessorRecord> KEY_PROCESSOR_PROCESSOR_PIPELINE_UUID = Internal.createUniqueKey(Processor.PROCESSOR, DSL.name("KEY_processor_processor_pipeline_uuid"), new TableField[] { Processor.PROCESSOR.PIPELINE_UUID }, true);
+    public static final UniqueKey<ProcessorRecord> KEY_PROCESSOR_PROCESSOR_TASK_TYPE_PIPELINE_UUID = Internal.createUniqueKey(Processor.PROCESSOR, DSL.name("KEY_processor_processor_task_type_pipeline_uuid"), new TableField[] { Processor.PROCESSOR.TASK_TYPE, Processor.PROCESSOR.PIPELINE_UUID }, true);
     public static final UniqueKey<ProcessorRecord> KEY_PROCESSOR_PROCESSOR_UUID = Internal.createUniqueKey(Processor.PROCESSOR, DSL.name("KEY_processor_processor_uuid"), new TableField[] { Processor.PROCESSOR.UUID }, true);
     public static final UniqueKey<ProcessorFeedRecord> KEY_PROCESSOR_FEED_PRIMARY = Internal.createUniqueKey(ProcessorFeed.PROCESSOR_FEED, DSL.name("KEY_processor_feed_PRIMARY"), new TableField[] { ProcessorFeed.PROCESSOR_FEED.ID }, true);
     public static final UniqueKey<ProcessorFeedRecord> KEY_PROCESSOR_FEED_PROCESSOR_FEED_NAME = Internal.createUniqueKey(ProcessorFeed.PROCESSOR_FEED, DSL.name("KEY_processor_feed_processor_feed_name"), new TableField[] { ProcessorFeed.PROCESSOR_FEED.NAME }, true);

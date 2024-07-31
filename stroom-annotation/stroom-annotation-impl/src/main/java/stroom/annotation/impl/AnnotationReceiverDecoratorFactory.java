@@ -1,5 +1,6 @@
 package stroom.annotation.impl;
 
+import jakarta.inject.Inject;
 import stroom.annotation.api.AnnotationFields;
 import stroom.annotation.shared.Annotation;
 import stroom.expression.matcher.ExpressionMatcher;
@@ -8,32 +9,17 @@ import stroom.index.shared.IndexConstants;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
-import stroom.query.language.functions.FieldIndex;
-import stroom.query.language.functions.Val;
-import stroom.query.language.functions.ValDate;
-import stroom.query.language.functions.ValLong;
-import stroom.query.language.functions.ValNull;
-import stroom.query.language.functions.ValString;
-import stroom.query.language.functions.ValuesConsumer;
+import stroom.query.language.functions.*;
 import stroom.search.extraction.AnnotationsDecoratorFactory;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.security.api.SecurityContext;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserRef;
 
-import jakarta.inject.Inject;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Set;
 import java.util.function.Function;
 
 class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory {
@@ -42,17 +28,11 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
 
     private static final Map<String, Function<Annotation, Val>> VALUE_MAPPING = Map.ofEntries(
             nullSafeEntry(AnnotationFields.ID, Annotation::getId),
-            nullSafeEntry(AnnotationFields.CREATED_ON, Annotation::getCreateTime, createTimeEpochMs ->
-                    Val.nullSafeCreate(createTimeEpochMs, ValDate::create)),
-            nullSafeEntry(AnnotationFields.CREATED_BY, Annotation::getCreateUser),
-            nullSafeEntry(AnnotationFields.UPDATED_ON, Annotation::getUpdateTime, updateTimeEpochMs ->
-                    Val.nullSafeCreate(updateTimeEpochMs, ValDate::create)),
-            nullSafeEntry(AnnotationFields.UPDATED_BY, Annotation::getUpdateUser),
             nullSafeEntry(AnnotationFields.TITLE, Annotation::getTitle),
             nullSafeEntry(AnnotationFields.SUBJECT, Annotation::getSubject),
             nullSafeEntry(AnnotationFields.STATUS, Annotation::getStatus),
             nullSafeEntry(AnnotationFields.ASSIGNED_TO, annotation ->
-                    NullSafe.get(annotation.getAssignedTo(), UserName::getUserIdentityForAudit)),
+                    NullSafe.get(annotation.getAssignedTo(), UserRef::toDisplayString)),
             nullSafeEntry(AnnotationFields.COMMENT, Annotation::getComment),
             nullSafeEntry(AnnotationFields.HISTORY, Annotation::getHistory));
 
@@ -66,7 +46,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
             Map.entry(AnnotationFields.SUBJECT, Annotation::getSubject),
             Map.entry(AnnotationFields.STATUS, Annotation::getStatus),
             Map.entry(AnnotationFields.ASSIGNED_TO, annotation ->
-                    NullSafe.get(annotation.getAssignedTo(), UserName::getUserIdentityForAudit)),
+                    NullSafe.get(annotation.getAssignedTo(), UserRef::toDisplayString)),
             Map.entry(AnnotationFields.COMMENT, Annotation::getComment),
             Map.entry(AnnotationFields.HISTORY, Annotation::getHistory));
 
@@ -254,8 +234,8 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
                     return ValString.create((String) value);
                 } else if (value instanceof Long) {
                     return ValLong.create((Long) value);
-                } else if (value instanceof final UserName userName) {
-                    return ValString.create(userName.getUserIdentityForAudit());
+                } else if (value instanceof final UserRef userRef) {
+                    return ValString.create(userRef.toDisplayString());
                 } else {
                     throw new RuntimeException("Unexpected type " + value.getClass().getName());
                 }

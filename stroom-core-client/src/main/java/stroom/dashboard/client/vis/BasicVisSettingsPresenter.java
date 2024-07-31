@@ -16,6 +16,14 @@
 
 package stroom.dashboard.client.vis;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.json.client.JSONArray;
+import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.user.client.ui.Focus;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.View;
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
 import stroom.dashboard.client.main.BasicSettingsView;
 import stroom.dashboard.client.main.Component;
@@ -28,28 +36,14 @@ import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.v2.Column;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.client.JSONUtil;
 import stroom.util.shared.EqualsUtil;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.visualisation.shared.VisualisationResource;
 import stroom.widget.tab.client.presenter.TabData;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.json.client.JSONArray;
-import com.google.gwt.json.client.JSONObject;
-import com.google.gwt.user.client.ui.Focus;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
-
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVisSettingsPresenter.BasicVisSettingsView>
         implements BasicVisSettingsUiHandlers, Focus {
@@ -78,7 +72,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
         view.setUiHandlers(this);
 
         visualisationPresenter.setIncludedTypes(VisualisationDoc.DOCUMENT_TYPE);
-        visualisationPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+        visualisationPresenter.setRequiredPermissions(DocumentPermission.USE);
 
         view.setVisualisationView(visualisationPresenter.getView());
     }

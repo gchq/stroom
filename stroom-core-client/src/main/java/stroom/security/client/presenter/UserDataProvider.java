@@ -61,13 +61,6 @@ public class UserDataProvider implements Refreshable {
         });
     }
 
-//    public FindUserCriteria getCriteria() {
-//        if (findAction != null) {
-//            return findAction.getCriteria();
-//        }
-//        return null;
-//    }
-
     public void setCriteria(final FindUserCriteria criteria,
                             final TaskListener taskListener) {
         this.criteria = criteria;

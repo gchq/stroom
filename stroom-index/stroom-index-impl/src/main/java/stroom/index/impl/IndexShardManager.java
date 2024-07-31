@@ -24,8 +24,8 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.NullSafe;
@@ -99,7 +99,7 @@ public class IndexShardManager {
      * Delete anything that has been marked to delete
      */
     public void deleteFromDisk() {
-        securityContext.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
+        securityContext.secure(AppPermission.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             if (deletingShards.compareAndSet(false, true)) {
                 try {
                     final FindIndexShardCriteria criteria = FindIndexShardCriteria.matchAll();
@@ -186,7 +186,7 @@ public class IndexShardManager {
     }
 
     public Long performAction(final FindIndexShardCriteria criteria, final IndexShardAction action) {
-        return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             final String thisNodeName = nodeInfo.getThisNodeName();
             final ResultPage<IndexShard> shards = indexShardDao.find(criteria);
 
@@ -270,10 +270,15 @@ public class IndexShardManager {
     }
 
     private void delete(final IndexShard indexShard) {
-        if (!securityContext.hasDocumentPermission(indexShard.getIndexUuid(),
-                DocumentPermissionNames.DELETE)) {
+        final DocRef indexDocRef = DocRef
+                .builder()
+                .type(LuceneIndexDoc.DOCUMENT_TYPE)
+                .uuid(indexShard.getIndexUuid())
+                .build();
+        if (!securityContext.hasDocumentPermission(indexDocRef,
+                DocumentPermission.DELETE)) {
             throw new PermissionException(
-                    securityContext.getUserIdentityForAudit(),
+                    securityContext.getUserRef(),
                     "You do not have permission to delete index shard");
         } else {
             indexShardWriterCache.delete(indexShard.getId());
@@ -282,7 +287,7 @@ public class IndexShardManager {
 
     public void checkRetention() {
         taskContextFactory.current().info(() -> "Checking index shard retention");
-        securityContext.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
+        securityContext.secure(AppPermission.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             final FindIndexShardCriteria criteria = FindIndexShardCriteria.matchAll();
             criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
             final ResultPage<IndexShard> shards = indexShardDao.find(criteria);

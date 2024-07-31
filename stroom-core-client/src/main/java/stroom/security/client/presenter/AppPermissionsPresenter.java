@@ -16,6 +16,12 @@
 
 package stroom.security.client.presenter;
 
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
@@ -23,24 +29,14 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppPermissionResource;
 import stroom.security.shared.ChangeSet;
 import stroom.security.shared.ChangeUserRequest;
-import stroom.security.shared.PermissionNames;
-import stroom.security.shared.User;
-import stroom.security.shared.UserAndPermissions;
+import stroom.util.shared.UserRef;
 
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class AppPermissionsPresenter
         extends MyPresenterWidget<PagerView> {
@@ -49,12 +45,12 @@ public class AppPermissionsPresenter
 
     private final RestFactory restFactory;
     private final ClientSecurityContext securityContext;
-    private final MyDataGrid<String> dataGrid;
+    private final MyDataGrid<AppPermission> dataGrid;
 
-    private UserAndPermissions userAppPermissions;
-    private List<String> allPermissions;
+    private Set<AppPermission> currentPermissions;
+    private List<AppPermission> allPermissions;
 
-    private User relatedUser;
+    private UserRef relatedUser;
 
     @Inject
     public AppPermissionsPresenter(final EventBus eventBus,
@@ -71,15 +67,15 @@ public class AppPermissionsPresenter
         addColumns();
     }
 
-    public void setUser(final User userRef) {
-        this.relatedUser = userRef;
+    public void setUser(final UserRef user) {
+        this.relatedUser = user;
         refresh();
     }
 
     private void refresh() {
         if (relatedUser == null) {
-            userAppPermissions = null;
-            final List<String> features = new ArrayList<>();
+            currentPermissions = null;
+            final List<AppPermission> features = new ArrayList<>();
             dataGrid.setRowData(0, features);
             dataGrid.setRowCount(features.size(), true);
 
@@ -89,7 +85,7 @@ public class AppPermissionsPresenter
                     .create(APP_PERMISSION_RESOURCE)
                     .method(res -> res.fetchUserAppPermissions(relatedUser))
                     .onSuccess(userAppPermissions -> {
-                        AppPermissionsPresenter.this.userAppPermissions = userAppPermissions;
+                        AppPermissionsPresenter.this.currentPermissions = userAppPermissions;
                         updateAllPermissions();
                     })
                     .taskListener(this)
@@ -98,24 +94,15 @@ public class AppPermissionsPresenter
     }
 
     private void updateAllPermissions() {
-        if (this.allPermissions != null) {
-            dataGrid.setRowData(0, allPermissions);
-            dataGrid.setRowCount(allPermissions.size(), true);
-
-        } else {
-            restFactory
-                    .create(APP_PERMISSION_RESOURCE)
-                    .method(AppPermissionResource::fetchAllPermissions)
-                    .onSuccess(allPermissions -> {
-                        Collections.sort(allPermissions);
-                        this.allPermissions = allPermissions;
-
-                        dataGrid.setRowData(0, allPermissions);
-                        dataGrid.setRowCount(allPermissions.size(), true);
-                    })
-                    .taskListener(this)
-                    .exec();
+        if (this.allPermissions == null) {
+            allPermissions = Arrays
+                    .stream(AppPermission.values())
+                    .sorted(Comparator.comparing(AppPermission::getDisplayValue))
+                    .collect(Collectors.toList());
         }
+
+        dataGrid.setRowData(0, allPermissions);
+        dataGrid.setRowCount(allPermissions.size(), true);
     }
 
     private void addColumns() {
@@ -125,12 +112,11 @@ public class AppPermissionsPresenter
                 : new TickBoxCell.NoBorderAppearance();
 
         // Selection.
-        final Column<String, TickBoxState> selectionColumn = new Column<String, TickBoxState>(
+        final Column<AppPermission, TickBoxState> selectionColumn = new Column<AppPermission, TickBoxState>(
                 TickBoxCell.create(appearance, true, true, updateable)) {
             @Override
-            public TickBoxState getValue(final String permission) {
-                final Set<String> permissions = userAppPermissions.getPermissions();
-                if (permissions != null && permissions.contains(permission)) {
+            public TickBoxState getValue(final AppPermission permission) {
+                if (currentPermissions != null && currentPermissions.contains(permission)) {
                     return TickBoxState.fromBoolean(true);
                 }
 
@@ -160,23 +146,23 @@ public class AppPermissionsPresenter
         dataGrid.addColumn(selectionColumn, "<br/>", ColumnSizeConstants.ICON_COL);
 
         // Perm name
-        dataGrid.addColumn(new Column<String, String>(new TextCell()) {
+        dataGrid.addColumn(new Column<AppPermission, String>(new TextCell()) {
             @Override
-            public String getValue(final String permissionName) {
-                return permissionName;
+            public String getValue(final AppPermission permission) {
+                return permission.getDisplayValue();
             }
         }, "Permission", 200);
 
         // Description
-        dataGrid.addColumn(new Column<String, String>(new TextCell()) {
+        dataGrid.addColumn(new Column<AppPermission, String>(new TextCell()) {
             @Override
-            public String getValue(final String permissionName) {
-                return PermissionNames.getDescription(permissionName);
+            public String getValue(final AppPermission permission) {
+                return permission.getDescription();
             }
         }, "Description", 700);
     }
 
     protected boolean isCurrentUserUpdate() {
-        return securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION);
+        return securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION);
     }
 }

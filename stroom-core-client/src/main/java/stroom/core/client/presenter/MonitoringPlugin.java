@@ -21,6 +21,7 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.shared.AppPermission;
 import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
@@ -45,7 +46,7 @@ public abstract class MonitoringPlugin<P extends MyPresenterWidget<?>> extends C
 
         final Action openAction = getOpenAction();
         if (openAction != null) {
-            final String requiredAppPermission = getRequiredAppPermission();
+            final AppPermission requiredAppPermission = getRequiredAppPermission();
             final Command command;
             if (requiredAppPermission != null) {
                 command = () -> {
@@ -75,7 +76,7 @@ public abstract class MonitoringPlugin<P extends MyPresenterWidget<?>> extends C
 
     protected abstract void addChildItems(BeforeRevealMenubarEvent event);
 
-    protected abstract String getRequiredAppPermission();
+    protected abstract AppPermission getRequiredAppPermission();
 
     protected abstract Action getOpenAction();
 

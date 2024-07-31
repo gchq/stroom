@@ -157,7 +157,7 @@ class QueryServiceImpl implements QueryService {
     @Override
     public ResourceGeneration downloadSearchResults(final DownloadQueryResultsRequest request) {
         return null;
-//        return securityContext.secureResult(PermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
+//        return securityContext.secureResult(AppPermissionEnum.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
 //            ResourceKey resourceKey;
 //
 //            final QuerySearchRequest searchRequest = request.getSearchRequest();

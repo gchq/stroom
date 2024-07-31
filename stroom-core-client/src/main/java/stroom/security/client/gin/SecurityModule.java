@@ -26,23 +26,23 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.ApiKeysPresenter;
 import stroom.security.client.presenter.CreateMultipleUsersPresenter;
 import stroom.security.client.presenter.CreateNewUserPresenter;
+import stroom.security.client.presenter.DocumentCreatePermissionsListPresenter;
+import stroom.security.client.presenter.DocumentCreatePermissionsListPresenter.DocumentCreatePermissionsListView;
 import stroom.security.client.presenter.DocumentPermissionsPresenter;
 import stroom.security.client.presenter.DocumentPermissionsTabPresenter;
 import stroom.security.client.presenter.EditApiKeyPresenter;
 import stroom.security.client.presenter.FolderPermissionsTabPresenter;
 import stroom.security.client.presenter.GroupEditPresenter;
-import stroom.security.client.presenter.PermissionsListPresenter;
-import stroom.security.client.presenter.PermissionsListPresenter.PermissionsListView;
 import stroom.security.client.presenter.UserEditPresenter;
 import stroom.security.client.presenter.UserListView;
 import stroom.security.client.view.ApiKeysViewImpl;
 import stroom.security.client.view.CreateMultipleUsersViewImpl;
 import stroom.security.client.view.CreateNewUserViewImpl;
+import stroom.security.client.view.DocumentCreatePermissionsListViewImpl;
 import stroom.security.client.view.DocumentPermissionsTabViewImpl;
 import stroom.security.client.view.DocumentPermissionsViewImpl;
 import stroom.security.client.view.EditApiKeyViewImpl;
 import stroom.security.client.view.FolderPermissionsTabViewImpl;
-import stroom.security.client.view.PermissionsListViewImpl;
 import stroom.security.client.view.UserEditViewImpl;
 import stroom.security.client.view.UserGroupEditViewImpl;
 import stroom.security.client.view.UserListViewImpl;
@@ -68,9 +68,6 @@ public class SecurityModule extends PluginModule {
         bindSharedView(CreateNewUserPresenter.CreateNewUserView.class, CreateNewUserViewImpl.class);
         bindSharedView(CreateMultipleUsersPresenter.CreateMultipleUsersView.class, CreateMultipleUsersViewImpl.class);
 
-        bindPresenterWidget(PermissionsListPresenter.class,
-                PermissionsListView.class,
-                PermissionsListViewImpl.class);
         bindPresenterWidget(DocumentPermissionsPresenter.class,
                 DocumentPermissionsPresenter.DocumentPermissionsView.class,
                 DocumentPermissionsViewImpl.class);
@@ -80,6 +77,9 @@ public class SecurityModule extends PluginModule {
         bindPresenterWidget(FolderPermissionsTabPresenter.class,
                 FolderPermissionsTabPresenter.FolderPermissionsTabView.class,
                 FolderPermissionsTabViewImpl.class);
+        bindPresenterWidget(DocumentCreatePermissionsListPresenter.class,
+                DocumentCreatePermissionsListView.class,
+                DocumentCreatePermissionsListViewImpl.class);
 
         bindPresenterWidget(ApiKeysPresenter.class,
                 ApiKeysPresenter.ApiKeysView.class,

@@ -1,7 +1,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:form="urn:import:stroom.widget.form.client">
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:i="urn:import:stroom.item.client">
     <g:FlowPanel styleName="documentPermissions form max dock-container-vertical">
         <g:FlowPanel styleName="documentPermissionsUsers form dock-max dock-container-vertical">
             <form:FormGroup ui:field="documentPermissionsUsers"
@@ -11,13 +12,8 @@
                 <g:SimplePanel ui:field="users"
                                addStyleNames="documentPermissionsUsers dock-max dock-container-vertical"/>
             </form:FormGroup>
-        </g:FlowPanel>
-        <g:FlowPanel styleName="documentPermissionsPermissions form dock-max dock-container-vertical">
-            <form:FormGroup identity="documentPermissionsPermissions"
-                            label="Permissions"
-                            addStyleNames="documentPermissionsPermissionFormGrp smax">
-                <g:ScrollPanel ui:field="permissions"
-                               addStyleNames="documentPermissionsPermissions dock-max stroom-control"/>
+            <form:FormGroup identity="permission" label="Permission">
+                <i:SelectionBox ui:field="permission" addStyleNames="w-100"/>
             </form:FormGroup>
         </g:FlowPanel>
     </g:FlowPanel>

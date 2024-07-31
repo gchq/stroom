@@ -1,6 +1,7 @@
 package stroom.analytics.shared;
 
 import stroom.docref.DocRef;
+import stroom.util.shared.UserRef;
 import stroom.util.shared.time.SimpleDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -29,6 +30,8 @@ public class TableBuilderAnalyticProcessConfig extends AnalyticProcessConfig {
     private final SimpleDuration timeToWaitForData;
     @JsonProperty
     private final SimpleDuration dataRetention;
+    @JsonProperty
+    private final UserRef runAsUser;
 
     @JsonCreator
     public TableBuilderAnalyticProcessConfig(@JsonProperty("enabled") final boolean enabled,
@@ -37,7 +40,8 @@ public class TableBuilderAnalyticProcessConfig extends AnalyticProcessConfig {
                                              @JsonProperty("minMetaCreateTimeMs") final Long minMetaCreateTimeMs,
                                              @JsonProperty("maxMetaCreateTimeMs") final Long maxMetaCreateTimeMs,
                                              @JsonProperty("timeToWaitForData") final SimpleDuration timeToWaitForData,
-                                             @JsonProperty("dataRetention") final SimpleDuration dataRetention) {
+                                             @JsonProperty("dataRetention") final SimpleDuration dataRetention,
+                                             @JsonProperty("runAsUser") UserRef runAsUser) {
         this.enabled = enabled;
         this.node = node;
         this.errorFeed = errorFeed;
@@ -45,6 +49,7 @@ public class TableBuilderAnalyticProcessConfig extends AnalyticProcessConfig {
         this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
         this.dataRetention = dataRetention;
         this.timeToWaitForData = timeToWaitForData;
+        this.runAsUser = runAsUser;
     }
 
     public boolean isEnabled() {
@@ -76,6 +81,10 @@ public class TableBuilderAnalyticProcessConfig extends AnalyticProcessConfig {
         return dataRetention;
     }
 
+    public UserRef getRunAsUser() {
+        return runAsUser;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -94,7 +103,8 @@ public class TableBuilderAnalyticProcessConfig extends AnalyticProcessConfig {
                 Objects.equals(minMetaCreateTimeMs, that.minMetaCreateTimeMs) &&
                 Objects.equals(maxMetaCreateTimeMs, that.maxMetaCreateTimeMs) &&
                 Objects.equals(timeToWaitForData, that.timeToWaitForData) &&
-                Objects.equals(dataRetention, that.dataRetention);
+                Objects.equals(dataRetention, that.dataRetention) &&
+                Objects.equals(runAsUser, that.runAsUser);
     }
 
     @Override
@@ -106,7 +116,8 @@ public class TableBuilderAnalyticProcessConfig extends AnalyticProcessConfig {
                 minMetaCreateTimeMs,
                 maxMetaCreateTimeMs,
                 timeToWaitForData,
-                dataRetention);
+                dataRetention,
+                runAsUser);
     }
 
     @Override
@@ -119,6 +130,7 @@ public class TableBuilderAnalyticProcessConfig extends AnalyticProcessConfig {
                 ", maxMetaCreateTimeMs=" + maxMetaCreateTimeMs +
                 ", timeToWaitForData=" + timeToWaitForData +
                 ", dataRetention=" + dataRetention +
+                ", runAsUser=" + runAsUser +
                 '}';
     }
 
@@ -139,6 +151,7 @@ public class TableBuilderAnalyticProcessConfig extends AnalyticProcessConfig {
         private Long maxMetaCreateTimeMs;
         private SimpleDuration timeToWaitForData;
         private SimpleDuration dataRetention;
+        private UserRef runAsUser;
 
         private Builder() {
         }
@@ -151,6 +164,7 @@ public class TableBuilderAnalyticProcessConfig extends AnalyticProcessConfig {
             this.maxMetaCreateTimeMs = tableBuilderAnalyticProcessConfig.maxMetaCreateTimeMs;
             this.timeToWaitForData = tableBuilderAnalyticProcessConfig.timeToWaitForData;
             this.dataRetention = tableBuilderAnalyticProcessConfig.dataRetention;
+            this.runAsUser = tableBuilderAnalyticProcessConfig.runAsUser;
         }
 
         public Builder enabled(final boolean enabled) {
@@ -189,6 +203,11 @@ public class TableBuilderAnalyticProcessConfig extends AnalyticProcessConfig {
             return this;
         }
 
+        public Builder runAsUser(final UserRef runAsUser) {
+            this.runAsUser = runAsUser;
+            return this;
+        }
+
         public TableBuilderAnalyticProcessConfig build() {
             return new TableBuilderAnalyticProcessConfig(
                     enabled,
@@ -197,7 +216,8 @@ public class TableBuilderAnalyticProcessConfig extends AnalyticProcessConfig {
                     minMetaCreateTimeMs,
                     maxMetaCreateTimeMs,
                     timeToWaitForData,
-                    dataRetention);
+                    dataRetention,
+                    runAsUser);
         }
     }
 }

@@ -1,10 +1,14 @@
 package stroom.security.impl.apikey;
 
+import stroom.cache.api.CacheManager;
 import stroom.cache.impl.CacheManagerImpl;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.AuthenticationConfig;
+import stroom.security.impl.AuthorisationConfig;
 import stroom.security.impl.HashedApiKeyParts;
+import stroom.security.impl.UserCache;
+import stroom.security.impl.UserDao;
 import stroom.security.impl.apikey.ApiKeyGenerator.ApiKeyParts;
 import stroom.security.impl.apikey.ApiKeyService.DuplicateHashException;
 import stroom.security.impl.apikey.ApiKeyService.DuplicatePrefixException;
@@ -12,10 +16,10 @@ import stroom.security.mock.MockSecurityContext;
 import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.CreateHashedApiKeyResponse;
 import stroom.security.shared.HashedApiKey;
+import stroom.security.shared.User;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.SimpleUserName;
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserRef;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.HttpHeaders;
@@ -50,23 +54,28 @@ class TestApiKeyService {
     private final SecurityContext securityContext = new MockSecurityContext();
     @Mock
     private ApiKeyDao mockApiKeyDao;
+    @Mock
+    private UserDao mockUserDao;
 
     ApiKeyGenerator apiKeyGenerator = new ApiKeyGenerator();
     ApiKeyService apiKeyService;
 
     @BeforeEach
     void setUp() {
+        final CacheManager cacheManager = new CacheManagerImpl();
+        final UserCache userCache = new UserCache(cacheManager, AuthorisationConfig::new, () -> mockUserDao);
         apiKeyService = new ApiKeyService(
                 mockApiKeyDao,
                 securityContext,
                 apiKeyGenerator,
                 new CacheManagerImpl(),
-                AuthenticationConfig::new);
+                AuthenticationConfig::new,
+                userCache);
     }
 
     @Test
     void create_success() throws DuplicateHashException, DuplicatePrefixException {
-        final UserName owner = SimpleUserName.builder()
+        final UserRef owner = UserRef.builder()
                 .uuid("myUuid")
                 .subjectId("mySubjectId")
                 .displayName("myDisplayName")
@@ -108,7 +117,7 @@ class TestApiKeyService {
 
     @Test
     void create_noExpireTime() throws DuplicateHashException, DuplicatePrefixException {
-        final UserName owner = SimpleUserName.builder()
+        final UserRef owner = UserRef.builder()
                 .uuid("myUuid")
                 .subjectId("mySubjectId")
                 .displayName("myDisplayName")
@@ -156,7 +165,7 @@ class TestApiKeyService {
 
     @Test
     void create_expireTimeTooBig() throws DuplicateHashException, DuplicatePrefixException {
-        final UserName owner = SimpleUserName.builder()
+        final UserRef owner = UserRef.builder()
                 .uuid("myUuid")
                 .subjectId("mySubjectId")
                 .displayName("myDisplayName")
@@ -182,7 +191,7 @@ class TestApiKeyService {
 
     @Test
     void create_hashClash() throws DuplicateHashException, DuplicatePrefixException {
-        final UserName owner = SimpleUserName.builder()
+        final UserRef owner = UserRef.builder()
                 .uuid("myUuid")
                 .subjectId("mySubjectId")
                 .displayName("myDisplayName")
@@ -229,7 +238,7 @@ class TestApiKeyService {
 
     @Test
     void create_prefixClash() throws DuplicateHashException, DuplicatePrefixException {
-        final UserName owner = SimpleUserName.builder()
+        final UserRef owner = UserRef.builder()
                 .uuid("myUuid")
                 .subjectId("mySubjectId")
                 .displayName("myDisplayName")
@@ -280,20 +289,23 @@ class TestApiKeyService {
         final String hash = apiKeyService.computeApiKeyHash(apiKeyStr);
         final HttpServletRequest mockRequest = Mockito.mock(HttpServletRequest.class);
 
-        final UserName owner = SimpleUserName.builder()
+        final User owner = User.builder()
                 .uuid("myUuid")
                 .subjectId("mySubjectId")
                 .displayName("myDisplayName")
                 .build();
+        final UserRef ownerRef = owner.asRef();
 
         Optional<HashedApiKey> optValidApiKey = Optional.of(
                 HashedApiKey.builder()
-                        .withOwner(owner)
+                        .withOwner(ownerRef)
                         .withApiKeyHash(hash)
                         .build());
 
         Mockito.when(mockApiKeyDao.fetchValidApiKeyByHash(Mockito.anyString()))
                 .thenReturn(optValidApiKey);
+        Mockito.when(mockUserDao.getByUuid(Mockito.anyString()))
+                .thenReturn(Optional.of(owner));
         Mockito.when(mockRequest.getHeader(HttpHeaders.AUTHORIZATION))
                 .thenReturn(apiKeyStr);
 
@@ -328,20 +340,23 @@ class TestApiKeyService {
         final String apiKeyStr = apiKeyGenerator.generateRandomApiKey();
         final String hash = apiKeyService.computeApiKeyHash(apiKeyStr);
 
-        final UserName owner = SimpleUserName.builder()
+        final User owner = User.builder()
                 .uuid("myUuid")
                 .subjectId("mySubjectId")
                 .displayName("myDisplayName")
                 .build();
+        final UserRef ownerRef = owner.asRef();
 
         Optional<HashedApiKey> optValidApiKey = Optional.of(
                 HashedApiKey.builder()
-                        .withOwner(owner)
+                        .withOwner(ownerRef)
                         .withApiKeyHash(hash)
                         .build());
 
         Mockito.when(mockApiKeyDao.fetchValidApiKeyByHash(Mockito.anyString()))
                 .thenReturn(optValidApiKey);
+        Mockito.when(mockUserDao.getByUuid(Mockito.anyString()))
+                .thenReturn(Optional.of(owner));
 
         final Optional<UserIdentity> opUserIdentity = apiKeyService.fetchVerifiedIdentity(apiKeyStr);
 

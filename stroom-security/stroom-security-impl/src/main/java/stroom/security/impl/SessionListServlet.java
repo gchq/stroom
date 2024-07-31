@@ -24,7 +24,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsServlet;
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import jakarta.servlet.ServletException;
@@ -102,23 +102,23 @@ class SessionListServlet extends HttpServlet implements IsServlet {
             sessionListService
                     .listSessions()
                     .stream()
-                    .filter(sessionDetails -> Objects.nonNull(sessionDetails.getUserName()))
+                    .filter(sessionDetails -> Objects.nonNull(sessionDetails.getUserRef()))
                     .sorted(Comparator.comparing(SessionDetails::getLastAccessedMs))
                     .forEach(sessionDetails -> {
                         try {
                             writer.write("<tr>");
                             final String subjectId = NullSafe.get(
-                                    sessionDetails.getUserName(),
-                                    UserName::getSubjectId);
+                                    sessionDetails.getUserRef(),
+                                    UserRef::getSubjectId);
                             final String displayName = NullSafe.getOrElse(
-                                    sessionDetails.getUserName(),
-                                    UserName::getDisplayName,
+                                    sessionDetails.getUserRef(),
+                                    UserRef::getDisplayName,
                                     subjectId);
 
                             writeCell(writer, DateUtil.createNormalDateTimeString(sessionDetails.getLastAccessedMs()));
                             writeCell(writer, DateUtil.createNormalDateTimeString(sessionDetails.getCreateMs()));
                             writeCell(writer, displayName);
-                            writeCell(writer, NullSafe.get(sessionDetails.getUserName(), UserName::getFullName));
+                            writeCell(writer, NullSafe.get(sessionDetails.getUserRef(), UserRef::getFullName));
                             writeCell(writer, subjectId);
                             writeCell(writer, sessionDetails.getNodeName());
                             writeCell(writer, "<span class=\"agent\">"

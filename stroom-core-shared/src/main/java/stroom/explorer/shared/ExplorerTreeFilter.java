@@ -17,6 +17,7 @@
 package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
@@ -51,7 +52,7 @@ public class ExplorerTreeFilter {
     @JsonProperty
     private final Set<NodeFlag> nodeFlags;
     @JsonProperty
-    private final Set<String> requiredPermissions;
+    private final Set<DocumentPermission> requiredPermissions;
     @JsonProperty
     private final String nameFilter;
     @JsonProperty
@@ -64,7 +65,8 @@ public class ExplorerTreeFilter {
                               @JsonProperty("includedRootTypes") final Set<String> includedRootTypes,
                               @JsonProperty("tags") final Set<String> tags,
                               @JsonProperty("nodeFlags") final Set<NodeFlag> nodeFlags,
-                              @JsonProperty("requiredPermissions") final Set<String> requiredPermissions,
+                              @JsonProperty("requiredPermissions")
+                                  final Set<DocumentPermission> requiredPermissions,
                               @JsonProperty("nameFilter") final String nameFilter,
                               @JsonProperty("nameFilterChange") final boolean nameFilterChange,
                               @JsonProperty("recentItems") final List<DocRef> recentItems) {
@@ -94,7 +96,7 @@ public class ExplorerTreeFilter {
         return nodeFlags;
     }
 
-    public Set<String> getRequiredPermissions() {
+    public Set<DocumentPermission> getRequiredPermissions() {
         return requiredPermissions;
     }
 

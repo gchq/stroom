@@ -1,23 +1,5 @@
 package stroom.explorer.client.presenter;
 
-import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.PagerView;
-import stroom.data.table.client.MyCellTable;
-import stroom.dispatch.client.RestErrorHandler;
-import stroom.dispatch.client.RestFactory;
-import stroom.document.client.event.OpenDocumentEvent;
-import stroom.explorer.client.presenter.AbstractFindPresenter.FindView;
-import stroom.explorer.shared.ExplorerResource;
-import stroom.explorer.shared.ExplorerTreeFilter;
-import stroom.explorer.shared.FindRequest;
-import stroom.explorer.shared.FindResult;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.shared.GwtNullSafe;
-import stroom.util.shared.PageRequest;
-import stroom.util.shared.ResultPage;
-import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.util.client.MultiSelectionModelImpl;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -32,6 +14,23 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.proxy.Proxy;
+import stroom.data.client.presenter.RestDataProvider;
+import stroom.data.grid.client.PagerView;
+import stroom.data.table.client.MyCellTable;
+import stroom.dispatch.client.RestErrorHandler;
+import stroom.dispatch.client.RestFactory;
+import stroom.document.client.event.OpenDocumentEvent;
+import stroom.explorer.client.presenter.AbstractFindPresenter.FindView;
+import stroom.explorer.shared.ExplorerResource;
+import stroom.explorer.shared.ExplorerTreeFilter;
+import stroom.explorer.shared.FindRequest;
+import stroom.explorer.shared.FindResult;
+import stroom.security.shared.DocumentPermission;
+import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -86,7 +85,7 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
 
         view.setResultView(pagerView);
         view.setUiHandlers(this);
-        explorerTreeFilterBuilder.setRequiredPermissions(DocumentPermissionNames.READ);
+        explorerTreeFilterBuilder.setRequiredPermissions(DocumentPermission.VIEW);
 
         dataProvider = new RestDataProvider<FindResult, ResultPage<FindResult>>(eventBus) {
             @Override

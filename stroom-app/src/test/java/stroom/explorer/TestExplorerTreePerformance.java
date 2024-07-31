@@ -28,7 +28,7 @@ import stroom.explorer.shared.FetchExplorerNodesRequest;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.DocumentPermissionServiceImpl;
 import stroom.security.impl.UserService;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.User;
 import stroom.svg.shared.SvgImage;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -86,7 +86,7 @@ class TestExplorerTreePerformance extends AbstractCoreIntegrationTest {
                             Collections.singleton("test"),
                             null,
                             null,
-                            Collections.singleton(DocumentPermissionNames.READ),
+                            Collections.singleton(DocumentPermission.VIEW),
                             null,
                             false,
                             null),
@@ -127,18 +127,18 @@ class TestExplorerTreePerformance extends AbstractCoreIntegrationTest {
             final User user = userService.getOrCreateUser("testuser");
             final User userGroup = userService.getOrCreateUserGroup("testusergroup");
             userService.addUserToGroup(user.getUuid(), userGroup.getUuid());
-            documentPermissionService.addPermission(
-                    lastChild.getUuid(),
-                    user.getUuid(),
-                    DocumentPermissionNames.READ);
-            documentPermissionService.addPermission(
-                    lastChild.getUuid(),
-                    userGroup.getUuid(),
-                    DocumentPermissionNames.READ);
+            documentPermissionService.setPermission(
+                    lastChild.getDocRef(),
+                    user.asRef(),
+                    DocumentPermission.VIEW);
+            documentPermissionService.setPermission(
+                    lastChild.getDocRef(),
+                    userGroup.asRef(),
+                    DocumentPermission.VIEW);
 
             LOGGER.logDurationIfInfoEnabled(() -> {
                 securityContext.asUser(
-                        securityContext.getOrCreateUserIdentity(user.getSubjectId()),
+                        user.asRef(),
                         () -> {
                             // See what we get back with a user with limited permissions.
                             expandTree(findExplorerNodeCriteria, 3);
@@ -146,7 +146,7 @@ class TestExplorerTreePerformance extends AbstractCoreIntegrationTest {
             }, "Expand all as user with empty cache");
 
             LOGGER.logDurationIfInfoEnabled(() -> {
-                securityContext.asUser(securityContext.getOrCreateUserIdentity(user.getSubjectId()), () -> {
+                securityContext.asUser(user.asRef(), () -> {
                     // See what we get back with a user with limited permissions.
                     expandTree(findExplorerNodeCriteria, 3);
                 });

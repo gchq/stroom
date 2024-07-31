@@ -4,7 +4,7 @@ import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserDesc;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -17,7 +17,6 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
 
@@ -29,18 +28,12 @@ import java.util.List;
 @Consumes(MediaType.APPLICATION_JSON)
 public interface UserResource extends RestResource, DirectRestService, FetchWithUuid<User> {
 
-    @GET
-    @Operation(
-            summary = "Find the users matching the supplied criteria",
-            operationId = "findUsers")
-    List<User> find(@QueryParam("name") String name,
-                    @QueryParam("isGroup") Boolean isGroup,
-                    @QueryParam("uuid") String uuid);
-
     @POST
     @Path("/find")
     @Operation(
-            summary = "Find the users matching the supplied criteria",
+            summary = "Find the user names matching the supplied criteria of users who belong to at least " +
+                    "one of the same groups as the current user. If the current user is admin or has " +
+                    "Manage Users permission then they can see all users.",
             operationId = "findUsersByCriteria")
     ResultPage<User> find(@Parameter(description = "criteria", required = true) FindUserCriteria criteria);
 
@@ -63,7 +56,7 @@ public interface UserResource extends RestResource, DirectRestService, FetchWith
     @Operation(
             summary = "Creates a user with the supplied name",
             operationId = "createUser")
-    User createUser(@Parameter(description = "name", required = true) UserName name);
+    User createUser(@Parameter(description = "name", required = true) UserDesc userDesc);
 
     @POST
     @Path("/createUsers")
@@ -95,11 +88,4 @@ public interface UserResource extends RestResource, DirectRestService, FetchWith
             operationId = "removeUserFromGroup")
     Boolean removeUserFromGroup(@PathParam("userUuid") String userUuid,
                                 @PathParam("groupUuid") String groupUuid);
-
-    @GET
-    @Path("associates")
-    @Operation(
-            summary = "Gets a list of associated users",
-            operationId = "getAssociatedUsers")
-    List<UserName> getAssociates(@QueryParam("filter") String filter);
 }

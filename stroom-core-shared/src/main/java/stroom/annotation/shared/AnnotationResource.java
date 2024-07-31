@@ -16,23 +16,15 @@
 
 package stroom.annotation.shared;
 
-import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.RestResource;
-import stroom.util.shared.filter.FilterFieldDefinition;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
+import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.RestResource;
 
-import java.util.Collections;
 import java.util.List;
 
 @Tag(name = "Annotations")
@@ -40,9 +32,6 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface AnnotationResource extends RestResource, DirectRestService {
-
-    // Only one field so no need to qualify
-    List<FilterFieldDefinition> NO_FIELD_DEFINITIONS = Collections.emptyList();
 
     @GET
     @Operation(

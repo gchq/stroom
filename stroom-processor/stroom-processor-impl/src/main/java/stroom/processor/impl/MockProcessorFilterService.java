@@ -12,6 +12,7 @@ import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.ReprocessDataInfo;
+import stroom.security.api.SecurityContext;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
@@ -25,12 +26,15 @@ public class MockProcessorFilterService implements ProcessorFilterService {
 
     private final ProcessorService processorService;
     private final MockProcessorFilterDao dao;
+    private final SecurityContext securityContext;
 
     @Inject
     MockProcessorFilterService(final ProcessorService processorService,
-                               final MockProcessorFilterDao dao) {
+                               final MockProcessorFilterDao dao,
+                               final SecurityContext securityContext) {
         this.processorService = processorService;
         this.dao = dao;
+        this.securityContext = securityContext;
     }
 
     @Override
@@ -43,6 +47,7 @@ public class MockProcessorFilterService implements ProcessorFilterService {
         filter.setEnabled(request.isEnabled());
         filter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
         filter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
+        filter.setRunAsUser(securityContext.getUserRef());
         Processor processor = processorService.create(
                 request.getProcessorType(),
                 request.getPipeline(),
@@ -69,6 +74,7 @@ public class MockProcessorFilterService implements ProcessorFilterService {
         filter.setEnabled(request.isEnabled());
         filter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
         filter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
+        filter.setRunAsUser(securityContext.getUserRef());
         return dao.create(filter);
     }
 
@@ -90,6 +96,7 @@ public class MockProcessorFilterService implements ProcessorFilterService {
         filter.setEnabled(request.isEnabled());
         filter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
         filter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
+        filter.setRunAsUser(securityContext.getUserRef());
         return dao.create(filter);
     }
 

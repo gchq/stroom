@@ -17,36 +17,28 @@
 
 package stroom.data.retention.impl;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
-import stroom.docstore.api.DependencyRemapper;
-import stroom.docstore.api.DocumentSerialiser2;
-import stroom.docstore.api.Serialiser2Factory;
-import stroom.docstore.api.Store;
-import stroom.docstore.api.StoreFactory;
-import stroom.docstore.api.UniqueNameUtil;
+import stroom.docstore.api.*;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.AppPermission;
 import stroom.util.shared.Message;
-
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
-
-import static stroom.security.shared.PermissionNames.MANAGE_POLICIES_PERMISSION;
 
 @Singleton
 class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
@@ -91,23 +83,23 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
     }
 
     @Override
-    public DocRef moveDocument(final String uuid) {
-        return store.moveDocument(uuid);
+    public DocRef moveDocument(final DocRef docRef) {
+        return store.moveDocument(docRef);
     }
 
     @Override
-    public DocRef renameDocument(final String uuid, final String name) {
-        return store.renameDocument(uuid, name);
+    public DocRef renameDocument(final DocRef docRef, final String name) {
+        return store.renameDocument(docRef, name);
     }
 
     @Override
-    public void deleteDocument(final String uuid) {
-        store.deleteDocument(uuid);
+    public void deleteDocument(final DocRef docRef) {
+        store.deleteDocument(docRef);
     }
 
     @Override
-    public DocRefInfo info(final String uuid) {
-        return store.info(uuid);
+    public DocRefInfo info(final DocRef docRef) {
+        return store.info(docRef);
     }
 
     @Override
@@ -170,7 +162,7 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
     public DataRetentionRules writeDocument(final DataRetentionRules document) {
         // The user will never have any doc perms on the DRR as it is not an explorer doc, thus
         // access it via the proc user (so long as use has MANAGE_POLICIES_PERMISSION)
-        return securityContext.secureResult(MANAGE_POLICIES_PERMISSION,
+        return securityContext.secureResult(AppPermission.MANAGE_POLICIES_PERMISSION,
                 () -> securityContext.asProcessingUserResult(() -> store.writeDocument(document)));
 
     }

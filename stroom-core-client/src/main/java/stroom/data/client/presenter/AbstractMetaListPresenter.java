@@ -16,6 +16,14 @@
 
 package stroom.data.client.presenter;
 
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.shared.GWT;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.Header;
+import com.google.gwt.view.client.Range;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.tickbox.client.TickBoxCell;
@@ -24,11 +32,7 @@ import stroom.core.client.LocationManager;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
-import stroom.data.grid.client.DataGridSelectionEventManager;
-import stroom.data.grid.client.EndColumn;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.OrderByColumn;
-import stroom.data.grid.client.PagerView;
+import stroom.data.grid.client.*;
 import stroom.data.shared.DataResource;
 import stroom.data.table.client.Refreshable;
 import stroom.datasource.api.v2.QueryField;
@@ -38,14 +42,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.feed.shared.FeedDoc;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaExpressionUtil;
-import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.MetaResource;
-import stroom.meta.shared.MetaRow;
-import stroom.meta.shared.Status;
-import stroom.meta.shared.UpdateStatusRequest;
+import stroom.meta.shared.*;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.preferences.client.DateTimeFormatter;
@@ -55,7 +52,7 @@ import stroom.processor.shared.QueryData;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
@@ -68,23 +65,10 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.shared.GWT;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.Header;
-import com.google.gwt.view.client.Range;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import javax.inject.Provider;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import javax.inject.Provider;
 
 public abstract class AbstractMetaListPresenter
         extends MyPresenterWidget<PagerView>
@@ -627,7 +611,7 @@ public abstract class AbstractMetaListPresenter
         final DocSelectionPopup chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Process Data With");
         chooser.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
-        chooser.setRequiredPermissions(DocumentPermissionNames.READ);
+        chooser.setRequiredPermissions(DocumentPermission.VIEW);
         chooser.show(consumer);
     }
 

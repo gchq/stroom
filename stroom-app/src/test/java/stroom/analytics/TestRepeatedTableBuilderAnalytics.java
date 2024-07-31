@@ -16,6 +16,11 @@
 
 package stroom.analytics;
 
+import jakarta.inject.Inject;
+import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
+import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import stroom.analytics.impl.TableBuilderAnalyticExecutor;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
@@ -28,14 +33,7 @@ import stroom.index.VolumeTestConfigModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.node.api.NodeInfo;
 import stroom.resource.impl.ResourceModule;
-import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.BootstrapTestModule;
-
-import jakarta.inject.Inject;
-import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
-import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -47,7 +45,6 @@ import java.time.ZoneOffset;
 @IncludeModule(ResourceModule.class)
 @IncludeModule(stroom.cluster.impl.MockClusterModule.class)
 @IncludeModule(VolumeTestConfigModule.class)
-@IncludeModule(MockSecurityContextModule.class)
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)

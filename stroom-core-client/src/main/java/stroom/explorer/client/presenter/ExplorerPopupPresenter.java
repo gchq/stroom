@@ -26,6 +26,7 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.NodeFlag;
+import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskListener;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupUiHandlers;
@@ -209,7 +210,7 @@ public class ExplorerPopupPresenter
         explorerTree.getTreeModel().setNodeFlags(nodeFlags);
     }
 
-    public void setRequiredPermissions(final String... requiredPermissions) {
+    public void setRequiredPermissions(final DocumentPermission... requiredPermissions) {
         explorerTree.getTreeModel().setRequiredPermissions(requiredPermissions);
     }
 

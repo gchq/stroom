@@ -4,6 +4,7 @@ import stroom.config.global.impl.UserPreferencesDao;
 import stroom.db.util.JooqUtil;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -17,6 +18,7 @@ class UserPreferencesDaoImpl implements UserPreferencesDao {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserPreferencesDaoImpl.class);
 
+    private static final String DEFAULT_PREFERENCES = "__default__";
     private final GlobalConfigDbConnProvider connProvider;
 
     @Inject
@@ -25,7 +27,16 @@ class UserPreferencesDaoImpl implements UserPreferencesDao {
     }
 
     @Override
-    public Optional<UserPreferences> fetch(final String userUuid) {
+    public Optional<UserPreferences> fetchDefault() {
+        return fetch(DEFAULT_PREFERENCES);
+    }
+
+    @Override
+    public Optional<UserPreferences> fetch(final UserRef userRef) {
+        return fetch(userRef.getUuid());
+    }
+
+    private Optional<UserPreferences> fetch(final String userUuid) {
         final Optional<String> optionalDat = JooqUtil.contextResult(connProvider, context ->
                 context
                         .select(PREFERENCES.DAT)
@@ -44,10 +55,21 @@ class UserPreferencesDaoImpl implements UserPreferencesDao {
         });
     }
 
+
     @Override
-    public int update(final String userUuid,
-                      final String userIdentityForAudit,
+    public int update(final UserRef userRef,
                       final UserPreferences userPreferences) {
+        return update(userRef, userRef.getUuid(), userPreferences);
+    }
+
+    @Override
+    public int updateDefault(final UserRef userRef, final UserPreferences userPreferences) {
+        return update(userRef, DEFAULT_PREFERENCES, userPreferences);
+    }
+
+    private int update(final UserRef userRef,
+                       final String userUuid,
+                       final UserPreferences userPreferences) {
         try {
             final String dat = JsonUtil.writeValueAsString(userPreferences, true);
             final long now = System.currentTimeMillis();
@@ -65,7 +87,7 @@ class UserPreferencesDaoImpl implements UserPreferencesDao {
                             .update(PREFERENCES)
                             .set(PREFERENCES.VERSION, PREFERENCES.VERSION.plus(1))
                             .set(PREFERENCES.UPDATE_TIME_MS, now)
-                            .set(PREFERENCES.UPDATE_USER, userIdentityForAudit)
+                            .set(PREFERENCES.UPDATE_USER, userRef.toDisplayString())
                             .set(PREFERENCES.DAT, dat)
                             .where(PREFERENCES.ID.eq(optionalId.get()))
                             .execute();
@@ -79,7 +101,13 @@ class UserPreferencesDaoImpl implements UserPreferencesDao {
                                     PREFERENCES.UPDATE_USER,
                                     PREFERENCES.USER_UUID,
                                     PREFERENCES.DAT)
-                            .values(1, now, userIdentityForAudit, now, userIdentityForAudit, userUuid, dat)
+                            .values(1,
+                                    now,
+                                    userRef.toDisplayString(),
+                                    now,
+                                    userRef.toDisplayString(),
+                                    userUuid,
+                                    dat)
                             .execute();
                 }
             });
@@ -90,11 +118,11 @@ class UserPreferencesDaoImpl implements UserPreferencesDao {
     }
 
     @Override
-    public int delete(final String userUuid) {
+    public int delete(final UserRef userRef) {
         return JooqUtil.contextResult(connProvider, context ->
                 context
                         .deleteFrom(PREFERENCES)
-                        .where(PREFERENCES.USER_UUID.eq(userUuid))
+                        .where(PREFERENCES.USER_UUID.eq(userRef.getUuid()))
                         .execute());
     }
 }

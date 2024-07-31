@@ -7,6 +7,7 @@ import stroom.db.util.JooqUtil;
 import stroom.storedquery.impl.StoredQueryDao;
 import stroom.storedquery.impl.db.jooq.tables.records.QueryRecord;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotNull;
@@ -74,7 +75,7 @@ class StoredQueryDaoImpl implements StoredQueryDao {
     public ResultPage<StoredQuery> find(final FindStoredQueryCriteria criteria) {
         List<StoredQuery> list = JooqUtil.contextResult(storedQueryDbConnProvider, context -> {
             final Collection<Condition> conditions = JooqUtil.conditions(
-                    Optional.ofNullable(criteria.getOwnerUuid()).map(QUERY.OWNER_UUID::eq),
+                    Optional.ofNullable(criteria.getOwner()).map(UserRef::getUuid).map(QUERY.OWNER_UUID::eq),
                     JooqUtil.getStringCondition(QUERY.NAME, criteria.getName()),
                     Optional.ofNullable(criteria.getDashboardUuid()).map(QUERY.DASHBOARD_UUID::eq),
                     Optional.ofNullable(criteria.getComponentId()).map(QUERY.COMPONENT_ID::eq),

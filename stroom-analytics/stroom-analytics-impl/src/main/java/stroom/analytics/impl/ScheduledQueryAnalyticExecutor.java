@@ -39,7 +39,6 @@ import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.security.api.SecurityContext;
-import stroom.security.api.UserIdentity;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -170,14 +169,9 @@ public class ScheduledQueryAnalyticExecutor {
         if (!parentTaskContext.isTerminated()) {
             final String ruleIdentity = AnalyticUtil.getAnalyticRuleIdentity(analytic);
             try {
-                final String ownerUuid = securityContext.getDocumentOwnerUuid(analytic.asDocRef());
-                final UserIdentity userIdentity = securityContext.getIdentityByUserUuid(ownerUuid);
-                securityContext.asUser(userIdentity, () ->
-                        process(
-                                ruleIdentity,
-                                analytic,
-                                userIdentity,
-                                parentTaskContext));
+                process(ruleIdentity,
+                        analytic,
+                        parentTaskContext);
             } catch (final RuntimeException e) {
                 LOGGER.error(() -> "Error executing rule: " + ruleIdentity, e);
             }
@@ -186,7 +180,6 @@ public class ScheduledQueryAnalyticExecutor {
 
     private void process(final String ruleIdentity,
                          final AnalyticRuleDoc analytic,
-                         final UserIdentity userIdentity,
                          final TaskContext parentTaskContext) {
         // Load schedules for the analytic.
         final ExecutionScheduleRequest request = ExecutionScheduleRequest
@@ -203,7 +196,7 @@ public class ScheduledQueryAnalyticExecutor {
                 try {
                     // We need to set the user again here as it will have been lost from the parent context as we are
                     // running within a new thread.
-                    securityContext.asUser(userIdentity, () -> securityContext.useAsRead(() -> {
+                    securityContext.asUser(executionSchedule.getRunAsUser(), () -> securityContext.useAsRead(() -> {
                         boolean success = true;
                         while (success && !parentTaskContext.isTerminated()) {
                             success = process(ruleIdentity, analytic, parentTaskContext, executionSchedule);

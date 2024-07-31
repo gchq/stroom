@@ -16,30 +16,24 @@
 
 package stroom.core.db;
 
+import jakarta.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.FindDBTableCriteria;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.ResultPage;
 
-import jakarta.inject.Inject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
-import javax.sql.DataSource;
 
 class DBTableService {
 
@@ -77,7 +71,7 @@ class DBTableService {
     }
 
     private ResultPage<DBTableStatus> doFind(final FindDBTableCriteria criteria) {
-        return securityContext.secureResult(PermissionNames.MANAGE_DB_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.MANAGE_DB_PERMISSION, () -> {
             // We need the results distinct by key (db name, table name)
             final Map<TableKey, DBTableStatus> rtnMap = new HashMap<>();
 

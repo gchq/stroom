@@ -24,7 +24,7 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.node.shared.Node;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.util.AuditUtil;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
@@ -88,9 +88,9 @@ public class NodeServiceImpl implements NodeService {
     }
 
     Node update(final Node node) {
-        if (!securityContext.hasAppPermission(PermissionNames.MANAGE_NODES_PERMISSION)) {
+        if (!securityContext.hasAppPermission(AppPermission.MANAGE_NODES_PERMISSION)) {
             throw new PermissionException(
-                    securityContext.getUserIdentityForAudit(), "You are not authorised to update nodes");
+                    securityContext.getUserRef(), "You are not authorised to update nodes");
         }
         AuditUtil.stamp(securityContext, node);
         final Node updated = nodeDao.update(node);

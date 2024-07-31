@@ -7,7 +7,7 @@ import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.util.AuditUtil;
 import stroom.util.NextNameGenerator;
 import stroom.util.entityevent.EntityAction;
@@ -31,7 +31,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.OptionalLong;
-import java.util.stream.Collectors;
 
 @Singleton
 @EntityEventHandler(type = IndexVolumeServiceImpl.ENTITY_TYPE, action = {
@@ -92,7 +91,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
         final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
         indexVolumeGroup.setName(name);
         AuditUtil.stamp(securityContext, indexVolumeGroup);
-        final IndexVolumeGroup result = securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
+        final IndexVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeGroupDao.getOrCreate(indexVolumeGroup));
         fireChange(EntityAction.CREATE);
         return result;
@@ -105,7 +104,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
         var newName = NextNameGenerator.getNextName(indexVolumeGroupDao.getNames(), "New group");
         indexVolumeGroup.setName(newName);
         AuditUtil.stamp(securityContext, indexVolumeGroup);
-        final IndexVolumeGroup result = securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
+        final IndexVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeGroupDao.getOrCreate(indexVolumeGroup));
         fireChange(EntityAction.CREATE);
         return result;
@@ -115,7 +114,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
     public IndexVolumeGroup update(final IndexVolumeGroup indexVolumeGroup) {
         ensureDefaultVolumes();
         AuditUtil.stamp(securityContext, indexVolumeGroup);
-        final IndexVolumeGroup result = securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
+        final IndexVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeGroupDao.update(indexVolumeGroup));
         fireChange(EntityAction.UPDATE);
         return result;
@@ -136,7 +135,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
 
     @Override
     public void delete(int id) {
-        securityContext.secure(PermissionNames.MANAGE_VOLUMES_PERMISSION,
+        securityContext.secure(AppPermission.MANAGE_VOLUMES_PERMISSION,
                 () -> {
                     //TODO Transaction?
                     var indexVolumesInGroup = indexVolumeDao.getAll().stream()

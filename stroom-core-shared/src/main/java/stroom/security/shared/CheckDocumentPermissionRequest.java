@@ -21,28 +21,29 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import stroom.docref.DocRef;
 
 @JsonPropertyOrder({"documentUuid", "permission"})
 @JsonInclude(Include.NON_NULL)
 public class CheckDocumentPermissionRequest {
 
     @JsonProperty
-    private final String documentUuid;
+    private final DocRef docRef;
     @JsonProperty
-    private final String permission;
+    private final DocumentPermission permission;
 
     @JsonCreator
-    public CheckDocumentPermissionRequest(@JsonProperty("documentUuid") final String documentUuid,
-                                          @JsonProperty("permission") final String permission) {
-        this.documentUuid = documentUuid;
+    public CheckDocumentPermissionRequest(@JsonProperty("docRef") final DocRef docRef,
+                                          @JsonProperty("permission") final DocumentPermission permission) {
+        this.docRef = docRef;
         this.permission = permission;
     }
 
-    public String getDocumentUuid() {
-        return documentUuid;
+    public DocRef getDocRef() {
+        return docRef;
     }
 
-    public String getPermission() {
+    public DocumentPermission getPermission() {
         return permission;
     }
 }

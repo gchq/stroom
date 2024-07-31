@@ -17,6 +17,12 @@
 
 package stroom.analytics.client.presenter;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 import stroom.analytics.client.presenter.AnalyticStreamDestinationPresenter.AnalyticStreamDestinationView;
 import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.document.client.event.DirtyEvent;
@@ -25,14 +31,7 @@ import stroom.document.client.event.DirtyUiHandlers;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.feed.shared.FeedDoc;
-import stroom.security.shared.DocumentPermissionNames;
-
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
+import stroom.security.shared.DocumentPermission;
 
 public class AnalyticStreamDestinationPresenter
         extends MyPresenterWidget<AnalyticStreamDestinationView>
@@ -49,7 +48,7 @@ public class AnalyticStreamDestinationPresenter
         this.feedPresenter = feedPresenter;
 
         feedPresenter.setIncludedTypes(FeedDoc.DOCUMENT_TYPE);
-        feedPresenter.setRequiredPermissions(DocumentPermissionNames.READ);
+        feedPresenter.setRequiredPermissions(DocumentPermission.VIEW);
         view.setDestinationFeedView(feedPresenter.getView());
     }
 

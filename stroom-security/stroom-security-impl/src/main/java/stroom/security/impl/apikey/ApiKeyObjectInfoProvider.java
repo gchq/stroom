@@ -1,17 +1,16 @@
 package stroom.security.impl.apikey;
 
-import stroom.event.logging.api.ObjectInfoProvider;
-import stroom.security.shared.HashedApiKey;
-import stroom.util.NullSafe;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.UserName;
-
 import event.logging.BaseObject;
 import event.logging.OtherObject;
 import event.logging.OtherObject.Builder;
 import event.logging.util.DateUtil;
 import event.logging.util.EventLoggingUtil;
+import stroom.event.logging.api.ObjectInfoProvider;
+import stroom.security.shared.HashedApiKey;
+import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.UserRef;
 
 public class ApiKeyObjectInfoProvider implements ObjectInfoProvider {
 
@@ -33,7 +32,7 @@ public class ApiKeyObjectInfoProvider implements ObjectInfoProvider {
         try {
             builder
                     .addData(EventLoggingUtil.createData("Owner",
-                            NullSafe.get(apiKey.getOwner(), UserName::getUserIdentityForAudit)))
+                            NullSafe.get(apiKey.getOwner(), UserRef::toInfoString)))
                     .addData(EventLoggingUtil.createData("Expiry",
                             DateUtil.createNormalDateTimeString(apiKey.getExpireTimeMs())))
                     .addData(EventLoggingUtil.createData("Prefix", apiKey.getApiKeyPrefix()));

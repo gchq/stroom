@@ -33,7 +33,7 @@ import stroom.search.solr.shared.SolrConnectionConfig;
 import stroom.search.solr.shared.SolrConnectionConfig.InstanceType;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexResource;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskListener;
 
 import com.google.gwt.core.client.GWT;
@@ -69,7 +69,7 @@ public class SolrIndexSettingsPresenter
         this.fieldSelectionBoxModel = fieldSelectionBoxModel;
 
         pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
-        pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.READ);
+        pipelinePresenter.setRequiredPermissions(DocumentPermission.VIEW);
 
         view.setUiHandlers(this);
         view.setDefaultExtractionPipelineView(pipelinePresenter.getView());

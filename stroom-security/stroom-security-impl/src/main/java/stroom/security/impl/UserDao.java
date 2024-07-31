@@ -2,21 +2,13 @@ package stroom.security.impl;
 
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
-import stroom.util.filter.FilterFieldMapper;
-import stroom.util.filter.FilterFieldMappers;
+import stroom.util.shared.ResultPage;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
 public interface UserDao {
-
-    FilterFieldMappers<User> FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
-            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_NAME, User::getSubjectId),
-            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_DISPLAY_NAME, User::getDisplayName),
-            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_FULL_NAME, User::getFullName));
 
     User create(User user);
 
@@ -26,26 +18,11 @@ public interface UserDao {
 
     User tryCreate(User user, final Consumer<User> onUserCreateAction);
 
-    /**
-     * Get a user by the DB PK.
-     */
-    Optional<User> getById(int id);
-
     Optional<User> getByUuid(String uuid);
 
-    Set<User> getByUuids(Collection<String> userUuids);
+    Optional<User> getUserBySubjectId(String subjectId);
 
-    Optional<User> getBySubjectId(String subjectId);
-
-    /**
-     * Gets by displayName, falling back to
-     *
-     * @param displayName
-     * @return
-     */
-    Optional<User> getByDisplayName(String displayName);
-
-    Optional<User> getBySubjectId(String name, boolean isGroup);
+    Optional<User> getGroupByName(String groupName);
 
     User update(User user);
 
@@ -54,15 +31,11 @@ public interface UserDao {
      */
     void delete(String uuid);
 
-    List<User> find(String quickFilter, boolean isGroup);
+    ResultPage<User> find(FindUserCriteria criteria);
 
-    List<User> findUsersInGroup(String groupUuid, String quickFilterInput);
+    ResultPage<User> findUsersInGroup(String groupUuid, FindUserCriteria criteria);
 
-    List<User> findGroupsForUser(String userUuid, String quickFilterInput);
-
-    Set<String> findGroupUuidsForUser(String userUuid);
-
-    List<User> findGroupsForUserName(String userName);
+    ResultPage<User> findGroupsForUser(String userUuid, FindUserCriteria criteria);
 
     void addUserToGroup(String userUuid, String groupUuid);
 

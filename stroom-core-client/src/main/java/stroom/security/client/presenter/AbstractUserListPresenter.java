@@ -16,13 +16,18 @@
 
 package stroom.security.client.presenter;
 
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.DataGrid;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.cell.info.client.SvgCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
+import stroom.security.shared.UserFields;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
@@ -31,12 +36,6 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
-
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.DataGrid;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,8 +48,6 @@ public abstract class AbstractUserListPresenter
     private final MultiSelectionModelImpl<User> selectionModel;
     final PagerView pagerView;
     private final List<Column<User, ?>> columns = new ArrayList<>();
-    private boolean isExternalIdentityProvider = false;
-    private Boolean lastIncludeUserInfoColsVal = null;
 
     public AbstractUserListPresenter(final EventBus eventBus,
                                      final UserListView userListView,
@@ -69,7 +66,7 @@ public abstract class AbstractUserListPresenter
             if (uiConfig != null) {
                 userListView.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
                         "Quick Filter",
-                        FindUserCriteria.FILTER_FIELD_DEFINITIONS,
+                        UserFields.FILTER_FIELD_DEFINITIONS,
                         uiConfig.getHelpUrlQuickFilter()));
             }
         }, this);
@@ -77,23 +74,17 @@ public abstract class AbstractUserListPresenter
         userListView.setDatGridView(pagerView);
         userListView.setUiHandlers(this);
 
+        setupColumns();
         refresh();
 
         uiConfigCache.get(extendedUiConfig -> {
             if (extendedUiConfig != null) {
-                isExternalIdentityProvider = extendedUiConfig.isExternalIdentityProvider();
                 refresh();
             }
         }, pagerView);
     }
 
     public void refresh() {
-        final boolean includeUserInfoCols = includeAdditionalUserInfo();
-
-        if (this.lastIncludeUserInfoColsVal == null || this.lastIncludeUserInfoColsVal != includeUserInfoCols) {
-            setupColumns();
-            this.lastIncludeUserInfoColsVal = includeUserInfoCols;
-        }
     }
 
     private void setupColumns() {
@@ -106,8 +97,8 @@ public abstract class AbstractUserListPresenter
         // Icon
         final Column<User, Preset> iconCol = new Column<User, Preset>(new SvgCell()) {
             @Override
-            public Preset getValue(final User userRef) {
-                if (!userRef.isGroup()) {
+            public Preset getValue(final User user) {
+                if (!user.isGroup()) {
                     return SvgPresets.USER;
                 }
 
@@ -117,38 +108,34 @@ public abstract class AbstractUserListPresenter
         dataGrid.addColumn(iconCol, "</br>", ColumnSizeConstants.ICON_COL);
         columns.add(iconCol);
 
-        if (includeAdditionalUserInfo()) {
-            // Preferred User Name
-            final Column<User, String> displayNameCol = new Column<User, String>(new TextCell()) {
-                @Override
-                public String getValue(final User userRef) {
-                    return GwtNullSafe.requireNonNullElse(userRef.getDisplayName(), userRef.getSubjectId());
-                }
-            };
-            dataGrid.addAutoResizableColumn(displayNameCol, "Display Name", 200);
-            columns.add(displayNameCol);
+        // Preferred User Name
+        final Column<User, String> displayNameCol = new Column<User, String>(new TextCell()) {
+            @Override
+            public String getValue(final User user) {
+                return GwtNullSafe.requireNonNullElse(user.getDisplayName(), user.getSubjectId());
+            }
+        };
+        dataGrid.addAutoResizableColumn(displayNameCol, "Display Name", 200);
+        columns.add(displayNameCol);
 
-            // Full name
-            final Column<User, String> fullNameCol = new Column<User, String>(new TextCell()) {
-                @Override
-                public String getValue(final User userRef) {
-                    return userRef.getFullName();
-                }
-            };
-            dataGrid.addAutoResizableColumn(fullNameCol, "Full Name", 350);
-            columns.add(fullNameCol);
-        }
+        // Full name
+        final Column<User, String> fullNameCol = new Column<User, String>(new TextCell()) {
+            @Override
+            public String getValue(final User user) {
+                return user.getFullName();
+            }
+        };
+        dataGrid.addAutoResizableColumn(fullNameCol, "Full Name", 350);
+        columns.add(fullNameCol);
 
         // Subject ID
         final Column<User, String> uniqueIdentityCol = new Column<User, String>(new TextCell()) {
             @Override
-            public String getValue(final User userRef) {
-                return userRef.getSubjectId();
+            public String getValue(final User user) {
+                return user.getSubjectId();
             }
         };
-        final String nameColName = includeAdditionalUserInfo()
-                ? "Unique User Identity"
-                : "Group Name";
+        final String nameColName = "Name";
         dataGrid.addAutoResizableColumn(uniqueIdentityCol, nameColName, 300);
         columns.add(uniqueIdentityCol);
 
@@ -172,9 +159,5 @@ public abstract class AbstractUserListPresenter
 
     public DataGrid<User> getDataGrid() {
         return dataGrid;
-    }
-
-    public boolean includeAdditionalUserInfo() {
-        return false;
     }
 }

@@ -18,13 +18,12 @@
 
 package stroom.security.identity.shared;
 
-import stroom.util.shared.HasIntegerId;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import stroom.util.shared.HasIntegerId;
 
 import java.util.Optional;
 
@@ -328,7 +327,7 @@ public class Account implements HasIntegerId {
                 ", updateTimeMs=" + updateTimeMs +
                 ", createUser='" + createUser + '\'' +
                 ", updateUser='" + updateUser + '\'' +
-                ", userId='" + userId + '\'' +
+                ", subjectId='" + userId + '\'' +
                 ", email='" + email + '\'' +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +

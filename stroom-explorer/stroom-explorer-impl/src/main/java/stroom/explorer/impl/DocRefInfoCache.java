@@ -16,6 +16,11 @@
 
 package stroom.explorer.impl;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
@@ -28,12 +33,6 @@ import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.shared.Clearable;
-
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -51,7 +50,7 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
     private static final String CACHE_NAME = "Doc Ref Info Cache";
 
     // Effectively docUuid => optDocRefInfo
-    private final LoadingStroomCache<DocRefCacheKey, Optional<DocRefInfo>> cache;
+    private final LoadingStroomCache<DocRef, Optional<DocRefInfo>> cache;
     private final SecurityContext securityContext;
     // Provider to avoid circular guice dependency issue
     private final Provider<DocumentActionHandlers> documentActionHandlersProvider;
@@ -74,12 +73,11 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
                 this::loadDocRefInfo);
     }
 
-    private Optional<DocRefInfo> loadDocRefInfo(final DocRefCacheKey docRefCacheKey) {
+    private Optional<DocRefInfo> loadDocRefInfo(final DocRef docRef) {
         DocRefInfo docRefInfo = null;
 
         try {
             docRefInfo = securityContext.asProcessingUserResult(() -> {
-                final DocRef docRef = docRefCacheKey.getDocRef();
                 if (docRef.getType() != null) {
                     return getDocRefInfoWithType(docRef);
                 } else {
@@ -93,7 +91,6 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
     }
 
     private DocRefInfo getDocRefInfoWithoutType(final DocRef docRef) {
-        final String uuid = docRef.getUuid();
         // No type so need to check all handlers and return the one that has it.
         // Hopefully next time it will still be in the cache so this won't be needed
         final Set<String> typesChecked = new HashSet<>();
@@ -102,7 +99,7 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
                 .map(handler -> {
                     typesChecked.add(handler.getType());
                     try {
-                        return handler.info(uuid);
+                        return handler.info(docRef);
                     } catch (DocumentNotFoundException e) {
                         return null;
                     }
@@ -118,7 +115,7 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
                                         !typesChecked.contains(handler.getDocumentType().getType()))
                                 .map(handler -> {
                                     try {
-                                        return handler.info(uuid);
+                                        return handler.info(docRef);
                                     } catch (DocumentNotFoundException e) {
                                         return null;
                                     }
@@ -130,26 +127,20 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
 
     private DocRefInfo getDocRefInfoWithType(final DocRef docRef) {
         final String type = docRef.getType();
-        final String uuid = docRef.getUuid();
-
         DocRefInfo docRefInfo = NullSafe.get(
                 documentActionHandlersProvider.get().getHandler(type),
-                handler -> handler.info(uuid));
+                handler -> handler.info(docRef));
 
         if (docRefInfo == null) {
             docRefInfo = NullSafe.get(
                     explorerActionHandlers.getHandler(type),
-                    handler -> handler.info(uuid));
+                    handler -> handler.info(docRef));
         }
         return docRefInfo;
     }
 
     Optional<DocRefInfo> get(final DocRef docRef) {
-        return cache.get(new DocRefCacheKey(docRef));
-    }
-
-    Optional<DocRefInfo> get(final String docUuid) {
-        return cache.get(new DocRefCacheKey(docUuid));
+        return cache.get(docRef);
     }
 
     @Override
@@ -161,69 +152,7 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
     public void onChange(final EntityEvent event) {
         if (event != null && !EntityAction.CREATE.equals(event.getAction())) {
             LOGGER.debug("Invalidating entry for {}", event);
-            cache.invalidate(new DocRefCacheKey(event.getDocRef()));
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    /**
-     * Custom cache key that holds a {@link DocRef} but only does equals/hashcode on
-     * the doc's UUID. The UUID is unique without the type.
-     */
-    private static class DocRefCacheKey {
-
-        private final DocRef docRef;
-        private transient int hashCode = -1;
-
-        private DocRefCacheKey(final DocRef docRef) {
-            this.docRef = Objects.requireNonNull(docRef);
-        }
-
-        private DocRefCacheKey(final String uuid) {
-            this.docRef = new DocRef(null, Objects.requireNonNull(uuid));
-        }
-
-        public DocRef getDocRef() {
-            return docRef;
-        }
-
-        public String getType() {
-            return docRef.getType();
-        }
-
-        public String getUuid() {
-            return docRef.getUuid();
-        }
-
-        public String getName() {
-            return docRef.getName();
-        }
-
-        public boolean hasType() {
-            return docRef.getType() != null;
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (!(o instanceof final DocRefCacheKey docRefCacheKey)) {
-                return false;
-            }
-            return Objects.equals(docRef.getUuid(), docRefCacheKey.getUuid());
-        }
-
-        @Override
-        public int hashCode() {
-            // In the unlikely event that the hash is actually -1 then it just means we compute every time
-            if (hashCode == -1) {
-                hashCode = Objects.hash(docRef.getUuid());
-            }
-            return hashCode;
+            cache.invalidate(event.getDocRef());
         }
     }
 }

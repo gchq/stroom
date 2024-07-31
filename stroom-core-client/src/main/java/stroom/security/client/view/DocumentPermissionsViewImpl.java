@@ -36,7 +36,7 @@ public final class DocumentPermissionsViewImpl extends ViewImpl
 
     private final Widget widget;
     @UiField
-    SimplePanel tabs;
+    SimplePanel permissions;
     @UiField
     Button copyPermissionsFromParentButton;
     @UiField
@@ -60,8 +60,8 @@ public final class DocumentPermissionsViewImpl extends ViewImpl
     }
 
     @Override
-    public void setTabsView(View view) {
-        tabs.setWidget(view.asWidget());
+    public void setPermissionsView(View view) {
+        permissions.setWidget(view.asWidget());
     }
 
     @Override

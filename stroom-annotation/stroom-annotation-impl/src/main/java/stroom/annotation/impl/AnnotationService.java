@@ -1,13 +1,9 @@
 package stroom.annotation.impl;
 
+import jakarta.inject.Inject;
 import stroom.annotation.api.AnnotationCreator;
 import stroom.annotation.api.AnnotationFields;
-import stroom.annotation.shared.AnnotationDetail;
-import stroom.annotation.shared.CreateEntryRequest;
-import stroom.annotation.shared.EventId;
-import stroom.annotation.shared.EventLink;
-import stroom.annotation.shared.SetAssignedToRequest;
-import stroom.annotation.shared.SetStatusRequest;
+import stroom.annotation.shared.*;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
@@ -19,13 +15,10 @@ import stroom.query.language.functions.ValuesConsumer;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
-import stroom.security.user.api.UserNameService;
+import stroom.security.shared.AppPermission;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.UserName;
-
-import jakarta.inject.Inject;
+import stroom.util.shared.UserRef;
 
 import java.util.List;
 import java.util.Optional;
@@ -36,15 +29,12 @@ public class AnnotationService implements Searchable, AnnotationCreator {
 
     private final AnnotationDao annotationDao;
     private final SecurityContext securityContext;
-    private final UserNameService userNameService;
 
     @Inject
     AnnotationService(final AnnotationDao annotationDao,
-                      final SecurityContext securityContext,
-                      final UserNameService userNameService) {
+                      final SecurityContext securityContext) {
         this.annotationDao = annotationDao;
         this.securityContext = securityContext;
-        this.userNameService = userNameService;
     }
 
     @Override
@@ -59,6 +49,9 @@ public class AnnotationService implements Searchable, AnnotationCreator {
 
     @Override
     public ResultPage<QueryField> getFieldInfo(final FindFieldInfoCriteria criteria) {
+        if (!ANNOTATIONS_PSEUDO_DOC_REF.equals(criteria.getDataSourceRef())) {
+            return ResultPage.empty();
+        }
         return FieldInfoResultPageBuilder.builder(criteria).addAll(AnnotationFields.FIELDS).build();
     }
 
@@ -81,7 +74,7 @@ public class AnnotationService implements Searchable, AnnotationCreator {
         final ExpressionFilter expressionFilter = ExpressionFilter.builder()
                 .addReplacementFilter(
                         AnnotationFields.CURRENT_USER_FUNCTION,
-                        securityContext.getUserIdentityForAudit())
+                        securityContext.getUserRef().toDisplayString())
                 .build();
 
         ExpressionOperator expression = criteria.getExpression();
@@ -91,8 +84,8 @@ public class AnnotationService implements Searchable, AnnotationCreator {
         annotationDao.search(criteria, fieldIndex, consumer);
     }
 
-    private UserName getCurrentUser() {
-        return securityContext.getUserName();
+    private UserRef getCurrentUser() {
+        return securityContext.getUserRef();
     }
 
     AnnotationDetail getDetail(Long annotationId) {
@@ -112,7 +105,7 @@ public class AnnotationService implements Searchable, AnnotationCreator {
 
     List<EventId> link(final EventLink eventLink) {
         checkPermission();
-        return annotationDao.link(eventLink, getCurrentUser());
+        return annotationDao.link(getCurrentUser(), eventLink);
     }
 
     List<EventId> unlink(final EventLink eventLink) {
@@ -131,9 +124,9 @@ public class AnnotationService implements Searchable, AnnotationCreator {
     }
 
     private void checkPermission() {
-        if (!securityContext.hasAppPermission(PermissionNames.ANNOTATIONS)) {
+        if (!securityContext.hasAppPermission(AppPermission.ANNOTATIONS)) {
             throw new PermissionException(
-                    securityContext.getUserIdentityForAudit(),
+                    securityContext.getUserRef(),
                     "You do not have permission to use annotations");
         }
     }

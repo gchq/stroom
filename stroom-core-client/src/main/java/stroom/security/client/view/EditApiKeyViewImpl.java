@@ -1,13 +1,10 @@
 package stroom.security.client.view;
 
-import stroom.item.client.SelectionBox;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.security.client.presenter.EditApiKeyPresenter.EditApiKeyView;
 import stroom.security.client.presenter.EditApiKeyPresenter.Mode;
 import stroom.svg.client.SvgPresets;
-import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.ClipboardUtil;
-import stroom.util.shared.UserName;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.customdatebox.client.MyDateBox;
@@ -20,28 +17,24 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-
-import java.util.List;
 
 public class EditApiKeyViewImpl
         extends ViewWithUiHandlers<HideRequestUiHandlers>
         implements EditApiKeyView {
 
     private final Widget widget;
-    private final UiConfigCache uiConfigCache;
     private Mode mode;
-    private UserName owner = null;
     private boolean canSelectOwner;
 
     @UiField
-    Label ownerLabel;
-    @UiField
-    SelectionBox<UserName> ownerSelectionBox;
+    SimplePanel owner;
     @UiField
     TextBox nameTextBox;
     @UiField
@@ -68,13 +61,9 @@ public class EditApiKeyViewImpl
 
     @Inject
     public EditApiKeyViewImpl(final Binder binder,
-                              final UserPreferencesManager userPreferencesManager,
-                              final UiConfigCache uiConfigCache) {
+                              final UserPreferencesManager userPreferencesManager) {
         widget = binder.createAndBindUi(this);
         widget.addAttachHandler(event -> focus());
-        this.uiConfigCache = uiConfigCache;
-
-        ownerSelectionBox.setDisplayValueFunction(UserName::getUserIdentityForAudit);
 
         apiKeyTextArea.setEnabled(false);
         prefixTextBox.setEnabled(false);
@@ -104,11 +93,9 @@ public class EditApiKeyViewImpl
 
     private void setOwnerControlsVisibility() {
         if (canSelectOwner && Mode.PRE_CREATE.equals(mode)) {
-            ownerSelectionBox.setVisible(true);
-            ownerLabel.setVisible(false);
+            owner.setVisible(true);
         } else {
-            ownerSelectionBox.setVisible(false);
-            ownerLabel.setVisible(true);
+            owner.setVisible(false);
         }
     }
 
@@ -162,28 +149,8 @@ public class EditApiKeyViewImpl
     }
 
     @Override
-    public void setUserNames(final List<UserName> userNames) {
-        ownerSelectionBox.clear();
-        if (userNames != null) {
-            ownerSelectionBox.addItems(userNames);
-        }
-        if (owner != null) {
-            ownerSelectionBox.setValue(owner);
-        }
-    }
+    public void setOwnerView(final View view) {
 
-    @Override
-    public void setOwner(final UserName owner) {
-        this.owner = owner;
-        this.ownerLabel.setText(owner.getUserIdentityForAudit());
-        this.ownerSelectionBox.setValue(owner);
-    }
-
-    @Override
-    public UserName getOwner() {
-        return canSelectOwner
-                ? ownerSelectionBox.getValue()
-                : owner;
     }
 
     @Override
@@ -247,7 +214,6 @@ public class EditApiKeyViewImpl
     public void reset(final Long milliseconds) {
         nameTextBox.setText("");
         commentsTextArea.setText("");
-        ownerLabel.setText("");
         owner = null;
         expiresOnDateBox.setMilliseconds(milliseconds);
         enabledCheckBox.setValue(true);

@@ -21,7 +21,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -43,24 +42,10 @@ public class SelectGroupPresenter extends AbstractDataUserListPresenter {
         super(eventBus, userListView, pagerView, restFactory, uiConfigCache);
     }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(getSelectionModel().addSelectionHandler(event -> {
-            if (event.getSelectionType().isDoubleSelect()) {
-                if (getFindUserCriteria() != null &&
-                        getFindUserCriteria().getRelatedUser() == null) {
-                    HidePopupRequestEvent.builder(this).fire();
-                }
-            }
-        }));
-    }
-
     public void show(final Consumer<User> groupConsumer) {
         final FindUserCriteria findUserCriteria = new FindUserCriteria();
 
         // If we are a group then get users and vice versa.
-        findUserCriteria.setGroup(true);
         setup(findUserCriteria);
 
         final PopupSize popupSize = PopupSize.builder()
@@ -81,7 +66,7 @@ public class SelectGroupPresenter extends AbstractDataUserListPresenter {
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
-                .caption("Choose Group To Add")
+                .caption("Choose Group Or User To Add")
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
                     if (e.isOk() && groupConsumer != null) {

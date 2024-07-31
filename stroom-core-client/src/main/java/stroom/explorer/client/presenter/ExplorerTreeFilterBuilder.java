@@ -19,6 +19,7 @@ package stroom.explorer.client.presenter;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.NodeFlag;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.GwtNullSafe;
 
 import java.util.List;
@@ -30,7 +31,7 @@ public class ExplorerTreeFilterBuilder {
     private Set<String> includedRootTypes;
     private Set<String> tags;
     private Set<NodeFlag> nodeFlags;
-    private Set<String> requiredPermissions;
+    private Set<DocumentPermission> requiredPermissions;
     private String nameFilter;
     private boolean nameFilterChange;
     private List<DocRef> recentItems;
@@ -71,7 +72,7 @@ public class ExplorerTreeFilterBuilder {
         this.nodeFlags = nodeFlags;
     }
 
-    public void setRequiredPermissions(final String... requiredPermissions) {
+    public void setRequiredPermissions(final DocumentPermission... requiredPermissions) {
         this.requiredPermissions = SetUtil.toSet(requiredPermissions);
     }
 

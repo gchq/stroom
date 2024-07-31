@@ -16,15 +16,14 @@
 
 package stroom.cluster.lock.impl.db;
 
-import stroom.security.api.SecurityContext;
-import stroom.task.api.TaskContextFactory;
-import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.PermissionException;
-
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.security.api.SecurityContext;
+import stroom.task.api.TaskContextFactory;
+import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.PermissionException;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -56,7 +55,7 @@ public class ClusterLockClusterHandler {
      */
     boolean tryLock(final ClusterLockKey clusterLockKey) {
         if (!securityContext.isProcessingUser()) {
-            throw new PermissionException(securityContext.getUserIdentityForAudit(),
+            throw new PermissionException(securityContext.getUserRef(),
                     "Only the processing user is allowed to try a cluster lock");
         }
 
@@ -98,7 +97,7 @@ public class ClusterLockClusterHandler {
      */
     boolean release(final ClusterLockKey clusterLockKey) {
         if (!securityContext.isProcessingUser()) {
-            throw new PermissionException(securityContext.getUserIdentityForAudit(),
+            throw new PermissionException(securityContext.getUserRef(),
                     "Only the processing user is allowed to release a cluster lock");
         }
 
@@ -145,7 +144,7 @@ public class ClusterLockClusterHandler {
      */
     boolean keepAlive(final ClusterLockKey clusterLockKey) {
         if (!securityContext.isProcessingUser()) {
-            throw new PermissionException(securityContext.getUserIdentityForAudit(),
+            throw new PermissionException(securityContext.getUserRef(),
                     "Only the processing user is allowed to keep a cluster lock alive");
         }
 

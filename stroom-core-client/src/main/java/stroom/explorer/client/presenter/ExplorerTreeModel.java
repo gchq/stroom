@@ -27,6 +27,7 @@ import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FetchExplorerNodesRequest;
 import stroom.explorer.shared.NodeFlag;
 import stroom.explorer.shared.NodeFlag.NodeFlagGroups;
+import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskListener;
 import stroom.util.shared.GwtNullSafe;
 
@@ -113,7 +114,7 @@ public class ExplorerTreeModel {
         explorerTreeFilterBuilder.setNodeFlags(GwtNullSafe.asSet(nodeFlags));
     }
 
-    public void setRequiredPermissions(final String... requiredPermissions) {
+    public void setRequiredPermissions(final DocumentPermission... requiredPermissions) {
         explorerTreeFilterBuilder.setRequiredPermissions(requiredPermissions);
     }
 

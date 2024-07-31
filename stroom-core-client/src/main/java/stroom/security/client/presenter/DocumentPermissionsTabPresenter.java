@@ -16,12 +16,14 @@
 
 package stroom.security.client.presenter;
 
+import stroom.docref.DocRef;
 import stroom.security.client.presenter.DocumentPermissionsTabPresenter.DocumentPermissionsTabView;
 import stroom.security.shared.Changes;
-import stroom.security.shared.DocumentPermissions;
+import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.User;
 import stroom.svg.client.SvgPresets;
 import stroom.task.client.TaskListener;
+import stroom.util.shared.UserRef;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MouseUtil;
 
@@ -30,9 +32,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -42,33 +42,23 @@ public class DocumentPermissionsTabPresenter
         implements Focus {
 
     private final DocumentUserListPresenter userListPresenter;
-    private final PermissionsListPresenter permissionsListPresenter;
-    private final Provider<SelectGroupPresenter> selectGroupPresenterProvider;
     private final Provider<SelectUserPresenter> selectUserPresenterProvider;
     private final ButtonView addButton;
     private final ButtonView removeButton;
-
-    private DocumentPermissions documentPermissions;
-    private boolean isGroup;
 
     @Inject
     public DocumentPermissionsTabPresenter(final EventBus eventBus,
                                            final DocumentPermissionsTabView view,
                                            final DocumentUserListPresenter userListPresenter,
-                                           final PermissionsListPresenter permissionsListPresenter,
-                                           final Provider<SelectGroupPresenter> selectGroupPresenterProvider,
                                            final Provider<SelectUserPresenter> selectUserPresenterProvider) {
         super(eventBus, view);
         this.userListPresenter = userListPresenter;
-        this.permissionsListPresenter = permissionsListPresenter;
-        this.selectGroupPresenterProvider = selectGroupPresenterProvider;
         this.selectUserPresenterProvider = selectUserPresenterProvider;
 
         addButton = userListPresenter.addButton(SvgPresets.ADD);
         removeButton = userListPresenter.addButton(SvgPresets.REMOVE);
 
         getView().setUserView(userListPresenter.getView());
-        getView().setPermissionsView(permissionsListPresenter.getView());
     }
 
     @Override
@@ -80,7 +70,12 @@ public class DocumentPermissionsTabPresenter
     protected void onBind() {
         registerHandler(userListPresenter.getSelectionModel().addSelectionHandler(event -> {
             enableButtons();
-            setCurrentUser(userListPresenter.getSelectionModel().getSelected());
+            final User user = userListPresenter.getSelectionModel().getSelected();
+            if (user != null) {
+                setCurrentUser(user.asRef());
+            } else {
+                setCurrentUser(null);
+            }
         }));
         registerHandler(addButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
@@ -100,26 +95,21 @@ public class DocumentPermissionsTabPresenter
         removeButton.setEnabled(userListPresenter.getSelectionModel().getSelected() != null);
     }
 
-    protected void setCurrentUser(final User user) {
-        permissionsListPresenter.setCurrentUser(user);
+    protected void setCurrentUser(final UserRef user) {
+//        permissionsListPresenter.setCurrentUser(user);
     }
 
     private void add() {
         final Consumer<User> consumer = user -> {
-            //GWT.log("user: " + user.getName());
-            if (!documentPermissions.containsUserOrGroup(user.getUuid(), isGroup)) {
-                // This will ensure a perm map exists for the user/group
-                documentPermissions.addUser(user, isGroup);
-                userListPresenter.getSelectionModel().setSelected(user);
-                refreshUserList();
-            }
+//            //GWT.log("user: " + user.getName());
+//            if (!documentPermissions.containsUser(user.getUuid())) {
+//                // This will ensure a perm map exists for the user/group
+//                documentPermissions.addUser(user);
+            userListPresenter.getSelectionModel().setSelected(user);
+            refreshUserList();
+//            }
         };
-
-        if (isGroup) {
-            selectGroupPresenterProvider.get().show(consumer);
-        } else {
-            selectUserPresenterProvider.get().show(consumer);
-        }
+        selectUserPresenterProvider.get().show(consumer);
     }
 
     private void remove() {
@@ -127,19 +117,18 @@ public class DocumentPermissionsTabPresenter
         userListPresenter.getSelectionModel().clear();
 
         if (userRef != null) {
-            final String userUuid = userRef.getUuid();
-            final Set<String> currentPermissions = documentPermissions.getPermissionsForUser(userUuid);
-            for (final String permission : currentPermissions) {
-                permissionsListPresenter.removePermission(userUuid, permission);
-            }
-            documentPermissions.removeUser(userRef);
-            refreshUserList();
+//            final String userUuid = userRef.getUuid();
+//            final Set<String> currentPermissions = documentPermissions.getPermissionsForUser(userUuid);
+//            for (final String permission : currentPermissions) {
+//                permissionsListPresenter.removePermission(userUuid, permission);
+//            }
+//            documentPermissions.removeUser(userRef);
+//            refreshUserList();
         }
     }
 
-    public void setDocumentPermissions(final List<String> allPermissions,
-                                       final DocumentPermissions documentPermissions,
-                                       final boolean group,
+    public void setDocumentPermissions(final DocRef docRef,
+                                       final List<DocumentPermission> allPermissions,
                                        final Changes changes) {
 //        GWT.log("setDocumentPermissions(isGroup: " + group
 //                + " documentPermissions (groups): "
@@ -151,30 +140,12 @@ public class DocumentPermissionsTabPresenter
 //                ? documentPermissions.getUsers().stream().map(User::getName).collect(Collectors.joining(", "))
 //                : "null"));
 
-        this.documentPermissions = documentPermissions;
-        this.isGroup = group;
+        userListPresenter.setDocRef(docRef);
 
-        if (group) {
-            getView().setUsersLabelText("Groups");
-            userListPresenter.setDocumentPermissions(documentPermissions.getGroups(), true);
-        } else {
-            getView().setUsersLabelText("Users");
-            userListPresenter.setDocumentPermissions(documentPermissions.getUsers(), false);
-        }
+        getView().setUsersLabelText("Groups and Users");
 
-        final List<String> permissions = new ArrayList<>();
-        for (final String permission : allPermissions) {
-            if (!permission.startsWith("Create")) {
-                permissions.add(permission);
-            }
-        }
-
-        permissionsListPresenter.setDocumentPermissions(documentPermissions, permissions, changes);
+//        permissionsListPresenter.setDocumentPermissions(new DocumentPermissionSet(), allPermissions, changes);
         refreshUserList();
-    }
-
-    public DocumentPermissions getDocumentPermissions() {
-        return this.documentPermissions;
     }
 
     private void refreshUserList() {
@@ -183,7 +154,7 @@ public class DocumentPermissionsTabPresenter
 
     @Override
     public void setTaskListener(final TaskListener taskListener) {
-        permissionsListPresenter.setTaskListener(taskListener);
+//        permissionsListPresenter.setTaskListener(taskListener);
     }
 
 
@@ -194,7 +165,9 @@ public class DocumentPermissionsTabPresenter
 
         void setUserView(View view);
 
-        void setPermissionsView(View view);
+        void setPermission(DocumentPermission permission);
+
+        DocumentPermission getPermission();
 
         void setUsersLabelText(String text);
     }

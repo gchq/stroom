@@ -16,15 +16,18 @@
 
 package stroom.activity.impl.db;
 
-import stroom.activity.api.FindActivityCriteria;
-import stroom.activity.impl.ActivityDao;
-import stroom.activity.impl.db.jooq.tables.records.ActivityRecord;
-import stroom.activity.shared.Activity;
-import stroom.db.util.GenericDao;
-import stroom.db.util.JooqUtil;
-
 import jakarta.inject.Inject;
 import org.jooq.Condition;
+import org.jooq.Record;
+import stroom.activity.api.FindActivityCriteria;
+import stroom.activity.impl.ActivityDao;
+import stroom.activity.shared.Activity;
+import stroom.activity.shared.Activity.ActivityDetails;
+import stroom.db.util.JooqUtil;
+import stroom.util.NullSafe;
+import stroom.util.exception.DataChangedException;
+import stroom.util.json.JsonUtil;
+import stroom.util.shared.UserRef;
 
 import java.util.Collection;
 import java.util.List;
@@ -38,33 +41,101 @@ import static stroom.activity.impl.db.jooq.tables.Activity.ACTIVITY;
 public class ActivityDaoImpl implements ActivityDao {
 
     private final ActivityDbConnProvider activityDbConnProvider;
-    private final GenericDao<ActivityRecord, Activity, Integer> genericDao;
+
+
+    private static final Function<Record, Activity> RECORD_TO_ACTIVITY_MAPPER = record -> Activity.builder()
+            .id(record.get(ACTIVITY.ID))
+            .version(record.get(ACTIVITY.VERSION))
+            .createTimeMs(record.get(ACTIVITY.CREATE_TIME_MS))
+            .createUser(record.get(ACTIVITY.CREATE_USER))
+            .updateTimeMs(record.get(ACTIVITY.UPDATE_TIME_MS))
+            .updateUser(record.get(ACTIVITY.UPDATE_USER))
+            .userRef(UserRef.builder().uuid(record.get(ACTIVITY.USER_UUID)).build())
+            .details(JsonUtil.readValue(record.get(ACTIVITY.JSON), ActivityDetails.class))
+            .build();
 
     @Inject
     ActivityDaoImpl(final ActivityDbConnProvider activityDbConnProvider) {
         this.activityDbConnProvider = activityDbConnProvider;
-        genericDao = new GenericDao<>(activityDbConnProvider, ACTIVITY, ACTIVITY.ID, Activity.class);
+    }
+
+    private String getJson(final Activity activity) {
+        String json = null;
+        if (activity.getDetails() != null) {
+            json = JsonUtil.writeValueAsString(activity.getDetails());
+        }
+        return json;
     }
 
     @Override
-    public Activity create(Activity activity) {
-        return genericDao.create(activity);
+    public Activity create(final Activity activity) {
+        final String json = getJson(activity);
+
+        final int version = activity.getVersion() == null
+                ? 1
+                : activity.getVersion();
+        final Optional<Integer> id = JooqUtil.contextResult(activityDbConnProvider, context -> context
+                .insertInto(ACTIVITY)
+                .columns(
+                        ACTIVITY.VERSION,
+                        ACTIVITY.CREATE_TIME_MS,
+                        ACTIVITY.CREATE_USER,
+                        ACTIVITY.UPDATE_TIME_MS,
+                        ACTIVITY.UPDATE_USER,
+                        ACTIVITY.JSON,
+                        ACTIVITY.USER_UUID)
+                .values(version,
+                        activity.getCreateTimeMs(),
+                        activity.getCreateUser(),
+                        activity.getUpdateTimeMs(),
+                        activity.getCreateUser(),
+                        json,
+                        activity.getUserRef().getUuid())
+                .returning(ACTIVITY.ID)
+                .fetchOptional(ACTIVITY.ID));
+
+        return activity.copy().id(id.orElseThrow()).version(version).build();
     }
 
     @Override
     public Activity update(final Activity activity) {
-        ActivitySerialiser.serialise(activity);
-        return ActivitySerialiser.deserialise(genericDao.update(activity));
+        final String json = getJson(activity);
+
+        final int version = activity.getVersion() + 1;
+        final int res = JooqUtil.contextResult(activityDbConnProvider, context -> context
+                .update(ACTIVITY)
+                .set(ACTIVITY.VERSION, version)
+                .set(ACTIVITY.UPDATE_TIME_MS, activity.getUpdateTimeMs())
+                .set(ACTIVITY.UPDATE_USER, activity.getUpdateUser())
+                .set(ACTIVITY.JSON, json)
+                .set(ACTIVITY.USER_UUID, activity.getUserRef().getUuid())
+                .where(ACTIVITY.ID.eq(activity.getId()))
+                .and(ACTIVITY.VERSION.eq(activity.getVersion()))
+                .execute());
+
+        if (res == 0) {
+            throw new DataChangedException("Unable to update");
+        }
+
+        return activity.copy().version(version).build();
     }
 
     @Override
     public boolean delete(final int id) {
-        return genericDao.delete(id);
+        return JooqUtil.contextResult(activityDbConnProvider, context -> context
+                .deleteFrom(ACTIVITY)
+                .where(ACTIVITY.ID.eq(id))
+                .execute()) > 0;
     }
 
     @Override
     public Optional<Activity> fetch(final int id) {
-        return genericDao.fetch(id).map(ActivitySerialiser::deserialise);
+        return JooqUtil.contextResult(activityDbConnProvider, context -> context
+                        .select()
+                        .from(ACTIVITY)
+                        .where(ACTIVITY.ID.eq(id))
+                        .fetchOptional())
+                .map(RECORD_TO_ACTIVITY_MAPPER);
     }
 
     @Override
@@ -72,19 +143,18 @@ public class ActivityDaoImpl implements ActivityDao {
         // Only filter on the user in the DB as we don't have a jooq/sql version of the
         // QuickFilterPredicateFactory
         final Collection<Condition> conditions = JooqUtil.conditions(
-                Optional.ofNullable(criteria.getUserId()).map(ACTIVITY.USER_ID::eq));
+                NullSafe.getAsOptional(criteria.getUserRef(), UserRef::getUuid, ACTIVITY.USER_UUID::eq));
         final Integer offset = JooqUtil.getOffset(criteria.getPageRequest());
         final Integer limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
 
         return JooqUtil.contextResult(activityDbConnProvider, context -> context
-                .select()
-                .from(ACTIVITY)
-                .where(conditions)
-                .limit(offset, limit)
-                .fetch())
-                .into(Activity.class)
+                        .select()
+                        .from(ACTIVITY)
+                        .where(conditions)
+                        .limit(offset, limit)
+                        .fetch())
                 .stream()
-                .map(ActivitySerialiser::deserialise)
+                .map(RECORD_TO_ACTIVITY_MAPPER)
                 .collect(Collectors.toList());
     }
 
@@ -95,7 +165,7 @@ public class ActivityDaoImpl implements ActivityDao {
         // Only filter on the user in the DB as we don't have a jooq/sql version of the
         // QuickFilterPredicateFactory
         final Collection<Condition> conditions = JooqUtil.conditions(
-                Optional.ofNullable(criteria.getUserId()).map(ACTIVITY.USER_ID::eq));
+                NullSafe.getAsOptional(criteria.getUserRef(), UserRef::getUuid, ACTIVITY.USER_UUID::eq));
         final int offset = JooqUtil.getOffset(criteria.getPageRequest());
         final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
 
@@ -104,8 +174,9 @@ public class ActivityDaoImpl implements ActivityDao {
                     .select()
                     .from(ACTIVITY)
                     .where(conditions)
-                    .fetchStreamInto(Activity.class)
-                    .map(ActivitySerialiser::deserialise)) {
+                    .fetch()
+                    .stream()
+                    .map(RECORD_TO_ACTIVITY_MAPPER)) {
 
                 return streamFunction.apply(activityStream)
                         .skip(offset)

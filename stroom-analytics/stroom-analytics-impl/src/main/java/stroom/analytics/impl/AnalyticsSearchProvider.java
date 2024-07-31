@@ -17,6 +17,7 @@
 
 package stroom.analytics.impl;
 
+import jakarta.inject.Inject;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
@@ -26,19 +27,10 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
-import stroom.query.common.v2.CoprocessorSettings;
-import stroom.query.common.v2.CoprocessorsFactory;
-import stroom.query.common.v2.CoprocessorsImpl;
-import stroom.query.common.v2.DataStoreSettings;
-import stroom.query.common.v2.FieldInfoResultPageBuilder;
-import stroom.query.common.v2.ResultStore;
-import stroom.query.common.v2.ResultStoreFactory;
-import stroom.query.common.v2.SearchProvider;
+import stroom.query.common.v2.*;
 import stroom.search.impl.FederatedSearchExecutor;
 import stroom.search.impl.FederatedSearchTask;
 import stroom.util.shared.ResultPage;
-
-import jakarta.inject.Inject;
 
 import java.util.Collections;
 import java.util.List;
@@ -65,6 +57,9 @@ public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDoc
 
     @Override
     public ResultPage<QueryField> getFieldInfo(final FindFieldInfoCriteria criteria) {
+        if (!getType().equals(criteria.getDataSourceRef().getType())) {
+            return ResultPage.empty();
+        }
         return FieldInfoResultPageBuilder.builder(criteria).addAll(AnalyticFields.getFields()).build();
     }
 

@@ -23,7 +23,7 @@ import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.structure.client.view.Box;
 import stroom.pipeline.structure.client.view.TreePanel;
 import stroom.query.client.presenter.FieldSelectionListModel;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.widget.htree.client.BracketConnectorRenderer;
 import stroom.widget.htree.client.ConnectorRenderer;
 import stroom.widget.htree.client.LayeredCanvas;
@@ -62,7 +62,7 @@ public class ExpressionTreePanel extends TreePanel<Item> {
     public ExpressionTreePanel(final Provider<DocSelectionBoxPresenter> docRefProvider,
                                final boolean utc) {
         final DocSelectionBoxPresenter docRefPresenter = docRefProvider.get();
-        docRefPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+        docRefPresenter.setRequiredPermissions(DocumentPermission.USE);
         docRefPresenter.getWidget().getElement().getStyle().setMargin(0, Unit.PX);
 
         operatorEditor = new OperatorEditor();

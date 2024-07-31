@@ -17,9 +17,12 @@
 
 package stroom.security.client.presenter;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 import stroom.security.client.presenter.CreateNewUserPresenter.CreateNewUserView;
-import stroom.util.shared.SimpleUserName;
-import stroom.util.shared.UserName;
 import stroom.widget.popup.client.event.DialogEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -27,12 +30,6 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.popup.client.view.DialogActionUiHandlers;
-
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 
 public class CreateNewUserPresenter extends MyPresenterWidget<CreateNewUserView> implements DialogActionUiHandlers {
 
@@ -54,13 +51,6 @@ public class CreateNewUserPresenter extends MyPresenterWidget<CreateNewUserView>
                 .onShow(e -> getView().focus())
                 .onHideRequest(handler)
                 .fire();
-    }
-
-    public UserName getUserName() {
-        return new SimpleUserName(
-                getView().getSubjectId(),
-                getView().getDisplayName(),
-                getView().getFullName());
     }
 
     @Override

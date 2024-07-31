@@ -15,7 +15,7 @@ import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
@@ -320,7 +320,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
                 : indexVolume.getPath());
         indexVolume.setIndexVolumeGroupId(indexVolume.getIndexVolumeGroupId());
 
-        final IndexVolume result = securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
+        final IndexVolume result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeDao.create(indexVolume));
         fireChange(EntityAction.CREATE);
         return result;
@@ -345,7 +345,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
 
         AuditUtil.stamp(securityContext, loadedIndexVolume);
 
-        final IndexVolume result = securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
+        final IndexVolume result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeDao.update(loadedIndexVolume));
         fireChange(EntityAction.UPDATE);
         return result;
@@ -353,7 +353,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
 
     @Override
     public Boolean delete(final int id) {
-        final Boolean result = securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
+        final Boolean result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeDao.delete(id));
         fireChange(EntityAction.DELETE);
         return result;

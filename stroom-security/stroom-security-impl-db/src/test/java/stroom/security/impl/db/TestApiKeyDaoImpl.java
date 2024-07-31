@@ -8,15 +8,12 @@ import stroom.security.impl.apikey.ApiKeyService.DuplicateHashException;
 import stroom.security.impl.apikey.ApiKeyService.DuplicatePrefixException;
 import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.FindApiKeyCriteria;
-import stroom.security.shared.FindUserNameCriteria;
 import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.User;
-import stroom.security.shared.UserNameProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.SimpleUserName;
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserRef;
 import stroom.util.string.StringUtil;
 
 import com.google.inject.AbstractModule;
@@ -85,7 +82,7 @@ class TestApiKeyDaoImpl {
                 new AbstractModule() {
                     @Override
                     protected void configure() {
-                        bind(UserNameProvider.class).to(MyUserNameProvider.class);
+//                        bind(UserNameProvider.class).to(MyUserNameProvider.class);
                     }
                 });
 
@@ -201,7 +198,7 @@ class TestApiKeyDaoImpl {
         final String saltedApiKeyHash = "myHash";
         final String prefix = "sak_1234567_";
 
-        final UserName owner = SimpleUserName.builder()
+        final UserRef owner = UserRef.builder()
                 .subjectId("user1")
                 .uuid("user1_uuid")
                 .build();
@@ -246,7 +243,7 @@ class TestApiKeyDaoImpl {
         final String hash2 = hash1;
         final String prefix2 = "sak_7654321_";
 
-        final UserName owner = SimpleUserName.builder()
+        final UserRef owner = UserRef.builder()
                 .subjectId("user1")
                 .uuid("user1_uuid")
                 .build();
@@ -288,7 +285,7 @@ class TestApiKeyDaoImpl {
         final String hash2 = "myHash2";
         final String prefix2 = "sak_7654321_";
 
-        final UserName owner = SimpleUserName.builder()
+        final UserRef owner = UserRef.builder()
                 .subjectId("user1")
                 .uuid("user1_uuid")
                 .build();
@@ -376,7 +373,7 @@ class TestApiKeyDaoImpl {
 
         final CreateHashedApiKeyRequest createHashedApiKeyRequest = CreateHashedApiKeyRequest.builder()
                 .withName(keyName)
-                .withOwner(SimpleUserName.builder()
+                .withOwner(UserRef.builder()
                         .uuid(userSubjectId + "_uuid")
                         .subjectId(userSubjectId)
                         .build())
@@ -390,51 +387,6 @@ class TestApiKeyDaoImpl {
             return apiKeyDao.create(createHashedApiKeyRequest, hashedApiKeyParts);
         } catch (DuplicateHashException | DuplicatePrefixException e) {
             throw new RuntimeException(e);
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private static class MyUserNameProvider implements UserNameProvider {
-
-        @Override
-        public int getPriority() {
-            return 0;
-        }
-
-        @Override
-        public ResultPage<UserName> findUserNames(final FindUserNameCriteria criteria) {
-            return null;
-        }
-
-        @Override
-        public ResultPage<UserName> findAssociates(final FindUserNameCriteria criteria) {
-            return null;
-        }
-
-        @Override
-        public Optional<UserName> getBySubjectId(final String subjectId) {
-            return Optional.ofNullable(SUBJECT_ID_TO_UUID_MAP.get(subjectId))
-                    .map(uuid -> SimpleUserName.builder()
-                            .uuid(uuid)
-                            .subjectId(subjectId)
-                            .build());
-        }
-
-        @Override
-        public Optional<UserName> getByDisplayName(final String displayName) {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<UserName> getByUuid(final String userUuid) {
-            return Optional.ofNullable(UUID_TO_SUBJECT_ID_MAP.get(userUuid))
-                    .map(subjectId -> SimpleUserName.builder()
-                            .uuid(userUuid)
-                            .subjectId(subjectId)
-                            .build());
         }
     }
 }

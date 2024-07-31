@@ -23,6 +23,7 @@ import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.NodeFlag;
 import stroom.explorer.shared.StandardExplorerTags;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.dropdowntree.client.view.DropDownUiHandlers;
 import stroom.widget.dropdowntree.client.view.DropDownView;
@@ -95,7 +96,7 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
                 .toArray(NodeFlag[]::new));
     }
 
-    public void setRequiredPermissions(final String... requiredPermissions) {
+    public void setRequiredPermissions(final DocumentPermission... requiredPermissions) {
         explorerPopupPresenter.setRequiredPermissions(requiredPermissions);
     }
 

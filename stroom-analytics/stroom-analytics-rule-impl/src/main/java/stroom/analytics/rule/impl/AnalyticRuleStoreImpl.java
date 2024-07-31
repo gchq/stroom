@@ -17,17 +17,16 @@
 
 package stroom.analytics.rule.impl;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleDoc.Builder;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
-import stroom.docstore.api.DependencyRemapper;
-import stroom.docstore.api.Store;
-import stroom.docstore.api.StoreFactory;
-import stroom.docstore.api.UniqueNameUtil;
+import stroom.docstore.api.*;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
@@ -39,15 +38,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Message;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiConsumer;
 
 @Singleton
@@ -143,24 +134,24 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
     }
 
     @Override
-    public DocRef moveDocument(final String uuid) {
-        return store.moveDocument(uuid);
+    public DocRef moveDocument(final DocRef docRef) {
+        return store.moveDocument(docRef);
     }
 
     @Override
-    public DocRef renameDocument(final String uuid, final String name) {
-        return store.renameDocument(uuid, name);
+    public DocRef renameDocument(final DocRef docRef, final String name) {
+        return store.renameDocument(docRef, name);
     }
 
     @Override
-    public void deleteDocument(final String uuid) {
-        deleteProcessorFilter(DocRef.builder().type(getType()).uuid(uuid).build());
-        store.deleteDocument(uuid);
+    public void deleteDocument(final DocRef docRef) {
+        deleteProcessorFilter(docRef);
+        store.deleteDocument(docRef);
     }
 
     @Override
-    public DocRefInfo info(String uuid) {
-        return store.info(uuid);
+    public DocRefInfo info(DocRef docRef) {
+        return store.info(docRef);
     }
 
     @Override

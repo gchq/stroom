@@ -1,25 +1,21 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.feed.api.FeedStore;
+import stroom.feed.shared.FeedDoc;
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb.LmdbEnv;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.refdata.ReferenceDataConfig;
-import stroom.pipeline.refdata.store.MapDefinition;
-import stroom.pipeline.refdata.store.ProcessingInfoResponse;
-import stroom.pipeline.refdata.store.ProcessingState;
-import stroom.pipeline.refdata.store.RefDataLoader;
-import stroom.pipeline.refdata.store.RefDataStore;
-import stroom.pipeline.refdata.store.RefDataValue;
-import stroom.pipeline.refdata.store.RefDataValueProxy;
-import stroom.pipeline.refdata.store.RefStoreEntry;
-import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.refdata.store.*;
 import stroom.pipeline.refdata.store.offheapstore.RefDataLmdbEnv.Factory;
 import stroom.security.api.SecurityContext;
 import stroom.util.NullSafe;
@@ -34,20 +30,11 @@ import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.time.StroomDuration;
 import stroom.util.time.TimeUtils;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -645,7 +632,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
             final String feedName;
             try {
                 feedName = NullSafe.get(
-                        feedStore.info(feedDocUuid),
+                        feedStore.info(DocRef.builder().type(FeedDoc.DOCUMENT_TYPE).uuid(feedDocUuid).build()),
                         DocRefInfo::getDocRef,
                         DocRef::getName);
             } catch (DocumentNotFoundException e) {
@@ -786,7 +773,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
             throw new RuntimeException(LogUtil.message("Found " + feedDocRefs.size() + " feed docs for name "
                     + feedName + ". Feed names should be unique."));
         }
-        final String feedDocUuid = feedDocRefs.get(0).getUuid();
+        final String feedDocUuid = feedDocRefs.getFirst().getUuid();
 
         // It is possible for two feed names to share the same cleaned name, so add a UUID on the end to make it
         // is involved, so it may tie up the fork join pool

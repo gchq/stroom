@@ -16,49 +16,31 @@
 
 package stroom.dashboard.impl;
 
+import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpServletRequest;
 import stroom.dashboard.impl.download.DelimitedTarget;
 import stroom.dashboard.impl.download.ExcelTarget;
 import stroom.dashboard.impl.download.SearchResultWriter;
 import stroom.dashboard.impl.logging.SearchEventLog;
-import stroom.dashboard.shared.ComponentResultRequest;
-import stroom.dashboard.shared.DashboardDoc;
-import stroom.dashboard.shared.DashboardSearchRequest;
-import stroom.dashboard.shared.DashboardSearchResponse;
-import stroom.dashboard.shared.DownloadSearchResultsRequest;
-import stroom.dashboard.shared.Search;
-import stroom.dashboard.shared.StoredQuery;
-import stroom.dashboard.shared.TableResultRequest;
-import stroom.dashboard.shared.ValidateExpressionResult;
-import stroom.dashboard.shared.VisResultRequest;
+import stroom.dashboard.shared.*;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.node.api.NodeInfo;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.Query;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.ResultRequest;
+import stroom.query.api.v2.*;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.ResultRequest.ResultStyle;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchRequestSource;
-import stroom.query.api.v2.SearchResponse;
-import stroom.query.api.v2.TableResultBuilder;
 import stroom.query.common.v2.ResultCreator;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
 import stroom.query.common.v2.TableResultCreator;
 import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
-import stroom.query.language.functions.Expression;
-import stroom.query.language.functions.ExpressionContext;
-import stroom.query.language.functions.ExpressionParser;
-import stroom.query.language.functions.FieldIndex;
-import stroom.query.language.functions.ParamFactory;
+import stroom.query.language.functions.*;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.storedquery.api.StoredQueryService;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
@@ -74,20 +56,13 @@ import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.string.ExceptionStringUtil;
 
-import jakarta.inject.Inject;
-import jakarta.servlet.http.HttpServletRequest;
-
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -237,7 +212,7 @@ class DashboardServiceImpl implements DashboardService {
 
     @Override
     public ResourceGeneration downloadSearchResults(final DownloadSearchResultsRequest request) {
-        return securityContext.secureResult(PermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
             final DashboardSearchRequest searchRequest = request.getSearchRequest();
             final QueryKey queryKey = searchRequest.getQueryKey();
             ResourceKey resourceKey;
@@ -358,12 +333,12 @@ class DashboardServiceImpl implements DashboardService {
 
     private String getQueryFileName(final DashboardSearchRequest request) {
         final SearchRequestSource searchRequestSource = request.getSearchRequestSource();
-        final DocRefInfo dashDocRefInfo = dashboardStore.info(searchRequestSource.getOwnerDocUuid());
+        final DocRefInfo dashDocRefInfo = dashboardStore.info(searchRequestSource.getOwnerDocRef());
         final String dashboardName = NullSafe.getOrElse(
                 dashDocRefInfo,
                 DocRefInfo::getDocRef,
                 DocRef::getName,
-                searchRequestSource.getOwnerDocUuid());
+                searchRequestSource.getOwnerDocRef().getName());
         final String basename = dashboardName + "__" + searchRequestSource.getComponentId();
         return getFileName(basename, "json");
     }
@@ -490,7 +465,7 @@ class DashboardServiceImpl implements DashboardService {
                 final SearchRequestSource searchRequestSource = request.getSearchRequestSource();
                 final StoredQuery storedQuery = new StoredQuery();
                 storedQuery.setName("History");
-                storedQuery.setDashboardUuid(searchRequestSource.getOwnerDocUuid());
+                storedQuery.setDashboardUuid(searchRequestSource.getOwnerDocRef().getUuid());
                 storedQuery.setComponentId(searchRequestSource.getComponentId());
                 storedQuery.setQuery(query);
                 queryService.create(storedQuery);

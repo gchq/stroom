@@ -17,70 +17,47 @@
 package stroom.security.shared;
 
 
-import stroom.util.shared.GwtNullSafe;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import stroom.util.shared.UserRef;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Stream;
 
-@JsonPropertyOrder({"add", "remove"})
 @JsonInclude(Include.NON_NULL)
 public class Changes {
 
     @JsonProperty
     // A map of user/group UUID => Set of permission names to add
-    private final Map<String, Set<String>> add;
-    @JsonProperty
-    // A map of user/group UUID => Set of permission names to remove
-    private final Map<String, Set<String>> remove;
+    private final Map<String, UserDocPermissionChanges> changes;
+
+    public Changes() {
+        this(new HashMap<>());
+    }
 
     @JsonCreator
-    public Changes(@JsonProperty("add") final Map<String, Set<String>> add,
-                   @JsonProperty("remove") final Map<String, Set<String>> remove) {
-        this.add = add;
-        this.remove = remove;
+    public Changes(@JsonProperty("changes") final Map<String, UserDocPermissionChanges> changes) {
+        this.changes = changes;
     }
 
-    /**
-     * @return A map of user/group UUID => Set of permission names
-     */
-    public Map<String, Set<String>> getAdd() {
-        return add;
+    public void setPermission(final UserRef userRef,
+                              final DocumentPermission permission) {
+        final UserDocPermissionChanges documentCreateChanges = changes
+                .computeIfAbsent(userRef.getUuid(), k -> new UserDocPermissionChanges());
+        documentCreateChanges.setPermission(permission);
     }
 
-    /**
-     * @return A map of user/group UUID => Set of permission names
-     */
-    public Map<String, Set<String>> getRemove() {
-        return remove;
+    public void addDocumentCreatePermission(final UserRef userRef, final String documentType) {
+        final UserDocPermissionChanges documentCreateChanges = changes
+                .computeIfAbsent(userRef.getUuid(), k -> new UserDocPermissionChanges());
+        documentCreateChanges.addDocumentCreatePermission(documentType);
     }
 
-    public boolean hasChanges() {
-        if (add == null && remove == null) {
-            return false;
-        } else {
-            return Stream.of(
-                            GwtNullSafe.map(add),
-                            GwtNullSafe.map(remove))
-                    .flatMap(map -> map.values().stream())
-                    .filter(Objects::nonNull)
-                    .mapToLong(Set::size)
-                    .sum() > 0;
-        }
-    }
-
-    @Override
-    public String toString() {
-        return "Additions:\n"
-                + DocumentPermissions.permsMapToStr(add)
-                + "\nRemovals:\n"
-                + DocumentPermissions.permsMapToStr(remove);
+    public void removeDocumentCreatePermission(final UserRef userRef, final String documentType) {
+        final UserDocPermissionChanges documentCreateChanges = changes
+                .computeIfAbsent(userRef.getUuid(), k -> new UserDocPermissionChanges());
+        documentCreateChanges.removeDocumentCreatePermission(documentType);
     }
 }

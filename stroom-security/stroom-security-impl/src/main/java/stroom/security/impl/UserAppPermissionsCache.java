@@ -19,11 +19,13 @@ package stroom.security.impl;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
+import stroom.security.shared.AppPermission;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -41,29 +43,29 @@ public class UserAppPermissionsCache implements Clearable, EntityEvent.Handler {
     private static final String CACHE_NAME = "User App Permissions Cache";
 
     private final Provider<EntityEventBus> eventBusProvider;
-    private final LoadingStroomCache<String, Set<String>> cache;
+    private final LoadingStroomCache<UserRef, Set<AppPermission>> cache;
 
     @Inject
     UserAppPermissionsCache(final CacheManager cacheManager,
                             final Provider<AuthorisationConfig> authorisationConfigProvider,
-                            final UserAppPermissionService userAppPermissionService,
+                            final Provider<AppPermissionDao> appPermissionDaoProvider,
                             final Provider<EntityEventBus> eventBusProvider) {
         this.eventBusProvider = eventBusProvider;
         cache = cacheManager.createLoadingCache(
                 CACHE_NAME,
                 () -> authorisationConfigProvider.get().getUserAppPermissionsCache(),
-                userAppPermissionService::getPermissionNamesForUser);
+                userRef -> appPermissionDaoProvider.get().getPermissionsForUser(userRef.getUuid()));
     }
 
-    Set<String> get(final String userUuid) {
-        return cache.get(userUuid);
+    Set<AppPermission> get(final UserRef userRef) {
+        return cache.get(userRef);
     }
 
-    void remove(final String userUuid) {
-        cache.invalidate(userUuid);
+    void remove(final UserRef userRef) {
+        cache.invalidate(userRef);
 
         final EntityEventBus entityEventBus = eventBusProvider.get();
-        EntityEvent.fire(entityEventBus, UserDocRefUtil.createDocRef(userUuid), EntityAction.CLEAR_CACHE);
+        EntityEvent.fire(entityEventBus, UserDocRefUtil.createDocRef(userRef), EntityAction.CLEAR_CACHE);
     }
 
     @Override
@@ -74,7 +76,7 @@ public class UserAppPermissionsCache implements Clearable, EntityEvent.Handler {
             final DocRef docRef = event.getDocRef();
             if (docRef != null) {
                 if (UserDocRefUtil.USER.equals(docRef.getType())) {
-                    cache.invalidate(docRef.getUuid());
+                    cache.invalidate(UserDocRefUtil.createUserRef(docRef));
                 }
             }
         }

@@ -21,36 +21,38 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import stroom.util.shared.UserRef;
 
 @JsonPropertyOrder({"user", "changedLinkedUsers", "changedAppPermissions"})
 @JsonInclude(Include.NON_NULL)
 public class ChangeUserRequest {
 
     @JsonProperty
-    private final User user;
+    private final UserRef user;
     @JsonProperty
-    private final ChangeSet<User> changedLinkedUsers;
+    private final ChangeSet<UserRef> changedLinkedUsers;
     @JsonProperty
-    private final ChangeSet<String> changedAppPermissions;
+    private final ChangeSet<AppPermission> changedAppPermissions;
 
     @JsonCreator
-    public ChangeUserRequest(@JsonProperty("user") final User user,
-                             @JsonProperty("changedLinkedUsers") final ChangeSet<User> changedLinkedUsers,
-                             @JsonProperty("changedAppPermissions") final ChangeSet<String> changedAppPermissions) {
+    public ChangeUserRequest(@JsonProperty("user") final UserRef user,
+                             @JsonProperty("changedLinkedUsers") final ChangeSet<UserRef> changedLinkedUsers,
+                             @JsonProperty("changedAppPermissions") final ChangeSet<AppPermission>
+                                     changedAppPermissions) {
         this.user = user;
         this.changedLinkedUsers = changedLinkedUsers;
         this.changedAppPermissions = changedAppPermissions;
     }
 
-    public User getUser() {
+    public UserRef getUser() {
         return user;
     }
 
-    public ChangeSet<User> getChangedLinkedUsers() {
+    public ChangeSet<UserRef> getChangedLinkedUsers() {
         return changedLinkedUsers;
     }
 
-    public ChangeSet<String> getChangedAppPermissions() {
+    public ChangeSet<AppPermission> getChangedAppPermissions() {
         return changedAppPermissions;
     }
 }

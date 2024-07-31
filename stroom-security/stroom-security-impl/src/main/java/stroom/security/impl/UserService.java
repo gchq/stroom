@@ -19,39 +19,33 @@ package stroom.security.impl;
 
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
-import stroom.util.shared.SimpleUserName;
-import stroom.util.shared.UserName;
+import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserDesc;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Consumer;
 
 public interface UserService {
 
-    default User getOrCreateUser(String name) {
-        return getOrCreateUser(name, null);
+    default User getOrCreateUser(String subjectId) {
+        return getOrCreateUser(UserDesc.builder().subjectId(subjectId).displayName(subjectId).build(), null);
     }
 
-    default User getOrCreateUser(UserName name) {
-        return getOrCreateUser(name, null);
+    default User getOrCreateUser(UserDesc userDesc) {
+        return getOrCreateUser(userDesc, null);
     }
 
-    default User getOrCreateUser(String subjectId, final Consumer<User> onCreateAction) {
-        return getOrCreateUser(SimpleUserName.fromSubjectId(subjectId), onCreateAction);
+    User getOrCreateUser(UserDesc userDesc, final Consumer<User> onCreateAction);
+
+    Optional<User> getUserBySubjectId(String subjectId);
+
+    default User getOrCreateUserGroup(String groupName) {
+        return getOrCreateUserGroup(groupName, null);
     }
 
-    User getOrCreateUser(UserName name, final Consumer<User> onCreateAction);
+    User getOrCreateUserGroup(String groupName, final Consumer<User> onCreateAction);
 
-    default User getOrCreateUserGroup(String name) {
-        return getOrCreateUserGroup(name, null);
-    }
-
-    User getOrCreateUserGroup(String name, final Consumer<User> onCreateAction);
-
-    Optional<User> getUserBySubjectId(String name);
-
-    Optional<User> getUserByDisplayName(String displayName);
+    Optional<User> getGroupByName(String groupName);
 
     Optional<User> loadByUuid(String uuid);
 
@@ -59,27 +53,13 @@ public interface UserService {
 
     Boolean delete(String userUuid);
 
-    List<User> find(FindUserCriteria criteria);
+    ResultPage<User> find(FindUserCriteria criteria);
 
-    default List<User> findUsersInGroup(String groupUuid) {
-        return findUsersInGroup(groupUuid, null);
-    }
+    ResultPage<User> findUsersInGroup(String groupUuid, FindUserCriteria criteria);
 
-    List<User> findUsersInGroup(String groupUuid, String quickFilter);
-
-    default List<User> findGroupsForUser(String userUuid) {
-        return findGroupsForUser(userUuid, null);
-    }
-
-    List<User> findGroupsForUser(String userUuid, String quickFilter);
-
-    Set<String> findGroupUuidsForUser(String userUuid);
-
-    List<User> findGroupsForUserName(String userName);
+    ResultPage<User> findGroupsForUser(String userUuid, FindUserCriteria criteria);
 
     Boolean addUserToGroup(String userUuid, String groupUuid);
 
     Boolean removeUserFromGroup(String userUuid, String groupUuid);
-
-    List<UserName> getAssociates(String filter);
 }

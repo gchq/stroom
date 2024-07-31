@@ -17,10 +17,13 @@
 package stroom.dashboard.shared;
 
 import stroom.query.api.v2.Query;
+import stroom.security.shared.User;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasIntegerId;
+import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -48,7 +51,7 @@ public class StoredQuery implements HasAuditInfo, HasIntegerId {
     @JsonProperty
     private String name;
     @JsonProperty
-    private String ownerUuid;
+    private UserRef owner;
     @JsonProperty
     private String data;
     @JsonProperty
@@ -70,7 +73,7 @@ public class StoredQuery implements HasAuditInfo, HasIntegerId {
                        @JsonProperty("dashboardUuid") final String dashboardUuid,
                        @JsonProperty("componentId") final String componentId,
                        @JsonProperty("name") final String name,
-                       @JsonProperty("ownerUuid") final String ownerUuid,
+                       @JsonProperty("owner") final UserRef owner,
                        @JsonProperty("data") final String data,
                        @JsonProperty("favourite") final boolean favourite,
                        @JsonProperty("query") final Query query) {
@@ -84,7 +87,7 @@ public class StoredQuery implements HasAuditInfo, HasIntegerId {
         this.dashboardUuid = dashboardUuid;
         this.componentId = componentId;
         this.name = name;
-        this.ownerUuid = ownerUuid;
+        this.owner = owner;
         this.data = data;
         this.favourite = favourite;
         this.query = query;
@@ -175,12 +178,24 @@ public class StoredQuery implements HasAuditInfo, HasIntegerId {
         this.name = name;
     }
 
-    public String getOwnerUuid() {
-        return ownerUuid;
+    public UserRef getOwner() {
+        return owner;
     }
 
-    public void setOwnerUuid(final String ownerUuid) {
-        this.ownerUuid = ownerUuid;
+    public void setOwner(final UserRef owner) {
+        this.owner = owner;
+    }
+
+    // Included for basic JOOQ mapping.
+    @JsonIgnore
+    public String getOwnerUuid() {
+        return owner.getUuid();
+    }
+
+    // Included for basic JOOQ mapping.
+    @JsonIgnore
+    public void setOwnerUuid(final String uuid) {
+        owner = UserRef.builder().uuid(uuid).build();
     }
 
     public String getData() {
@@ -220,7 +235,7 @@ public class StoredQuery implements HasAuditInfo, HasIntegerId {
                 ", dashboardUuid='" + dashboardUuid + '\'' +
                 ", componentId='" + componentId + '\'' +
                 ", name='" + name + '\'' +
-                ", ownerUuid='" + ownerUuid + '\'' +
+                ", owner='" + owner + '\'' +
                 ", data='" + data + '\'' +
                 ", favourite=" + favourite +
                 ", query=" + query +

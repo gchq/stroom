@@ -47,7 +47,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.Objects;
 import java.util.function.Supplier;
 
 public class ProcessorPresenter
@@ -255,7 +254,7 @@ public class ProcessorPresenter
 
     private void addProcessor() {
         if (allowCreate) {
-            edit(null, defaultExpression, null);
+            edit(null, defaultExpression);
         }
     }
 
@@ -277,7 +276,7 @@ public class ProcessorPresenter
                     .updateUser(null)
                     .createTimeMs(null)
                     .build();
-            edit(copy, null, null);
+            edit(copy, null);
         }
     }
 
@@ -297,7 +296,7 @@ public class ProcessorPresenter
                                         "Unable to load filter",
                                         null);
                             } else {
-                                edit(loadedFilter, null, processorFilterRow.getOwnerDisplayName());
+                                edit(loadedFilter, null);
                             }
                         })
                         .taskListener(this)
@@ -307,8 +306,7 @@ public class ProcessorPresenter
     }
 
     private void edit(final ProcessorFilter filter,
-                      final ExpressionOperator defaultExpression,
-                      final String ownerDisplayName) {
+                      final ExpressionOperator defaultExpression) {
         if (editInterceptor.get()) {
             if (filter == null && ProcessorType.STREAMING_ANALYTIC.equals(processorType)) {
                 processorEditPresenterProvider.get()
@@ -320,16 +318,16 @@ public class ProcessorPresenter
                                 null,
                                 result -> {
                                     if (result != null) {
-                                        // The owner can't be changed in the editor
-                                        refresh(result, ownerDisplayName);
+                                        // The runAsUser can't be changed in the editor
+                                        refresh(result);
                                     }
                                 });
             } else {
                 processorEditPresenterProvider.get()
                         .show(processorType, docRef, filter, null, result -> {
                             if (result != null) {
-                                // The owner can't be changed in the editor
-                                refresh(result, ownerDisplayName);
+                                // The runAsUser can't be changed in the editor
+                                refresh(result);
                             }
                         });
             }
@@ -366,28 +364,7 @@ public class ProcessorPresenter
     }
 
     public void refresh(final ProcessorFilter processorFilter) {
-        Objects.requireNonNull(processorFilter);
-        restFactory
-                .create(DOC_PERMISSION_RESOURCE)
-                .method(res -> res.getDocumentOwners(processorFilter.getUuid()))
-                .onSuccess(owners -> {
-                    String ownerDisplayName;
-                    if (owners == null || owners.size() == 0) {
-                        ownerDisplayName = "Error: No owner";
-                    } else if (owners.size() > 1) {
-                        ownerDisplayName = "Error: Multiple owners";
-                    } else {
-                        ownerDisplayName = owners.get(0).getDisplayName();
-                    }
-                    refresh(processorFilter, ownerDisplayName);
-                })
-                .taskListener(this)
-                .exec();
-    }
-
-    public void refresh(final ProcessorFilter processorFilter, final String ownerDisplayName) {
-
-        final ProcessorListRow processorListRow = new ProcessorFilterRow(processorFilter, ownerDisplayName);
+        final ProcessorListRow processorListRow = new ProcessorFilterRow(processorFilter);
         processorListPresenter.setNextSelection(processorListRow);
         processorListPresenter.refresh();
 

@@ -226,7 +226,7 @@ public class ProcessorFilterImportExportHandlerImpl
             return null;
         }
 
-        //Don't export certain fields
+        // Don't export certain fields
         ProcessorFilter processorFilter = findProcessorFilter(docRef);
 
         processorFilter.setId(null);
@@ -234,6 +234,7 @@ public class ProcessorFilterImportExportHandlerImpl
         processorFilter.setProcessorFilterTracker(null);
         processorFilter.setProcessor(null);
         processorFilter.setData(null);
+        processorFilter.setRunAsUser(null);
 
         if (omitAuditFields) {
             processorFilter = new AuditFieldFilter<ProcessorFilter>().apply(processorFilter);
@@ -314,12 +315,12 @@ public class ProcessorFilterImportExportHandlerImpl
     }
 
     @Override
-    public DocRefInfo info(final String uuid) {
-        return processorFilterService.fetchByUuid(uuid)
+    public DocRefInfo info(final DocRef docRef) {
+        return processorFilterService.fetchByUuid(docRef.getUuid())
                 .map(processorFilter -> {
                     // Gets the name of the pipe as the proc filter has no name
                     final String name = this.findNameOfDocRef(ProcessorFilter.buildDocRef()
-                            .uuid(uuid)
+                            .uuid(docRef.getUuid())
                             .build());
 
                     final DocRef decoratedDocRef = processorFilter.asDocRef()
@@ -336,7 +337,7 @@ public class ProcessorFilterImportExportHandlerImpl
                             .build();
                 })
                 .orElseThrow(() -> new IllegalArgumentException(LogUtil.message(
-                        "Processor filter with UUID {} not found", uuid)));
+                        "Processor filter {} not found", docRef)));
     }
 
     private Processor findProcessorForFilter(final ProcessorFilter filter) {

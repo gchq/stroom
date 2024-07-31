@@ -45,7 +45,6 @@ import stroom.query.common.v2.EventRefs;
 import stroom.query.common.v2.EventSearch;
 import stroom.query.common.v2.ExpressionValidator;
 import stroom.security.api.SecurityContext;
-import stroom.security.api.UserIdentity;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -56,6 +55,7 @@ import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -224,9 +224,8 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                       final ProcessorFilter filter) {
         // Set the current user to be the one who created the filter so that only streams that
         // the user has access to are processed.
-        final UserIdentity ownerIdentity = getFilterOwnerIdentity(filter);
-
-        securityContext.asUser(ownerIdentity, () ->
+        final UserRef runAs = getFilterRunAs(filter);
+        securityContext.asUser(runAs, () ->
                 taskContextFactory.childContext(parentTaskContext,
                         "Create Tasks",
                         taskContext -> {
@@ -235,8 +234,8 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                     count +
                                     " of " +
                                     filters.size() +
-                                    " filters (owner: "
-                                    + ownerIdentity.getUserIdentityForAudit()
+                                    " filters (runAs: "
+                                    + runAs
                                     + ")");
                             createTasksForFilter(
                                     taskContext,
@@ -247,14 +246,12 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                         }).run());
     }
 
-    private UserIdentity getFilterOwnerIdentity(final ProcessorFilter filter) {
-        try {
-            return securityContext.getIdentityByUserUuid(securityContext.getDocumentOwnerUuid(
-                    filter.asDocRef()));
-        } catch (final RuntimeException e) {
+    private UserRef getFilterRunAs(final ProcessorFilter filter) {
+        if (filter.getRunAsUser() == null) {
             throw new RuntimeException(
-                    LogUtil.message("No owner found for filter uuid: {}", filter.getUuid()));
+                    LogUtil.message("No run as user specified for filter uuid: {}", filter.getUuid()));
         }
+        return filter.getRunAsUser();
     }
 
     public void createTasksForFilter(final TaskContext taskContext,

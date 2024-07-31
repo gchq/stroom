@@ -17,6 +17,7 @@
 package stroom.security.impl;
 
 import stroom.event.logging.api.ObjectInfoProviderBinder;
+import stroom.security.api.ContentPackUserService;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.ServiceUserFactory;
 import stroom.security.api.UserIdentityFactory;
@@ -39,8 +40,7 @@ import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.shared.CreateHashedApiKeyResponse;
 import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.User;
-import stroom.security.shared.UserNameProvider;
-import stroom.security.user.api.UserNameService;
+import stroom.security.user.api.UserRefLookup;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
@@ -62,16 +62,17 @@ public class SecurityModule extends AbstractModule {
         install(new PermissionChangeEventModule());
         install(new PermissionChangeEventLifecycleModule());
 
-        bind(UserAppPermissionService.class).to(UserAppPermissionServiceImpl.class);
+        bind(AppPermissionService.class).to(AppPermissionServiceImpl.class);
         bind(DocumentPermissionService.class).to(DocumentPermissionServiceImpl.class);
         bind(UserService.class).to(UserServiceImpl.class);
+        bind(ContentPackUserService.class).to(UserServiceImpl.class);
         bind(UserIdentityFactory.class).to(StroomUserIdentityFactory.class);
         bind(CloseableHttpClient.class).toProvider(HttpClientProvider.class);
         bind(JwtContextFactory.class).to(DelegatingJwtContextFactory.class);
         bind(IdpConfigurationProvider.class).to(DelegatingIdpConfigurationProvider.class);
         // Now bind OpenIdConfiguration to the iface from prev bind
         bind(OpenIdConfiguration.class).to(IdpConfigurationProvider.class);
-        bind(UserNameService.class).to(UserNameServiceImpl.class);
+        bind(UserRefLookup.class).to(UserRefLookupImpl.class);
         bind(AuthProxyService.class).to(AuthProxyServiceImpl.class);
 
         HasHealthCheckBinder.create(binder())
@@ -93,9 +94,6 @@ public class SecurityModule extends AbstractModule {
                 .bind(new FilterInfo(SecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),
                         SecurityFilter.class);
 
-        GuiceUtil.buildMultiBinder(binder(), UserNameProvider.class)
-                .addBinding(StroomUserNameProvider.class);
-
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
                 .addBinding(RefreshManager.class);
 
@@ -105,16 +103,16 @@ public class SecurityModule extends AbstractModule {
                 .addBinding(UserAppPermissionsCache.class)
                 .addBinding(UserGroupsCache.class)
                 .addBinding(UserCache.class)
-                .addBinding(DocumentOwnerPermissionsCache.class);
+                .addBinding(StroomUserIdentityFactory.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(UserCache.class)
                 .addBinding(UserGroupsCache.class)
-                .addBinding(UserAppPermissionsCache.class);
+                .addBinding(UserAppPermissionsCache.class)
+                .addBinding(StroomUserIdentityFactory.class);
 
         GuiceUtil.buildMultiBinder(binder(), PermissionChangeEvent.Handler.class)
-                .addBinding(UserDocumentPermissionsCache.class)
-                .addBinding(DocumentOwnerPermissionsCache.class);
+                .addBinding(UserDocumentPermissionsCache.class);
 
         RestResourcesBinder.create(binder())
                 .bind(ApiKeyResourceImpl.class)
@@ -122,7 +120,6 @@ public class SecurityModule extends AbstractModule {
                 .bind(DocPermissionResourceImpl.class)
                 .bind(SessionResourceImpl.class)
                 .bind(UserResourceImpl.class)
-                .bind(UserNameResourceImpl.class)
                 .bind(AuthProxyResourceImpl.class);
 
         ObjectInfoProviderBinder.create(binder())

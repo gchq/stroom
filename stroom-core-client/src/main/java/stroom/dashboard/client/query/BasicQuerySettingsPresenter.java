@@ -16,6 +16,10 @@
 
 package stroom.dashboard.client.query;
 
+import com.google.gwt.user.client.ui.Focus;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
 import stroom.dashboard.client.main.BasicSettingsView;
@@ -25,13 +29,8 @@ import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.shared.NodeFlag;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.ModelStringUtil;
-
-import com.google.gwt.user.client.ui.Focus;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.Objects;
 
@@ -52,7 +51,7 @@ public class BasicQuerySettingsPresenter
 //        final String[] types = dataSourceTypes.getTypes();
 //        dataSourceSelectionPresenter.setIncludedTypes(types);
         dataSourceSelectionPresenter.setNodeFlags(NodeFlag.DATA_SOURCE);
-        dataSourceSelectionPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+        dataSourceSelectionPresenter.setRequiredPermissions(DocumentPermission.USE);
 //        dataSourceSelectionPresenter.setSelectionTypes(types);
     }
 

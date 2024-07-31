@@ -51,6 +51,18 @@ public class PageRequest implements Serializable, Copyable<PageRequest> {
         this.length = length;
     }
 
+    public static PageRequest createDefault() {
+        return new PageRequest(0, 100);
+    }
+
+    public static PageRequest oneRow() {
+        return new PageRequest(0, 1);
+    }
+
+    public static PageRequest unlimited() {
+        return new PageRequest(0, 10_000_000);
+    }
+
     public Integer getOffset() {
         return offset;
     }

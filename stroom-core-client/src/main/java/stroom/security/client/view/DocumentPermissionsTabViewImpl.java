@@ -16,16 +16,16 @@
 
 package stroom.security.client.view;
 
+import stroom.item.client.SelectionBox;
 import stroom.security.client.presenter.DocumentPermissionsTabPresenter;
+import stroom.security.shared.DocumentPermission;
 import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
@@ -38,11 +38,13 @@ public final class DocumentPermissionsTabViewImpl extends ViewImpl
     @UiField
     FormGroup documentPermissionsUsers;
     @UiField
-    ScrollPanel permissions;
+    SelectionBox<DocumentPermission> permission;
 
     @Inject
-    public DocumentPermissionsTabViewImpl(final EventBus eventBus, final Binder binder) {
+    public DocumentPermissionsTabViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        permission.setNonSelectString("[none]");
+        permission.addItems(DocumentPermission.LIST);
     }
 
     @Override
@@ -56,8 +58,13 @@ public final class DocumentPermissionsTabViewImpl extends ViewImpl
     }
 
     @Override
-    public void setPermissionsView(View view) {
-        permissions.setWidget(view.asWidget());
+    public void setPermission(final DocumentPermission permission) {
+        this.permission.setValue(permission);
+    }
+
+    @Override
+    public DocumentPermission getPermission() {
+        return permission.getValue();
     }
 
     @Override

@@ -16,6 +16,11 @@
 
 package stroom.dashboard.client.table;
 
+import com.google.gwt.user.client.ui.Focus;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.View;
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
 import stroom.dashboard.client.main.BasicSettingsView;
 import stroom.dashboard.client.main.Component;
@@ -26,16 +31,10 @@ import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.QueryConfig;
 import stroom.util.shared.GwtNullSafe;
-
-import com.google.gwt.user.client.ui.Focus;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +55,7 @@ public class BasicTableSettingsPresenter
         this.pipelinePresenter = pipelinePresenter;
 
         pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
-        pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+        pipelinePresenter.setRequiredPermissions(DocumentPermission.USE);
 
         view.setPipelineView(pipelinePresenter.getView());
 

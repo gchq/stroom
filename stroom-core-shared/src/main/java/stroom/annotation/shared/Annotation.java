@@ -1,18 +1,16 @@
 package stroom.annotation.shared;
 
-import stroom.util.shared.UserName;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import stroom.util.shared.UserRef;
 
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class Annotation {
 
-    // TODO: 28/03/2023 Why not an Enum?
     public static final String TITLE = "Title";
     public static final String SUBJECT = "Subject";
     public static final String COMMENT = "Comment";
@@ -40,7 +38,7 @@ public class Annotation {
     @JsonProperty
     private String status;
     @JsonProperty
-    private UserName assignedTo;
+    private UserRef assignedTo;
     @JsonProperty
     private String comment;
     @JsonProperty
@@ -59,7 +57,7 @@ public class Annotation {
                       @JsonProperty("title") final String title,
                       @JsonProperty("subject") final String subject,
                       @JsonProperty("status") final String status,
-                      @JsonProperty("assignedTo") final UserName assignedTo,
+                      @JsonProperty("assignedTo") final UserRef assignedTo,
                       @JsonProperty("comment") final String comment,
                       @JsonProperty("history") final String history) {
         this.id = id;
@@ -148,11 +146,11 @@ public class Annotation {
         this.status = status;
     }
 
-    public UserName getAssignedTo() {
+    public UserRef getAssignedTo() {
         return assignedTo;
     }
 
-    public void setAssignedTo(final UserName assignedTo) {
+    public void setAssignedTo(final UserRef assignedTo) {
         this.assignedTo = assignedTo;
     }
 
@@ -186,15 +184,18 @@ public class Annotation {
             return false;
         }
         final Annotation that = (Annotation) o;
-        return Objects.equals(id, that.id) && Objects.equals(version,
-                that.version) && Objects.equals(createTime, that.createTime) && Objects.equals(
-                createUser,
-                that.createUser) && Objects.equals(updateTime, that.updateTime) && Objects.equals(
-                updateUser,
-                that.updateUser) && Objects.equals(title, that.title) && Objects.equals(subject,
-                that.subject) && Objects.equals(status, that.status) && Objects.equals(assignedTo,
-                that.assignedTo) && Objects.equals(comment, that.comment) && Objects.equals(history,
-                that.history);
+        return Objects.equals(id, that.id) &&
+                Objects.equals(version, that.version) &&
+                Objects.equals(createTime, that.createTime) &&
+                Objects.equals(createUser, that.createUser) &&
+                Objects.equals(updateTime, that.updateTime) &&
+                Objects.equals(updateUser, that.updateUser) &&
+                Objects.equals(title, that.title) &&
+                Objects.equals(subject, that.subject) &&
+                Objects.equals(status, that.status) &&
+                Objects.equals(assignedTo, that.assignedTo) &&
+                Objects.equals(comment, that.comment) &&
+                Objects.equals(history, that.history);
     }
 
     @Override

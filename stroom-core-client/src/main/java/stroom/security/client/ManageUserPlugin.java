@@ -17,25 +17,14 @@
 
 package stroom.security.client;
 
-import stroom.core.client.MenuKeys;
-import stroom.document.client.event.ShowPermissionsDialogEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.NodeToolsPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.DocumentPermissionsPresenter;
-import stroom.security.client.presenter.UsersAndGroupsPresenter;
-import stroom.security.shared.PermissionNames;
-import stroom.svg.shared.SvgImage;
-import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.util.client.KeyBinding;
+import stroom.security.shared.AppPermission;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.inject.client.AsyncProvider;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -44,47 +33,45 @@ import javax.inject.Singleton;
 @Singleton
 public class ManageUserPlugin extends NodeToolsPlugin {
 
-    private final AsyncProvider<UsersAndGroupsPresenter> usersAndGroupsPresenterProvider;
 
     @Inject
     public ManageUserPlugin(final EventBus eventBus, final ClientSecurityContext securityContext,
-                            final AsyncProvider<UsersAndGroupsPresenter> usersAndGroupsPresenterProvider,
                             final AsyncProvider<DocumentPermissionsPresenter> documentPermissionsPresenterProvider) {
         super(eventBus, securityContext);
-        this.usersAndGroupsPresenterProvider = usersAndGroupsPresenterProvider;
-
-        // Add handler for showing the document permissions dialog in the explorer tree context menu
-        eventBus.addHandler(ShowPermissionsDialogEvent.getType(),
-                event -> documentPermissionsPresenterProvider.get(new AsyncCallback<DocumentPermissionsPresenter>() {
-                    @Override
-                    public void onSuccess(final DocumentPermissionsPresenter presenter) {
-                        presenter.show(event.getExplorerNode());
-                    }
-
-                    @Override
-                    public void onFailure(final Throwable caught) {
-                    }
-                }));
-
-        final Action openAction = getOpenAction();
-        if (openAction != null) {
-            final String requiredAppPermission = getRequiredAppPermission();
-            final Command command;
-            if (requiredAppPermission != null) {
-                command = () -> {
-                    if (getSecurityContext().hasAppPermission(requiredAppPermission)) {
-                        open();
-                    }
-                };
-            } else {
-                command = this::open;
-            }
-            KeyBinding.addCommand(openAction, command);
-        }
+//        this.usersAndGroupsPresenterProvider = usersAndGroupsPresenterProvider;
+//
+//        // Add handler for showing the document permissions dialog in the explorer tree context menu
+//        eventBus.addHandler(ShowPermissionsDialogEvent.getType(),
+//                event -> documentPermissionsPresenterProvider.get(new AsyncCallback<DocumentPermissionsPresenter>() {
+//                    @Override
+//                    public void onSuccess(final DocumentPermissionsPresenter presenter) {
+//                        presenter.show(event.getExplorerNode());
+//                    }
+//
+//                    @Override
+//                    public void onFailure(final Throwable caught) {
+//                    }
+//                }));
+//
+//        final Action openAction = getOpenAction();
+//        if (openAction != null) {
+//            final String requiredAppPermission = getRequiredAppPermission();
+//            final Command command;
+//            if (requiredAppPermission != null) {
+//                command = () -> {
+//                    if (getSecurityContext().hasAppPermission(requiredAppPermission)) {
+//                        open();
+//                    }
+//                };
+//            } else {
+//                command = this::open;
+//            }
+//            KeyBinding.addCommand(openAction, command);
+//        }
     }
 
-    private String getRequiredAppPermission() {
-        return PermissionNames.MANAGE_USERS_PERMISSION;
+    private AppPermission getRequiredAppPermission() {
+        return AppPermission.MANAGE_USERS_PERMISSION;
     }
 
     private Action getOpenAction() {
@@ -93,36 +80,36 @@ public class ManageUserPlugin extends NodeToolsPlugin {
 
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
-        if (getSecurityContext().hasAppPermission(getRequiredAppPermission())) {
-            // Menu item for the user/group permissions dialog
-            MenuKeys.addSecurityMenu(event.getMenuItems());
-            event.getMenuItems().addMenuItem(MenuKeys.SECURITY_MENU,
-                    new IconMenuItem.Builder()
-                            .priority(1)
-                            .icon(SvgImage.USER)
-                            .text("Application Permissions")
-                            .action(getOpenAction())
-                            .command(this::open)
-                            .build());
-        }
+//        if (getSecurityContext().hasAppPermission(getRequiredAppPermission())) {
+//            // Menu item for the user/group permissions dialog
+//            MenuKeys.addSecurityMenu(event.getMenuItems());
+//            event.getMenuItems().addMenuItem(MenuKeys.SECURITY_MENU,
+//                    new IconMenuItem.Builder()
+//                            .priority(1)
+//                            .icon(SvgImage.USER)
+//                            .text("Application Permissions")
+//                            .action(getOpenAction())
+//                            .command(this::open)
+//                            .build());
+//        }
     }
 
-    private void open() {
-        usersAndGroupsPresenterProvider.get(new AsyncCallback<UsersAndGroupsPresenter>() {
-            @Override
-            public void onSuccess(final UsersAndGroupsPresenter presenter) {
-                final PopupSize popupSize = PopupSize.resizable(1_100, 800);
-                ShowPopupEvent.builder(presenter)
-                        .popupType(PopupType.CLOSE_DIALOG)
-                        .popupSize(popupSize)
-                        .caption("Application Permissions")
-                        .onShow(e -> presenter.focus())
-                        .fire();
-            }
-
-            @Override
-            public void onFailure(final Throwable caught) {
-            }
-        });
-    }
+//    private void open() {
+//        usersAndGroupsPresenterProvider.get(new AsyncCallback<UsersAndGroupsPresenter>() {
+//            @Override
+//            public void onSuccess(final UsersAndGroupsPresenter presenter) {
+//                final PopupSize popupSize = PopupSize.resizable(1_100, 800);
+//                ShowPopupEvent.builder(presenter)
+//                        .popupType(PopupType.CLOSE_DIALOG)
+//                        .popupSize(popupSize)
+//                        .caption("Application Permissions")
+//                        .onShow(e -> presenter.focus())
+//                        .fire();
+//            }
+//
+//            @Override
+//            public void onFailure(final Throwable caught) {
+//            }
+//        });
+//    }
 }

@@ -14,7 +14,7 @@ import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.task.client.TaskListener;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SourceConfig;
@@ -173,7 +173,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
 
     private void updateStepControlVisibility() {
         final boolean hasStepPermission = clientSecurityContext.hasAppPermission(
-                PermissionNames.STEPPING_PERMISSION);
+                AppPermission.STEPPING_PERMISSION);
 
         textPresenter.setControlsVisible(hasStepPermission && !isSteppingSource);
     }

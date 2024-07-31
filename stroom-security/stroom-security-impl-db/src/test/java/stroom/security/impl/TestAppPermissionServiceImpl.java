@@ -18,9 +18,11 @@ package stroom.security.impl;
 
 import stroom.security.impl.db.SecurityDbConnProvider;
 import stroom.security.impl.db.SecurityTestUtil;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.test.common.util.test.FileSystemTestUtil;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
@@ -47,7 +49,7 @@ class TestAppPermissionServiceImpl {
     @Inject
     private UserService userService;
     @Inject
-    private UserAppPermissionService userAppPermissionService;
+    private AppPermissionService userAppPermissionService;
     @Inject
     private UserGroupsCache userGroupsCache;
     @Inject
@@ -67,9 +69,9 @@ class TestAppPermissionServiceImpl {
         final User userGroup3 = createUserGroup(String.format("Group_3_%s", UUID.randomUUID()));
 
         // No idea what the distinction is between c and p
-        final String c1 = PermissionNames.IMPORT_DATA_PERMISSION;
-        final String p1 = PermissionNames.MANAGE_DB_PERMISSION;
-        final String p2 = PermissionNames.MANAGE_PROCESSORS_PERMISSION;
+        final AppPermission c1 = AppPermission.IMPORT_DATA_PERMISSION;
+        final AppPermission p1 = AppPermission.MANAGE_DB_PERMISSION;
+        final AppPermission p2 = AppPermission.MANAGE_PROCESSORS_PERMISSION;
 
         addPermissions(userGroup1, c1, p1);
         addPermissions(userGroup2, c1, p2);
@@ -97,69 +99,69 @@ class TestAppPermissionServiceImpl {
         checkUserPermissions(user, c1, p1);
     }
 
-    private void addPermissions(final User user, final String... permissions) {
-        for (final String permission : permissions) {
+    private void addPermissions(final User user, final AppPermission... permissions) {
+        for (final AppPermission permission : permissions) {
             try {
-                userAppPermissionService.addPermission(user.getUuid(), permission);
+                userAppPermissionService.addPermission(user.asRef(), permission);
             } catch (final Exception e) {
                 LOGGER.info(e.getMessage());
             }
         }
     }
 
-    private void removePermissions(final User user, final String... permissions) {
-        for (final String permission : permissions) {
-            userAppPermissionService.removePermission(user.getUuid(), permission);
+    private void removePermissions(final User user, final AppPermission... permissions) {
+        for (final AppPermission permission : permissions) {
+            userAppPermissionService.removePermission(user.asRef(), permission);
         }
     }
 
-    private void checkPermissions(final User user, final String... permissions) {
-        final Set<String> permissionSet = userAppPermissionService
-                .getPermissionNamesForUser(user.getUuid());
+    private void checkPermissions(final User user, final AppPermission... permissions) {
+        final Set<AppPermission> permissionSet = userAppPermissionService
+                .getPermissions(user.asRef());
         assertThat(permissionSet.size()).isEqualTo(permissions.length);
-        for (final String permission : permissions) {
+        for (final AppPermission permission : permissions) {
             assertThat(permissionSet.contains(permission)).isTrue();
         }
 
         checkUserPermissions(user, permissions);
     }
 
-    private void checkUserPermissions(final User user, final String... permissions) {
+    private void checkUserPermissions(final User user, final AppPermission... permissions) {
         final Set<User> allUsers = new HashSet<>();
         allUsers.add(user);
-        allUsers.addAll(userService.findGroupsForUser(user.getUuid()));
+        allUsers.addAll(userService.findGroupsForUser(user.getUuid(), new FindUserCriteria()).getValues());
 
-        final Set<String> combinedPermissions = new HashSet<>();
+        final Set<AppPermission> combinedPermissions = new HashSet<>();
         for (final User userRef : allUsers) {
-            final Set<String> permissionSet = userAppPermissionService
-                    .getPermissionNamesForUser(userRef.getUuid());
+            final Set<AppPermission> permissionSet = userAppPermissionService
+                    .getPermissions(userRef.asRef());
             combinedPermissions.addAll(permissionSet);
         }
 
         assertThat(combinedPermissions.size()).isEqualTo(permissions.length);
-        for (final String permission : permissions) {
+        for (final AppPermission permission : permissions) {
             assertThat(combinedPermissions.contains(permission)).isTrue();
         }
 
         checkUserCachePermissions(user, permissions);
     }
 
-    private void checkUserCachePermissions(final User user, final String... permissions) {
+    private void checkUserCachePermissions(final User user, final AppPermission... permissions) {
         userGroupsCache.clear();
         userAppPermissionsCache.clear();
 
-        final Set<String> allUsers = new HashSet<>();
-        allUsers.add(user.getUuid());
-        allUsers.addAll(userGroupsCache.get(user.getUuid()));
+        final Set<UserRef> allUsers = new HashSet<>();
+        allUsers.add(user.asRef());
+        allUsers.addAll(userGroupsCache.getGroups(user.asRef()));
 
-        final Set<String> combinedPermissions = new HashSet<>();
-        for (final String userUuid : allUsers) {
-            final Set<String> permissionSet = userAppPermissionsCache.get(userUuid);
+        final Set<AppPermission> combinedPermissions = new HashSet<>();
+        for (final UserRef userRef : allUsers) {
+            final Set<AppPermission> permissionSet = userAppPermissionsCache.get(userRef);
             combinedPermissions.addAll(permissionSet);
         }
 
         assertThat(combinedPermissions.size()).isEqualTo(permissions.length);
-        for (final String permission : permissions) {
+        for (final AppPermission permission : permissions) {
             assertThat(combinedPermissions.contains(permission)).isTrue();
         }
     }

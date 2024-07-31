@@ -17,8 +17,7 @@
 package stroom.security.client.presenter;
 
 import stroom.security.client.presenter.UserEditPresenter.UserEditView;
-import stroom.security.shared.User;
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserRef;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -55,8 +54,8 @@ public class UserEditPresenter extends MyPresenterWidget<UserEditView>
         super.onBind();
     }
 
-    public void show(final User userRef, final Runnable closeRunnable) {
-        read(userRef);
+    public void show(final UserRef user, final Runnable closeRunnable) {
+        read(user);
 
         final PopupSize popupSize = PopupSize.builder()
                 .width(Size
@@ -72,7 +71,7 @@ public class UserEditPresenter extends MyPresenterWidget<UserEditView>
                         .resizable(true)
                         .build())
                 .build();
-        final String caption = "User - " + UserName.buildCombinedName(userRef);
+        final String caption = "User - " + user.toDisplayString();
         ShowPopupEvent.builder(UserEditPresenter.this)
                 .popupType(PopupType.CLOSE_DIALOG)
                 .popupSize(popupSize)
@@ -82,9 +81,9 @@ public class UserEditPresenter extends MyPresenterWidget<UserEditView>
                 .fire();
     }
 
-    private void read(User userRef) {
-        userListAddRemovePresenter.setUser(userRef);
-        appPermissionsPresenter.setUser(userRef);
+    private void read(UserRef user) {
+        userListAddRemovePresenter.setUser(user);
+        appPermissionsPresenter.setUser(user);
     }
 
     public interface UserEditView extends View, HasUiHandlers<UserEditUiHandlers> {

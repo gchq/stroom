@@ -26,7 +26,7 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;
 import stroom.security.api.SecurityContext;
-import stroom.security.user.api.UserNameService;
+import stroom.security.user.api.UserRefLookup;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.storedquery.impl.StoredQueryConfig.StoredQueryDbConfig;
 import stroom.storedquery.impl.StoredQueryDao;
@@ -35,7 +35,7 @@ import stroom.task.api.SimpleTaskContextFactory;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.AuditUtil;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.SimpleUserName;
+import stroom.util.shared.UserRef;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,7 +58,7 @@ class TestStoredQueryDao {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestStoredQueryDao.class);
 
     @Mock
-    UserNameService userNameService;
+    UserRefLookup userRefLookup;
     @Mock
     private SecurityContext securityContext;
     private StoredQueryDao storedQueryDao;
@@ -82,14 +82,13 @@ class TestStoredQueryDao {
         // Clear the current DB.
         DbTestUtil.clear();
 
-        final String ownerUuid = UUID.randomUUID().toString();
-
+        final UserRef owner = UserRef.builder().uuid(UUID.randomUUID().toString()).build();
         storedQueryDao = new StoredQueryDaoImpl(storedQueryDbConnProvider);
 
         queryHistoryCleanExecutor = new StoredQueryHistoryCleanExecutor(
                 storedQueryDao,
                 new StoredQueryConfig(),
-                new SimpleTaskContextFactory(), userNameService);
+                new SimpleTaskContextFactory(), userRefLookup);
 
         dashboardRef = new DocRef("Dashboard", "8c1bc23c-f65c-413f-ba72-7538abf90b91", "Test Dashboard");
         indexRef = new DocRef("Index", "4a085071-1d1b-4c96-8567-82f6954584a4", "Test Index");
@@ -102,7 +101,7 @@ class TestStoredQueryDao {
                 .dataSource(indexRef)
                 .expression(ExpressionOperator.builder().build())
                 .build());
-        refQuery.setOwnerUuid(ownerUuid);
+        refQuery.setOwner(owner);
         AuditUtil.stamp(securityContext, refQuery);
         storedQueryDao.create(refQuery);
 
@@ -119,7 +118,7 @@ class TestStoredQueryDao {
                 .dataSource(indexRef)
                 .expression(root.build())
                 .build());
-        testQuery.setOwnerUuid(ownerUuid);
+        testQuery.setOwner(owner);
         AuditUtil.stamp(securityContext, testQuery);
         testQuery = storedQueryDao.create(testQuery);
 
@@ -171,11 +170,13 @@ class TestStoredQueryDao {
 
     @Test
     void testOldHistoryDeletion() {
-        Mockito.when(userNameService.getByUuid(Mockito.anyString()))
-                .thenReturn(Optional.of(new SimpleUserName(
-                        "dummy",
-                        "dummy",
-                        null)));
+        Mockito.when(userRefLookup.getByUuid(Mockito.anyString()))
+                .thenReturn(Optional.of(UserRef
+                        .builder()
+                        .uuid("dummy")
+                        .subjectId("dummy")
+                        .displayName("dummy")
+                        .build()));
 
         final FindStoredQueryCriteria criteria = new FindStoredQueryCriteria();
         criteria.setDashboardUuid(dashboardRef.getUuid());
@@ -196,7 +197,7 @@ class TestStoredQueryDao {
             newQuery.setFavourite(false);
             newQuery.setQuery(query.getQuery());
             newQuery.setData(query.getData());
-            newQuery.setOwnerUuid(query.getOwnerUuid());
+            newQuery.setOwner(query.getOwner());
             AuditUtil.stamp(securityContext, newQuery);
             storedQueryDao.create(newQuery);
         }

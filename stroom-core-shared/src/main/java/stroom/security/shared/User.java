@@ -1,10 +1,10 @@
 package stroom.security.shared;
 
 
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasIntegerId;
-import stroom.util.shared.SimpleUserName;
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -18,7 +18,7 @@ import java.util.Objects;
  * Represents a user or a named group of users.
  */
 @JsonInclude(Include.NON_NULL)
-public class User implements HasAuditInfo, HasIntegerId, UserName {
+public class User implements HasAuditInfo, HasIntegerId {
 
     /**
      * The unique subjectId of the default Admin user that gets created if
@@ -155,7 +155,6 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
      *
      * @return The unique identifier for this user or group.
      */
-    @Override
     public String getSubjectId() {
         return subjectId;
     }
@@ -174,7 +173,6 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
      * Intended for display purposes only or to aid in identifying the user where {@code name}
      * is an unfriendly UUID.
      */
-    @Override
     public String getDisplayName() {
         return displayName;
     }
@@ -195,7 +193,6 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
      * Intended for display purposes only or to aid in identifying the user where {@code name}
      * is an unfriendly UUID.
      */
-    @Override
     public String getFullName() {
         return fullName;
     }
@@ -213,7 +210,6 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
      * Unrelated to any subjectId that an IDP may use to identify the user.
      * Unique across both users and groups, unlike {@code name}.
      */
-    @Override
     public String getUuid() {
         return uuid;
     }
@@ -236,12 +232,35 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
         this.group = group;
     }
 
-    public UserName asUserName() {
-        return new SimpleUserName(subjectId, displayName, fullName, uuid);
+    public UserRef asRef() {
+        return new UserRef(uuid, subjectId, displayName, fullName, group);
     }
 
     public String asCombinedName() {
-        return UserName.buildCombinedName(subjectId, displayName);
+        return buildCombinedName(subjectId, displayName);
+    }
+
+    /**
+     * Combine the name and displayName, only showing both if they are both present
+     * and not equal. Useful for the User parts of the UI where showing both is helpful.
+     * i.e.
+     * <p>{@code '6798d3ca-c1a1-490e-a52e-132ade052468'} if there is no displayName</p>
+     * <p>{@code 'admin'} if the displayName and subjectId are the same</p>
+     * <p>{@code 'admin (6798d3ca-c1a1-490e-a52e-132ade052468)'} if they are different</p>
+     */
+    static String buildCombinedName(final User userName) {
+        return GwtNullSafe.get(userName,
+                userName2 -> buildCombinedName(userName2.getSubjectId(), userName2.getDisplayName()));
+    }
+
+    static String buildCombinedName(final String subjectId, final String displayName) {
+        if (displayName == null) {
+            return subjectId;
+        } else if (Objects.equals(subjectId, displayName)) {
+            return displayName;
+        } else {
+            return displayName + " (" + subjectId + ")";
+        }
     }
 
     /**
@@ -337,6 +356,14 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
         }
 
         /**
+         * A globally unique identifier for identifying this user in other areas of stroom code.
+         */
+        public Builder uuid(final String value) {
+            uuid = value;
+            return this;
+        }
+
+        /**
          * The unique identifier for this user on the IDP, i.e. the subject. May not be unique within stroom as
          * we may be using an external IDP but still using the internal IDP for processing user.
          * If isGroup is true then this is the name of the group.
@@ -346,11 +373,8 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
             return this;
         }
 
-        /**
-         * A globally unique identifier for identifying this user in other areas of stroom code.
-         */
-        public Builder uuid(final String value) {
-            uuid = value;
+        public Builder displayName(final String displayName) {
+            this.displayName = displayName;
             return this;
         }
 

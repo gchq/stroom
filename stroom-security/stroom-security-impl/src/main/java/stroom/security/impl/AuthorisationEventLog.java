@@ -16,20 +16,13 @@
 
 package stroom.security.impl;
 
-import stroom.event.logging.api.StroomEventLoggingService;
-import stroom.event.logging.api.StroomEventLoggingUtil;
-import stroom.util.shared.UserName;
-
-import event.logging.AddGroups;
-import event.logging.AuthorisationActionType;
-import event.logging.AuthoriseEventAction;
-import event.logging.Event;
-import event.logging.Group;
-import event.logging.Outcome;
-import event.logging.RemoveGroups;
+import event.logging.*;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.api.StroomEventLoggingUtil;
+import stroom.util.shared.UserRef;
 
 public class AuthorisationEventLog {
 
@@ -42,13 +35,13 @@ public class AuthorisationEventLog {
         this.eventLoggingService = eventLoggingService;
     }
 
-    public void addUserToGroup(final UserName userName,
-                               final String groupName,
-                               final boolean success,
-                               final String outcomeDescription) {
+    public void addPermission(final UserRef userName,
+                              final String permission,
+                              final boolean success,
+                              final String outcomeDescription) {
         final AddGroups addGroups = AddGroups.builder()
                 .addGroups(Group.builder()
-                        .withName(groupName)
+                        .withName(permission)
                         .build())
                 .build();
 
@@ -62,13 +55,13 @@ public class AuthorisationEventLog {
                 outcomeDescription);
     }
 
-    public void removeUserFromGroup(final UserName userName,
-                                    final String groupName,
-                                    final boolean success,
-                                    final String outcomeDescription) {
+    public void removePermission(final UserRef userName,
+                                 final String permission,
+                                 final boolean success,
+                                 final String outcomeDescription) {
         final RemoveGroups removeGroups = RemoveGroups.builder()
                 .withGroups(Group.builder()
-                        .withName(groupName)
+                        .withName(permission)
                         .build())
                 .build();
 
@@ -84,7 +77,7 @@ public class AuthorisationEventLog {
 
     private void authorisationEvent(final String typeId,
                                     final String description,
-                                    final UserName userName,
+                                    final UserRef userName,
                                     final AddGroups addGroups,
                                     final RemoveGroups removeGroups,
                                     final boolean success,
