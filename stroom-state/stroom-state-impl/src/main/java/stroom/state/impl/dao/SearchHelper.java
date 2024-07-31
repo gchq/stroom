@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.state.impl.dao;
 
 import stroom.entity.shared.ExpressionCriteria;
@@ -14,6 +30,7 @@ import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.state.impl.ScyllaDbExpressionUtil;
+import stroom.util.shared.string.CIKey;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -35,21 +52,21 @@ public class SearchHelper {
 
     private final Provider<CqlSession> sessionProvider;
     private final CqlIdentifier table;
-    private final Map<String, ScyllaDbColumn> columnMap;
-    private final String valueTypeFieldName;
-    private final String valueFieldName;
+    private final Map<CIKey, ScyllaDbColumn> fieldNameToColumnMap;
+    private final CIKey valueTypeFieldName;
+    private final CIKey valueFieldName;
 
     private int valueTypePosition = -1;
     private int valuePosition = -1;
 
     public SearchHelper(final Provider<CqlSession> sessionProvider,
                         final CqlIdentifier table,
-                        final Map<String, ScyllaDbColumn> columnMap,
-                        final String valueTypeFieldName,
-                        final String valueFieldName) {
+                        final Map<CIKey, ScyllaDbColumn> fieldNameToColumnMap,
+                        final CIKey valueTypeFieldName,
+                        final CIKey valueFieldName) {
         this.sessionProvider = sessionProvider;
         this.table = table;
-        this.columnMap = columnMap;
+        this.fieldNameToColumnMap = fieldNameToColumnMap;
         this.valueTypeFieldName = valueTypeFieldName;
         this.valueFieldName = valueFieldName;
     }
@@ -58,16 +75,22 @@ public class SearchHelper {
                 final FieldIndex fieldIndex,
                 final DateTimeSettings dateTimeSettings,
                 final ValuesConsumer consumer) {
+
         final List<Relation> relations = new ArrayList<>();
-        ScyllaDbExpressionUtil.getRelations(columnMap, criteria.getExpression(), relations, dateTimeSettings);
-        final String[] fieldNames = fieldIndex.getFields();
+        ScyllaDbExpressionUtil.getRelations(
+                fieldNameToColumnMap,
+                criteria.getExpression(),
+                relations,
+                dateTimeSettings);
+        final List<CIKey> fieldNames = fieldIndex.getFieldsAsCIKeys();
         final List<CqlIdentifier> columns = new ArrayList<>();
 
+        final int fieldCount = fieldNames.size();
         int columnPos = 0;
-        final ValFunction[] valFunctions = new ValFunction[fieldNames.length];
-        for (int i = 0; i < fieldNames.length; i++) {
-            final String fieldName = fieldNames[i];
-            final ScyllaDbColumn column = columnMap.get(fieldName);
+        final ValFunction[] valFunctions = new ValFunction[fieldCount];
+        for (int i = 0; i < fieldCount; i++) {
+            final CIKey fieldName = fieldNames.get(i);
+            final ScyllaDbColumn column = fieldNameToColumnMap.get(fieldName);
             if (column != null) {
                 columns.add(column.cqlIdentifier());
                 final int pos = columnPos;
@@ -94,7 +117,7 @@ public class SearchHelper {
 
         // Add the value type and record the value type position if it is needed.
         if (valuePosition != -1 && valueTypePosition == -1) {
-            columns.add(columnMap.get(valueTypeFieldName).cqlIdentifier());
+            columns.add(fieldNameToColumnMap.get(valueTypeFieldName).cqlIdentifier());
             valueTypePosition = columnPos;
         }
 
@@ -108,7 +131,7 @@ public class SearchHelper {
                 .allowFiltering()
                 .build();
         sessionProvider.get().execute(statement).forEach(row -> {
-            final Val[] values = new Val[fieldNames.length];
+            final Val[] values = new Val[fieldCount];
             for (int i = 0; i < values.length; i++) {
                 values[i] = valFunctions[i].apply(row);
             }
@@ -135,6 +158,10 @@ public class SearchHelper {
 
         throw new RuntimeException("Unexpected data type: " + dataType);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private interface ValFunction extends Function<Row, Val> {
 

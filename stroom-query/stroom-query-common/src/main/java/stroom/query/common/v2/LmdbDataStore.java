@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.query.common.v2;
@@ -52,6 +51,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.Metrics;
 import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.query.FieldNames;
 import stroom.util.shared.string.CIKey;
 import stroom.util.shared.time.SimpleDuration;
 
@@ -145,7 +145,7 @@ public class LmdbDataStore implements DataStore {
                          final TableSettings tableSettings,
                          final ExpressionContext expressionContext,
                          final FieldIndex fieldIndex,
-                         final Map<String, String> paramMap,
+                         final Map<CIKey, String> paramMap,
                          final DataStoreSettings dataStoreSettings,
                          final Provider<Executor> executorProvider,
                          final ErrorConsumer errorConsumer,
@@ -257,8 +257,8 @@ public class LmdbDataStore implements DataStore {
                     if (fieldIdToValueMap == null) {
                         fieldIdToValueMap = new HashMap<>();
                     }
-                    fieldIdToValueMap.put(CIKey.of(compiledColumn.getColumn().getName()),
-                            string);
+                    final CIKey caseInsensitiveFieldName = FieldNames.createCIKey(compiledColumn.getColumn().getName());
+                    fieldIdToValueMap.put(caseInsensitiveFieldName, string);
                 }
             }
         }

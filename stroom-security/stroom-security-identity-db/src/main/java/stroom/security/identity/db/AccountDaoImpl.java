@@ -1,19 +1,17 @@
 /*
+ * Copyright 2017-2024 Crown Copyright
  *
- *   Copyright 2017 Crown Copyright
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package stroom.security.identity.db;
@@ -36,6 +34,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.PageResponse;
+import stroom.util.shared.string.CIKey;
 
 import com.google.common.base.Strings;
 import jakarta.inject.Inject;
@@ -140,7 +139,7 @@ class AccountDaoImpl implements AccountDao {
     protected static final String FIELD_NAME_LAST_LOGIN_MS = "lastLoginMs";
     protected static final String FIELD_NAME_LOGIN_FAILURES = "loginFailures";
     protected static final String FIELD_NAME_COMMENTS = "comments";
-    private static final Map<String, Field<?>> FIELD_MAP = Map.ofEntries(
+    private static final Map<CIKey, Field<?>> FIELD_MAP = CIKey.mapOfEntries(
             entry("id", ACCOUNT.ID),
             entry("version", ACCOUNT.VERSION),
             entry("createTimeMs", ACCOUNT.CREATE_TIME_MS),

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package stroom.meta.shared;
 
+import stroom.util.shared.string.CIKey;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -31,12 +33,12 @@ public class MetaRow {
     @JsonProperty
     private final String pipelineName;
     @JsonProperty
-    private final Map<String, String> attributes;
+    private final Map<CIKey, String> attributes;
 
     @JsonCreator
     public MetaRow(@JsonProperty("meta") final Meta meta,
                    @JsonProperty("pipelineName") final String pipelineName,
-                   @JsonProperty("attributes") final Map<String, String> attributes) {
+                   @JsonProperty("attributes") final Map<CIKey, String> attributes) {
         this.meta = meta;
         this.pipelineName = pipelineName;
         this.attributes = attributes;
@@ -50,12 +52,12 @@ public class MetaRow {
         return pipelineName;
     }
 
-    public Map<String, String> getAttributes() {
+    public Map<CIKey, String> getAttributes() {
         return attributes;
     }
 
     public String getAttributeValue(final String name) {
-        return attributes.get(name);
+        return attributes.get(CIKey.of(name));
     }
 
     @Override
@@ -67,6 +69,7 @@ public class MetaRow {
             return false;
         }
 
+        //noinspection PatternVariableCanBeUsed // Not in GWT land
         final MetaRow that = (MetaRow) o;
 
         return meta.equals(that.meta);

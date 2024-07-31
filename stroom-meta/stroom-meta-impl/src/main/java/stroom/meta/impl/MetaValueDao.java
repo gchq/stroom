@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package stroom.meta.impl;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.Meta;
 import stroom.util.shared.Flushable;
+import stroom.util.shared.string.CIKey;
 
 import java.util.Collection;
 import java.util.List;
@@ -28,7 +29,7 @@ public interface MetaValueDao extends Flushable {
 
     void addAttributes(Meta meta, AttributeMap attributes);
 
-    Map<Long, Map<String, String>> getAttributes(List<Meta> list);
+    Map<Long, Map<CIKey, String>> getAttributes(List<Meta> list);
 
     void deleteOldValues();
 

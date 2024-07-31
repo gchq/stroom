@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.db.util;
 
 import stroom.util.NullSafe;
@@ -17,6 +33,7 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
 import stroom.util.shared.Selection;
 import stroom.util.shared.StringCriteria;
+import stroom.util.shared.string.CIKey;
 import stroom.util.string.PatternUtil;
 
 import org.jooq.Collation;
@@ -798,7 +815,7 @@ public final class JooqUtil {
         return condition.or(() -> Optional.of(field.isNotNull()));
     }
 
-    public static Collection<OrderField<?>> getOrderFields(final Map<String, Field<?>> fieldMap,
+    public static Collection<OrderField<?>> getOrderFields(final Map<CIKey, Field<?>> fieldMap,
                                                            final BaseCriteria criteria,
                                                            final OrderField<?>... defaultSortFields) {
         if (criteria.getSortList() == null || criteria.getSortList().isEmpty()) {
@@ -817,9 +834,9 @@ public final class JooqUtil {
         }
     }
 
-    private static Optional<OrderField<?>> getOrderField(final Map<String, Field<?>> fieldMap,
+    private static Optional<OrderField<?>> getOrderField(final Map<CIKey, Field<?>> fieldMap,
                                                          final CriteriaFieldSort sort) {
-        final Field<?> field = fieldMap.get(sort.getId());
+        final Field<?> field = fieldMap.get(CIKey.of(sort.getId()));
 
         if (field != null) {
             if (sort.isDesc()) {

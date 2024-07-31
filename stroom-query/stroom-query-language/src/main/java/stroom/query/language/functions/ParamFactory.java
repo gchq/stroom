@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package stroom.query.language.functions;
 import stroom.query.language.token.Param;
 import stroom.query.language.token.Token;
 import stroom.query.language.token.TokenException;
+import stroom.util.shared.query.FieldNames;
 import stroom.util.shared.string.CIKey;
 
 import java.util.Map;
@@ -49,11 +50,12 @@ public class ParamFactory {
     }
 
     private Param createRef(final String name, final FieldIndex fieldIndex) {
-        final Expression expression = expressionReference.get(CIKey.of(name));
+        final CIKey caseInsensitiveFieldName = FieldNames.createCIKey(name);
+        final Expression expression = expressionReference.get(caseInsensitiveFieldName);
         if (expression != null) {
             return expression;
         }
-        final int pos = fieldIndex.create(name);
+        final int pos = fieldIndex.create(caseInsensitiveFieldName);
         return new Ref(name, pos);
     }
 }

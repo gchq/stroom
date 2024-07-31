@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,6 +18,7 @@ package stroom.datasource.api.v2;
 
 import stroom.docref.HasDisplayValue;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.util.shared.string.CIKey;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -58,6 +59,9 @@ public class QueryField implements Field, HasDisplayValue {
     private final String docRefType;
     @JsonProperty
     private final Boolean queryable;
+
+    @JsonIgnore
+    public transient volatile CIKey fldNameCIKey = null;
 
     @JsonCreator
     public QueryField(@Deprecated @JsonProperty("type") final String type,
@@ -302,6 +306,15 @@ public class QueryField implements Field, HasDisplayValue {
     @Override
     public String getFldName() {
         return fldName;
+    }
+
+    public CIKey getFldNameAsCIKey() {
+        if (fldNameCIKey == null) {
+            final CIKey ciKey = CIKey.of(fldName);
+            fldNameCIKey = ciKey;
+            return ciKey;
+        }
+        return getFldNameAsCIKey();
     }
 
     @Override

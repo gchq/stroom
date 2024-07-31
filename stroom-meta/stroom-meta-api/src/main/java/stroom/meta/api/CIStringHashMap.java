@@ -1,4 +1,22 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.meta.api;
+
+import stroom.util.shared.string.CIKey;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -9,6 +27,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * String hash map that does not care about key case.
@@ -133,6 +152,23 @@ class CIStringHashMap implements Map<String, String> {
     @Override
     public int hashCode() {
         return Objects.hash(map);
+    }
+
+    /**
+     * Convert this map into one keyed with {@link CIKey}
+     */
+    public Map<CIKey, String> asCaseInsensitiveMap() {
+        // TODO this can be moved onto AttributeMap and changed to just return
+        //  'this' when we change AttributeMap to extend CIHashMap
+
+        // Convert Map<CIString, String> into Map<CIKey, String>
+        return map.entrySet().stream()
+                .collect(Collectors.toMap(
+                        entry -> {
+                            final CIString ciString = entry.getKey();
+                            return CIKey.of(ciString.key, ciString.lowerKey);
+                        },
+                        Entry::getValue));
     }
 
 

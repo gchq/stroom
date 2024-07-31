@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.receive.rules.impl;
@@ -22,10 +21,13 @@ import stroom.docref.DocRef;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.ExpressionMatcherFactory;
 import stroom.meta.api.AttributeMap;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.receive.rules.shared.RuleAction;
+import stroom.util.NullSafe;
+import stroom.util.shared.string.CIKey;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,18 +93,21 @@ class ReceiveDataPolicyChecker {
                     && dataReceiptPolicy.getRules() != null
                     && dataReceiptPolicy.getFields() != null) {
                 // Create a map of fields.
-                final Map<String, QueryField> fieldMap = dataReceiptPolicy.getFields()
+                final Map<CIKey, QueryField> fieldMap = dataReceiptPolicy.getFields()
                         .stream()
-                        .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
+                        .collect(Collectors.toMap(
+                                (QueryField queryField1) -> CIKey.of(queryField1.getFldName()),
+                                Function.identity()));
 
                 // Also make sure we create a list of rules that are enabled and have at least one enabled term.
                 final Set<String> fieldSet = new HashSet<>();
                 final List<ReceiveDataRule> activeRules = new ArrayList<>();
                 dataReceiptPolicy.getRules().forEach(rule -> {
-                    if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().enabled()) {
+                    if (rule.isEnabled()
+                            && NullSafe.test(rule.getExpression(), ExpressionOperator::enabled)) {
                         final Set<String> set = new HashSet<>();
                         addToFieldSet(rule, set);
-                        if (set.size() > 0) {
+                        if (!set.isEmpty()) {
                             fieldSet.addAll(set);
                         }
                         // expression may have no fields in it.
@@ -111,11 +116,13 @@ class ReceiveDataPolicyChecker {
                 });
 
                 // Create a map of fields that are valid fields and have been used in the expressions.
-                final Map<String, QueryField> usedFieldMap = fieldSet
+                final Map<CIKey, QueryField> usedFieldMap = fieldSet
                         .stream()
                         .map(fieldMap::get)
                         .filter(Objects::nonNull)
-                        .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
+                        .collect(Collectors.toMap(
+                                (QueryField queryField) -> CIKey.of(queryField.getFldName()),
+                                Function.identity()));
 
                 final ExpressionMatcher expressionMatcher = expressionMatcherFactory.create(usedFieldMap);
                 checker = new CheckerImpl(expressionMatcher, activeRules, fieldMap);
@@ -134,10 +141,18 @@ class ReceiveDataPolicyChecker {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private interface Checker {
 
         RuleAction check(AttributeMap attributeMap);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class ReceiveAllChecker implements Checker {
 
@@ -147,15 +162,19 @@ class ReceiveDataPolicyChecker {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class CheckerImpl implements Checker {
 
         private final ExpressionMatcher expressionMatcher;
         private final List<ReceiveDataRule> activeRules;
-        private final Map<String, QueryField> fieldMap;
+        private final Map<CIKey, QueryField> fieldMap;
 
         CheckerImpl(final ExpressionMatcher expressionMatcher,
                     final List<ReceiveDataRule> activeRules,
-                    final Map<String, QueryField> fieldMap) {
+                    final Map<CIKey, QueryField> fieldMap) {
             this.expressionMatcher = expressionMatcher;
             this.activeRules = activeRules;
             this.fieldMap = fieldMap;
@@ -163,7 +182,7 @@ class ReceiveDataPolicyChecker {
 
         @Override
         public RuleAction check(final AttributeMap attributeMap) {
-            final Map<String, Object> map = createAttributeMap(attributeMap, fieldMap);
+            final Map<CIKey, Object> map = createAttributeMap(attributeMap, fieldMap);
 
             final ReceiveDataRule matchingRule = findMatchingRule(expressionMatcher, map, activeRules);
             if (matchingRule != null && matchingRule.getAction() != null) {
@@ -174,12 +193,12 @@ class ReceiveDataPolicyChecker {
             return RuleAction.RECEIVE;
         }
 
-        private Map<String, Object> createAttributeMap(final AttributeMap attributeMap,
-                                                       final Map<String, QueryField> fieldMap) {
-            final Map<String, Object> map = new HashMap<>();
+        private Map<CIKey, Object> createAttributeMap(final AttributeMap attributeMap,
+                                                      final Map<CIKey, QueryField> fieldMap) {
+            final Map<CIKey, Object> map = new HashMap<>();
             fieldMap.forEach((fieldName, field) -> {
                 try {
-                    final String string = attributeMap.get(fieldName);
+                    final String string = attributeMap.get(fieldName.get());
                     switch (field.getFldType()) {
                         case TEXT:
                             map.put(fieldName, string);
@@ -208,7 +227,7 @@ class ReceiveDataPolicyChecker {
         }
 
         private ReceiveDataRule findMatchingRule(final ExpressionMatcher expressionMatcher,
-                                                 final Map<String, Object> attributeMap,
+                                                 final Map<CIKey, Object> attributeMap,
                                                  final List<ReceiveDataRule> activeRules) {
             for (final ReceiveDataRule rule : activeRules) {
                 try {

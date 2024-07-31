@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.query.common.v2;
@@ -28,6 +27,7 @@ import stroom.query.api.v2.Format.Type;
 import stroom.query.language.functions.DateUtil;
 import stroom.util.NullSafe;
 import stroom.util.shared.CompareUtil;
+import stroom.util.shared.query.FieldNames;
 import stroom.util.shared.string.CIKey;
 
 import org.slf4j.Logger;
@@ -59,8 +59,8 @@ public class ColumnExpressionMatcher {
         this.fieldNameToFieldMap = new HashMap<>();
         for (final Column column : NullSafe.list(columns)) {
             // Allow match by id and name.
-            fieldNameToFieldMap.putIfAbsent(CIKey.of(column.getId()), column);
-            fieldNameToFieldMap.putIfAbsent(CIKey.of(column.getName()), column);
+            fieldNameToFieldMap.putIfAbsent(column.getIdAsCIKey(), column);
+            fieldNameToFieldMap.putIfAbsent(column.getNameAsCIKey(), column);
         }
     }
 
@@ -124,14 +124,15 @@ public class ColumnExpressionMatcher {
         if (NullSafe.isBlankString(term.getField())) {
             throw new MatchException("Field not set");
         }
-        String termField = term.getField().trim();
-        final Column column = fieldNameToFieldMap.get(CIKey.of(termField));
+        final String termField = term.getField().trim();
+        final CIKey caseInsensitiveTermField = FieldNames.createCIKey(termField);
+        final Column column = fieldNameToFieldMap.get(caseInsensitiveTermField);
         if (column == null) {
             throw new MatchException("Column not found: " + termField);
         }
         final String columnName = column.getName();
 
-        final Object attribute = attributeMap.get(CIKey.of(termField));
+        final Object attribute = attributeMap.get(caseInsensitiveTermField);
         if (Condition.IS_NULL.equals(condition)) {
             return attribute == null;
         } else if (Condition.IS_NOT_NULL.equals(condition)) {
@@ -141,14 +142,13 @@ public class ColumnExpressionMatcher {
         }
 
         // Try and resolve the term value.
-        String termValue = term.getValue();
-        if (NullSafe.isBlankString(termValue)) {
+        String termValue = NullSafe.trim(term.getValue());
+        if (termValue.isEmpty()) {
             throw new MatchException("Value not set");
         }
-        termValue = termValue.trim();
 
         // Substitute with row value if a row value exists.
-        final Object rowValue = attributeMap.get(CIKey.of(termValue));
+        final Object rowValue = attributeMap.get(FieldNames.createCIKey(termValue));
         if (rowValue != null) {
             termValue = rowValue.toString();
         }

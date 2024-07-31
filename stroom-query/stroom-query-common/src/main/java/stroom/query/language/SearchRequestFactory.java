@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.language;
 
 import stroom.docref.DocRef;
@@ -34,6 +50,7 @@ import stroom.query.language.token.TokenType;
 import stroom.query.language.token.Tokeniser;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.query.FieldNames;
 import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
@@ -79,6 +96,10 @@ public class SearchRequestFactory {
                                 final ExpressionContext expressionContext) {
         return new Builder(visualisationTokenConsumer, docResolver).create(string, in, expressionContext);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class Builder {
 
@@ -790,18 +811,18 @@ public class SearchRequestFactory {
 
             // Ensure StreamId and EventId fields exist if there is no grouping.
             if (groupDepth == 0) {
-                if (!addedFields.contains(FieldIndex.FALLBACK_STREAM_ID_FIELD_KEY)) {
-                    tableSettingsBuilder.addColumns(buildSpecialColumn(FieldIndex.FALLBACK_STREAM_ID_FIELD_NAME));
+                if (!addedFields.contains(FieldNames.FALLBACK_STREAM_ID_FIELD_KEY)) {
+                    tableSettingsBuilder.addColumns(buildSpecialColumn(FieldNames.FALLBACK_STREAM_ID_FIELD_KEY));
                 }
-                if (!addedFields.contains(FieldIndex.FALLBACK_EVENT_ID_FIELD_KEY)) {
-                    tableSettingsBuilder.addColumns(buildSpecialColumn(FieldIndex.FALLBACK_EVENT_ID_FIELD_NAME));
+                if (!addedFields.contains(FieldNames.FALLBACK_EVENT_ID_FIELD_KEY)) {
+                    tableSettingsBuilder.addColumns(buildSpecialColumn(FieldNames.FALLBACK_EVENT_ID_FIELD_KEY));
                 }
             }
 
             // Add missing fields if needed.
             for (final AbstractToken token : additionalFields) {
                 final String fieldName = token.getUnescapedText();
-                if (!addedFields.contains(CIKey.of(fieldName))) {
+                if (!addedFields.contains(FieldNames.createCIKey(fieldName))) {
                     final String id = "__" + fieldName.replaceAll("\\s", "_") + "__";
                     addField(token,
                             id,
@@ -844,8 +865,9 @@ public class SearchRequestFactory {
             }
         }
 
-        public Column buildSpecialColumn(final String name) {
-            addedFields.add(CIKey.of(name));
+        public Column buildSpecialColumn(final CIKey caseInsensitiveName) {
+            addedFields.add(caseInsensitiveName);
+            final String name = caseInsensitiveName.get();
             return Column.builder()
                     .id(name)
                     .name(name)
@@ -1060,8 +1082,9 @@ public class SearchRequestFactory {
                               final Map<String, Integer> groupMap,
                               final Map<String, Filter> filterMap,
                               final TableSettings.Builder tableSettingsBuilder) {
-            addedFields.add(CIKey.of(fieldName));
-            Expression expression = expressionMap.get(CIKey.of(fieldName));
+            final CIKey caseInsensitiveFieldName = FieldNames.createCIKey(fieldName);
+            addedFields.add(caseInsensitiveFieldName);
+            Expression expression = expressionMap.get(caseInsensitiveFieldName);
             if (expression == null) {
                 ExpressionParser expressionParser = new ExpressionParser(new ParamFactory(expressionMap));
                 try {

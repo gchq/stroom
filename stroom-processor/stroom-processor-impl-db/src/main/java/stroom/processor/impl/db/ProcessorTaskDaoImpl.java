@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.processor.impl.db;
 
 import stroom.datasource.api.v2.QueryField;
@@ -37,12 +53,15 @@ import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.util.NullSafe;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -62,7 +81,6 @@ import org.jooq.impl.DSL;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -77,7 +95,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static java.util.Map.entry;
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFeed.PROCESSOR_FEED;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
@@ -106,19 +123,19 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
     private static final Field<Integer> COUNT = DSL.count();
 
-    private static final Map<String, Field<?>> FIELD_MAP = Map.ofEntries(
-            entry(ProcessorTaskFields.FIELD_ID, PROCESSOR_TASK.ID),
-            entry(ProcessorTaskFields.FIELD_CREATE_TIME, PROCESSOR_TASK.CREATE_TIME_MS),
-            entry(ProcessorTaskFields.FIELD_START_TIME, PROCESSOR_TASK.START_TIME_MS),
-            entry(ProcessorTaskFields.FIELD_END_TIME_DATE, PROCESSOR_TASK.END_TIME_MS),
-            entry(ProcessorTaskFields.FIELD_FEED, PROCESSOR_FEED.NAME),
-            entry(ProcessorTaskFields.FIELD_PRIORITY, PROCESSOR_FILTER.PRIORITY),
-            entry(ProcessorTaskFields.FIELD_PIPELINE, PROCESSOR.PIPELINE_UUID),
-            entry(ProcessorTaskFields.FIELD_PIPELINE_NAME, PROCESSOR.PIPELINE_UUID),
-            entry(ProcessorTaskFields.FIELD_STATUS, PROCESSOR_TASK.STATUS),
-            entry(ProcessorTaskFields.FIELD_COUNT, COUNT),
-            entry(ProcessorTaskFields.FIELD_NODE, PROCESSOR_NODE.NAME),
-            entry(ProcessorTaskFields.FIELD_POLL_AGE, PROCESSOR_FILTER_TRACKER.LAST_POLL_MS)
+    private static final Map<CIKey, Field<?>> FIELD_NAME_TO_DB_FIELD_MAP = Map.ofEntries(
+            CIKey.entry(ProcessorTaskFields.FIELD_ID, PROCESSOR_TASK.ID),
+            CIKey.entry(ProcessorTaskFields.FIELD_CREATE_TIME, PROCESSOR_TASK.CREATE_TIME_MS),
+            CIKey.entry(ProcessorTaskFields.FIELD_START_TIME, PROCESSOR_TASK.START_TIME_MS),
+            CIKey.entry(ProcessorTaskFields.FIELD_END_TIME_DATE, PROCESSOR_TASK.END_TIME_MS),
+            CIKey.entry(ProcessorTaskFields.FIELD_FEED, PROCESSOR_FEED.NAME),
+            CIKey.entry(ProcessorTaskFields.FIELD_PRIORITY, PROCESSOR_FILTER.PRIORITY),
+            CIKey.entry(ProcessorTaskFields.FIELD_PIPELINE, PROCESSOR.PIPELINE_UUID),
+            CIKey.entry(ProcessorTaskFields.FIELD_PIPELINE_NAME, PROCESSOR.PIPELINE_UUID),
+            CIKey.entry(ProcessorTaskFields.FIELD_STATUS, PROCESSOR_TASK.STATUS),
+            CIKey.entry(ProcessorTaskFields.FIELD_COUNT, COUNT),
+            CIKey.entry(ProcessorTaskFields.FIELD_NODE, PROCESSOR_NODE.NAME),
+            CIKey.entry(ProcessorTaskFields.FIELD_POLL_AGE, PROCESSOR_FILTER_TRACKER.LAST_POLL_MS)
     );
 
     private static final Field<?>[] PROCESSOR_TASK_COLUMNS = new Field<?>[]{
@@ -698,7 +715,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     @Override
     public ResultPage<ProcessorTask> find(final ExpressionCriteria criteria) {
         final Condition condition = expressionMapper.apply(criteria.getExpression());
-        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_NAME_TO_DB_FIELD_MAP, criteria);
         final int offset = JooqUtil.getOffset(criteria.getPageRequest());
         final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
         final Result<Record> result = JooqUtil.contextResult(processorDbConnProvider, context ->
@@ -760,7 +777,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     @Override
     public ResultPage<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria) {
         final Condition condition = expressionMapper.apply(criteria.getExpression());
-        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_NAME_TO_DB_FIELD_MAP, criteria);
         final PageRequest pageRequest = criteria.getPageRequest();
         final int offset = JooqUtil.getOffset(pageRequest);
         final int limit = JooqUtil.getLimit(pageRequest, true);
@@ -805,35 +822,53 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         return ResultPage.createCriterialBasedList(list, criteria);
     }
 
-    private boolean isUsed(final Set<String> fieldSet,
-                           final String[] resultFields,
+    private boolean isUsed(final CIKey field,
+                           final List<CIKey> resultFields,
                            final ExpressionCriteria criteria) {
-        return Arrays.stream(resultFields).filter(Objects::nonNull).anyMatch(fieldSet::contains) ||
-                ExpressionUtil.termCount(criteria.getExpression(), fieldSet) > 0;
+        final boolean isInResultFields = NullSafe.stream(resultFields)
+                .filter(Objects::nonNull)
+                .anyMatch(resultField -> Objects.equals(resultField, field));
+
+        return isInResultFields
+                || ExpressionUtil.termCount(criteria.getExpression(), field.get()) > 0;
+    }
+
+    private boolean isUsed(final Set<CIKey> fieldSet,
+                           final List<CIKey> resultFields,
+                           final ExpressionCriteria criteria) {
+        final boolean isInResultFields = NullSafe.stream(resultFields)
+                .filter(Objects::nonNull)
+                .anyMatch(fieldSet::contains);
+
+        return isInResultFields || ExpressionUtil.termCount(
+                criteria.getExpression(),
+                fieldSet.stream()
+                        .map(CIKey::get).collect(Collectors.toSet())) > 0;
     }
 
     @Override
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
                        final ValuesConsumer consumer) {
-        final Set<String> processorFields = Set.of(
-                ProcessorTaskFields.PROCESSOR_FILTER_ID.getFldName(),
-                ProcessorTaskFields.PROCESSOR_FILTER_PRIORITY.getFldName());
+        final Set<CIKey> processorFields = Set.of(
+                ProcessorTaskFields.PROCESSOR_FILTER_ID.getFldNameAsCIKey(),
+                ProcessorTaskFields.PROCESSOR_FILTER_PRIORITY.getFldNameAsCIKey());
 
         validateExpressionTerms(criteria.getExpression());
 
-        final String[] fieldNames = fieldIndex.getFields();
-        final boolean nodeUsed = isUsed(Set.of(ProcessorTaskFields.NODE_NAME.getFldName()), fieldNames, criteria);
-        final boolean feedUsed = isUsed(Set.of(ProcessorTaskFields.FEED.getFldName()), fieldNames, criteria);
+        final List<CIKey> fieldNames = fieldIndex.getFieldsAsCIKeys();
+        final int fieldCount = GwtNullSafe.size(fieldNames);
+        final boolean nodeUsed = isUsed(ProcessorTaskFields.NODE_NAME.getFldNameAsCIKey(), fieldNames, criteria);
+        final boolean feedUsed = isUsed(ProcessorTaskFields.FEED.getFldNameAsCIKey(), fieldNames, criteria);
         final boolean processorFilterUsed = isUsed(processorFields, fieldNames, criteria);
         final boolean processorUsed =
-                isUsed(Set.of(ProcessorTaskFields.PROCESSOR_ID.getFldName()), fieldNames, criteria);
+                isUsed(CIKey.of(ProcessorTaskFields.PROCESSOR_ID.getFldName()), fieldNames, criteria);
         final boolean pipelineUsed =
-                isUsed(Set.of(ProcessorTaskFields.PIPELINE.getFldName()), fieldNames, criteria);
+                isUsed(CIKey.of(ProcessorTaskFields.PIPELINE.getFldName()), fieldNames, criteria);
 
         final PageRequest pageRequest = criteria.getPageRequest();
         final Condition condition = expressionMapper.apply(criteria.getExpression());
-        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_NAME_TO_DB_FIELD_MAP, criteria);
         final List<Field<?>> dbFields = new ArrayList<>(valueMapper.getDbFieldsByName(fieldNames));
         final Mapper<?>[] mappers = valueMapper.getMappersForFieldNames(fieldNames);
 
@@ -874,8 +909,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     final Result<?> result = cursor.fetchNext(BATCH_SIZE);
 
                     result.forEach(r -> {
-                        final Val[] arr = new Val[fieldNames.length];
-                        for (int i = 0; i < fieldNames.length; i++) {
+                        final Val[] arr = new Val[fieldCount];
+                        for (int i = 0; i < fieldCount; i++) {
                             Val val = ValNull.INSTANCE;
                             final Mapper<?> mapper = mappers[i];
                             if (mapper != null) {
@@ -909,7 +944,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         }
 
         final Condition condition = expressionMapper.apply(criteria.getExpression());
-        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_NAME_TO_DB_FIELD_MAP, criteria);
         final int offset = JooqUtil.getOffset(criteria.getPageRequest());
         final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
 

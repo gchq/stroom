@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,7 +167,9 @@ public class ProcessorTaskListPresenter
                 }, "Node", ColumnSizeConstants.MEDIUM_COL);
         dataGrid
                 .addResizableColumn(new OrderByColumn<ProcessorTask, DocRef>(
-                        new DocRefCell(getEventBus(), true), ProcessorTaskFields.FIELD_FEED, true) {
+                        new DocRefCell(getEventBus(), true),
+                        ProcessorTaskFields.FIELD_FEED,
+                        true) {
                     @Override
                     public DocRef getValue(final ProcessorTask row) {
                         if (row.getFeedName() != null) {
@@ -219,6 +221,7 @@ public class ProcessorTaskListPresenter
 
         dataGrid.addColumnSortHandler(event -> {
             if (event.getColumn() instanceof OrderByColumn<?, ?>) {
+                //noinspection PatternVariableCanBeUsed // GWT
                 final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
                 criteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
                 refresh();

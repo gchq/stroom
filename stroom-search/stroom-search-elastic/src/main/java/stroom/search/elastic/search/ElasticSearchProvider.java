@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.search.elastic.search;
@@ -50,6 +49,7 @@ import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.string.CIKey;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ExpandWildcard;
@@ -72,6 +72,7 @@ import jakarta.inject.Provider;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -176,7 +177,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     }
 
     @Override
-    public IndexField getIndexField(final DocRef docRef, final String fieldName) {
+    public IndexField getIndexField(final DocRef docRef, final CIKey fieldName) {
         final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
         if (index != null) {
             final Map<String, ElasticIndexField> indexFieldMap = getFieldsMap(index);
@@ -263,8 +264,8 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
      * Returns an `AbstractField` instance, based on the field's data type
      */
     private QueryField toDataSourceField(final FieldType elasticIndexFieldType,
-                                        final String fieldName,
-                                        final Boolean isIndexed)
+                                         final String fieldName,
+                                         final Boolean isIndexed)
             throws IllegalArgumentException {
         final ConditionSet conditionSet = ConditionSet.getElastic(elasticIndexFieldType);
         return QueryField
@@ -365,21 +366,15 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 final Object mappingInstance = firstFieldMapping.get()._get();
 
                 // Detect non-indexed fields for common data types. For all others, assume the field is indexed
-                if (mappingInstance instanceof KeywordProperty) {
-                    return !Boolean.FALSE.equals(((KeywordProperty) mappingInstance).index());
-                } else if (mappingInstance instanceof TextProperty) {
-                    return !Boolean.FALSE.equals(((TextProperty) mappingInstance).index());
-                } else if (mappingInstance instanceof BooleanProperty) {
-                    return !Boolean.FALSE.equals(((BooleanProperty) mappingInstance).index());
-                } else if (mappingInstance instanceof DateProperty) {
-                    return !Boolean.FALSE.equals(((DateProperty) mappingInstance).index());
-                } else if (mappingInstance instanceof NumberPropertyBase) {
-                    return !Boolean.FALSE.equals(((NumberPropertyBase) mappingInstance).index());
-                } else if (mappingInstance instanceof IpProperty) {
-                    return !Boolean.FALSE.equals(((IpProperty) mappingInstance).index());
-                } else {
-                    return true;
-                }
+                return switch (mappingInstance) {
+                    case KeywordProperty keywordProperty -> !Boolean.FALSE.equals(keywordProperty.index());
+                    case TextProperty textProperty -> !Boolean.FALSE.equals(textProperty.index());
+                    case BooleanProperty booleanProperty -> !Boolean.FALSE.equals(booleanProperty.index());
+                    case DateProperty dateProperty -> !Boolean.FALSE.equals(dateProperty.index());
+                    case NumberPropertyBase numberPropertyBase -> !Boolean.FALSE.equals(numberPropertyBase.index());
+                    case IpProperty ipProperty -> !Boolean.FALSE.equals(ipProperty.index());
+                    case null, default -> true;
+                };
             }
         } catch (Exception e) {
             return false;
@@ -389,7 +384,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     }
 
     private Map<String, FieldMapping> getFieldMappings(final ElasticIndexDoc elasticIndex) {
-        Map<String, FieldMapping> result = new TreeMap<>();
+        Map<String, FieldMapping> result = null;
 
         if (elasticIndex.getClusterRef() != null) {
             try {
@@ -400,12 +395,17 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 LOGGER.error(e::getMessage, e);
             }
         }
+        if (result == null) {
+            result = Collections.emptyMap();
+        }
         return result;
     }
 
     private static TreeMap<String, FieldMapping> getFlattenedFieldMappings(final ElasticIndexDoc elasticIndex,
                                                                            final ElasticsearchClient elasticClient) {
         // Flatten the mappings, which are keyed by index, into a de-duplicated list
+        // TODO potentially replace with Map<CIKey, FieldMapping> as I don't think there is any
+        //  need to iterate in order.
         final TreeMap<String, FieldMapping> mappings = new TreeMap<>((o1, o2) -> {
             if (Objects.equals(o1, o2)) {
                 return 0;
@@ -433,8 +433,8 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
             final HashSet<String> multiFieldMappings = new HashSet<>();
             allMappings.values().forEach(indexMappings -> indexMappings.mappings().forEach((fieldName, mapping) -> {
                 final Property source = mapping.mapping().get(fieldName);
-                if (source != null && source._get() instanceof PropertyBase) {
-                    final var multiFields = ((PropertyBase) source._get()).fields();
+                if (source != null && source._get() instanceof PropertyBase propertyBase) {
+                    final var multiFields = propertyBase.fields();
 
                     if (!multiFields.isEmpty()) {
                         multiFields.forEach((multiFieldName, multiFieldMapping) -> {

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.dashboard.impl.visualisation;
 
 import stroom.dashboard.impl.VisField;
@@ -27,6 +43,7 @@ import stroom.query.language.token.TokenGroup;
 import stroom.query.language.token.TokenType;
 import stroom.util.NullSafe;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.query.FieldNames;
 import stroom.util.shared.string.CIKey;
 import stroom.visualisation.shared.VisualisationDoc;
 
@@ -223,7 +240,7 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
                     final String columnName = t.getUnescapedText();
 
                     // Validate the column name.
-                    final Column column = columnMap.get(CIKey.of(columnName));
+                    final Column column = columnMap.get(FieldNames.createCIKey(columnName));
                     if (column == null) {
                         throw new TokenException(t, "Unable to find selected column: " + columnName);
                     }
@@ -452,9 +469,8 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
                 for (final Tab tab : visSettings.getTabs()) {
                     if (tab.getControls() != null) {
                         for (final Control control : tab.getControls()) {
-                            if (control != null && control.getId() != null) {
-                                controlsById.put(CIKey.of(control.getId()), control);
-                            }
+                            NullSafe.consume(control, Control::getId, id ->
+                                    controlsById.put(FieldNames.createCIKey(id), control));
                         }
                     }
                 }
@@ -462,7 +478,7 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
         }
 
         public Control getControl(final String controlId) {
-            return controlsById.get(CIKey.of(controlId));
+            return controlsById.get(FieldNames.createCIKey(controlId));
         }
     }
 

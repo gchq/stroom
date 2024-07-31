@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.state.impl.dao;
 
 import stroom.entity.shared.ExpressionCriteria;
@@ -6,6 +22,7 @@ import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.string.CIKey;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -29,7 +46,6 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.insertInto;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
 import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.createTable;
-import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.dropTable;
 
 public class RangedStateDao extends AbstractStateDao<RangedState> {
 
@@ -41,17 +57,17 @@ public class RangedStateDao extends AbstractStateDao<RangedState> {
     private static final CqlIdentifier COLUMN_VALUE = CqlIdentifier.fromCql("value");
     private static final CqlIdentifier COLUMN_INSERT_TIME = CqlIdentifier.fromCql("insert_time");
 
-    private static final Map<String, ScyllaDbColumn> COLUMN_MAP = Map.of(
-            RangedStateFields.KEY_START,
-            new ScyllaDbColumn(RangedStateFields.KEY_START, DataTypes.BIGINT, COLUMN_KEY_START),
-            RangedStateFields.KEY_END,
-            new ScyllaDbColumn(RangedStateFields.KEY_END, DataTypes.BIGINT, COLUMN_KEY_END),
-            RangedStateFields.VALUE_TYPE,
-            new ScyllaDbColumn(RangedStateFields.VALUE_TYPE, DataTypes.TINYINT, COLUMN_VALUE_TYPE),
-            RangedStateFields.VALUE,
-            new ScyllaDbColumn(RangedStateFields.VALUE, DataTypes.BLOB, COLUMN_VALUE),
-            RangedStateFields.INSERT_TIME,
-            new ScyllaDbColumn(RangedStateFields.INSERT_TIME, DataTypes.TIMESTAMP, COLUMN_INSERT_TIME));
+    private static final Map<CIKey, ScyllaDbColumn> FIELD_NAME_TO_COLUMN_MAP = Map.of(
+            FieldNames.KEY_START_FIELD_KEY,
+            new ScyllaDbColumn(FieldNames.KEY_START_FIELD_NAME, DataTypes.BIGINT, COLUMN_KEY_START),
+            FieldNames.KEY_END_FIELD_KEY,
+            new ScyllaDbColumn(FieldNames.KEY_END_FIELD_NAME, DataTypes.BIGINT, COLUMN_KEY_END),
+            FieldNames.VALUE_TYPE_FIELD_KEY,
+            new ScyllaDbColumn(FieldNames.VALUE_TYPE_FIELD_NAME, DataTypes.TINYINT, COLUMN_VALUE_TYPE),
+            FieldNames.VALUE_FIELD_KEY,
+            new ScyllaDbColumn(FieldNames.VALUE_FIELD_NAME, DataTypes.BLOB, COLUMN_VALUE),
+            FieldNames.INSERT_TIME_FIELD_KEY,
+            new ScyllaDbColumn(FieldNames.INSERT_TIME_FIELD_NAME, DataTypes.TIMESTAMP, COLUMN_INSERT_TIME));
 
     public RangedStateDao(final Provider<CqlSession> sessionProvider, final String tableName) {
         super(sessionProvider, CqlIdentifier.fromCql(tableName));
@@ -139,9 +155,9 @@ public class RangedStateDao extends AbstractStateDao<RangedState> {
         final SearchHelper searchHelper = new SearchHelper(
                 sessionProvider,
                 table,
-                COLUMN_MAP,
-                RangedStateFields.VALUE_TYPE,
-                RangedStateFields.VALUE);
+                FIELD_NAME_TO_COLUMN_MAP,
+                FieldNames.VALUE_TYPE_FIELD_KEY,
+                FieldNames.VALUE_FIELD_KEY);
         searchHelper.search(criteria, fieldIndex, dateTimeSettings, consumer);
     }
 

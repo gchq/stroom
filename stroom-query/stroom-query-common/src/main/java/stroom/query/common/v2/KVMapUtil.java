@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,6 +15,9 @@
  */
 
 package stroom.query.common.v2;
+
+import stroom.util.NullSafe;
+import stroom.util.shared.string.CIKey;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -26,19 +29,15 @@ public final class KVMapUtil {
         // Utility class.
     }
 
-    public static Map<String, String> parse(final String string) {
+    public static Map<CIKey, String> parse(final String string) {
         // Create a parameter map.
-        if (string == null) {
+        if (NullSafe.isBlankString(string)) {
             return Collections.emptyMap();
         }
 
         final String trimmed = string.trim();
-        if (trimmed.length() == 0) {
-            return Collections.emptyMap();
-        }
 
-
-        final Map<String, String> paramMap = new HashMap<>();
+        final Map<CIKey, String> paramMap = new HashMap<>();
         final char[] chars = trimmed.toCharArray();
 
         boolean quot = false;
@@ -76,9 +75,9 @@ public final class KVMapUtil {
 
                         int index = text.lastIndexOf(' ');
                         if (index != -1) {
-                            if (key != null && key.length() > 0) {
+                            if (NullSafe.isNonEmptyString(key)) {
                                 final String value = text.substring(0, index).trim();
-                                paramMap.put(key, value);
+                                paramMap.put(CIKey.of(key), value);
                             }
 
                             key = text.substring(index + 1).trim();
@@ -94,15 +93,16 @@ public final class KVMapUtil {
             }
         }
 
-        if (key != null && key.length() > 0) {
+        if (NullSafe.isNonEmptyString(key)) {
             final String value = sb.toString().trim();
-            paramMap.put(key, value);
+            paramMap.put(CIKey.of(key), value);
         }
 
         return paramMap;
     }
 
-    public static String replaceParameters(final String value, final Map<String, String> paramMap) {
+    public static String replaceParameters(final String value,
+                                           final Map<CIKey, String> paramMap) {
         final StringBuilder sb = new StringBuilder();
 
         int paramStart = -1;
@@ -146,10 +146,7 @@ public final class KVMapUtil {
                 case '}':
                     if (paramStart != -1) {
                         final String key = value.substring(paramStart + 2, i);
-                        String replacement = paramMap.get(key);
-                        if (replacement == null) {
-                            replacement = "";
-                        }
+                        final String replacement = NullSafe.string(paramMap.get(CIKey.of(key)));
                         sb.append(replacement);
 
                         paramStart = -1;

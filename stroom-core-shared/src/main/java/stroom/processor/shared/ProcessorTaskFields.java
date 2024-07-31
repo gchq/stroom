@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.processor.shared;
 
 import stroom.datasource.api.v2.QueryField;
@@ -42,15 +58,16 @@ public class ProcessorTaskFields {
     public static final QueryField STATUS_TIME_MS = QueryField.createLong("Status Time Ms");
     public static final QueryField STATUS_TIME = QueryField.createDate("Status Time");
     public static final QueryField META_ID = QueryField.createId("Meta Id");
-    public static final QueryField NODE_NAME = QueryField.createText("Node");
-    public static final QueryField PIPELINE = QueryField.createDocRefByUuid(PipelineDoc.DOCUMENT_TYPE, FIELD_PIPELINE);
+    public static final QueryField NODE_NAME = QueryField.createText(FIELD_NODE);
+    public static final QueryField PIPELINE = QueryField.createDocRefByUuid(
+            PipelineDoc.DOCUMENT_TYPE, FIELD_PIPELINE);
     public static final QueryField PIPELINE_NAME = QueryField.createDocRefByNonUniqueName(
             PipelineDoc.DOCUMENT_TYPE, FIELD_PIPELINE_NAME);
     public static final QueryField PROCESSOR_FILTER_ID = QueryField.createId("Processor Filter Id");
     public static final QueryField PROCESSOR_FILTER_PRIORITY = QueryField.createLong("Processor Filter Priority");
     public static final QueryField PROCESSOR_ID = QueryField.createId("Processor Id");
-    public static final QueryField FEED = QueryField.createDocRefByUniqueName("Feed", "Feed");
-    public static final QueryField STATUS = QueryField.createText("Status");
+    public static final QueryField FEED = QueryField.createDocRefByUniqueName("Feed", FIELD_FEED);
+    public static final QueryField STATUS = QueryField.createText(FIELD_STATUS);
     public static final QueryField TASK_ID = QueryField.createId("Task Id");
 
     static {

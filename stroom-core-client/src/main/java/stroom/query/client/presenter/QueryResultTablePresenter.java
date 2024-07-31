@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -447,7 +447,7 @@ public class QueryResultTablePresenter
                 rowStyle.trustedColor(row.getTextColor());
             }
 
-            final Map<String, Cell> cellsMap = new HashMap<>();
+            final Map<String, Cell> fieldIdToCellMap = new HashMap<>();
             for (int i = 0; i < columns.size() && i < row.getValues().size(); i++) {
                 final Column column = columns.get(i);
                 final String value = row.getValues().get(i) != null
@@ -471,7 +471,7 @@ public class QueryResultTablePresenter
                 final String style = stylesBuilder.toSafeStyles().asString();
 
                 final TableRow.Cell cell = new TableRow.Cell(value, style);
-                cellsMap.put(column.getId(), cell);
+                fieldIdToCellMap.put(column.getId(), cell);
             }
 
             // Create an expander for the row.
@@ -483,7 +483,7 @@ public class QueryResultTablePresenter
                 expander = new Expander(row.getDepth(), false, true);
             }
 
-            processed.add(new TableRow(expander, row.getGroupKey(), cellsMap));
+            processed.add(new TableRow(expander, row.getGroupKey(), fieldIdToCellMap));
         }
 
         // Set the expander column width.

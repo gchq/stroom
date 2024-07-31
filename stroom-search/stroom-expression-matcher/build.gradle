@@ -7,13 +7,14 @@ dependencies {
     implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
+    implementation project(':stroom-util-shared')
+    implementation project(':stroom-util')
 
     implementation libs.jackson_annotations
     implementation libs.jakarta_inject
     implementation libs.jaxb_api
 
     testImplementation project(':stroom-core-shared')
-    testImplementation project(':stroom-util-shared')
 
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter_api

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.index.impl;
@@ -28,6 +27,7 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.query.FieldNames;
 import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
@@ -60,7 +60,7 @@ public class IndexFieldCacheImpl implements IndexFieldCache, Clearable {
 
     private IndexField create(final Key key) {
         return securityContext.asProcessingUserResult(() ->
-                indexFieldProviders.getIndexField(key.docRef, key.fieldName.get()));
+                indexFieldProviders.getIndexField(key.docRef, key.fieldName));
     }
 
     @Override
@@ -102,7 +102,7 @@ public class IndexFieldCacheImpl implements IndexFieldCache, Clearable {
 
         public Key(final DocRef docRef, final String fieldName) {
             this.docRef = docRef;
-            this.fieldName = CIKey.of(fieldName);
+            this.fieldName = FieldNames.createCIKey(fieldName);
         }
 
         public DocRef getDocRef() {
@@ -147,62 +147,4 @@ public class IndexFieldCacheImpl implements IndexFieldCache, Clearable {
             return "'" + fieldName + "' - " + docRef;
         }
     }
-
-//    // Pkg private for testing
-//    static class Key {
-//
-//        private final DocRef docRef;
-//        // field names are case-insensitive
-//        private final String fieldName;
-//
-//        private int hash = 0;
-//        /**
-//         * Set to true if the hash has been calculated and found to be zero,
-//         * to distinguish from the default value for hash.
-//         */
-//        private boolean hashIsZero = false;
-//
-//        public Key(final DocRef docRef, final String fieldName) {
-//            this.docRef = docRef;
-//            this.fieldName = fieldName;
-//        }
-//
-//        // CUSTOM EQUALS METHOD!!! - case-insensitive on fieldName
-//        @Override
-//        public boolean equals(final Object object) {
-//            if (this == object) {
-//                return true;
-//            }
-//            if (object == null || getClass() != object.getClass()) {
-//                return false;
-//            }
-//            final Key that = (Key) object;
-//            // CUSTOM EQUALS METHOD!!! - case-insensitive on fieldName
-//            return Objects.equals(docRef, that.docRef)
-//                    && fieldName != null
-//                    ? fieldName.equalsIgnoreCase(that.fieldName)
-//                    : that.fieldName == null;
-//        }
-//
-//        @Override
-//        public int hashCode() {
-//            int hash = this.hash;
-//            // Lazily cache the hash
-//            if (hash == 0 && !hashIsZero) {
-//                // Case-insensitive hash
-//                hash = Objects.hash(docRef, NullSafe.get(fieldName, String::toLowerCase));
-//                if (hash == 0) {
-//                    hashIsZero = true;
-//                } else {
-//                    this.hash = hash;
-//                }
-//            }
-//            return hash;
-//        }
-//
-//        @Override
-//        public String toString() {
-//            return "'" + fieldName + "' - " + docRef;
-//        }
-//    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,20 +12,15 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package stroom.state.impl;
+package stroom.state.impl.dao;
 
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.language.functions.FieldIndex;
-import stroom.state.impl.dao.RangedState;
-import stroom.state.impl.dao.RangedStateDao;
-import stroom.state.impl.dao.RangedStateFields;
-import stroom.state.impl.dao.RangedStateRequest;
-import stroom.state.impl.dao.State;
+import stroom.state.impl.ScyllaDbUtil;
 
 import org.junit.jupiter.api.Test;
 
@@ -57,7 +52,7 @@ class TestRangedStateDao {
             assertThat(res.getValueAsString()).isEqualTo("test99");
 
             final FieldIndex fieldIndex = new FieldIndex();
-            fieldIndex.create(RangedStateFields.KEY_START);
+            fieldIndex.create(FieldNames.KEY_START_FIELD_KEY);
             final AtomicInteger count = new AtomicInteger();
             rangedStateDao.search(new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex, null,
                     v -> count.incrementAndGet());
