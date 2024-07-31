@@ -13,6 +13,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#3960** : Migrate to Elasticsearch Java API Client.
+
+* Issue **#4385** : Fix error when trying to change permissions on a folder with no current owner.
+
+* Issue **#4384** : Stop logging to ERROR when stroomQL contains a malformed function.
+
+* Issue **#4389** : Fix the Query table re-drawing too frequently.
+
+
 ## [v7.5-beta.8] - 2024-07-23
 
 * Change API endpoint `/Authentication/v1/noauth/reset` from GET to POST and from a path parameter to a POST body.
