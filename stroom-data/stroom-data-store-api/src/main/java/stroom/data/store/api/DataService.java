@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl;
+package stroom.data.store.api;
 
 import stroom.data.shared.DataInfoSection;
 import stroom.data.shared.UploadDataRequest;
@@ -25,6 +25,7 @@ import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface DataService {
@@ -32,6 +33,8 @@ public interface DataService {
     ResourceGeneration download(FindMetaCriteria criteria);
 
     ResourceKey upload(UploadDataRequest request);
+
+    Map<String, String> metaAttributes(long id);
 
     List<DataInfoSection> info(long id);
 
