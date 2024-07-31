@@ -80,7 +80,7 @@ public class CIKey implements Comparable<CIKey> {
     @JsonProperty
     private final String key;
     @JsonIgnore
-    private transient final String lowerKey;
+    private final transient String lowerKey;
 
     @JsonCreator
     private CIKey(@JsonProperty("key") final String key) {
