@@ -92,4 +92,13 @@ public class SteppingFilterSettings {
                 || skipToOutput != null
                 || (filters != null && !filters.isEmpty());
     }
+
+    @Override
+    public String toString() {
+        return "SteppingFilterSettings{" +
+                "skipToSeverity=" + skipToSeverity +
+                ", skipToOutput=" + skipToOutput +
+                ", filters=" + filters +
+                '}';
+    }
 }

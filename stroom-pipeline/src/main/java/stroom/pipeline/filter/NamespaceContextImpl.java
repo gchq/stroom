@@ -16,6 +16,8 @@
 
 package stroom.pipeline.filter;
 
+import stroom.util.NullSafe;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -23,42 +25,54 @@ import java.util.Map;
 import java.util.Set;
 import javax.xml.namespace.NamespaceContext;
 
+/**
+ * Holds the namespaces and their prefixes encountered in the output of the element being stepped
+ */
 public class NamespaceContextImpl implements NamespaceContext {
 
-    private Map<String, String> prefixToUriMap = new HashMap<>();
-    private Map<String, Set<String>> uriToPrefixMap = new HashMap<>();
+    private final Map<String, String> prefixToUriMap = new HashMap<>();
+    private final Map<String, Set<String>> uriToPrefixMap = new HashMap<>();
 
     @Override
     public String getNamespaceURI(final String prefix) {
         return prefixToUriMap.get(prefix);
     }
 
-    @SuppressWarnings("rawtypes")
     @Override
     public String getPrefix(final String namespaceURI) {
-        final Iterator iter = getPrefixes(namespaceURI);
-        if (iter == null) {
-            return null;
-        }
-        return (String) iter.next();
+        return NullSafe.get(
+                getPrefixes(namespaceURI),
+                Iterator::next);
     }
 
-    @SuppressWarnings("rawtypes")
     @Override
     public Iterator<String> getPrefixes(final String namespaceURI) {
         final Set<String> prefixSet = uriToPrefixMap.get(namespaceURI);
-        if (prefixSet == null || prefixSet.size() == 0) {
-            return null;
-        }
+        return NullSafe.isEmptyCollection(prefixSet)
+                ? null
+                : prefixSet.iterator();
 
-        return prefixSet.iterator();
     }
 
     public void addPrefix(final String prefix, final String namespaceURI) {
-        prefixToUriMap.put(prefix, namespaceURI);
+        // putIfAbsent because we may encounter namespace declarations deeper in the document which would
+        // override the ones from the top level element, e.g
+        // <Events
+        //         xmlns="event-logging:3"
+        //         xmlns:sm="stroom-meta"
+        //         ...
+        //         Version="3.4.2">
+        //   <Event>
+        //     <Meta>
+        //       <source xmlns="stroom-meta">
+        //
+        // the 'stroom-meta' namespace with null prefix would override 'event-logging:3' with null prefix.
+        // We would expect the user to do a xpath like '/Events/Event/Meta/sm:source'
+        prefixToUriMap.putIfAbsent(prefix, namespaceURI);
 
         // Add to URI to prefix map.
-        uriToPrefixMap.computeIfAbsent(namespaceURI, k -> new HashSet<>()).add(prefix);
+        uriToPrefixMap.computeIfAbsent(namespaceURI, k -> new HashSet<>())
+                .add(prefix);
     }
 
     public void removePrefix(final String prefix) {
@@ -66,10 +80,10 @@ public class NamespaceContextImpl implements NamespaceContext {
 
         // Remove from URI to prefix map.
         if (namespaceURI != null) {
-            Set<String> prefixSet = uriToPrefixMap.get(namespaceURI);
+            final Set<String> prefixSet = uriToPrefixMap.get(namespaceURI);
             if (prefixSet != null) {
                 prefixSet.remove(prefix);
-                if (prefixSet.size() == 0) {
+                if (prefixSet.isEmpty()) {
                     uriToPrefixMap.remove(namespaceURI);
                 }
             }
@@ -79,5 +93,12 @@ public class NamespaceContextImpl implements NamespaceContext {
     public void clear() {
         prefixToUriMap.clear();
         uriToPrefixMap.clear();
+    }
+
+    @Override
+    public String toString() {
+        return "NamespaceContextImpl{" +
+                "prefixToUriMap=" + prefixToUriMap +
+                '}';
     }
 }
