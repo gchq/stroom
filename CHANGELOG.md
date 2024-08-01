@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.4.11] - 2024-08-01
+
+* Issue **#4394** : Fix a bug that was causing stepping filters to ignore the top level null prefixed namespace (e.g. `xmlns="event-logging:3"`. This meant all elements in the xpath had to be fully qualified.
+
+* Issue **#4395** : Fix ClassCastException when using a stepping xpath filter that returns something other than a list of nodes, e.g. a double, long, boolean, etc.. This means you can now do something like `/Events/Event/Meta/sm:source/sm:recordNo > 2` `equals` `true`, or `/Events/Event/Meta/sm:source/sm:recordNo mod 2` `equals` `0`.
+
+
 ## [v7.4.10] - 2024-07-25
 
 * Issue **#3960** : Migrate to Elasticsearch Java API Client.
@@ -698,7 +705,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4.10...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4.11...HEAD
+[v7.4.11]: https://github.com/gchq/stroom/compare/v7.4.10...v7.4.11
 [v7.4.10]: https://github.com/gchq/stroom/compare/v7.4.9...v7.4.10
 [v7.4.9]: https://github.com/gchq/stroom/compare/v7.4.8...v7.4.9
 [v7.4.8]: https://github.com/gchq/stroom/compare/v7.4.7...v7.4.8
