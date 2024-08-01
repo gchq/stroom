@@ -274,7 +274,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
     /**
      * @return value as a string, trimmed and, if ignoreCase is true, converted to lower case
      */
-    static private String getStringValue(final Object object, Boolean ignoreCase) {
+    private static String getStringValue(final Object object, Boolean ignoreCase) {
         if (object == null) {
             return null;
         } else {
@@ -286,14 +286,14 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
         }
     }
 
-    static private String clean(final String value, final Boolean ignoreCase) {
+    private static String clean(final String value, final Boolean ignoreCase) {
         return NullSafe.get(value,
                 val -> NullSafe.isTrue(ignoreCase)
                         ? val.trim().toLowerCase()
                         : val.trim());
     }
 
-    static private boolean contains(final Object value, final String text, final Boolean ignoreCase) {
+    private static boolean contains(final Object value, final String text, final Boolean ignoreCase) {
         // Contains doesn't really make any sense for any type other than string, so just convert whatever it
         // is to a string and do contains on that.
         String valueStr = getStringValue(value, ignoreCase);
@@ -311,7 +311,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
         return valueStr.contains(txt);
     }
 
-    static private boolean equals(final Object value, final String text, final Boolean ignoreCase) {
+    private static boolean equals(final Object value, final String text, final Boolean ignoreCase) {
         if (value == null || text == null) {
             return false;
         } else {
@@ -326,7 +326,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
         }
     }
 
-    static private boolean equalsAsString(final String value, final String text, final Boolean ignoreCase) {
+    private static boolean equalsAsString(final String value, final String text, final Boolean ignoreCase) {
         if (value == null || text == null) {
             return false;
         } else {
@@ -341,7 +341,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
         }
     }
 
-    static private boolean equalsAsDouble(final Double value, final String text) {
+    private static boolean equalsAsDouble(final Double value, final String text) {
         try {
             final Double val2 = Double.parseDouble(text);
             return value.equals(val2);
@@ -352,7 +352,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
         }
     }
 
-    static private boolean equalsAsLong(final Long value, final String text) {
+    private static boolean equalsAsLong(final Long value, final String text) {
         try {
             final Long val2 = Long.parseLong(text);
             return value.equals(val2);
@@ -363,7 +363,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
         }
     }
 
-    static private boolean equalsAsBoolean(final Boolean value, final String text) {
+    private static boolean equalsAsBoolean(final Boolean value, final String text) {
         try {
             final Boolean val2 = Boolean.parseBoolean(text);
             return value.equals(val2);
