@@ -161,6 +161,7 @@ class AbstractProcessorTest {
         processorFilter.setQueryData(QueryData.builder()
                 .build());
         processorFilter.setUuid(UUID.randomUUID().toString());
+        processorFilter.setRunAsUserUuid(UUID.randomUUID().toString());
         stampProcessorFilter(processorFilter, "jbloggs");
 
         return processorFilterDao.create(processorFilter);
