@@ -30,6 +30,8 @@ import stroom.meta.statistics.api.MetaStatistics;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.cache.PipelineCacheModule;
 import stroom.processor.impl.MockProcessorModule;
+import stroom.security.api.ContentPackUserService;
+import stroom.security.mock.MockSecurityContext;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.impl.TaskContextModule;
@@ -106,6 +108,8 @@ public class CliModule extends AbstractModule {
         bind(PathConfig.class).to(StroomPathConfig.class);
         install(new DirProvidersModule());
         install(new MockJerseyModule());
+
+        bind(ContentPackUserService.class).to(MockSecurityContext.class);
     }
 
     @Provides
