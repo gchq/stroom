@@ -43,7 +43,6 @@ import stroom.query.language.token.TokenGroup;
 import stroom.query.language.token.TokenType;
 import stroom.util.NullSafe;
 import stroom.util.json.JsonUtil;
-import stroom.util.shared.query.FieldNames;
 import stroom.util.shared.string.CIKey;
 import stroom.visualisation.shared.VisualisationDoc;
 
@@ -240,7 +239,7 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
                     final String columnName = t.getUnescapedText();
 
                     // Validate the column name.
-                    final Column column = columnMap.get(FieldNames.createCIKey(columnName));
+                    final Column column = columnMap.get(CIKey.of(columnName));
                     if (column == null) {
                         throw new TokenException(t, "Unable to find selected column: " + columnName);
                     }
@@ -470,7 +469,7 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
                     if (tab.getControls() != null) {
                         for (final Control control : tab.getControls()) {
                             NullSafe.consume(control, Control::getId, id ->
-                                    controlsById.put(FieldNames.createCIKey(id), control));
+                                    controlsById.put(CIKey.of(id), control));
                         }
                     }
                 }
@@ -478,7 +477,7 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
         }
 
         public Control getControl(final String controlId) {
-            return controlsById.get(FieldNames.createCIKey(controlId));
+            return controlsById.get(CIKey.of(controlId));
         }
     }
 

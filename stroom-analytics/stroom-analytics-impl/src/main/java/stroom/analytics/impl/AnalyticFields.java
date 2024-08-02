@@ -61,9 +61,6 @@ public class AnalyticFields {
             TIME_FIELD_KEY, TIME_FIELD,
             VALUE_FIELD_KEY, VALUE_FIELD);
 
-    static {
-    }
-
     public static List<QueryField> getFields() {
         return new ArrayList<>(FIELDS);
     }

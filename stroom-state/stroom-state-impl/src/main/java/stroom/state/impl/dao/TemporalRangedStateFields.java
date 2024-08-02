@@ -24,11 +24,11 @@ import java.util.Map;
 
 public interface TemporalRangedStateFields {
 
-    QueryField KEY_START_FIELD = QueryField.createLong(FieldNames.KEY_START_FIELD_NAME);
-    QueryField KEY_END_FIELD = QueryField.createText(FieldNames.KEY_END_FIELD_NAME);
-    QueryField EFFECTIVE_TIME_FIELD = QueryField.createDate(FieldNames.EFFECTIVE_TIME_FIELD_NAME);
-    QueryField VALUE_TYPE_FIELD = QueryField.createText(FieldNames.VALUE_TYPE_FIELD_NAME, false);
-    QueryField VALUE_FIELD = QueryField.createText(FieldNames.VALUE_FIELD_NAME, false);
+    QueryField KEY_START_FIELD = QueryField.createLong(CIKey.KEY_START, true);
+    QueryField KEY_END_FIELD = QueryField.createText(CIKey.KEY_END, true);
+    QueryField EFFECTIVE_TIME_FIELD = QueryField.createDate(CIKey.EFFECTIVE_TIME, true);
+    QueryField VALUE_TYPE_FIELD = QueryField.createText(CIKey.VALUE_TYPE, false);
+    QueryField VALUE_FIELD = QueryField.createText(CIKey.VALUE, false);
 
     List<QueryField> FIELDS = List.of(
             KEY_START_FIELD,
@@ -38,9 +38,9 @@ public interface TemporalRangedStateFields {
             VALUE_FIELD);
 
     Map<CIKey, QueryField> FIELD_NAME_TO_FIELD_MAP = Map.of(
-            FieldNames.KEY_START_FIELD_KEY, KEY_START_FIELD,
-            FieldNames.KEY_END_FIELD_KEY, KEY_END_FIELD,
-            FieldNames.EFFECTIVE_TIME_FIELD_KEY, EFFECTIVE_TIME_FIELD,
-            FieldNames.VALUE_TYPE_FIELD_KEY, VALUE_TYPE_FIELD,
-            FieldNames.VALUE_FIELD_KEY, VALUE_FIELD);
+            CIKey.KEY_START, KEY_START_FIELD,
+            CIKey.KEY_END, KEY_END_FIELD,
+            CIKey.EFFECTIVE_TIME, EFFECTIVE_TIME_FIELD,
+            CIKey.VALUE_TYPE, VALUE_TYPE_FIELD,
+            CIKey.VALUE, VALUE_FIELD);
 }

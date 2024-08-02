@@ -16,8 +16,6 @@
 
 package stroom.meta.shared;
 
-import stroom.util.shared.string.CIKey;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -32,16 +30,19 @@ public class MetaRow {
     private final Meta meta;
     @JsonProperty
     private final String pipelineName;
+
+    // Can't use a CIKey keyed map due to GWT
     @JsonProperty
-    private final Map<CIKey, String> attributes;
+    private final Map<String, String> attributes;
 
     @JsonCreator
     public MetaRow(@JsonProperty("meta") final Meta meta,
                    @JsonProperty("pipelineName") final String pipelineName,
-                   @JsonProperty("attributes") final Map<CIKey, String> attributes) {
+                   @JsonProperty("attributes") final Map<String, String> attributes) {
         this.meta = meta;
         this.pipelineName = pipelineName;
         this.attributes = attributes;
+
     }
 
     public Meta getMeta() {
@@ -52,12 +53,12 @@ public class MetaRow {
         return pipelineName;
     }
 
-    public Map<CIKey, String> getAttributes() {
+    public Map<String, String> getAttributes() {
         return attributes;
     }
 
     public String getAttributeValue(final String name) {
-        return attributes.get(CIKey.of(name));
+        return attributes.get(name);
     }
 
     @Override
@@ -71,7 +72,6 @@ public class MetaRow {
 
         //noinspection PatternVariableCanBeUsed // Not in GWT land
         final MetaRow that = (MetaRow) o;
-
         return meta.equals(that.meta);
     }
 
@@ -82,6 +82,7 @@ public class MetaRow {
 
     @Override
     public String toString() {
-        return meta.toString();
+        return "meta: " + meta +
+                " - pipeline: '" + pipelineName + '\'';
     }
 }

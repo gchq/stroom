@@ -234,40 +234,39 @@ class DataServiceImpl implements DataService {
 
             final List<DataInfoSection.Entry> entries = new ArrayList<>();
 
-            final Map<CIKey, String> attributeMap = metaRow.getAttributes();
+            final Map<String, String> attributeMap = metaRow.getAttributes();
             final Map<CIKey, String> additionalAttributes = attributeMapFactory.getAttributes(
                     metaRow.getMeta().getId());
             final String files = additionalAttributes.remove(FILES_ATTR_KEY);
-            attributeMap.putAll(additionalAttributes);
+            additionalAttributes
+                    .forEach((k, v) ->
+                            attributeMap.put(k.get(), v));
 
-            final List<CIKey> sortedKeys = attributeMap
-                    .keySet()
+            attributeMap.entrySet()
                     .stream()
-                    .sorted()
-                    .toList();
-            sortedKeys.forEach(ciKey -> {
-                final String value = attributeMap.get(ciKey);
-                if (value != null &&
-                        // We are going to add retention entries separately.
-                        !DataRetentionFields.RETENTION_AGE_FIELD.getFldNameAsCIKey().equals(ciKey) &&
-                        !DataRetentionFields.RETENTION_UNTIL_FIELD.getFldNameAsCIKey().equals(ciKey) &&
-                        !DataRetentionFields.RETENTION_RULE_FIELD.getFldNameAsCIKey().equals(ciKey)) {
+                    .sorted(Map.Entry.comparingByKey())
+                    .forEach(entry -> {
+                        final String key = entry.getKey();
+                        final String value = entry.getValue();
+                        if (value != null &&
+                                // We are going to add retention entries separately.
+                                !DataRetentionFields.RETENTION_AGE_FIELD.getFldName().equals(key) &&
+                                !DataRetentionFields.RETENTION_UNTIL_FIELD.getFldName().equals(key) &&
+                                !DataRetentionFields.RETENTION_RULE_FIELD.getFldName().equals(key)) {
 
-                    final String key = ciKey.get();
-                    final String lowerKey = ciKey.get();
-                    if (MetaFields.DURATION.getFldNameAsCIKey().equals(ciKey)) {
-                        entries.add(new DataInfoSection.Entry(key, convertDuration(value)));
-                    } else if (ciKey.containsLowerCase("time")) {
-                        entries.add(new DataInfoSection.Entry(key, convertTime(value)));
-                    } else if (ciKey.containsLowerCase("size")) {
-                        entries.add(new DataInfoSection.Entry(key, convertSize(value)));
-                    } else if (ciKey.containsLowerCase("count")) {
-                        entries.add(new DataInfoSection.Entry(key, convertCount(value)));
-                    } else {
-                        entries.add(new DataInfoSection.Entry(key, value));
-                    }
-                }
-            });
+                            if (MetaFields.DURATION.getFldName().equalsIgnoreCase(key)) {
+                                entries.add(new DataInfoSection.Entry(key, convertDuration(value)));
+                            } else if (key.toLowerCase().contains("time")) {
+                                entries.add(new DataInfoSection.Entry(key, convertTime(value)));
+                            } else if (key.toLowerCase().contains("size")) {
+                                entries.add(new DataInfoSection.Entry(key, convertSize(value)));
+                            } else if (key.toLowerCase().contains("count")) {
+                                entries.add(new DataInfoSection.Entry(key, convertCount(value)));
+                            } else {
+                                entries.add(new DataInfoSection.Entry(key, value));
+                            }
+                        }
+                    });
             sections.add(new DataInfoSection("Attributes", entries));
 
             // Add additional data retention information.
@@ -430,16 +429,16 @@ class DataServiceImpl implements DataService {
         return DateUtil.createNormalDateTimeString(ms) + " (" + ms + ")";
     }
 
-    private List<DataInfoSection.Entry> getDataRententionEntries(final Map<CIKey, String> attributeMap) {
+    private List<DataInfoSection.Entry> getDataRententionEntries(final Map<String, String> attributeMap) {
         final List<DataInfoSection.Entry> entries = new ArrayList<>();
 
         if (NullSafe.hasEntries(attributeMap)) {
             entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_AGE,
-                    attributeMap.get(DataRetentionFields.RETENTION_AGE_FIELD.getFldNameAsCIKey())));
+                    attributeMap.get(DataRetentionFields.RETENTION_AGE_FIELD.getFldName())));
             entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_UNTIL,
-                    attributeMap.get(DataRetentionFields.RETENTION_UNTIL_FIELD.getFldNameAsCIKey())));
+                    attributeMap.get(DataRetentionFields.RETENTION_UNTIL_FIELD.getFldName())));
             entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_RULE,
-                    attributeMap.get(DataRetentionFields.RETENTION_RULE_FIELD.getFldNameAsCIKey())));
+                    attributeMap.get(DataRetentionFields.RETENTION_RULE_FIELD.getFldName())));
         }
 
         return entries;

@@ -23,15 +23,11 @@ import java.util.List;
 import java.util.Map;
 
 public interface TemporalStateFields {
-//    String KEY = "Key";
-//    String EFFECTIVE_TIME = "EffectiveTime";
-//    String VALUE_TYPE = "ValueType";
-//    String VALUE = "Value";
 
-    QueryField KEY_FIELD = QueryField.createText(FieldNames.KEY_FIELD_NAME);
-    QueryField EFFECTIVE_TIME_FIELD = QueryField.createDate(FieldNames.EFFECTIVE_TIME_FIELD_NAME);
-    QueryField VALUE_TYPE_FIELD = QueryField.createText(FieldNames.VALUE_TYPE_FIELD_NAME, false);
-    QueryField VALUE_FIELD = QueryField.createText(FieldNames.VALUE_FIELD_NAME, false);
+    QueryField KEY_FIELD = QueryField.createText(CIKey.KEY, true);
+    QueryField EFFECTIVE_TIME_FIELD = QueryField.createDate(CIKey.EFFECTIVE_TIME, true);
+    QueryField VALUE_TYPE_FIELD = QueryField.createText(CIKey.VALUE_TYPE, false);
+    QueryField VALUE_FIELD = QueryField.createText(CIKey.VALUE, false);
 
     List<QueryField> FIELDS = List.of(
             KEY_FIELD,
@@ -40,8 +36,8 @@ public interface TemporalStateFields {
             VALUE_FIELD);
 
     Map<CIKey, QueryField> FIELD_NAME_TO_FIELD_MAP = Map.of(
-            FieldNames.KEY_FIELD_KEY, KEY_FIELD,
-            FieldNames.EFFECTIVE_TIME_FIELD_KEY, EFFECTIVE_TIME_FIELD,
-            FieldNames.VALUE_TYPE_FIELD_KEY, VALUE_TYPE_FIELD,
-            FieldNames.VALUE_FIELD_KEY, VALUE_FIELD);
+            CIKey.KEY, KEY_FIELD,
+            CIKey.EFFECTIVE_TIME, EFFECTIVE_TIME_FIELD,
+            CIKey.VALUE_TYPE, VALUE_TYPE_FIELD,
+            CIKey.VALUE, VALUE_FIELD);
 }

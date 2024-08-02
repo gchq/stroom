@@ -30,7 +30,6 @@ import stroom.query.client.presenter.TableRow;
 import stroom.security.shared.UserNameResource;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
-import stroom.util.shared.query.FieldNames;
 import stroom.util.shared.string.CIKey;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -150,7 +149,7 @@ public class AnnotationManager {
     }
 
     private String getFieldId(final TableComponentSettings tableComponentSettings, final String fieldName) {
-        final CIKey fieldNameKey = FieldNames.createCIKey(fieldName);
+        final CIKey fieldNameKey = CIKey.of(fieldName);
         return tableComponentSettings.getColumns()
                 .stream()
                 .filter(column ->

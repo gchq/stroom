@@ -557,7 +557,10 @@ public class MetaServiceImpl implements MetaService, Searchable {
                         final Map<CIKey, String> attributes = attributeMaps.getOrDefault(
                                 meta.getId(),
                                 new HashMap<>());
-                        metaRowList.add(new MetaRow(meta, getPipelineName(meta), attributes));
+                        metaRowList.add(new MetaRow(
+                                meta,
+                                getPipelineName(meta),
+                                CIKey.convertToStringMap(attributes)));
                     }
                     return metaRowList;
                 },

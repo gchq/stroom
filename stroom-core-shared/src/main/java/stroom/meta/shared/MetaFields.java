@@ -19,7 +19,6 @@ package stroom.meta.shared;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.string.CIKey;
 
 import java.util.ArrayList;
@@ -171,12 +170,6 @@ public class MetaFields {
     }
 
     public static CIKey createCIKey(final String fieldName) {
-        if (GwtNullSafe.isEmptyString(fieldName)) {
-            return CIKey.of(fieldName);
-        } else {
-            return GwtNullSafe.requireNonNullElseGet(
-                    ALL_FIELD_NAME_TO_KEY_MAP.get(fieldName),
-                    () -> CIKey.of(fieldName));
-        }
+        return CIKey.of(fieldName, ALL_FIELD_NAME_TO_KEY_MAP);
     }
 }

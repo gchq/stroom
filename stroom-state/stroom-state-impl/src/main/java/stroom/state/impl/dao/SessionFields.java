@@ -24,10 +24,10 @@ import java.util.Map;
 
 public interface SessionFields {
 
-    QueryField KEY_FIELD = QueryField.createText(FieldNames.KEY_FIELD_NAME);
-    QueryField START_FIELD = QueryField.createDate(FieldNames.START_FIELD_NAME);
-    QueryField END_FIELD = QueryField.createDate(FieldNames.END_FIELD_NAME);
-    QueryField TERMINAL_FIELD = QueryField.createText(FieldNames.TERMINAL_FIELD_NAME, false);
+    QueryField KEY_FIELD = QueryField.createText(CIKey.KEY, true);
+    QueryField START_FIELD = QueryField.createDate(CIKey.START, true);
+    QueryField END_FIELD = QueryField.createDate(CIKey.END, true);
+    QueryField TERMINAL_FIELD = QueryField.createText(CIKey.TERMINAL, false);
 
     List<QueryField> FIELDS = List.of(
             KEY_FIELD,
@@ -36,8 +36,8 @@ public interface SessionFields {
             TERMINAL_FIELD);
 
     Map<CIKey, QueryField> FIELD_NAME_TO_FIELD_MAP = Map.of(
-            FieldNames.KEY_FIELD_KEY, KEY_FIELD,
-            FieldNames.START_FIELD_KEY, START_FIELD,
-            FieldNames.END_FIELD_KEY, END_FIELD,
-            FieldNames.TERMINAL_FIELD_KEY, TERMINAL_FIELD);
+            CIKey.KEY, KEY_FIELD,
+            CIKey.START, START_FIELD,
+            CIKey.END, END_FIELD,
+            CIKey.TERMINAL, TERMINAL_FIELD);
 }

@@ -17,7 +17,12 @@
 package stroom.util.shared.string;
 
 import stroom.test.common.TestUtil;
+import stroom.util.json.JsonUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import io.vavr.Tuple;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -27,13 +32,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static stroom.util.shared.string.CIKey.equalsIgnoreCase;
 
-class TestCIKey {
+public class TestCIKey {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestCIKey.class);
 
     @TestFactory
     Stream<DynamicTest> test() {
@@ -197,5 +205,85 @@ class TestCIKey {
                 .toList())
                 .extracting(CIKey::getAsLowerCase)
                 .containsExactly("0", "1", "a", "aa", "b", "c", "d");
+    }
+
+    @Test
+    void testWithKnownKeys() {
+        final Map<String, CIKey> knownCIKeys = Stream.of(
+                        "Foo",
+                        "Bar")
+                .map(CIKey::of)
+                .collect(Collectors.toMap(
+                        CIKey::get,
+                        Function.identity()));
+
+        final CIKey knownCIKey = knownCIKeys.get("Foo");
+
+        final CIKey ciKey = CIKey.of("Foo", knownCIKeys);
+        assertThat(ciKey)
+                .isSameAs(knownCIKey);
+
+        // Different case so not known
+        final CIKey ciKey2 = CIKey.of("foo", knownCIKeys);
+        assertThat(ciKey2)
+                .isNotSameAs(knownCIKey);
+    }
+
+    @Test
+    void testWithKnownKeys2() {
+        final Map<String, CIKey> knownCIKeys = Stream.of(
+                        "Foo",
+                        "Bar")
+                .map(CIKey::of)
+                .collect(Collectors.toMap(
+                        CIKey::get,
+                        Function.identity()));
+
+        // Not in known keys, so uses one from built-in common keys
+        final CIKey ciKey = CIKey.of(CIKey.UUID.get(), knownCIKeys);
+        assertThat(ciKey)
+                .isSameAs(CIKey.UUID);
+    }
+
+    @Test
+    void testWithCommonKey() {
+        // Not in known keys, so uses one from built-in common keys
+        final CIKey ciKey = CIKey.of(CIKey.UUID.get());
+        assertThat(ciKey)
+                .isSameAs(CIKey.UUID);
+    }
+
+    @Test
+    void testSerialisation() throws JsonProcessingException {
+        final CIKey ciKey1 = CIKey.of("foo");
+        final CIKey ciKey2 = CIKey.of("bar");
+        String json = JsonUtil.getMapper()
+                .writeValueAsString(ciKey1);
+        LOGGER.info("json\n{}", json);
+
+        assertThat(json)
+                .isEqualTo("""
+                        "foo\"""");
+
+        final CIKey ciKey = JsonUtil.getMapper().readValue(json, CIKey.class);
+        assertThat(ciKey)
+                .isEqualTo(ciKey1);
+
+        final Map<CIKey, String> map = Map.of(
+                ciKey1, "A");
+
+        json = JsonUtil.getMapper()
+                .writeValueAsString(map);
+        LOGGER.info("json\n{}", json);
+        assertThat(json)
+                .isEqualTo("""
+                        {
+                          "foo" : "A"
+                        }""");
+
+        final Map<CIKey, String> map2 = JsonUtil.getMapper().readValue(json, new TypeReference<>() {
+        });
+        assertThat(map2)
+                .isEqualTo(map);
     }
 }

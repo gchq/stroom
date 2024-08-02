@@ -23,6 +23,7 @@ import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValDate;
 import stroom.state.impl.InstantRange;
 import stroom.state.impl.ScyllaDbUtil;
+import stroom.util.shared.string.CIKey;
 
 import org.junit.jupiter.api.Test;
 
@@ -53,10 +54,10 @@ class TestSessionDao {
 
             final AtomicInteger count = new AtomicInteger();
             final FieldIndex fieldIndex = new FieldIndex();
-            fieldIndex.create(FieldNames.KEY_FIELD_KEY);
-            fieldIndex.create(FieldNames.START_FIELD_KEY);
-            fieldIndex.create(FieldNames.END_FIELD_KEY);
-            fieldIndex.create(FieldNames.TERMINAL_FIELD_KEY);
+            fieldIndex.create(CIKey.KEY);
+            fieldIndex.create(CIKey.START);
+            fieldIndex.create(CIKey.END);
+            fieldIndex.create(CIKey.TERMINAL);
 
             final ValDate minTime = ValDate.create(outerRange.min());
             final ValDate maxTime = ValDate.create(outerRange.max());

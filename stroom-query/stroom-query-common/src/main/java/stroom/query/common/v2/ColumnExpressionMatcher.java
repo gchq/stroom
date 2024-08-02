@@ -27,7 +27,6 @@ import stroom.query.api.v2.Format.Type;
 import stroom.query.language.functions.DateUtil;
 import stroom.util.NullSafe;
 import stroom.util.shared.CompareUtil;
-import stroom.util.shared.query.FieldNames;
 import stroom.util.shared.string.CIKey;
 
 import org.slf4j.Logger;
@@ -125,7 +124,7 @@ public class ColumnExpressionMatcher {
             throw new MatchException("Field not set");
         }
         final String termField = term.getField().trim();
-        final CIKey caseInsensitiveTermField = FieldNames.createCIKey(termField);
+        final CIKey caseInsensitiveTermField = CIKey.of(termField);
         final Column column = fieldNameToFieldMap.get(caseInsensitiveTermField);
         if (column == null) {
             throw new MatchException("Column not found: " + termField);
@@ -148,7 +147,7 @@ public class ColumnExpressionMatcher {
         }
 
         // Substitute with row value if a row value exists.
-        final Object rowValue = attributeMap.get(FieldNames.createCIKey(termValue));
+        final Object rowValue = attributeMap.get(CIKey.of(termValue));
         if (rowValue != null) {
             termValue = rowValue.toString();
         }

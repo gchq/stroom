@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@
 package stroom.query.language.functions;
 
 import stroom.query.language.token.Param;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.string.CIKey;
 
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -109,7 +109,7 @@ class CurrentUser extends AbstractFunction {
 
         static {
             for (final NameType nameType : NameType.values()) {
-                STR_TO_ENUM_MAP.put(CIKey.of(nameType.paramVal), nameType);
+                STR_TO_ENUM_MAP.put(CIKey.of(nameType.paramVal, ParamKeys.KNOWN_KEYS_MAP), nameType);
             }
         }
 
@@ -120,9 +120,10 @@ class CurrentUser extends AbstractFunction {
         }
 
         static NameType fromString(final String type) {
-            return type != null
-                    ? Objects.requireNonNullElse(STR_TO_ENUM_MAP.get(CIKey.of(type)), DEFAULT)
-                    : DEFAULT;
+            return GwtNullSafe.getOrElse(
+                    type,
+                    type2 -> STR_TO_ENUM_MAP.get(CIKey.of(type2, ParamKeys.KNOWN_KEYS_MAP)),
+                    DEFAULT);
         }
     }
 }

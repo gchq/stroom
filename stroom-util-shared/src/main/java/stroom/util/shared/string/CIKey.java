@@ -20,16 +20,17 @@ import stroom.util.shared.GwtNullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonValue;
 
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * A wrapper for a {@link String} whose {@link CIKey#equals(Object)} and
@@ -40,50 +41,121 @@ import java.util.stream.Stream;
  * original string at the cost of wrapping it in another object.
  * </p>
  */
+@JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
 public class CIKey implements Comparable<CIKey> {
+
+    // Hold some common keys, so we can just re-use instances rather than creating new each time
+    // Some of these map values will get used statically in code, but a lot will come from dash/query
+    // fields/columns/tokens which are not known at compile time so the map lets us save on
+    // object creation for common ones.
+    // The cost of a hashmap get is less than the combined cost of CIKey object creation and
+    // the toLowerCase call.
+    private static final Map<String, CIKey> COMMON_KEYS = new HashMap<>();
 
     public static final CIKey NULL_STRING = new CIKey(null);
     public static final CIKey EMPTY_STRING = new CIKey("");
 
-    // Hold some common keys, so we can just re-use instances rather than creating new each time
-    // Some of these map values will get held as static CIKey variables elsewhere in the code
-    // that get used programmatically.
-    // Intern the lowerKey so they are in the string pool
-    private static final Map<String, CIKey> COMMON_KEYS = Stream.of(
-                    "CreatedBy",
-                    "CreatedOn",
-                    "EventId",
-                    "EventTime",
-                    "Feed",
-                    "Id",
-                    "Name",
-                    "Node",
-                    "Partition",
-                    "Status",
-                    "StreamId",
-                    "Subject",
-                    "Time",
-                    "Title",
-                    "Type",
-                    "UUID",
-                    "UpdatedBy",
-                    "UpdatedOn",
-                    "Value",
-                    "__event_id__",
-                    "__stream_id__",
-                    "__time__")
-            .collect(Collectors.toMap(
-                    Function.identity(),
-                    k -> new CIKey(k, toLowerCase(k).intern())));
+    // Upper camel case keys
+    public static final CIKey EFFECTIVE_TIME = CIKey.createCommonKey("EffectiveTime");
+    public static final CIKey DURATION = CIKey.createCommonKey("Duration");
+    public static final CIKey END = CIKey.createCommonKey("End");
+    public static final CIKey EVENT_ID = CIKey.createCommonKey("EventId");
+    public static final CIKey EVENT_TIME = CIKey.createCommonKey("EventTime");
+    public static final CIKey FEED = CIKey.createCommonKey("Feed");
+    public static final CIKey ID = CIKey.createCommonKey("Id");
+    public static final CIKey INDEX = CIKey.createCommonKey("Index");
+    public static final CIKey INSERT_TIME = CIKey.createCommonKey("InsertTime");
+    public static final CIKey KEY = CIKey.createCommonKey("Key");
+    public static final CIKey KEY_END = CIKey.createCommonKey("KeyEnd");
+    public static final CIKey KEY_START = CIKey.createCommonKey("KeyStart");
+    public static final CIKey NAME = CIKey.createCommonKey("Name");
+    public static final CIKey NODE = CIKey.createCommonKey("Node");
+    public static final CIKey PARTITION = CIKey.createCommonKey("Partition");
+    public static final CIKey PIPELINE = CIKey.createCommonKey("Pipeline");
+    public static final CIKey START = CIKey.createCommonKey("Start");
+    public static final CIKey STATUS = CIKey.createCommonKey("Status");
+    public static final CIKey STREAM_ID = CIKey.createCommonKey("StreamId");
+    public static final CIKey SUBJECT = CIKey.createCommonKey("Subject");
+    public static final CIKey TERMINAL = CIKey.createCommonKey("Terminal");
+    public static final CIKey TIME = CIKey.createCommonKey("Time");
+    public static final CIKey TITLE = CIKey.createCommonKey("Title");
+    public static final CIKey TYPE = CIKey.createCommonKey("Type");
+    public static final CIKey UUID = CIKey.createCommonKey("UUID");
+    public static final CIKey VALUE = CIKey.createCommonKey("Value");
+    public static final CIKey VALUE_TYPE = CIKey.createCommonKey("ValueType");
 
-    @JsonProperty
+    // Upper sentence case keys
+    public static final CIKey ANALYTIC__RULE = CIKey.createCommonKey("Analytic Rule");
+    public static final CIKey CREATE__TIME = CIKey.createCommonKey("Create Time");
+    public static final CIKey CREATE__TIME__MS = CIKey.createCommonKey("Create Time Ms");
+    public static final CIKey DOC__COUNT = CIKey.createCommonKey("Doc Count");
+    public static final CIKey EFFECTIVE__TIME = CIKey.createCommonKey("Effective Time");
+    public static final CIKey END__TIME = CIKey.createCommonKey("End Time");
+    public static final CIKey END__TIME__MS = CIKey.createCommonKey("End Time Ms");
+    public static final CIKey ERROR__COUNT = CIKey.createCommonKey("Error Count");
+    public static final CIKey FATAL__ERROR__COUNT = CIKey.createCommonKey("Fatal Error Count");
+    public static final CIKey FILE__SIZE = CIKey.createCommonKey("File Size");
+    public static final CIKey INDEX__NAME = CIKey.createCommonKey("Index Name");
+    public static final CIKey INFO__COUNT = CIKey.createCommonKey("Info Count");
+    public static final CIKey LAST__COMMIT = CIKey.createCommonKey("Last Commit");
+    public static final CIKey META__ID = CIKey.createCommonKey("Meta Id");
+    public static final CIKey PARENT__CREATE__TIME = CIKey.createCommonKey("Parent Create Time");
+    public static final CIKey PARENT__FEED = CIKey.createCommonKey("Parent Feed");
+    public static final CIKey PARENT__ID = CIKey.createCommonKey("Parent Id");
+    public static final CIKey PARENT__STATUS = CIKey.createCommonKey("Parent Status");
+    public static final CIKey PIPELINE__NAME = CIKey.createCommonKey("Pipeline Name");
+    public static final CIKey PROCESSOR__DELETED = CIKey.createCommonKey("Processor Deleted");
+    public static final CIKey PROCESSOR__ENABLED = CIKey.createCommonKey("Processor Enabled");
+    public static final CIKey PROCESSOR__FILTER__DELETED = CIKey.createCommonKey("Processor Filter Deleted");
+    public static final CIKey PROCESSOR__FILTER__ENABLED = CIKey.createCommonKey("Processor Filter Enabled");
+    public static final CIKey PROCESSOR__FILTER__ID = CIKey.createCommonKey("Processor Filter Id");
+    public static final CIKey PROCESSOR__FILTER__LAST__POLL__MS = CIKey.createCommonKey(
+            "Processor Filter Last Poll Ms");
+    public static final CIKey PROCESSOR__FILTER__PRIORITY = CIKey.createCommonKey("Processor Filter Priority");
+    public static final CIKey PROCESSOR__FILTER__UUID = CIKey.createCommonKey("Processor Filter UUID");
+    public static final CIKey PROCESSOR__ID = CIKey.createCommonKey("Processor Id");
+    public static final CIKey PROCESSOR__PIPELINE = CIKey.createCommonKey("Processor Pipeline");
+    public static final CIKey PROCESSOR__TASK__ID = CIKey.createCommonKey("Processor Task Id");
+    public static final CIKey PROCESSOR__TYPE = CIKey.createCommonKey("Processor Type");
+    public static final CIKey PROCESSOR__UUID = CIKey.createCommonKey("Processor UUID");
+    public static final CIKey RAW__SIZE = CIKey.createCommonKey("Raw Size");
+    public static final CIKey READ__COUNT = CIKey.createCommonKey("Read Count");
+    public static final CIKey START__TIME = CIKey.createCommonKey("Start Time");
+    public static final CIKey START__TIME__MS = CIKey.createCommonKey("Start Time Ms");
+    public static final CIKey STATUS__TIME = CIKey.createCommonKey("Status Time");
+    public static final CIKey STATUS__TIME__MS = CIKey.createCommonKey("Status Time Ms");
+    public static final CIKey TASK__ID = CIKey.createCommonKey("Task Id");
+    public static final CIKey VOLUME__GROUP = CIKey.createCommonKey("Volume Group");
+    public static final CIKey VOLUME__PATH = CIKey.createCommonKey("Volume Path");
+    public static final CIKey WARNING__COUNT = CIKey.createCommonKey("Warning Count");
+    public static final CIKey WRITE__COUNT = CIKey.createCommonKey("Write Count");
+
+    // Annotations keys
+    public static final CIKey ANNO_ASSIGNED_TO = CIKey.createCommonKey("annotation:AssignedTo");
+    public static final CIKey ANNO_COMMENT = CIKey.createCommonKey("annotation:Comment");
+    public static final CIKey ANNO_CREATED_BY = CIKey.createCommonKey("annotation:CreatedBy");
+    public static final CIKey ANNO_CREATED_ON = CIKey.createCommonKey("annotation:CreatedOn");
+    public static final CIKey ANNO_HISTORY = CIKey.createCommonKey("annotation:History");
+    public static final CIKey ANNO_ID = CIKey.createCommonKey("annotation:Id");
+    public static final CIKey ANNO_STATUS = CIKey.createCommonKey("annotation:Status");
+    public static final CIKey ANNO_SUBJECT = CIKey.createCommonKey("annotation:Subject");
+    public static final CIKey ANNO_TITLE = CIKey.createCommonKey("annotation:Title");
+    public static final CIKey ANNO_UPDATED_BY = CIKey.createCommonKey("annotation:UpdatedBy");
+    public static final CIKey ANNO_UPDATED_ON = CIKey.createCommonKey("annotation:UpdatedOn");
+
+    public static final CIKey UNDERSCORE_EVENT_ID = CIKey.createCommonKey("__event_id__");
+    public static final CIKey UNDERSCORE_STREAM_ID = CIKey.createCommonKey("__stream_id__");
+    public static final CIKey UNDERSCORE_TIME = CIKey.createCommonKey("__time__");
+
+    @JsonValue // No need to serialise the CIKey wrapper, just the key
     private final String key;
+
     @JsonIgnore
     private final transient String lowerKey;
 
     @JsonCreator
-    private CIKey(@JsonProperty("key") final String key) {
+    private CIKey(final String key) {
         this.key = key;
         this.lowerKey = toLowerCase(key);
     }
@@ -103,6 +175,30 @@ public class CIKey implements Comparable<CIKey> {
         this.lowerKey = lowerKey;
     }
 
+    /**
+     * Only intended for use on static {@link CIKey} instances due to the cost of
+     * interning
+     */
+    private static CIKey createCommonKey(final String key) {
+        final CIKey ciKey;
+        if (key == null) {
+            ciKey = NULL_STRING;
+        } else {
+            // Ensure we are using string pool instances for both
+            final String k = key.intern();
+            ciKey = new CIKey(k, toLowerCase(k).intern());
+        }
+        COMMON_KEYS.put(key, ciKey);
+        return ciKey;
+    }
+
+    /**
+     * Create a {@link CIKey} for an upper or mixed case key, e.g. "FOO", or "Foo",
+     * when you already know the lower-case form of the key.
+     * If key is all lower case then user {@link CIKey#ofLowerCase(String)}.
+     * If key is a common key this method will return an existing {@link CIKey} instance
+     * else it will create a new instance.
+     */
     public static CIKey of(final String key, final String lowerKey) {
         if (key == null) {
             return NULL_STRING;
@@ -120,6 +216,8 @@ public class CIKey implements Comparable<CIKey> {
     /**
      * Create a {@link CIKey} for an upper or mixed case key, e.g. "FOO", or "Foo".
      * If key is all lower case then user {@link CIKey#ofLowerCase(String)}.
+     * If key is a common key this method will return an existing {@link CIKey} instance
+     * else it will create a new instance.
      */
     public static CIKey of(final String key) {
         if (key == null) {
@@ -136,7 +234,33 @@ public class CIKey implements Comparable<CIKey> {
     }
 
     /**
+     * Create a {@link CIKey} for key, providing a map of known {@link CIKey}s keyed
+     * on their key value. Allows callers to hold their own set of known {@link CIKey}s.
+     */
+    public static CIKey of(final String key, final Map<String, CIKey> knownKeys) {
+        if (key == null) {
+            return NULL_STRING;
+        } else if (key.isEmpty()) {
+            return EMPTY_STRING;
+        } else {
+            CIKey ciKey = null;
+            if (knownKeys != null) {
+                ciKey = knownKeys.get(key);
+            }
+            if (ciKey == null) {
+                ciKey = COMMON_KEYS.get(key);
+                if (ciKey == null) {
+                    ciKey = new CIKey(key);
+                }
+            }
+            return ciKey;
+        }
+    }
+
+    /**
      * Create a {@link CIKey} for an all lower case key, e.g. "foo".
+     * This is a minor optimisation to avoid a call to toLowerCase as the
+     * key is already in lower-case.
      */
     public static CIKey ofLowerCase(final String lowerKey) {
         if (lowerKey == null) {
@@ -153,9 +277,50 @@ public class CIKey implements Comparable<CIKey> {
     }
 
     /**
+     * Create a {@link CIKey} for a key that is known NOT to be in {@link CIKey}s list
+     * of common keys.
+     */
+    public static CIKey ofDynamicKey(final String dynamicKey) {
+        if (dynamicKey == null) {
+            return NULL_STRING;
+        } else if (dynamicKey.isEmpty()) {
+            return EMPTY_STRING;
+        } else {
+            return new CIKey(dynamicKey);
+        }
+    }
+
+    /**
+     * Create a {@link CIKey} for an upper or mixed case key, e.g. "FOO", or "Foo",
+     * that will be held as a static variable. This has the additional cost of
+     * interning the lower-case form of the key. Don't use this for dynamic keys.
+     */
+    public static CIKey ofStaticKey(final String key) {
+        if (key == null) {
+            return NULL_STRING;
+        } else if (key.isEmpty()) {
+            return EMPTY_STRING;
+        } else {
+            // See if we have a common key that matches exactly with the one requested.
+            // Case-sensitive here because CIKey should wrap the exact case passed in.
+            return GwtNullSafe.requireNonNullElseGet(
+                    COMMON_KEYS.get(key),
+                    () -> CIKey.createCommonKey(key));
+        }
+    }
+
+    /**
      * @return The wrapped string in its original case.
      */
+    @JsonIgnore
     public String get() {
+        return key;
+    }
+
+    /**
+     * Here for JSON (de-)ser.
+     */
+    private String getKey() {
         return key;
     }
 
@@ -208,8 +373,12 @@ public class CIKey implements Comparable<CIKey> {
     }
 
     /**
-     * Returns true if the string this {@link CIKey} wraps contains lowerSubString
-     * which MUST be all lower case.
+     * Returns true if the string this {@link CIKey} wraps contains (ignoring case) lowerSubString.
+     * {@code lowerSubString} MUST be all lower case.
+     * <p>
+     * This method is a slight optimisation to avoid having to lower-case the input if it
+     * is know to already be lower-case.
+     * </p>
      * If lowerSubString is mixed or upper case, use {@link CIKey#containsIgnoreCase(String)} instead.
      */
     public boolean containsLowerCase(final String lowerSubString) {
@@ -408,6 +577,13 @@ public class CIKey implements Comparable<CIKey> {
     /**
      * True if str is equal to the string wrapped by ciKey, ignoring case.
      */
+    public static boolean equalsIgnoreCase(final CIKey ciKey, final String str) {
+        return equalsIgnoreCase(str, ciKey);
+    }
+
+    /**
+     * True if str is equal to the string wrapped by ciKey, ignoring case.
+     */
     public static boolean equalsIgnoreCase(final String str, final CIKey ciKey) {
         final String lowerKey = ciKey.lowerKey;
         if (lowerKey == null && str == null) {
@@ -415,12 +591,5 @@ public class CIKey implements Comparable<CIKey> {
         } else {
             return lowerKey != null && lowerKey.equalsIgnoreCase(str);
         }
-    }
-
-    /**
-     * True if str is equal to the string wrapped by ciKey, ignoring case.
-     */
-    public static boolean equalsIgnoreCase(final CIKey ciKey, final String str) {
-        return equalsIgnoreCase(str, ciKey);
     }
 }

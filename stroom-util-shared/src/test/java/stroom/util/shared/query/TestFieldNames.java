@@ -19,7 +19,6 @@ package stroom.util.shared.query;
 import stroom.test.common.TestUtil;
 import stroom.util.shared.string.CIKey;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
@@ -61,7 +60,7 @@ class TestFieldNames {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String.class)
                 .withOutputType(CIKey.class)
-                .withSingleArgTestFunction(FieldNames::createCIKey)
+                .withSingleArgTestFunction(CIKey::of)
                 .withAssertions(outcome -> {
                     final String input = outcome.getInput();
                     final CIKey actualOutput = outcome.getActualOutput();
@@ -81,11 +80,5 @@ class TestFieldNames {
                 .addCase(null, CIKey.NULL_STRING)
                 .addCase("", CIKey.EMPTY_STRING)
                 .build();
-    }
-
-    @Test
-    void testCreate() {
-        Assertions.assertThat(FieldNames.createCIKey("foo"))
-                .isEqualTo(CIKey.of("foo"));
     }
 }

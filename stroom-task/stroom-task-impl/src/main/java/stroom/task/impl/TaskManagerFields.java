@@ -17,7 +17,6 @@
 package stroom.task.impl;
 
 import stroom.datasource.api.v2.QueryField;
-import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.string.CIKey;
 
 import java.util.ArrayList;
@@ -35,12 +34,12 @@ public class TaskManagerFields {
     public static final String FIELD_AGE = "Age";
     public static final String FIELD_INFO = "Info";
 
-    public static final CIKey FIELD_NODE_KEY = CIKey.of(FIELD_NODE);
-    public static final CIKey FIELD_NAME_KEY = CIKey.of(FIELD_NAME);
-    public static final CIKey FIELD_USER_KEY = CIKey.of(FIELD_USER);
-    public static final CIKey FIELD_SUBMIT_TIME_KEY = CIKey.of(FIELD_SUBMIT_TIME);
-    public static final CIKey FIELD_AGE_KEY = CIKey.of(FIELD_AGE);
-    public static final CIKey FIELD_INFO_KEY = CIKey.of(FIELD_INFO);
+    public static final CIKey FIELD_NODE_KEY = CIKey.ofStaticKey(FIELD_NODE);
+    public static final CIKey FIELD_NAME_KEY = CIKey.ofStaticKey(FIELD_NAME);
+    public static final CIKey FIELD_USER_KEY = CIKey.ofStaticKey(FIELD_USER);
+    public static final CIKey FIELD_SUBMIT_TIME_KEY = CIKey.ofStaticKey(FIELD_SUBMIT_TIME);
+    public static final CIKey FIELD_AGE_KEY = CIKey.ofStaticKey(FIELD_AGE);
+    public static final CIKey FIELD_INFO_KEY = CIKey.ofStaticKey(FIELD_INFO);
 
     public static final QueryField NODE = QueryField.createText(FIELD_NODE);
     public static final QueryField NAME = QueryField.createText(FIELD_NAME);
@@ -78,12 +77,6 @@ public class TaskManagerFields {
     }
 
     public static CIKey createCIKey(final String fieldName) {
-        if (GwtNullSafe.isEmptyString(fieldName)) {
-            return CIKey.of(fieldName);
-        } else {
-            return GwtNullSafe.requireNonNullElseGet(
-                    NAME_TO_KEY_MAP.get(fieldName),
-                    () -> CIKey.of(fieldName));
-        }
+        return CIKey.of(fieldName, NAME_TO_KEY_MAP);
     }
 }

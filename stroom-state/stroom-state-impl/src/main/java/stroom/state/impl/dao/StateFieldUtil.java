@@ -20,8 +20,12 @@ import stroom.datasource.api.v2.QueryField;
 import stroom.state.shared.StateType;
 import stroom.util.shared.string.CIKey;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.type.DataType;
+
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 public class StateFieldUtil {
 
@@ -52,5 +56,15 @@ public class StateFieldUtil {
             case TEMPORAL_RANGED_STATE -> TemporalRangedStateFields.EFFECTIVE_TIME_FIELD;
             case SESSION -> SessionFields.START_FIELD;
         };
+    }
+
+    public static Entry<CIKey, ScyllaDbColumn> createNameToColumnEntry(
+            final CIKey name,
+            final DataType dataType,
+            final CqlIdentifier identifier) {
+
+        return Map.entry(
+                name,
+                new ScyllaDbColumn(name.get(), dataType, identifier));
     }
 }

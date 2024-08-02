@@ -19,7 +19,6 @@ package stroom.query.language.functions;
 import stroom.query.language.token.Param;
 import stroom.query.language.token.Token;
 import stroom.query.language.token.TokenException;
-import stroom.util.shared.query.FieldNames;
 import stroom.util.shared.string.CIKey;
 
 import java.util.Map;
@@ -50,7 +49,7 @@ public class ParamFactory {
     }
 
     private Param createRef(final String name, final FieldIndex fieldIndex) {
-        final CIKey caseInsensitiveFieldName = FieldNames.createCIKey(name);
+        final CIKey caseInsensitiveFieldName = CIKey.of(name);
         final Expression expression = expressionReference.get(caseInsensitiveFieldName);
         if (expression != null) {
             return expression;

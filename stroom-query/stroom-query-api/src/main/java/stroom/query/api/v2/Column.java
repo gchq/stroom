@@ -18,7 +18,6 @@ package stroom.query.api.v2;
 
 import stroom.docref.HasDisplayValue;
 import stroom.util.shared.GwtNullSafe;
-import stroom.util.shared.query.FieldNames;
 import stroom.util.shared.string.CIKey;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -116,7 +115,7 @@ public final class Column implements HasDisplayValue {
     public CIKey getIdAsCIKey() {
         if (caseInsensitiveId == null) {
             // Saves us building a CIKey every time we need to look up the columns name
-            final CIKey idKey = FieldNames.createCIKey(id);
+            final CIKey idKey = CIKey.of(id);
             this.caseInsensitiveId = idKey;
             return idKey;
         }
@@ -131,9 +130,9 @@ public final class Column implements HasDisplayValue {
     public CIKey getNameAsCIKey() {
         if (caseInsensitiveName == null) {
             // Saves us building a CIKey every time we need to look up the columns name
-            final CIKey nameKey = Objects.equals(id, name)
+            final CIKey nameKey = Objects.equals(id, name) && this.caseInsensitiveId != null
                     ? this.caseInsensitiveId
-                    : FieldNames.createCIKey(name);
+                    : CIKey.of(name);
             this.caseInsensitiveName = nameKey;
             return nameKey;
         }

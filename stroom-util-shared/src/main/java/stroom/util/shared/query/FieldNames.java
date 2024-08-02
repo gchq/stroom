@@ -16,79 +16,67 @@
 
 package stroom.util.shared.query;
 
-import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.string.CIKey;
 
-import java.util.Map;
 import java.util.Objects;
 
 public class FieldNames {
 
-    public static final String DEFAULT_TIME_FIELD_NAME = "__time__";
     /**
      * For field '{@code __time__}'
      */
-    public static final CIKey DEFAULT_TIME_FIELD_KEY = CIKey.of(DEFAULT_TIME_FIELD_NAME);
-
-    public static final String FALLBACK_TIME_FIELD_NAME = "EventTime";
+    public static final CIKey DEFAULT_TIME_FIELD_KEY = CIKey.UNDERSCORE_TIME;
+    /**
+     * Field '{@code __time__}'
+     */
+    public static final String DEFAULT_TIME_FIELD_NAME = DEFAULT_TIME_FIELD_KEY.get();
     /**
      * For field '{@code EventTime}'
      */
-    public static final CIKey FALLBACK_TIME_FIELD_KEY = CIKey.of(FALLBACK_TIME_FIELD_NAME);
+    public static final CIKey FALLBACK_TIME_FIELD_KEY = CIKey.EVENT_TIME;
+    /**
+     * Field '{@code EventTime}'
+     */
+    public static final String FALLBACK_TIME_FIELD_NAME = FALLBACK_TIME_FIELD_KEY.get();
 
-    public static final String DEFAULT_STREAM_ID_FIELD_NAME = "__stream_id__";
     /**
      * For field '{@code __stream_id__}'
      */
-    public static final CIKey DEFAULT_STREAM_ID_FIELD_KEY = CIKey.of(
-            DEFAULT_STREAM_ID_FIELD_NAME);
+    public static final CIKey DEFAULT_STREAM_ID_FIELD_KEY = CIKey.UNDERSCORE_STREAM_ID;
+    /**
+     * Field '{@code __stream_id__}'
+     */
+    public static final String DEFAULT_STREAM_ID_FIELD_NAME = DEFAULT_STREAM_ID_FIELD_KEY.get();
 
-    public static final String FALLBACK_STREAM_ID_FIELD_NAME = "StreamId";
     /**
      * For field '{@code StreamId}'
      */
-    public static final CIKey FALLBACK_STREAM_ID_FIELD_KEY = CIKey.of(
-            FALLBACK_STREAM_ID_FIELD_NAME);
+    public static final CIKey FALLBACK_STREAM_ID_FIELD_KEY = CIKey.STREAM_ID;
+    /**
+     * Field '{@code StreamId}'
+     */
+    public static final String FALLBACK_STREAM_ID_FIELD_NAME = FALLBACK_STREAM_ID_FIELD_KEY.get();
 
-    public static final String DEFAULT_EVENT_ID_FIELD_NAME = "__event_id__";
     /**
      * For field '{@code __event_id__}'
      */
-    public static final CIKey DEFAULT_EVENT_ID_FIELD_KEY = CIKey.of(
-            DEFAULT_EVENT_ID_FIELD_NAME);
+    public static final CIKey DEFAULT_EVENT_ID_FIELD_KEY = CIKey.UNDERSCORE_EVENT_ID;
+    /**
+     * Field '{@code __event_id__}'
+     */
+    public static final String DEFAULT_EVENT_ID_FIELD_NAME = DEFAULT_EVENT_ID_FIELD_KEY.get();
 
-    public static final String FALLBACK_EVENT_ID_FIELD_NAME = "EventId";
     /**
      * For field '{@code EventId}'
      */
-    public static final CIKey FALLBACK_EVENT_ID_FIELD_KEY = CIKey.of(
-            FALLBACK_EVENT_ID_FIELD_NAME);
-
-    private static final Map<String, CIKey> STANDARD_FIELD_NAMES_MAP = Map.of(
-            DEFAULT_TIME_FIELD_NAME, DEFAULT_TIME_FIELD_KEY,
-            FALLBACK_TIME_FIELD_NAME, FALLBACK_TIME_FIELD_KEY,
-            DEFAULT_STREAM_ID_FIELD_NAME, DEFAULT_STREAM_ID_FIELD_KEY,
-            FALLBACK_STREAM_ID_FIELD_NAME, FALLBACK_STREAM_ID_FIELD_KEY,
-            DEFAULT_EVENT_ID_FIELD_NAME, DEFAULT_EVENT_ID_FIELD_KEY,
-            FALLBACK_EVENT_ID_FIELD_NAME, FALLBACK_EVENT_ID_FIELD_KEY,
-            "", CIKey.EMPTY_STRING);
+    public static final CIKey FALLBACK_EVENT_ID_FIELD_KEY = CIKey.EVENT_ID;
+    /**
+     * Field '{@code EventId}'
+     */
+    public static final String FALLBACK_EVENT_ID_FIELD_NAME = FALLBACK_EVENT_ID_FIELD_KEY.get();
 
     private FieldNames() {
         // Static stuff only
-    }
-
-    /**
-     * Create a case-insensitive cache key for the passed fieldName
-     */
-    public static CIKey createCIKey(final String fieldName) {
-        // Re-use the pre-built CIKeys for standard fieldNames if we can
-        if (fieldName == null) {
-            return CIKey.NULL_STRING;
-        } else {
-            return GwtNullSafe.requireNonNullElseGet(
-                    STANDARD_FIELD_NAMES_MAP.get(fieldName),
-                    () -> CIKey.of(fieldName));
-        }
     }
 
     /**

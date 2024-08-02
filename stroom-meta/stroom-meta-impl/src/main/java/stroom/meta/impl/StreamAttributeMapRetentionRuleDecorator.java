@@ -60,7 +60,7 @@ class StreamAttributeMapRetentionRuleDecorator {
     }
 
     void addMatchingRetentionRuleInfo(final Meta meta,
-                                      final Map<CIKey, String> attributeMap) {
+                                      final Map<String, String> attributeMap) {
         try {
             int index = -1;
 
@@ -101,10 +101,10 @@ class StreamAttributeMapRetentionRuleDecorator {
         }
     }
 
-    private void putAttr(final Map<CIKey, String> attributeMap,
+    private void putAttr(final Map<String, String> attributeMap,
                          final QueryField queryField,
                          final String value) {
-        attributeMap.put(queryField.getFldNameAsCIKey(), value);
+        attributeMap.put(queryField.getFldName(), value);
     }
 
     private int findMatchingRuleIndex(final Map<CIKey, Object> attributeMap) {

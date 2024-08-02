@@ -16,62 +16,50 @@
 
 package stroom.state.impl.dao;
 
-import stroom.util.shared.GwtNullSafe;
-import stroom.util.shared.string.CIKey;
-
-import java.util.Map;
-
 public class FieldNames {
 
     private FieldNames() {
     }
 
-    static final String EFFECTIVE_TIME_FIELD_NAME = "EffectiveTime";
-    static final String END_FIELD_NAME = "End";
-    static final String INSERT_TIME_FIELD_NAME = "InsertTime";
-    static final String KEY_END_FIELD_NAME = "KeyEnd";
-    static final String KEY_FIELD_NAME = "Key";
-    static final String KEY_START_FIELD_NAME = "KeyStart";
-    static final String START_FIELD_NAME = "Start";
-    static final String TERMINAL_FIELD_NAME = "Terminal";
-    static final String VALUE_FIELD_NAME = "Value";
-    static final String VALUE_TYPE_FIELD_NAME = "ValueType";
-
-    static final CIKey EFFECTIVE_TIME_FIELD_KEY = CIKey.of(EFFECTIVE_TIME_FIELD_NAME);
-    static final CIKey END_FIELD_KEY = CIKey.of(END_FIELD_NAME);
-    static final CIKey INSERT_TIME_FIELD_KEY = CIKey.of(INSERT_TIME_FIELD_NAME);
-    static final CIKey KEY_END_FIELD_KEY = CIKey.of(KEY_END_FIELD_NAME);
-    static final CIKey KEY_FIELD_KEY = CIKey.of(KEY_FIELD_NAME);
-    static final CIKey KEY_START_FIELD_KEY = CIKey.of(KEY_START_FIELD_NAME);
-    static final CIKey START_FIELD_KEY = CIKey.of(START_FIELD_NAME);
-    static final CIKey TERMINAL_FIELD_KEY = CIKey.of(TERMINAL_FIELD_NAME);
-    static final CIKey VALUE_FIELD_KEY = CIKey.of(VALUE_FIELD_NAME);
-    static final CIKey VALUE_TYPE_FIELD_KEY = CIKey.of(VALUE_TYPE_FIELD_NAME);
-
-    private static final Map<String, CIKey> STANDARD_FIELD_NAMES_MAP = Map.ofEntries(
-            Map.entry(EFFECTIVE_TIME_FIELD_NAME, EFFECTIVE_TIME_FIELD_KEY),
-            Map.entry(END_FIELD_NAME, END_FIELD_KEY),
-            Map.entry(INSERT_TIME_FIELD_NAME, INSERT_TIME_FIELD_KEY),
-            Map.entry(KEY_END_FIELD_NAME, KEY_END_FIELD_KEY),
-            Map.entry(KEY_FIELD_NAME, KEY_FIELD_KEY),
-            Map.entry(KEY_START_FIELD_NAME, KEY_START_FIELD_KEY),
-            Map.entry(START_FIELD_NAME, START_FIELD_KEY),
-            Map.entry(TERMINAL_FIELD_NAME, TERMINAL_FIELD_KEY),
-            Map.entry(VALUE_FIELD_NAME, VALUE_FIELD_KEY),
-            Map.entry(VALUE_TYPE_FIELD_NAME, VALUE_TYPE_FIELD_KEY),
-            Map.entry("", CIKey.EMPTY_STRING));
-
-    /**
-     * Create a case-insensitive cache key for the passed fieldName
-     */
-    public static CIKey createCIKey(final String fieldName) {
-        // Re-use the pre-built CIKeys for standard fieldNames if we can
-        if (fieldName == null) {
-            return CIKey.NULL_STRING;
-        } else {
-            return GwtNullSafe.requireNonNullElseGet(
-                    STANDARD_FIELD_NAMES_MAP.get(fieldName),
-                    () -> CIKey.of(fieldName));
-        }
-    }
+//    static final String EFFECTIVE_TIME_FIELD_NAME = "EffectiveTime";
+//    static final String END_FIELD_NAME = "End";
+//    static final String INSERT_TIME_FIELD_NAME = "InsertTime";
+//    static final String KEY_END_FIELD_NAME = "KeyEnd";
+//    static final String KEY_FIELD_NAME = "Key";
+//    static final String KEY_START_FIELD_NAME = "KeyStart";
+//    static final String START_FIELD_NAME = "Start";
+//    static final String TERMINAL_FIELD_NAME = "Terminal";
+//    static final String VALUE_FIELD_NAME = "Value";
+//    static final String VALUE_TYPE_FIELD_NAME = "ValueType";
+//
+//    static final CIKey EFFECTIVE_TIME_FIELD_KEY = CIKey.ofStaticKey(EFFECTIVE_TIME_FIELD_NAME);
+//    static final CIKey END_FIELD_KEY = CIKey.ofStaticKey(END_FIELD_NAME);
+//    static final CIKey INSERT_TIME_FIELD_KEY = CIKey.ofStaticKey(INSERT_TIME_FIELD_NAME);
+//    static final CIKey KEY_END_FIELD_KEY = CIKey.ofStaticKey(KEY_END_FIELD_NAME);
+//    static final CIKey KEY_FIELD_KEY = CIKey.ofStaticKey(KEY_FIELD_NAME);
+//    static final CIKey KEY_START_FIELD_KEY = CIKey.ofStaticKey(KEY_START_FIELD_NAME);
+//    static final CIKey START_FIELD_KEY = CIKey.ofStaticKey(START_FIELD_NAME);
+//    static final CIKey TERMINAL_FIELD_KEY = CIKey.ofStaticKey(TERMINAL_FIELD_NAME);
+//    static final CIKey VALUE_FIELD_KEY = CIKey.ofStaticKey(VALUE_FIELD_NAME);
+//    static final CIKey VALUE_TYPE_FIELD_KEY = CIKey.ofStaticKey(VALUE_TYPE_FIELD_NAME);
+//
+//    private static final Map<String, CIKey> STANDARD_FIELD_NAMES_MAP = Map.ofEntries(
+//            Map.entry(EFFECTIVE_TIME_FIELD_NAME, EFFECTIVE_TIME_FIELD_KEY),
+//            Map.entry(END_FIELD_NAME, END_FIELD_KEY),
+//            Map.entry(INSERT_TIME_FIELD_NAME, INSERT_TIME_FIELD_KEY),
+//            Map.entry(KEY_END_FIELD_NAME, KEY_END_FIELD_KEY),
+//            Map.entry(KEY_FIELD_NAME, KEY_FIELD_KEY),
+//            Map.entry(KEY_START_FIELD_NAME, KEY_START_FIELD_KEY),
+//            Map.entry(START_FIELD_NAME, START_FIELD_KEY),
+//            Map.entry(TERMINAL_FIELD_NAME, TERMINAL_FIELD_KEY),
+//            Map.entry(VALUE_FIELD_NAME, VALUE_FIELD_KEY),
+//            Map.entry(VALUE_TYPE_FIELD_NAME, VALUE_TYPE_FIELD_KEY),
+//            Map.entry("", CIKey.EMPTY_STRING));
+//
+//    /**
+//     * Create a case-insensitive cache key for the passed fieldName
+//     */
+//    public static CIKey createCIKey(final String fieldName) {
+//        return CIKey.of(fieldName, STANDARD_FIELD_NAMES_MAP);
+//    }
 }

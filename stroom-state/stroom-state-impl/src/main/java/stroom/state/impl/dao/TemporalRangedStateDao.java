@@ -62,17 +62,13 @@ public class TemporalRangedStateDao extends AbstractStateDao<TemporalRangedState
     private static final CqlIdentifier COLUMN_VALUE_TYPE = CqlIdentifier.fromCql("value_type");
     private static final CqlIdentifier COLUMN_VALUE = CqlIdentifier.fromCql("value");
 
-    private static final Map<CIKey, ScyllaDbColumn> NAME_TO_COLUMN_MAP = Map.of(
-            FieldNames.KEY_START_FIELD_KEY,
-            new ScyllaDbColumn(FieldNames.KEY_START_FIELD_NAME, DataTypes.BIGINT, COLUMN_KEY_START),
-            FieldNames.KEY_END_FIELD_KEY,
-            new ScyllaDbColumn(FieldNames.KEY_END_FIELD_NAME, DataTypes.BIGINT, COLUMN_KEY_END),
-            FieldNames.EFFECTIVE_TIME_FIELD_KEY,
-            new ScyllaDbColumn(FieldNames.EFFECTIVE_TIME_FIELD_NAME, DataTypes.TIMESTAMP, COLUMN_EFFECTIVE_TIME),
-            FieldNames.VALUE_TYPE_FIELD_KEY,
-            new ScyllaDbColumn(FieldNames.VALUE_TYPE_FIELD_NAME, DataTypes.TINYINT, COLUMN_VALUE_TYPE),
-            FieldNames.VALUE_FIELD_KEY,
-            new ScyllaDbColumn(FieldNames.VALUE_FIELD_NAME, DataTypes.BLOB, COLUMN_VALUE));
+    private static final Map<CIKey, ScyllaDbColumn> NAME_TO_COLUMN_MAP = Map.ofEntries(
+            StateFieldUtil.createNameToColumnEntry(CIKey.KEY_START, DataTypes.BIGINT, COLUMN_KEY_START),
+            StateFieldUtil.createNameToColumnEntry(CIKey.KEY_END, DataTypes.BIGINT, COLUMN_KEY_END),
+            StateFieldUtil.createNameToColumnEntry(
+                    CIKey.EFFECTIVE_TIME, DataTypes.TIMESTAMP, COLUMN_EFFECTIVE_TIME),
+            StateFieldUtil.createNameToColumnEntry(CIKey.VALUE_TYPE, DataTypes.TINYINT, COLUMN_VALUE_TYPE),
+            StateFieldUtil.createNameToColumnEntry(CIKey.VALUE, DataTypes.BLOB, COLUMN_VALUE));
 
     public TemporalRangedStateDao(final Provider<CqlSession> sessionProvider, final String tableName) {
         super(sessionProvider, CqlIdentifier.fromCql(tableName));
@@ -153,8 +149,8 @@ public class TemporalRangedStateDao extends AbstractStateDao<TemporalRangedState
                 sessionProvider,
                 table,
                 NAME_TO_COLUMN_MAP,
-                FieldNames.VALUE_TYPE_FIELD_KEY,
-                FieldNames.VALUE_FIELD_KEY);
+                CIKey.VALUE_TYPE,
+                CIKey.VALUE);
         searchHelper.search(criteria, fieldIndex, dateTimeSettings, consumer);
     }
 

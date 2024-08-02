@@ -51,7 +51,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.Metrics;
 import stroom.util.shared.GwtNullSafe;
-import stroom.util.shared.query.FieldNames;
 import stroom.util.shared.string.CIKey;
 import stroom.util.shared.time.SimpleDuration;
 
@@ -257,7 +256,7 @@ public class LmdbDataStore implements DataStore {
                     if (fieldIdToValueMap == null) {
                         fieldIdToValueMap = new HashMap<>();
                     }
-                    final CIKey caseInsensitiveFieldName = FieldNames.createCIKey(compiledColumn.getColumn().getName());
+                    final CIKey caseInsensitiveFieldName = CIKey.of(compiledColumn.getColumn().getName());
                     fieldIdToValueMap.put(caseInsensitiveFieldName, string);
                 }
             }

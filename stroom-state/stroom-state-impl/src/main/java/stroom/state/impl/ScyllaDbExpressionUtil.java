@@ -21,7 +21,6 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
-import stroom.state.impl.dao.FieldNames;
 import stroom.state.impl.dao.ScyllaDbColumn;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -80,7 +79,7 @@ public class ScyllaDbExpressionUtil {
         final Condition condition = term.getCondition();
         String value = term.getValue();
 
-        final ScyllaDbColumn column = columnMap.get(FieldNames.createCIKey(field));
+        final ScyllaDbColumn column = columnMap.get(CIKey.of(field));
         if (column == null) {
             throw new RuntimeException("Unexpected column " + field);
         }

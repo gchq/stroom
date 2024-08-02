@@ -18,6 +18,7 @@ package stroom.query.language.functions;
 
 import stroom.util.shared.string.CIKey;
 
+import java.util.Map;
 import java.util.Set;
 
 public class ParamKeys {
@@ -26,25 +27,19 @@ public class ParamKeys {
      * The display name (or subjectId if there isn't one) of the current logged-in user
      */
     public static final String CURRENT_USER = "currentUser()";
-    public static final CIKey CURRENT_USER_KEY = CIKey.of(CURRENT_USER);
+    public static final CIKey CURRENT_USER_KEY = CIKey.ofStaticKey(CURRENT_USER);
 
     /**
-     * The subjectId of the curent logged-in user
+     * The subjectId of the current logged-in user
      */
     public static final String CURRENT_USER_SUBJECT_ID = "currentUserSubjectId()";
-    public static final CIKey CURRENT_USER_SUBJECT_ID_KEY = CIKey.of(CURRENT_USER_SUBJECT_ID);
+    public static final CIKey CURRENT_USER_SUBJECT_ID_KEY = CIKey.ofStaticKey(CURRENT_USER_SUBJECT_ID);
 
     /**
-     * The full name of the curent logged-in user. May be null
+     * The full name of the current logged-in user. May be null
      */
     public static final String CURRENT_USER_FULL_NAME = "currentUserFullName()";
-    public static final CIKey CURRENT_USER_FULL_NAME_KEY = CIKey.of(CURRENT_USER_FULL_NAME);
-
-    private static final Set<String> INTERNAL_PARAM_KEYS = Set.of(
-            CURRENT_USER,
-            CURRENT_USER_SUBJECT_ID,
-            CURRENT_USER_FULL_NAME
-    );
+    public static final CIKey CURRENT_USER_FULL_NAME_KEY = CIKey.ofStaticKey(CURRENT_USER_FULL_NAME);
 
     private static final Set<CIKey> INTERNAL_PARAM_KEYS_AS_KEYS = Set.of(
             CURRENT_USER_KEY,
@@ -52,13 +47,10 @@ public class ParamKeys {
             CURRENT_USER_FULL_NAME_KEY
     );
 
-    static boolean isInternalParamKey(final String key) {
-        if (key == null) {
-            return false;
-        } else {
-            return INTERNAL_PARAM_KEYS.contains(key);
-        }
-    }
+    public static final Map<String, CIKey> KNOWN_KEYS_MAP = Map.of(
+            CURRENT_USER, CURRENT_USER_KEY,
+            CURRENT_USER_SUBJECT_ID, CURRENT_USER_SUBJECT_ID_KEY,
+            CURRENT_USER_FULL_NAME, CURRENT_USER_FULL_NAME_KEY);
 
     static boolean isInternalParamKey(final CIKey key) {
         if (key == null) {

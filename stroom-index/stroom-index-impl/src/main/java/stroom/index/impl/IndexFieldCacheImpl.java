@@ -27,7 +27,6 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.PermissionException;
-import stroom.util.shared.query.FieldNames;
 import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
@@ -102,7 +101,7 @@ public class IndexFieldCacheImpl implements IndexFieldCache, Clearable {
 
         public Key(final DocRef docRef, final String fieldName) {
             this.docRef = docRef;
-            this.fieldName = FieldNames.createCIKey(fieldName);
+            this.fieldName = CIKey.of(fieldName);
         }
 
         public DocRef getDocRef() {

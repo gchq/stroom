@@ -40,7 +40,7 @@ public class FieldIndex {
     private Integer eventIdFieldIndex;
 
     public int create(final String fieldName) {
-        final CIKey caseInsensitiveFieldName = FieldNames.createCIKey(fieldName);
+        final CIKey caseInsensitiveFieldName = CIKey.of(fieldName);
         return fieldToPos.computeIfAbsent(caseInsensitiveFieldName, k ->
                 addField(caseInsensitiveFieldName));
     }
@@ -56,7 +56,7 @@ public class FieldIndex {
     }
 
     public Integer getPos(final String fieldName) {
-        return fieldToPos.get(FieldNames.createCIKey(fieldName));
+        return fieldToPos.get(CIKey.of(fieldName));
     }
 
     public Integer getPos(final CIKey caseInsensitiveFieldName) {

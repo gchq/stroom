@@ -822,7 +822,7 @@ public class SearchRequestFactory {
             // Add missing fields if needed.
             for (final AbstractToken token : additionalFields) {
                 final String fieldName = token.getUnescapedText();
-                if (!addedFields.contains(FieldNames.createCIKey(fieldName))) {
+                if (!addedFields.contains(CIKey.of(fieldName))) {
                     final String id = "__" + fieldName.replaceAll("\\s", "_") + "__";
                     addField(token,
                             id,
@@ -1082,7 +1082,7 @@ public class SearchRequestFactory {
                               final Map<String, Integer> groupMap,
                               final Map<String, Filter> filterMap,
                               final TableSettings.Builder tableSettingsBuilder) {
-            final CIKey caseInsensitiveFieldName = FieldNames.createCIKey(fieldName);
+            final CIKey caseInsensitiveFieldName = CIKey.of(fieldName);
             addedFields.add(caseInsensitiveFieldName);
             Expression expression = expressionMap.get(caseInsensitiveFieldName);
             if (expression == null) {

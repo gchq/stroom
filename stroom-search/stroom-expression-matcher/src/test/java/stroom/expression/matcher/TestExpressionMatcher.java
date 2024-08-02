@@ -57,9 +57,9 @@ class TestExpressionMatcher {
     public static final QueryField FEED = QueryField.createDocRefByUniqueName("Feed", "Feed");
     private static final QueryField TYPE = QueryField.createText("Type");
     private static final QueryField FRUIT = QueryField.createText("Fruit");
-    private static final Map<CIKey, QueryField> FIELD_MAP = Map.of(
-            CIKey.of(FEED.getFldName()), FEED,
-            CIKey.of(TYPE.getFldName()), TYPE);
+    private static final Map<CIKey, QueryField> FIELD_MAP = CIKey.mapOf(
+            FEED.getFldName(), FEED,
+            TYPE.getFldName(), TYPE);
 
     @Test
     void testSimpleMatch_match() {
