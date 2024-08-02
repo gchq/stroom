@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.4.12] - 2024-08-02
+
+* Issue **#4397** : Fix search API to not require node name.
+
+
 ## [v7.4.11] - 2024-08-01
 
 * Issue **#4394** : Fix a bug that was causing stepping filters to ignore the top level null prefixed namespace (e.g. `xmlns="event-logging:3"`. This meant all elements in the xpath had to be fully qualified.
@@ -705,7 +710,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4.11...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4.12...HEAD
+[v7.4.12]: https://github.com/gchq/stroom/compare/v7.4.11...v7.4.12
 [v7.4.11]: https://github.com/gchq/stroom/compare/v7.4.10...v7.4.11
 [v7.4.10]: https://github.com/gchq/stroom/compare/v7.4.9...v7.4.10
 [v7.4.9]: https://github.com/gchq/stroom/compare/v7.4.8...v7.4.9
