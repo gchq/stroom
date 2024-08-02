@@ -107,11 +107,11 @@ class AnnotationDaoImpl implements AnnotationDao {
 //        expressionMapper.map(AnnotationDataSource.EVENT_ID_FIELD, ANNOTATION_DATA_LINK.EVENT_ID, Long::valueOf);
         expressionMapper.map(AnnotationFields.CREATED_ON_FIELD,
                 ANNOTATION.CREATE_TIME_MS,
-                value -> DateExpressionParser.getMs(AnnotationFields.CREATED_ON, value));
+                value -> DateExpressionParser.getMs(AnnotationFields.CREATED_ON_FIELD, value));
         expressionMapper.map(AnnotationFields.CREATED_BY_FIELD, ANNOTATION.CREATE_USER, value -> value);
         expressionMapper.map(AnnotationFields.UPDATED_ON_FIELD,
                 ANNOTATION.UPDATE_TIME_MS,
-                value -> DateExpressionParser.getMs(AnnotationFields.UPDATED_ON, value));
+                value -> DateExpressionParser.getMs(AnnotationFields.UPDATED_ON_FIELD, value));
         expressionMapper.map(AnnotationFields.UPDATED_BY_FIELD, ANNOTATION.UPDATE_USER, value -> value);
         expressionMapper.map(AnnotationFields.TITLE_FIELD, ANNOTATION.TITLE, value -> value);
         expressionMapper.map(AnnotationFields.SUBJECT_FIELD, ANNOTATION.SUBJECT, value -> value);

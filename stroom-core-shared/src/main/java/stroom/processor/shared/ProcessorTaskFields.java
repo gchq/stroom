@@ -19,6 +19,7 @@ package stroom.processor.shared;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.util.shared.string.CIKey;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +35,7 @@ public class ProcessorTaskFields {
             "Processor Tasks");
 
     private static final List<QueryField> FIELDS = new ArrayList<>();
-    private static final Map<String, QueryField> FIELD_MAP;
+    private static final Map<CIKey, QueryField> FIELD_MAP;
 
     public static final String FIELD_ID = "Id";
     public static final String FIELD_CREATE_TIME = "Created";
@@ -89,15 +90,18 @@ public class ProcessorTaskFields {
         FIELDS.add(FEED);
         FIELDS.add(STATUS);
         FIELDS.add(TASK_ID);
+
         FIELD_MAP = FIELDS.stream()
-                .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
+                .collect(Collectors.toMap(
+                        QueryField::getFldNameAsCIKey,
+                        Function.identity()));
     }
 
     public static List<QueryField> getFields() {
         return new ArrayList<>(FIELDS);
     }
 
-    public static Map<String, QueryField> getFieldMap() {
+    public static Map<CIKey, QueryField> getFieldMap() {
         return FIELD_MAP;
     }
 }

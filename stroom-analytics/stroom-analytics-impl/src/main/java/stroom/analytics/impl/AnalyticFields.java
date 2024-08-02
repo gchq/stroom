@@ -23,6 +23,8 @@ import stroom.util.shared.string.CIKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class AnalyticFields {
 
@@ -33,21 +35,11 @@ public class AnalyticFields {
             .name(ANALYTICS_STORE_TYPE)
             .build();
 
-    public static final String NAME_FIELD_NAME = "Name";
-    public static final String UUID_FIELD_NAME = "UUID";
-    public static final String TIME_FIELD_NAME = "Time";
-    public static final String VALUE_FIELD_NAME = "Value";
-
-    public static final CIKey NAME_FIELD_KEY = CIKey.of(NAME_FIELD_NAME);
-    public static final CIKey UUID_FIELD_KEY = CIKey.of(UUID_FIELD_NAME);
-    public static final CIKey TIME_FIELD_KEY = CIKey.of(TIME_FIELD_NAME);
-    public static final CIKey VALUE_FIELD_KEY = CIKey.of(VALUE_FIELD_NAME);
-
     // Times
-    public static final QueryField TIME_FIELD = QueryField.createDate(TIME_FIELD_NAME);
-    public static final QueryField NAME_FIELD = QueryField.createText(NAME_FIELD_NAME);
-    public static final QueryField UUID_FIELD = QueryField.createText(UUID_FIELD_NAME);
-    public static final QueryField VALUE_FIELD = QueryField.createText(VALUE_FIELD_NAME);
+    public static final QueryField TIME_FIELD = QueryField.createDate(CIKey.TIME, true);
+    public static final QueryField NAME_FIELD = QueryField.createText(CIKey.NAME, true);
+    public static final QueryField UUID_FIELD = QueryField.createText(CIKey.UUID, true);
+    public static final QueryField VALUE_FIELD = QueryField.createText(CIKey.VALUE, true);
 
     private static final List<QueryField> FIELDS = List.of(
             TIME_FIELD,
@@ -55,11 +47,10 @@ public class AnalyticFields {
             UUID_FIELD,
             VALUE_FIELD);
 
-    private static final Map<CIKey, QueryField> FIELD_NAME_TO_FIELD_MAP = Map.of(
-            NAME_FIELD_KEY, NAME_FIELD,
-            UUID_FIELD_KEY, UUID_FIELD,
-            TIME_FIELD_KEY, TIME_FIELD,
-            VALUE_FIELD_KEY, VALUE_FIELD);
+    private static final Map<CIKey, QueryField> FIELD_NAME_TO_FIELD_MAP = FIELDS.stream()
+            .collect(Collectors.toMap(
+                    QueryField::getFldNameAsCIKey,
+                    Function.identity()));
 
     public static List<QueryField> getFields() {
         return new ArrayList<>(FIELDS);

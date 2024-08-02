@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.search;
@@ -525,7 +524,7 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
 
         final Column statusColumn = Column.builder()
                 .name("Status")
-                .expression(ParamSubstituteUtil.makeParam(AnnotationFields.STATUS))
+                .expression(ParamSubstituteUtil.makeParam(AnnotationFields.STATUS_FIELD.getFldName()))
                 .build();
 
         final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();

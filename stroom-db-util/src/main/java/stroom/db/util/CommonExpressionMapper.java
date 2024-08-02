@@ -25,6 +25,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.string.CIKey;
 
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
@@ -44,9 +45,9 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CommonExpressionMapper.class);
 
-    private final Map<String, Function<ExpressionTerm, Condition>> termHandlers = new HashMap<>();
-    private final Map<String, QueryField> fieldMap = new HashMap<>();
-    private final Set<String> ignoredFields = new HashSet<>();
+    private final Map<CIKey, Function<ExpressionTerm, Condition>> termHandlers = new HashMap<>();
+    private final Map<CIKey, QueryField> fieldMap = new HashMap<>();
+    private final Set<CIKey> ignoredFields = new HashSet<>();
     private final Function<ExpressionItem, Condition> delegateItemHandler;
 
     public CommonExpressionMapper() {
@@ -59,13 +60,13 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
 
     public void addHandler(final QueryField dataSourceField,
                            final Function<ExpressionTerm, Condition> handler) {
-        final String fieldName = dataSourceField.getFldName();
+        final CIKey fieldName = dataSourceField.getFldNameAsCIKey();
         termHandlers.put(fieldName, handler);
         fieldMap.put(fieldName, dataSourceField);
     }
 
     public void ignoreField(final QueryField dataSourceField) {
-        ignoredFields.add(dataSourceField.getFldName());
+        ignoredFields.add(dataSourceField.getFldNameAsCIKey());
     }
 
     /**
@@ -88,8 +89,8 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
 
         if (item != null && item.enabled()) {
             if (item instanceof final ExpressionTerm term) {
-                final String fieldName = term.getField();
-                if (fieldName == null) {
+                final CIKey fieldName = CIKey.of(term.getField());
+                if (CIKey.isNull(fieldName)) {
                     throw new NullPointerException("Term has a null field '" + term + "'");
                 }
                 if (term.getCondition() == null) {
@@ -119,7 +120,7 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
                     result = Optional.of(termHandler.apply(term));
                 } else if (delegateItemHandler != null) {
                     result = Optional.of(delegateItemHandler.apply(term));
-                } else if (!ignoredFields.contains(term.getField())) {
+                } else if (!ignoredFields.contains(fieldName)) {
                     throw new RuntimeException("No term handler supplied for term '" + term.getField() + "'");
                 }
 

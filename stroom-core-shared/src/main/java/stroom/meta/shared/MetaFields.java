@@ -116,7 +116,7 @@ public class MetaFields {
 
         FIELD_MAP = FIELDS.stream()
                 .collect(Collectors.toMap(
-                        (QueryField queryField) -> CIKey.of(queryField.getFldName()),
+                        QueryField::getFldNameAsCIKey,
                         Function.identity()));
 
         // Single Items

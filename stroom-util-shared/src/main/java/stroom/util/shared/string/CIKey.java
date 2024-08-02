@@ -57,96 +57,106 @@ public class CIKey implements Comparable<CIKey> {
     public static final CIKey EMPTY_STRING = new CIKey("");
 
     // Upper camel case keys
-    public static final CIKey EFFECTIVE_TIME = CIKey.createCommonKey("EffectiveTime");
-    public static final CIKey DURATION = CIKey.createCommonKey("Duration");
-    public static final CIKey END = CIKey.createCommonKey("End");
-    public static final CIKey EVENT_ID = CIKey.createCommonKey("EventId");
-    public static final CIKey EVENT_TIME = CIKey.createCommonKey("EventTime");
-    public static final CIKey FEED = CIKey.createCommonKey("Feed");
-    public static final CIKey ID = CIKey.createCommonKey("Id");
-    public static final CIKey INDEX = CIKey.createCommonKey("Index");
-    public static final CIKey INSERT_TIME = CIKey.createCommonKey("InsertTime");
-    public static final CIKey KEY = CIKey.createCommonKey("Key");
-    public static final CIKey KEY_END = CIKey.createCommonKey("KeyEnd");
-    public static final CIKey KEY_START = CIKey.createCommonKey("KeyStart");
-    public static final CIKey NAME = CIKey.createCommonKey("Name");
-    public static final CIKey NODE = CIKey.createCommonKey("Node");
-    public static final CIKey PARTITION = CIKey.createCommonKey("Partition");
-    public static final CIKey PIPELINE = CIKey.createCommonKey("Pipeline");
-    public static final CIKey START = CIKey.createCommonKey("Start");
-    public static final CIKey STATUS = CIKey.createCommonKey("Status");
-    public static final CIKey STREAM_ID = CIKey.createCommonKey("StreamId");
-    public static final CIKey SUBJECT = CIKey.createCommonKey("Subject");
-    public static final CIKey TERMINAL = CIKey.createCommonKey("Terminal");
-    public static final CIKey TIME = CIKey.createCommonKey("Time");
-    public static final CIKey TITLE = CIKey.createCommonKey("Title");
-    public static final CIKey TYPE = CIKey.createCommonKey("Type");
-    public static final CIKey UUID = CIKey.createCommonKey("UUID");
-    public static final CIKey VALUE = CIKey.createCommonKey("Value");
-    public static final CIKey VALUE_TYPE = CIKey.createCommonKey("ValueType");
+    public static final CIKey EFFECTIVE_TIME = CIKey.commonKey("EffectiveTime");
+    public static final CIKey DURATION = CIKey.commonKey("Duration");
+    public static final CIKey END = CIKey.commonKey("End");
+    public static final CIKey EVENT_ID = CIKey.commonKey("EventId");
+    public static final CIKey EVENT_TIME = CIKey.commonKey("EventTime");
+    public static final CIKey FEED = CIKey.commonKey("Feed");
+    public static final CIKey ID = CIKey.commonKey("Id");
+    public static final CIKey INDEX = CIKey.commonKey("Index");
+    public static final CIKey INSERT_TIME = CIKey.commonKey("InsertTime");
+    public static final CIKey KEY = CIKey.commonKey("Key");
+    public static final CIKey KEY_END = CIKey.commonKey("KeyEnd");
+    public static final CIKey KEY_START = CIKey.commonKey("KeyStart");
+    public static final CIKey NAME = CIKey.commonKey("Name");
+    public static final CIKey NODE = CIKey.commonKey("Node");
+    public static final CIKey PARTITION = CIKey.commonKey("Partition");
+    public static final CIKey PIPELINE = CIKey.commonKey("Pipeline");
+    public static final CIKey START = CIKey.commonKey("Start");
+    public static final CIKey STATUS = CIKey.commonKey("Status");
+    public static final CIKey STREAM_ID = CIKey.commonKey("StreamId");
+    public static final CIKey SUBJECT = CIKey.commonKey("Subject");
+    public static final CIKey TERMINAL = CIKey.commonKey("Terminal");
+    public static final CIKey TIME = CIKey.commonKey("Time");
+    public static final CIKey TITLE = CIKey.commonKey("Title");
+    public static final CIKey TYPE = CIKey.commonKey("Type");
+    public static final CIKey UUID = CIKey.commonKey("UUID");
+    public static final CIKey VALUE = CIKey.commonKey("Value");
+    public static final CIKey VALUE_TYPE = CIKey.commonKey("ValueType");
 
     // Upper sentence case keys
-    public static final CIKey ANALYTIC__RULE = CIKey.createCommonKey("Analytic Rule");
-    public static final CIKey CREATE__TIME = CIKey.createCommonKey("Create Time");
-    public static final CIKey CREATE__TIME__MS = CIKey.createCommonKey("Create Time Ms");
-    public static final CIKey DOC__COUNT = CIKey.createCommonKey("Doc Count");
-    public static final CIKey EFFECTIVE__TIME = CIKey.createCommonKey("Effective Time");
-    public static final CIKey END__TIME = CIKey.createCommonKey("End Time");
-    public static final CIKey END__TIME__MS = CIKey.createCommonKey("End Time Ms");
-    public static final CIKey ERROR__COUNT = CIKey.createCommonKey("Error Count");
-    public static final CIKey FATAL__ERROR__COUNT = CIKey.createCommonKey("Fatal Error Count");
-    public static final CIKey FILE__SIZE = CIKey.createCommonKey("File Size");
-    public static final CIKey INDEX__NAME = CIKey.createCommonKey("Index Name");
-    public static final CIKey INFO__COUNT = CIKey.createCommonKey("Info Count");
-    public static final CIKey LAST__COMMIT = CIKey.createCommonKey("Last Commit");
-    public static final CIKey META__ID = CIKey.createCommonKey("Meta Id");
-    public static final CIKey PARENT__CREATE__TIME = CIKey.createCommonKey("Parent Create Time");
-    public static final CIKey PARENT__FEED = CIKey.createCommonKey("Parent Feed");
-    public static final CIKey PARENT__ID = CIKey.createCommonKey("Parent Id");
-    public static final CIKey PARENT__STATUS = CIKey.createCommonKey("Parent Status");
-    public static final CIKey PIPELINE__NAME = CIKey.createCommonKey("Pipeline Name");
-    public static final CIKey PROCESSOR__DELETED = CIKey.createCommonKey("Processor Deleted");
-    public static final CIKey PROCESSOR__ENABLED = CIKey.createCommonKey("Processor Enabled");
-    public static final CIKey PROCESSOR__FILTER__DELETED = CIKey.createCommonKey("Processor Filter Deleted");
-    public static final CIKey PROCESSOR__FILTER__ENABLED = CIKey.createCommonKey("Processor Filter Enabled");
-    public static final CIKey PROCESSOR__FILTER__ID = CIKey.createCommonKey("Processor Filter Id");
-    public static final CIKey PROCESSOR__FILTER__LAST__POLL__MS = CIKey.createCommonKey(
-            "Processor Filter Last Poll Ms");
-    public static final CIKey PROCESSOR__FILTER__PRIORITY = CIKey.createCommonKey("Processor Filter Priority");
-    public static final CIKey PROCESSOR__FILTER__UUID = CIKey.createCommonKey("Processor Filter UUID");
-    public static final CIKey PROCESSOR__ID = CIKey.createCommonKey("Processor Id");
-    public static final CIKey PROCESSOR__PIPELINE = CIKey.createCommonKey("Processor Pipeline");
-    public static final CIKey PROCESSOR__TASK__ID = CIKey.createCommonKey("Processor Task Id");
-    public static final CIKey PROCESSOR__TYPE = CIKey.createCommonKey("Processor Type");
-    public static final CIKey PROCESSOR__UUID = CIKey.createCommonKey("Processor UUID");
-    public static final CIKey RAW__SIZE = CIKey.createCommonKey("Raw Size");
-    public static final CIKey READ__COUNT = CIKey.createCommonKey("Read Count");
-    public static final CIKey START__TIME = CIKey.createCommonKey("Start Time");
-    public static final CIKey START__TIME__MS = CIKey.createCommonKey("Start Time Ms");
-    public static final CIKey STATUS__TIME = CIKey.createCommonKey("Status Time");
-    public static final CIKey STATUS__TIME__MS = CIKey.createCommonKey("Status Time Ms");
-    public static final CIKey TASK__ID = CIKey.createCommonKey("Task Id");
-    public static final CIKey VOLUME__GROUP = CIKey.createCommonKey("Volume Group");
-    public static final CIKey VOLUME__PATH = CIKey.createCommonKey("Volume Path");
-    public static final CIKey WARNING__COUNT = CIKey.createCommonKey("Warning Count");
-    public static final CIKey WRITE__COUNT = CIKey.createCommonKey("Write Count");
+    public static final CIKey ANALYTIC__RULE = CIKey.commonKey("Analytic Rule");
+    public static final CIKey CREATE__TIME = CIKey.commonKey("Create Time");
+    public static final CIKey CREATE__TIME__MS = CIKey.commonKey("Create Time Ms");
+    public static final CIKey DOC__COUNT = CIKey.commonKey("Doc Count");
+    public static final CIKey EFFECTIVE__TIME = CIKey.commonKey("Effective Time");
+    public static final CIKey END__TIME = CIKey.commonKey("End Time");
+    public static final CIKey END__TIME__MS = CIKey.commonKey("End Time Ms");
+    public static final CIKey ERROR__COUNT = CIKey.commonKey("Error Count");
+    public static final CIKey FATAL__ERROR__COUNT = CIKey.commonKey("Fatal Error Count");
+    public static final CIKey FILE__SIZE = CIKey.commonKey("File Size");
+    public static final CIKey INDEX__NAME = CIKey.commonKey("Index Name");
+    public static final CIKey INFO__COUNT = CIKey.commonKey("Info Count");
+    public static final CIKey LAST__COMMIT = CIKey.commonKey("Last Commit");
+    public static final CIKey META__ID = CIKey.commonKey("Meta Id");
+    public static final CIKey PARENT__CREATE__TIME = CIKey.commonKey("Parent Create Time");
+    public static final CIKey PARENT__FEED = CIKey.commonKey("Parent Feed");
+    public static final CIKey PARENT__ID = CIKey.commonKey("Parent Id");
+    public static final CIKey PARENT__STATUS = CIKey.commonKey("Parent Status");
+    public static final CIKey PIPELINE__NAME = CIKey.commonKey("Pipeline Name");
+    public static final CIKey PROCESSOR__DELETED = CIKey.commonKey("Processor Deleted");
+    public static final CIKey PROCESSOR__ENABLED = CIKey.commonKey("Processor Enabled");
+    public static final CIKey PROCESSOR__FILTER__DELETED = CIKey.commonKey("Processor Filter Deleted");
+    public static final CIKey PROCESSOR__FILTER__ENABLED = CIKey.commonKey("Processor Filter Enabled");
+    public static final CIKey PROCESSOR__FILTER__ID = CIKey.commonKey("Processor Filter Id");
+    public static final CIKey PROCESSOR__FILTER__LAST__POLL__MS = CIKey.commonKey("Processor Filter Last Poll Ms");
+    public static final CIKey PROCESSOR__FILTER__PRIORITY = CIKey.commonKey("Processor Filter Priority");
+    public static final CIKey PROCESSOR__FILTER__UUID = CIKey.commonKey("Processor Filter UUID");
+    public static final CIKey PROCESSOR__ID = CIKey.commonKey("Processor Id");
+    public static final CIKey PROCESSOR__PIPELINE = CIKey.commonKey("Processor Pipeline");
+    public static final CIKey PROCESSOR__TASK__ID = CIKey.commonKey("Processor Task Id");
+    public static final CIKey PROCESSOR__TYPE = CIKey.commonKey("Processor Type");
+    public static final CIKey PROCESSOR__UUID = CIKey.commonKey("Processor UUID");
+    public static final CIKey RAW__SIZE = CIKey.commonKey("Raw Size");
+    public static final CIKey READ__COUNT = CIKey.commonKey("Read Count");
+    public static final CIKey START__TIME = CIKey.commonKey("Start Time");
+    public static final CIKey START__TIME__MS = CIKey.commonKey("Start Time Ms");
+    public static final CIKey STATUS__TIME = CIKey.commonKey("Status Time");
+    public static final CIKey STATUS__TIME__MS = CIKey.commonKey("Status Time Ms");
+    public static final CIKey TASK__ID = CIKey.commonKey("Task Id");
+    public static final CIKey VOLUME__GROUP = CIKey.commonKey("Volume Group");
+    public static final CIKey VOLUME__PATH = CIKey.commonKey("Volume Path");
+    public static final CIKey WARNING__COUNT = CIKey.commonKey("Warning Count");
+    public static final CIKey WRITE__COUNT = CIKey.commonKey("Write Count");
+
+    // Reference Data fields
+    public static final CIKey FEED__NAME = CIKey.commonKey("Feed Name");
+    public static final CIKey VALUE__REFERENCE__COUNT = CIKey.commonKey("Value Reference Count");
+    public static final CIKey MAP__NAME = CIKey.commonKey("Map Name");
+    public static final CIKey LAST__ACCESSED__TIME = CIKey.commonKey("Last Accessed Time");
+    public static final CIKey REFERENCE__LOADER__PIPELINE = CIKey.commonKey("Reference Loader Pipeline");
+    public static final CIKey PROCESSING__STATE = CIKey.commonKey("Processing State");
+    public static final CIKey STREAM__ID = CIKey.commonKey("Stream ID");
+    public static final CIKey PART__NUMBER = CIKey.commonKey("Part Number");
+    public static final CIKey PIPELINE__VERSION = CIKey.commonKey("Pipeline Version");
 
     // Annotations keys
-    public static final CIKey ANNO_ASSIGNED_TO = CIKey.createCommonKey("annotation:AssignedTo");
-    public static final CIKey ANNO_COMMENT = CIKey.createCommonKey("annotation:Comment");
-    public static final CIKey ANNO_CREATED_BY = CIKey.createCommonKey("annotation:CreatedBy");
-    public static final CIKey ANNO_CREATED_ON = CIKey.createCommonKey("annotation:CreatedOn");
-    public static final CIKey ANNO_HISTORY = CIKey.createCommonKey("annotation:History");
-    public static final CIKey ANNO_ID = CIKey.createCommonKey("annotation:Id");
-    public static final CIKey ANNO_STATUS = CIKey.createCommonKey("annotation:Status");
-    public static final CIKey ANNO_SUBJECT = CIKey.createCommonKey("annotation:Subject");
-    public static final CIKey ANNO_TITLE = CIKey.createCommonKey("annotation:Title");
-    public static final CIKey ANNO_UPDATED_BY = CIKey.createCommonKey("annotation:UpdatedBy");
-    public static final CIKey ANNO_UPDATED_ON = CIKey.createCommonKey("annotation:UpdatedOn");
+    public static final CIKey ANNO_ASSIGNED_TO = CIKey.commonKey("annotation:AssignedTo");
+    public static final CIKey ANNO_COMMENT = CIKey.commonKey("annotation:Comment");
+    public static final CIKey ANNO_CREATED_BY = CIKey.commonKey("annotation:CreatedBy");
+    public static final CIKey ANNO_CREATED_ON = CIKey.commonKey("annotation:CreatedOn");
+    public static final CIKey ANNO_HISTORY = CIKey.commonKey("annotation:History");
+    public static final CIKey ANNO_ID = CIKey.commonKey("annotation:Id");
+    public static final CIKey ANNO_STATUS = CIKey.commonKey("annotation:Status");
+    public static final CIKey ANNO_SUBJECT = CIKey.commonKey("annotation:Subject");
+    public static final CIKey ANNO_TITLE = CIKey.commonKey("annotation:Title");
+    public static final CIKey ANNO_UPDATED_BY = CIKey.commonKey("annotation:UpdatedBy");
+    public static final CIKey ANNO_UPDATED_ON = CIKey.commonKey("annotation:UpdatedOn");
 
-    public static final CIKey UNDERSCORE_EVENT_ID = CIKey.createCommonKey("__event_id__");
-    public static final CIKey UNDERSCORE_STREAM_ID = CIKey.createCommonKey("__stream_id__");
-    public static final CIKey UNDERSCORE_TIME = CIKey.createCommonKey("__time__");
+    public static final CIKey UNDERSCORE_EVENT_ID = CIKey.commonKey("__event_id__");
+    public static final CIKey UNDERSCORE_STREAM_ID = CIKey.commonKey("__stream_id__");
+    public static final CIKey UNDERSCORE_TIME = CIKey.commonKey("__time__");
 
     @JsonValue // No need to serialise the CIKey wrapper, just the key
     private final String key;
@@ -179,7 +189,7 @@ public class CIKey implements Comparable<CIKey> {
      * Only intended for use on static {@link CIKey} instances due to the cost of
      * interning
      */
-    private static CIKey createCommonKey(final String key) {
+    private static CIKey commonKey(final String key) {
         final CIKey ciKey;
         if (key == null) {
             ciKey = NULL_STRING;
@@ -188,6 +198,7 @@ public class CIKey implements Comparable<CIKey> {
             final String k = key.intern();
             ciKey = new CIKey(k, toLowerCase(k).intern());
         }
+        // Add it to our static map so CIKey.of() can look it up
         COMMON_KEYS.put(key, ciKey);
         return ciKey;
     }
@@ -305,7 +316,7 @@ public class CIKey implements Comparable<CIKey> {
             // Case-sensitive here because CIKey should wrap the exact case passed in.
             return GwtNullSafe.requireNonNullElseGet(
                     COMMON_KEYS.get(key),
-                    () -> CIKey.createCommonKey(key));
+                    () -> CIKey.commonKey(key));
         }
     }
 
@@ -387,6 +398,13 @@ public class CIKey implements Comparable<CIKey> {
             return false;
         }
         return lowerKey.contains(toLowerCase(lowerSubString));
+    }
+
+    /**
+     * @return True if ciKey is null or wraps a null string
+     */
+    public static boolean isNull(final CIKey ciKey) {
+        return ciKey == null || NULL_STRING.equals(ciKey);
     }
 
     /**

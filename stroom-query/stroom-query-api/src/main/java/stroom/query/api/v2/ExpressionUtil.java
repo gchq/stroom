@@ -301,6 +301,7 @@ public class ExpressionUtil {
             }
             if (continueWalking) {
                 if (expressionItem instanceof ExpressionOperator) {
+                    //noinspection PatternVariableCanBeUsed // GWT
                     final ExpressionOperator expressionOperator = (ExpressionOperator) expressionItem;
                     final List<ExpressionItem> children = expressionOperator.getChildren();
                     if (children != null && !children.isEmpty()) {
@@ -316,6 +317,10 @@ public class ExpressionUtil {
         }
         return continueWalking;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface ExpressionItemVisitor {
 

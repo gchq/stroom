@@ -952,17 +952,18 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
         // name => field
         // field => fieldType
-        QueryField abstractField = FIELD_NAME_TO_FIELD_MAP.get(expressionTerm.getField());
+        final CIKey fieldName = CIKey.of(expressionTerm.getField());
+        QueryField abstractField = FIELD_NAME_TO_FIELD_MAP.get(fieldName);
 
         return switch (abstractField.getFldType()) {
             case TEXT -> buildTextFieldPredicate(expressionTerm, refStoreEntry ->
-                    (String) FIELD_TO_EXTRACTOR_MAP.get(expressionTerm.getField()).apply(refStoreEntry));
+                    (String) FIELD_TO_EXTRACTOR_MAP.get(fieldName).apply(refStoreEntry));
             case LONG -> buildLongFieldPredicate(expressionTerm, refStoreEntry ->
-                    (Long) FIELD_TO_EXTRACTOR_MAP.get(expressionTerm.getField()).apply(refStoreEntry));
+                    (Long) FIELD_TO_EXTRACTOR_MAP.get(fieldName).apply(refStoreEntry));
             case DATE -> buildDateFieldPredicate(expressionTerm, refStoreEntry ->
-                    (Long) FIELD_TO_EXTRACTOR_MAP.get(expressionTerm.getField()).apply(refStoreEntry));
+                    (Long) FIELD_TO_EXTRACTOR_MAP.get(fieldName).apply(refStoreEntry));
             case DOC_REF -> buildDocRefFieldPredicate(expressionTerm, refStoreEntry ->
-                    (DocRef) FIELD_TO_EXTRACTOR_MAP.get(expressionTerm.getField()).apply(refStoreEntry));
+                    (DocRef) FIELD_TO_EXTRACTOR_MAP.get(fieldName).apply(refStoreEntry));
             default -> throw new RuntimeException("Unsupported term " + expressionTerm);
         };
 

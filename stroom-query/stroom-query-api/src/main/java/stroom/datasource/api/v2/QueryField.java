@@ -62,7 +62,7 @@ public class QueryField implements Field, HasDisplayValue {
     private final Boolean queryable;
 
     @JsonIgnore
-    public transient volatile CIKey fldNameCIKey = null;
+    private transient volatile CIKey fldNameCIKey = null;
 
     @JsonCreator
     public QueryField(@Deprecated @JsonProperty("type") final String type,
@@ -144,6 +144,16 @@ public class QueryField implements Field, HasDisplayValue {
                 .build();
     }
 
+    public static QueryField createId(final CIKey name,
+                                      final Boolean queryable) {
+        return builder()
+                .fldName(name)
+                .fldType(FieldType.ID)
+                .conditionSet(ConditionSet.DEFAULT_ID)
+                .queryable(queryable)
+                .build();
+    }
+
     public static QueryField createKeyword(final String name) {
         return createKeyword(name, true);
     }
@@ -172,6 +182,16 @@ public class QueryField implements Field, HasDisplayValue {
                 .build();
     }
 
+    public static QueryField createInteger(final CIKey name,
+                                           final Boolean queryable) {
+        return builder()
+                .fldName(name)
+                .fldType(FieldType.INTEGER)
+                .conditionSet(ConditionSet.DEFAULT_NUMERIC)
+                .queryable(queryable)
+                .build();
+    }
+
     public static QueryField createLong(final String name) {
         return createLong(name, true);
     }
@@ -189,7 +209,7 @@ public class QueryField implements Field, HasDisplayValue {
     public static QueryField createLong(final CIKey name,
                                         final Boolean queryable) {
         return builder()
-                .fldNameAsKey(name)
+                .fldName(name)
                 .fldType(FieldType.LONG)
                 .conditionSet(ConditionSet.DEFAULT_NUMERIC)
                 .queryable(queryable)
@@ -269,7 +289,7 @@ public class QueryField implements Field, HasDisplayValue {
     public static QueryField createDate(final CIKey name,
                                         final Boolean queryable) {
         return builder()
-                .fldNameAsKey(name)
+                .fldName(name)
                 .fldType(FieldType.DATE)
                 .conditionSet(ConditionSet.DEFAULT_DATE)
                 .queryable(queryable)
@@ -293,7 +313,7 @@ public class QueryField implements Field, HasDisplayValue {
     public static QueryField createText(final CIKey name,
                                         final Boolean queryable) {
         return builder()
-                .fldNameAsKey(name)
+                .fldName(name)
                 .fldType(FieldType.TEXT)
                 .conditionSet(ConditionSet.DEFAULT_TEXT)
                 .queryable(queryable)
@@ -470,8 +490,8 @@ public class QueryField implements Field, HasDisplayValue {
             return this;
         }
 
-        public Builder fldNameAsKey(final CIKey fldNameAsKey) {
-            this.fldNameAsKey = fldNameAsKey;
+        public Builder fldName(final CIKey fldName) {
+            this.fldNameAsKey = fldName;
             return this;
         }
 

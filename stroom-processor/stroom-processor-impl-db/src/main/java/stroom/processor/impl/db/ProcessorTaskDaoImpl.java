@@ -1121,21 +1121,23 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         if (expressionItem == null) {
             return true;
         } else {
-            final Map<String, QueryField> fieldMap = ProcessorTaskFields.getFieldMap();
+            final Map<CIKey, QueryField> fieldMap = ProcessorTaskFields.getFieldMap();
 
             return ExpressionUtil.validateExpressionTerms(expressionItem, term -> {
-                final QueryField field = fieldMap.get(term.getField());
+                final CIKey fieldName = CIKey.of(term.getField());
+                final QueryField field = fieldMap.get(fieldName);
                 if (field == null) {
                     throw new RuntimeException(LogUtil.message("Unknown field {} in term {}, in expression {}",
-                            term.getField(), term, expressionItem));
+                            fieldName, term, expressionItem));
                 } else {
                     final boolean isValid = field.supportsCondition(term.getCondition());
                     if (!isValid) {
                         throw new RuntimeException(LogUtil.message("Condition '{}' is not supported by field '{}' " +
                                         "of type {}. Term: {}",
                                 term.getCondition(),
-                                term.getField(),
-                                field.getFldType(), term));
+                                fieldName,
+                                field.getFldType(),
+                                term));
                     } else {
                         return true;
                     }

@@ -18,6 +18,7 @@ package stroom.annotation.impl;
 
 import stroom.annotation.api.AnnotationFields;
 import stroom.annotation.shared.Annotation;
+import stroom.datasource.api.v2.QueryField;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.ExpressionMatcherFactory;
 import stroom.index.shared.IndexConstants;
@@ -58,35 +59,35 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationReceiverDecoratorFactory.class);
 
-    private static final Map<CIKey, Function<Annotation, Val>> VALUE_MAPPING = CIKey.mapOfEntries(
-            nullSafeEntry(AnnotationFields.ID, Annotation::getId),
-            nullSafeEntry(AnnotationFields.CREATED_ON, Annotation::getCreateTime, createTimeEpochMs ->
+    private static final Map<CIKey, Function<Annotation, Val>> VALUE_MAPPING = Map.ofEntries(
+            nullSafeEntry(AnnotationFields.ID_FIELD, Annotation::getId),
+            nullSafeEntry(AnnotationFields.CREATED_ON_FIELD, Annotation::getCreateTime, createTimeEpochMs ->
                     Val.nullSafeCreate(createTimeEpochMs, ValDate::create)),
-            nullSafeEntry(AnnotationFields.CREATED_BY, Annotation::getCreateUser),
-            nullSafeEntry(AnnotationFields.UPDATED_ON, Annotation::getUpdateTime, updateTimeEpochMs ->
+            nullSafeEntry(AnnotationFields.CREATED_BY_FIELD, Annotation::getCreateUser),
+            nullSafeEntry(AnnotationFields.UPDATED_ON_FIELD, Annotation::getUpdateTime, updateTimeEpochMs ->
                     Val.nullSafeCreate(updateTimeEpochMs, ValDate::create)),
-            nullSafeEntry(AnnotationFields.UPDATED_BY, Annotation::getUpdateUser),
-            nullSafeEntry(AnnotationFields.TITLE, Annotation::getTitle),
-            nullSafeEntry(AnnotationFields.SUBJECT, Annotation::getSubject),
-            nullSafeEntry(AnnotationFields.STATUS, Annotation::getStatus),
-            nullSafeEntry(AnnotationFields.ASSIGNED_TO, annotation ->
+            nullSafeEntry(AnnotationFields.UPDATED_BY_FIELD, Annotation::getUpdateUser),
+            nullSafeEntry(AnnotationFields.TITLE_FIELD, Annotation::getTitle),
+            nullSafeEntry(AnnotationFields.SUBJECT_FIELD, Annotation::getSubject),
+            nullSafeEntry(AnnotationFields.STATUS_FIELD, Annotation::getStatus),
+            nullSafeEntry(AnnotationFields.ASSIGNED_TO_FIELD, annotation ->
                     NullSafe.get(annotation.getAssignedTo(), UserName::getUserIdentityForAudit)),
-            nullSafeEntry(AnnotationFields.COMMENT, Annotation::getComment),
-            nullSafeEntry(AnnotationFields.HISTORY, Annotation::getHistory));
+            nullSafeEntry(AnnotationFields.COMMENT_FIELD, Annotation::getComment),
+            nullSafeEntry(AnnotationFields.HISTORY_FIELD, Annotation::getHistory));
 
-    private static final Map<CIKey, Function<Annotation, Object>> OBJECT_MAPPING = CIKey.mapOfEntries(
-            Map.entry(AnnotationFields.ID, Annotation::getId),
-            Map.entry(AnnotationFields.CREATED_ON, Annotation::getCreateTime),
-            Map.entry(AnnotationFields.CREATED_BY, Annotation::getCreateUser),
-            Map.entry(AnnotationFields.UPDATED_ON, Annotation::getUpdateTime),
-            Map.entry(AnnotationFields.UPDATED_BY, Annotation::getUpdateUser),
-            Map.entry(AnnotationFields.TITLE, Annotation::getTitle),
-            Map.entry(AnnotationFields.SUBJECT, Annotation::getSubject),
-            Map.entry(AnnotationFields.STATUS, Annotation::getStatus),
-            Map.entry(AnnotationFields.ASSIGNED_TO, annotation ->
+    private static final Map<CIKey, Function<Annotation, Object>> OBJECT_MAPPING = Map.ofEntries(
+            Map.entry(AnnotationFields.ID_FIELD.getFldNameAsCIKey(), Annotation::getId),
+            Map.entry(AnnotationFields.CREATED_ON_FIELD.getFldNameAsCIKey(), Annotation::getCreateTime),
+            Map.entry(AnnotationFields.CREATED_BY_FIELD.getFldNameAsCIKey(), Annotation::getCreateUser),
+            Map.entry(AnnotationFields.UPDATED_ON_FIELD.getFldNameAsCIKey(), Annotation::getUpdateTime),
+            Map.entry(AnnotationFields.UPDATED_BY_FIELD.getFldNameAsCIKey(), Annotation::getUpdateUser),
+            Map.entry(AnnotationFields.TITLE_FIELD.getFldNameAsCIKey(), Annotation::getTitle),
+            Map.entry(AnnotationFields.SUBJECT_FIELD.getFldNameAsCIKey(), Annotation::getSubject),
+            Map.entry(AnnotationFields.STATUS_FIELD.getFldNameAsCIKey(), Annotation::getStatus),
+            Map.entry(AnnotationFields.ASSIGNED_TO_FIELD.getFldNameAsCIKey(), annotation ->
                     NullSafe.get(annotation.getAssignedTo(), UserName::getUserIdentityForAudit)),
-            Map.entry(AnnotationFields.COMMENT, Annotation::getComment),
-            Map.entry(AnnotationFields.HISTORY, Annotation::getHistory));
+            Map.entry(AnnotationFields.COMMENT_FIELD.getFldNameAsCIKey(), Annotation::getComment),
+            Map.entry(AnnotationFields.HISTORY_FIELD.getFldNameAsCIKey(), Annotation::getHistory));
 
     private final AnnotationDao annotationDao;
     private final ExpressionMatcherFactory expressionMatcherFactory;
@@ -108,7 +109,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
     public ValuesConsumer create(final ValuesConsumer valuesConsumer,
                                  final FieldIndex fieldIndex,
                                  final Query query) {
-        final Integer annotationIdIndex = fieldIndex.getPos(AnnotationFields.ID);
+        final Integer annotationIdIndex = fieldIndex.getPos(AnnotationFields.ID_FIELD.getFldNameAsCIKey());
         final Integer streamIdIndex = fieldIndex.getPos(IndexConstants.STREAM_ID);
         final Integer eventIdIndex = fieldIndex.getPos(IndexConstants.EVENT_ID);
 
@@ -245,22 +246,23 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
         }
     }
 
-    private static <T> Entry<String, Function<Annotation, Val>> nullSafeEntry(
-            final String fieldName,
+    private static <T> Entry<CIKey, Function<Annotation, Val>> nullSafeEntry(
+            final QueryField field,
             final Function<Annotation, T> getter) {
-        return nullSafeEntry(fieldName, getter, null);
+        return nullSafeEntry(field, getter, null);
     }
 
     /**
      * @param creator An explicit creator function to use rather than inferring it from the type.
      */
-    private static <T> Entry<String, Function<Annotation, Val>> nullSafeEntry(
-            final String fieldName,
+    private static <T> Entry<CIKey, Function<Annotation, Val>> nullSafeEntry(
+            final QueryField field,
             final Function<Annotation, T> getter,
             final Function<T, Val> creator) {
 
-        Objects.requireNonNull(fieldName);
+        Objects.requireNonNull(field);
         Objects.requireNonNull(getter);
+        final CIKey fieldName = field.getFldNameAsCIKey();
         return Map.entry(fieldName, annotation -> {
             T value = getter.apply(annotation);
 
