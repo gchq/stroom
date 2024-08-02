@@ -73,7 +73,9 @@ public class QueryField implements Field, HasDisplayValue {
                       @JsonProperty("conditionSet") final ConditionSet conditionSet,
                       @JsonProperty("docRefType") final String docRefType,
                       @JsonProperty("queryable") final Boolean queryable) {
-        this.fldName = GwtNullSafe.requireNonNullElse(fldName, name);
+        this.fldName = fldName != null
+                ? fldName
+                : name;
         this.fldType = convertLegacyType(fldType, type);
         this.conditionSet = conditionSet;
         this.docRefType = docRefType;
@@ -89,7 +91,9 @@ public class QueryField implements Field, HasDisplayValue {
                        final ConditionSet conditionSet,
                        final String docRefType,
                        final Boolean queryable) {
-        this.fldName = GwtNullSafe.requireNonNullElse(fldName, name);
+        this.fldName = fldName != null
+                ? fldName
+                : name;
         this.fldNameCIKey = fldNameAsKey;
         this.fldType = convertLegacyType(fldType, type);
         this.conditionSet = conditionSet;
@@ -534,6 +538,7 @@ public class QueryField implements Field, HasDisplayValue {
                     null,
                     null,
                     fldName,
+                    fldNameAsKey,
                     fldType,
                     conditionSet,
                     docRefType,
