@@ -22,9 +22,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-
 public class V07_06_00_300__processor_filter_pre_migration_checks extends BaseJavaMigration {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory

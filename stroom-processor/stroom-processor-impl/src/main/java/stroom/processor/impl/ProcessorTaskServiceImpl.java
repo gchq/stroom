@@ -17,8 +17,6 @@
 package stroom.processor.impl;
 
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
@@ -36,6 +34,9 @@ import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.util.shared.ResultPage;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import java.util.Optional;
 

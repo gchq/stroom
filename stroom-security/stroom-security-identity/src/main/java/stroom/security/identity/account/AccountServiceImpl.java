@@ -1,13 +1,18 @@
 package stroom.security.identity.account;
 
-import com.google.common.base.Strings;
-import jakarta.inject.Inject;
 import stroom.security.api.SecurityContext;
 import stroom.security.identity.authenticate.PasswordValidator;
 import stroom.security.identity.config.IdentityConfig;
-import stroom.security.identity.shared.*;
+import stroom.security.identity.shared.Account;
+import stroom.security.identity.shared.AccountResultPage;
+import stroom.security.identity.shared.CreateAccountRequest;
+import stroom.security.identity.shared.FindAccountRequest;
+import stroom.security.identity.shared.UpdateAccountRequest;
 import stroom.security.shared.AppPermission;
 import stroom.util.shared.PermissionException;
+
+import com.google.common.base.Strings;
+import jakarta.inject.Inject;
 
 import java.util.Optional;
 

@@ -16,13 +16,20 @@
 
 package stroom.security.impl;
 
-import event.logging.*;
-import jakarta.inject.Inject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.util.shared.UserRef;
+
+import event.logging.AddGroups;
+import event.logging.AuthorisationActionType;
+import event.logging.AuthoriseEventAction;
+import event.logging.Event;
+import event.logging.Group;
+import event.logging.Outcome;
+import event.logging.RemoveGroups;
+import jakarta.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AuthorisationEventLog {
 

@@ -16,13 +16,14 @@
 
 package stroom.activity.shared;
 
+import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasIntegerId;
+import stroom.util.shared.UserRef;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.HasAuditInfo;
-import stroom.util.shared.HasIntegerId;
-import stroom.util.shared.UserRef;
 
 import java.util.ArrayList;
 import java.util.List;

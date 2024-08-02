@@ -1,7 +1,5 @@
 package stroom.explorer.impl;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
@@ -11,7 +9,14 @@ import stroom.feed.shared.FeedDoc;
 import stroom.security.api.SecurityContext;
 import stroom.util.NullSafe;
 
-import java.util.*;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 class DocRefInfoServiceImpl implements DocRefInfoService {

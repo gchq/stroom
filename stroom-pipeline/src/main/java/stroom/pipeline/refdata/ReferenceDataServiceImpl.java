@@ -9,7 +9,6 @@ import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.api.FeedStore;
-import stroom.meta.shared.MetaFields;
 import stroom.node.api.FindNodeCriteria;
 import stroom.node.api.NodeService;
 import stroom.pipeline.refdata.RefDataLookupRequest.ReferenceLoader;

@@ -16,11 +16,12 @@
 
 package stroom.security.impl.event;
 
+import stroom.docref.DocRef;
+import stroom.util.shared.UserRef;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.docref.DocRef;
-import stroom.util.shared.UserRef;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AddDocumentCreatePermissionEvent implements PermissionChangeEvent {

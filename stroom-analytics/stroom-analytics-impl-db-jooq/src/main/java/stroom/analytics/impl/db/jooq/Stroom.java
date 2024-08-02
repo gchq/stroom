@@ -4,17 +4,17 @@
 package stroom.analytics.impl.db.jooq;
 
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.analytics.impl.db.jooq.tables.AnalyticTracker;
+import stroom.analytics.impl.db.jooq.tables.ExecutionHistory;
+import stroom.analytics.impl.db.jooq.tables.ExecutionSchedule;
+import stroom.analytics.impl.db.jooq.tables.ExecutionTracker;
 
 import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
-import stroom.analytics.impl.db.jooq.tables.AnalyticTracker;
-import stroom.analytics.impl.db.jooq.tables.ExecutionHistory;
-import stroom.analytics.impl.db.jooq.tables.ExecutionSchedule;
-import stroom.analytics.impl.db.jooq.tables.ExecutionTracker;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**

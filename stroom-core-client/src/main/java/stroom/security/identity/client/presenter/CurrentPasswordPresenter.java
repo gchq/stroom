@@ -16,14 +16,6 @@
 
 package stroom.security.identity.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.Focus;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -38,6 +30,15 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.view.HideRequest;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.Focus;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
 public class CurrentPasswordPresenter extends MyPresenterWidget<CurrentPasswordView> {
 
@@ -64,11 +65,6 @@ public class CurrentPasswordPresenter extends MyPresenterWidget<CurrentPasswordV
                 HidePopupRequestEvent.builder(CurrentPasswordPresenter.this).ok(request.isOk()).fire();
             }
         });
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
     }
 
     public void show() {

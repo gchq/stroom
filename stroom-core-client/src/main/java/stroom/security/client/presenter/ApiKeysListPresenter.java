@@ -1,13 +1,5 @@
 package stroom.security.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.view.client.Range;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.tickbox.client.TickBoxCell;
@@ -26,7 +18,11 @@ import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.EditApiKeyPresenter.Mode;
-import stroom.security.shared.*;
+import stroom.security.shared.ApiKeyResource;
+import stroom.security.shared.ApiKeyResultPage;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.FindApiKeyCriteria;
+import stroom.security.shared.HashedApiKey;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskListener;
 import stroom.util.client.DataGridUtil;
@@ -35,7 +31,22 @@ import stroom.util.shared.Selection;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import java.util.*;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.view.client.Range;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class ApiKeysListPresenter

@@ -4,13 +4,13 @@
 package stroom.analytics.impl.db.jooq.tables.records;
 
 
+import stroom.analytics.impl.db.jooq.tables.ExecutionSchedule;
+
 import org.jooq.Field;
 import org.jooq.Record1;
 import org.jooq.Record11;
 import org.jooq.Row11;
 import org.jooq.impl.UpdatableRecordImpl;
-
-import stroom.analytics.impl.db.jooq.tables.ExecutionSchedule;
 
 
 /**

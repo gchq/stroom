@@ -14,7 +14,6 @@ import stroom.query.shared.UpdateStoreRequest;
 import stroom.task.client.TaskListener;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.ResultPage;
-import stroom.widget.popup.client.event.HidePopupRequestEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.view.client.Range;

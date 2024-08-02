@@ -1,8 +1,5 @@
 package stroom.test;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-import org.mockito.stubbing.Answer;
 import stroom.activity.mock.MockActivityModule;
 import stroom.cache.impl.CacheModule;
 import stroom.core.dataprocess.PipelineStreamTaskModule;
@@ -35,6 +32,10 @@ import stroom.util.jersey.MockJerseyModule;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 import stroom.util.servlet.MockServletModule;
 import stroom.util.shared.ResultPage;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;

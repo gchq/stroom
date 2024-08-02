@@ -16,9 +16,6 @@
 
 package stroom.core.db;
 
-import jakarta.inject.Inject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.FindDBTableCriteria;
 import stroom.security.api.SecurityContext;
@@ -27,13 +24,22 @@ import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.ResultPage;
 
-import javax.sql.DataSource;
+import jakarta.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
+import javax.sql.DataSource;
 
 class DBTableService {
 

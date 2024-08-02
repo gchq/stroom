@@ -16,11 +16,6 @@
 
 package stroom.analytics;
 
-import jakarta.inject.Inject;
-import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
-import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.extension.ExtendWith;
 import stroom.analytics.impl.AnalyticHelper;
 import stroom.analytics.rule.impl.AnalyticRuleStore;
 import stroom.analytics.shared.AnalyticRuleDoc;
@@ -47,6 +42,12 @@ import stroom.test.StroomIntegrationTest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
+
+import jakarta.inject.Inject;
+import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
+import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;

@@ -16,10 +16,6 @@
 
 package stroom.dashboard.client.query;
 
-import com.google.gwt.user.client.ui.Focus;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
 import stroom.dashboard.client.main.BasicSettingsView;
@@ -31,6 +27,11 @@ import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.shared.NodeFlag;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.ModelStringUtil;
+
+import com.google.gwt.user.client.ui.Focus;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.View;
 
 import java.util.Objects;
 

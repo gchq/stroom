@@ -1068,15 +1068,16 @@ paths:
       summary: Log a user out of their session
       tags:
       - Authentication
-  /authentication/v1/noauth/reset/{email}:
-    get:
+  /authentication/v1/noauth/reset:
+    post:
       operationId: resetEmail
-      parameters:
-      - in: path
-        name: email
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+        description: email
         required: true
-        schema:
-          type: string
       responses:
         default:
           content:
@@ -1331,19 +1332,6 @@ paths:
                 $ref: '#/components/schemas/ExtendedUiConfig'
           description: default response
       summary: Fetch the extended UI configuration
-      tags:
-      - Global Config
-  /config/v1/noauth/fetchUiConfig:
-    get:
-      operationId: fetchUiConfig
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UiConfig'
-          description: default response
-      summary: Fetch the UI configuration
       tags:
       - Global Config
   /config/v1/nodeProperties/{nodeName}:
@@ -7216,12 +7204,12 @@ components:
         reactivatedMs:
           type: integer
           format: int64
-        subjectId:
-          type: string
         updateTimeMs:
           type: integer
           format: int64
         updateUser:
+          type: string
+        userId:
           type: string
         version:
           type: integer
@@ -7887,20 +7875,10 @@ components:
     Changes:
       type: object
       properties:
-        createChanges:
+        changes:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/ChangeSetString'
-        permissions:
-          type: object
-          additionalProperties:
-            type: string
-            enum:
-            - OWNER
-            - DELETE
-            - EDIT
-            - VIEW
-            - USE
+            $ref: '#/components/schemas/UserDocPermissionChanges'
     CheckDocumentPermissionRequest:
       type: object
       properties:
@@ -15823,6 +15801,19 @@ components:
           type: string
         subjectId:
           type: string
+    UserDocPermissionChanges:
+      type: object
+      properties:
+        createChanges:
+          $ref: '#/components/schemas/ChangeSetString'
+        permission:
+          type: string
+          enum:
+          - OWNER
+          - DELETE
+          - EDIT
+          - VIEW
+          - USE
     UserPreferences:
       type: object
       properties:
@@ -15873,8 +15864,6 @@ components:
       - $ref: '#/components/schemas/EntryValue'
       - type: object
         properties:
-          userName:
-            $ref: '#/components/schemas/UserRef'
           userRef:
             $ref: '#/components/schemas/UserRef'
     UserTimeZone:

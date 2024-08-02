@@ -16,10 +16,6 @@
 
 package stroom.security.impl;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.util.entityevent.EntityAction;
@@ -27,6 +23,11 @@ import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.UserRef;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 

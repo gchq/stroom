@@ -1,7 +1,5 @@
 package stroom.test;
 
-import com.google.inject.AbstractModule;
-import io.dropwizard.core.setup.Environment;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.DbConnectionsModule;
 import stroom.app.guice.JerseyModule;
@@ -13,6 +11,9 @@ import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.resource.impl.ResourceModule;
 import stroom.security.mock.MockUserSecurityContextModule;
 import stroom.util.io.DirProvidersModule;
+
+import com.google.inject.AbstractModule;
+import io.dropwizard.core.setup.Environment;
 
 public class CoreTestModule extends AbstractModule {
 

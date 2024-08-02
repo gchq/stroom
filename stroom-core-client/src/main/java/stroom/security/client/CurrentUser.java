@@ -16,12 +16,6 @@
 
 package stroom.security.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.activity.client.CurrentActivity;
 import stroom.activity.client.SplashPresenter;
 import stroom.dispatch.client.RestFactory;
@@ -29,13 +23,24 @@ import stroom.docref.DocRef;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.api.event.CurrentUserChangedEvent;
 import stroom.security.client.api.event.RequestLogoutEvent;
-import stroom.security.shared.*;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.CheckDocumentPermissionRequest;
+import stroom.security.shared.DocPermissionResource;
+import stroom.security.shared.DocumentPermission;
+import stroom.security.shared.UserAndEffectivePermissions;
 import stroom.task.client.TaskListener;
 import stroom.util.shared.UserRef;
 
-import javax.inject.Singleton;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
 import java.util.Set;
 import java.util.function.Consumer;
+import javax.inject.Singleton;
 
 @Singleton
 public class CurrentUser implements ClientSecurityContext, HasHandlers {

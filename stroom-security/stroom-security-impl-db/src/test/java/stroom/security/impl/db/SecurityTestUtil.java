@@ -7,7 +7,6 @@ import static stroom.security.impl.db.jooq.Tables.PERMISSION_APP;
 import static stroom.security.impl.db.jooq.Tables.PERMISSION_APP_ID;
 import static stroom.security.impl.db.jooq.Tables.PERMISSION_DOC;
 import static stroom.security.impl.db.jooq.Tables.PERMISSION_DOC_CREATE;
-import static stroom.security.impl.db.jooq.Tables.PERMISSION_DOC_ID;
 import static stroom.security.impl.db.jooq.Tables.PERMISSION_DOC_TYPE_ID;
 import static stroom.security.impl.db.jooq.Tables.STROOM_USER;
 import static stroom.security.impl.db.jooq.Tables.STROOM_USER_GROUP;

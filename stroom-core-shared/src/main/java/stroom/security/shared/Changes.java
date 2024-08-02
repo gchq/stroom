@@ -17,11 +17,12 @@
 package stroom.security.shared;
 
 
+import stroom.util.shared.UserRef;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.UserRef;
 
 import java.util.HashMap;
 import java.util.Map;

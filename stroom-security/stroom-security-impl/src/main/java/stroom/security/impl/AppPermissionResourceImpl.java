@@ -1,17 +1,23 @@
 package stroom.security.impl;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.exception.AuthenticationException;
-import stroom.security.shared.*;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.AppPermissionResource;
+import stroom.security.shared.ChangeSet;
+import stroom.security.shared.ChangeUserRequest;
+import stroom.security.shared.HasUserRef;
+import stroom.security.shared.UserAndEffectivePermissions;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.UserRef;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.Set;
 

@@ -1,10 +1,11 @@
 package stroom.annotation.shared;
 
+import stroom.util.shared.UserRef;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.UserRef;
 
 import java.util.Collections;
 import java.util.List;

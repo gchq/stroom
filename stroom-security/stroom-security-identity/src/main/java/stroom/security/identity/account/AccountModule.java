@@ -16,14 +16,15 @@
 
 package stroom.security.identity.account;
 
-import com.google.inject.AbstractModule;
-import jakarta.inject.Inject;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.security.api.ServiceUserFactory;
 import stroom.security.openid.api.IdpType;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
+
+import com.google.inject.AbstractModule;
+import jakarta.inject.Inject;
 
 public final class AccountModule extends AbstractModule {
 

@@ -1,9 +1,6 @@
 package stroom.hyperlink.client;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.annotation.client.ShowAnnotationEvent;
-import stroom.annotation.shared.Annotation;
-import stroom.annotation.shared.EventId;
 import stroom.core.client.ContentManager;
 import stroom.core.client.event.CloseContentEvent;
 import stroom.data.client.presenter.DataViewType;
@@ -36,9 +33,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HandlerContainerImpl;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
 import java.util.function.Function;
 
 @Singleton

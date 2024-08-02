@@ -1,9 +1,7 @@
 package stroom.annotation.impl;
 
-import jakarta.inject.Inject;
 import stroom.annotation.api.AnnotationCreator;
 import stroom.annotation.api.AnnotationFields;
-import stroom.annotation.shared.*;
 import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.CreateEntryRequest;
 import stroom.annotation.shared.EventId;
@@ -25,6 +23,8 @@ import stroom.security.shared.AppPermission;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
+
+import jakarta.inject.Inject;
 
 import java.util.List;
 import java.util.Optional;

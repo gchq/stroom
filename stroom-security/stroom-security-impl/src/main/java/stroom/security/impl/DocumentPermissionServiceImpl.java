@@ -17,18 +17,23 @@
 
 package stroom.security.impl;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import stroom.docref.DocRef;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
-import stroom.security.impl.event.*;
+import stroom.security.impl.event.AddDocumentCreatePermissionEvent;
+import stroom.security.impl.event.ClearDocumentPermissionsEvent;
+import stroom.security.impl.event.PermissionChangeEventBus;
+import stroom.security.impl.event.RemoveDocumentCreatePermissionEvent;
+import stroom.security.impl.event.SetPermissionEvent;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.UserRef;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import java.util.Set;
 

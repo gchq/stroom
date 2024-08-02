@@ -17,13 +17,14 @@
 
 package stroom.annotation.impl;
 
-import event.logging.BaseObject;
-import event.logging.OtherObject;
-import event.logging.util.EventLoggingUtil;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDetail;
 import stroom.event.logging.api.ObjectInfoProvider;
 import stroom.util.shared.UserRef;
+
+import event.logging.BaseObject;
+import event.logging.OtherObject;
+import event.logging.util.EventLoggingUtil;
 
 class AnnotationEventInfoProvider implements ObjectInfoProvider {
 

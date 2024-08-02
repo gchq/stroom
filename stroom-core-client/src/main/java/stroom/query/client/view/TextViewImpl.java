@@ -23,7 +23,6 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.FabButton;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.spinner.client.SpinnerLarge;
-import stroom.widget.spinner.client.SpinnerSmall;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;

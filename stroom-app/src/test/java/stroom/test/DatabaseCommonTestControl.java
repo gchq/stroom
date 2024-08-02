@@ -16,8 +16,6 @@
 
 package stroom.test;
 
-import jakarta.inject.Inject;
-import org.assertj.core.api.Assertions;
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.data.store.impl.fs.FsVolumeService;
 import stroom.data.store.impl.fs.S3ExampleVolumes;
@@ -34,6 +32,9 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
+
+import jakarta.inject.Inject;
+import org.assertj.core.api.Assertions;
 
 import java.nio.file.Path;
 import java.time.Duration;

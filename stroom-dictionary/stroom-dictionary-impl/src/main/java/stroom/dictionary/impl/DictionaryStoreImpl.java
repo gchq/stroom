@@ -17,19 +17,24 @@
 
 package stroom.dictionary.impl;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.*;
+import stroom.docstore.api.AuditFieldFilter;
+import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.Store;
+import stroom.docstore.api.StoreFactory;
+import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.util.shared.Message;
 import stroom.util.string.StringUtil;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import java.util.HashSet;
 import java.util.List;

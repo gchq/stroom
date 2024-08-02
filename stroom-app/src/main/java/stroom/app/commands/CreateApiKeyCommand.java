@@ -1,5 +1,16 @@
 package stroom.app.commands;
 
+import stroom.config.app.Config;
+import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.security.api.SecurityContext;
+import stroom.security.impl.UserService;
+import stroom.security.impl.apikey.ApiKeyService;
+import stroom.security.shared.CreateHashedApiKeyResponse;
+import stroom.security.shared.User;
+import stroom.util.NullSafe;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.UserRef;
+
 import com.google.inject.Injector;
 import event.logging.CreateEventAction;
 import event.logging.Outcome;
@@ -9,17 +20,6 @@ import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.config.app.Config;
-import stroom.event.logging.api.StroomEventLoggingService;
-import stroom.security.api.SecurityContext;
-import stroom.security.impl.UserService;
-import stroom.security.impl.apikey.ApiKeyService;
-import stroom.security.shared.CreateHashedApiKeyRequest;
-import stroom.security.shared.CreateHashedApiKeyResponse;
-import stroom.security.shared.User;
-import stroom.util.NullSafe;
-import stroom.util.logging.LogUtil;
-import stroom.util.shared.UserRef;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -52,8 +52,6 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
             OUTPUT_FILE_PATH_ARG_NAME,
             COMMENTS_ARG_NAME);
 
-    private final Path configFile;
-
     @Inject
     private ApiKeyService apiKeyService;
     @Inject
@@ -65,7 +63,6 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
 
     public CreateApiKeyCommand(final Path configFile) {
         super(configFile, COMMAND_NAME, COMMAND_DESCRIPTION);
-        this.configFile = configFile;
     }
 
     @Override
@@ -166,14 +163,12 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
                 namespace.getString(COMMENTS_ARG_NAME),
                 "Created by 'create_api_key' command.");
 
-        final CreateHashedApiKeyResponse response = apiKeyService.create(new CreateHashedApiKeyRequest(
+        return apiKeyService.create(new stroom.security.shared.CreateHashedApiKeyRequest(
                 userRef,
                 expireTimeEpochMs,
                 apiKeyName,
                 comments,
                 true));
-
-        return response;
     }
 
     /**

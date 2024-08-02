@@ -91,7 +91,7 @@ class JobNodeService {
         // Stop Job Nodes being saved with invalid crons.
         ensureSchedule(batchScheduleRequest.getJobType(), batchScheduleRequest.getSchedule().getExpression());
 
-        securityContext.secure(PermissionNames.MANAGE_JOBS_PERMISSION, () -> {
+        securityContext.secure(AppPermission.MANAGE_JOBS_PERMISSION, () -> {
             jobNodeDao.updateSchedule(batchScheduleRequest);
         });
     }

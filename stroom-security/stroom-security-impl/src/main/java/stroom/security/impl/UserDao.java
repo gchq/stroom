@@ -5,7 +5,6 @@ import stroom.security.shared.User;
 import stroom.util.shared.ResultPage;
 
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Consumer;
 
 public interface UserDao {

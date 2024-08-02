@@ -1545,17 +1545,20 @@
         "tags" : [ "Authentication" ]
       }
     },
-    "/authentication/v1/noauth/reset/{email}" : {
-      "get" : {
+    "/authentication/v1/noauth/reset" : {
+      "post" : {
         "operationId" : "resetEmail",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "email",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          },
+          "description" : "email",
+          "required" : true
+        },
         "responses" : {
           "default" : {
             "content" : {
@@ -1925,25 +1928,6 @@
           }
         },
         "summary" : "Fetch the extended UI configuration",
-        "tags" : [ "Global Config" ]
-      }
-    },
-    "/config/v1/noauth/fetchUiConfig" : {
-      "get" : {
-        "operationId" : "fetchUiConfig",
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/UiConfig"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Fetch the UI configuration",
         "tags" : [ "Global Config" ]
       }
     },
@@ -10455,14 +10439,14 @@
             "type" : "integer",
             "format" : "int64"
           },
-          "subjectId" : {
-            "type" : "string"
-          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
           },
           "updateUser" : {
+            "type" : "string"
+          },
+          "userId" : {
             "type" : "string"
           },
           "version" : {
@@ -11353,17 +11337,10 @@
       "Changes" : {
         "type" : "object",
         "properties" : {
-          "createChanges" : {
+          "changes" : {
             "type" : "object",
             "additionalProperties" : {
-              "$ref" : "#/components/schemas/ChangeSetString"
-            }
-          },
-          "permissions" : {
-            "type" : "object",
-            "additionalProperties" : {
-              "type" : "string",
-              "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
+              "$ref" : "#/components/schemas/UserDocPermissionChanges"
             }
           }
         }
@@ -20369,6 +20346,18 @@
           }
         }
       },
+      "UserDocPermissionChanges" : {
+        "type" : "object",
+        "properties" : {
+          "createChanges" : {
+            "$ref" : "#/components/schemas/ChangeSetString"
+          },
+          "permission" : {
+            "type" : "string",
+            "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
+          }
+        }
+      },
       "UserPreferences" : {
         "type" : "object",
         "properties" : {
@@ -20434,9 +20423,6 @@
         }, {
           "type" : "object",
           "properties" : {
-            "userName" : {
-              "$ref" : "#/components/schemas/UserRef"
-            },
             "userRef" : {
               "$ref" : "#/components/schemas/UserRef"
             }

@@ -17,12 +17,6 @@
 
 package stroom.dictionary.client.presenter;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.grid.client.WrapperView;
 import stroom.dictionary.shared.DictionaryDoc;
@@ -37,6 +31,13 @@ import stroom.security.shared.DocumentPermission;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
+
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,16 +1,17 @@
 package stroom.security.impl.apikey;
 
-import event.logging.BaseObject;
-import event.logging.OtherObject;
-import event.logging.OtherObject.Builder;
-import event.logging.util.DateUtil;
-import event.logging.util.EventLoggingUtil;
 import stroom.event.logging.api.ObjectInfoProvider;
 import stroom.security.shared.HashedApiKey;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.UserRef;
+
+import event.logging.BaseObject;
+import event.logging.OtherObject;
+import event.logging.OtherObject.Builder;
+import event.logging.util.DateUtil;
+import event.logging.util.EventLoggingUtil;
 
 public class ApiKeyObjectInfoProvider implements ObjectInfoProvider {
 

@@ -1,11 +1,12 @@
 package stroom.security.impl.db;
 
-import jakarta.inject.Inject;
-import org.jooq.types.UByte;
 import stroom.db.util.JooqUtil;
 import stroom.security.impl.AppPermissionDao;
 import stroom.security.impl.AppPermissionIdDao;
 import stroom.security.shared.AppPermission;
+
+import jakarta.inject.Inject;
+import org.jooq.types.UByte;
 
 import java.util.Set;
 import java.util.stream.Collectors;

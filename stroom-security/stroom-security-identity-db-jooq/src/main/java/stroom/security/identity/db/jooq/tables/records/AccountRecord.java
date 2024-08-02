@@ -4,9 +4,10 @@
 package stroom.security.identity.db.jooq.tables.records;
 
 
+import stroom.security.identity.db.jooq.tables.Account;
+
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
-import stroom.security.identity.db.jooq.tables.Account;
 
 
 /**

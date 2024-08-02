@@ -17,12 +17,6 @@
 
 package stroom.dashboard.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.http.client.URL;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.ContentManager;
 import stroom.core.client.event.CloseContentEvent;
@@ -45,10 +39,17 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.DefaultTaskListener;
 import stroom.task.client.TaskListener;
 
-import javax.inject.Singleton;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.http.client.URL;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
+import javax.inject.Singleton;
 
 @Singleton
 public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {

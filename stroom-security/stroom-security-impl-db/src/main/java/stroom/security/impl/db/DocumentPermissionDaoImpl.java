@@ -1,8 +1,5 @@
 package stroom.security.impl.db;
 
-import jakarta.inject.Inject;
-import org.jooq.impl.DSL;
-import org.jooq.types.UByte;
 import stroom.db.util.JooqUtil;
 import stroom.security.impl.DocTypeIdDao;
 import stroom.security.impl.DocumentPermissionDao;
@@ -10,6 +7,10 @@ import stroom.security.impl.UserDocumentPermissions;
 import stroom.security.impl.db.jooq.tables.PermissionDoc;
 import stroom.security.impl.db.jooq.tables.PermissionDocCreate;
 import stroom.security.shared.DocumentPermission;
+
+import jakarta.inject.Inject;
+import org.jooq.impl.DSL;
+import org.jooq.types.UByte;
 
 import java.util.List;
 import java.util.Map;

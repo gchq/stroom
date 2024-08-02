@@ -16,7 +16,13 @@
 
 package stroom.annotation.impl;
 
-import stroom.annotation.shared.*;
+import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.AnnotationDetail;
+import stroom.annotation.shared.CreateEntryRequest;
+import stroom.annotation.shared.EventId;
+import stroom.annotation.shared.EventLink;
+import stroom.annotation.shared.SetAssignedToRequest;
+import stroom.annotation.shared.SetStatusRequest;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;

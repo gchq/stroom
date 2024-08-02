@@ -16,10 +16,6 @@
 
 package stroom.dashboard.client.input;
 
-import com.google.gwt.user.client.ui.Focus;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 import stroom.dashboard.client.input.BasicListInputSettingsPresenter.BasicListInputSettingsView;
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
 import stroom.dashboard.client.main.BasicSettingsView;
@@ -28,6 +24,11 @@ import stroom.dashboard.shared.ListInputComponentSettings;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.security.shared.DocumentPermission;
+
+import com.google.gwt.user.client.ui.Focus;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 import java.util.Objects;

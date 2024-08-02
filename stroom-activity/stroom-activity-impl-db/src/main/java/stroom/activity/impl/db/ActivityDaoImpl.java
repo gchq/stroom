@@ -16,9 +16,6 @@
 
 package stroom.activity.impl.db;
 
-import jakarta.inject.Inject;
-import org.jooq.Condition;
-import org.jooq.Record;
 import stroom.activity.api.FindActivityCriteria;
 import stroom.activity.impl.ActivityDao;
 import stroom.activity.shared.Activity;
@@ -28,6 +25,10 @@ import stroom.util.NullSafe;
 import stroom.util.exception.DataChangedException;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.UserRef;
+
+import jakarta.inject.Inject;
+import org.jooq.Condition;
+import org.jooq.Record;
 
 import java.util.Collection;
 import java.util.List;

@@ -1,14 +1,5 @@
 package stroom.security.identity.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.view.client.Range;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.event.DataSelectionEvent;
@@ -38,6 +29,16 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.Selection;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.util.client.MultiSelectionModelImpl;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.view.client.Range;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.Collections;
 import java.util.List;

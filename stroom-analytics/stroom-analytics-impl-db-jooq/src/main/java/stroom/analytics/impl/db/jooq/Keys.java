@@ -4,12 +4,6 @@
 package stroom.analytics.impl.db.jooq;
 
 
-import org.jooq.ForeignKey;
-import org.jooq.TableField;
-import org.jooq.UniqueKey;
-import org.jooq.impl.DSL;
-import org.jooq.impl.Internal;
-
 import stroom.analytics.impl.db.jooq.tables.AnalyticTracker;
 import stroom.analytics.impl.db.jooq.tables.ExecutionHistory;
 import stroom.analytics.impl.db.jooq.tables.ExecutionSchedule;
@@ -18,6 +12,12 @@ import stroom.analytics.impl.db.jooq.tables.records.AnalyticTrackerRecord;
 import stroom.analytics.impl.db.jooq.tables.records.ExecutionHistoryRecord;
 import stroom.analytics.impl.db.jooq.tables.records.ExecutionScheduleRecord;
 import stroom.analytics.impl.db.jooq.tables.records.ExecutionTrackerRecord;
+
+import org.jooq.ForeignKey;
+import org.jooq.TableField;
+import org.jooq.UniqueKey;
+import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 
 
 /**

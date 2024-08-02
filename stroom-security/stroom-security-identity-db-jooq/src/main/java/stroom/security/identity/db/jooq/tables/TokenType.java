@@ -4,7 +4,9 @@
 package stroom.security.identity.db.jooq.tables;
 
 
-import java.util.function.Function;
+import stroom.security.identity.db.jooq.Keys;
+import stroom.security.identity.db.jooq.Stroom;
+import stroom.security.identity.db.jooq.tables.records.TokenTypeRecord;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
@@ -24,9 +26,7 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import stroom.security.identity.db.jooq.Keys;
-import stroom.security.identity.db.jooq.Stroom;
-import stroom.security.identity.db.jooq.tables.records.TokenTypeRecord;
+import java.util.function.Function;
 
 
 /**

@@ -4,9 +4,9 @@
 package stroom.analytics.impl.db.jooq.tables;
 
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.function.Function;
+import stroom.analytics.impl.db.jooq.Keys;
+import stroom.analytics.impl.db.jooq.Stroom;
+import stroom.analytics.impl.db.jooq.tables.records.ExecutionTrackerRecord;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
@@ -25,9 +25,9 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import stroom.analytics.impl.db.jooq.Keys;
-import stroom.analytics.impl.db.jooq.Stroom;
-import stroom.analytics.impl.db.jooq.tables.records.ExecutionTrackerRecord;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Function;
 
 
 /**

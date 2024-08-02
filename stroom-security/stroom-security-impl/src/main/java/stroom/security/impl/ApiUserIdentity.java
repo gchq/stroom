@@ -1,7 +1,5 @@
 package stroom.security.impl;
 
-import org.jose4j.jwt.JwtClaims;
-import org.jose4j.jwt.consumer.JwtContext;
 import stroom.security.api.HasJwt;
 import stroom.security.api.HasSessionId;
 import stroom.security.api.UserIdentity;
@@ -10,6 +8,9 @@ import stroom.security.shared.HasUserRef;
 import stroom.util.NullSafe;
 import stroom.util.exception.ThrowingFunction;
 import stroom.util.shared.UserRef;
+
+import org.jose4j.jwt.JwtClaims;
+import org.jose4j.jwt.consumer.JwtContext;
 
 import java.util.Objects;
 import java.util.Optional;

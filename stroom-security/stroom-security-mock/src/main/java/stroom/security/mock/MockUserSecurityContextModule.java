@@ -16,12 +16,13 @@
 
 package stroom.security.mock;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.UserDao;
 import stroom.security.shared.User;
 import stroom.util.shared.UserRef;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
 
 import java.util.Optional;
 import java.util.UUID;

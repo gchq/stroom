@@ -16,8 +16,6 @@
 
 package stroom.data.store.impl;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import stroom.data.shared.DataInfoSection;
 import stroom.data.shared.DataInfoSection.Entry;
 import stroom.data.shared.UploadDataRequest;
@@ -29,7 +27,12 @@ import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaService;
-import stroom.meta.shared.*;
+import stroom.meta.shared.DataRetentionFields;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaExpressionUtil;
+import stroom.meta.shared.MetaFields;
+import stroom.meta.shared.MetaRow;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.PipelineDataCache;
@@ -37,7 +40,11 @@ import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.pipeline.state.*;
+import stroom.pipeline.state.CurrentUserHolder;
+import stroom.pipeline.state.FeedHolder;
+import stroom.pipeline.state.MetaDataHolder;
+import stroom.pipeline.state.MetaHolder;
+import stroom.pipeline.state.PipelineHolder;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
@@ -51,11 +58,23 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
-import stroom.util.shared.*;
+import stroom.util.shared.Message;
+import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.PermissionException;
+import stroom.util.shared.ResourceGeneration;
+import stroom.util.shared.ResourceKey;
+import stroom.util.shared.ResultPage;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.nio.file.Path;
 import java.text.NumberFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 class DataServiceImpl implements DataService {

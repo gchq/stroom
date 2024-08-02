@@ -4,9 +4,9 @@
 package stroom.security.impl.db.jooq.tables;
 
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.function.Function;
+import stroom.security.impl.db.jooq.Keys;
+import stroom.security.impl.db.jooq.Stroom;
+import stroom.security.impl.db.jooq.tables.records.PermissionAppRecord;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
@@ -27,9 +27,9 @@ import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 import org.jooq.types.UByte;
 
-import stroom.security.impl.db.jooq.Keys;
-import stroom.security.impl.db.jooq.Stroom;
-import stroom.security.impl.db.jooq.tables.records.PermissionAppRecord;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Function;
 
 
 /**

@@ -16,8 +16,6 @@
 
 package stroom.activity.impl;
 
-import com.google.common.base.Strings;
-import jakarta.inject.Inject;
 import stroom.activity.api.ActivityService;
 import stroom.activity.api.FindActivityCriteria;
 import stroom.activity.shared.Activity;
@@ -34,6 +32,9 @@ import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.QuickFilterResultPage;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.filter.FilterFieldDefinition;
+
+import com.google.common.base.Strings;
+import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,12 +1,8 @@
 package stroom.security.impl;
 
-import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermission;
-import stroom.util.shared.UserRef;
 
-import java.util.BitSet;
 import java.util.List;
-import java.util.Set;
 
 public interface DocumentPermissionDao {
 

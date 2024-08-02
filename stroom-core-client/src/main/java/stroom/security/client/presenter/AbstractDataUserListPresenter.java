@@ -1,8 +1,5 @@
 package stroom.security.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.ExpressionOperator;
@@ -10,6 +7,10 @@ import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.UserFields;
 import stroom.ui.config.client.UiConfigCache;
+
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
 
 public abstract class AbstractDataUserListPresenter extends AbstractUserListPresenter {
 

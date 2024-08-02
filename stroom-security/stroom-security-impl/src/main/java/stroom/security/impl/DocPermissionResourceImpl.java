@@ -11,7 +11,6 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.ChangeDocumentPermissionsRequest;
 import stroom.security.shared.CheckDocumentPermissionRequest;
 import stroom.security.shared.DocPermissionResource;
-import stroom.security.shared.FetchDocumentPermissionsRequest;
 import stroom.security.shared.FetchDocumentUsersRequest;
 import stroom.security.shared.PermissionChangeImpactSummary;
 import stroom.security.shared.User;

@@ -16,8 +16,9 @@
 
 package stroom.security.mock;
 
-import com.google.inject.AbstractModule;
 import stroom.security.api.SecurityContext;
+
+import com.google.inject.AbstractModule;
 
 public class MockSecurityContextModule extends AbstractModule {
 

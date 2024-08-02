@@ -17,9 +17,6 @@
 
 package stroom.processor.impl;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.ws.rs.ProcessingException;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.meta.api.MetaService;
@@ -29,7 +26,11 @@ import stroom.node.api.NodeInfo;
 import stroom.processor.api.ProcessorResult;
 import stroom.processor.api.ProcessorResultImpl;
 import stroom.processor.api.ProcessorTaskExecutor;
-import stroom.processor.shared.*;
+import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorTask;
+import stroom.processor.shared.ProcessorType;
+import stroom.processor.shared.TaskStatus;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -39,6 +40,10 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.UserRef;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.ws.rs.ProcessingException;
 
 import java.io.IOException;
 import java.util.Collections;

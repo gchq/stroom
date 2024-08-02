@@ -16,12 +16,13 @@
 
 package stroom.security.shared;
 
+import stroom.util.shared.UserRef;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.util.shared.UserRef;
 
 @JsonPropertyOrder({"user", "changedLinkedUsers", "changedAppPermissions"})
 @JsonInclude(Include.NON_NULL)

@@ -1,12 +1,5 @@
 package stroom.security.impl.db;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.jooq.Record;
-import org.jooq.*;
-import org.jooq.exception.DataAccessException;
-import org.jooq.impl.DSL;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.security.api.SecurityContext;
@@ -16,14 +9,28 @@ import stroom.security.impl.apikey.ApiKeyDao;
 import stroom.security.impl.apikey.ApiKeyService.DuplicateHashException;
 import stroom.security.impl.apikey.ApiKeyService.DuplicatePrefixException;
 import stroom.security.impl.db.jooq.tables.records.ApiKeyRecord;
+import stroom.security.shared.ApiKeyResultPage;
+import stroom.security.shared.CreateHashedApiKeyRequest;
+import stroom.security.shared.FindApiKeyCriteria;
+import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.User;
-import stroom.security.shared.*;
 import stroom.util.NullSafe;
 import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.UserRef;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.jooq.Condition;
+import org.jooq.Field;
+import org.jooq.Name;
+import org.jooq.OrderField;
+import org.jooq.Record;
+import org.jooq.exception.DataAccessException;
+import org.jooq.impl.DSL;
 
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.Instant;

@@ -1,14 +1,15 @@
 package stroom.security.impl;
 
+import stroom.util.cache.CacheConfig;
+import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
+import stroom.util.time.StroomDuration;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.NotNull;
-import stroom.util.cache.CacheConfig;
-import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.IsStroomConfig;
-import stroom.util.time.StroomDuration;
 
 @JsonPropertyOrder(alphabetic = true)
 public class AuthenticationConfig extends AbstractConfig implements IsStroomConfig {

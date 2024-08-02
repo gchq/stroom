@@ -17,10 +17,6 @@
 
 package stroom.security.impl.db;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-import org.jooq.types.UByte;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.cache.api.StroomCache;
@@ -28,6 +24,11 @@ import stroom.db.util.JooqUtil;
 import stroom.security.impl.AuthorisationConfig;
 import stroom.security.impl.DocTypeIdDao;
 import stroom.util.shared.Clearable;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+import org.jooq.types.UByte;
 
 import java.util.Optional;
 

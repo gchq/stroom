@@ -17,14 +17,21 @@
 
 package stroom.dashboard.impl;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.dashboard.shared.*;
+import stroom.dashboard.shared.ComponentConfig;
+import stroom.dashboard.shared.ComponentSettings;
+import stroom.dashboard.shared.DashboardConfig;
+import stroom.dashboard.shared.DashboardDoc;
+import stroom.dashboard.shared.QueryComponentSettings;
+import stroom.dashboard.shared.TableComponentSettings;
+import stroom.dashboard.shared.TextComponentSettings;
+import stroom.dashboard.shared.VisComponentSettings;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.*;
+import stroom.docstore.api.AuditFieldFilter;
+import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.Store;
+import stroom.docstore.api.StoreFactory;
+import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
@@ -32,6 +39,11 @@ import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
 import stroom.util.shared.Version;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;

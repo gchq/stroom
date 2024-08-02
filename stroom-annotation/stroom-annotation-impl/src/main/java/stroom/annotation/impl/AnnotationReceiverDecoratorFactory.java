@@ -1,6 +1,5 @@
 package stroom.annotation.impl;
 
-import jakarta.inject.Inject;
 import stroom.annotation.api.AnnotationFields;
 import stroom.annotation.shared.Annotation;
 import stroom.expression.matcher.ExpressionMatcher;
@@ -9,7 +8,12 @@ import stroom.index.shared.IndexConstants;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
-import stroom.query.language.functions.*;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ValNull;
+import stroom.query.language.functions.ValString;
+import stroom.query.language.functions.ValuesConsumer;
 import stroom.search.extraction.AnnotationsDecoratorFactory;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.security.api.SecurityContext;
@@ -18,8 +22,17 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.UserRef;
 
-import java.util.*;
+import jakarta.inject.Inject;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 
 class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory {

@@ -4,7 +4,9 @@
 package stroom.processor.impl.db.jooq.tables;
 
 
-import java.util.function.Function;
+import stroom.processor.impl.db.jooq.Keys;
+import stroom.processor.impl.db.jooq.Stroom;
+import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterTrackerRecord;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
@@ -24,9 +26,7 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import stroom.processor.impl.db.jooq.Keys;
-import stroom.processor.impl.db.jooq.Stroom;
-import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterTrackerRecord;
+import java.util.function.Function;
 
 
 /**

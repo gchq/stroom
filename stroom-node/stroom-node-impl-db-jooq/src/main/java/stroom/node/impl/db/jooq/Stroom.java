@@ -4,14 +4,14 @@
 package stroom.node.impl.db.jooq;
 
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.node.impl.db.jooq.tables.Node;
 
 import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
-import stroom.node.impl.db.jooq.tables.Node;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**

@@ -17,13 +17,12 @@
 
 package stroom.analytics.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
 import stroom.analytics.client.presenter.AnalyticProcessingPresenter.AnalyticProcessingView;
-import stroom.analytics.shared.*;
+import stroom.analytics.shared.AnalyticProcessConfig;
+import stroom.analytics.shared.AnalyticProcessType;
+import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.QueryLanguageVersion;
+import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
@@ -34,6 +33,12 @@ import stroom.pipeline.client.event.HasChangeDataHandlers;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskListener;
 import stroom.ui.config.client.UiConfigCache;
+
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.View;
 
 public class AnalyticProcessingPresenter
         extends DocumentEditPresenter<AnalyticProcessingView, AnalyticRuleDoc>
