@@ -442,7 +442,8 @@ public class StroomUserIdentityFactory
         } else {
             Optional<User> optUser = cacheBySubjectId.get(subjectId);
             if (optUser.isEmpty()) {
-                optUser = Optional.ofNullable(userServiceProvider.get().getOrCreateUser(subjectId));
+                optUser = securityContext.asProcessingUserResult(() ->
+                        Optional.ofNullable(userServiceProvider.get().getOrCreateUser(subjectId)));
                 if (optUser.isPresent()) {
                     cacheBySubjectId.put(subjectId, optUser);
                 }
