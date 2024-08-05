@@ -17,7 +17,9 @@
 package stroom.security.mock;
 
 import stroom.security.api.SecurityContext;
+import stroom.security.impl.AppPermissionDao;
 import stroom.security.impl.UserDao;
+import stroom.security.shared.AppPermission;
 import stroom.security.shared.User;
 import stroom.util.shared.UserRef;
 
@@ -33,27 +35,49 @@ import java.util.UUID;
  */
 public class MockUserSecurityContextModule extends AbstractModule {
 
+    private static final String ADMINISTRATORS = "Administrators";
+    private static final String ADMIN = "admin";
+
     @Override
     protected void configure() {
     }
 
     @Provides
-    public SecurityContext securityContext(final UserDao userDao) {
+    public SecurityContext securityContext(final UserDao userDao,
+                                           final AppPermissionDao appPermissionDao) {
         return new MockSecurityContext() {
             @Override
             public UserRef getUserRef() {
-                final Optional<User> optional = userDao.getUserBySubjectId("admin");
+                final Optional<User> optionalGroup = userDao.getGroupByName(ADMINISTRATORS);
+                final User group = optionalGroup.orElseGet(() -> {
+                    final User user = User.builder()
+                            .subjectId(ADMINISTRATORS)
+                            .uuid(UUID.randomUUID().toString())
+                            .group(true)
+                            .build();
+                    user.setCreateUser(ADMIN);
+                    user.setUpdateUser(ADMIN);
+                    user.setCreateTimeMs(System.currentTimeMillis());
+                    user.setUpdateTimeMs(System.currentTimeMillis());
+                    final User created = userDao.create(user);
+                    appPermissionDao.addPermission(created.getUuid(), AppPermission.ADMINISTRATOR);
+                    return created;
+                });
+
+                final Optional<User> optional = userDao.getUserBySubjectId(ADMIN);
                 final User persisted = optional.orElseGet(() -> {
                     final User user = User.builder()
-                            .subjectId("admin")
+                            .subjectId(ADMIN)
                             .uuid(UUID.randomUUID().toString())
                             .group(false)
                             .build();
-                    user.setCreateUser("admin");
-                    user.setUpdateUser("admin");
+                    user.setCreateUser(ADMIN);
+                    user.setUpdateUser(ADMIN);
                     user.setCreateTimeMs(System.currentTimeMillis());
                     user.setUpdateTimeMs(System.currentTimeMillis());
-                    return userDao.create(user);
+                    final User created = userDao.create(user);
+                    userDao.addUserToGroup(created.getUuid(), group.getUuid());
+                    return created;
                 });
                 return persisted.asRef();
             }
