@@ -118,13 +118,15 @@ class OpenIdService {
                 authStatus = authenticationService.currentAuthState(request);
 
                 if (authStatus.getError().isPresent()) {
+                    final BadRequestException badRequestException = authStatus.getError().get();
                     LOGGER.error("Error authenticating request {} for {} got {} - {}",
                             request.getRequestURI(),
-                            authStatus.getError().get().getSubject(),
-                            authStatus.getError().get().getReason().value(),
-                            authStatus.getError().get().getMessage());
+                            badRequestException.getSubject(),
+                            badRequestException.getReason().value(),
+                            badRequestException.getMessage());
                     //Send back to log in with username/password
-                    result = authenticationService.createSignInUri(postSignInRedirectUri);
+//                    result = authenticationService.createSignInUri(postSignInRedirectUri);
+                    result = authenticationService.createErrorUri(authStatus.getError().get());
 
                 } else if (authStatus.getAuthState().isPresent()) {
                     // If we have an authenticated session then the user is logged in

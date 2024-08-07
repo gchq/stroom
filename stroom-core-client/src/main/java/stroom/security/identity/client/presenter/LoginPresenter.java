@@ -158,10 +158,18 @@ public class LoginPresenter extends MyPresenter<LoginView, LoginProxy> implement
         loading.getStyle().setOpacity(0);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     @ProxyStandard
     public interface LoginProxy extends Proxy<LoginPresenter> {
 
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface LoginView extends View, Focus, HasUiHandlers<LoginUiHandlers> {
 

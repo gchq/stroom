@@ -1,4 +1,4 @@
-.LoginView {
+.LoginView, .AuthErrorView {
     position: absolute;
     top: 0;
     left: 0;
@@ -19,7 +19,8 @@
     color: #fff;
 }
 
-.LoginView .LoginViewFormPanel {
+.LoginView .LoginViewFormPanel,
+.AuthErrorView .AuthErrorViewFormPanel {
     border-radius: var(--dialog__border-radius);
     background-color: var(--dialog__background-color);
     color: var(--page__text-color);
@@ -108,4 +109,42 @@
     cursor: pointer;
     color: #1890ff;
     transition: color .3s;
+}
+
+
+.AuthErrorView {
+}
+
+.AuthErrorViewFormPanel {
+}
+
+.AuthErrorViewForm{
+}
+
+.AuthErrorView .AuthErrorViewFormPanel .AuthErrorViewForm {
+    padding: 2rem;
+    border-radius: 0.5rem;
+    width: 30rem;
+
+    font-size: .8rem;
+    font-weight: 400;
+    margin-bottom: 0.25rem;
+
+    justify-content: center;
+}
+
+.AuthErrorView .AuthErrorViewFormPanel .AuthErrorViewImageContainer {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+}
+
+.AuthErrorView .AuthErrorViewFormPanel .AuthErrorViewImageContainer .AuthErrorViewImage svg {
+    width: 4rem;
+    height: 4rem;
+    border-radius: 4rem;
+}
+
+.AuthErrorView .AuthErrorViewFormPanel .AuthErrorViewForm .form-group-label {
+    font-size: var(--font-size-15);
 }

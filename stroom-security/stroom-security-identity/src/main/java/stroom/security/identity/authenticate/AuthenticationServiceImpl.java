@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.identity.authenticate;
 
 import stroom.config.common.UriFactory;
@@ -345,6 +361,14 @@ class AuthenticationServiceImpl implements AuthenticationService {
         UriBuilder uriBuilder = UriBuilder.fromUri(uriFactory.uiUri(AuthenticationService.SIGN_IN_URL_PATH));
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, "error", "login_required");
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.REDIRECT_URI, redirectUri);
+        return uriBuilder.build();
+    }
+
+    @Override
+    public URI createErrorUri(final BadRequestException badRequestException) {
+        LOGGER.debug("Sending user to login.");
+        UriBuilder uriBuilder = UriBuilder.fromUri(uriFactory.uiUri(AuthenticationService.SIGN_IN_URL_PATH));
+        uriBuilder = UriBuilderUtil.addParam(uriBuilder, "error", badRequestException.getMessage());
         return uriBuilder.build();
     }
 
