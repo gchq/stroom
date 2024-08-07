@@ -19,12 +19,16 @@ package stroom.pipeline.filter;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.XPathFilter.MatchType;
 import stroom.test.common.StroomPipelineTestFileUtil;
+import stroom.test.common.TestUtil;
 import stroom.test.common.util.test.StroomUnitTest;
+import stroom.util.NullSafe;
 import stroom.util.xml.SAXParserFactoryFactory;
 
+import io.vavr.Tuple;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.om.NodeInfo;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.TestFactory;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
@@ -33,6 +37,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Stream;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -40,19 +45,15 @@ import javax.xml.parsers.SAXParserFactory;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 class TestXPathFilter extends StroomUnitTest {
 
     private static final String INPUT = "TestTranslationStepping/1.xml";
-    private static final SAXParserFactory PARSER_FACTORY;
+    private static final SAXParserFactory PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
 
-    static {
-        PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
-    }
+    @TestFactory
+    Stream<DynamicTest> testXPathFilters()
+            throws SAXException, IOException, ParserConfigurationException, XPathExpressionException {
 
-    @Test
-    void test() throws SAXException, IOException, ParserConfigurationException, XPathExpressionException {
         final Path input = StroomPipelineTestFileUtil.getTestResourcesFile(INPUT);
         final SAXParser parser = PARSER_FACTORY.newSAXParser();
         final XMLReader xmlReader = parser.getXMLReader();
@@ -61,37 +62,71 @@ class TestXPathFilter extends StroomUnitTest {
         xmlReader.setContentHandler(steppingFilter);
 
         xmlReader.parse(new InputSource(Files.newBufferedReader(input)));
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(String.class, MatchType.class, String.class)
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    final String xPath = testCase.getInput()._1;
+                    final MatchType matchType = testCase.getInput()._2;
+                    final String value = testCase.getInput()._3;
 
-        testPathExists("/records", steppingFilter);
-        testPathExists("records", steppingFilter);
-        testPathExists("records/record", steppingFilter);
-        testPathExists("records/record/data", steppingFilter);
-        testPathExists("records/record/data[@name]", steppingFilter);
-        testPathExists("records/record/data[@name = 'FileNo']", steppingFilter);
-        testPathExists("records/record/data[@name = 'FileNo' and @value]", steppingFilter);
-        testPathExists("records/record/data[@name = 'FileNo' and @value = '1']", steppingFilter);
+                    final XPathFilter xPathFilter = new XPathFilter();
+                    xPathFilter.setPath(xPath);
+                    xPathFilter.setMatchType(matchType);
+                    xPathFilter.setValue(value);
+                    xPathFilter.setIgnoreCase(true);
 
-        testPathExists("records/record", steppingFilter);
-        testPathExists("records/record", steppingFilter);
+                    try {
+                        return match(xPathFilter, steppingFilter);
+                    } catch (XPathExpressionException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of("/foo", MatchType.EXISTS, null),
+                        false)
+                .addCase(Tuple.of("/records", MatchType.EXISTS, null),
+                        true)
+                .addCase(Tuple.of("records", MatchType.EXISTS, null),
+                        true)
+                .addCase(Tuple.of("records/record", MatchType.EXISTS, null),
+                        true)
+                .addCase(Tuple.of("records/record/data", MatchType.EXISTS, null),
+                        true)
+                .addCase(Tuple.of("records/record/data[@name]", MatchType.EXISTS, null),
+                        true)
+                .addCase(Tuple.of("records/record/data[@name = 'FileNo']", MatchType.EXISTS, null),
+                        true)
+                .addCase(Tuple.of("records/record/data[@name = 'FileNo' and @value]", MatchType.EXISTS, null),
+                        true)
+                .addCase(Tuple.of("records/record/data[@name = 'FileNo' and @value = '1']", MatchType.EXISTS, null),
+                        true)
+                .addCase(Tuple.of("records/record/data[@name = 'FileNo']/@value", MatchType.EQUALS, "1"),
+                        true)
+                .addCase(Tuple.of(
+                                "records/record[10]/data[@name = 'Message']/@value",
+                                MatchType.EQUALS,
+                                "some message 10"),
+                        true)
 
-        testPathEquals("records/record/data[@name = 'FileNo']/@value", "1", steppingFilter);
-    }
+                .addCase(Tuple.of("records/record[1]/data[@name = 'LineNo']/@value mod 2", MatchType.EQUALS, "1"),
+                        true)
+                .addCase(Tuple.of("records/record[1]/data[@name = 'LineNo']/@value mod 2", MatchType.NOT_EQUALS, "0"),
+                        true)
+                .addCase(Tuple.of("records/record[2]/data[@name = 'LineNo']/@value mod 2", MatchType.EQUALS, "0"),
+                        true)
 
-    private void testPathExists(final String xPath, final SAXEventRecorder steppingFilter)
-            throws XPathExpressionException {
-        final XPathFilter xPathFilter = new XPathFilter();
-        xPathFilter.setPath(xPath);
-        xPathFilter.setMatchType(MatchType.EXISTS);
-        assertThat(match(xPathFilter, steppingFilter)).isTrue();
-    }
-
-    private void testPathEquals(final String xPath, final String value, final SAXEventRecorder steppingFilter)
-            throws XPathExpressionException {
-        final XPathFilter xPathFilter = new XPathFilter();
-        xPathFilter.setPath(xPath);
-        xPathFilter.setMatchType(MatchType.EQUALS);
-        xPathFilter.setValue(value);
-        assertThat(match(xPathFilter, steppingFilter)).isTrue();
+                .addCase(Tuple.of("records/record[10]/data[@name = 'Message']/@value", MatchType.CONTAINS, "10"),
+                        true)
+                .addCase(Tuple.of(
+                                "records/record[10]/data[@name = 'Message']/@value",
+                                MatchType.CONTAINS,
+                                "some message"),
+                        true)
+                .addCase(
+                        Tuple.of("records/record[10]/data[@name = 'Message']/@value", MatchType.CONTAINS, "foo"),
+                        false)
+                .build();
     }
 
     @SuppressWarnings("unchecked")
@@ -105,71 +140,10 @@ class TestXPathFilter extends StroomUnitTest {
                 xPathFilter, configuration, namespaceContext);
         final Object result = compiledXPathFilter.getXPathExpression().evaluate(nodeInfo, XPathConstants.NODESET);
 
-        final List<NodeInfo> nodes = (List<NodeInfo>) result;
-        if (nodes.size() > 0) {
-            switch (xPathFilter.getMatchType()) {
-                case EXISTS:
-                    return true;
-
-                case CONTAINS:
-                    for (final NodeInfo node : nodes) {
-                        if (contains(node.getStringValue(), xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
-                            return true;
-                        }
-                    }
-                    break;
-
-                case EQUALS:
-                    for (final NodeInfo node : nodes) {
-                        if (equals(node.getStringValue(), xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
-                            return true;
-                        }
-                    }
-                    break;
-                case NOT_EQUALS:
-                    for (final NodeInfo node : nodes) {
-                        if (equals(node.getStringValue(), xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
-                            return false;
-                        }
-                    }
-                    return true;
-                case UNIQUE:
-                    return true;
-            }
+        final List<Object> objects = (List<Object>) result;
+        if (NullSafe.hasItems(objects)) {
+            return SAXEventRecorder.isFilterMatch(objects, compiledXPathFilter, 1L, 0);
         }
-
-        return false;
-    }
-
-    private boolean contains(final String value, final String text, final Boolean ignoreCase) {
-        if (value != null && text != null) {
-            String val = value.trim();
-            String txt = text.trim();
-
-            if (ignoreCase != null && ignoreCase) {
-                val = val.toLowerCase();
-                txt = text.toLowerCase();
-            }
-
-            return val.contains(txt);
-        }
-
-        return false;
-    }
-
-    private boolean equals(final String value, final String text, final Boolean ignoreCase) {
-        if (value != null && text != null) {
-            String val = value.trim();
-            String txt = text.trim();
-
-            if (ignoreCase != null && ignoreCase) {
-                val = val.toLowerCase();
-                txt = text.toLowerCase();
-            }
-
-            return val.equals(txt);
-        }
-
         return false;
     }
 }

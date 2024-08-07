@@ -13,6 +13,21 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#4397** : Fix search API to not require node name.
+
+* Issue **#4394** : Fix a bug that was causing stepping filters to ignore the top level null prefixed namespace (e.g. `xmlns="event-logging:3"`. This meant all elements in the xpath had to be fully qualified.
+
+* Issue **#4395** : Fix ClassCastException when using a stepping xpath filter that returns something other than a list of nodes, e.g. a double, long, boolean, etc.. This means you can now do something like `/Events/Event/Meta/sm:source/sm:recordNo > 2` `equals` `true`, or `/Events/Event/Meta/sm:source/sm:recordNo mod 2` `equals` `0`.
+
+* Issue **#3960** : Migrate to Elasticsearch Java API Client.
+
+* Issue **#4385** : Fix error when trying to change permissions on a folder with no current owner.
+
+* Issue **#4384** : Stop logging to ERROR when stroomQL contains a malformed function.
+
+* Issue **#4389** : Fix the Query table re-drawing too frequently.
+
+
 ## [v7.5-beta.8] - 2024-07-23
 
 * Change API endpoint `/Authentication/v1/noauth/reset` from GET to POST and from a path parameter to a POST body.

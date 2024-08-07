@@ -1,6 +1,7 @@
 package stroom.data.store.impl;
 
 import stroom.data.store.api.DataDownloadResource;
+import stroom.data.store.api.DataService;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
