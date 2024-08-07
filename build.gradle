@@ -102,7 +102,7 @@ ext.versions = [
 
         //------Stroom-repos---------------
         //    stroomProxyRepo: 'v5.1-beta.8',
-        eventLogging      : '5.0-beta.31_schema-v4.0-beta.3',
+        eventLogging      : '6.0-beta.1_schema-v4.1.0',
         hadoopCommonShaded: '2.6.4-9',
         hadoopHdfsShaded  : '2.6.4-7',
         stroomStats       : '1.0-alpha.6',
@@ -242,7 +242,7 @@ ext.libs = [
         javassist                           : "org.javassist:javassist", // version controlled by dropwizard-dependencies
         javax_inject__gwt                   : "javax.inject:javax.inject:1",
         jakarta_inject                      : "jakarta.inject:jakarta.inject-api:2.0.1",
-        jaxb_api                            : "jakarta.xml.bind:jakarta.xml.bind-api:4.0.1",
+        jaxb_api                            : "jakarta.xml.bind:jakarta.xml.bind-api:4.0.2",
         jaxb_api__gwt                       : "javax.xml.bind:jaxb-api:2.3.1",//"jakarta.xml.bind:jakarta.xml.bind-api:3.0.1", // Using beta versions of jaxb libs as they resolve the split pkg problem between jaxb-core and jaxb-runtime
         jaxb_impl                           : "com.sun.xml.bind:jaxb-impl:4.0.4",
         //jaxb_impl__gwt                      : "org.glassfish.jaxb:jaxb-runtime:2.3.1",//"com.sun.xml.bind:jaxb-impl:3.0.2",
