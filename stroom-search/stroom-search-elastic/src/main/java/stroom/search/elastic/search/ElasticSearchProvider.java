@@ -263,8 +263,8 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
      * Returns an `AbstractField` instance, based on the field's data type
      */
     private QueryField toDataSourceField(final FieldType elasticIndexFieldType,
-                                        final String fieldName,
-                                        final Boolean isIndexed)
+                                         final String fieldName,
+                                         final Boolean isIndexed)
             throws IllegalArgumentException {
         final ConditionSet conditionSet = ConditionSet.getElastic(elasticIndexFieldType);
         return QueryField
@@ -459,7 +459,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
 
     @Override
     public List<DocRef> list() {
-        return elasticClusterStore.list();
+        return elasticIndexStore.list();
     }
 
     @Override

@@ -26,6 +26,7 @@ import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.stepping.Recorder;
 import stroom.pipeline.stepping.SteppingFilter;
+import stroom.util.NullSafe;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
@@ -113,9 +114,9 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
             }
             if (settings.getFilters() != null) {
                 for (final XPathFilter xPathFilter : settings.getFilters()) {
-                    if (xPathFilter.getMatchType() != null && xPathFilter.getPath() != null) {
+                    if (NullSafe.allNonNull(xPathFilter.getMatchType(), xPathFilter.getPath())) {
                         if (xPathFilter.getMatchType().isNeedsValue()) {
-                            if (xPathFilter.getValue() != null && !xPathFilter.getValue().isEmpty()) {
+                            if (NullSafe.isNonEmptyString(xPathFilter.getValue())) {
                                 return true;
                             }
                         } else {
@@ -195,69 +196,11 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
                 for (final CompiledXPathFilter compiledXPathFilter : xPathFilters) {
                     final Object result = compiledXPathFilter.getXPathExpression().evaluate(documentInfo,
                             XPathConstants.NODESET);
-                    final List<NodeInfo> nodes = (List<NodeInfo>) result;
-                    if (!nodes.isEmpty()) {
-                        final XPathFilter xPathFilter = compiledXPathFilter.getXPathFilter();
-                        switch (xPathFilter.getMatchType()) {
-                            case EXISTS:
-                                return true;
-
-                            case CONTAINS:
-                                for (final NodeInfo node : nodes) {
-                                    if (contains(node.getStringValue(), xPathFilter.getValue(),
-                                            xPathFilter.isIgnoreCase())) {
-                                        return true;
-                                    }
-                                }
-                                break;
-
-                            case EQUALS:
-                                for (final NodeInfo node : nodes) {
-                                    if (equals(node.getStringValue(),
-                                            xPathFilter.getValue(),
-                                            xPathFilter.isIgnoreCase())) {
-                                        return true;
-                                    }
-                                }
-                                break;
-                            case NOT_EQUALS:
-                                for (final NodeInfo node : nodes) {
-                                    if (!equals(node.getStringValue(),
-                                            xPathFilter.getValue(),
-                                            xPathFilter.isIgnoreCase())) {
-                                        return true;
-                                    }
-                                }
-                                break;
-                            case UNIQUE:
-                                for (final NodeInfo node : nodes) {
-                                    String value = node.getStringValue();
-                                    if (value != null) {
-                                        value = value.trim();
-                                        if (xPathFilter.isIgnoreCase() != null && xPathFilter.isIgnoreCase()) {
-                                            value = value.toLowerCase();
-                                        }
-                                    }
-
-                                    // See if we previously found a matching record
-                                    // for this filter.
-                                    Rec record = xPathFilter.getUniqueRecord(value);
-                                    if (record != null) {
-                                        // We did so see if this is the same record.
-                                        // If it is then we can return this record
-                                        // again.
-                                        if (record.getMetaId() == metaId &&
-                                                record.getRecordIndex() == recordIndex) {
-                                            return true;
-                                        }
-
-                                    } else {
-                                        record = new Rec(metaId, recordIndex);
-                                        xPathFilter.addUniqueValue(value, record);
-                                        return true;
-                                    }
-                                }
-                                break;
+                    // May contain NodeInfo, Boolean, Double, Long, String
+                    final List<Object> objects = (List<Object>) result;
+                    if (NullSafe.hasItems(objects)) {
+                        if (isFilterMatch(objects, compiledXPathFilter, metaId, recordIndex)) {
+                            return true;
                         }
                     }
                 }
@@ -269,36 +212,166 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
         return false;
     }
 
-    private boolean contains(final String value, final String text, final Boolean ignoreCase) {
-        if (value == null || text == null) {
-            return false;
+    /**
+     * Pkg private for testing
+     */
+    static boolean isFilterMatch(final List<Object> objects,
+                                 final CompiledXPathFilter compiledXPathFilter,
+                                 final long metaId,
+                                 final long recordIndex) {
+        final XPathFilter xPathFilter = compiledXPathFilter.getXPathFilter();
+        switch (xPathFilter.getMatchType()) {
+            case EXISTS -> {
+                return true;
+            }
+            case CONTAINS -> {
+                for (final Object object : objects) {
+                    if (contains(object, xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
+                        return true;
+                    }
+                }
+            }
+            case EQUALS -> {
+                for (final Object object : objects) {
+                    if (equals(object, xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
+                        return true;
+                    }
+                }
+            }
+            case NOT_EQUALS -> {
+                for (final Object object : objects) {
+                    if (!equals(object, xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
+                        return true;
+                    }
+                }
+            }
+            case UNIQUE -> {
+                for (final Object object : objects) {
+                    String value = getStringValue(object, xPathFilter.isIgnoreCase());
+                    // See if we previously found a matching record
+                    // for this filter.
+                    Rec record = xPathFilter.getUniqueRecord(value);
+                    if (record != null) {
+                        // We did so see if this is the same record.
+                        // If it is then we can return this record
+                        // again.
+                        if (record.getMetaId() == metaId &&
+                                record.getRecordIndex() == recordIndex) {
+                            return true;
+                        }
+
+                    } else {
+                        record = new Rec(metaId, recordIndex);
+                        xPathFilter.addUniqueValue(value, record);
+                        return true;
+                    }
+                }
+            }
         }
-
-        String val = value.trim();
-        String txt = text.trim();
-
-        if (ignoreCase != null && ignoreCase) {
-            val = val.toLowerCase();
-            txt = text.toLowerCase();
-        }
-
-        return val.contains(txt);
+        return false;
     }
 
-    private boolean equals(final String value, final String text, final Boolean ignoreCase) {
-        if (value == null || text == null) {
+    /**
+     * @return value as a string, trimmed and, if ignoreCase is true, converted to lower case
+     */
+    private static String getStringValue(final Object object, Boolean ignoreCase) {
+        if (object == null) {
+            return null;
+        } else {
+            return switch (object) {
+                case NodeInfo nodeInfo -> clean(nodeInfo.getStringValue(), ignoreCase);
+                case String str -> clean(str, ignoreCase);
+                default -> object.toString();
+            };
+        }
+    }
+
+    private static String clean(final String value, final Boolean ignoreCase) {
+        return NullSafe.get(value,
+                val -> NullSafe.isTrue(ignoreCase)
+                        ? val.trim().toLowerCase()
+                        : val.trim());
+    }
+
+    private static boolean contains(final Object value, final String text, final Boolean ignoreCase) {
+        // Contains doesn't really make any sense for any type other than string, so just convert whatever it
+        // is to a string and do contains on that.
+        String valueStr = getStringValue(value, ignoreCase);
+
+        if (valueStr == null || text == null) {
             return false;
         }
 
-        String val = value.trim();
         String txt = text.trim();
 
-        if (ignoreCase != null && ignoreCase) {
-            val = val.toLowerCase();
+        if (NullSafe.isTrue(ignoreCase)) {
+            // getStringValue does the trim and toLowerCase for value/valueStr
             txt = text.toLowerCase();
         }
+        return valueStr.contains(txt);
+    }
 
-        return val.equals(txt);
+    private static boolean equals(final Object value, final String text, final Boolean ignoreCase) {
+        if (value == null || text == null) {
+            return false;
+        } else {
+            return switch (value) {
+                case NodeInfo nodeInfo -> equalsAsString(nodeInfo.getStringValue(), text, ignoreCase);
+                case String str -> equalsAsString(str, text, ignoreCase);
+                case Double aDouble -> equalsAsDouble(aDouble, text);
+                case Long aLong -> equalsAsLong(aLong, text);
+                case Boolean aBool -> equalsAsBoolean(aBool, text);
+                default -> equalsAsString(value.toString(), text, ignoreCase);
+            };
+        }
+    }
+
+    private static boolean equalsAsString(final String value, final String text, final Boolean ignoreCase) {
+        if (value == null || text == null) {
+            return false;
+        } else {
+            String val = value.trim();
+            String txt = text.trim();
+
+            if (NullSafe.isTrue(ignoreCase)) {
+                return val.equalsIgnoreCase(txt);
+            } else {
+                return val.equals(txt);
+            }
+        }
+    }
+
+    private static boolean equalsAsDouble(final Double value, final String text) {
+        try {
+            final Double val2 = Double.parseDouble(text);
+            return value.equals(val2);
+        } catch (NumberFormatException e) {
+            // We know the xpath returned a number so if we can't parse the user value to a number
+            // it is not a match
+            return false;
+        }
+    }
+
+    private static boolean equalsAsLong(final Long value, final String text) {
+        try {
+            final Long val2 = Long.parseLong(text);
+            return value.equals(val2);
+        } catch (NumberFormatException e) {
+            // We know the xpath returned a number so if we can't parse the user value to a number
+            // it is not a match
+            return false;
+        }
+    }
+
+    private static boolean equalsAsBoolean(final Boolean value, final String text) {
+        try {
+            final Boolean val2 = Boolean.parseBoolean(text);
+            return value.equals(val2);
+        } catch (NumberFormatException e) {
+            // We know the xpath returned a number so if we can't parse the user value to a number
+            // it is not a match
+            return false;
+        }
     }
 
     @Override
@@ -307,7 +380,6 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
         if (events == null) {
             return null;
         }
-
         return new NodeInfoSerializer(events);
     }
 
@@ -338,12 +410,23 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
         return filterApplied;
     }
 
+    @Override
+    public String toString() {
+        return "SAXEventRecorder{" +
+                "elementId='" + elementId + '\'' +
+                '}';
+    }
+
+    // --------------------------------------------------------------------------------
+
+
     public static class CompiledXPathFilter {
 
         private final XPathFilter xPathFilter;
         private final XPathExpression xPathExpression;
 
-        public CompiledXPathFilter(final XPathFilter xPathFilter, final Configuration configuration,
+        public CompiledXPathFilter(final XPathFilter xPathFilter,
+                                   final Configuration configuration,
                                    final NamespaceContext namespaceContext) throws XPathExpressionException {
             this.xPathFilter = xPathFilter;
 
@@ -362,6 +445,14 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
 
         public XPathExpression getXPathExpression() {
             return xPathExpression;
+        }
+
+        @Override
+        public String toString() {
+            return "CompiledXPathFilter{" +
+                    "xPathFilter=" + xPathFilter +
+                    ", xPathExpression=" + xPathExpression +
+                    '}';
         }
     }
 }
