@@ -12,6 +12,10 @@ import java.util.Comparator;
 import java.util.NavigableSet;
 import java.util.Objects;
 
+/**
+ * Represents a stream with an effective time. Used for determining which reference
+ * stream to perform a lookup against.
+ */
 public class EffectiveMeta implements Comparable<EffectiveMeta> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EffectiveMeta.class);
@@ -26,6 +30,7 @@ public class EffectiveMeta implements Comparable<EffectiveMeta> {
             .thenComparing(EffectiveMeta::getId);
 
     private final long id;
+    // feed/type are mainly here to aid with debugging and logging
     private final String feedName;
     private final String typeName;
     private final long effectiveMs;
@@ -145,6 +150,8 @@ public class EffectiveMeta implements Comparable<EffectiveMeta> {
         return hashcode;
     }
 
+    // TODO We could potentially do equals/hash on just the id given that an id can only be
+    //  associated with one effectiveMs and id is unique.
     private static int buildHash(final long id,
                                  final long effectiveMs) {
         return Objects.hash(id, effectiveMs);

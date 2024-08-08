@@ -61,7 +61,8 @@ public class EffectiveMetaSet implements Iterable<EffectiveMeta> {
     private final String type;
 
     /**
-     * Cache the hash code as we are pretty much guaranteed to call hashCode
+     * Cache the hash code as we are pretty much guaranteed to call hashCode in
+     * EffectiveStreamInternPool
      */
     private final int hash;
 
@@ -169,17 +170,6 @@ public class EffectiveMetaSet implements Iterable<EffectiveMeta> {
                 stream().collect(Collectors.toCollection(EffectiveMetaSet::createTreeSet)));
     }
 
-    /**
-     * Find the latest {@link EffectiveMeta} in effectiveMetaSet that is before or equal to timeMs.
-     */
-    public Optional<EffectiveMeta> findLatestBefore(final long timeMs) {
-        if (isEmpty()) {
-            return Optional.empty();
-        } else {
-            return Optional.ofNullable(effectiveMetas.floor(EffectiveMeta.asFloorKey(timeMs)));
-        }
-    }
-
     @Override
     public boolean equals(final Object object) {
         // CUSTOM equals - only care about the metaIds
@@ -264,6 +254,18 @@ public class EffectiveMetaSet implements Iterable<EffectiveMeta> {
             return Optional.empty();
         }
     }
+
+    /**
+     * Find the latest {@link EffectiveMeta} in effectiveMetaSet that is before or equal to timeMs.
+     */
+    public Optional<EffectiveMeta> findLatestBefore(final long timeMs) {
+        if (isEmpty()) {
+            return Optional.empty();
+        } else {
+            return Optional.ofNullable(effectiveMetas.floor(EffectiveMeta.asFloorKey(timeMs)));
+        }
+    }
+
 
     public boolean contains(final EffectiveMeta effectiveMeta) {
         return effectiveMetas.contains(effectiveMeta);
