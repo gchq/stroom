@@ -30,6 +30,7 @@ import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.string.CIKey;
+import stroom.util.shared.string.CIKeys;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -70,10 +71,10 @@ public class SessionDao extends AbstractStateDao<Session> {
     private static final CqlIdentifier COLUMN_TERMINAL = CqlIdentifier.fromCql("terminal");
 
     private static final Map<CIKey, ScyllaDbColumn> COLUMN_MAP = Map.ofEntries(
-            StateFieldUtil.createNameToColumnEntry(CIKey.KEY, DataTypes.TEXT, COLUMN_KEY),
-            StateFieldUtil.createNameToColumnEntry(CIKey.START, DataTypes.TIMESTAMP, COLUMN_START),
-            StateFieldUtil.createNameToColumnEntry(CIKey.END, DataTypes.TIMESTAMP, COLUMN_END),
-            StateFieldUtil.createNameToColumnEntry(CIKey.TERMINAL, DataTypes.BOOLEAN, COLUMN_TERMINAL));
+            StateFieldUtil.createNameToColumnEntry(CIKeys.KEY, DataTypes.TEXT, COLUMN_KEY),
+            StateFieldUtil.createNameToColumnEntry(CIKeys.START, DataTypes.TIMESTAMP, COLUMN_START),
+            StateFieldUtil.createNameToColumnEntry(CIKeys.END, DataTypes.TIMESTAMP, COLUMN_END),
+            StateFieldUtil.createNameToColumnEntry(CIKeys.TERMINAL, DataTypes.BOOLEAN, COLUMN_TERMINAL));
 
     public SessionDao(final Provider<CqlSession> sessionProvider, final String tableName) {
         super(sessionProvider, CqlIdentifier.fromCql(tableName));
@@ -459,10 +460,10 @@ public class SessionDao extends AbstractStateDao<Session> {
         private final ValuesConsumer consumer;
 
         private static final Map<CIKey, Function<Session, Val>> FIELD_NAME_TO_EXTRACTOR_MAP = Map.of(
-                CIKey.KEY, session -> ValString.create(session.key()),
-                CIKey.START, session -> ValDate.create(session.start()),
-                CIKey.END, session -> ValDate.create(session.end()),
-                CIKey.TERMINAL, session -> ValBoolean.create(session.terminal()));
+                CIKeys.KEY, session -> ValString.create(session.key()),
+                CIKeys.START, session -> ValDate.create(session.start()),
+                CIKeys.END, session -> ValDate.create(session.end()),
+                CIKeys.TERMINAL, session -> ValBoolean.create(session.terminal()));
 
         public SessionConsumer(final FieldIndex fieldIndex, final ValuesConsumer consumer) {
             this.fieldNames = fieldIndex.getFieldsAsCIKeys();

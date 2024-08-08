@@ -16,11 +16,10 @@
 
 package stroom.query.common.v2;
 
-import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
 import stroom.util.shared.string.CIKey;
 
 public interface IndexFieldProviders {
 
-    IndexField getIndexField(DocRef docRef, CIKey fieldName);
+    IndexFieldMap getIndexFields(DocRef docRef, CIKey fieldName);
 }

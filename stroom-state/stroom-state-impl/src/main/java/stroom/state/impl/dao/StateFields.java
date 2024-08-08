@@ -18,6 +18,7 @@ package stroom.state.impl.dao;
 
 import stroom.datasource.api.v2.QueryField;
 import stroom.util.shared.string.CIKey;
+import stroom.util.shared.string.CIKeys;
 
 import java.util.Arrays;
 import java.util.List;
@@ -25,10 +26,10 @@ import java.util.Map;
 
 public interface StateFields {
 
-    QueryField KEY_FIELD = QueryField.createText(CIKey.KEY, true);
-    QueryField VALUE_TYPE_FIELD = QueryField.createText(CIKey.VALUE_TYPE, false);
-    QueryField VALUE_FIELD = QueryField.createText(CIKey.VALUE, false);
-    QueryField INSERT_TIME_FIELD = QueryField.createText(CIKey.INSERT_TIME, false);
+    QueryField KEY_FIELD = QueryField.createText(CIKeys.KEY, true);
+    QueryField VALUE_TYPE_FIELD = QueryField.createText(CIKeys.VALUE_TYPE, false);
+    QueryField VALUE_FIELD = QueryField.createText(CIKeys.VALUE, false);
+    QueryField INSERT_TIME_FIELD = QueryField.createText(CIKeys.INSERT_TIME, false);
 
     List<QueryField> FIELDS = Arrays.asList(
             KEY_FIELD,
@@ -37,8 +38,8 @@ public interface StateFields {
             INSERT_TIME_FIELD);
 
     Map<CIKey, QueryField> FIELD_NAME_TO_FIELD_MAP = Map.of(
-            CIKey.KEY, KEY_FIELD,
-            CIKey.VALUE_TYPE, VALUE_TYPE_FIELD,
-            CIKey.VALUE, VALUE_FIELD,
-            CIKey.INSERT_TIME, INSERT_TIME_FIELD);
+            CIKeys.KEY, KEY_FIELD,
+            CIKeys.VALUE_TYPE, VALUE_TYPE_FIELD,
+            CIKeys.VALUE, VALUE_FIELD,
+            CIKeys.INSERT_TIME, INSERT_TIME_FIELD);
 }

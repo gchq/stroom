@@ -17,6 +17,7 @@
 package stroom.util.shared.query;
 
 import stroom.util.shared.string.CIKey;
+import stroom.util.shared.string.CIKeys;
 
 import java.util.Objects;
 
@@ -25,7 +26,7 @@ public class FieldNames {
     /**
      * For field '{@code __time__}'
      */
-    public static final CIKey DEFAULT_TIME_FIELD_KEY = CIKey.UNDERSCORE_TIME;
+    public static final CIKey DEFAULT_TIME_FIELD_KEY = CIKeys.UNDERSCORE_TIME;
     /**
      * Field '{@code __time__}'
      */
@@ -33,7 +34,7 @@ public class FieldNames {
     /**
      * For field '{@code EventTime}'
      */
-    public static final CIKey FALLBACK_TIME_FIELD_KEY = CIKey.EVENT_TIME;
+    public static final CIKey FALLBACK_TIME_FIELD_KEY = CIKeys.EVENT_TIME;
     /**
      * Field '{@code EventTime}'
      */
@@ -42,7 +43,7 @@ public class FieldNames {
     /**
      * For field '{@code __stream_id__}'
      */
-    public static final CIKey DEFAULT_STREAM_ID_FIELD_KEY = CIKey.UNDERSCORE_STREAM_ID;
+    public static final CIKey DEFAULT_STREAM_ID_FIELD_KEY = CIKeys.UNDERSCORE_STREAM_ID;
     /**
      * Field '{@code __stream_id__}'
      */
@@ -51,7 +52,7 @@ public class FieldNames {
     /**
      * For field '{@code StreamId}'
      */
-    public static final CIKey FALLBACK_STREAM_ID_FIELD_KEY = CIKey.STREAM_ID;
+    public static final CIKey FALLBACK_STREAM_ID_FIELD_KEY = CIKeys.STREAM_ID;
     /**
      * Field '{@code StreamId}'
      */
@@ -60,7 +61,7 @@ public class FieldNames {
     /**
      * For field '{@code __event_id__}'
      */
-    public static final CIKey DEFAULT_EVENT_ID_FIELD_KEY = CIKey.UNDERSCORE_EVENT_ID;
+    public static final CIKey DEFAULT_EVENT_ID_FIELD_KEY = CIKeys.UNDERSCORE_EVENT_ID;
     /**
      * Field '{@code __event_id__}'
      */
@@ -69,7 +70,7 @@ public class FieldNames {
     /**
      * For field '{@code EventId}'
      */
-    public static final CIKey FALLBACK_EVENT_ID_FIELD_KEY = CIKey.EVENT_ID;
+    public static final CIKey FALLBACK_EVENT_ID_FIELD_KEY = CIKeys.EVENT_ID;
     /**
      * Field '{@code EventId}'
      */

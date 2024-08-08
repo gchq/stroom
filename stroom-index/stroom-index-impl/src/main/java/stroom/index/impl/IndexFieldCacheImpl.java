@@ -21,6 +21,7 @@ import stroom.cache.api.LoadingStroomCache;
 import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
 import stroom.query.common.v2.IndexFieldCache;
+import stroom.query.common.v2.IndexFieldMap;
 import stroom.query.common.v2.IndexFieldProviders;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -41,7 +42,7 @@ public class IndexFieldCacheImpl implements IndexFieldCache, Clearable {
     private static final String CACHE_NAME = "Index Field Cache";
 
     private final IndexFieldProviders indexFieldProviders;
-    private final LoadingStroomCache<Key, IndexField> cache;
+    private final LoadingStroomCache<Key, IndexFieldMap> cache;
     private final SecurityContext securityContext;
 
     @Inject
@@ -57,9 +58,9 @@ public class IndexFieldCacheImpl implements IndexFieldCache, Clearable {
                 this::create);
     }
 
-    private IndexField create(final Key key) {
+    private IndexFieldMap create(final Key key) {
         return securityContext.asProcessingUserResult(() ->
-                indexFieldProviders.getIndexField(key.docRef, key.fieldName));
+                indexFieldProviders.getIndexFields(key.docRef, key.fieldName));
     }
 
     @Override
@@ -74,7 +75,11 @@ public class IndexFieldCacheImpl implements IndexFieldCache, Clearable {
                     LogUtil.message("You are not authorised to read {}", docRef));
         }
         final Key key = new Key(docRef, fieldName);
-        return cache.get(key);
+        final IndexFieldMap indexFieldMap = cache.get(key);
+
+        final IndexField indexField = indexFieldMap.getCaseSensitive(fieldName);
+
+        return indexField;
     }
 
     @Override
@@ -84,6 +89,7 @@ public class IndexFieldCacheImpl implements IndexFieldCache, Clearable {
 
 
     // --------------------------------------------------------------------------------
+
 
     // Pkg private for testing
     static class Key {

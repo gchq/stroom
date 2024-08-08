@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 package stroom.index.impl;
 
-import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
+import stroom.query.common.v2.IndexFieldMap;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.IndexFieldProviders;
 import stroom.security.api.SecurityContext;
@@ -37,6 +37,7 @@ import java.util.Set;
 @Singleton
 public class IndexFieldProvidersImpl implements IndexFieldProviders {
 
+    // DocRef.type => IndexFieldProvider
     private final Map<String, IndexFieldProvider> providers = new HashMap<>();
     private final SecurityContext securityContext;
 
@@ -50,7 +51,7 @@ public class IndexFieldProvidersImpl implements IndexFieldProviders {
     }
 
     @Override
-    public IndexField getIndexField(final DocRef docRef, final CIKey fieldName) {
+    public IndexFieldMap getIndexFields(final DocRef docRef, final CIKey fieldName) {
         Objects.requireNonNull(docRef, "Null DocRef supplied");
         Objects.requireNonNull(docRef.getType(), "Null DocRef type supplied");
         Objects.requireNonNull(fieldName, "Null field name supplied");
@@ -66,6 +67,6 @@ public class IndexFieldProvidersImpl implements IndexFieldProviders {
             throw new NullPointerException("No provider can be found for: " + docRef.getType());
         }
 
-        return provider.getIndexField(docRef, fieldName);
+        return provider.getIndexFields(docRef, fieldName);
     }
 }

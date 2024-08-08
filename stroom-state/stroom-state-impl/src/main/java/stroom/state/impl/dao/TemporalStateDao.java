@@ -23,6 +23,7 @@ import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.string.CIKey;
+import stroom.util.shared.string.CIKeys;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -63,11 +64,11 @@ public class TemporalStateDao extends AbstractStateDao<TemporalState> {
     private static final CqlIdentifier COLUMN_VALUE = CqlIdentifier.fromCql("value");
 
     private static final Map<CIKey, ScyllaDbColumn> FIELD_NAME_TO_COLUMN_MAP = Map.ofEntries(
-            StateFieldUtil.createNameToColumnEntry(CIKey.KEY, DataTypes.TEXT, COLUMN_KEY),
+            StateFieldUtil.createNameToColumnEntry(CIKeys.KEY, DataTypes.TEXT, COLUMN_KEY),
             StateFieldUtil.createNameToColumnEntry(
-                    CIKey.EFFECTIVE_TIME, DataTypes.TIMESTAMP, COLUMN_EFFECTIVE_TIME),
-            StateFieldUtil.createNameToColumnEntry(CIKey.VALUE_TYPE, DataTypes.TINYINT, COLUMN_VALUE_TYPE),
-            StateFieldUtil.createNameToColumnEntry(CIKey.VALUE, DataTypes.BLOB, COLUMN_VALUE));
+                    CIKeys.EFFECTIVE_TIME, DataTypes.TIMESTAMP, COLUMN_EFFECTIVE_TIME),
+            StateFieldUtil.createNameToColumnEntry(CIKeys.VALUE_TYPE, DataTypes.TINYINT, COLUMN_VALUE_TYPE),
+            StateFieldUtil.createNameToColumnEntry(CIKeys.VALUE, DataTypes.BLOB, COLUMN_VALUE));
 
     public TemporalStateDao(final Provider<CqlSession> sessionProvider, final String tableName) {
         super(sessionProvider, CqlIdentifier.fromCql(tableName));
@@ -154,8 +155,8 @@ public class TemporalStateDao extends AbstractStateDao<TemporalState> {
                 sessionProvider,
                 table,
                 FIELD_NAME_TO_COLUMN_MAP,
-                CIKey.VALUE_TYPE,
-                CIKey.VALUE);
+                CIKeys.VALUE_TYPE,
+                CIKeys.VALUE);
         searchHelper.search(criteria, fieldIndex, dateTimeSettings, consumer);
     }
 

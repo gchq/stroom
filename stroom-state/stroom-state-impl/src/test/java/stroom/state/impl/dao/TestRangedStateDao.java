@@ -21,7 +21,7 @@ import stroom.pipeline.refdata.store.StringValue;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.language.functions.FieldIndex;
 import stroom.state.impl.ScyllaDbUtil;
-import stroom.util.shared.string.CIKey;
+import stroom.util.shared.string.CIKeys;
 
 import org.junit.jupiter.api.Test;
 
@@ -53,7 +53,7 @@ class TestRangedStateDao {
             assertThat(res.getValueAsString()).isEqualTo("test99");
 
             final FieldIndex fieldIndex = new FieldIndex();
-            fieldIndex.create(CIKey.KEY_START);
+            fieldIndex.create(CIKeys.KEY_START);
             final AtomicInteger count = new AtomicInteger();
             rangedStateDao.search(
                     new ExpressionCriteria(ExpressionOperator.builder().build()),

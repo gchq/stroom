@@ -21,6 +21,7 @@ import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
 import stroom.index.shared.LuceneIndexDoc;
+import stroom.query.common.v2.IndexFieldMap;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.NullSafe;
@@ -104,7 +105,7 @@ public class IndexFieldServiceImpl implements IndexFieldService {
     }
 
     @Override
-    public IndexField getIndexField(final DocRef docRef, final CIKey fieldName) {
+    public IndexFieldMap getIndexFields(final DocRef docRef, final CIKey fieldName) {
         return securityContext.useAsReadResult(() -> {
 
             // Check for read permission.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2018-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,14 @@ import stroom.meta.statistics.api.MetaStatistics;
 import stroom.security.api.SecurityContext;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
+import stroom.util.shared.string.CIKeys;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import jakarta.inject.Provider;
 
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 public class MetaStatisticsModule extends AbstractModule {
 
@@ -43,16 +44,16 @@ public class MetaStatisticsModule extends AbstractModule {
         final MetaStatisticsImpl metaDataStatistic = new MetaStatisticsImpl(
                 internalStatisticsReceiverProvider,
                 securityContext);
-        metaDataStatistic.setTemplates(Arrays.asList(
+        metaDataStatistic.setTemplates(List.of(
                 new MetaStatisticsTemplate(
                         InternalStatisticKey.METADATA_STREAMS_RECEIVED,
-                        "receivedTime",
-                        Collections.singletonList("Feed")),
+                        CIKeys.RECEIVED_TIME,
+                        Collections.singletonList(CIKeys.FEED)),
                 new MetaStatisticsTemplate(
                         InternalStatisticKey.METADATA_STREAM_SIZE,
-                        "receivedTime",
-                        "StreamSize",
-                        Collections.singletonList("Feed"))));
+                        CIKeys.RECEIVED_TIME,
+                        CIKeys.STREAM_SIZE,
+                        Collections.singletonList(CIKeys.FEED))));
         return metaDataStatistic;
     }
 }

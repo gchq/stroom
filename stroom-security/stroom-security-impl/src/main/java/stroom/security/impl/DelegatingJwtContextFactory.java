@@ -1,9 +1,26 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.impl;
 
 import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.StandardJwtContextFactory;
 import stroom.security.openid.api.IdpType;
 import stroom.util.NullSafe;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -19,6 +36,7 @@ import java.util.Optional;
 // * user request which always uses the internal idp. It also takes into account whether
 // * an external IDP is in use.
 // */
+
 /**
  * A front for {@link InternalJwtContextFactory} and {@link StandardJwtContextFactory}
  * that picks the delegate based on the identity provider that has been configured, e.g.
@@ -45,7 +63,7 @@ public class DelegatingJwtContextFactory implements JwtContextFactory {
     }
 
     @Override
-    public void removeAuthorisationEntries(final Map<String, String> headers) {
+    public void removeAuthorisationEntries(final Map<CIKey, String> headers) {
         if (NullSafe.hasEntries(headers)) {
             getDelegate().removeAuthorisationEntries(headers);
         }
@@ -73,10 +91,8 @@ public class DelegatingJwtContextFactory implements JwtContextFactory {
 
     private JwtContextFactory getDelegate() {
         return switch (openIdConfigProvider.get().getIdentityProviderType()) {
-            case INTERNAL_IDP, TEST_CREDENTIALS ->
-                    internalJwtContextFactory;
-            case EXTERNAL_IDP ->
-                    standardJwtContextFactory;
+            case INTERNAL_IDP, TEST_CREDENTIALS -> internalJwtContextFactory;
+            case EXTERNAL_IDP -> standardJwtContextFactory;
             case NO_IDP ->
                     throw new UnsupportedOperationException("No JwtContextFactory when IDP type is " + IdpType.NO_IDP);
         };

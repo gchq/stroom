@@ -66,6 +66,7 @@ import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.string.CIKey;
+import stroom.util.shared.string.CIKeys;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -83,7 +84,7 @@ class DataServiceImpl implements DataService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataServiceImpl.class);
 
-    private static final CIKey FILES_ATTR_KEY = CIKey.of("Files");
+    private static final CIKey FILES_ATTR_KEY = CIKeys.FILES;
 
     private final ResourceStore resourceStore;
     private final DataUploadTaskHandler dataUploadTaskHandlerProvider;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.string.CIKeys;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -134,7 +135,7 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
 
             try {
                 final List<Path> files = fileSystemStreamPathHelper.getFiles(file);
-                attributeMap.putCollection("Files", files.stream()
+                attributeMap.putCollection(CIKeys.FILES, files.stream()
                         .map(FileUtil::getCanonicalPath)
                         .toList());
             } catch (final IOException e) {

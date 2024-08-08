@@ -16,13 +16,19 @@
 
 package stroom.query.common.v2;
 
-import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
 import stroom.util.shared.string.CIKey;
 
 public interface IndexFieldProvider {
 
-    IndexField getIndexField(DocRef docRef, CIKey fieldName);
+    /**
+     * Get all {@link stroom.datasource.api.v2.IndexField}s matching (ignoring case) the fieldName {@link CIKey}.
+     * Will return an empty map if no matching fields are found.
+     */
+    IndexFieldMap getIndexFields(DocRef docRef, CIKey fieldName);
 
+    /**
+     * @return The {@link DocRef} type of the {@link IndexFieldProvider}
+     */
     String getType();
 }

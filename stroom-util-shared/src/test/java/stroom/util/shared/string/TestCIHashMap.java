@@ -18,6 +18,7 @@ package stroom.util.shared.string;
 
 import org.junit.jupiter.api.Test;
 
+import static java.util.Map.Entry.comparingByKey;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestCIHashMap {
@@ -55,5 +56,27 @@ class TestCIHashMap {
                 .isTrue();
         assertThat(map.containsKey(CIKey.of("bar")))
                 .isTrue();
+    }
+
+    @Test
+    void sorting() {
+        final CIHashMap<String> map = new CIHashMap<>();
+        map.put("D", "1");
+        map.put("e", "1");
+        map.put("B", "1");
+        map.put("c", "1");
+        map.put("a", "1");
+
+        assertThat(map.entrySet()
+                .stream()
+                .sorted(comparingByKey())
+                .toList())
+                .extracting(entry -> entry.getKey().getAsLowerCase())
+                .containsExactly(
+                        "a",
+                        "b",
+                        "c",
+                        "d",
+                        "e");
     }
 }

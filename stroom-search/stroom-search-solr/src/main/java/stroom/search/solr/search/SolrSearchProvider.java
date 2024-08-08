@@ -17,7 +17,6 @@
 package stroom.search.solr.search;
 
 import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.IndexField;
 import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
@@ -32,6 +31,7 @@ import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.FieldInfoResultPageBuilder;
 import stroom.query.common.v2.IndexFieldCache;
+import stroom.query.common.v2.IndexFieldMap;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
@@ -105,13 +105,14 @@ public class SolrSearchProvider implements SearchProvider, IndexFieldProvider {
     }
 
     @Override
-    public IndexField getIndexField(final DocRef docRef, final CIKey fieldName) {
+    public IndexFieldMap getIndexFields(final DocRef docRef, final CIKey fieldName) {
         final SolrIndexDoc index = solrIndexStore.readDocument(docRef);
         if (index != null && index.getFields() != null) {
             final Optional<SolrIndexField> optionalSolrIndexField = index
                     .getFields()
                     .stream()
-                    .filter(field -> CIKey.equalsIgnoreCase(fieldName, field.getFldName()))
+                    .filter(field ->
+                            CIKey.equalsIgnoreCase(fieldName, field.getFldName()))
                     .findFirst();
             return optionalSolrIndexField.orElse(null);
         }

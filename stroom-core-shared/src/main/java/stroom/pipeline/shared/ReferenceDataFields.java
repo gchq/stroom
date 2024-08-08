@@ -20,7 +20,7 @@ import stroom.datasource.api.v2.ConditionSet;
 import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
-import stroom.util.shared.string.CIKey;
+import stroom.util.shared.string.CIKeys;
 
 import java.util.Arrays;
 import java.util.List;
@@ -34,56 +34,56 @@ public class ReferenceDataFields {
 
     public static final QueryField FEED_NAME_FIELD = QueryField
             .builder()
-            .fldName(CIKey.FEED__NAME)
+            .fldName(CIKeys.FEED__NAME)
             .fldType(FieldType.TEXT)
             .conditionSet(ConditionSet.REF_DATA_TEXT)
             .queryable(true)
             .build();
     public static final QueryField KEY_FIELD = QueryField
             .builder()
-            .fldName(CIKey.KEY)
+            .fldName(CIKeys.KEY)
             .fldType(FieldType.TEXT)
             .conditionSet(ConditionSet.REF_DATA_TEXT)
             .queryable(true)
             .build();
     public static final QueryField VALUE_FIELD = QueryField
             .builder()
-            .fldName(CIKey.VALUE)
+            .fldName(CIKeys.VALUE)
             .fldType(FieldType.TEXT)
             .conditionSet(ConditionSet.REF_DATA_TEXT)
             .queryable(true)
             .build();
     public static final QueryField VALUE_REF_COUNT_FIELD = QueryField.createInteger(
-            CIKey.VALUE__REFERENCE__COUNT, false);
+            CIKeys.VALUE__REFERENCE__COUNT, false);
     public static final QueryField MAP_NAME_FIELD = QueryField
             .builder()
-            .fldName(CIKey.MAP__NAME)
+            .fldName(CIKeys.MAP__NAME)
             .fldType(FieldType.TEXT)
             .conditionSet(ConditionSet.REF_DATA_TEXT)
             .queryable(true)
             .build();
     public static final QueryField CREATE_TIME_FIELD = QueryField
-            .createDate(CIKey.CREATE__TIME, true);
+            .createDate(CIKeys.CREATE__TIME, true);
     public static final QueryField EFFECTIVE_TIME_FIELD = QueryField
-            .createDate(CIKey.EFFECTIVE__TIME, true);
+            .createDate(CIKeys.EFFECTIVE__TIME, true);
     public static final QueryField LAST_ACCESSED_TIME_FIELD = QueryField
-            .createDate(CIKey.LAST__ACCESSED__TIME, true);
+            .createDate(CIKeys.LAST__ACCESSED__TIME, true);
     public static final QueryField PIPELINE_FIELD = QueryField
             .builder()
-            .fldName(CIKey.REFERENCE__LOADER__PIPELINE)
+            .fldName(CIKeys.REFERENCE__LOADER__PIPELINE)
             .fldType(FieldType.DOC_REF)
             .conditionSet(ConditionSet.REF_DATA_DOC_REF)
             .docRefType(PipelineDoc.DOCUMENT_TYPE)
             .queryable(true)
             .build();
     public static final QueryField PROCESSING_STATE_FIELD = QueryField
-            .createText(CIKey.PROCESSING__STATE, false);
+            .createText(CIKeys.PROCESSING__STATE, false);
     public static final QueryField STREAM_ID_FIELD = QueryField.createId(
-            CIKey.STREAM__ID, false);
+            CIKeys.STREAM__ID, false);
     public static final QueryField PART_NO_FIELD = QueryField.createLong(
-            CIKey.PART__NUMBER, false);
+            CIKeys.PART__NUMBER, false);
     public static final QueryField PIPELINE_VERSION_FIELD = QueryField.createText(
-            CIKey.PIPELINE__VERSION, false);
+            CIKeys.PIPELINE__VERSION, false);
 
     public static final List<QueryField> FIELDS = Arrays.asList(
             FEED_NAME_FIELD,

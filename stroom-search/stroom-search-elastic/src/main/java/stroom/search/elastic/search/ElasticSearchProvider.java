@@ -19,7 +19,6 @@ package stroom.search.elastic.search;
 import stroom.datasource.api.v2.ConditionSet;
 import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.IndexField;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionUtil;
@@ -30,6 +29,7 @@ import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.query.common.v2.IndexFieldMap;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
@@ -48,8 +48,12 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.CompareUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.string.CIKey;
+import stroom.util.string.MultiCaseMap;
+import stroom.util.string.MultiCaseMap.MultipleMatchException;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ExpandWildcard;
@@ -71,15 +75,15 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.TreeMap;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
@@ -177,11 +181,21 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     }
 
     @Override
-    public IndexField getIndexField(final DocRef docRef, final CIKey fieldName) {
+    public IndexFieldMap getIndexFields(final DocRef docRef, final CIKey fieldName) {
         final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
         if (index != null) {
-            final Map<String, ElasticIndexField> indexFieldMap = getFieldsMap(index);
-            return indexFieldMap.get(fieldName);
+            final MultiCaseMap<ElasticIndexField> indexFieldMap = getFieldsMap(index);
+            ElasticIndexField elasticIndexField;
+            try {
+                elasticIndexField = indexFieldMap.getCaseSensitive(fieldName);
+            } catch (MultipleMatchException e) {
+                final Set<String> matchingFieldNames = indexFieldMap.get(fieldName)
+                        .keySet();
+                throw new RuntimeException(LogUtil.message(
+                        "Multiple fields match '{}' (ignoring case). Matching fields: {}",
+                        fieldName.get(), matchingFieldNames));
+            }
+            return elasticIndexField;
         }
         return null;
     }
@@ -308,13 +322,18 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
 
     @Override
     public List<ElasticIndexField> getFields(final ElasticIndexDoc index) {
-        return new ArrayList<>(getFieldsMap(index).values());
+        return getFieldsMap(index)
+                .entrySet()
+                .stream()
+                .sorted(CompareUtil.getNullSafeCaseInsensitiveComparator(Entry::getKey))
+                .map(Entry::getValue)
+                .toList();
     }
 
     @Override
-    public Map<String, ElasticIndexField> getFieldsMap(final ElasticIndexDoc index) {
+    public MultiCaseMap<ElasticIndexField> getFieldsMap(final ElasticIndexDoc index) {
         final Map<String, FieldMapping> fieldMappings = getFieldMappings(index);
-        final Map<String, ElasticIndexField> fieldsMap = new HashMap<>();
+        final MultiCaseMap<ElasticIndexField> fieldsMap = new MultiCaseMap<>();
 
         fieldMappings.forEach((key, fieldMeta) -> {
             try {
@@ -401,22 +420,10 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         return result;
     }
 
-    private static TreeMap<String, FieldMapping> getFlattenedFieldMappings(final ElasticIndexDoc elasticIndex,
-                                                                           final ElasticsearchClient elasticClient) {
+    private static Map<String, FieldMapping> getFlattenedFieldMappings(final ElasticIndexDoc elasticIndex,
+                                                                       final ElasticsearchClient elasticClient) {
         // Flatten the mappings, which are keyed by index, into a de-duplicated list
-        // TODO potentially replace with Map<CIKey, FieldMapping> as I don't think there is any
-        //  need to iterate in order.
-        final TreeMap<String, FieldMapping> mappings = new TreeMap<>((o1, o2) -> {
-            if (Objects.equals(o1, o2)) {
-                return 0;
-            }
-            if (o2 == null) {
-                return 1;
-            }
-
-            return o1.compareToIgnoreCase(o2);
-        });
-
+        final Map<String, FieldMapping> mappings = new HashMap<>();
         final String indexName = elasticIndex.getIndexName();
         final GetFieldMappingRequest request = GetFieldMappingRequest.of(r -> r
                 .expandWildcards(ExpandWildcard.Open)

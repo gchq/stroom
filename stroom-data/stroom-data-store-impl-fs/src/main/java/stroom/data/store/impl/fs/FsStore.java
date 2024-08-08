@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import stroom.data.store.api.Target;
 import stroom.data.store.impl.AttributeMapFactory;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.shared.FsVolume;
-import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
@@ -200,7 +199,6 @@ class FsStore implements Store, AttributeMapFactory {
             return NullSafe.getOrElseGet(
                     source,
                     Source::getAttributes,
-                    AttributeMap::asCaseInsensitiveMap,
                     Collections::emptyMap);
         } catch (final IOException e) {
             throw new RuntimeException(e.getMessage(), e);

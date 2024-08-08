@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import stroom.docref.StringMatch;
 import stroom.index.impl.IndexFieldService;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.LuceneIndexDoc;
+import stroom.query.common.v2.IndexFieldMap;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -102,7 +103,7 @@ public class MockIndexFieldService implements IndexFieldService {
     }
 
     @Override
-    public IndexField getIndexField(final DocRef docRef, final CIKey fieldName) {
+    public IndexFieldMap getIndexFields(final DocRef docRef, final CIKey fieldName) {
         final FindFieldCriteria findIndexFieldCriteria = new FindFieldCriteria(
                 PageRequest.oneRow(),
                 null,

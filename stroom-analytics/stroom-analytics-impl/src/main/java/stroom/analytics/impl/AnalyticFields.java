@@ -19,6 +19,7 @@ package stroom.analytics.impl;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.util.shared.string.CIKey;
+import stroom.util.shared.string.CIKeys;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,10 +37,10 @@ public class AnalyticFields {
             .build();
 
     // Times
-    public static final QueryField TIME_FIELD = QueryField.createDate(CIKey.TIME, true);
-    public static final QueryField NAME_FIELD = QueryField.createText(CIKey.NAME, true);
-    public static final QueryField UUID_FIELD = QueryField.createText(CIKey.UUID, true);
-    public static final QueryField VALUE_FIELD = QueryField.createText(CIKey.VALUE, true);
+    public static final QueryField TIME_FIELD = QueryField.createDate(CIKeys.TIME, true);
+    public static final QueryField NAME_FIELD = QueryField.createText(CIKeys.NAME, true);
+    public static final QueryField UUID_FIELD = QueryField.createText(CIKeys.UUID, true);
+    public static final QueryField VALUE_FIELD = QueryField.createText(CIKeys.VALUE, true);
 
     private static final List<QueryField> FIELDS = List.of(
             TIME_FIELD,

@@ -23,12 +23,16 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -38,6 +42,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static stroom.util.shared.string.CIKey.equalsIgnoreCase;
+import static stroom.util.shared.string.CIKey.listOf;
 
 public class TestCIKey {
 
@@ -122,7 +127,10 @@ public class TestCIKey {
                     final String str = testCase.getInput()._1;
                     final CIKey ciKey = CIKey.of(testCase.getInput()._2);
                     boolean isEqual = equalsIgnoreCase(str, ciKey);
+                    // Test the other overloaded equalsIgnoreCase methods too
                     assertThat(equalsIgnoreCase(ciKey, str))
+                            .isEqualTo(isEqual);
+                    assertThat(equalsIgnoreCase(str, ciKey.get()))
                             .isEqualTo(isEqual);
                     return isEqual;
                 })
@@ -185,11 +193,49 @@ public class TestCIKey {
                 .build();
     }
 
+    @TestFactory
+    Stream<DynamicTest> testIn() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple2<String, List<String>>>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    final String key = testCase.getInput()._1;
+                    final List<String> keys = testCase.getInput()._2;
+                    return CIKey.of(key).in(keys);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of("foo", List.of("foo", "bar")), true)
+                .addCase(Tuple.of("bar", List.of("foo", "bar")), true)
+                .addCase(Tuple.of("BAR", List.of("foo", "bar")), true)
+                .addCase(Tuple.of("FOO", List.of("foo", "bar")), true)
+                .addCase(Tuple.of("xxx", List.of("foo", "bar")), false)
+                .addCase(Tuple.of("", List.of("foo", "bar")), false)
+                .addCase(Tuple.of("", List.of("foo", "", "bar")), true)
+                .addCase(Tuple.of(null, Arrays.asList("foo", "bar", null)), true)
+                .build();
+    }
+
+    @Test
+    void testListOf() {
+        assertThat(listOf("a", "B", "c"))
+                .extracting(CIKey::getAsLowerCase)
+                .containsExactly("a", "b", "c");
+
+        assertThat(listOf((String[]) null))
+                .extracting(CIKey::getAsLowerCase)
+                .isEmpty();
+
+        assertThat(listOf())
+                .extracting(CIKey::getAsLowerCase)
+                .isEmpty();
+    }
+
     @Test
     void testSorting() {
 
         final Map<CIKey, String> map = new HashMap<>();
-        Stream.of("0", "1", "A", "aa", "b", "C", "d")
+        Stream.of("A", "aa", "b", "C", "d", null, "", "1", "0")
                 .forEach(str -> map.put(CIKey.of(str), str));
 
         assertThat(map.keySet()
@@ -197,14 +243,14 @@ public class TestCIKey {
                 .sorted()
                 .toList())
                 .extracting(CIKey::get)
-                .containsExactly("0", "1", "A", "aa", "b", "C", "d");
+                .containsExactly(null, "", "0", "1", "A", "aa", "b", "C", "d");
 
         assertThat(map.keySet()
                 .stream()
                 .sorted()
                 .toList())
                 .extracting(CIKey::getAsLowerCase)
-                .containsExactly("0", "1", "a", "aa", "b", "c", "d");
+                .containsExactly(null, "", "0", "1", "a", "aa", "b", "c", "d");
     }
 
     @Test
@@ -240,17 +286,17 @@ public class TestCIKey {
                         Function.identity()));
 
         // Not in known keys, so uses one from built-in common keys
-        final CIKey ciKey = CIKey.of(CIKey.UUID.get(), knownCIKeys);
+        final CIKey ciKey = CIKey.of(CIKeys.UUID.get(), knownCIKeys);
         assertThat(ciKey)
-                .isSameAs(CIKey.UUID);
+                .isSameAs(CIKeys.UUID);
     }
 
     @Test
     void testWithCommonKey() {
         // Not in known keys, so uses one from built-in common keys
-        final CIKey ciKey = CIKey.of(CIKey.UUID.get());
+        final CIKey ciKey = CIKey.of(CIKeys.UUID.get());
         assertThat(ciKey)
-                .isSameAs(CIKey.UUID);
+                .isSameAs(CIKeys.UUID);
     }
 
     @Test

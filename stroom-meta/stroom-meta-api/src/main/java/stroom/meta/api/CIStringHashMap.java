@@ -16,8 +16,6 @@
 
 package stroom.meta.api;
 
-import stroom.util.shared.string.CIKey;
-
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
@@ -27,7 +25,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * String hash map that does not care about key case.
@@ -152,23 +149,6 @@ class CIStringHashMap implements Map<String, String> {
     @Override
     public int hashCode() {
         return Objects.hash(map);
-    }
-
-    /**
-     * Convert this map into one keyed with {@link CIKey}
-     */
-    public Map<CIKey, String> asCaseInsensitiveMap() {
-        // TODO this can be moved onto AttributeMap and changed to just return
-        //  'this' when we change AttributeMap to extend CIHashMap
-
-        // Convert Map<CIString, String> into Map<CIKey, String>
-        return map.entrySet().stream()
-                .collect(Collectors.toMap(
-                        entry -> {
-                            final CIString ciString = entry.getKey();
-                            return CIKey.of(ciString.key, ciString.lowerKey);
-                        },
-                        Entry::getValue));
     }
 
 

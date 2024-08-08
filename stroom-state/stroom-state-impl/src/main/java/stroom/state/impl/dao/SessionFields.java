@@ -18,16 +18,17 @@ package stroom.state.impl.dao;
 
 import stroom.datasource.api.v2.QueryField;
 import stroom.util.shared.string.CIKey;
+import stroom.util.shared.string.CIKeys;
 
 import java.util.List;
 import java.util.Map;
 
 public interface SessionFields {
 
-    QueryField KEY_FIELD = QueryField.createText(CIKey.KEY, true);
-    QueryField START_FIELD = QueryField.createDate(CIKey.START, true);
-    QueryField END_FIELD = QueryField.createDate(CIKey.END, true);
-    QueryField TERMINAL_FIELD = QueryField.createText(CIKey.TERMINAL, false);
+    QueryField KEY_FIELD = QueryField.createText(CIKeys.KEY, true);
+    QueryField START_FIELD = QueryField.createDate(CIKeys.START, true);
+    QueryField END_FIELD = QueryField.createDate(CIKeys.END, true);
+    QueryField TERMINAL_FIELD = QueryField.createText(CIKeys.TERMINAL, false);
 
     List<QueryField> FIELDS = List.of(
             KEY_FIELD,
@@ -36,8 +37,8 @@ public interface SessionFields {
             TERMINAL_FIELD);
 
     Map<CIKey, QueryField> FIELD_NAME_TO_FIELD_MAP = Map.of(
-            CIKey.KEY, KEY_FIELD,
-            CIKey.START, START_FIELD,
-            CIKey.END, END_FIELD,
-            CIKey.TERMINAL, TERMINAL_FIELD);
+            CIKeys.KEY, KEY_FIELD,
+            CIKeys.START, START_FIELD,
+            CIKeys.END, END_FIELD,
+            CIKeys.TERMINAL, TERMINAL_FIELD);
 }
