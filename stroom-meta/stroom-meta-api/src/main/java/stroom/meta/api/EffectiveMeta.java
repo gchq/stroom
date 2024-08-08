@@ -8,15 +8,22 @@ import stroom.util.logging.LambdaLoggerFactory;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.NavigableSet;
 import java.util.Objects;
 
-// TODO: 08/02/2023 May want to consider combining this with SimpleMeta class
-// Could maybe have used the EffectiveStream class but this has feed/type in which aids
-// debugging.
 public class EffectiveMeta implements Comparable<EffectiveMeta> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EffectiveMeta.class);
+    private static final String DUMMY = "DUMMY";
+
+    // We have to be able to compare EffectiveMeta items on their effective time, so that we
+    // can get the latest EffectiveMeta before time X. Include stream ID also, so that we have
+    // deterministic ordering if two streams have the same effectiveMs.
+    // IMPORTANT: compareTo is used for equality checking of items in the equals method of a TreeSet
+    private static final Comparator<EffectiveMeta> TIME_THEN_ID_COMPARATOR = Comparator.comparingLong(
+                    (EffectiveMeta effectiveMeta) -> effectiveMeta.getEffectiveMs())
+            .thenComparing(EffectiveMeta::getId);
 
     private final long id;
     private final String feedName;
@@ -29,10 +36,8 @@ public class EffectiveMeta implements Comparable<EffectiveMeta> {
                          final String typeName,
                          final long effectiveMs) {
         this.id = id;
-        // Many EffectiveMeta objects will share the same feed/type (which help with debugging)
-        // so intern them to reduce mem use.
-        this.feedName = Objects.requireNonNull(feedName).intern();
-        this.typeName = Objects.requireNonNull(typeName).intern();
+        this.feedName = Objects.requireNonNull(feedName);
+        this.typeName = Objects.requireNonNull(typeName);
         this.effectiveMs = effectiveMs;
 
         // feed/type will always be the same for a given id so ignore them in equals/hash
@@ -50,16 +55,13 @@ public class EffectiveMeta implements Comparable<EffectiveMeta> {
     }
 
     /**
-     * Only used as a threshold in navigable set navigation where we only care about the effectiveMs
+     * Only to be used as a threshold in {@link NavigableSet#floor(Object)} navigation
+     * where we only care about the effectiveMs.
      */
-    private EffectiveMeta(final long effectiveMs) {
-        this.id = -1;
-        this.feedName = null;
-        this.typeName = null;
-        this.effectiveMs = effectiveMs;
-
-        // feed/type will always be the same for a given id so ignore them in equals/hash
-        this.hashcode = buildHash(id, effectiveMs);
+    static EffectiveMeta asFloorKey(final long effectiveMs) {
+        // Use Long.MAX_VALUE so that the floor() when used with TIME_THEN_ID_COMPARATOR
+        // will return the item with an effectiveMs equal to the passed effectiveMs
+        return new EffectiveMeta(Long.MAX_VALUE, DUMMY, DUMMY, effectiveMs);
     }
 
     public EffectiveMeta(final Meta meta) {
@@ -121,7 +123,8 @@ public class EffectiveMeta implements Comparable<EffectiveMeta> {
 
     @Override
     public int compareTo(final EffectiveMeta o) {
-        return Long.compare(effectiveMs, o.effectiveMs);
+        // IMPORTANT: compareTo is used for equality checking of items in the equals method of a TreeSet
+        return TIME_THEN_ID_COMPARATOR.compare(this, o);
     }
 
     @Override
@@ -140,14 +143,6 @@ public class EffectiveMeta implements Comparable<EffectiveMeta> {
     @Override
     public int hashCode() {
         return hashcode;
-    }
-
-    /**
-     * Find the latest {@link EffectiveMeta} in effectiveMetaSet that is before timeMs.
-     */
-    public static EffectiveMeta findLatestBefore(final long timeMs,
-                                                 final NavigableSet<EffectiveMeta> effectiveMetaSet) {
-        return effectiveMetaSet.floor(new EffectiveMeta(timeMs));
     }
 
     private static int buildHash(final long id,

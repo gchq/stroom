@@ -8,8 +8,9 @@ import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.data.shared.StreamTypeNames;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.meta.api.AttributeMap;
-import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaDataCriteria;
+import stroom.meta.api.EffectiveMetaSet;
+import stroom.meta.api.EffectiveMetaSet.Builder;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
@@ -37,7 +38,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Singleton
 public class MockMetaService implements MetaService, Clearable {
@@ -287,24 +287,23 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
-    public List<EffectiveMeta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
-        List<EffectiveMeta> results = new ArrayList<>();
+    public EffectiveMetaSet findEffectiveData(final EffectiveMetaDataCriteria criteria) {
+        final Builder builder = EffectiveMetaSet.builder(criteria.getFeed(), criteria.getType());
 
         try {
-            results = metaMap.values()
+            metaMap.values()
                     .stream()
                     .filter(meta ->
                             NullSafe.test(criteria.getType(), type -> type.equals(meta.getTypeName())))
                     .filter(meta ->
                             NullSafe.test(criteria.getFeed(), feed -> feed.equals(meta.getFeedName())))
-                    .map(EffectiveMeta::new)
-                    .collect(Collectors.toList());
+                    .forEach(meta -> builder.add(meta.getId(), meta.getEffectiveMs()));
 
         } catch (final RuntimeException e) {
             System.out.println(e.getMessage());
             // Ignore ... just a mock
         }
-        return results;
+        return builder.build();
     }
 
     @Override
