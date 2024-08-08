@@ -38,7 +38,8 @@ public class EffectiveMetaSet implements Iterable<EffectiveMeta> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EffectiveMetaSet.class);
 
-    // Exactly one metaId per effectiveTimeMs so only need one field in the comparator
+    // Exactly one metaId per effectiveTimeMs (see de-duping in add(), so only
+    // comparator only needs to work on effectiveTimeMs
     private static final Comparator<EffectiveMeta> EFF_TIME_COMPARATOR = Comparator.comparingLong(
             EffectiveMeta::getEffectiveMs);
 
@@ -49,8 +50,8 @@ public class EffectiveMetaSet implements Iterable<EffectiveMeta> {
 
     private final NavigableSet<EffectiveMeta> effectiveMetas;
     /**
-     * Hold all the meta IDs as a sorted array, so we can do fast equality checking.
-     * It is also used to compute the cached hash.
+     * Hold all the meta IDs as a sorted array, so we can do fast equality checking in the
+     * EffectiveStreamInternPool, It is also used to compute the cached hash.
      */
     private final long[] sortedMetaIds;
 
@@ -242,6 +243,9 @@ public class EffectiveMetaSet implements Iterable<EffectiveMeta> {
         return new Builder(feedName, typeName);
     }
 
+    /**
+     * @return The {@link EffectiveMeta} with the oldest effectiveTimeMs
+     */
     public Optional<EffectiveMeta> first() {
         try {
             return Optional.ofNullable(effectiveMetas.first());
@@ -250,6 +254,9 @@ public class EffectiveMetaSet implements Iterable<EffectiveMeta> {
         }
     }
 
+    /**
+     * @return The {@link EffectiveMeta} with the most recent effectiveTimeMs
+     */
     public Optional<EffectiveMeta> last() {
         try {
             return Optional.ofNullable(effectiveMetas.last());
