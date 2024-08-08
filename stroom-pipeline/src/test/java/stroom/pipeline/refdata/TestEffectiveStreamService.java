@@ -4,6 +4,8 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.EffectiveMeta;
+import stroom.meta.api.EffectiveMetaSet;
+import stroom.meta.api.EffectiveMetaSet.Builder;
 import stroom.pipeline.shared.data.PipelineReference;
 
 import org.assertj.core.api.Assertions;
@@ -18,10 +20,8 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.function.Consumer;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,6 +36,8 @@ class TestEffectiveStreamService {
             LOOKUP_TIME_MS);
     protected static final ReferenceDataResult RESULT = new ReferenceDataResult(LOOKUP_IDENTIFIER);
     protected static final String FEED_NAME = "MY_FEED";
+    public static final String DUMMY_FEED = "DUMMY_FEED";
+    public static final String DUMMY_TYPE = "DummyType";
     @Mock
     private EffectiveStreamCache mockEffectiveStreamCache;
 
@@ -62,7 +64,7 @@ class TestEffectiveStreamService {
         final ReferenceDataResult result = new ReferenceDataResult(lookupIdentifier);
 
         Mockito.when(mockEffectiveStreamCache.get(Mockito.any()))
-                .thenReturn(Collections.emptyNavigableSet());
+                .thenReturn(EffectiveMetaSet.empty());
 
         final Optional<EffectiveMeta> optEffectiveStream = effectiveStreamService.determineEffectiveStream(
                 pipelineReference,
@@ -176,14 +178,17 @@ class TestEffectiveStreamService {
     }
 
     private EffectiveMeta buildEffectiveMeta(final long id, final Instant effectiveTime) {
-        return new EffectiveMeta(id, "DUMMY_FEED", "DummyType", effectiveTime.toEpochMilli());
+        return new EffectiveMeta(id, DUMMY_FEED, DUMMY_TYPE, effectiveTime.toEpochMilli());
     }
 
     void doDetermineTest(final Set<EffectiveMeta> effectiveStreams,
                          final Consumer<Optional<EffectiveMeta>> resultConsumer) {
 
+        final Builder builder = EffectiveMetaSet.builder(DUMMY_FEED, DUMMY_TYPE);
+        effectiveStreams.forEach(builder::add);
+
         Mockito.when(mockEffectiveStreamCache.get(Mockito.any()))
-                .thenReturn(new TreeSet<>(effectiveStreams));
+                .thenReturn(builder.build());
 
         final EffectiveStreamService effectiveStreamService = new EffectiveStreamService(mockEffectiveStreamCache);
         final Optional<EffectiveMeta> optEffectiveStream = effectiveStreamService.determineEffectiveStream(
