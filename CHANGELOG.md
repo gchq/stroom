@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.4.13] - 2024-08-08
+
+* Issue **#4403** : Fix to make elastic indexes searchable with StroomQL.
+
+* Issue **#2897** : Fix issue of the effective stream intern pool returning incorrect sets of streams.
+
+
 ## [v7.4.12] - 2024-08-02
 
 * Issue **#4397** : Fix search API to not require node name.
@@ -710,7 +717,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4.12...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4.13...HEAD
+[v7.4.13]: https://github.com/gchq/stroom/compare/v7.4.12...v7.4.13
 [v7.4.12]: https://github.com/gchq/stroom/compare/v7.4.11...v7.4.12
 [v7.4.11]: https://github.com/gchq/stroom/compare/v7.4.10...v7.4.11
 [v7.4.10]: https://github.com/gchq/stroom/compare/v7.4.9...v7.4.10
