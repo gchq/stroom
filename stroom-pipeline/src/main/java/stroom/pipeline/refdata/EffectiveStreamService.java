@@ -95,6 +95,7 @@ public class EffectiveStreamService {
                             streamType,
                             Instant.ofEpochMilli(time).toString()));
         }
+        LOGGER.debug("Determined optEffectiveStream to be {}", optEffectiveStream);
         return optEffectiveStream;
     }
 
