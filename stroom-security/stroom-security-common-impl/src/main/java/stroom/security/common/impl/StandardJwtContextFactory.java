@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.common.impl;
 
 import stroom.security.api.exception.AuthenticationException;
@@ -13,6 +29,8 @@ import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.string.CIKey;
+import stroom.util.shared.string.CIKeys;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
@@ -78,21 +96,22 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     /**
      * The access token from the token endpoint, in plain text.
      */
-    static final String AMZN_OIDC_ACCESS_TOKEN_HEADER = "x-amzn-oidc-accesstoken";
+    static final CIKey AMZN_OIDC_ACCESS_TOKEN_HEADER_KEY = CIKey.ofStaticKey("x-amzn-oidc-accesstoken");
     /**
      * The subject field (sub) from the user info endpoint, in plain text.
      */
-    static final String AMZN_OIDC_IDENTITY_HEADER = "x-amzn-oidc-identity";
+    static final CIKey AMZN_OIDC_IDENTITY_HEADER_KEY = CIKey.ofStaticKey("x-amzn-oidc-identity");
     /**
      * The user claims, in JSON web tokens (JWT) format.
      */
-    static final String AMZN_OIDC_DATA_HEADER = "x-amzn-oidc-data";
+    static final CIKey AMZN_OIDC_DATA_HEADER_KEY = CIKey.ofStaticKey("x-amzn-oidc-data");
+
     static final String AMZN_OIDC_SIGNER_PREFIX = "arn:";
-    static final String SIGNER_HEADER_KEY = "signer";
+    static final String SIGNER_HEADER_JSON_KEY = "signer";
     static final String AMZN_OIDC_SIGNER_SPLIT_CHAR = ":";
     static final Pattern AMZN_REGION_PATTERN = Pattern.compile("^[a-z0-9-]+$");
 
-    private static final String AUTHORIZATION_HEADER = HttpHeaders.AUTHORIZATION;
+    private static final CIKey AUTHORIZATION_HEADER_KEY = CIKeys.AUTHORIZATION;
 
     private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
     private final OpenIdPublicKeysSupplier openIdPublicKeysSupplier;
@@ -146,12 +165,12 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     }
 
     @Override
-    public void removeAuthorisationEntries(final Map<String, String> headers) {
+    public void removeAuthorisationEntries(final Map<CIKey, String> headers) {
         if (NullSafe.hasEntries(headers)) {
-            headers.remove(AUTHORIZATION_HEADER);
-            headers.remove(AMZN_OIDC_ACCESS_TOKEN_HEADER);
-            headers.remove(AMZN_OIDC_DATA_HEADER);
-            headers.remove(AMZN_OIDC_IDENTITY_HEADER);
+            headers.remove(CIKeys.AUTHORIZATION);
+            headers.remove(AMZN_OIDC_ACCESS_TOKEN_HEADER_KEY);
+            headers.remove(AMZN_OIDC_DATA_HEADER_KEY);
+            headers.remove(AMZN_OIDC_IDENTITY_HEADER_KEY);
         }
     }
 
@@ -189,10 +208,11 @@ public class StandardJwtContextFactory implements JwtContextFactory {
         if (LOGGER.isTraceEnabled()) {
             // Only output non-null ones. Probably the only useful one is the ID one as the rest are base64 encoded
             final String headers = Stream.of(
-                            AUTHORIZATION_HEADER,
-                            AMZN_OIDC_ACCESS_TOKEN_HEADER,
-                            AMZN_OIDC_IDENTITY_HEADER,
-                            AMZN_OIDC_DATA_HEADER)
+                            AUTHORIZATION_HEADER_KEY,
+                            AMZN_OIDC_ACCESS_TOKEN_HEADER_KEY,
+                            AMZN_OIDC_IDENTITY_HEADER_KEY,
+                            AMZN_OIDC_DATA_HEADER_KEY)
+                    .map(CIKey::get)
                     .map(key -> new SimpleEntry<>(key, request.getHeader(key)))
                     .filter(entry -> entry.getValue() != null)
                     .map(keyValue -> "\n  " + keyValue.getKey() + ": '" + keyValue.getValue() + "'")
@@ -210,8 +230,8 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     }
 
     private boolean isAwsSignedToken(final HeaderToken headerToken, final JwsParts jwsParts) {
-        if (AMZN_OIDC_DATA_HEADER.equals(headerToken.header)) {
-            LOGGER.debug("Found header {}", AMZN_OIDC_DATA_HEADER);
+        if (AMZN_OIDC_DATA_HEADER_KEY.equals(headerToken.header)) {
+            LOGGER.debug("Found header {}", AMZN_OIDC_DATA_HEADER_KEY);
             // Request came from an AWS load balancer that did the auth flow
             return true;
         } else {
@@ -224,9 +244,9 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     private boolean isAwsSignedToken(final JwsParts jwsParts) {
         // Request may have come from another stroom node that has passed on an AWS signed
         // token, but not in the special AWS header
-        return jwsParts.getHeaderValue(SIGNER_HEADER_KEY)
+        return jwsParts.getHeaderValue(SIGNER_HEADER_JSON_KEY)
                 .filter(val -> {
-                    LOGGER.debug("{} is {}", SIGNER_HEADER_KEY, val);
+                    LOGGER.debug("{} is {}", SIGNER_HEADER_JSON_KEY, val);
                     return val.startsWith(AMZN_OIDC_SIGNER_PREFIX);
                 })
                 .isPresent();
@@ -264,13 +284,13 @@ public class StandardJwtContextFactory implements JwtContextFactory {
         // We may be dealing with requests of either form
         if (LOGGER.isDebugEnabled()) {
             // This will log the AWS identity if there is one
-            JwtUtil.getJwsFromHeader(request, AMZN_OIDC_IDENTITY_HEADER);
+            JwtUtil.getJwsFromHeader(request, AMZN_OIDC_IDENTITY_HEADER_KEY);
         }
-        return JwtUtil.getJwsFromHeader(request, AMZN_OIDC_DATA_HEADER)
-                .map(jws -> new HeaderToken(AMZN_OIDC_DATA_HEADER, jws))
+        return JwtUtil.getJwsFromHeader(request, AMZN_OIDC_DATA_HEADER_KEY)
+                .map(jws -> new HeaderToken(AMZN_OIDC_DATA_HEADER_KEY, jws))
                 .or(() ->
-                        JwtUtil.getJwsFromHeader(request, AUTHORIZATION_HEADER)
-                                .map(jws -> new HeaderToken(AUTHORIZATION_HEADER, jws)));
+                        JwtUtil.getJwsFromHeader(request, AUTHORIZATION_HEADER_KEY)
+                                .map(jws -> new HeaderToken(AUTHORIZATION_HEADER_KEY, jws)));
     }
 
 
@@ -475,12 +495,12 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                                      final Set<String> expectedSignerPrefixes) {
 
         final Map<String, String> headerValues = jwsParts.getHeaderValues(
-                SIGNER_HEADER_KEY,
+                SIGNER_HEADER_JSON_KEY,
                 OpenId.KEY_ID);
 
-        final String signer = Optional.ofNullable(headerValues.get(SIGNER_HEADER_KEY))
+        final String signer = Optional.ofNullable(headerValues.get(SIGNER_HEADER_JSON_KEY))
                 .orElseThrow(() -> new RuntimeException(LogUtil.message("Missing '{}' key in jws header {}",
-                        SIGNER_HEADER_KEY, jwsParts.header)));
+                        SIGNER_HEADER_JSON_KEY, jwsParts.header)));
 
         // 'arn:aws:elasticloadbalancing:region-code:account-id:loadbalancer/app/load-balancer-name/load-balancer-id'
         // The LB ID is not known at provisioning time so validate signer against a set of valid prefixes
@@ -501,7 +521,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                             "configuration property: [{}]. You need to set '{}' to the partial ARN(s) of the " +
                             "AWS load balancer that is handling authentication for Stroom. The partial " +
                             "ARN needs to include at least up to the account ID part.",
-                    SIGNER_HEADER_KEY,
+                    SIGNER_HEADER_JSON_KEY,
                     signer,
                     AbstractOpenIdConfig.PROP_NAME_EXPECTED_SIGNER_PREFIXES,
                     String.join(", ", NullSafe.set(expectedSignerPrefixes)),
@@ -529,7 +549,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
             final String[] signerParts = signer.split(AMZN_OIDC_SIGNER_SPLIT_CHAR);
             if (signerParts.length < 4) {
                 throw new RuntimeException(LogUtil.message("Unable to parse value for '{}' key in JWS header {}",
-                        SIGNER_HEADER_KEY, signer));
+                        SIGNER_HEADER_JSON_KEY, signer));
             }
             final String awsRegion = signerParts[3];
 
@@ -602,7 +622,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
 
 
     private record HeaderToken(
-            String header,
+            CIKey header,
             String jwt) {
 
     }
@@ -614,7 +634,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     // Pkg private for testing
     record JwsParts(
             String jws,
-            String header,
+            String header, // base64 encoded json
             String payload,
             String signature) {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.search.elastic.search;
@@ -20,7 +19,6 @@ package stroom.search.elastic.search;
 import stroom.datasource.api.v2.ConditionSet;
 import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.IndexField;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionUtil;
@@ -31,6 +29,7 @@ import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.query.common.v2.IndexFieldMap;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
@@ -49,7 +48,12 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.CompareUtil;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.string.CIKey;
+import stroom.util.string.MultiCaseMap;
+import stroom.util.string.MultiCaseMap.MultipleMatchException;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ExpandWildcard;
@@ -71,14 +75,15 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.TreeMap;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
@@ -176,11 +181,21 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     }
 
     @Override
-    public IndexField getIndexField(final DocRef docRef, final String fieldName) {
+    public IndexFieldMap getIndexFields(final DocRef docRef, final CIKey fieldName) {
         final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
         if (index != null) {
-            final Map<String, ElasticIndexField> indexFieldMap = getFieldsMap(index);
-            return indexFieldMap.get(fieldName);
+            final MultiCaseMap<ElasticIndexField> indexFieldMap = getFieldsMap(index);
+            ElasticIndexField elasticIndexField;
+            try {
+                elasticIndexField = indexFieldMap.getCaseSensitive(fieldName);
+            } catch (MultipleMatchException e) {
+                final Set<String> matchingFieldNames = indexFieldMap.get(fieldName)
+                        .keySet();
+                throw new RuntimeException(LogUtil.message(
+                        "Multiple fields match '{}' (ignoring case). Matching fields: {}",
+                        fieldName.get(), matchingFieldNames));
+            }
+            return elasticIndexField;
         }
         return null;
     }
@@ -307,13 +322,18 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
 
     @Override
     public List<ElasticIndexField> getFields(final ElasticIndexDoc index) {
-        return new ArrayList<>(getFieldsMap(index).values());
+        return getFieldsMap(index)
+                .entrySet()
+                .stream()
+                .sorted(CompareUtil.getNullSafeCaseInsensitiveComparator(Entry::getKey))
+                .map(Entry::getValue)
+                .toList();
     }
 
     @Override
-    public Map<String, ElasticIndexField> getFieldsMap(final ElasticIndexDoc index) {
+    public MultiCaseMap<ElasticIndexField> getFieldsMap(final ElasticIndexDoc index) {
         final Map<String, FieldMapping> fieldMappings = getFieldMappings(index);
-        final Map<String, ElasticIndexField> fieldsMap = new HashMap<>();
+        final MultiCaseMap<ElasticIndexField> fieldsMap = new MultiCaseMap<>();
 
         fieldMappings.forEach((key, fieldMeta) -> {
             try {
@@ -365,21 +385,15 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 final Object mappingInstance = firstFieldMapping.get()._get();
 
                 // Detect non-indexed fields for common data types. For all others, assume the field is indexed
-                if (mappingInstance instanceof KeywordProperty) {
-                    return !Boolean.FALSE.equals(((KeywordProperty) mappingInstance).index());
-                } else if (mappingInstance instanceof TextProperty) {
-                    return !Boolean.FALSE.equals(((TextProperty) mappingInstance).index());
-                } else if (mappingInstance instanceof BooleanProperty) {
-                    return !Boolean.FALSE.equals(((BooleanProperty) mappingInstance).index());
-                } else if (mappingInstance instanceof DateProperty) {
-                    return !Boolean.FALSE.equals(((DateProperty) mappingInstance).index());
-                } else if (mappingInstance instanceof NumberPropertyBase) {
-                    return !Boolean.FALSE.equals(((NumberPropertyBase) mappingInstance).index());
-                } else if (mappingInstance instanceof IpProperty) {
-                    return !Boolean.FALSE.equals(((IpProperty) mappingInstance).index());
-                } else {
-                    return true;
-                }
+                return switch (mappingInstance) {
+                    case KeywordProperty keywordProperty -> !Boolean.FALSE.equals(keywordProperty.index());
+                    case TextProperty textProperty -> !Boolean.FALSE.equals(textProperty.index());
+                    case BooleanProperty booleanProperty -> !Boolean.FALSE.equals(booleanProperty.index());
+                    case DateProperty dateProperty -> !Boolean.FALSE.equals(dateProperty.index());
+                    case NumberPropertyBase numberPropertyBase -> !Boolean.FALSE.equals(numberPropertyBase.index());
+                    case IpProperty ipProperty -> !Boolean.FALSE.equals(ipProperty.index());
+                    case null, default -> true;
+                };
             }
         } catch (Exception e) {
             return false;
@@ -389,7 +403,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     }
 
     private Map<String, FieldMapping> getFieldMappings(final ElasticIndexDoc elasticIndex) {
-        Map<String, FieldMapping> result = new TreeMap<>();
+        Map<String, FieldMapping> result = null;
 
         if (elasticIndex.getClusterRef() != null) {
             try {
@@ -400,23 +414,16 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 LOGGER.error(e::getMessage, e);
             }
         }
+        if (result == null) {
+            result = Collections.emptyMap();
+        }
         return result;
     }
 
-    private static TreeMap<String, FieldMapping> getFlattenedFieldMappings(final ElasticIndexDoc elasticIndex,
-                                                                           final ElasticsearchClient elasticClient) {
+    private static Map<String, FieldMapping> getFlattenedFieldMappings(final ElasticIndexDoc elasticIndex,
+                                                                       final ElasticsearchClient elasticClient) {
         // Flatten the mappings, which are keyed by index, into a de-duplicated list
-        final TreeMap<String, FieldMapping> mappings = new TreeMap<>((o1, o2) -> {
-            if (Objects.equals(o1, o2)) {
-                return 0;
-            }
-            if (o2 == null) {
-                return 1;
-            }
-
-            return o1.compareToIgnoreCase(o2);
-        });
-
+        final Map<String, FieldMapping> mappings = new HashMap<>();
         final String indexName = elasticIndex.getIndexName();
         final GetFieldMappingRequest request = GetFieldMappingRequest.of(r -> r
                 .expandWildcards(ExpandWildcard.Open)
@@ -433,8 +440,8 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
             final HashSet<String> multiFieldMappings = new HashSet<>();
             allMappings.values().forEach(indexMappings -> indexMappings.mappings().forEach((fieldName, mapping) -> {
                 final Property source = mapping.mapping().get(fieldName);
-                if (source != null && source._get() instanceof PropertyBase) {
-                    final var multiFields = ((PropertyBase) source._get()).fields();
+                if (source != null && source._get() instanceof PropertyBase propertyBase) {
+                    final var multiFields = propertyBase.fields();
 
                     if (!multiFields.isEmpty()) {
                         multiFields.forEach((multiFieldName, multiFieldMapping) -> {

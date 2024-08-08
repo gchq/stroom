@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.meta.impl;
 
 import stroom.data.retention.api.DataRetentionRuleAction;
@@ -36,10 +52,12 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.string.CIKey;
 import stroom.util.time.TimePeriod;
 
 import jakarta.inject.Inject;
@@ -481,7 +499,9 @@ public class MetaServiceImpl implements MetaService, Searchable {
                     () -> {
                         final StreamAttributeMapRetentionRuleDecorator decorator = decoratorProvider.get();
                         list.getValues().forEach(metaRow ->
-                                decorator.addMatchingRetentionRuleInfo(metaRow.getMeta(), metaRow.getAttributes()));
+                                decorator.addMatchingRetentionRuleInfo(
+                                        metaRow.getMeta(),
+                                        metaRow.getAttributes()));
                     },
                     "Adding data retention rules");
 
@@ -526,18 +546,21 @@ public class MetaServiceImpl implements MetaService, Searchable {
     private List<MetaRow> decorate(final List<Meta> metaList) {
         return LOGGER.logDurationIfTraceEnabled(
                 () -> {
-                    if (metaList == null || metaList.size() == 0) {
+                    if (NullSafe.isEmptyCollection(metaList)) {
                         return Collections.emptyList();
                     }
 
                     LOGGER.debug("Loading attribute map from DB");
-                    final Map<Long, Map<String, String>> attributeMap = metaValueDao.getAttributes(metaList);
+                    final Map<Long, Map<CIKey, String>> attributeMaps = metaValueDao.getAttributes(metaList);
                     final List<MetaRow> metaRowList = new ArrayList<>(metaList.size());
                     for (final Meta meta : metaList) {
-                        final Map<String, String> attributes = attributeMap.getOrDefault(
+                        final Map<CIKey, String> attributes = attributeMaps.getOrDefault(
                                 meta.getId(),
                                 new HashMap<>());
-                        metaRowList.add(new MetaRow(meta, getPipelineName(meta), attributes));
+                        metaRowList.add(new MetaRow(
+                                meta,
+                                getPipelineName(meta),
+                                CIKey.convertToStringMap(attributes)));
                     }
                     return metaRowList;
                 },
@@ -584,7 +607,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
         if (child.getParentMetaId() != null) {
             final List<Meta> parents = find(new FindMetaCriteria(getIdExpression(child.getParentMetaId(),
                     anyStatus))).getValues();
-            if (parents != null && parents.size() > 0) {
+            if (NullSafe.hasItems(parents)) {
                 parents.forEach(parent -> {
                     result.add(parent);
                     addParents(parent, anyStatus, result);

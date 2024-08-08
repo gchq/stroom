@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 
 package stroom.receive.common;
 
+import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.util.date.DateUtil;
-
-import java.util.Map;
+import stroom.util.shared.string.CIKey;
 
 /**
  * Helper to build meta data classes.
@@ -27,19 +27,20 @@ import java.util.Map;
 public final class StreamFactory {
 
     @Deprecated
-    private static final String PERIOD_START_TIME = "periodStartTime";
+    private static final CIKey PERIOD_START_TIME = CIKey.ofStaticKey("periodStartTime");
 
     private StreamFactory() {
         // Private constructor.
     }
 
-    public static Long getReferenceEffectiveTime(final Map<String, String> argsMap, boolean doDefault) {
-        Long effectiveMs = getSafeMs(argsMap, StandardHeaderArguments.EFFECTIVE_TIME);
+    public static Long getReferenceEffectiveTime(final AttributeMap attributeMap,
+                                                 boolean doDefault) {
+        Long effectiveMs = getSafeMs(attributeMap, StandardHeaderArguments.EFFECTIVE_TIME);
         if (effectiveMs != null) {
             return effectiveMs;
         }
         // This is here for backwards compatibility
-        effectiveMs = getSafeMs(argsMap, PERIOD_START_TIME);
+        effectiveMs = getSafeMs(attributeMap, PERIOD_START_TIME);
         if (effectiveMs != null) {
             return effectiveMs;
         }
@@ -49,8 +50,8 @@ public final class StreamFactory {
         return null;
     }
 
-    public static Long getReceivedTime(final Map<String, String> argsMap, boolean doDefault) {
-        Long receivedTimeMs = getSafeMs(argsMap, StandardHeaderArguments.RECEIVED_TIME);
+    public static Long getReceivedTime(final AttributeMap attributeMap, boolean doDefault) {
+        Long receivedTimeMs = getSafeMs(attributeMap, StandardHeaderArguments.RECEIVED_TIME);
         if (receivedTimeMs != null) {
             return receivedTimeMs;
         }
@@ -63,8 +64,8 @@ public final class StreamFactory {
     /**
      * Helper to avoid null pointers
      */
-    private static Long getSafeMs(final Map<String, String> argsMap, final String key) {
-        String value = argsMap.get(key);
+    private static Long getSafeMs(final AttributeMap attributeMap, final CIKey key) {
+        String value = attributeMap.get(key);
         if (value != null) {
             try {
                 return DateUtil.parseNormalDateTimeString(value);

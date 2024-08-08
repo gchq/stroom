@@ -24,8 +24,6 @@ import stroom.cache.shared.CacheIdentity;
 import stroom.util.NullSafe;
 import stroom.util.cache.CacheConfig;
 import stroom.util.json.JsonUtil;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
@@ -149,62 +147,81 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
         final String cacheName = params.get(PARAM_NAME_CACHE_NAME);
 
         if (cacheName != null) {
-            final StroomCache<?, ?> cache = caches.get(cacheName);
+            return getSystemInfoByCacheName(cacheName, limit);
+        } else {
+            return getSystemInfoCacheList(limit);
+        }
+    }
 
-            if (cache != null) {
-                final Set<?> keySet = cache.keySet();
+    private SystemInfoResult getSystemInfoCacheList(final Integer limit) {
+        final List<String> cacheNames = caches.keySet()
+                .stream()
+                .sorted()
+                .limit(limit)
+                .collect(Collectors.toList());
 
-                Stream<?> stream = keySet
-                        .stream()
-                        .limit(limit);
+        return SystemInfoResult.builder(this)
+                .description("List of cache names")
+                .addDetail("cacheNames", cacheNames)
+                .addDetail("cacheCount", caches.size())
+                .build();
+    }
 
-                final List<?> keyList;
-                if (!keySet.isEmpty()) {
-                    final Object aKey = keySet.iterator().next();
+    private SystemInfoResult getSystemInfoByCacheName(final String cacheName, final Integer limit) {
+        final StroomCache<?, ?> cache = caches.get(cacheName);
 
-                    if (aKey instanceof Comparable) {
-                        stream = stream
-                                .sorted();
-                    }
-                    keyList = stream
-                            .map(key -> {
+        if (cache != null) {
+            final Set<?> keySet = cache.keySet();
+
+            Stream<?> stream = keySet
+                    .stream()
+                    .limit(limit);
+
+            final List<?> keyList;
+            if (!keySet.isEmpty()) {
+                final Object aKey = keySet.iterator().next();
+
+                if (aKey instanceof Comparable) {
+                    stream = stream
+                            .sorted();
+                }
+                keyList = stream
+                        .map(key -> {
+                            if (key != null) {
+                                Object result = null;
                                 try {
                                     // Try and serialise it
-                                    JsonUtil.writeValueAsString(key);
+                                    final String json = JsonUtil.writeValueAsString(key);
+                                    if (json != null) {
+                                        result = key;
+                                    }
                                 } catch (Exception e) {
-                                    return "Unable to serialise Key as JSON, dumping as string: "
-                                            + key.toString().substring(0, 1_000);
+                                    // swallow
                                 }
-                                return key;
-                            })
-                            .collect(Collectors.toList());
+                                if (result == null) {
+                                    final String str = key.toString();
+                                    result = "Unable to serialise Key as JSON, dumping as string: "
+                                            + key.toString().substring(0, Math.min(str.length(), 1_000));
+                                }
+                                return result;
+                            } else {
+                                return null;
+                            }
+                        })
+                        .collect(Collectors.toList());
 
-                } else {
-                    keyList = Collections.emptyList();
-                }
-
-                return SystemInfoResult.builder(this)
-                        .description("List of cache keys")
-                        .addDetail("cacheName", cacheName)
-                        .addDetail("keys", keyList)
-                        .addDetail("keyCount", keySet.size())
-                        .build();
             } else {
-                throw new RuntimeException(LogUtil.message("Unknown cache name {}", cacheName));
+                keyList = Collections.emptyList();
             }
-        } else {
-            final List<String> cacheNames = caches.keySet()
-                    .stream()
-                    .sorted()
-                    .limit(limit)
-                    .collect(Collectors.toList());
-
 
             return SystemInfoResult.builder(this)
-                    .description("List of cache names")
-                    .addDetail("cacheNames", cacheNames)
-                    .addDetail("cacheCount", caches.size())
+                    .description("List of cache keys")
+                    .addDetail("cacheName", cacheName)
+                    .addDetail("keys", keyList)
+                    .addDetail("keyCount", keySet.size())
                     .build();
+        } else {
+            throw new RuntimeException(LogUtil.message("Unknown cache name {}", cacheName));
         }
     }
 

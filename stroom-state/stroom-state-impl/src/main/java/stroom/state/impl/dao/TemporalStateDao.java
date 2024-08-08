@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.state.impl.dao;
 
 import stroom.entity.shared.ExpressionCriteria;
@@ -6,6 +22,8 @@ import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.string.CIKey;
+import stroom.util.shared.string.CIKeys;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -13,7 +31,6 @@ import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.datastax.oss.driver.api.core.data.CqlDuration;
 import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.relation.Relation;
@@ -35,7 +52,6 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.insertInto;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
 import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.createTable;
-import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.dropTable;
 
 
 public class TemporalStateDao extends AbstractStateDao<TemporalState> {
@@ -47,17 +63,12 @@ public class TemporalStateDao extends AbstractStateDao<TemporalState> {
     private static final CqlIdentifier COLUMN_VALUE_TYPE = CqlIdentifier.fromCql("value_type");
     private static final CqlIdentifier COLUMN_VALUE = CqlIdentifier.fromCql("value");
 
-    private static final Map<String, ScyllaDbColumn> COLUMN_MAP = Map.of(
-            TemporalStateFields.KEY,
-            new ScyllaDbColumn(TemporalStateFields.KEY, DataTypes.TEXT, COLUMN_KEY),
-            TemporalStateFields.EFFECTIVE_TIME,
-            new ScyllaDbColumn(TemporalStateFields.EFFECTIVE_TIME, DataTypes.TIMESTAMP, COLUMN_EFFECTIVE_TIME),
-            TemporalStateFields.VALUE_TYPE,
-            new ScyllaDbColumn(TemporalStateFields.VALUE_TYPE, DataTypes.TINYINT, COLUMN_VALUE_TYPE),
-            TemporalStateFields.VALUE,
-            new ScyllaDbColumn(TemporalStateFields.VALUE, DataTypes.BLOB, COLUMN_VALUE));
-
-
+    private static final Map<CIKey, ScyllaDbColumn> FIELD_NAME_TO_COLUMN_MAP = Map.ofEntries(
+            StateFieldUtil.createNameToColumnEntry(CIKeys.KEY, DataTypes.TEXT, COLUMN_KEY),
+            StateFieldUtil.createNameToColumnEntry(
+                    CIKeys.EFFECTIVE_TIME, DataTypes.TIMESTAMP, COLUMN_EFFECTIVE_TIME),
+            StateFieldUtil.createNameToColumnEntry(CIKeys.VALUE_TYPE, DataTypes.TINYINT, COLUMN_VALUE_TYPE),
+            StateFieldUtil.createNameToColumnEntry(CIKeys.VALUE, DataTypes.BLOB, COLUMN_VALUE));
 
     public TemporalStateDao(final Provider<CqlSession> sessionProvider, final String tableName) {
         super(sessionProvider, CqlIdentifier.fromCql(tableName));
@@ -143,9 +154,9 @@ public class TemporalStateDao extends AbstractStateDao<TemporalState> {
         final SearchHelper searchHelper = new SearchHelper(
                 sessionProvider,
                 table,
-                COLUMN_MAP,
-                TemporalStateFields.VALUE_TYPE,
-                TemporalStateFields.VALUE);
+                FIELD_NAME_TO_COLUMN_MAP,
+                CIKeys.VALUE_TYPE,
+                CIKeys.VALUE);
         searchHelper.search(criteria, fieldIndex, dateTimeSettings, consumer);
     }
 

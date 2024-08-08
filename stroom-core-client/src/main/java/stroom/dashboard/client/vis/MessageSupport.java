@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import stroom.task.client.HasTaskListener;
 import stroom.task.client.TaskListener;
 import stroom.task.client.TaskListenerImpl;
 import stroom.util.client.JSONUtil;
+import stroom.util.shared.string.CIKey;
 
 import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.GWT;
@@ -37,6 +38,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,19 +92,21 @@ public class MessageSupport
         PostMessage.get().postMessage(frame, json, frameId);
     }
 
-    private Map<String, String> toMap(final JSONObject obj) {
-        final Map<String, String> map = new HashMap<>();
+    private Map<CIKey, String> toMap(final JSONObject obj) {
         if (obj != null) {
+            final Map<CIKey, String> map = new HashMap<>();
             for (final String key : obj.keySet()) {
                 final JSONValue v = obj.get(key);
                 if (v.isString() != null) {
-                    map.put(key, v.isString().stringValue());
+                    map.put(CIKey.of(key), v.isString().stringValue());
                 } else {
-                    map.put(key, v.toString());
+                    map.put(CIKey.of(key), v.toString());
                 }
             }
+            return map;
+        } else {
+            return Collections.emptyMap();
         }
-        return map;
     }
 
     @Override
@@ -121,7 +125,7 @@ public class MessageSupport
             GWT.log("Received selection from vis: " + selection.toString());
 
             if (uiHandlers != null) {
-                final List<Map<String, String>> list = new ArrayList<>();
+                final List<Map<CIKey, String>> list = new ArrayList<>();
                 final JSONArray array = selection.isArray();
                 if (array != null) {
                     for (int i = 0; i < array.size(); i++) {

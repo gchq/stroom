@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,6 +17,8 @@
 package stroom.query.api.v2;
 
 import stroom.docref.HasDisplayValue;
+import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.string.CIKey;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -77,6 +79,11 @@ public final class Column implements HasDisplayValue {
     @JsonProperty
     private final Boolean special;
 
+    @JsonIgnore
+    private transient volatile CIKey caseInsensitiveId = null;
+    @JsonIgnore
+    private transient volatile CIKey caseInsensitiveName;
+
     @JsonCreator
     public Column(@JsonProperty("id") final String id,
                   @JsonProperty("name") final String name,
@@ -95,29 +102,41 @@ public final class Column implements HasDisplayValue {
         this.filter = filter;
         this.format = format;
         this.group = group;
-        if (width != null) {
-            this.width = width;
-        } else {
-            this.width = 200;
-        }
-        if (visible != null) {
-            this.visible = visible;
-        } else {
-            this.visible = true;
-        }
-        if (special != null) {
-            this.special = special;
-        } else {
-            this.special = false;
-        }
+        this.width = GwtNullSafe.requireNonNullElse(width, 200);
+        this.visible = GwtNullSafe.requireNonNullElse(visible, true);
+        this.special = GwtNullSafe.requireNonNullElse(special, false);
     }
 
     public String getId() {
         return id;
     }
 
+    @JsonIgnore
+    public CIKey getIdAsCIKey() {
+        if (caseInsensitiveId == null) {
+            // Saves us building a CIKey every time we need to look up the columns name
+            final CIKey idKey = CIKey.of(id);
+            this.caseInsensitiveId = idKey;
+            return idKey;
+        }
+        return caseInsensitiveId;
+    }
+
     public String getName() {
         return name;
+    }
+
+    @JsonIgnore
+    public CIKey getNameAsCIKey() {
+        if (caseInsensitiveName == null) {
+            // Saves us building a CIKey every time we need to look up the columns name
+            final CIKey nameKey = Objects.equals(id, name) && this.caseInsensitiveId != null
+                    ? this.caseInsensitiveId
+                    : CIKey.of(name);
+            this.caseInsensitiveName = nameKey;
+            return nameKey;
+        }
+        return caseInsensitiveName;
     }
 
     public String getExpression() {
@@ -217,6 +236,10 @@ public final class Column implements HasDisplayValue {
     public Builder copy() {
         return new Builder(this);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     /**
      * Builder for constructing a {@link Column}

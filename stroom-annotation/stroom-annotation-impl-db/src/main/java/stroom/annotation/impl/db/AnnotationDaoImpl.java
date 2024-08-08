@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.annotation.impl.db;
 
 import stroom.annotation.api.AnnotationFields;
@@ -35,6 +51,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.UserName;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 import org.jooq.Condition;
@@ -90,11 +107,11 @@ class AnnotationDaoImpl implements AnnotationDao {
 //        expressionMapper.map(AnnotationDataSource.EVENT_ID_FIELD, ANNOTATION_DATA_LINK.EVENT_ID, Long::valueOf);
         expressionMapper.map(AnnotationFields.CREATED_ON_FIELD,
                 ANNOTATION.CREATE_TIME_MS,
-                value -> DateExpressionParser.getMs(AnnotationFields.CREATED_ON, value));
+                value -> DateExpressionParser.getMs(AnnotationFields.CREATED_ON_FIELD, value));
         expressionMapper.map(AnnotationFields.CREATED_BY_FIELD, ANNOTATION.CREATE_USER, value -> value);
         expressionMapper.map(AnnotationFields.UPDATED_ON_FIELD,
                 ANNOTATION.UPDATE_TIME_MS,
-                value -> DateExpressionParser.getMs(AnnotationFields.UPDATED_ON, value));
+                value -> DateExpressionParser.getMs(AnnotationFields.UPDATED_ON_FIELD, value));
         expressionMapper.map(AnnotationFields.UPDATED_BY_FIELD, ANNOTATION.UPDATE_USER, value -> value);
         expressionMapper.map(AnnotationFields.TITLE_FIELD, ANNOTATION.TITLE, value -> value);
         expressionMapper.map(AnnotationFields.SUBJECT_FIELD, ANNOTATION.SUBJECT, value -> value);
@@ -502,7 +519,8 @@ class AnnotationDaoImpl implements AnnotationDao {
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
                        final ValuesConsumer consumer) {
-        final String[] fieldNames = fieldIndex.getFields();
+        final List<CIKey> fieldNames = fieldIndex.getFieldsAsCIKeys();
+        final int fieldCount = fieldNames.size();
         final Condition condition = createCondition(criteria.getExpression());
         final List<Field<?>> dbFields = new ArrayList<>(valueMapper.getDbFieldsByName(fieldNames));
         final Mapper<?>[] mappers = valueMapper.getMappersForFieldNames(fieldNames);
@@ -517,13 +535,13 @@ class AnnotationDaoImpl implements AnnotationDao {
 
                 while (cursor.hasNext()) {
                     final Result<?> result = cursor.fetchNext(1000);
-                    result.forEach(r -> {
-                        final Val[] arr = new Val[fieldNames.length];
-                        for (int i = 0; i < fieldNames.length; i++) {
+                    result.forEach(rec -> {
+                        final Val[] arr = new Val[fieldCount];
+                        for (int i = 0; i < fieldCount; i++) {
                             Val val = ValNull.INSTANCE;
                             final Mapper<?> mapper = mappers[i];
                             if (mapper != null) {
-                                val = mapper.map(r);
+                                val = mapper.map(rec);
                             }
                             arr[i] = val;
                         }

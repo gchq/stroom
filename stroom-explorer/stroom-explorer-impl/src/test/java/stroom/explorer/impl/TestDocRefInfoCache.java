@@ -228,7 +228,9 @@ class TestDocRefInfoCache {
         }
 
         @Override
-        public List<DocRef> findByNames(final List<String> names, final boolean allowWildCards) {
+        public List<DocRef> findByNames(final List<String> names,
+                                        final boolean allowWildCards,
+                                        final boolean isCaseSensitive) {
             return null;
         }
 

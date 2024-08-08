@@ -323,10 +323,10 @@ class TaskProgressUtil {
                     int compare = 0;
                     switch (field) {
                         case FindTaskProgressCriteria.FIELD_NAME:
-                            compare = CompareUtil.compareString(o1.getTaskName(), o2.getTaskName());
+                            compare = CompareUtil.compareStringIgnoreCase(o1.getTaskName(), o2.getTaskName());
                             break;
                         case FindTaskProgressCriteria.FIELD_USER:
-                            compare = CompareUtil.compareString(o1.getUserName(), o2.getUserName());
+                            compare = CompareUtil.compareStringIgnoreCase(o1.getUserName(), o2.getUserName());
                             break;
                         case FindTaskProgressCriteria.FIELD_SUBMIT_TIME:
                             compare = CompareUtil.compareLong(o1.getSubmitTimeMs(), o2.getSubmitTimeMs());
@@ -335,10 +335,10 @@ class TaskProgressUtil {
                             compare = CompareUtil.compareLong(o1.getAgeMs(), o2.getAgeMs());
                             break;
                         case FindTaskProgressCriteria.FIELD_INFO:
-                            compare = CompareUtil.compareString(o1.getTaskInfo(), o2.getTaskInfo());
+                            compare = CompareUtil.compareStringIgnoreCase(o1.getTaskInfo(), o2.getTaskInfo());
                             break;
                         case FindTaskProgressCriteria.FIELD_NODE:
-                            compare = CompareUtil.compareString(o1.getNodeName(), o2.getNodeName());
+                            compare = CompareUtil.compareStringIgnoreCase(o1.getNodeName(), o2.getNodeName());
                             break;
                     }
 

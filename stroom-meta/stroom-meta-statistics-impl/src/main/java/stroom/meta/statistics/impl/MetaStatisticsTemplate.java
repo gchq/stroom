@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package stroom.meta.statistics.impl;
 
 import stroom.statistics.api.InternalStatisticKey;
+import stroom.util.shared.string.CIKey;
 
 import java.io.Serializable;
 import java.util.List;
@@ -29,41 +30,42 @@ class MetaStatisticsTemplate implements Serializable {
     private static final long serialVersionUID = -2347332113575225973L;
 
     private InternalStatisticKey key;
-    private String timeMsAttribute;
-    private String incrementAttribute;
-    private List<String> tagAttributeList;
+    private CIKey timeMsAttribute;
+    private CIKey incrementAttribute;
+    private List<CIKey> tagAttributeList;
 
     MetaStatisticsTemplate() {
     }
 
-    MetaStatisticsTemplate(final InternalStatisticKey key, final String timeMsAttribute,
-                           final List<String> tagAttributeList) {
+    MetaStatisticsTemplate(final InternalStatisticKey key,
+                           final CIKey timeMsAttribute,
+                           final List<CIKey> tagAttributeList) {
         this(key, timeMsAttribute, null, tagAttributeList);
     }
 
     MetaStatisticsTemplate(final InternalStatisticKey key,
-                           final String timeMsAttribute,
-                           final String incrementAttribute,
-                           final List<String> tagAttributeList) {
+                           final CIKey timeMsAttribute,
+                           final CIKey incrementAttribute,
+                           final List<CIKey> tagAttributeList) {
         this.key = key;
         this.timeMsAttribute = timeMsAttribute;
         this.incrementAttribute = incrementAttribute;
         this.tagAttributeList = tagAttributeList;
     }
 
-    public String getTimeMsAttribute() {
+    public CIKey getTimeMsAttribute() {
         return timeMsAttribute;
     }
 
-    public void setTimeMsAttribute(final String timeMsAttribute) {
+    public void setTimeMsAttribute(final CIKey timeMsAttribute) {
         this.timeMsAttribute = timeMsAttribute;
     }
 
-    public List<String> getTagAttributeList() {
+    public List<CIKey> getTagAttributeList() {
         return tagAttributeList;
     }
 
-    public void setTagAttributeList(final List<String> tagAttributeList) {
+    public void setTagAttributeList(final List<CIKey> tagAttributeList) {
         this.tagAttributeList = tagAttributeList;
     }
 
@@ -75,11 +77,21 @@ class MetaStatisticsTemplate implements Serializable {
         this.key = key;
     }
 
-    public String getIncrementAttribute() {
+    public CIKey getIncrementAttribute() {
         return incrementAttribute;
     }
 
-    public void setIncrementAttribute(final String incrementAttribute) {
+    public void setIncrementAttribute(final CIKey incrementAttribute) {
         this.incrementAttribute = incrementAttribute;
+    }
+
+    @Override
+    public String toString() {
+        return "MetaStatisticsTemplate{" +
+                "key=" + key +
+                ", timeMsAttribute=" + timeMsAttribute +
+                ", incrementAttribute=" + incrementAttribute +
+                ", tagAttributeList=" + tagAttributeList +
+                '}';
     }
 }

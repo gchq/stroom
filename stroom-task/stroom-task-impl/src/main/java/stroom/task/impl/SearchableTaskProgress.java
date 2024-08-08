@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.task.impl;
 
 import stroom.cluster.task.api.NodeNotFoundException;
@@ -27,6 +43,7 @@ import stroom.task.api.TaskContextFactory;
 import stroom.task.shared.TaskProgressResponse;
 import stroom.task.shared.TaskResource;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -109,38 +126,41 @@ class SearchableTaskProgress implements Searchable {
                     .map(ResultPage::getValues)
                     .flatMap(List::stream)
                     .map(taskProgress -> {
-                        final Map<String, Object> attributeMap = new HashMap<>();
-                        attributeMap.put(TaskManagerFields.FIELD_NODE, taskProgress.getNodeName());
-                        attributeMap.put(TaskManagerFields.FIELD_NAME, taskProgress.getTaskName());
-                        attributeMap.put(TaskManagerFields.FIELD_USER, taskProgress.getUserName());
-                        attributeMap.put(TaskManagerFields.FIELD_SUBMIT_TIME, taskProgress.getSubmitTimeMs());
-                        attributeMap.put(TaskManagerFields.FIELD_AGE, taskProgress.getAgeMs());
-                        attributeMap.put(TaskManagerFields.FIELD_INFO, taskProgress.getTaskInfo());
+                        final Map<CIKey, Object> attributeMap = new HashMap<>();
+                        attributeMap.put(TaskManagerFields.FIELD_NODE_KEY, taskProgress.getNodeName());
+                        attributeMap.put(TaskManagerFields.FIELD_NAME_KEY, taskProgress.getTaskName());
+                        attributeMap.put(TaskManagerFields.FIELD_USER_KEY, taskProgress.getUserName());
+                        attributeMap.put(TaskManagerFields.FIELD_SUBMIT_TIME_KEY, taskProgress.getSubmitTimeMs());
+                        attributeMap.put(TaskManagerFields.FIELD_AGE_KEY, taskProgress.getAgeMs());
+                        attributeMap.put(TaskManagerFields.FIELD_INFO_KEY, taskProgress.getTaskInfo());
                         return attributeMap;
                     })
                     .filter(attributeMap -> expressionMatcher.match(attributeMap, criteria.getExpression()))
                     .forEach(attributeMap -> {
-                        final String[] fields = fieldIndex.getFields();
-                        final Val[] arr = new Val[fields.length];
-                        for (int i = 0; i < fields.length; i++) {
-                            final String fieldName = fields[i];
+                        final List<String> fields = fieldIndex.getFields();
+                        final int fieldCount = fields.size();
+
+                        final Val[] arr = new Val[fieldCount];
+                        for (int i = 0; i < fieldCount; i++) {
+                            final String fieldName = fields.get(i);
                             Val val = ValNull.INSTANCE;
                             if (fieldName != null) {
-                                final Object o = attributeMap.get(fieldName);
+                                final Object o = attributeMap.get(TaskManagerFields.createCIKey(fieldName));
                                 if (o != null) {
-                                    if (o instanceof String) {
-                                        val = ValString.create((String) o);
-                                    } else if (o instanceof Long) {
-                                        final long aLong = (long) o;
-                                        if (TaskManagerFields.FIELD_SUBMIT_TIME.equals(fieldName)) {
-                                            val = ValDate.create(aLong);
-                                        } else if (TaskManagerFields.FIELD_AGE.equals(fieldName)) {
-                                            val = ValDuration.create(aLong);
-                                        } else {
-                                            val = ValLong.create(aLong);
+                                    switch (o) {
+                                        case String str -> val = ValString.create(str);
+                                        case Long aLong -> {
+                                            if (TaskManagerFields.FIELD_SUBMIT_TIME.equals(fieldName)) {
+                                                val = ValDate.create(aLong);
+                                            } else if (TaskManagerFields.FIELD_AGE.equals(fieldName)) {
+                                                val = ValDuration.create(aLong);
+                                            } else {
+                                                val = ValLong.create(aLong);
+                                            }
                                         }
-                                    } else if (o instanceof Integer) {
-                                        val = ValInteger.create((int) o);
+                                        case Integer anInt -> val = ValInteger.create(anInt);
+                                        default -> {
+                                        }
                                     }
                                 }
                             }

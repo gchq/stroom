@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.common.v2;
 
 import stroom.expression.api.DateTimeSettings;
@@ -10,6 +26,7 @@ import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.string.CIKey;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -77,15 +94,15 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
                       final Item item) {
         Row row = null;
 
-        final Map<String, Object> fieldIdToValueMap = new HashMap<>();
+        final Map<CIKey, Object> fieldIdToValueMap = new HashMap<>();
         final List<String> stringValues = new ArrayList<>(columns.size());
         int i = 0;
         for (final Column column : columns) {
             final Val val = item.getValue(i);
             final String string = fieldFormatter.format(column, val);
             stringValues.add(string);
-            fieldIdToValueMap.put(column.getId(), string);
-            fieldIdToValueMap.put(column.getName(), string);
+            fieldIdToValueMap.put(column.getIdAsCIKey(), string);
+            fieldIdToValueMap.put(column.getNameAsCIKey(), string);
             i++;
         }
 

@@ -177,6 +177,7 @@ ext.libs = [
         commons_lang                        : "org.apache.commons:commons-lang3", // version controlled by dropwizard-dependencies
         commons_pool2                       : "org.apache.commons:commons-pool2:2.12.0",
         commons_text                        : "org.apache.commons:commons-text", // version controlled by dropwizard-dependencies
+        commons_collections4                : "org.apache.commons:commons-collections4:4.4", // Not in dropwizard-dependencies
         classgraph                          : "io.github.classgraph:classgraph:4.8.146",
         curator_client                      : "org.apache.curator:curator-client:$versions.curator",
         curator_framework                   : "org.apache.curator:curator-framework:$versions.curator",

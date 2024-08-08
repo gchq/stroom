@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.dashboard.impl.visualisation;
 
 import stroom.dashboard.impl.VisField;
@@ -27,6 +43,7 @@ import stroom.query.language.token.TokenGroup;
 import stroom.query.language.token.TokenType;
 import stroom.util.NullSafe;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.string.CIKey;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import jakarta.inject.Inject;
@@ -174,11 +191,8 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
                                                  final String visName,
                                                  final Controls controls,
                                                  final TableSettings parentTableSettings) {
-        final Map<String, Column> columnMap = NullSafe
-                .list(parentTableSettings
-                        .getColumns())
-                .stream()
-                .collect(Collectors.toMap(Column::getName, Function.identity()));
+        final Map<CIKey, Column> columnMap = NullSafe.stream(parentTableSettings.getColumns())
+                .collect(Collectors.toMap(Column::getNameAsCIKey, Function.identity()));
 
         final Map<String, String> params = new HashMap<>();
         for (int i = 0; i < children.size(); i++) {
@@ -225,7 +239,7 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
                     final String columnName = t.getUnescapedText();
 
                     // Validate the column name.
-                    final Column column = columnMap.get(columnName);
+                    final Column column = columnMap.get(CIKey.of(columnName));
                     if (column == null) {
                         throw new TokenException(t, "Unable to find selected column: " + columnName);
                     }
@@ -251,8 +265,11 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
                 }
             }
 
-            if (controlId != null && controlValue != null) {
-                params.put(controlId, controlValue);
+            // Need to use resolvedControlId as that is from the will be the correct case
+            // as controlId came from the user so could be any case
+            final String resolvedControlId = control.getId();
+            if (resolvedControlId != null && controlValue != null) {
+                params.put(resolvedControlId, controlValue);
             }
         }
         return params;
@@ -436,9 +453,14 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
         return null;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class Controls {
 
-        private final Map<String, Control> controls = new HashMap<>();
+        // column id => control
+        private final Map<CIKey, Control> controlsById = new HashMap<>();
 
         public Controls(final VisSettings visSettings) {
             // Create a map of controls.
@@ -446,9 +468,8 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
                 for (final Tab tab : visSettings.getTabs()) {
                     if (tab.getControls() != null) {
                         for (final Control control : tab.getControls()) {
-                            if (control != null && control.getId() != null) {
-                                controls.put(control.getId(), control);
-                            }
+                            NullSafe.consume(control, Control::getId, id ->
+                                    controlsById.put(CIKey.of(id), control));
                         }
                     }
                 }
@@ -456,9 +477,13 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
         }
 
         public Control getControl(final String controlId) {
-            return controls.get(controlId);
+            return controlsById.get(CIKey.of(controlId));
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class SettingResolver {
 

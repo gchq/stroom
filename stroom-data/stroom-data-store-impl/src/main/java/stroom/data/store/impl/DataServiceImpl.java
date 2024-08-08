@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,8 @@ import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.string.CIKey;
+import stroom.util.shared.string.CIKeys;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -81,6 +83,8 @@ import java.util.stream.Collectors;
 class DataServiceImpl implements DataService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataServiceImpl.class);
+
+    private static final CIKey FILES_ATTR_KEY = CIKeys.FILES;
 
     private final ResourceStore resourceStore;
     private final DataUploadTaskHandler dataUploadTaskHandlerProvider;
@@ -211,7 +215,7 @@ class DataServiceImpl implements DataService {
     }
 
     @Override
-    public Map<String, String> metaAttributes(final long id) {
+    public Map<CIKey, String> metaAttributes(final long id) {
         return attributeMapFactory.getAttributes(id);
     }
 
@@ -232,37 +236,38 @@ class DataServiceImpl implements DataService {
             final List<DataInfoSection.Entry> entries = new ArrayList<>();
 
             final Map<String, String> attributeMap = metaRow.getAttributes();
-            final Map<String, String> additionalAttributes = attributeMapFactory.getAttributes(
+            final Map<CIKey, String> additionalAttributes = attributeMapFactory.getAttributes(
                     metaRow.getMeta().getId());
-            final String files = additionalAttributes.remove("Files");
-            attributeMap.putAll(additionalAttributes);
+            final String files = additionalAttributes.remove(FILES_ATTR_KEY);
+            additionalAttributes
+                    .forEach((k, v) ->
+                            attributeMap.put(k.get(), v));
 
-            final List<String> sortedKeys = attributeMap
-                    .keySet()
+            attributeMap.entrySet()
                     .stream()
-                    .sorted()
-                    .toList();
-            sortedKeys.forEach(key -> {
-                final String value = attributeMap.get(key);
-                if (value != null &&
-                        // We are going to add retention entries separately.
-                        !DataRetentionFields.RETENTION_AGE.equals(key) &&
-                        !DataRetentionFields.RETENTION_UNTIL.equals(key) &&
-                        !DataRetentionFields.RETENTION_RULE.equals(key)) {
+                    .sorted(Map.Entry.comparingByKey())
+                    .forEach(entry -> {
+                        final String key = entry.getKey();
+                        final String value = entry.getValue();
+                        if (value != null &&
+                                // We are going to add retention entries separately.
+                                !DataRetentionFields.RETENTION_AGE_FIELD.getFldName().equals(key) &&
+                                !DataRetentionFields.RETENTION_UNTIL_FIELD.getFldName().equals(key) &&
+                                !DataRetentionFields.RETENTION_RULE_FIELD.getFldName().equals(key)) {
 
-                    if (MetaFields.DURATION.getFldName().equals(key)) {
-                        entries.add(new DataInfoSection.Entry(key, convertDuration(value)));
-                    } else if (key.toLowerCase().contains("time")) {
-                        entries.add(new DataInfoSection.Entry(key, convertTime(value)));
-                    } else if (key.toLowerCase().contains("size")) {
-                        entries.add(new DataInfoSection.Entry(key, convertSize(value)));
-                    } else if (key.toLowerCase().contains("count")) {
-                        entries.add(new DataInfoSection.Entry(key, convertCount(value)));
-                    } else {
-                        entries.add(new DataInfoSection.Entry(key, value));
-                    }
-                }
-            });
+                            if (MetaFields.DURATION.getFldName().equalsIgnoreCase(key)) {
+                                entries.add(new DataInfoSection.Entry(key, convertDuration(value)));
+                            } else if (key.toLowerCase().contains("time")) {
+                                entries.add(new DataInfoSection.Entry(key, convertTime(value)));
+                            } else if (key.toLowerCase().contains("size")) {
+                                entries.add(new DataInfoSection.Entry(key, convertSize(value)));
+                            } else if (key.toLowerCase().contains("count")) {
+                                entries.add(new DataInfoSection.Entry(key, convertCount(value)));
+                            } else {
+                                entries.add(new DataInfoSection.Entry(key, value));
+                            }
+                        }
+                    });
             sections.add(new DataInfoSection("Attributes", entries));
 
             // Add additional data retention information.
@@ -428,13 +433,13 @@ class DataServiceImpl implements DataService {
     private List<DataInfoSection.Entry> getDataRententionEntries(final Map<String, String> attributeMap) {
         final List<DataInfoSection.Entry> entries = new ArrayList<>();
 
-        if (attributeMap != null && !attributeMap.isEmpty()) {
+        if (NullSafe.hasEntries(attributeMap)) {
             entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_AGE,
-                    attributeMap.get(DataRetentionFields.RETENTION_AGE)));
+                    attributeMap.get(DataRetentionFields.RETENTION_AGE_FIELD.getFldName())));
             entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_UNTIL,
-                    attributeMap.get(DataRetentionFields.RETENTION_UNTIL)));
+                    attributeMap.get(DataRetentionFields.RETENTION_UNTIL_FIELD.getFldName())));
             entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_RULE,
-                    attributeMap.get(DataRetentionFields.RETENTION_RULE)));
+                    attributeMap.get(DataRetentionFields.RETENTION_RULE_FIELD.getFldName())));
         }
 
         return entries;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.expression.matcher;
@@ -28,6 +27,8 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
+import stroom.util.NullSafe;
+import stroom.util.shared.string.CIKey;
 
 import java.util.List;
 import java.util.Map;
@@ -40,31 +41,31 @@ public class ExpressionMatcher {
 
     private static final String DELIMITER = ",";
 
-    private final Map<String, QueryField> fieldMap;
+    private final Map<CIKey, QueryField> fieldNameToFieldMap;
     private final WordListProvider wordListProvider;
     private final CollectionService collectionService;
     private final Map<DocRef, String[]> wordMap = new ConcurrentHashMap<>();
-    private final Map<String, Pattern> patternMap = new ConcurrentHashMap<>();
+    private final Map<String, Pattern> termValueToPatternMap = new ConcurrentHashMap<>();
     private final DateTimeSettings dateTimeSettings;
 
-    public ExpressionMatcher(final Map<String, QueryField> fieldMap) {
-        this.fieldMap = fieldMap;
+    public ExpressionMatcher(final Map<CIKey, QueryField> fieldNameToFieldMap) {
+        this.fieldNameToFieldMap = fieldNameToFieldMap;
         this.wordListProvider = null;
         this.collectionService = null;
         this.dateTimeSettings = DateTimeSettings.builder().build();
     }
 
-    public ExpressionMatcher(final Map<String, QueryField> fieldMap,
+    public ExpressionMatcher(final Map<CIKey, QueryField> fieldNameToFieldMap,
                              final WordListProvider wordListProvider,
                              final CollectionService collectionService,
                              final DateTimeSettings dateTimeSettings) {
-        this.fieldMap = fieldMap;
+        this.fieldNameToFieldMap = fieldNameToFieldMap;
         this.wordListProvider = wordListProvider;
         this.collectionService = collectionService;
         this.dateTimeSettings = dateTimeSettings;
     }
 
-    public boolean match(final Map<String, Object> attributeMap, final ExpressionItem item) {
+    public boolean match(final Map<CIKey, Object> attributeMap, final ExpressionItem item) {
         // If the initial item is null or not enabled then don't match.
         if (item == null || !item.enabled()) {
             return true;
@@ -72,7 +73,7 @@ public class ExpressionMatcher {
         return matchItem(attributeMap, item);
     }
 
-    private boolean matchItem(final Map<String, Object> attributeMap, final ExpressionItem item) {
+    private boolean matchItem(final Map<CIKey, Object> attributeMap, final ExpressionItem item) {
         if (!item.enabled()) {
             // If the child item is not enabled then return and keep trying to match with other parts of the expression.
             return true;
@@ -87,56 +88,50 @@ public class ExpressionMatcher {
         }
     }
 
-    private boolean matchOperator(final Map<String, Object> attributeMap,
+    private boolean matchOperator(final Map<CIKey, Object> attributeMap,
                                   final ExpressionOperator operator) {
         if (!operator.hasEnabledChildren()) {
             return true;
         } else {
             final List<ExpressionItem> enabledChildren = operator.getEnabledChildren();
-            switch (operator.op()) {
-                case AND:
+            return switch (operator.op()) {
+                case AND -> {
                     for (final ExpressionItem child : enabledChildren) {
                         if (!matchItem(attributeMap, child)) {
-                            return false;
+                            yield false;
                         }
                     }
-                    return true;
-                case OR:
+                    yield true;
+                }
+                case OR -> {
                     for (final ExpressionItem child : enabledChildren) {
                         if (matchItem(attributeMap, child)) {
-                            return true;
+                            yield true;
                         }
                     }
-                    return false;
-                case NOT:
-                    return enabledChildren.size() == 1
-                            && !matchItem(attributeMap, enabledChildren.get(0));
-                default:
-                    throw new MatchException("Unexpected operator type");
-            }
+                    yield false;
+                }
+                case NOT -> enabledChildren.size() == 1
+                        && !matchItem(attributeMap, enabledChildren.get(0));
+            };
         }
     }
 
-    private boolean matchTerm(final Map<String, Object> attributeMap, final ExpressionTerm term) {
-        String termField = term.getField();
+    private boolean matchTerm(final Map<CIKey, Object> attributeMap,
+                              final ExpressionTerm term) {
+        // Clean strings to remove unwanted whitespace that the user may have
+        // added accidentally.
+        final String termField = NullSafe.trim(term.getField());
         final Condition condition = term.getCondition();
         String termValue = term.getValue();
         final DocRef docRef = term.getDocRef();
 
-        // Clean strings to remove unwanted whitespace that the user may have
-        // added accidentally.
-        if (termField != null) {
-            termField = termField.trim();
-        }
-        if (termValue != null) {
-            termValue = termValue.trim();
-        }
-
         // Try and find the referenced field.
-        if (termField == null || termField.length() == 0) {
+        if (NullSafe.isBlankString(termField)) {
             throw new MatchException("Field not set");
         }
-        final QueryField field = fieldMap.get(termField);
+        final CIKey termFieldKey = CIKey.of(termField);
+        final QueryField field = fieldNameToFieldMap.get(termFieldKey);
         if (field == null) {
             throw new MatchException("Field not found in index: " + termField);
         }
@@ -150,12 +145,12 @@ public class ExpressionMatcher {
                 throw new MatchException("DocRef not set for field: " + termField);
             }
         } else {
-            if (termValue == null || termValue.length() == 0) {
+            if (NullSafe.isBlankString(termValue)) {
                 throw new MatchException("Value not set");
             }
         }
 
-        final Object attribute = attributeMap.get(term.getField());
+        final Object attribute = attributeMap.get(termFieldKey);
 
         // Perform null/not null equality if required.
         if (Condition.IS_NULL.equals(condition)) {
@@ -276,23 +271,16 @@ public class ExpressionMatcher {
                             + field.getFldType() + " field type");
             }
         } else {
-            switch (condition) {
-                case EQUALS, CONTAINS:
-                    return isStringMatch(termValue, attribute);
-                case NOT_EQUALS:
-                    return !isStringMatch(termValue, attribute);
-                case IN:
-                    return isIn(fieldName, termValue, attribute);
-                case IN_DICTIONARY:
-                    return isInDictionary(fieldName, docRef, field, attribute);
-                case IN_FOLDER:
-                    return isInFolder(fieldName, docRef, field, attribute);
-                case IS_DOC_REF:
-                    return isDocRef(fieldName, docRef, field, attribute);
-                default:
-                    throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + field.getFldType() + " field type");
-            }
+            return switch (condition) {
+                case EQUALS, CONTAINS -> isStringMatch(termValue, attribute);
+                case NOT_EQUALS -> !isStringMatch(termValue, attribute);
+                case IN -> isIn(fieldName, termValue, attribute);
+                case IN_DICTIONARY -> isInDictionary(fieldName, docRef, field, attribute);
+                case IN_FOLDER -> isInFolder(fieldName, docRef, field, attribute);
+                case IS_DOC_REF -> isDocRef(fieldName, docRef, field, attribute);
+                default -> throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                        + field.getFldType() + " field type");
+            };
         }
     }
 
@@ -337,10 +325,10 @@ public class ExpressionMatcher {
     }
 
     private boolean isStringMatch(final String termValue, final Object attribute) {
-        final Pattern pattern = patternMap.computeIfAbsent(termValue, t -> Pattern.compile(t.replaceAll("\\*", ".*")));
+        final Pattern pattern = termValueToPatternMap.computeIfAbsent(termValue, t ->
+                Pattern.compile(t.replaceAll("\\*", ".*")));
 
-        if (attribute instanceof DocRef) {
-            final DocRef docRef = (DocRef) attribute;
+        if (attribute instanceof final DocRef docRef) {
             if (pattern.matcher(docRef.getUuid()).matches()) {
                 return true;
             }
@@ -381,7 +369,7 @@ public class ExpressionMatcher {
             final String type = field.getDocRefType();
             if (type != null && collectionService != null) {
                 final Set<DocRef> descendants = collectionService.getDescendants(docRef, type);
-                if (descendants != null && descendants.size() > 0) {
+                if (NullSafe.hasItems(descendants)) {
                     if (attribute instanceof DocRef) {
                         final String uuid = ((DocRef) attribute).getUuid();
                         if (uuid != null) {
@@ -399,8 +387,10 @@ public class ExpressionMatcher {
         return false;
     }
 
-    private boolean isDocRef(final String fieldName, final DocRef docRef,
-                             final QueryField field, final Object attribute) {
+    private boolean isDocRef(final String fieldName,
+                             final DocRef docRef,
+                             final QueryField field,
+                             final Object attribute) {
         if (attribute instanceof DocRef) {
             final String uuid = ((DocRef) attribute).getUuid();
             return (null != uuid && uuid.equals(docRef.getUuid()));

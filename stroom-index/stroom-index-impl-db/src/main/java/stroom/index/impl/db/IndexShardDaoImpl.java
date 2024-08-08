@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.index.impl.db;
 
 import stroom.db.util.ExpressionMapper;
@@ -31,12 +47,14 @@ import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -48,7 +66,6 @@ import org.jooq.Record;
 import org.jooq.Result;
 import org.jooq.impl.DSL;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -107,7 +124,7 @@ class IndexShardDaoImpl implements IndexShardDao {
                 return record;
             };
 
-    private static final Map<String, Field<?>> FIELD_MAP = Map.of(
+    private static final Map<CIKey, Field<?>> FIELD_MAP = CIKey.mapOf(
             FindIndexShardCriteria.FIELD_ID, INDEX_SHARD.ID,
             FindIndexShardCriteria.FIELD_NODE, INDEX_SHARD.NODE_NAME,
             FindIndexShardCriteria.FIELD_PARTITION, INDEX_SHARD.PARTITION_NAME,
@@ -199,7 +216,7 @@ class IndexShardDaoImpl implements IndexShardDao {
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
                        final ValuesConsumer consumer) {
-        final String[] fieldNames = fieldIndex.getFields();
+        final List<CIKey> fieldNames = fieldIndex.getFieldsAsCIKeys();
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
         final List<Field<?>> dbFields = indexShardValueMapper.getDbFieldsByName(fieldNames);
         final Mapper<?>[] mappers = indexShardValueMapper.getMappersForFieldNames(fieldNames);
@@ -207,12 +224,12 @@ class IndexShardDaoImpl implements IndexShardDao {
         final Condition condition = indexShardExpressionMapper.apply(criteria.getExpression());
 
         final boolean volumeUsed = isUsed(
-                Set.of(IndexShardFields.FIELD_VOLUME_PATH.getFldName(),
-                        IndexShardFields.FIELD_VOLUME_GROUP.getFldName()),
+                Set.of(IndexShardFields.FIELD_VOLUME_PATH.getFldNameAsCIKey(),
+                        IndexShardFields.FIELD_VOLUME_GROUP.getFldNameAsCIKey()),
                 fieldNames,
                 criteria);
         final boolean volumeGroupUsed = isUsed(
-                Set.of(IndexShardFields.FIELD_VOLUME_GROUP.getFldName()),
+                Set.of(IndexShardFields.FIELD_VOLUME_GROUP.getFldNameAsCIKey()),
                 fieldNames,
                 criteria);
 
@@ -239,6 +256,7 @@ class IndexShardDaoImpl implements IndexShardDao {
                         .on(INDEX_VOLUME_GROUP.ID.eq(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID));
             }
 
+            final int fieldCount = fieldNames.size();
             try (final Cursor<?> cursor = select
                     .where(condition)
                     .orderBy(orderFields)
@@ -248,13 +266,13 @@ class IndexShardDaoImpl implements IndexShardDao {
                 while (cursor.hasNext()) {
                     final Result<?> result = cursor.fetchNext(1000);
 
-                    result.forEach(r -> {
-                        final Val[] arr = new Val[fieldNames.length];
-                        for (int i = 0; i < fieldNames.length; i++) {
+                    result.forEach(rec -> {
+                        final Val[] arr = new Val[fieldCount];
+                        for (int i = 0; i < fieldCount; i++) {
                             Val val = ValNull.INSTANCE;
                             final Mapper<?> mapper = mappers[i];
                             if (mapper != null) {
-                                val = mapper.map(r);
+                                val = mapper.map(rec);
                             }
                             arr[i] = val;
                         }
@@ -360,11 +378,28 @@ class IndexShardDaoImpl implements IndexShardDao {
                 .execute());
     }
 
-    private boolean isUsed(final Set<String> fieldSet,
-                           final String[] fields,
+    private boolean isUsed(final CIKey field,
+                           final List<CIKey> resultFields,
                            final ExpressionCriteria criteria) {
-        return Arrays.stream(fields).filter(Objects::nonNull).anyMatch(fieldSet::contains) ||
-                ExpressionUtil.termCount(criteria.getExpression(), fieldSet) > 0;
+        final boolean isInResultFields = NullSafe.stream(resultFields)
+                .filter(Objects::nonNull)
+                .anyMatch(resultField -> Objects.equals(resultField, field));
+
+        return isInResultFields
+                || ExpressionUtil.termCount(criteria.getExpression(), field.get()) > 0;
+    }
+
+    private boolean isUsed(final Set<CIKey> fieldSet,
+                           final List<CIKey> resultFields,
+                           final ExpressionCriteria criteria) {
+        final boolean isInResultFields = NullSafe.stream(resultFields)
+                .filter(Objects::nonNull)
+                .anyMatch(fieldSet::contains);
+
+        return isInResultFields || ExpressionUtil.termCount(
+                criteria.getExpression(),
+                fieldSet.stream()
+                        .map(CIKey::get).collect(Collectors.toSet())) > 0;
     }
 
 
@@ -410,11 +445,11 @@ class IndexShardDaoImpl implements IndexShardDao {
             return ValString.create(indexShardStatus.getDisplayValue());
         }
 
-        public List<Field<?>> getDbFieldsByName(final String[] fieldNames) {
+        public List<Field<?>> getDbFieldsByName(final List<CIKey> fieldNames) {
             return valueMapper.getDbFieldsByName(fieldNames);
         }
 
-        public Mapper<?>[] getMappersForFieldNames(final String[] fieldNames) {
+        public Mapper<?>[] getMappersForFieldNames(final List<CIKey> fieldNames) {
             return valueMapper.getMappersForFieldNames(fieldNames);
         }
     }
@@ -452,7 +487,7 @@ class IndexShardDaoImpl implements IndexShardDao {
         }
 
         private List<String> getIndexUuids(final List<String> indexNames) {
-            return indexStore.findByNames(indexNames, true)
+            return indexStore.findByNames(indexNames, true, false)
                     .stream()
                     .map(DocRef::getUuid)
                     .collect(Collectors.toList());

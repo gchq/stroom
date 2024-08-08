@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.util.shared.string.CIKey;
 
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -38,7 +39,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -57,11 +57,9 @@ class TestExpressionMatcher {
     public static final QueryField FEED = QueryField.createDocRefByUniqueName("Feed", "Feed");
     private static final QueryField TYPE = QueryField.createText("Type");
     private static final QueryField FRUIT = QueryField.createText("Fruit");
-    private static final Map<String, QueryField> FIELD_MAP = Map.of(
-            FEED.getFldName(),
-            FEED,
-            TYPE.getFldName(),
-            TYPE);
+    private static final Map<CIKey, QueryField> FIELD_MAP = CIKey.mapOf(
+            FEED.getFldName(), FEED,
+            TYPE.getFldName(), TYPE);
 
     @Test
     void testSimpleMatch_match() {
@@ -168,7 +166,7 @@ class TestExpressionMatcher {
                 .build();
 
         final ExpressionMatcher expressionMatcher = new ExpressionMatcher(
-                Map.of(FRUIT.getFldName(), FRUIT),
+                Map.of(CIKey.of(FRUIT.getFldName()), FRUIT),
                 mockWordListProvider,
                 null,
                 DateTimeSettings.builder()
@@ -193,7 +191,7 @@ class TestExpressionMatcher {
                 .build();
 
         boolean match = expressionMatcher.match(
-                Map.of(FRUIT.getFldName(), "orange"),
+                Map.of(CIKey.of(FRUIT.getFldName()), "orange"),
                 expression);
         assertThat(match)
                 .isTrue();
@@ -207,7 +205,7 @@ class TestExpressionMatcher {
 //                .isTrue();
     }
 
-    private void test(final Map<String, Object> attributeMap,
+    private void test(final Map<CIKey, Object> attributeMap,
                       final ExpressionOperator expression,
                       final boolean outcome) {
         final ExpressionMatcher expressionMatcher = new ExpressionMatcher(
@@ -225,10 +223,9 @@ class TestExpressionMatcher {
         return builder.build();
     }
 
-    private Map<String, Object> createAttributeMap() {
-        final Map<String, Object> attributeMap = new HashMap<>();
-        attributeMap.put(FEED.getFldName(), "TEST_FEED");
-        attributeMap.put(TYPE.getFldName(), StreamTypeNames.RAW_EVENTS);
-        return attributeMap;
+    private Map<CIKey, Object> createAttributeMap() {
+        return CIKey.mapOf(
+                FEED.getFldName(), "TEST_FEED",
+                TYPE.getFldName(), StreamTypeNames.RAW_EVENTS);
     }
 }

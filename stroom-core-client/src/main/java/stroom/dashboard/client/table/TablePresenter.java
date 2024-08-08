@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.dashboard.client.table;
@@ -84,6 +83,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.Expander;
 import stroom.util.shared.Version;
+import stroom.util.shared.string.CIKey;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -577,7 +577,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 rowStyle.trustedColor(row.getTextColor());
             }
 
-            final Map<String, TableRow.Cell> cellsMap = new HashMap<>();
+            final Map<String, TableRow.Cell> fieldIdToCellMap = new HashMap<>();
             for (int i = 0; i < columns.size() && i < row.getValues().size(); i++) {
                 final Column column = columns.get(i);
                 final String value = row.getValues().get(i) != null
@@ -601,7 +601,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 final String style = stylesBuilder.toSafeStyles().asString();
 
                 final TableRow.Cell cell = new TableRow.Cell(value, style);
-                cellsMap.put(column.getId(), cell);
+                fieldIdToCellMap.put(column.getId(), cell);
             }
 
             // Create an expander for the row.
@@ -613,7 +613,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 expander = new Expander(row.getDepth(), false, true);
             }
 
-            processed.add(new TableRow(expander, row.getGroupKey(), cellsMap));
+            processed.add(new TableRow(expander, row.getGroupKey(), fieldIdToCellMap));
         }
 
         // Set the expander column width.
@@ -763,7 +763,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private void ensureSpecialFields(final String... indexFieldNames) {
         // Remove all special fields as we will re-add them.
-        getTableSettings().getColumns().removeIf(Column::isSpecial);
+        getTableSettings().getColumns()
+                .removeIf(Column::isSpecial);
 
         final Optional<Integer> maxGroup = getTableSettings()
                 .getColumns()
@@ -771,6 +772,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .map(Column::getGroup)
                 .filter(Objects::nonNull)
                 .max(Integer::compareTo);
+
         if (getTableSettings().showDetail() || maxGroup.isEmpty()) {
             final List<Column> requiredSpecialColumns = new ArrayList<>();
             for (final String indexFieldName : indexFieldNames) {
@@ -780,7 +782,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
             // If the fields we want to make special do exist in the current data source then
             // add them.
-            if (requiredSpecialColumns.size() > 0) {
+            if (!requiredSpecialColumns.isEmpty()) {
                 // Prior to the introduction of the special field concept, special fields were
                 // treated as invisible fields. For this reason we need to remove old invisible
                 // fields if we haven't yet turned them into special fields.
@@ -983,13 +985,13 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     @Override
-    public List<Map<String, String>> getSelection() {
-        final List<Map<String, String>> list = new ArrayList<>();
+    public List<Map<CIKey, String>> getSelection() {
+        final List<Map<CIKey, String>> list = new ArrayList<>();
         final List<Column> columns = getTableSettings().getColumns();
         for (final TableRow tableRow : getSelectedRows()) {
-            final Map<String, String> map = new HashMap<>();
+            final Map<CIKey, String> map = new HashMap<>();
             for (final Column column : columns) {
-                map.put(column.getName(), tableRow.getText(column.getId()));
+                map.put(column.getNameAsCIKey(), tableRow.getText(column.getId()));
             }
             list.add(map);
         }

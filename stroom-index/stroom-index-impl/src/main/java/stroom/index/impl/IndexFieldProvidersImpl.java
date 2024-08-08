@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,19 +12,19 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.index.impl;
 
-import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
+import stroom.query.common.v2.IndexFieldMap;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.IndexFieldProviders;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -37,6 +37,7 @@ import java.util.Set;
 @Singleton
 public class IndexFieldProvidersImpl implements IndexFieldProviders {
 
+    // DocRef.type => IndexFieldProvider
     private final Map<String, IndexFieldProvider> providers = new HashMap<>();
     private final SecurityContext securityContext;
 
@@ -50,10 +51,11 @@ public class IndexFieldProvidersImpl implements IndexFieldProviders {
     }
 
     @Override
-    public IndexField getIndexField(final DocRef docRef, final String fieldName) {
+    public IndexFieldMap getIndexFields(final DocRef docRef, final CIKey fieldName) {
         Objects.requireNonNull(docRef, "Null DocRef supplied");
         Objects.requireNonNull(docRef.getType(), "Null DocRef type supplied");
         Objects.requireNonNull(fieldName, "Null field name supplied");
+        Objects.requireNonNull(fieldName.get(), "Null field name supplied");
 
         if (!securityContext.hasDocumentPermission(docRef, DocumentPermissionNames.USE)) {
             throw new PermissionException(
@@ -65,6 +67,6 @@ public class IndexFieldProvidersImpl implements IndexFieldProviders {
             throw new NullPointerException("No provider can be found for: " + docRef.getType());
         }
 
-        return provider.getIndexField(docRef, fieldName);
+        return provider.getIndexFields(docRef, fieldName);
     }
 }

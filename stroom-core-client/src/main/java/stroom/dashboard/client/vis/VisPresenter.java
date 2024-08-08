@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ import stroom.script.shared.ScriptResource;
 import stroom.ui.config.shared.Themes;
 import stroom.util.client.JSONUtil;
 import stroom.util.shared.EqualsUtil;
+import stroom.util.shared.string.CIKey;
 import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 import stroom.visualisation.client.presenter.VisFunction.StatusHandler;
@@ -122,7 +123,7 @@ public class VisPresenter
     private TablePresenter linkedTablePresenter;
 
     private final Timer timer;
-    private List<Map<String, String>> currentSelection;
+    private List<Map<CIKey, String>> currentSelection;
     private boolean pause;
     private int currentRequestCount;
 
@@ -153,7 +154,7 @@ public class VisPresenter
     }
 
     @Override
-    public void onSelection(final List<Map<String, String>> selection) {
+    public void onSelection(final List<Map<CIKey, String>> selection) {
         if (!Objects.equals(currentSelection, selection)) {
             currentSelection = selection;
             timer.schedule(250);
@@ -743,7 +744,7 @@ public class VisPresenter
     }
 
     @Override
-    public List<Map<String, String>> getSelection() {
+    public List<Map<CIKey, String>> getSelection() {
         return currentSelection;
     }
 

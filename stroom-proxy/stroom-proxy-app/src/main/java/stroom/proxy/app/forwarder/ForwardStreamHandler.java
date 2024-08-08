@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.forwarder;
 
 import stroom.meta.api.AttributeMap;
@@ -15,6 +31,7 @@ import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.string.CIKey;
 import stroom.util.time.StroomDuration;
 
 import org.slf4j.Logger;
@@ -104,11 +121,13 @@ public class ForwardStreamHandler implements StreamHandler {
         connection.setDoOutput(true);
         connection.setDoInput(true);
 
-        connection.addRequestProperty(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
+        connection.addRequestProperty(
+                StandardHeaderArguments.COMPRESSION.get(),
+                StandardHeaderArguments.COMPRESSION_ZIP);
 
         final AttributeMap sendHeader = AttributeMapUtil.cloneAllowable(attributeMap);
-        for (Entry<String, String> entry : sendHeader.entrySet()) {
-            connection.addRequestProperty(entry.getKey(), entry.getValue());
+        for (Entry<CIKey, String> entry : sendHeader.entrySet()) {
+            connection.addRequestProperty(entry.getKey().get(), entry.getValue());
         }
 
         // Allows sending to systems on the same OpenId realm as us using an access token
@@ -202,14 +221,10 @@ public class ForwardStreamHandler implements StreamHandler {
         return attributeMap
                 .entrySet()
                 .stream()
-                .map(entry -> new SimpleEntry<>(
-                        Objects.requireNonNullElse(entry.getKey(), "null"),
-                        entry.getValue())
-                )
                 .sorted(Entry.comparingByKey())
                 .map(entry -> "  " + String.join(
                         ":",
-                        NullSafe.string(entry.getKey()),
+                        NullSafe.getOrElse(entry.getKey(), CIKey::get, "null"),
                         LogUtil.truncateUnless(entry.getValue(), 50, LOGGER.isTraceEnabled())))
                 .collect(Collectors.joining("\n"));
     }

@@ -1,8 +1,25 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.meta.shared;
 
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.util.shared.string.CIKey;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,10 +42,11 @@ public class MetaFields {
     public static final String FIELD_PARENT_FEED = "Parent Feed";
 
     private static final List<QueryField> FIELDS = new ArrayList<>();
-    private static final Map<String, QueryField> FIELD_MAP;
+    private static final Map<CIKey, QueryField> FIELD_MAP;
     private static final List<QueryField> EXTENDED_FIELDS = new ArrayList<>();
     private static final List<QueryField> ALL_FIELDS = new ArrayList<>();
-    private static final Map<String, QueryField> ALL_FIELD_MAP;
+    private static final Map<CIKey, QueryField> ALL_FIELD_MAP;
+    private static final Map<String, CIKey> ALL_FIELD_NAME_TO_KEY_MAP;
 
     // Non grouped fields
     // Maps to the docref name (which is unique)
@@ -96,7 +114,10 @@ public class MetaFields {
         FIELDS.add(EFFECTIVE_TIME);
         FIELDS.add(STATUS_TIME);
 
-        FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
+        FIELD_MAP = FIELDS.stream()
+                .collect(Collectors.toMap(
+                        QueryField::getFldNameAsCIKey,
+                        Function.identity()));
 
         // Single Items
         EXTENDED_FIELDS.add(DURATION);
@@ -115,14 +136,24 @@ public class MetaFields {
 
         ALL_FIELDS.addAll(FIELDS);
         ALL_FIELDS.addAll(EXTENDED_FIELDS);
-        ALL_FIELD_MAP = ALL_FIELDS.stream().collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
+
+        ALL_FIELD_MAP = ALL_FIELDS.stream()
+                .collect(Collectors.toMap(
+                        (QueryField queryField) -> CIKey.of(queryField.getFldName()),
+                        Function.identity()));
+
+        ALL_FIELD_NAME_TO_KEY_MAP = ALL_FIELD_MAP.keySet()
+                .stream()
+                .collect(Collectors.toMap(
+                        CIKey::get,
+                        Function.identity()));
     }
 
     public static List<QueryField> getFields() {
         return new ArrayList<>(FIELDS);
     }
 
-    public static Map<String, QueryField> getFieldMap() {
+    public static Map<CIKey, QueryField> getFieldMap() {
         return FIELD_MAP;
     }
 
@@ -130,11 +161,15 @@ public class MetaFields {
         return ALL_FIELDS;
     }
 
-    public static Map<String, QueryField> getAllFieldMap() {
+    public static Map<CIKey, QueryField> getAllFieldMap() {
         return ALL_FIELD_MAP;
     }
 
     public static List<QueryField> getExtendedFields() {
         return EXTENDED_FIELDS;
+    }
+
+    public static CIKey createCIKey(final String fieldName) {
+        return CIKey.of(fieldName, ALL_FIELD_NAME_TO_KEY_MAP);
     }
 }

@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,11 +17,12 @@
 package stroom.query.language.functions;
 
 import stroom.query.language.token.Param;
+import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.string.CIKey;
 
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -65,11 +66,11 @@ class CurrentUser extends AbstractFunction {
     }
 
     @Override
-    public void setStaticMappedValues(final Map<String, String> staticMappedValues) {
+    public void setStaticMappedValues(final Map<CIKey, String> staticMappedValues) {
         final String v = switch (getNameType()) {
-            case DISPLAY_NAME -> staticMappedValues.get(ParamKeys.CURRENT_USER);
-            case SUBJECT_ID -> staticMappedValues.get(ParamKeys.CURRENT_USER_SUBJECT_ID);
-            case FULL_NAME -> staticMappedValues.get(ParamKeys.CURRENT_USER_FULL_NAME);
+            case DISPLAY_NAME -> staticMappedValues.get(ParamKeys.CURRENT_USER_KEY);
+            case SUBJECT_ID -> staticMappedValues.get(ParamKeys.CURRENT_USER_SUBJECT_ID_KEY);
+            case FULL_NAME -> staticMappedValues.get(ParamKeys.CURRENT_USER_FULL_NAME_KEY);
         };
         if (v != null) {
             gen = new StaticValueGen(ValString.create(v));
@@ -103,12 +104,12 @@ class CurrentUser extends AbstractFunction {
         SUBJECT_ID("subject"),
         FULL_NAME("full"),
         ;
-        private static final Map<String, NameType> STR_TO_ENUM_MAP = new HashMap<>(3);
+        private static final Map<CIKey, NameType> STR_TO_ENUM_MAP = new HashMap<>(3);
         private static final NameType DEFAULT = DISPLAY_NAME;
 
         static {
             for (final NameType nameType : NameType.values()) {
-                STR_TO_ENUM_MAP.put(nameType.paramVal, nameType);
+                STR_TO_ENUM_MAP.put(CIKey.of(nameType.paramVal, ParamKeys.KNOWN_KEYS_MAP), nameType);
             }
         }
 
@@ -119,9 +120,10 @@ class CurrentUser extends AbstractFunction {
         }
 
         static NameType fromString(final String type) {
-            return type != null
-                    ? Objects.requireNonNullElse(STR_TO_ENUM_MAP.get(type), DEFAULT)
-                    : DEFAULT;
+            return GwtNullSafe.getOrElse(
+                    type,
+                    type2 -> STR_TO_ENUM_MAP.get(CIKey.of(type2, ParamKeys.KNOWN_KEYS_MAP)),
+                    DEFAULT);
         }
     }
 }

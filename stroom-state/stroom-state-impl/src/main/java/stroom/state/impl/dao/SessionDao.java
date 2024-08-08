@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.state.impl.dao;
 
 import stroom.entity.shared.ExpressionCriteria;
@@ -10,8 +26,11 @@ import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.state.impl.ScyllaDbExpressionUtil;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.string.CIKey;
+import stroom.util.shared.string.CIKeys;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -33,6 +52,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.bindMarker;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.deleteFrom;
@@ -40,7 +60,6 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.insertInto;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
 import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.createTable;
-import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.dropTable;
 
 public class SessionDao extends AbstractStateDao<Session> {
 
@@ -51,15 +70,11 @@ public class SessionDao extends AbstractStateDao<Session> {
     private static final CqlIdentifier COLUMN_END = CqlIdentifier.fromCql("end");
     private static final CqlIdentifier COLUMN_TERMINAL = CqlIdentifier.fromCql("terminal");
 
-    private static final Map<String, ScyllaDbColumn> COLUMN_MAP = Map.of(
-            SessionFields.KEY,
-            new ScyllaDbColumn(SessionFields.KEY, DataTypes.TEXT, COLUMN_KEY),
-            SessionFields.START,
-            new ScyllaDbColumn(SessionFields.START, DataTypes.TIMESTAMP, COLUMN_START),
-            SessionFields.END,
-            new ScyllaDbColumn(SessionFields.END, DataTypes.TIMESTAMP, COLUMN_END),
-            SessionFields.TERMINAL,
-            new ScyllaDbColumn(SessionFields.TERMINAL, DataTypes.BOOLEAN, COLUMN_TERMINAL));
+    private static final Map<CIKey, ScyllaDbColumn> COLUMN_MAP = Map.ofEntries(
+            StateFieldUtil.createNameToColumnEntry(CIKeys.KEY, DataTypes.TEXT, COLUMN_KEY),
+            StateFieldUtil.createNameToColumnEntry(CIKeys.START, DataTypes.TIMESTAMP, COLUMN_START),
+            StateFieldUtil.createNameToColumnEntry(CIKeys.END, DataTypes.TIMESTAMP, COLUMN_END),
+            StateFieldUtil.createNameToColumnEntry(CIKeys.TERMINAL, DataTypes.BOOLEAN, COLUMN_TERMINAL));
 
     public SessionDao(final Provider<CqlSession> sessionProvider, final String tableName) {
         super(sessionProvider, CqlIdentifier.fromCql(tableName));
@@ -435,28 +450,36 @@ public class SessionDao extends AbstractStateDao<Session> {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class SessionConsumer implements Consumer<Session> {
 
-        private final String[] fieldNames;
+        private final List<CIKey> fieldNames;
         private final ValuesConsumer consumer;
 
+        private static final Map<CIKey, Function<Session, Val>> FIELD_NAME_TO_EXTRACTOR_MAP = Map.of(
+                CIKeys.KEY, session -> ValString.create(session.key()),
+                CIKeys.START, session -> ValDate.create(session.start()),
+                CIKeys.END, session -> ValDate.create(session.end()),
+                CIKeys.TERMINAL, session -> ValBoolean.create(session.terminal()));
+
         public SessionConsumer(final FieldIndex fieldIndex, final ValuesConsumer consumer) {
-            this.fieldNames = fieldIndex.getFields();
+            this.fieldNames = fieldIndex.getFieldsAsCIKeys();
             this.consumer = consumer;
         }
 
         @Override
         public void accept(final Session session) {
-            final Val[] values = new Val[fieldNames.length];
-            for (int i = 0; i < values.length; i++) {
-                final String fieldName = fieldNames[i];
-                switch (fieldName) {
-                    case SessionFields.KEY -> values[i] = ValString.create(session.key());
-                    case SessionFields.START -> values[i] = ValDate.create(session.start());
-                    case SessionFields.END -> values[i] = ValDate.create(session.end());
-                    case SessionFields.TERMINAL -> values[i] = ValBoolean.create(session.terminal());
-                    default -> values[i] = ValNull.INSTANCE;
-                }
+            final int fieldCount = fieldNames.size();
+            final Val[] values = new Val[fieldCount];
+            for (int i = 0; i < fieldCount; i++) {
+                final CIKey fieldName = fieldNames.get(i);
+                values[i] = NullSafe.getOrElse(
+                        FIELD_NAME_TO_EXTRACTOR_MAP.get(fieldName),
+                        extractor -> extractor.apply(session),
+                        ValNull.INSTANCE);
             }
             consumer.accept(Val.of(values));
         }

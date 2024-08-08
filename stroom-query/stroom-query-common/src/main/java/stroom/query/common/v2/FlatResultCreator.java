@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -40,6 +40,7 @@ import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.string.CIKey;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -64,7 +65,7 @@ public class FlatResultCreator implements ResultCreator {
                              final String componentId,
                              final ExpressionContext expressionContext,
                              final ResultRequest resultRequest,
-                             final Map<String, String> paramMap,
+                             final Map<CIKey, String> paramMap,
                              final ColumnFormatter columnFormatter,
                              final Sizes defaultMaxResultsSizes,
                              final boolean cacheLastResult) {
@@ -328,7 +329,7 @@ public class FlatResultCreator implements ResultCreator {
         private final QueryKey queryKey;
         private final String componentId;
         private final TableSettings child;
-        private final Map<String, String> paramMap;
+        private final Map<CIKey, String> paramMap;
         private final ErrorConsumer errorConsumer;
         private final FieldIndex childFieldIndex;
 
@@ -342,7 +343,7 @@ public class FlatResultCreator implements ResultCreator {
                final String componentId,
                final TableSettings parent,
                final TableSettings child,
-               final Map<String, String> paramMap,
+               final Map<CIKey, String> paramMap,
                final ErrorConsumer errorConsumer) {
             this.dataStoreFactory = dataStoreFactory;
             this.dataStoreSettings = dataStoreSettings;
@@ -358,7 +359,7 @@ public class FlatResultCreator implements ResultCreator {
 
             // Parent fields are now table column names.
             for (final Column column : parent.getColumns()) {
-                parentFieldIndex.create(column.getName());
+                parentFieldIndex.create(column.getNameAsCIKey());
             }
 
             // Extract child fields from expressions.

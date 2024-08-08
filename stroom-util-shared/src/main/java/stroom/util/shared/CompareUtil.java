@@ -66,7 +66,7 @@ public final class CompareUtil {
         return l1.compareTo(l2);
     }
 
-    public static int compareString(final String l1, final String l2) {
+    public static int compareStringIgnoreCase(final String l1, final String l2) {
         if (l1 == null && l2 == null) {
             return 0;
         }

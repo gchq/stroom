@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import jakarta.inject.Inject;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.ma.arrays.ArrayItem;
 import net.sf.saxon.ma.arrays.SimpleArrayItem;
-import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
 
@@ -46,7 +45,7 @@ class MetaKeys extends StroomExtensionFunctionCall {
 
         try {
             try {
-                result = metaDataHolder.getMetaData().keySet();
+                result = metaDataHolder.getMetaData().keySetAsString();
             } catch (final RuntimeException e) {
                 outputWarning(context, new StringBuilder("Error fetching meta keys"), e);
             }

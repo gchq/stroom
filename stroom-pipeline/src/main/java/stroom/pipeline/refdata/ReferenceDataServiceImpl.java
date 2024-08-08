@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.refdata;
 
 import stroom.bytebuffer.ByteBufferPool;
@@ -51,6 +67,7 @@ import stroom.util.rest.RestUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.string.CIKey;
 import stroom.util.time.StroomDuration;
 
 import com.google.common.base.Strings;
@@ -83,10 +100,10 @@ import java.util.stream.Collectors;
 public class ReferenceDataServiceImpl implements ReferenceDataService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReferenceDataServiceImpl.class);
-    private static final Map<String, QueryField> FIELD_NAME_TO_FIELD_MAP = ReferenceDataFields.FIELDS.stream()
-            .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
+    private static final Map<CIKey, QueryField> FIELD_NAME_TO_FIELD_MAP = ReferenceDataFields.FIELDS.stream()
+            .collect(Collectors.toMap(QueryField::getFldNameAsCIKey, Function.identity()));
 
-    private static final Map<String, Function<RefStoreEntry, Object>> FIELD_TO_EXTRACTOR_MAP = Map.ofEntries(
+    private static final Map<CIKey, Function<RefStoreEntry, Object>> FIELD_TO_EXTRACTOR_MAP = CIKey.mapOfEntries(
             Map.entry(ReferenceDataFields.FEED_NAME_FIELD.getFldName(),
                     RefStoreEntry::getFeedName),
             Map.entry(ReferenceDataFields.KEY_FIELD.getFldName(),
@@ -750,14 +767,15 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                 throw new TaskTerminatedException();
             }
             if (skipTest.getAsBoolean()) {
-                final String[] fields = fieldIndex.getFields();
-                final Val[] valArr = new Val[fields.length];
+                final List<CIKey> fields = fieldIndex.getFieldsAsCIKeys();
+                final int fieldCount = fields.size();
+                final Val[] valArr = new Val[fieldCount];
 
                 // Useful for slowing down the search in dev to test termination
                 //ThreadUtil.sleepIgnoringInterrupts(50);
 
-                for (int i = 0; i < fields.length; i++) {
-                    final String fieldName = fields[i];
+                for (int i = 0; i < fieldCount; i++) {
+                    final CIKey fieldName = fields.get(i);
                     final QueryField field = FIELD_NAME_TO_FIELD_MAP.get(fieldName);
                     // May be a custom field that we obvs can't extract
                     if (field != null) {
@@ -934,17 +952,18 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
         // name => field
         // field => fieldType
-        QueryField abstractField = FIELD_NAME_TO_FIELD_MAP.get(expressionTerm.getField());
+        final CIKey fieldName = CIKey.of(expressionTerm.getField());
+        QueryField abstractField = FIELD_NAME_TO_FIELD_MAP.get(fieldName);
 
         return switch (abstractField.getFldType()) {
             case TEXT -> buildTextFieldPredicate(expressionTerm, refStoreEntry ->
-                    (String) FIELD_TO_EXTRACTOR_MAP.get(expressionTerm.getField()).apply(refStoreEntry));
+                    (String) FIELD_TO_EXTRACTOR_MAP.get(fieldName).apply(refStoreEntry));
             case LONG -> buildLongFieldPredicate(expressionTerm, refStoreEntry ->
-                    (Long) FIELD_TO_EXTRACTOR_MAP.get(expressionTerm.getField()).apply(refStoreEntry));
+                    (Long) FIELD_TO_EXTRACTOR_MAP.get(fieldName).apply(refStoreEntry));
             case DATE -> buildDateFieldPredicate(expressionTerm, refStoreEntry ->
-                    (Long) FIELD_TO_EXTRACTOR_MAP.get(expressionTerm.getField()).apply(refStoreEntry));
+                    (Long) FIELD_TO_EXTRACTOR_MAP.get(fieldName).apply(refStoreEntry));
             case DOC_REF -> buildDocRefFieldPredicate(expressionTerm, refStoreEntry ->
-                    (DocRef) FIELD_TO_EXTRACTOR_MAP.get(expressionTerm.getField()).apply(refStoreEntry));
+                    (DocRef) FIELD_TO_EXTRACTOR_MAP.get(fieldName).apply(refStoreEntry));
             default -> throw new RuntimeException("Unsupported term " + expressionTerm);
         };
 

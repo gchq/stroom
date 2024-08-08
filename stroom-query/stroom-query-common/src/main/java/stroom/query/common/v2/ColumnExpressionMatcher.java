@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.query.common.v2;
@@ -28,6 +27,7 @@ import stroom.query.api.v2.Format.Type;
 import stroom.query.language.functions.DateUtil;
 import stroom.util.NullSafe;
 import stroom.util.shared.CompareUtil;
+import stroom.util.shared.string.CIKey;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +49,7 @@ public class ColumnExpressionMatcher {
 
     private final Map<String, Pattern> patternCache = new ConcurrentHashMap<>();
 
-    private final Map<String, Column> fieldNameToFieldMap;
+    private final Map<CIKey, Column> fieldNameToFieldMap;
     private final DateTimeSettings dateTimeSettings;
 
     public ColumnExpressionMatcher(final List<Column> columns,
@@ -58,12 +58,12 @@ public class ColumnExpressionMatcher {
         this.fieldNameToFieldMap = new HashMap<>();
         for (final Column column : NullSafe.list(columns)) {
             // Allow match by id and name.
-            fieldNameToFieldMap.putIfAbsent(column.getId(), column);
-            fieldNameToFieldMap.putIfAbsent(column.getName(), column);
+            fieldNameToFieldMap.putIfAbsent(column.getIdAsCIKey(), column);
+            fieldNameToFieldMap.putIfAbsent(column.getNameAsCIKey(), column);
         }
     }
 
-    public boolean match(final Map<String, Object> attributeMap, final ExpressionItem item) {
+    public boolean match(final Map<CIKey, Object> attributeMap, final ExpressionItem item) {
         // If the initial item is null or not enabled then don't match.
         if (item == null || !item.enabled()) {
             return false;
@@ -71,7 +71,7 @@ public class ColumnExpressionMatcher {
         return matchItem(attributeMap, item);
     }
 
-    private boolean matchItem(final Map<String, Object> attributeMap, final ExpressionItem item) {
+    private boolean matchItem(final Map<CIKey, Object> attributeMap, final ExpressionItem item) {
         if (!item.enabled()) {
             // If the child item is not enabled then return and keep trying to match with other parts
             // of the expression.
@@ -87,7 +87,7 @@ public class ColumnExpressionMatcher {
         }
     }
 
-    private boolean matchOperator(final Map<String, Object> attributeMap,
+    private boolean matchOperator(final Map<CIKey, Object> attributeMap,
                                   final ExpressionOperator operator) {
         if (operator.getChildren() == null || operator.getChildren().isEmpty()) {
             return true;
@@ -115,23 +115,23 @@ public class ColumnExpressionMatcher {
         };
     }
 
-    private boolean matchTerm(final Map<String, Object> attributeMap, final ExpressionTerm term) {
+    private boolean matchTerm(final Map<CIKey, Object> attributeMap, final ExpressionTerm term) {
         // The term field is the column name, NOT the index field name
         final Condition condition = term.getCondition();
 
         // Try and find the referenced field.
-        String termField = term.getField();
-        if (NullSafe.isBlankString(termField)) {
+        if (NullSafe.isBlankString(term.getField())) {
             throw new MatchException("Field not set");
         }
-        termField = termField.trim();
-        final Column column = fieldNameToFieldMap.get(termField);
+        final String termField = term.getField().trim();
+        final CIKey caseInsensitiveTermField = CIKey.of(termField);
+        final Column column = fieldNameToFieldMap.get(caseInsensitiveTermField);
         if (column == null) {
             throw new MatchException("Column not found: " + termField);
         }
         final String columnName = column.getName();
 
-        final Object attribute = attributeMap.get(termField);
+        final Object attribute = attributeMap.get(caseInsensitiveTermField);
         if (Condition.IS_NULL.equals(condition)) {
             return attribute == null;
         } else if (Condition.IS_NOT_NULL.equals(condition)) {
@@ -141,14 +141,13 @@ public class ColumnExpressionMatcher {
         }
 
         // Try and resolve the term value.
-        String termValue = term.getValue();
-        if (NullSafe.isBlankString(termValue)) {
+        String termValue = NullSafe.trim(term.getValue());
+        if (termValue.isEmpty()) {
             throw new MatchException("Value not set");
         }
-        termValue = termValue.trim();
 
         // Substitute with row value if a row value exists.
-        final Object rowValue = attributeMap.get(termValue);
+        final Object rowValue = attributeMap.get(CIKey.of(termValue));
         if (rowValue != null) {
             termValue = rowValue.toString();
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,6 +74,7 @@ import stroom.task.client.TaskListener;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.string.CIKey;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -300,8 +301,9 @@ public class QueryPresenter
             if (initialised) {
                 final Component component = event.getComponent();
                 if (component instanceof HasSelection) {
+                    //noinspection PatternVariableCanBeUsed // GWT
                     final HasSelection hasSelection = (HasSelection) component;
-                    final List<Map<String, String>> selection = hasSelection.getSelection();
+                    final List<Map<CIKey, String>> selection = hasSelection.getSelection();
                     final List<ComponentSelectionHandler> selectionHandlers = getQuerySettings().getSelectionHandlers();
                     if (selectionHandlers != null) {
                         final List<ComponentSelectionHandler> matchingHandlers = selectionHandlers
@@ -311,13 +313,13 @@ public class QueryPresenter
                                         selectionHandler.getComponentId().equals(component.getId()))
                                 .collect(Collectors.toList());
 
-                        if (matchingHandlers.size() > 0) {
+                        if (!matchingHandlers.isEmpty()) {
                             final Function<ExpressionOperator, ExpressionOperator> decorator = (in) -> {
                                 final ExpressionOperator.Builder innerBuilder = ExpressionOperator
                                         .builder();
                                 boolean added = false;
                                 for (final ComponentSelectionHandler selectionHandler : matchingHandlers) {
-                                    for (final Map<String, String> params : selection) {
+                                    for (final Map<CIKey, String> params : selection) {
                                         ExpressionOperator ex = selectionHandler.getExpression();
                                         ex = ExpressionUtil.replaceExpressionParameters(ex, params);
                                         innerBuilder.addOperator(ex);

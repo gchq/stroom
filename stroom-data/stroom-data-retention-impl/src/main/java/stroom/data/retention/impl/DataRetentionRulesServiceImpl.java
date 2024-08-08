@@ -255,8 +255,10 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
     }
 
     @Override
-    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
-        return store.findByNames(name, allowWildCards);
+    public List<DocRef> findByNames(final List<String> name,
+                                    final boolean allowWildCards,
+                                    final boolean isCaseSensitive) {
+        return store.findByNames(name, allowWildCards, isCaseSensitive);
     }
 
     @Override

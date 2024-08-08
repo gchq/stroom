@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,6 +18,8 @@ package stroom.datasource.api.v2;
 
 import stroom.docref.HasDisplayValue;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.string.CIKey;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -59,6 +61,9 @@ public class QueryField implements Field, HasDisplayValue {
     @JsonProperty
     private final Boolean queryable;
 
+    @JsonIgnore
+    private transient volatile CIKey fldNameCIKey = null;
+
     @JsonCreator
     public QueryField(@Deprecated @JsonProperty("type") final String type,
                       @Deprecated @JsonProperty("name") final String name,
@@ -71,6 +76,25 @@ public class QueryField implements Field, HasDisplayValue {
         this.fldName = fldName != null
                 ? fldName
                 : name;
+        this.fldType = convertLegacyType(fldType, type);
+        this.conditionSet = conditionSet;
+        this.docRefType = docRefType;
+        this.queryable = queryable;
+        this.fldNameCIKey = null;
+    }
+
+    private QueryField(final String type,
+                       final String name,
+                       final String fldName,
+                       final CIKey fldNameAsKey,
+                       final FieldType fldType,
+                       final ConditionSet conditionSet,
+                       final String docRefType,
+                       final Boolean queryable) {
+        this.fldName = fldName != null
+                ? fldName
+                : name;
+        this.fldNameCIKey = fldNameAsKey;
         this.fldType = convertLegacyType(fldType, type);
         this.conditionSet = conditionSet;
         this.docRefType = docRefType;
@@ -124,6 +148,16 @@ public class QueryField implements Field, HasDisplayValue {
                 .build();
     }
 
+    public static QueryField createId(final CIKey name,
+                                      final Boolean queryable) {
+        return builder()
+                .fldName(name)
+                .fldType(FieldType.ID)
+                .conditionSet(ConditionSet.DEFAULT_ID)
+                .queryable(queryable)
+                .build();
+    }
+
     public static QueryField createKeyword(final String name) {
         return createKeyword(name, true);
     }
@@ -152,11 +186,31 @@ public class QueryField implements Field, HasDisplayValue {
                 .build();
     }
 
+    public static QueryField createInteger(final CIKey name,
+                                           final Boolean queryable) {
+        return builder()
+                .fldName(name)
+                .fldType(FieldType.INTEGER)
+                .conditionSet(ConditionSet.DEFAULT_NUMERIC)
+                .queryable(queryable)
+                .build();
+    }
+
     public static QueryField createLong(final String name) {
         return createLong(name, true);
     }
 
     public static QueryField createLong(final String name,
+                                        final Boolean queryable) {
+        return builder()
+                .fldName(name)
+                .fldType(FieldType.LONG)
+                .conditionSet(ConditionSet.DEFAULT_NUMERIC)
+                .queryable(queryable)
+                .build();
+    }
+
+    public static QueryField createLong(final CIKey name,
                                         final Boolean queryable) {
         return builder()
                 .fldName(name)
@@ -236,11 +290,31 @@ public class QueryField implements Field, HasDisplayValue {
                 .build();
     }
 
+    public static QueryField createDate(final CIKey name,
+                                        final Boolean queryable) {
+        return builder()
+                .fldName(name)
+                .fldType(FieldType.DATE)
+                .conditionSet(ConditionSet.DEFAULT_DATE)
+                .queryable(queryable)
+                .build();
+    }
+
     public static QueryField createText(final String name) {
         return createText(name, true);
     }
 
     public static QueryField createText(final String name,
+                                        final Boolean queryable) {
+        return builder()
+                .fldName(name)
+                .fldType(FieldType.TEXT)
+                .conditionSet(ConditionSet.DEFAULT_TEXT)
+                .queryable(queryable)
+                .build();
+    }
+
+    public static QueryField createText(final CIKey name,
                                         final Boolean queryable) {
         return builder()
                 .fldName(name)
@@ -302,6 +376,16 @@ public class QueryField implements Field, HasDisplayValue {
     @Override
     public String getFldName() {
         return fldName;
+    }
+
+    @JsonIgnore
+    public CIKey getFldNameAsCIKey() {
+        if (fldNameCIKey == null) {
+            final CIKey ciKey = CIKey.of(fldName);
+            fldNameCIKey = ciKey;
+            return ciKey;
+        }
+        return fldNameCIKey;
     }
 
     @Override
@@ -380,9 +464,14 @@ public class QueryField implements Field, HasDisplayValue {
         return new Builder();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Builder {
 
         private String fldName;
+        private CIKey fldNameAsKey;
         private FieldType fldType;
         private ConditionSet conditionSet;
         private String docRefType;
@@ -393,6 +482,7 @@ public class QueryField implements Field, HasDisplayValue {
 
         private Builder(final QueryField queryField) {
             this.fldName = queryField.fldName;
+            this.fldNameAsKey = queryField.getFldNameAsCIKey();
             this.fldType = queryField.fldType;
             this.conditionSet = queryField.conditionSet;
             this.docRefType = queryField.docRefType;
@@ -401,6 +491,11 @@ public class QueryField implements Field, HasDisplayValue {
 
         public Builder fldName(final String fldName) {
             this.fldName = fldName;
+            return this;
+        }
+
+        public Builder fldName(final CIKey fldName) {
+            this.fldNameAsKey = fldName;
             return this;
         }
 
@@ -428,10 +523,22 @@ public class QueryField implements Field, HasDisplayValue {
             if (conditionSet == null && fldType != null) {
                 conditionSet = ConditionSet.getDefault(fldType);
             }
+            if (GwtNullSafe.allNonNull(fldName, fldNameAsKey)) {
+                if (!Objects.equals(fldNameAsKey.get(), fldName)) {
+                    throw new IllegalArgumentException("fldName (" + fldName
+                            + ") and fldNameAsKey ("
+                            + fldNameAsKey.get() + ") do not match");
+                }
+            } else if (fldName != null && fldNameAsKey == null) {
+                fldNameAsKey = CIKey.of(fldName);
+            } else if (fldName == null && fldNameAsKey != null) {
+                fldName = fldNameAsKey.get();
+            }
             return new QueryField(
                     null,
                     null,
                     fldName,
+                    fldNameAsKey,
                     fldType,
                     conditionSet,
                     docRefType,

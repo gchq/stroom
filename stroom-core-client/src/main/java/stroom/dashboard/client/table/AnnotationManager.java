@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ import stroom.query.api.v2.Column;
 import stroom.query.client.presenter.TableRow;
 import stroom.security.shared.UserNameResource;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.string.CIKey;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -147,12 +149,14 @@ public class AnnotationManager {
     }
 
     private String getFieldId(final TableComponentSettings tableComponentSettings, final String fieldName) {
-        for (final Column column : tableComponentSettings.getColumns()) {
-            if (column.getName().equalsIgnoreCase(fieldName)) {
-                return column.getId();
-            }
-        }
-        return null;
+        final CIKey fieldNameKey = CIKey.of(fieldName);
+        return tableComponentSettings.getColumns()
+                .stream()
+                .filter(column ->
+                        Objects.equals(column.getNameAsCIKey(), fieldNameKey))
+                .findAny()
+                .map(Column::getId)
+                .orElse(null);
     }
 
     public List<Long> getAnnotationIdList(final TableComponentSettings tableComponentSettings,
@@ -169,7 +173,7 @@ public class AnnotationManager {
                                   final List<TableRow> selectedItems,
                                   final String fieldName) {
         final List<String> values = new ArrayList<>();
-        if (selectedItems != null && selectedItems.size() > 0) {
+        if (!GwtNullSafe.isEmptyCollection(selectedItems)) {
             final String fieldId = getFieldId(tableComponentSettings, fieldName);
             if (fieldId != null) {
                 for (final TableRow row : selectedItems) {
@@ -184,7 +188,7 @@ public class AnnotationManager {
     public String getValue(final TableComponentSettings tableComponentSettings,
                            final List<TableRow> selectedItems,
                            final String fieldName) {
-        if (selectedItems != null && selectedItems.size() > 0) {
+        if (!GwtNullSafe.isEmptyCollection(selectedItems)) {
             final String fieldId = getFieldId(tableComponentSettings, fieldName);
             if (fieldId != null) {
                 for (final TableRow row : selectedItems) {

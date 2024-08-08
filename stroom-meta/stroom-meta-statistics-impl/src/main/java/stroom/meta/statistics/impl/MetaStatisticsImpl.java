@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import stroom.security.api.SecurityContext;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.util.date.DateUtil;
+import stroom.util.shared.string.CIKey;
 
 import com.google.common.base.Preconditions;
 import jakarta.inject.Inject;
@@ -52,7 +53,7 @@ class MetaStatisticsImpl implements MetaStatistics {
     }
 
     @Override
-    public void recordStatistics(final Map<String, String> metaData) {
+    public void recordStatistics(final Map<CIKey, String> metaData) {
         securityContext.asProcessingUser(() -> {
             final InternalStatisticsReceiver receiver = internalStatisticsReceiverProvider.get();
             if (receiver != null) {
@@ -76,7 +77,7 @@ class MetaStatisticsImpl implements MetaStatistics {
      * @return build the STAT or return null for not valid
      */
     private InternalStatisticEvent buildStatisticEvent(final MetaStatisticsTemplate template,
-                                                       final Map<String, String> metaData) {
+                                                       final Map<CIKey, String> metaData) {
         Preconditions.checkNotNull(template);
         Preconditions.checkNotNull(template.getTimeMsAttribute());
         Preconditions.checkNotNull(template.getKey());
@@ -98,11 +99,11 @@ class MetaStatisticsImpl implements MetaStatistics {
 
         final SortedMap<String, String> statisticTags = new TreeMap<>();
 
-        for (final String tagName : template.getTagAttributeList()) {
+        for (final CIKey tagName : template.getTagAttributeList()) {
             final String tagValue = metaData.get(tagName);
 
             if (tagValue != null && !tagValue.isEmpty()) {
-                statisticTags.put(tagName, tagValue);
+                statisticTags.put(tagName.get(), tagValue);
             } else {
                 // Quit!
                 return null;

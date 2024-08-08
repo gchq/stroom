@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.impl.db;
 
 import stroom.db.util.GenericDao;
@@ -19,6 +35,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.UserName;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -51,7 +68,7 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
     private static final Field<String> OWNER_UI_VALUE_JOOQ_FIELD = DSL.field(
             DSL.coalesce(STROOM_USER.DISPLAY_NAME, STROOM_USER.NAME).as(OWNER_UI_VALUE_JOOQ_FIELD_NAME));
 
-    private static final Map<String, Field<?>> FIELD_MAP = Map.of(
+    private static final Map<CIKey, Field<?>> FIELD_MAP = CIKey.mapOf(
             FindApiKeyCriteria.FIELD_NAME, API_KEY.NAME,
             FindApiKeyCriteria.FIELD_PREFIX, API_KEY.API_KEY_PREFIX,
             FindApiKeyCriteria.FIELD_OWNER, OWNER_UI_VALUE_JOOQ_FIELD,
