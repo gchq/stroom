@@ -148,4 +148,44 @@ public abstract class BaseCriteria {
                 ", sortList=" + sortList +
                 '}';
     }
+
+    public abstract static class AbstractBuilder<T extends BaseCriteria, B extends AbstractBuilder<T, B>>
+            extends BaseBuilder<T, B> {
+
+        protected PageRequest pageRequest;
+        protected List<CriteriaFieldSort> sortList;
+
+        protected AbstractBuilder() {
+
+        }
+
+        protected AbstractBuilder(final T criteria) {
+            if (criteria.getPageRequest() != null) {
+                pageRequest = new PageRequest(
+                        criteria.getPageRequest().getOffset(),
+                        criteria.getPageRequest().getLength());
+            }
+            if (criteria.getSortList() != null) {
+                sortList = new ArrayList<>(criteria.getSortList());
+            }
+        }
+
+        public B pageRequest(final PageRequest pageRequest) {
+            this.pageRequest = pageRequest;
+            return self();
+        }
+
+        public B sortList(final List<CriteriaFieldSort> sortList) {
+            this.sortList = sortList;
+            return self();
+        }
+
+        public B addSort(final CriteriaFieldSort sort) {
+            if (sortList == null) {
+                sortList = new ArrayList<>();
+            }
+            sortList.add(sort);
+            return self();
+        }
+    }
 }

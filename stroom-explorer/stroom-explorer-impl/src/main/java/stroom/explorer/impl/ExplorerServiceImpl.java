@@ -18,6 +18,7 @@
 package stroom.explorer.impl;
 
 import stroom.collection.api.CollectionService;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
@@ -27,7 +28,9 @@ import stroom.explorer.api.ExplorerDecorator;
 import stroom.explorer.api.ExplorerFavService;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
+import stroom.explorer.shared.AdvancedDocumentFindRequest;
 import stroom.explorer.shared.BulkActionResult;
+import stroom.explorer.shared.DocumentFindRequest;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerFields;
@@ -41,17 +44,23 @@ import stroom.explorer.shared.FetchExplorerNodesRequest;
 import stroom.explorer.shared.FetchHighlightsRequest;
 import stroom.explorer.shared.FindInContentRequest;
 import stroom.explorer.shared.FindInContentResult;
-import stroom.explorer.shared.FindRequest;
 import stroom.explorer.shared.FindResult;
 import stroom.explorer.shared.NodeFlag;
 import stroom.explorer.shared.NodeFlag.NodeFlagGroups;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.explorer.shared.StandardExplorerTags;
+import stroom.expression.matcher.ExpressionMatcher;
+import stroom.expression.matcher.TermMatcher;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.Suggestions;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.ChangeDocumentPermissionsRequest;
 import stroom.security.shared.DocumentPermission;
+import stroom.security.shared.DocumentPermissionFields;
 import stroom.suggestions.api.SuggestionsQueryHandler;
 import stroom.svg.shared.SvgImage;
 import stroom.util.NullSafe;
@@ -65,8 +74,10 @@ import stroom.util.logging.LogUtil;
 import stroom.util.logging.Metrics;
 import stroom.util.logging.Metrics.LocalMetrics;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -1484,7 +1495,7 @@ class ExplorerServiceImpl
     }
 
     @Override
-    public ResultPage<FindResult> find(final FindRequest request) {
+    public ResultPage<FindResult> find(final DocumentFindRequest request) {
         final LocalMetrics metrics = Metrics.createLocalMetrics(LOGGER.isDebugEnabled());
         try {
             if (request.getFilter() == null) {
@@ -1564,6 +1575,159 @@ class ExplorerServiceImpl
     }
 
     @Override
+    public ResultPage<FindResult> advancedFind(final AdvancedDocumentFindRequest request) {
+        final LocalMetrics metrics = Metrics.createLocalMetrics(LOGGER.isDebugEnabled());
+        try {
+            if (request.getExpression() == null || ExpressionUtil.termCount(request.getExpression()) == 0) {
+                return ResultPage.empty();
+            }
+
+            // Get a copy of the master tree model, so we can add the favourites into it.
+            final TreeModel masterTreeModelClone = explorerTreeModel.getModel().createMutableCopy();
+
+            final ExplorerTreeFilter explorerTreeFilter = ExplorerTreeFilter
+                    .builder()
+                    .requiredPermissions(request.getRequiredPermissions())
+                    .build();
+            final FetchExplorerNodeResult result = getData(
+                    explorerTreeFilter,
+                    masterTreeModelClone,
+                    OpenItemsImpl.all(),
+                    metrics,
+                    false);
+
+            final ExpressionMatcher expressionMatcher =
+                    new ExpressionMatcher(DocumentPermissionFields.getAllFieldMap());
+
+            final List<FindResult> results = new ArrayList<>();
+            addResults2("",
+                    result.getRootNodes(),
+                    Collections.emptyList(),
+                    results,
+                    expressionMatcher,
+                    request.getExpression());
+
+            // If this is recent items mode then filter by recent items.
+            results.sort(Comparator
+                    .<FindResult, String>comparing(res -> res.getDocRef().getName(), Comparator.naturalOrder())
+                    .thenComparing(FindResult::getPath)
+                    .thenComparing(res -> res.getDocRef().getType())
+                    .thenComparing(res -> res.getDocRef().getUuid()));
+
+            return ResultPage.createPageLimitedList(results, request.getPageRequest());
+
+        } catch (Exception e) {
+            LOGGER.error("Error finding nodes with request {}", request, e);
+            throw e;
+        }
+    }
+
+    private void addResults2(final String parent,
+                             final List<ExplorerNode> nodes,
+                             final List<DocRef> ancestors,
+                             final List<FindResult> results,
+                             final ExpressionMatcher expressionMatcher,
+                             final ExpressionOperator expression) {
+        if (nodes != null) {
+            for (final ExplorerNode node : nodes) {
+                if (node.hasNodeFlag(NodeFlag.FILTER_MATCH) &&
+                        node.getDocRef() != null &&
+                        !ExplorerConstants.isRootNode(node)) {
+
+                    final Set<String> fields = ExpressionUtil.fields(expression).stream().collect(Collectors.toSet());
+                    final Map<String, Object> attributes = new HashMap<>();
+                    attributes.put(DocumentPermissionFields.DOCUMENT.getFldName(), node.getDocRef());
+                    attributes.put(DocumentPermissionFields.CHILDREN.getFldName(), new TermMatcher() {
+                        @Override
+                        public boolean match(final QueryField queryField,
+                                             final Condition condition,
+                                             final String termValue,
+                                             final DocRef docRef) {
+                            if (Condition.OF_DOC_REF.equals(condition)) {
+                                if (docRef == null) {
+                                    return false;
+                                }
+                                if (ancestors != null && ancestors.size() > 0) {
+                                    final DocRef parent = ancestors.getLast();
+                                    return docRef.equals(parent);
+                                }
+                            }
+                            return false;
+                        }
+                    });
+                    attributes.put(DocumentPermissionFields.DESCENDANTS.getFldName(), new TermMatcher() {
+                        @Override
+                        public boolean match(final QueryField queryField,
+                                             final Condition condition,
+                                             final String termValue,
+                                             final DocRef docRef) {
+                            if (Condition.OF_DOC_REF.equals(condition)) {
+                                if (docRef == null) {
+                                    return false;
+                                }
+                                if (ancestors != null && ancestors.size() > 0) {
+                                    return ancestors.contains(docRef);
+                                }
+                            }
+                            return false;
+                        }
+                    });
+                    attributes.put(DocumentPermissionFields.USER.getFldName(), new TermMatcher() {
+                        @Override
+                        public boolean match(final QueryField queryField,
+                                             final Condition condition,
+                                             final String termValue,
+                                             final DocRef docRef) {
+                            if (docRef == null) {
+                                return false;
+                            }
+
+                            final DocumentPermission permission = documentPermissionService
+                                    .getPermission(
+                                            node.getDocRef(),
+                                            UserRef.builder().uuid(docRef.getUuid()).build());
+
+                            return switch (condition) {
+                                case USER_HAS_PERM -> permission != null;
+                                case USER_HAS_OWNER -> DocumentPermission.OWNER.equals(permission);
+                                case USER_HAS_DELETE -> DocumentPermission.DELETE.equals(permission);
+                                case USER_HAS_EDIT -> DocumentPermission.EDIT.equals(permission);
+                                case USER_HAS_VIEW -> DocumentPermission.VIEW.equals(permission);
+                                case USER_HAS_USE -> DocumentPermission.USE.equals(permission);
+                                default -> false;
+                            };
+                        }
+                    });
+                    attributes.put(DocumentPermissionFields.DOCUMENT_TYPE.getFldName(), node.getDocRef().getType());
+                    attributes.put(DocumentPermissionFields.DOCUMENT_UUID.getFldName(), node.getDocRef().getUuid());
+                    attributes.put(DocumentPermissionFields.DOCUMENT_NAME.getFldName(), node.getDocRef().getName());
+                    attributes.put(DocumentPermissionFields.DOCUMENT_TAG.getFldName(), node.getTags());
+
+                    if (expressionMatcher.match(attributes, expression)) {
+                        results.add(new FindResult(
+                                node.getDocRef(),
+                                parent,
+                                node.getIcon()));
+                    }
+                }
+                final List<DocRef> newAncestors = new ArrayList<>(ancestors);
+                if (node.getDocRef() != null) {
+                    newAncestors.add(node.getDocRef());
+                }
+                addResults2(
+                        parent.isEmpty()
+                                ? node.getName()
+                                : parent + " / " + node.getName(),
+                        node.getChildren(),
+                        newAncestors,
+                        results,
+                        expressionMatcher,
+                        expression);
+            }
+        }
+    }
+
+    @Override
     public ResultPage<FindInContentResult> findInContent(final FindInContentRequest request) {
         final ResultPage<DocContentMatch> resultPage = contentIndex.findInContent(request);
         final List<FindInContentResult> list = new ArrayList<>();
@@ -1627,6 +1791,20 @@ class ExplorerServiceImpl
                 throw new RuntimeException(LogUtil.message("Unexpected field " + request.getField().getFldName()));
             }
         });
+    }
+
+    @Override
+    public Boolean changeDocumentPermssions(final ChangeDocumentPermissionsRequest request) {
+        final AdvancedDocumentFindRequest advancedDocumentFindRequest = new AdvancedDocumentFindRequest.Builder()
+                .requiredPermissions(Set.of(DocumentPermission.OWNER))
+                .expression(request.getExpression())
+                .pageRequest(PageRequest.unlimited())
+                .build();
+        final ResultPage<FindResult> results = advancedFind(advancedDocumentFindRequest);
+        results.getValues().stream().map(FindResult::getDocRef).forEach(docRef -> {
+            documentPermissionService.changeDocumentPermissions(docRef, request);
+        });
+        return true;
     }
 
     // --------------------------------------------------------------------------------

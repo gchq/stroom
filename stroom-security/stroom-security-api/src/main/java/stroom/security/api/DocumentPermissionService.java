@@ -1,7 +1,11 @@
 package stroom.security.api;
 
 import stroom.docref.DocRef;
+import stroom.security.shared.ChangeDocumentPermissionsRequest;
 import stroom.security.shared.DocumentPermission;
+import stroom.security.shared.DocumentUserPermissions;
+import stroom.security.shared.FetchDocumentUserPermissionsRequest;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 
 import java.util.Set;
@@ -29,13 +33,13 @@ public interface DocumentPermissionService {
 
 
 //    Set<String> getDocumentCreatePermissions(DocRef docRef, UserRef userRef);
-
-    void addDocumentCreatePermission(DocRef docRef, UserRef userRef, String documentType);
-
-    void removeDocumentCreatePermission(DocRef docRef, UserRef userRef, String documentType);
-
-    void clearDocumentCreatePermissions(DocRef docRef, UserRef userRef);
-
+//
+//    void addDocumentCreatePermission(DocRef docRef, UserRef userRef, String documentType);
+//
+//    void removeDocumentCreatePermission(DocRef docRef, UserRef userRef, String documentType);
+//
+//    void clearDocumentCreatePermissions(DocRef docRef, UserRef userRef);
+//
 //    void clearDocumentCreatePermissionsForDocs(Set<DocRef> docRefs);
 
 
@@ -44,11 +48,15 @@ public interface DocumentPermissionService {
     void removeAllDocumentPermissions(Set<DocRef> docRefs);
 
     /**
-     * Copy all permissions from one doc to another.
+     * Add all permissions from one doc to another.
      *
      * @param sourceDocRef The source doc to copy permissions from.
      * @param destDocRef   The dest doc to copy permissions to.
      */
-    void copyDocumentPermissions(DocRef sourceDocRef,
-                                 DocRef destDocRef);
+    void addDocumentPermissions(DocRef sourceDocRef,
+                                DocRef destDocRef);
+
+    Boolean changeDocumentPermissions(DocRef docRef, ChangeDocumentPermissionsRequest request);
+
+    ResultPage<DocumentUserPermissions> fetchDocumentUserPermissions(FetchDocumentUserPermissionsRequest request);
 }

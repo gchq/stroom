@@ -1,6 +1,9 @@
 package stroom.security.impl;
 
 import stroom.security.shared.DocumentPermission;
+import stroom.security.shared.DocumentUserPermissions;
+import stroom.security.shared.FetchDocumentUserPermissionsRequest;
+import stroom.util.shared.ResultPage;
 
 import java.util.List;
 
@@ -8,32 +11,47 @@ public interface DocumentPermissionDao {
 
     UserDocumentPermissions getPermissionsForUser(String userUuid);
 
-    DocumentPermission getPermission(String documentUuid, String userUuid);
+    DocumentPermission getDocumentUserPermission(String documentUuid, String userUuid);
 
-    void setPermission(String documentUuid, String userUuid, DocumentPermission permission);
+    void setDocumentUserPermission(String documentUuid, String userUuid, DocumentPermission permission);
 
-    void clearPermission(String documentUuid, String userUuid);
+    void removeDocumentUserPermission(String documentUuid, String userUuid);
 
     void removeAllDocumentPermissions(String documentUuid);
 
-    List<Integer> getDocumentCreatePermissions(String documentUuid, String userUuid);
+    void clearAllDocumentPermissions();
 
-    void addDocumentCreatePermission(String documentUuid, String userUuid, String documentType);
+    List<Integer> getDocumentUserCreatePermissions(String documentUuid, String userUuid);
 
-    void removeDocumentCreatePermission(String documentUuid, String userUuid, String documentType);
+    void addDocumentUserCreatePermission(String documentUuid, String userUuid, String documentType);
 
-    void clearDocumentCreatePermissions(String documentUuid, String userUuid);
+    void removeDocumentUserCreatePermission(String documentUuid, String userUuid, String documentType);
+
+    void removeDocumentUserCreatePermissions(String documentUuid, String userUuid);
 
     void removeAllDocumentCreatePermissions(String documentUuid);
 
-//
-//    void clearDocumentPermissionsForDoc(String documentUuid);
-//
-//    void clearDocumentPermissionsForDocs(Set<String> documentUuids);
-//
-//    int getDocumentTypeId(String documentType);
+    void clearAllDocumentCreatePermissions();
 
-    void copyDocumentPermissions(String sourceDocUuid, String destDocUuid);
+    /**
+     * BULK operation to add all permssions from a source document to a target document.
+     */
+    void addDocumentPermissions(String sourceDocUuid, String destDocUuid);
 
-    void copyDocumentCreatePermissions(String sourceDocUuid, String destDocUuid);
+    /**
+     * BULK operation to add all create permssions from a source document to a target document.
+     */
+    void addDocumentCreatePermissions(String sourceDocUuid, String destDocUuid);
+
+    /**
+     * BULK operation to set all permssions from a source document to a target document.
+     */
+    void setDocumentPermissions(String sourceDocUuid, String destDocUuid);
+
+    /**
+     * BULK operation to set all create permssions from a source document to a target document.
+     */
+    void setDocumentCreatePermissions(String sourceDocUuid, String destDocUuid);
+
+    ResultPage<DocumentUserPermissions> fetchDocumentUserPermissions(FetchDocumentUserPermissionsRequest request);
 }

@@ -17,6 +17,7 @@
 
 package stroom.security.client;
 
+import stroom.document.client.event.ShowPermissionsDialogEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.NodeToolsPlugin;
 import stroom.security.client.api.ClientSecurityContext;
@@ -25,6 +26,7 @@ import stroom.security.shared.AppPermission;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.inject.client.AsyncProvider;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -35,23 +37,24 @@ public class ManageUserPlugin extends NodeToolsPlugin {
 
 
     @Inject
-    public ManageUserPlugin(final EventBus eventBus, final ClientSecurityContext securityContext,
+    public ManageUserPlugin(final EventBus eventBus,
+                            final ClientSecurityContext securityContext,
                             final AsyncProvider<DocumentPermissionsPresenter> documentPermissionsPresenterProvider) {
         super(eventBus, securityContext);
 //        this.usersAndGroupsPresenterProvider = usersAndGroupsPresenterProvider;
 //
-//        // Add handler for showing the document permissions dialog in the explorer tree context menu
-//        eventBus.addHandler(ShowPermissionsDialogEvent.getType(),
-//                event -> documentPermissionsPresenterProvider.get(new AsyncCallback<DocumentPermissionsPresenter>() {
-//                    @Override
-//                    public void onSuccess(final DocumentPermissionsPresenter presenter) {
-//                        presenter.show(event.getExplorerNode());
-//                    }
-//
-//                    @Override
-//                    public void onFailure(final Throwable caught) {
-//                    }
-//                }));
+        // Add handler for showing the document permissions dialog in the explorer tree context menu
+        eventBus.addHandler(ShowPermissionsDialogEvent.getType(),
+                event -> documentPermissionsPresenterProvider.get(new AsyncCallback<DocumentPermissionsPresenter>() {
+                    @Override
+                    public void onSuccess(final DocumentPermissionsPresenter presenter) {
+                        presenter.show(event.getDocRef());
+                    }
+
+                    @Override
+                    public void onFailure(final Throwable caught) {
+                    }
+                }));
 //
 //        final Action openAction = getOpenAction();
 //        if (openAction != null) {

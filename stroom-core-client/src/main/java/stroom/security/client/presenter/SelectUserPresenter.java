@@ -45,6 +45,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -95,6 +96,9 @@ public class SelectUserPresenter
         dataGrid.addColumn(new Column<User, Preset>(new SvgCell()) {
             @Override
             public Preset getValue(final User user) {
+                if (user.isGroup()) {
+                    return SvgPresets.USER_GROUP;
+                }
                 return SvgPresets.USER;
             }
         }, "</br>", 20);
@@ -103,10 +107,17 @@ public class SelectUserPresenter
         final Column<User, String> displayNameCol = new Column<User, String>(new TextCell()) {
             @Override
             public String getValue(final User user) {
-                return GwtNullSafe.requireNonNullElse(user.getDisplayName(), user.getSubjectId());
+                if (user.getDisplayName() != null) {
+                    if (!Objects.equals(user.getDisplayName(), user.getSubjectId())) {
+                        return user.getDisplayName() + " (" + user.getSubjectId() + ")";
+                    } else {
+                        return user.getDisplayName();
+                    }
+                }
+                return user.getSubjectId();
             }
         };
-        dataGrid.addResizableColumn(displayNameCol, "Display Name", 200);
+        dataGrid.addResizableColumn(displayNameCol, "Name", 400);
 
         // Full name
         final Column<User, String> fullNameCol = new Column<User, String>(new TextCell()) {
@@ -115,16 +126,7 @@ public class SelectUserPresenter
                 return user.getFullName();
             }
         };
-        dataGrid.addResizableColumn(fullNameCol, "Full Name", 350);
-
-        // Subject ID (aka the unique ID for the user)
-        dataGrid.addResizableColumn(new Column<User, String>(new TextCell()) {
-            @Override
-            public String getValue(final User user) {
-                return user.getSubjectId();
-            }
-        }, "Unique User Identity", 300);
-
+        dataGrid.addResizableColumn(fullNameCol, "Full Name", 400);
 
         dataGrid.addEndColumn(new EndColumn<>());
     }
@@ -170,11 +172,11 @@ public class SelectUserPresenter
         final FindUserCriteria findUserCriteria = new FindUserCriteria();
         setup(findUserCriteria);
 
-        final PopupSize popupSize = PopupSize.resizable(1_000, 400);
+        final PopupSize popupSize = PopupSize.resizable(800, 500);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
-                .caption("Choose User To Add")
+                .caption("Choose User Or Group To Add")
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {

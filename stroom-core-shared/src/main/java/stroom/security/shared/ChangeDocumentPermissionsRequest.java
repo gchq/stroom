@@ -17,68 +17,69 @@
 package stroom.security.shared;
 
 import stroom.docref.DocRef;
-import stroom.docref.HasDisplayValue;
+import stroom.explorer.shared.AdvancedDocumentFindRequest;
+import stroom.explorer.shared.DocumentType;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({"docRef", "changeSet", "cascade"})
 @JsonInclude(Include.NON_NULL)
 public class ChangeDocumentPermissionsRequest {
 
     @JsonProperty
+    private final ExpressionOperator expression;
+    @JsonProperty
+    private final DocumentPermissionChange documentPermissionChange;
+    @JsonProperty
+    private final UserRef userRef;
+    @JsonProperty
     private final DocRef docRef;
     @JsonProperty
-    private final Changes changes;
+    private final DocumentType docType;
     @JsonProperty
-    private final Cascade cascade;
+    private final DocumentPermission permission;
 
     @JsonCreator
-    public ChangeDocumentPermissionsRequest(@JsonProperty("docRef") final DocRef docRef,
-                                            @JsonProperty("changes") Changes changes,
-                                            @JsonProperty("cascade") final Cascade cascade) {
+    public ChangeDocumentPermissionsRequest(@JsonProperty("expression") final ExpressionOperator expression,
+                                            @JsonProperty("documentPermissionChange") final
+                                            DocumentPermissionChange documentPermissionChange,
+                                            @JsonProperty("userRef") final UserRef userRef,
+                                            @JsonProperty("docRef") final DocRef docRef,
+                                            @JsonProperty("docType") final DocumentType docType,
+                                            @JsonProperty("permission") final DocumentPermission permission) {
+        this.expression = expression;
+        this.documentPermissionChange = documentPermissionChange;
+        this.userRef = userRef;
         this.docRef = docRef;
-        this.changes = changes;
-        this.cascade = cascade;
+        this.docType = docType;
+        this.permission = permission;
+    }
+
+    public ExpressionOperator getExpression() {
+        return expression;
+    }
+
+    public DocumentPermissionChange getDocumentPermissionChange() {
+        return documentPermissionChange;
+    }
+
+    public UserRef getUserRef() {
+        return userRef;
     }
 
     public DocRef getDocRef() {
         return docRef;
     }
 
-    public Changes getChanges() {
-        return changes;
+    public DocumentType getDocType() {
+        return docType;
     }
 
-    public Cascade getCascade() {
-        return cascade;
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    public enum Cascade implements HasDisplayValue {
-        NO("No"),
-        CHANGES_ONLY("Changes only"),
-        ALL("All");
-
-        private final String displayValue;
-
-        Cascade(final String displayValue) {
-            this.displayValue = displayValue;
-        }
-
-        @Override
-        public String getDisplayValue() {
-            return displayValue;
-        }
-
-        public static boolean isCascading(final Cascade cascade) {
-            return cascade == CHANGES_ONLY || cascade == ALL;
-        }
+    public DocumentPermission getPermission() {
+        return permission;
     }
 }

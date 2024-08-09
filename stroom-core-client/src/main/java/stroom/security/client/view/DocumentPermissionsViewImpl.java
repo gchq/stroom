@@ -16,42 +16,34 @@
 
 package stroom.security.client.view;
 
-import stroom.item.client.SelectionBox;
 import stroom.security.client.presenter.DocumentPermissionsPresenter;
-import stroom.security.shared.ChangeDocumentPermissionsRequest.Cascade;
-import stroom.svg.shared.SvgImage;
+import stroom.security.client.presenter.DocumentPermissionsUiHandlers;
 import stroom.widget.button.client.Button;
-import stroom.widget.form.client.FormGroup;
 
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
+import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public final class DocumentPermissionsViewImpl extends ViewImpl
+public final class DocumentPermissionsViewImpl
+        extends ViewWithUiHandlers<DocumentPermissionsUiHandlers>
         implements DocumentPermissionsPresenter.DocumentPermissionsView {
 
     private final Widget widget;
+
     @UiField
     SimplePanel permissions;
     @UiField
-    Button copyPermissionsFromParentButton;
-    @UiField
-    FormGroup cascadeGrid;
-    @UiField
-    SelectionBox<Cascade> cascade;
+    Button edit;
 
     @Inject
     public DocumentPermissionsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        copyPermissionsFromParentButton.setIcon(SvgImage.COPY);
-        cascade.addItem(Cascade.NO);
-        cascade.addItem(Cascade.CHANGES_ONLY);
-        cascade.addItem(Cascade.ALL);
-        cascade.setValue(Cascade.NO);
     }
 
     @Override
@@ -65,18 +57,13 @@ public final class DocumentPermissionsViewImpl extends ViewImpl
     }
 
     @Override
-    public SelectionBox<Cascade> getCascade() {
-        return cascade;
+    public void setEditVisible(final boolean visible) {
+        edit.setVisible(visible);
     }
 
-    @Override
-    public Button getCopyPermissionsFromParentButton() {
-        return copyPermissionsFromParentButton;
-    }
-
-    @Override
-    public void setCascadeVisible(boolean visible) {
-        cascadeGrid.setVisible(visible);
+    @UiHandler("edit")
+    public void onEdit(final ClickEvent e) {
+        getUiHandlers().editPermissions();
     }
 
     public interface Binder extends UiBinder<Widget, DocumentPermissionsViewImpl> {

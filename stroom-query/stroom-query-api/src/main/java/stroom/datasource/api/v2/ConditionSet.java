@@ -174,8 +174,16 @@ public enum ConditionSet {
             Condition.LESS_THAN_OR_EQUAL_TO,
             Condition.BETWEEN,
             Condition.IN,
-            Condition.IN_DICTIONARY);
-
+            Condition.IN_DICTIONARY),
+    DOC_DOC_IS(Condition.IS_DOC_REF),
+    DOC_DOC_OF(Condition.OF_DOC_REF),
+    DOC_USER_IS(
+            Condition.USER_HAS_PERM,
+            Condition.USER_HAS_OWNER,
+            Condition.USER_HAS_DELETE,
+            Condition.USER_HAS_EDIT,
+            Condition.USER_HAS_VIEW,
+            Condition.USER_HAS_USE);
 
     private final List<Condition> conditionList;
     private final Set<Condition> conditionSet;

@@ -224,25 +224,31 @@ public class ContainerResourceInfo {
 
     public boolean shouldLog(LoggingConfig config) {
         OperationType op = getOperationType();
-        if (OperationType.MANUALLY_LOGGED.equals(op)) {
-            LOGGER.debug("{}, not logging request", OperationType.MANUALLY_LOGGED);
-            return false;
-        } else if (config.isLogEveryRestCallEnabled()) {
-            LOGGER.debug("logEveryRestCallEnabled set to true, logging request");
-            return true;
-        } else if (OperationType.UNLOGGED.equals(op)) {
+//        if (OperationType.MANUALLY_LOGGED.equals(op)) {
+//            LOGGER.debug("{}, not logging request", OperationType.MANUALLY_LOGGED);
+//            return true;
+////        } else if (config.isLogEveryRestCallEnabled()) {
+////            LOGGER.debug("logEveryRestCallEnabled set to true, logging request");
+////            return true;
+//        } else
+//
+            if (OperationType.UNLOGGED.equals(op)) {
             LOGGER.debug("{}, not logging request", OperationType.UNLOGGED);
             return false;
         } else if (securityContext.isProcessingUser()) {
             LOGGER.debug("Processing user, not logging request");
             return false;
-        } else if (isAutologgerAnnotationPresent()) {
-            LOGGER.debug("Auto logger annotation present, logging request");
-            return true;
-        } else {
-            LOGGER.debug("No matches, not logging request");
-            return false;
         }
+
+//        else if (isAutologgerAnnotationPresent()) {
+//            LOGGER.debug("Auto logger annotation present, logging request");
+//            return true;
+//        } else {
+//            LOGGER.debug("No matches, not logging request");
+//            return false;
+//        }
+
+        return true;
     }
 
     @Override

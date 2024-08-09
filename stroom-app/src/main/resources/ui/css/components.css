@@ -2050,14 +2050,15 @@ button.main-menu svg {
 
 .findCell-path {
     display: flex;
-    font-size: 0.7rem;
+    font-size: .7rem;
     flex-grow: 1;
     opacity: .5;
 }
 
 .findCell-uuid {
     display: flex;
-    font-size: .7rem;
+    font-size: .6rem;
+    font-family: monospace;
     flex-grow: 0;
     opacity: .5;
 }
@@ -2309,4 +2310,10 @@ button.main-menu svg {
 .ScheduledProcessingViewImpl,
 .DuplicateManagementViewImpl {
     border-top: 1px solid var(--splitter__background-color);
+}
+
+.documentPermissionChangeControls {
+    display: flex;
+    gap: 5px;
+    flex-direction: column;
 }

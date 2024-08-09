@@ -75,18 +75,21 @@ public class QuickFilterExpressionParser {
                                     + "'. Valid qualifiers: " + fieldMap.keySet());
                         }
                         final String fieldValue = subParts[1];
-                        builder.addTerm(fieldName, Condition.EQUALS, fieldValue);
+                        final String value = wildcard(fieldValue);
+                        builder.addTerm(fieldName, Condition.EQUALS, value);
                     }
                 } else {
                     if (defaultFields == null || defaultFields.isEmpty()) {
                         throw new RuntimeException("No default fields defined");
                     }
+
+                    final String value = wildcard(part);
                     if (defaultFields.size() == 1) {
-                        builder.addTerm(defaultFields.iterator().next().getFldName(), Condition.EQUALS, part);
+                        builder.addTerm(defaultFields.iterator().next().getFldName(), Condition.EQUALS, value);
                     } else {
                         final ExpressionOperator.Builder eb = ExpressionOperator.builder().op(Op.OR);
                         for (final QueryField field : defaultFields) {
-                            eb.addTerm(field.getFldName(), Condition.EQUALS, part);
+                            eb.addTerm(field.getFldName(), Condition.EQUALS, value);
                         }
                         builder.addOperator(eb.build());
                     }
@@ -96,6 +99,16 @@ public class QuickFilterExpressionParser {
                 throw new RuntimeException("Unable to split [" + part + "], due to " + e.getMessage(), e);
             }
         }
+    }
+
+    private static String wildcard(String value) {
+        if (!value.endsWith("*")) {
+            value = value + "*";
+        }
+        if (!value.startsWith("*")) {
+            value = "*" + value;
+        }
+        return value;
     }
 
     /**

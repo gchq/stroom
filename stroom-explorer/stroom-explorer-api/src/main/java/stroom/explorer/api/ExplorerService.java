@@ -26,11 +26,13 @@ import stroom.explorer.shared.ExplorerResource.TagFetchMode;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FetchExplorerNodesRequest;
 import stroom.explorer.shared.FetchHighlightsRequest;
+import stroom.explorer.shared.AdvancedDocumentFindRequest;
 import stroom.explorer.shared.FindInContentRequest;
 import stroom.explorer.shared.FindInContentResult;
-import stroom.explorer.shared.FindRequest;
+import stroom.explorer.shared.DocumentFindRequest;
 import stroom.explorer.shared.FindResult;
 import stroom.explorer.shared.PermissionInheritance;
+import stroom.security.shared.ChangeDocumentPermissionsRequest;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 
@@ -94,7 +96,9 @@ public interface ExplorerService extends Clearable {
 
     List<DocumentType> getVisibleTypes();
 
-    ResultPage<FindResult> find(FindRequest request);
+    ResultPage<FindResult> find(DocumentFindRequest request);
+
+    ResultPage<FindResult> advancedFind(AdvancedDocumentFindRequest request);
 
     ResultPage<FindInContentResult> findInContent(FindInContentRequest request);
 
@@ -105,4 +109,6 @@ public interface ExplorerService extends Clearable {
     Set<String> parseNodeTags(final String tagsStr);
 
     String nodeTagsToString(final Set<String> tags);
+
+    Boolean changeDocumentPermssions(ChangeDocumentPermissionsRequest request);
 }

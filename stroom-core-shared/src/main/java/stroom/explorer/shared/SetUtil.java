@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.explorer.client.presenter;
+package stroom.explorer.shared;
 
 import java.util.Arrays;
 import java.util.HashSet;

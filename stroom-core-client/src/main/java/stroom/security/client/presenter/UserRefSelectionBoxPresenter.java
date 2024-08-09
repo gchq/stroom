@@ -57,18 +57,19 @@ public class UserRefSelectionBoxPresenter extends MyPresenterWidget<DropDownView
         return userRefPopupPresenter.getSelected();
     }
 
-    public void setSelected(final UserRef docRef) {
-        userRefPopupPresenter.setSelected(docRef);
+    public void setSelected(final UserRef userRef) {
+        userRefPopupPresenter.setSelected(userRef);
+        changeSelection(userRef);
     }
 
     @Override
     public void showPopup() {
         if (enabled) {
             final UserRef initialSelection = userRefPopupPresenter.getSelected();
-            userRefPopupPresenter.show(docRef -> {
+            userRefPopupPresenter.show(userRef -> {
                 final UserRef currentSelection = userRefPopupPresenter.getSelected();
                 if (!Objects.equals(initialSelection, currentSelection)) {
-                    DataSelectionEvent.fire(UserRefSelectionBoxPresenter.this, docRef, true);
+                    DataSelectionEvent.fire(UserRefSelectionBoxPresenter.this, userRef, true);
                 }
             });
         }

@@ -21,46 +21,20 @@ import org.fusesource.restygwt.client.DirectRestService;
 public interface DocPermissionResource extends RestResource, DirectRestService {
 
     @POST
-    @Path("/changeDocumentPermissions")
+    @Path("/fetchDocumentUserPermissions")
     @Operation(
-            summary = "Change document permissions",
-            operationId = "changeDocumentPermissions")
-    Boolean changeDocumentPermissions(
-            @Parameter(description = "request", required = true) ChangeDocumentPermissionsRequest request);
+            summary = "Fetch document user permissions",
+            operationId = "fetchDocumentUserPermissions")
+    ResultPage<DocumentUserPermissions> fetchDocumentUserPermissions(
+            @Parameter(description = "request", required = true) FetchDocumentUserPermissionsRequest request);
 
-    @POST
-    @Path("/fetchPermissionChangeImpact")
-    @Operation(
-            summary = "Fetch impact summary for a change of document permissions",
-            operationId = "fetchPermissionChangeImpact")
-    PermissionChangeImpactSummary fetchPermissionChangeImpact(
-            @Parameter(description = "request", required = true) ChangeDocumentPermissionsRequest request);
-
-//    @POST
-//    @Path("/copyPermissionsFromParent")
-//    @Operation(
-//            summary = "Copy permissions from parent",
-//            operationId = "copyPermissionFromParent")
-//    DocumentPermissions copyPermissionFromParent(
-//            @Parameter(description = "request", required = true) CopyPermissionsFromParentRequest request);
-
-
-    @POST
-    @Path("/fetchDocumentUsers")
-    @Operation(
-            summary = "Fetch document users",
-            operationId = "fetchDocumentUsers")
-    ResultPage<User> fetchDocumentUsers(
-            @Parameter(description = "request", required = true) FetchDocumentUsersRequest request);
-
-//    @POST
-//    @Path("/fetchDocumentPermissions")
-//    @Operation(
-//            summary = "Fetch document permissions",
-//            operationId = "fetchDocumentPermissions")
-//    DocumentPermissionSet fetchDocumentPermissions(
-//            @Parameter(description = "request", required = true) FetchDocumentPermissionsRequest request);
-
+    /**
+     * Check that the current user has the requested document permission.
+     * This allows the UI to make some decisions but is not used for security purposes.
+     *
+     * @param request The request to find out if the current user has a certain document permission.
+     * @return True if the permission is held.
+     */
     @POST
     @Path("/checkDocumentPermission")
     @Operation(

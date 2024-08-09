@@ -17,7 +17,7 @@
 
 package stroom.document.client.event;
 
-import stroom.explorer.shared.ExplorerNode;
+import stroom.docref.DocRef;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -26,14 +26,14 @@ import com.google.gwt.event.shared.HasHandlers;
 public class ShowPermissionsDialogEvent extends GwtEvent<ShowPermissionsDialogEvent.Handler> {
 
     private static Type<Handler> TYPE;
-    private final ExplorerNode explorerNode;
+    private final DocRef docRef;
 
-    private ShowPermissionsDialogEvent(final ExplorerNode explorerNode) {
-        this.explorerNode = explorerNode;
+    private ShowPermissionsDialogEvent(final DocRef docRef) {
+        this.docRef = docRef;
     }
 
-    public static void fire(final HasHandlers handlers, final ExplorerNode explorerNode) {
-        handlers.fireEvent(new ShowPermissionsDialogEvent(explorerNode));
+    public static void fire(final HasHandlers handlers, final DocRef docRef) {
+        handlers.fireEvent(new ShowPermissionsDialogEvent(docRef));
     }
 
     public static Type<Handler> getType() {
@@ -53,8 +53,8 @@ public class ShowPermissionsDialogEvent extends GwtEvent<ShowPermissionsDialogEv
         handler.onPermissions(this);
     }
 
-    public ExplorerNode getExplorerNode() {
-        return explorerNode;
+    public DocRef getDocRef() {
+        return docRef;
     }
 
     public interface Handler extends EventHandler {

@@ -391,7 +391,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                 && DocumentTypes.isFolder(sourceType)) {
             final List<ExplorerNode> descendants = getDescendants(dest);
             descendants.forEach(descendant -> {
-                documentPermissionService.copyDocumentPermissions(source, descendant.getDocRef());
+                documentPermissionService.addDocumentPermissions(source, descendant.getDocRef());
                 if (owner) {
                     documentPermissionService.setPermission(
                             descendant.getDocRef(),
@@ -401,7 +401,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
             });
         }
 
-        documentPermissionService.copyDocumentPermissions(source, dest);
+        documentPermissionService.addDocumentPermissions(source, dest);
         if (owner) {
             documentPermissionService.setPermission(
                     dest,

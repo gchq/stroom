@@ -28,7 +28,9 @@ import stroom.explorer.api.ExplorerNodePermissionsService;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.AddRemoveTagsRequest;
+import stroom.explorer.shared.AdvancedDocumentFindRequest;
 import stroom.explorer.shared.BulkActionResult;
+import stroom.explorer.shared.DocumentFindRequest;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
@@ -46,8 +48,8 @@ import stroom.explorer.shared.FetchExplorerNodesRequest;
 import stroom.explorer.shared.FetchHighlightsRequest;
 import stroom.explorer.shared.FindInContentRequest;
 import stroom.explorer.shared.FindInContentResult;
-import stroom.explorer.shared.FindRequest;
 import stroom.explorer.shared.FindResult;
+import stroom.security.shared.ChangeDocumentPermissionsRequest;
 import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
@@ -255,8 +257,13 @@ class ExplorerResourceImpl implements ExplorerResource {
     }
 
     @Override
-    public ResultPage<FindResult> find(final FindRequest request) {
+    public ResultPage<FindResult> find(final DocumentFindRequest request) {
         return explorerServiceProvider.get().find(request);
+    }
+
+    @Override
+    public ResultPage<FindResult> advancedFind(final AdvancedDocumentFindRequest request) {
+        return explorerServiceProvider.get().advancedFind(request);
     }
 
     @Override
@@ -267,5 +274,10 @@ class ExplorerResourceImpl implements ExplorerResource {
     @Override
     public DocContentHighlights fetchHighlights(final FetchHighlightsRequest request) {
         return explorerServiceProvider.get().fetchHighlights(request);
+    }
+
+    @Override
+    public Boolean changeDocumentPermssions(final ChangeDocumentPermissionsRequest request) {
+        return explorerServiceProvider.get().changeDocumentPermssions(request);
     }
 }

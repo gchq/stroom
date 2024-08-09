@@ -83,7 +83,7 @@ public class ExplorerNodePermissionsServiceImpl implements ExplorerNodePermissio
                 }
 
                 // Add special permissions for folders to control creation of sub items.
-                if (DocumentTypes.isFolder(docRef.getType())) {
+                if (DocumentTypes.isFolder(docRef)) {
                     for (final DocumentType documentType : explorerService.getTypes()) {
                         if (securityContext.hasDocumentCreatePermission(docRef,
                                 documentType.getType())) {

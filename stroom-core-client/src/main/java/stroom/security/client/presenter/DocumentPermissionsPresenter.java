@@ -17,128 +17,127 @@
 
 package stroom.security.client.presenter;
 
-import stroom.alert.client.event.ConfirmEvent;
-import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.explorer.shared.DocumentTypes;
-import stroom.explorer.shared.ExplorerNode;
-import stroom.item.client.SelectionBox;
+import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.security.client.presenter.DocumentPermissionsPresenter.DocumentPermissionsView;
-import stroom.security.shared.ChangeDocumentPermissionsRequest;
-import stroom.security.shared.ChangeDocumentPermissionsRequest.Cascade;
-import stroom.security.shared.Changes;
 import stroom.security.shared.DocPermissionResource;
-import stroom.security.shared.DocumentPermission;
-import stroom.util.shared.GwtNullSafe;
-import stroom.widget.button.client.Button;
-import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
-import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 public class DocumentPermissionsPresenter
-        extends MyPresenterWidget<DocumentPermissionsView> {
+        extends MyPresenterWidget<DocumentPermissionsView>
+        implements DocumentPermissionsUiHandlers {
 
-    private static final DocPermissionResource DOC_PERMISSION_RESOURCE = GWT.create(DocPermissionResource.class);
-
-    //    private final DocumentTypePermissions documentTypePermissions;
     private final RestFactory restFactory;
-    private final Provider<DocumentPermissionsTabPresenter> documentPermissionsListPresenterProvider;
-    private final Provider<FolderPermissionsTabPresenter> folderPermissionsListPresenterProvider;
+    private final Provider<DocumentPermissionsEditPresenter> documentPermissionsEditPresenterProvider;
+    private final Provider<SelectUserPresenter> selectUserPresenterProvider;
+    private final DocumentUserPermissionsListPresenter documentUserPermissionsListPresenter;
+    private final Provider<DocSelectionPopup> docSelectionPopupProvider;
 
-    private Changes changes = new Changes();
-
-    // The permissions initially received from the server before any client side changes are made.
-    // This is map will be set on show then will not change
-//    private Map<String, DocumentPermissionSet> initialPermissions = null;
+    private DocRef docRef;
 
     @Inject
     public DocumentPermissionsPresenter(
             final EventBus eventBus,
             final DocumentPermissionsView view,
             final RestFactory restFactory,
-            final Provider<DocumentPermissionsTabPresenter> documentPermissionsListPresenterProvider,
-            final Provider<FolderPermissionsTabPresenter> folderPermissionsListPresenterProvider) {
+            final DocumentUserPermissionsListPresenter documentUserPermissionsListPresenter,
+            final Provider<DocumentPermissionsEditPresenter> documentPermissionsEditPresenterProvider,
+            final Provider<SelectUserPresenter> selectUserPresenterProvider,
+            final Provider<DocSelectionPopup> docSelectionPopupProvider) {
 
         super(eventBus, view);
         this.restFactory = restFactory;
-//        this.documentTypePermissions = documentTypePermissions;
-        this.documentPermissionsListPresenterProvider = documentPermissionsListPresenterProvider;
-        this.folderPermissionsListPresenterProvider = folderPermissionsListPresenterProvider;
+        this.documentPermissionsEditPresenterProvider = documentPermissionsEditPresenterProvider;
+        this.selectUserPresenterProvider = selectUserPresenterProvider;
+        this.documentUserPermissionsListPresenter = documentUserPermissionsListPresenter;
+        this.docSelectionPopupProvider = docSelectionPopupProvider;
+        view.setPermissionsView(documentUserPermissionsListPresenter.getView());
+        view.setUiHandlers(this);
     }
 
-    public void show(final ExplorerNode explorerNode) {
-        getView().setCascadeVisible(DocumentTypes.isFolder(explorerNode.getType()));
-        final DocumentPermissionsTabPresenter usersPresenter = getTabPresenter(explorerNode);
-
-        getView().setPermissionsView(usersPresenter.getView());
-
-        getView().getCopyPermissionsFromParentButton()
-                .addClickHandler(buildCopyPermissionsFromParentClickHandler(
-                        explorerNode,
-                        DocumentPermission.LIST,
-                        usersPresenter));
-        // If we're looking at the root node then we can't copy from the parent because there isn't one.
-        if (DocumentTypes.isSystem(explorerNode.getType())) {
-            getView().getCopyPermissionsFromParentButton().setEnabled(false);
-        }
-
-        final DocRef docRef = explorerNode.getDocRef();
-        final PopupSize popupSize = DocumentTypes.isFolder(explorerNode.getType())
-                ? getFolderPopupSize()
-                : getDocumentPopupSize();
-
-        ShowPopupEvent.builder(this)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(popupSize)
-                .caption("Set Permissions For '" + explorerNode.getName() + "'")
-                .onShow(e -> usersPresenter.focus())
-                .onHideRequest(e -> onHideRequest(e, docRef))
-                .fire();
-
-//            usersPresenter.setDocumentPermissions(docRef, allPermissions, changes);
+    @Override
+    public void editPermissions() {
+        final DocumentPermissionsEditPresenter documentPermissionsEditPresenter =
+                documentPermissionsEditPresenterProvider.get();
+        documentPermissionsEditPresenter.show(docRef, () -> {
+            documentUserPermissionsListPresenter.refresh();
+        });
     }
 
-    private ClickHandler buildCopyPermissionsFromParentClickHandler(
-            final ExplorerNode explorerNode,
-            final List<DocumentPermission> allPermissions,
-            final DocumentPermissionsTabPresenter usersPresenter) {
-
-        return event -> {
-//            restFactory
-//                    .create(DOC_PERMISSION_RESOURCE)
-//                    .method(res -> res.copyPermissionFromParent(
-//                            new CopyPermissionsFromParentRequest(explorerNode.getDocRef())))
-//                    .onSuccess(parentDocPermissions -> {
-//                        // We want to wipe existing permissions on the server, which means creating REMOVES
-//                        // for all the perms that we started with except those that are also on the parent.
-//                        final Map<String, Set<String>> permissionsToRemove = DocumentPermissions.excludePermissions(
-//                                initialPermissions,
-//                                parentDocPermissions.getPermissions());
-//                        final Map<String, Set<String>> permissionsToAdd = DocumentPermissions.excludePermissions(
-//                                parentDocPermissions.getPermissions(),
-//                                initialPermissions);
-//                        // Now create the ADDs and REMOVEs for the effective changes.
-//                        changes = new Changes(permissionsToAdd, permissionsToRemove);
+    //    private void enableButtons() {
+//        removeButton.setEnabled(documentUserPermissionsListPresenter.getSelectionModel().getSelected() != null);
+//    }
 //
-//                        // We need to set the document permissions so that what's been changed is visible.
-//                        usersPresenter.setDocumentPermissions(
-//                                allPermissions,
-//                                parentDocPermissions,
-//                                changes);
+//    private void edit() {
+//        final DocumentUserPermissions documentUserPermissions = documentUserPermissionsListPresenter
+//                .getSelectionModel()
+//                .getSelected();
+//        if (documentUserPermissions != null) {
+//            final Consumer<User> consumer = user -> {
+//                final DocumentUserPermissionEditPresenter editPresenter =
+//                        documentUserPermissionEditPresenterProvider.get();
+//                editPresenter.show(docRef, documentUserPermissions, updated -> {
+//                    documentUserPermissionsListPresenter.refresh();
+//                });
+//            };
+//            selectUserPresenterProvider.get().show(consumer);
+//        }
+//    }
+//
+//    private void add() {
+//        final Consumer<User> consumer = user -> {
+//            final DocumentUserPermissionEditPresenter editPresenter = documentUserPermissionEditPresenterProvider.get();
+//            final DocumentUserPermissions documentUserPermissions = new DocumentUserPermissions(
+//                    user.asRef(),
+//                    DocumentPermission.USE,
+//                    Collections.emptySet());
+//            editPresenter.show(docRef, documentUserPermissions, updated -> {
+//                documentUserPermissionsListPresenter.refresh();
+//                documentUserPermissionsListPresenter.getSelectionModel().setSelected(updated);
+//            });
+//        };
+//        selectUserPresenterProvider.get().show(consumer);
+//    }
+//
+//    private void remove() {
+//        final DocumentUserPermissions documentUserPermissions =
+//                documentUserPermissionsListPresenter.getSelectionModel().getSelected();
+//        if (documentUserPermissions != null) {
+//            ConfirmEvent.fire(this, "Are you sure you want to remove all permissions for '" +
+//                    documentUserPermissions.getUserRef().toDisplayString() + "'?", ok -> {
+//                if (ok) {
+//                    documentUserPermissionsListPresenter.getSelectionModel().clear();
+//                    doRemove(documentUserPermissions);
+//                }
+//            });
+//        }
+//    }
+//
+//    private void doRemove(final DocumentUserPermissions documentUserPermissions) {
+//        final DocumentUserPermissions newPermissions = new DocumentUserPermissions(
+//                documentUserPermissions.getUserRef(),
+//                null,
+//                null);
+//        final SetDocumentUserPermissionsRequest request =
+//                new SetDocumentUserPermissionsRequest(docRef, newPermissions);
+//        restFactory
+//                .create(DOC_PERMISSION_RESOURCE)
+//                .method(res -> res.setDocumentUserPermissions(request))
+//                .onSuccess(result -> {
+//                    documentUserPermissionsListPresenter.refresh();
 //
 ////                        GWT.log("After copyFromParent:"
 ////                                + "\ninitialPermissions:\n"
@@ -149,35 +148,58 @@ public class DocumentPermissionsPresenter
 ////                                + DocumentPermissions.permsMapToStr(permissionsToAdd)
 ////                                + "\nREMOVEs:\n"
 ////                                + DocumentPermissions.permsMapToStr(permissionsToRemove));
-//                    })
-//                    .taskListener(this)
-//                    .exec();
-        };
-    }
+//                })
+//                .taskListener(documentUserPermissionsListPresenter.getPagerView())
+//                .exec();
+//    }
+//
+//    private void copy() {
+//        final DocSelectionPopup popup = docSelectionPopupProvider.get();
+//        popup.setCaption("Select Document To Copy Permissions From");
+//        popup.setRequiredPermissions(DocumentPermission.VIEW);
+//        popup.show(source -> {
+//            if (source != null) {
+//                final CopyDocumentPermissionsRequest request =
+//                        new CopyDocumentPermissionsRequest(source, docRef);
+//                restFactory
+//                        .create(DOC_PERMISSION_RESOURCE)
+//                        .method(res -> res.copyDocumentPermissions(request))
+//                        .onSuccess(result -> {
+//                            documentUserPermissionsListPresenter.refresh();
+//                        })
+//                        .taskListener(documentUserPermissionsListPresenter.getPagerView())
+//                        .exec();
+//            }
+//        });
+//    }
+//
+//    private void clear() {
+//        ConfirmEvent.fire(this, "Are you sure you want to remove all permissions?", ok -> {
+//            if (ok) {
+//                documentUserPermissionsListPresenter.getSelectionModel().clear();
+//                doClear();
+//            }
+//        });
+//    }
+//
+//    private void doClear() {
+//        final ClearDocumentPermissionsRequest request =
+//                new ClearDocumentPermissionsRequest(docRef);
+//        restFactory
+//                .create(DOC_PERMISSION_RESOURCE)
+//                .method(res -> res.clearDocumentPermissions(request))
+//                .onSuccess(result -> {
+//                    documentUserPermissionsListPresenter.refresh();
+//                })
+//                .taskListener(documentUserPermissionsListPresenter.getPagerView())
+//                .exec();
+//    }
 
+    public void show(final DocRef docRef) {
+        this.docRef = docRef;
+        documentUserPermissionsListPresenter.setDocRef(docRef);
 
-    private static PopupSize getDocumentPopupSize() {
-        PopupSize popupSize;
-        popupSize = PopupSize.builder()
-                .width(Size
-                        .builder()
-                        .initial(1000)
-                        .min(1000)
-                        .resizable(true)
-                        .build())
-                .height(Size
-                        .builder()
-                        .initial(700)
-                        .min(700)
-                        .resizable(true)
-                        .build())
-                .build();
-        return popupSize;
-    }
-
-    private static PopupSize getFolderPopupSize() {
-        PopupSize popupSize;
-        popupSize = PopupSize.builder()
+        final PopupSize popupSize = PopupSize.builder()
                 .width(Size
                         .builder()
                         .initial(1000)
@@ -191,85 +213,50 @@ public class DocumentPermissionsPresenter
                         .resizable(true)
                         .build())
                 .build();
-        return popupSize;
+
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.CLOSE_DIALOG)
+                .popupSize(popupSize)
+                .caption("Permissions For '" + docRef.getDisplayValue() + "'")
+                .modal()
+                .fire();
     }
 
-    private void onHideRequest(final HidePopupRequestEvent e, final DocRef docRef) {
-        if (e.isOk()) {
-            final Cascade cascade = getView().getCascade().getValue();
-            // If user is cascading then we need to show them a confirm dialog first showing the impact
-            // of what they are about to do as it may impact 00s or 000s of documents.
-            if (Cascade.isCascading(cascade)) {
-                restFactory
-                        .create(DOC_PERMISSION_RESOURCE)
-                        .method(res -> res.fetchPermissionChangeImpact(new ChangeDocumentPermissionsRequest(
-                                docRef,
-                                changes,
-                                getView().getCascade().getValue())))
-                        .onSuccess(impactSummary -> {
-                            if (GwtNullSafe.isBlankString(impactSummary.getImpactSummary())) {
-                                doPermissionChange(e, docRef);
-                            } else {
-                                ConfirmEvent.fire(
-                                        this,
-                                        SafeHtmlUtil.toParagraphs(impactSummary.getImpactSummary()),
-                                        GwtNullSafe.get(impactSummary.getImpactDetail(), SafeHtmlUtil::toParagraphs),
-                                        ok -> {
-                                            if (ok) {
-                                                doPermissionChange(e, docRef);
-                                            } else {
-                                                e.reset();
-                                            }
-                                        });
-                            }
-                        })
-                        .onFailure(RestErrorHandler.forPopup(this, e))
-                        .taskListener(this)
-                        .exec();
-            } else {
-                doPermissionChange(e, docRef);
-            }
-        } else {
-            e.hide();
-        }
-    }
+//    @Override
+//    public void onAddPermissionsFromParentFolder(final TaskListener taskListener) {
+//        if (docRefs.size() > 1) {
+//            ConfirmEvent.fire(this, "Are you sure you want to add permissions from parent folders?",
+//                    ok -> {
+//                        if (ok) {
+//                            restFactory
+//                                    .create(DOC_PERMISSION_RESOURCE)
+//                                    .method(res -> res.addPermissionsFromParentFolder(docRefs))
+//                                    .onSuccess(result -> {
+//                                        documentUserPermissionsListPresenter.refresh();
+//
+////                        GWT.log("After copyFromParent:"
+////                                + "\ninitialPermissions:\n"
+////                                + DocumentPermissions.permsMapToStr(initialPermissions)
+////                                + "\nparentDocPermissions:\n"
+////                                + DocumentPermissions.permsMapToStr(parentDocPermissions.getPermissions())
+////                                + "\nADDs:\n"
+////                                + DocumentPermissions.permsMapToStr(permissionsToAdd)
+////                                + "\nREMOVEs:\n"
+////                                + DocumentPermissions.permsMapToStr(permissionsToRemove));
+//                                    })
+//                                    .taskListener(taskListener)
+//                                    .exec();
+//                        }
+//                    });
+//        }
+//
+//
+//    }
 
-    private void doPermissionChange(final HidePopupRequestEvent e, final DocRef docRef) {
-        restFactory
-                .create(DOC_PERMISSION_RESOURCE)
-                .method(res -> res.changeDocumentPermissions(new ChangeDocumentPermissionsRequest(
-                        docRef,
-                        changes,
-                        getView().getCascade().getValue())))
-                .onSuccess(result -> e.hide())
-                .onFailure(RestErrorHandler.forPopup(this, e))
-                .taskListener(this)
-                .exec();
-    }
-
-    private DocumentPermissionsTabPresenter getTabPresenter(final ExplorerNode entity) {
-        DocumentPermissionsTabPresenter permissionsTabPresenter;
-        if (DocumentTypes.isFolder(entity.getType())) {
-            permissionsTabPresenter = folderPermissionsListPresenterProvider.get();
-
-        } else {
-            permissionsTabPresenter = documentPermissionsListPresenterProvider.get();
-        }
-        permissionsTabPresenter.setTaskListener(this);
-        return permissionsTabPresenter;
-    }
-
-    // --------------------------------------------------------------------------------
-
-
-    public interface DocumentPermissionsView extends View {
+    public interface DocumentPermissionsView extends View, HasUiHandlers<DocumentPermissionsUiHandlers> {
 
         void setPermissionsView(View view);
 
-        SelectionBox<Cascade> getCascade();
-
-        void setCascadeVisible(boolean visible);
-
-        Button getCopyPermissionsFromParentButton();
+        void setEditVisible(boolean visible);
     }
 }

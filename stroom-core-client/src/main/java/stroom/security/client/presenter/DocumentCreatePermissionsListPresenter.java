@@ -25,10 +25,8 @@ import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.security.client.presenter.DocumentCreatePermissionsListPresenter.DocumentCreatePermissionsListView;
-import stroom.security.shared.Changes;
 import stroom.svg.client.Preset;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.UserRef;
 import stroom.widget.util.client.CheckListSelectionEventManager;
 import stroom.widget.util.client.MySingleSelectionModel;
 
@@ -50,7 +48,6 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import javax.inject.Inject;
 
@@ -64,10 +61,7 @@ public class DocumentCreatePermissionsListPresenter
 
     private final DocumentTypeCache documentTypeCache;
     private DocumentTypes documentTypes;
-    private Changes changes;
-    private UserRef currentUser;
-    private UserRef currentOwner;
-    private Set<String> currentPermissions;
+    private Set<String> documentPermissions;
 
     @Inject
     public DocumentCreatePermissionsListPresenter(final EventBus eventBus,
@@ -122,7 +116,7 @@ public class DocumentCreatePermissionsListPresenter
     }
 
     private boolean hasPermission(DocumentType documentType) {
-        return currentPermissions.contains(documentType.getType());
+        return documentPermissions.contains(documentType.getType());
     }
 
     private Column<DocumentType, TickBoxState> buildSelectionColumn(final boolean updatable,
@@ -134,8 +128,6 @@ public class DocumentCreatePermissionsListPresenter
                 TickBoxState tickBoxState = TickBoxState.UNTICK;
                 if (hasPermission(documentType)) {
                     tickBoxState = TickBoxState.TICK;
-                } else if (isInferred(documentType)) {
-                    tickBoxState = TickBoxState.HALF_TICK;
                 }
 
                 return tickBoxState;
@@ -145,32 +137,21 @@ public class DocumentCreatePermissionsListPresenter
         return selectionColumn;
     }
 
-    private boolean isInferred(final DocumentType documentType) {
-        // See if the permission is inferred.
-        // TODO : We need to find a way of showing permissions that are inferred by the user belonging to
-        //  the group that owns the item or belonging to a group that has the permission.
-        if (Objects.equals(currentOwner, currentUser)) {
-            return true;
-        }
-        return false;
-    }
-
     private Column<DocumentType, SafeHtml> buildPermissionNameColumn() {
         final Column<DocumentType, SafeHtml> column = new Column<DocumentType, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final DocumentType documentType) {
-                final boolean inferred = isInferred(documentType);
 //                GWT.log(permission + " - " + optInferredType);
                 final String permClassBase = "documentPermissionType-";
                 final List<String> classes = new ArrayList<>();
 
-                if (!hasPermission(documentType) && !inferred) {
+                if (!hasPermission(documentType)) {
                     classes.add(permClassBase + "noPermission");
                 } else {
-                    // User has this perm (possibly inferred)
-                    classes.add(permClassBase + (inferred
-                            ? "inferred"
-                            : "direct"));
+//                    // User has this perm (possibly inferred)
+//                    classes.add(permClassBase + (inferred
+//                            ? "inferred"
+//                            : "direct"));
                 }
 
                 final SafeHtmlBuilder safeHtmlBuilder = new SafeHtmlBuilder()
@@ -192,11 +173,11 @@ public class DocumentCreatePermissionsListPresenter
     }
 
     public void addDocumentCreatePermission(final DocumentType documentType) {
-        changes.addDocumentCreatePermission(currentUser, documentType.getType());
+        documentPermissions.add(documentType.getType());
     }
 
     public void removeDocumentCreatePermission(final DocumentType documentType) {
-        changes.removeDocumentCreatePermission(currentUser, documentType.getType());
+        documentPermissions.remove(documentType.getType());
     }
 
     private void refreshDocTypeIcons() {
@@ -210,8 +191,8 @@ public class DocumentCreatePermissionsListPresenter
     public void toggle(final DocumentType documentType) {
         // Determine if it is present in the model
         boolean hasPermission = false;
-        if (currentPermissions != null) {
-            hasPermission = currentPermissions.contains(documentType.getType());
+        if (documentPermissions != null) {
+            hasPermission = documentPermissions.contains(documentType.getType());
         }
 
 //        GWT.log("toggle, userUuid: " + userUuid
@@ -226,45 +207,37 @@ public class DocumentCreatePermissionsListPresenter
     }
 
     private void toggleSelectAll() {
-        if (currentUser != null) {
-            final boolean select = currentPermissions == null || currentPermissions.size() <
-                    documentTypes.getTypes().size();
-            for (final DocumentType documentType : documentTypes.getTypes()) {
-                boolean hasPermission = false;
-                if (currentPermissions != null) {
-                    hasPermission = currentPermissions.contains(documentType.getType());
-                }
+        final boolean select = documentPermissions == null || documentPermissions.size() <
+                documentTypes.getTypes().size();
+        for (final DocumentType documentType : documentTypes.getTypes()) {
+            boolean hasPermission = false;
+            if (documentPermissions != null) {
+                hasPermission = documentPermissions.contains(documentType.getType());
+            }
 
-                if (select) {
-                    if (!hasPermission) {
-                        addDocumentCreatePermission(documentType);
-                    }
-                } else {
-                    if (hasPermission) {
-                        removeDocumentCreatePermission(documentType);
-                    }
+            if (select) {
+                if (!hasPermission) {
+                    addDocumentCreatePermission(documentType);
+                }
+            } else {
+                if (hasPermission) {
+                    removeDocumentCreatePermission(documentType);
                 }
             }
-            refresh();
         }
+        refresh();
     }
 
-    public void setDocumentPermissions(final Set<String> documentPermissions,
-                                       final Changes changes) {
-        this.currentPermissions = documentPermissions;
-        this.changes = changes;
+    public void setDocumentPermissions(final Set<String> documentPermissions) {
+        this.documentPermissions = documentPermissions;
     }
 
-    public void setCurrentOwner(final UserRef currentOwner) {
-        this.currentOwner = currentOwner;
-    }
-
-    public void setCurrentUser(UserRef currentUser) {
-        this.currentUser = currentUser;
+    public Set<String> getDocumentPermissions() {
+        return documentPermissions;
     }
 
     private void refresh() {
-        if (currentUser != null && documentTypes != null) {
+        if (documentTypes != null) {
             cellTable.setRowData(0, documentTypes.getTypes());
             cellTable.setRowCount(documentTypes.getTypes().size());
         } else {
@@ -280,17 +253,10 @@ public class DocumentCreatePermissionsListPresenter
         }
     }
 
-    // --------------------------------------------------------------------------------
-
-
     public interface DocumentCreatePermissionsListView extends View {
 
         void setTable(Widget widget);
     }
-
-
-    // --------------------------------------------------------------------------------
-
 
     private class PermissionsListSelectionEventManager extends CheckListSelectionEventManager<DocumentType> {
 

@@ -102,6 +102,10 @@ public enum DocumentPermission implements HasDisplayValue, HasPrimitiveValue {
         return primitiveValue >= permission.getPrimitiveValue();
     }
 
+    public boolean isHigher(final DocumentPermission permission) {
+        return primitiveValue > permission.getPrimitiveValue();
+    }
+
     public enum PermissionType {
         DESTRUCTIVE,
         NON_DESTRUCTIVE

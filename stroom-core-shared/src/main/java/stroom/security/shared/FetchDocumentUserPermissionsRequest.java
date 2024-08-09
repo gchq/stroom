@@ -17,8 +17,8 @@
 package stroom.security.shared;
 
 import stroom.docref.DocRef;
-import stroom.docref.StringMatch;
-import stroom.util.shared.BaseCriteria;
+import stroom.entity.shared.ExpressionCriteria;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 
@@ -30,24 +30,21 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
-public class FetchDocumentUsersRequest extends BaseCriteria {
+public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
 
     @JsonProperty
     private DocRef docRef;
-    @JsonProperty
-    private StringMatch stringMatch;
 
-    public FetchDocumentUsersRequest() {
+    public FetchDocumentUserPermissionsRequest() {
     }
 
     @JsonCreator
-    public FetchDocumentUsersRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                                     @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                                     @JsonProperty("docRef") final DocRef docRef,
-                                     @JsonProperty("stringMatch") StringMatch stringMatch) {
-        super(pageRequest, sortList);
+    public FetchDocumentUserPermissionsRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
+                                               @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
+                                               @JsonProperty("expression") final ExpressionOperator expression,
+                                               @JsonProperty("docRef") final DocRef docRef) {
+        super(pageRequest, sortList, expression);
         this.docRef = docRef;
-        this.stringMatch = stringMatch;
     }
 
     public DocRef getDocRef() {
@@ -56,13 +53,5 @@ public class FetchDocumentUsersRequest extends BaseCriteria {
 
     public void setDocRef(final DocRef docRef) {
         this.docRef = docRef;
-    }
-
-    public StringMatch getStringMatch() {
-        return stringMatch;
-    }
-
-    public void setStringMatch(final StringMatch stringMatch) {
-        this.stringMatch = stringMatch;
     }
 }

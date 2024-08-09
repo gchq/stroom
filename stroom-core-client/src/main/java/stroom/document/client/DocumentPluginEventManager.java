@@ -122,6 +122,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -1060,11 +1061,12 @@ public class DocumentPluginEventManager extends Plugin {
                     DocumentPermission.OWNER,
                     true);
             if (ownedItems.size() == 1) {
+                final DocRef docRef = ownedItems.get(0).getDocRef();
                 menuItems.add(new Separator(30));
-                menuItems.add(createShowDependenciesFromMenuItem(ownedItems.get(0), 31));
-                menuItems.add(createShowDependantsMenuItem(ownedItems.get(0), 32));
+                menuItems.add(createShowDependenciesFromMenuItem(docRef, 31));
+                menuItems.add(createShowDependantsMenuItem(docRef, 32));
                 menuItems.add(new Separator(33));
-                menuItems.add(createPermissionsMenuItem(ownedItems.get(0), 34, true));
+                menuItems.add(createPermissionsMenuItem(docRef, 34, true));
             }
         }
     }
@@ -1425,12 +1427,12 @@ public class DocumentPluginEventManager extends Plugin {
                 .build();
     }
 
-    private MenuItem createPermissionsMenuItem(final ExplorerNode explorerNode,
+    private MenuItem createPermissionsMenuItem(final DocRef docRef,
                                                final int priority,
                                                final boolean enabled) {
         final Command command = () -> {
-            if (explorerNode != null) {
-                ShowPermissionsDialogEvent.fire(DocumentPluginEventManager.this, explorerNode);
+            if (docRef != null) {
+                ShowPermissionsDialogEvent.fire(DocumentPluginEventManager.this, docRef);
             }
         };
 
@@ -1462,26 +1464,26 @@ public class DocumentPluginEventManager extends Plugin {
                 .build();
     }
 
-    private MenuItem createShowDependantsMenuItem(final ExplorerNode explorerNode, final int priority) {
+    private MenuItem createShowDependantsMenuItem(final DocRef docRef, final int priority) {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.DEPENDENCIES)
                 .text("Dependants")
                 .command(() -> ShowDocRefDependenciesEvent.fire(
                         DocumentPluginEventManager.this,
-                        explorerNode.getDocRef(),
+                        docRef,
                         DependencyType.DEPENDANT))
                 .build();
     }
 
-    private MenuItem createShowDependenciesFromMenuItem(final ExplorerNode explorerNode, final int priority) {
+    private MenuItem createShowDependenciesFromMenuItem(final DocRef docRef, final int priority) {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.DEPENDENCIES)
                 .text("Dependencies")
                 .command(() -> ShowDocRefDependenciesEvent.fire(
                         DocumentPluginEventManager.this,
-                        explorerNode.getDocRef(),
+                        docRef,
                         DependencyType.DEPENDENCY))
                 .build();
     }

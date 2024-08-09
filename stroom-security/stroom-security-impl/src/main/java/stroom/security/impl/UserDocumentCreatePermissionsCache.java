@@ -60,7 +60,7 @@ public class UserDocumentCreatePermissionsCache implements PermissionChangeEvent
 
     private BitSet create(final UserDocKey key) {
         final List<Integer> list = documentPermissionDaoProvider.get()
-                .getDocumentCreatePermissions(key.docUuid, key.userUuid);
+                .getDocumentUserCreatePermissions(key.docUuid, key.userUuid);
         if (list.isEmpty()) {
             return EMPTY;
         }

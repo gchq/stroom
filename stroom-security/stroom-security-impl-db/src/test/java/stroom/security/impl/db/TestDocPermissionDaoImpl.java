@@ -59,20 +59,20 @@ class TestDocPermissionDaoImpl {
         final UserRef user = createUser("User1");
         final DocRef docRef = createTestDocRef();
 
-        documentPermissionDao.setPermission(docRef.getUuid(), user.getUuid(), DocumentPermission.USE);
+        documentPermissionDao.setDocumentUserPermission(docRef.getUuid(), user.getUuid(), DocumentPermission.USE);
 
-        DocumentPermission docPermission = documentPermissionDao.getPermission(docRef.getUuid(), user.getUuid());
+        DocumentPermission docPermission = documentPermissionDao.getDocumentUserPermission(docRef.getUuid(), user.getUuid());
         assertThat(docPermission).isEqualTo(DocumentPermission.USE);
 
         // Check that we can add the same perm again without error
-        documentPermissionDao.setPermission(docRef.getUuid(), user.getUuid(), DocumentPermission.USE);
+        documentPermissionDao.setDocumentUserPermission(docRef.getUuid(), user.getUuid(), DocumentPermission.USE);
 
-        docPermission = documentPermissionDao.getPermission(docRef.getUuid(), user.getUuid());
+        docPermission = documentPermissionDao.getDocumentUserPermission(docRef.getUuid(), user.getUuid());
         assertThat(docPermission).isEqualTo(DocumentPermission.USE);
 
-        documentPermissionDao.setPermission(docRef.getUuid(), user.getUuid(), DocumentPermission.VIEW);
+        documentPermissionDao.setDocumentUserPermission(docRef.getUuid(), user.getUuid(), DocumentPermission.VIEW);
 
-        docPermission = documentPermissionDao.getPermission(docRef.getUuid(), user.getUuid());
+        docPermission = documentPermissionDao.getDocumentUserPermission(docRef.getUuid(), user.getUuid());
         assertThat(docPermission).isEqualTo(DocumentPermission.VIEW);
     }
 
@@ -89,7 +89,7 @@ class TestDocPermissionDaoImpl {
                                                                             final Set<UserRef> users) {
         return users.stream().collect(Collectors.toMap(Function.identity(), userRef -> {
             final DocumentPermission documentPermission =
-                    documentPermissionDao.getPermission(docRef.getUuid(), userRef.getUuid());
+                    documentPermissionDao.getDocumentUserPermission(docRef.getUuid(), userRef.getUuid());
             return Arrays
                     .stream(DocumentPermission.values())
                     .filter(permission -> documentPermission != null &&
@@ -114,11 +114,11 @@ class TestDocPermissionDaoImpl {
         Stream.of(docRef1, docRef2)
                 .map(DocRef::getUuid)
                 .forEach(docRefUuid -> {
-                    documentPermissionDao.setPermission(docRefUuid, user1.getUuid(), DocumentPermission.USE);
-                    documentPermissionDao.setPermission(docRefUuid, user1.getUuid(), DocumentPermission.VIEW);
-                    documentPermissionDao.setPermission(docRefUuid, user2.getUuid(), DocumentPermission.USE);
-                    documentPermissionDao.setPermission(docRefUuid, user3.getUuid(), DocumentPermission.USE);
-                    documentPermissionDao.setPermission(docRefUuid, user3.getUuid(), DocumentPermission.EDIT);
+                    documentPermissionDao.setDocumentUserPermission(docRefUuid, user1.getUuid(), DocumentPermission.USE);
+                    documentPermissionDao.setDocumentUserPermission(docRefUuid, user1.getUuid(), DocumentPermission.VIEW);
+                    documentPermissionDao.setDocumentUserPermission(docRefUuid, user2.getUuid(), DocumentPermission.USE);
+                    documentPermissionDao.setDocumentUserPermission(docRefUuid, user3.getUuid(), DocumentPermission.USE);
+                    documentPermissionDao.setDocumentUserPermission(docRefUuid, user3.getUuid(), DocumentPermission.EDIT);
                 });
 
         // Get the permissions for all users to this document
@@ -142,12 +142,12 @@ class TestDocPermissionDaoImpl {
 
         // Check permissions per user per document
         final DocumentPermission permissionsUser3Doc2_1 = documentPermissionDao
-                .getPermission(docRef2.getUuid(), user3.getUuid());
+                .getDocumentUserPermission(docRef2.getUuid(), user3.getUuid());
         assertThat(permissionsUser3Doc2_1).isEqualTo(DocumentPermission.EDIT);
 
         // Remove a couple of permission from docRef1 (leaving docRef2 in place)
-        documentPermissionDao.setPermission(docRef1.getUuid(), user1.getUuid(), DocumentPermission.USE);
-        documentPermissionDao.setPermission(docRef1.getUuid(), user3.getUuid(), DocumentPermission.USE);
+        documentPermissionDao.setDocumentUserPermission(docRef1.getUuid(), user1.getUuid(), DocumentPermission.USE);
+        documentPermissionDao.setDocumentUserPermission(docRef1.getUuid(), user3.getUuid(), DocumentPermission.USE);
 
         // Get the permissions for all users to this document again
         final Map<UserRef, Set<DocumentPermission>> permissionsFound2 =
@@ -164,16 +164,16 @@ class TestDocPermissionDaoImpl {
 
         // Check permissions per user per document
         final DocumentPermission permissionsUser3Doc2_2 = documentPermissionDao
-                .getPermission(docRef2.getUuid(), user3.getUuid());
+                .getDocumentUserPermission(docRef2.getUuid(), user3.getUuid());
         assertThat(permissionsUser3Doc2_2).isEqualTo(DocumentPermission.EDIT);
 
         final DocumentPermission permissionsUser3Doc1_2 = documentPermissionDao
-                .getPermission(docRef1.getUuid(), user3.getUuid());
+                .getDocumentUserPermission(docRef1.getUuid(), user3.getUuid());
         assertThat(permissionsUser3Doc1_2).isEqualTo(DocumentPermission.USE);
 
         // Clear permission from docRef1 (leaving docRef2 in place)
-        documentPermissionDao.clearPermission(docRef1.getUuid(), user1.getUuid());
-        documentPermissionDao.clearPermission(docRef1.getUuid(), user3.getUuid());
+        documentPermissionDao.removeDocumentUserPermission(docRef1.getUuid(), user1.getUuid());
+        documentPermissionDao.removeDocumentUserPermission(docRef1.getUuid(), user3.getUuid());
 
         // Get the permissions for all users to this document again
         final Map<UserRef, Set<DocumentPermission>> permissionsFound3 =
@@ -190,11 +190,11 @@ class TestDocPermissionDaoImpl {
 
         // Check permissions per user per document
         final DocumentPermission permissionsUser3Doc2_3 = documentPermissionDao
-                .getPermission(docRef2.getUuid(), user3.getUuid());
+                .getDocumentUserPermission(docRef2.getUuid(), user3.getUuid());
         assertThat(permissionsUser3Doc2_3).isEqualTo(DocumentPermission.EDIT);
 
         final DocumentPermission permissionsUser3Doc1_3 = documentPermissionDao
-                .getPermission(docRef1.getUuid(), user3.getUuid());
+                .getDocumentUserPermission(docRef1.getUuid(), user3.getUuid());
         assertThat(permissionsUser3Doc1_3).isNull();
     }
 

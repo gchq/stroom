@@ -24,7 +24,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.ShowPermissionsDialogEvent;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.explorer.shared.ExplorerNode;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
@@ -47,6 +46,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Collections;
 import java.util.function.Supplier;
 
 public class ProcessorPresenter
@@ -356,10 +356,7 @@ public class ProcessorPresenter
             final DocRef processorFilterRef = new DocRef(ProcessorFilter.ENTITY_TYPE,
                     processorFilterRow.getProcessorFilter().getUuid(),
                     null);
-            final ExplorerNode explorerNode = ExplorerNode.builder()
-                    .docRef(processorFilterRef)
-                    .build();
-            ShowPermissionsDialogEvent.fire(this, explorerNode);
+            ShowPermissionsDialogEvent.fire(this, processorFilterRef);
         }
     }
 

@@ -120,6 +120,7 @@ public class SecurityModule extends AbstractModule {
                 .bind(DocPermissionResourceImpl.class)
                 .bind(SessionResourceImpl.class)
                 .bind(UserResourceImpl.class)
+                .bind(UserRefResourceImpl.class)
                 .bind(AuthProxyResourceImpl.class);
 
         ObjectInfoProviderBinder.create(binder())

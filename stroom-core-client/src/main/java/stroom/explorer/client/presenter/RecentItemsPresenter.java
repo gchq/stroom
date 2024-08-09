@@ -1,10 +1,9 @@
 package stroom.explorer.client.presenter;
 
-import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.event.ShowRecentItemsEvent;
 import stroom.explorer.client.presenter.RecentItemsPresenter.RecentItemsProxy;
 import stroom.explorer.shared.ExplorerConstants;
+import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -27,10 +26,9 @@ public class RecentItemsPresenter
     public RecentItemsPresenter(final EventBus eventBus,
                                 final FindView view,
                                 final RecentItemsProxy proxy,
-                                final PagerView pagerView,
-                                final RestFactory restFactory,
+                                final FindDocResultListPresenter findResultListPresenter,
                                 final RecentItems recentItems) {
-        super(eventBus, view, proxy, pagerView, restFactory);
+        super(eventBus, view, proxy, findResultListPresenter);
         this.recentItems = recentItems;
     }
 
@@ -39,8 +37,20 @@ public class RecentItemsPresenter
     public void onShowRecentItems(final ShowRecentItemsEvent event) {
         if (!showing) {
             showing = true;
-            focusText = true;
+
+            // Make sure we are set to focus text next time we show.
+            getFindResultListPresenter().setFocusText(true);
+
+            final ExplorerTreeFilter.Builder explorerTreeFilterBuilder =
+                    getFindResultListPresenter().getExplorerTreeFilterBuilder();
+            explorerTreeFilterBuilder.recentItems(recentItems.getRecentItems());
+            // Don't want favourites in the recent items as they are effectively duplicates
+            explorerTreeFilterBuilder.includedRootTypes(ExplorerConstants.SYSTEM);
+            explorerTreeFilterBuilder.setNameFilter(explorerTreeFilterBuilder.build().getNameFilter(), true);
+
+            // Refresh the results.
             refresh();
+
             final PopupSize popupSize = PopupSize.resizable(800, 600);
             ShowPopupEvent.builder(this)
                     .popupType(PopupType.CLOSE_DIALOG)
@@ -51,14 +61,6 @@ public class RecentItemsPresenter
                     .onHide(e -> showing = false)
                     .fire();
         }
-    }
-
-    @Override
-    protected void updateFilter(final ExplorerTreeFilterBuilder explorerTreeFilterBuilder) {
-        explorerTreeFilterBuilder.setRecentItems(recentItems.getRecentItems());
-        // Don't want favourites in the recent items as they are effectively duplicates
-        explorerTreeFilterBuilder.setIncludedRootTypes(ExplorerConstants.SYSTEM);
-        explorerTreeFilterBuilder.setNameFilter(explorerTreeFilterBuilder.build().getNameFilter(), true);
     }
 
     @ProxyCodeSplit

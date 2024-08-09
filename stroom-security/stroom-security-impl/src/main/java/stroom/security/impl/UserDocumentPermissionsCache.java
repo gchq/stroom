@@ -75,11 +75,12 @@ public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handl
                                 addPermissionEvent.getPermission()));
 
             } else if (event instanceof final ClearDocumentPermissionsEvent clearDocumentPermissionsEvent) {
-                cache.forEach((userUuid, userDocumentPermissions) -> {
-                    if (userDocumentPermissions != null) {
-                        userDocumentPermissions.clearPermission(clearDocumentPermissionsEvent.getDocRef());
-                    }
-                });
+                cache.clear();
+//                cache.forEach((userUuid, userDocumentPermissions) -> {
+//                    if (userDocumentPermissions != null) {
+//                        userDocumentPermissions.clearPermission(clearDocumentPermissionsEvent.getDocRef());
+//                    }
+//                });
             }
         }
     }

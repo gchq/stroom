@@ -5,13 +5,6 @@
              xmlns:b="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="max dock-container-vertical form">
         <g:SimplePanel ui:field="permissions" styleName="dock-max"/>
-        <g:FlowPanel ui:field="innerLayout" styleName="dock-min form">
-            <form:FormGroup ui:field="cascadeGrid" identity="documentPermissionsCascade" label="Cascade">
-                <l:SelectionBox ui:field="cascade" addStyleNames="w-100"/>
-            </form:FormGroup>
-            <b:Button addStyleNames="dock-min allow-focus documentPermissionsViewImpl-copyPermissionsFromParentButton"
-                      ui:field="copyPermissionsFromParentButton"
-                      text="Copy permissions from parent"/>
-        </g:FlowPanel>
+        <b:Button ui:field="edit" text="Change Permissions" addStyleNames="allow-focus"/>
     </g:FlowPanel>
 </ui:UiBinder> 

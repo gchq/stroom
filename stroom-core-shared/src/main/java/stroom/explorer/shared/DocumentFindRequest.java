@@ -13,15 +13,15 @@ import java.util.List;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class FindRequest extends BaseCriteria {
+public class DocumentFindRequest extends BaseCriteria {
 
     @JsonProperty
     private final ExplorerTreeFilter filter;
 
     @JsonCreator
-    public FindRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                       @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                       @JsonProperty("filter") final ExplorerTreeFilter filter) {
+    public DocumentFindRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
+                               @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
+                               @JsonProperty("filter") final ExplorerTreeFilter filter) {
         super(pageRequest, sortList);
         this.filter = filter;
     }
@@ -41,7 +41,7 @@ public class FindRequest extends BaseCriteria {
         if (!super.equals(o)) {
             return false;
         }
-        final FindRequest that = (FindRequest) o;
+        final DocumentFindRequest that = (DocumentFindRequest) o;
         return Objects.equals(filter, that.filter);
     }
 

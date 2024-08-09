@@ -5,12 +5,14 @@ import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.impl.UserDao;
 import stroom.security.impl.db.jooq.tables.records.StroomUserRecord;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
 import stroom.util.NullSafe;
+import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.ResultPage;
 
@@ -183,9 +185,9 @@ public class UserDaoImpl implements UserDao {
         return ResultPage.createCriterialBasedList(list, criteria);
     }
 
-    private Collection<OrderField<?>> createOrderFields(final ExpressionCriteria criteria) {
+    Collection<OrderField<?>> createOrderFields(final BaseCriteria criteria) {
         final List<CriteriaFieldSort> sortList = NullSafe
-                .getOrElseGet(criteria, ExpressionCriteria::getSortList, Collections::emptyList);
+                .getOrElseGet(criteria, BaseCriteria::getSortList, Collections::emptyList);
         if (sortList.isEmpty()) {
             return Collections.singleton(STROOM_USER.DISPLAY_NAME);
         }
@@ -215,7 +217,7 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public ResultPage<User> findUsersInGroup(final String groupUuid, final FindUserCriteria criteria) {
-        final Condition condition = expressionMapper.apply(criteria.getExpression());
+        final Condition condition = getUserCondition(criteria.getExpression());
         final Collection<OrderField<?>> orderFields = createOrderFields(criteria);
         final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
         final int offset = JooqUtil.getOffset(criteria.getPageRequest());
@@ -279,5 +281,9 @@ public class UserDaoImpl implements UserDao {
                 .where(STROOM_USER_GROUP.USER_UUID.eq(userUuid))
                 .and(STROOM_USER_GROUP.GROUP_UUID.eq(groupUuid))
                 .execute());
+    }
+
+    Condition getUserCondition(final ExpressionOperator expression) {
+        return expressionMapper.apply(expression);
     }
 }

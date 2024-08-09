@@ -211,7 +211,16 @@ public final class ExpressionTerm extends ExpressionItem {
         IS_DOC_REF("is"),
         IS_NULL("is null"),
         IS_NOT_NULL("is not null"),
-        MATCHES_REGEX("matches regex");
+        MATCHES_REGEX("matches regex"),
+
+        // Permission related conditions.
+        OF_DOC_REF("of"),
+        USER_HAS_PERM("has permissions"),
+        USER_HAS_OWNER("has owner permission"),
+        USER_HAS_DELETE("has delete permission"),
+        USER_HAS_EDIT("has edit permission"),
+        USER_HAS_VIEW("has view permission"),
+        USER_HAS_USE("has use permission");
 
 //        public static final List<Condition> SIMPLE_CONDITIONS = Arrays.asList(
 //                EQUALS,
