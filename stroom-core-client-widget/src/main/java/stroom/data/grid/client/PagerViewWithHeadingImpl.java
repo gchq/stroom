@@ -35,8 +35,16 @@ import com.gwtplatform.mvp.client.ViewImpl;
 
 import javax.inject.Inject;
 
-public class PagerViewImpl extends ViewImpl implements PagerView {
+/**
+ * Including a form in the pager view breaks a bunch of stuff so leaving this version for specific uses.
+ */
+public class PagerViewWithHeadingImpl extends ViewImpl implements PagerViewWithHeading {
 
+    /**
+     * The pager used to change the range of data.
+     */
+    @UiField
+    FormGroup pagerFormGroup;
     @UiField
     FlowPanel pagerContainer;
     @UiField
@@ -51,7 +59,7 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
     private final Widget widget;
 
     @Inject
-    public PagerViewImpl(final Binder binder) {
+    public PagerViewWithHeadingImpl(final Binder binder) {
         // Create the UiBinder.
         widget = binder.createAndBindUi(this);
     }
@@ -65,6 +73,11 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public void setHeading(final String string) {
+        pagerFormGroup.setLabel(string);
     }
 
     @Override
@@ -114,7 +127,7 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
     // --------------------------------------------------------------------------------
 
 
-    public interface Binder extends UiBinder<Widget, PagerViewImpl> {
+    public interface Binder extends UiBinder<Widget, PagerViewWithHeadingImpl> {
 
     }
 }

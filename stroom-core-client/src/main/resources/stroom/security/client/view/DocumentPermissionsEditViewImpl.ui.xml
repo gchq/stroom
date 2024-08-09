@@ -4,8 +4,8 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:i="urn:import:stroom.item.client"
              xmlns:b="urn:import:stroom.widget.button.client">
-    <g:FlowPanel styleName="documentPermissions form max dock-container-vertical">
-        <form:FormGroup identity="docList" label="Documents" addStyleNames="dock-max">
+    <g:FlowPanel styleName="documentPermissions form max dock-container-vertical overflow-hidden">
+        <form:FormGroup identity="docList" label="Documents" addStyleNames="dock-max overflow-hidden">
             <g:SimplePanel ui:field="docList" addStyleNames="dock-max form-control-border form-control-background"/>
         </form:FormGroup>
 

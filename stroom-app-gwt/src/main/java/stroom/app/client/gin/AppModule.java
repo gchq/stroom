@@ -31,6 +31,8 @@ import stroom.core.client.presenter.FullScreenPresenter.FullScreenProxy;
 import stroom.core.client.presenter.FullScreenPresenter.FullScreenView;
 import stroom.core.client.view.CoreViewImpl;
 import stroom.core.client.view.FullScreenViewImpl;
+import stroom.data.grid.client.PagerViewWithHeading;
+import stroom.data.grid.client.PagerViewWithHeadingImpl;
 import stroom.data.grid.client.PagerView;
 import stroom.data.grid.client.PagerViewImpl;
 import stroom.entity.client.presenter.LinkTabPanelView;
@@ -184,6 +186,7 @@ public class AppModule extends AbstractPresenterModule {
         // Widgets
         bindSharedView(CurveTabLayoutView.class, CurveTabLayoutViewImpl.class);
         bindSharedView(PagerView.class, PagerViewImpl.class);
+        bindSharedView(PagerViewWithHeading.class, PagerViewWithHeadingImpl.class);
         bindSharedView(LinkTabPanelView.class, LinkTabPanelViewImpl.class);
     }
 }
