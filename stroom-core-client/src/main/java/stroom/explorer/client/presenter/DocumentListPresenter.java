@@ -168,4 +168,8 @@ public class DocumentListPresenter extends MyPresenterWidget<PagerView> {
     public void setFocusText(final boolean focusText) {
         this.focusText = focusText;
     }
+
+    public MultiSelectionModelImpl<FindResult> getSelectionModel() {
+        return selectionModel;
+    }
 }

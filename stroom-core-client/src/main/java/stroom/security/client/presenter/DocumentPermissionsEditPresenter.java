@@ -22,8 +22,10 @@ import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.client.presenter.DocumentListPresenter;
 import stroom.explorer.client.presenter.DocumentTypeCache;
+import stroom.explorer.client.presenter.FindDocResultListHandler;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerResource;
+import stroom.explorer.shared.FindResult;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
@@ -51,7 +53,6 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -65,10 +66,11 @@ public class DocumentPermissionsEditPresenter
     private final DocSelectionBoxPresenter docSelectionBoxPresenter;
     private final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
     private final DocumentListPresenter documentListPresenter;
-    private final Provider<DocumentCreatePermissionsListPresenter>
-            documentCreatePermissionsListPresenterProvider;
+    private final Provider<DocumentCreatePermissionsListPresenter> documentCreatePermissionsListPresenterProvider;
+    private final Provider<DocumentPermissionsPresenter> documentPermissionsPresenterProvider;
     private final RestFactory restFactory;
     private final ButtonView docFilter;
+    private final ButtonView docView;
     private ExpressionOperator expression;
 
     @Inject
@@ -78,6 +80,8 @@ public class DocumentPermissionsEditPresenter
                                             final DocumentListPresenter documentListPresenter,
                                             final Provider<DocumentCreatePermissionsListPresenter>
                                                     documentCreatePermissionsListPresenterProvider,
+                                            final Provider<DocumentPermissionsPresenter>
+                                                    documentPermissionsPresenterProvider,
                                             final DocSelectionBoxPresenter docSelectionBoxPresenter,
                                             final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter,
                                             final RestFactory restFactory,
@@ -88,6 +92,7 @@ public class DocumentPermissionsEditPresenter
         this.docSelectionBoxPresenter = docSelectionBoxPresenter;
         this.userRefSelectionBoxPresenter = userRefSelectionBoxPresenter;
         this.documentCreatePermissionsListPresenterProvider = documentCreatePermissionsListPresenterProvider;
+        this.documentPermissionsPresenterProvider = documentPermissionsPresenterProvider;
         this.docFilterPresenterProvider = docFilterPresenterProvider;
 
         view.setDocList(documentListPresenter.getView());
@@ -95,6 +100,8 @@ public class DocumentPermissionsEditPresenter
 
         // Filter
         docFilter = documentListPresenter.getView().addButton(SvgPresets.FILTER);
+        docView = documentListPresenter.getView().addButton(SvgPresets.LOCKED_AMBER);
+        docView.setEnabled(false);
         expression = ExpressionOperator.builder().op(Op.AND).build();
 
         documentTypeCache.fetch(types -> {
@@ -102,6 +109,22 @@ public class DocumentPermissionsEditPresenter
         }, this);
         getView().setDocRefSelection(docSelectionBoxPresenter.getView());
         getView().setUserRefSelection(userRefSelectionBoxPresenter.getView());
+
+        documentListPresenter.setFindResultListHandler(new FindDocResultListHandler() {
+            @Override
+            public void openDocument(final FindResult match) {
+                final FindResult selected = documentListPresenter.getSelected();
+                if (match != null) {
+                    documentPermissionsPresenterProvider.get().show(match.getDocRef());
+                }
+                docView.setEnabled(match != null);
+            }
+
+            @Override
+            public void focus() {
+
+            }
+        });
     }
 
     @Override
@@ -148,19 +171,39 @@ public class DocumentPermissionsEditPresenter
                     .onHideRequest(handler)
                     .fire();
         }));
+
+        registerHandler(documentListPresenter.getSelectionModel().addSelectionHandler(e -> {
+            final FindResult selected = documentListPresenter.getSelected();
+//            if (selected != null) {
+//                if (e.getSelectionType().isDoubleSelect()) {
+//                    documentPermissionsPresenterProvider.get().show(selected.getDocRef());
+//                }
+//            }
+            docView.setEnabled(selected != null);
+        }));
+        registerHandler(docView.addClickHandler(e -> {
+            final FindResult selected = documentListPresenter.getSelected();
+            if (selected != null) {
+                documentPermissionsPresenterProvider.get().show(selected.getDocRef());
+            }
+        }));
     }
 
     public void show(final DocRef docRef, final Runnable onClose) {
+        if (docRef != null) {
+            docSelectionBoxPresenter.setSelectedEntityReference(docRef);
+            final ExpressionTerm term = new ExpressionTerm(
+                    true,
+                    DocumentPermissionFields.DOCUMENT.getFldName(),
+                    Condition.IS_DOC_REF,
+                    null,
+                    docRef);
+            show(ExpressionOperator.builder().op(Op.AND).addTerm(term).build(), onClose);
+        }
+    }
 
-        final ExpressionTerm term = new ExpressionTerm(
-                true,
-                DocumentPermissionFields.DOCUMENT.getFldName(),
-                Condition.IS_DOC_REF,
-                null,
-                docRef);
-        expression = ExpressionOperator.builder().op(Op.AND).addTerm(term).build();
-
-        docSelectionBoxPresenter.setSelectedEntityReference(docRef);
+    public void show(final ExpressionOperator expression, final Runnable onClose) {
+        this.expression = expression;
 
         // We only want to see documents tha the current user is effectively the owner of as they can't change
         // permissions on anything else.
