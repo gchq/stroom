@@ -149,8 +149,6 @@ class TestUserServiceImpl {
         assertThat(findUsers).doesNotContain(userGroup1.getUuid(), userGroup2.getUuid());
         assertThat(findGroups).contains(userGroup1.getUuid(), userGroup2.getUuid());
         assertThat(findGroups).doesNotContain(user1.getUuid(), user2.getUuid());
-
-
     }
 
     private FindUserCriteria createCriteria(final String filter) {

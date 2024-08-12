@@ -1,5 +1,6 @@
 package stroom.security.shared;
 
+import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.QueryField;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -75,29 +76,37 @@ public class QuickFilterExpressionParser {
                                     + "'. Valid qualifiers: " + fieldMap.keySet());
                         }
                         final String fieldValue = subParts[1];
-                        final String value = wildcard(fieldValue);
-                        builder.addTerm(fieldName, Condition.EQUALS, value);
+                        addTerm(builder, field, fieldValue);
                     }
                 } else {
                     if (defaultFields == null || defaultFields.isEmpty()) {
                         throw new RuntimeException("No default fields defined");
                     }
 
-                    final String value = wildcard(part);
                     if (defaultFields.size() == 1) {
-                        builder.addTerm(defaultFields.iterator().next().getFldName(), Condition.EQUALS, value);
+                        addTerm(builder, defaultFields.iterator().next(), part);
                     } else {
                         final ExpressionOperator.Builder eb = ExpressionOperator.builder().op(Op.OR);
                         for (final QueryField field : defaultFields) {
-                            eb.addTerm(field.getFldName(), Condition.EQUALS, value);
+                            addTerm(eb, field, part);
                         }
                         builder.addOperator(eb.build());
                     }
                 }
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 // Probably due to the user not having finished typing yet
                 throw new RuntimeException("Unable to split [" + part + "], due to " + e.getMessage(), e);
             }
+        }
+    }
+
+    private static void addTerm(final ExpressionOperator.Builder builder,
+                                final QueryField queryField,
+                                final String value) {
+        if (FieldType.TEXT.equals(queryField.getFldType())) {
+            builder.addTerm(queryField.getFldName(), Condition.EQUALS, wildcard(value));
+        } else {
+            builder.addTerm(queryField.getFldName(), Condition.EQUALS, value);
         }
     }
 
