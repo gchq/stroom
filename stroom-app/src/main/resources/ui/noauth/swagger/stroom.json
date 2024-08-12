@@ -16397,9 +16397,6 @@
           "createUser" : {
             "type" : "string"
           },
-          "data" : {
-            "type" : "string"
-          },
           "deleted" : {
             "type" : "boolean"
           },
@@ -19276,9 +19273,6 @@
             "type" : "string"
           },
           "dashboardUuid" : {
-            "type" : "string"
-          },
-          "data" : {
             "type" : "string"
           },
           "favourite" : {

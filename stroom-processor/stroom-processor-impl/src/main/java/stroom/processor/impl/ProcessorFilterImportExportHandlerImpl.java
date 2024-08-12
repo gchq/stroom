@@ -233,7 +233,6 @@ public class ProcessorFilterImportExportHandlerImpl
         processorFilter.setVersion(null);
         processorFilter.setProcessorFilterTracker(null);
         processorFilter.setProcessor(null);
-        processorFilter.setData(null);
         processorFilter.setRunAsUser(null);
 
         if (omitAuditFields) {

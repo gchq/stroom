@@ -184,7 +184,7 @@ class AnnotationDaoImpl implements AnnotationDao {
     }
 
     private UserRef getUserRef(final String uuid) {
-        return userRefLookup.getByUuid(uuid).orElse(null);
+        return userRefLookup.getByUuid(uuid).orElse(UserRef.builder().uuid(uuid).build());
     }
 
     private Annotation mapToAnnotation(final Record record) {
@@ -198,7 +198,7 @@ class AnnotationDaoImpl implements AnnotationDao {
         annotation.setTitle(record.get(ANNOTATION.TITLE));
         annotation.setSubject(record.get(ANNOTATION.SUBJECT));
         annotation.setStatus(record.get(ANNOTATION.STATUS));
-        annotation.setAssignedTo(mapUserUuidToUserRef(record.get(ANNOTATION.ASSIGNED_TO_UUID)));
+        annotation.setAssignedTo(getUserRef(record.get(ANNOTATION.ASSIGNED_TO_UUID)));
         annotation.setComment(record.get(ANNOTATION.COMMENT));
         annotation.setHistory(record.get(ANNOTATION.HISTORY));
         return annotation;
@@ -528,19 +528,10 @@ class AnnotationDaoImpl implements AnnotationDao {
         } else {
             return NullSafe.getAsOptional(
                             userUuid,
-                            this::mapUserUuidToUserRef,
+                            this::getUserRef,
                             UserRef::toDisplayString,
                             value -> (Val) ValString.create(value))
                     .orElse(ValNull.INSTANCE);
-        }
-    }
-
-    private UserRef mapUserUuidToUserRef(final String userUuid) {
-        if (NullSafe.isBlankString(userUuid)) {
-            return UserRef.builder().displayName("Unknown").build();
-        } else {
-            return userRefLookup.getByUuid(userUuid)
-                    .orElse(UserRef.builder().displayName("Unknown").build());
         }
     }
 

@@ -5,22 +5,23 @@ import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.impl.ProcessorFilterDao;
-import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterRecord;
-import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterTrackerRecord;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorFilterTrackerStatus;
+import stroom.security.user.api.UserRefLookup;
+import stroom.util.NullSafe;
+import stroom.util.exception.DataChangedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 
-import io.vavr.Tuple;
-import io.vavr.Tuple2;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
@@ -56,24 +57,29 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
             ProcessorFilterFields.FIELD_ID, PROCESSOR_FILTER.ID);
 
     private static final Function<Record, Processor> RECORD_TO_PROCESSOR_MAPPER = new RecordToProcessorMapper();
-    private static final Function<Record, ProcessorFilter> RECORD_TO_PROCESSOR_FILTER_MAPPER =
-            new RecordToProcessorFilterMapper();
+    private final Function<Record, ProcessorFilter> recordToProcessorFilterMapper;
     private static final Function<Record, ProcessorFilterTracker> RECORD_TO_PROCESSOR_FILTER_TRACKER_MAPPER =
             new RecordToProcessorFilterTrackerMapper();
 
     private final ProcessorDbConnProvider processorDbConnProvider;
-    private final ProcessorFilterMarshaller marshaller;
+    private final QueryDataXMLSerialiser queryDataXMLSerialiser;
     private final ExpressionMapper expressionMapper;
     private final ProcessorFilterTrackerDaoImpl processorFilterTrackerDaoImpl;
+    private final Provider<UserRefLookup> userRefLookupProvider;
 
     @Inject
     ProcessorFilterDaoImpl(final ProcessorDbConnProvider processorDbConnProvider,
                            final ExpressionMapperFactory expressionMapperFactory,
-                           final ProcessorFilterMarshaller marshaller,
-                           final ProcessorFilterTrackerDaoImpl processorFilterTrackerDaoImpl) {
+                           final ProcessorFilterTrackerDaoImpl processorFilterTrackerDaoImpl,
+                           final QueryDataXMLSerialiser queryDataXMLSerialiser,
+                           final Provider<UserRefLookup> userRefLookupProvider) {
         this.processorDbConnProvider = processorDbConnProvider;
-        this.marshaller = marshaller;
         this.processorFilterTrackerDaoImpl = processorFilterTrackerDaoImpl;
+        this.queryDataXMLSerialiser = queryDataXMLSerialiser;
+        this.userRefLookupProvider = userRefLookupProvider;
+        recordToProcessorFilterMapper = new RecordToProcessorFilterMapper(
+                queryDataXMLSerialiser,
+                userRefLookupProvider);
 
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(ProcessorFilterFields.ID, PROCESSOR_FILTER.ID, Integer::valueOf);
@@ -97,57 +103,130 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     public ProcessorFilter create(final ProcessorFilter processorFilter) {
         LAMBDA_LOGGER.debug(() -> LogUtil.message("Creating a {}", PROCESSOR_FILTER.getName()));
 
-        final ProcessorFilter marshalled = marshaller.marshal(processorFilter);
-        final ProcessorFilterTracker tracker = new ProcessorFilterTracker();
-
-        final ProcessorFilterTrackerRecord processorFilterTrackerRecord = PROCESSOR_FILTER_TRACKER.newRecord();
-        processorFilterTrackerRecord.from(tracker);
-
-        final ProcessorFilterRecord processorFilterRecord = PROCESSOR_FILTER.newRecord();
-        processorFilterRecord.from(marshalled);
-        processorFilterRecord.setFkProcessorId(marshalled.getProcessor().getId());
-
-        final Tuple2<ProcessorFilterRecord, ProcessorFilterTracker> result = JooqUtil.transactionResult(
+        return JooqUtil.transactionResult(
                 processorDbConnProvider,
                 context -> {
-                    processorFilterTrackerRecord.attach(context.configuration());
-                    processorFilterTrackerRecord.store();
-
-                    // The .store() doesn't seem to bring back the default value for status so re-fetch
-                    final ProcessorFilterTracker persistedTracker = processorFilterTrackerDaoImpl.fetch(
-                                    context, processorFilterTrackerRecord.getId())
-                            .orElseThrow(() -> new RuntimeException(
-                                    "Can't find newly created tracker with id" + processorFilterTrackerRecord.getId()));
-
-                    marshalled.setProcessorFilterTracker(persistedTracker);
-                    processorFilterRecord.setFkProcessorFilterTrackerId(persistedTracker.getId());
-
-                    processorFilterRecord.attach(context.configuration());
-                    processorFilterRecord.store();
-
-                    return Tuple.of(processorFilterRecord, persistedTracker);
+                    final ProcessorFilterTracker tracker = createTracker(context);
+                    processorFilter.setProcessorFilterTracker(tracker);
+                    return createFilter(context, processorFilter);
                 });
-
-        final ProcessorFilterRecord processorFilterRecord2 = result._1;
-        final ProcessorFilterTracker processorFilterTracker = result._2;
-        final ProcessorFilter processorFilter2 = processorFilterRecord2.into(ProcessorFilter.class);
-        processorFilter2.setProcessorFilterTracker(processorFilterTracker);
-        processorFilter2.setProcessor(processorFilter.getProcessor());
-
-        return marshaller.unmarshal(processorFilter2);
     }
 
     @Override
     public ProcessorFilter update(final ProcessorFilter processorFilter) {
-        final ProcessorFilter marshalled = marshaller.marshal(processorFilter);
-        final ProcessorFilterRecord record = PROCESSOR_FILTER.newRecord();
-        record.from(processorFilter);
-        final ProcessorFilterRecord persistedRecord = JooqUtil.updateWithOptimisticLocking(processorDbConnProvider,
-                record);
-        final ProcessorFilter result = persistedRecord.into(ProcessorFilter.class);
-        result.setProcessorFilterTracker(marshalled.getProcessorFilterTracker());
-        result.setProcessor(marshalled.getProcessor());
-        return marshaller.unmarshal(result);
+        return JooqUtil.contextResult(processorDbConnProvider, context -> updateFilter(context, processorFilter));
+    }
+
+    private ProcessorFilterTracker createTracker(final DSLContext context) {
+        final ProcessorFilterTracker tracker = new ProcessorFilterTracker();
+        tracker.setVersion(1);
+        tracker.setStatus(ProcessorFilterTrackerStatus.CREATED);
+        final int id = context
+                .insertInto(PROCESSOR_FILTER_TRACKER)
+                .columns(
+                        PROCESSOR_FILTER_TRACKER.VERSION,
+                        PROCESSOR_FILTER_TRACKER.MIN_META_ID,
+                        PROCESSOR_FILTER_TRACKER.MIN_EVENT_ID,
+                        PROCESSOR_FILTER_TRACKER.MIN_META_CREATE_MS,
+                        PROCESSOR_FILTER_TRACKER.MAX_META_CREATE_MS,
+                        PROCESSOR_FILTER_TRACKER.META_CREATE_MS,
+                        PROCESSOR_FILTER_TRACKER.LAST_POLL_MS,
+                        PROCESSOR_FILTER_TRACKER.LAST_POLL_TASK_COUNT,
+                        PROCESSOR_FILTER_TRACKER.MESSAGE,
+                        PROCESSOR_FILTER_TRACKER.META_COUNT,
+                        PROCESSOR_FILTER_TRACKER.EVENT_COUNT,
+                        PROCESSOR_FILTER_TRACKER.STATUS)
+                .values(
+                        tracker.getVersion(),
+                        tracker.getMinMetaId(),
+                        tracker.getMinEventId(),
+                        tracker.getMinMetaCreateMs(),
+                        tracker.getMaxMetaCreateMs(),
+                        tracker.getMetaCreateMs(),
+                        tracker.getLastPollMs(),
+                        tracker.getLastPollTaskCount(),
+                        tracker.getMessage(),
+                        tracker.getMetaCount(),
+                        tracker.getEventCount(),
+                        NullSafe.get(tracker.getStatus(), ProcessorFilterTrackerStatus::getPrimitiveValue))
+                .returning(PROCESSOR_FILTER_TRACKER.ID)
+                .fetchOne(PROCESSOR_FILTER_TRACKER.ID);
+        tracker.setId(id);
+        return tracker;
+    }
+
+    private ProcessorFilter createFilter(final DSLContext context, final ProcessorFilter filter) {
+        filter.setVersion(1);
+        final String data = queryDataXMLSerialiser.serialise(filter.getQueryData());
+        final int id = context
+                .insertInto(PROCESSOR_FILTER)
+                .columns(PROCESSOR_FILTER.VERSION,
+                        PROCESSOR_FILTER.CREATE_TIME_MS,
+                        PROCESSOR_FILTER.CREATE_USER,
+                        PROCESSOR_FILTER.UPDATE_TIME_MS,
+                        PROCESSOR_FILTER.UPDATE_USER,
+                        PROCESSOR_FILTER.UUID,
+                        PROCESSOR_FILTER.FK_PROCESSOR_ID,
+                        PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID,
+                        PROCESSOR_FILTER.DATA,
+                        PROCESSOR_FILTER.PRIORITY,
+                        PROCESSOR_FILTER.REPROCESS,
+                        PROCESSOR_FILTER.ENABLED,
+                        PROCESSOR_FILTER.DELETED,
+                        PROCESSOR_FILTER.MIN_META_CREATE_TIME_MS,
+                        PROCESSOR_FILTER.MAX_META_CREATE_TIME_MS,
+                        PROCESSOR_FILTER.MAX_PROCESSING_TASKS,
+                        PROCESSOR_FILTER.RUN_AS_USER_UUID)
+                .values(filter.getVersion(),
+                        filter.getCreateTimeMs(),
+                        filter.getCreateUser(),
+                        filter.getUpdateTimeMs(),
+                        filter.getUpdateUser(),
+                        filter.getUuid(),
+                        filter.getProcessor().getId(),
+                        filter.getProcessorFilterTracker().getId(),
+                        data,
+                        filter.getPriority(),
+                        filter.isReprocess(),
+                        filter.isEnabled(),
+                        filter.isDeleted(),
+                        filter.getMinMetaCreateTimeMs(),
+                        filter.getMaxMetaCreateTimeMs(),
+                        filter.getMaxProcessingTasks(),
+                        NullSafe.get(filter.getRunAsUser(), UserRef::getUuid))
+                .returning(PROCESSOR_FILTER.ID)
+                .fetchOne(PROCESSOR_FILTER.ID);
+        filter.setId(id);
+        return filter;
+    }
+
+    private ProcessorFilter updateFilter(final DSLContext context, final ProcessorFilter filter) {
+        final String data = queryDataXMLSerialiser.serialise(filter.getQueryData());
+        final int count = context
+                .update(PROCESSOR_FILTER)
+                .set(PROCESSOR_FILTER.VERSION, PROCESSOR_FILTER.VERSION.plus(1))
+                .set(PROCESSOR_FILTER.UPDATE_TIME_MS, filter.getUpdateTimeMs())
+                .set(PROCESSOR_FILTER.UPDATE_USER, filter.getUpdateUser())
+                .set(PROCESSOR_FILTER.DATA, data)
+                .set(PROCESSOR_FILTER.PRIORITY, filter.getPriority())
+                .set(PROCESSOR_FILTER.REPROCESS, filter.isReprocess())
+                .set(PROCESSOR_FILTER.ENABLED, filter.isEnabled())
+                .set(PROCESSOR_FILTER.DELETED, filter.isDeleted())
+                .set(PROCESSOR_FILTER.MIN_META_CREATE_TIME_MS, filter.getMinMetaCreateTimeMs())
+                .set(PROCESSOR_FILTER.MAX_META_CREATE_TIME_MS, filter.getMaxMetaCreateTimeMs())
+                .set(PROCESSOR_FILTER.MAX_PROCESSING_TASKS, filter.getMaxProcessingTasks())
+                .set(PROCESSOR_FILTER.RUN_AS_USER_UUID, NullSafe.get(filter.getRunAsUser(), UserRef::getUuid))
+                .where(PROCESSOR_FILTER.ID.eq(filter.getId()))
+                .and(PROCESSOR_FILTER.VERSION.eq(filter.getVersion()))
+                .execute();
+
+        if (count == 0) {
+            throw new DataChangedException("Failed to update processor filter, " +
+                    "it may have been updated by another user or deleted");
+        }
+
+        filter.setVersion(filter.getVersion() + 1);
+        return filter;
     }
 
     @Override
@@ -363,12 +442,12 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
     private ProcessorFilter mapRecord(final Record record) {
         final Processor processor = RECORD_TO_PROCESSOR_MAPPER.apply(record);
-        final ProcessorFilter processorFilter = RECORD_TO_PROCESSOR_FILTER_MAPPER.apply(record);
+        final ProcessorFilter processorFilter = recordToProcessorFilterMapper.apply(record);
         final ProcessorFilterTracker processorFilterTracker =
                 RECORD_TO_PROCESSOR_FILTER_TRACKER_MAPPER.apply(record);
         processorFilter.setProcessor(processor);
         processorFilter.setProcessorFilterTracker(processorFilterTracker);
-        return marshaller.unmarshal(processorFilter);
+        return processorFilter;
     }
 
 

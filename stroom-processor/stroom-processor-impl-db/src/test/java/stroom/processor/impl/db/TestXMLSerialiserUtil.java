@@ -28,9 +28,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestXMLMarshallUtil {
+class TestXMLSerialiserUtil {
 
-    private static ProcessorFilterMarshaller marshaller;
+    private static QueryDataXMLSerialiser serialiser;
 
     @Test
     void testSimple() {
@@ -55,12 +55,10 @@ class TestXMLMarshallUtil {
         // Test Writing
         ProcessorFilter processorFilter = new ProcessorFilter();
         processorFilter.setQueryData(queryData1);
-        processorFilter = getMarshaller().marshal(processorFilter);
-        final String xml1 = processorFilter.getData();
+        final String xml1 = getSerialiser().serialise(processorFilter.getQueryData());
 
-        processorFilter = getMarshaller().unmarshal(processorFilter);
-        processorFilter = getMarshaller().marshal(processorFilter);
-        final String xml2 = processorFilter.getData();
+        QueryData queryData = getSerialiser().deserialise(xml1);
+        final String xml2 = getSerialiser().serialise(queryData);
 
         assertThat(xml1.contains("999")).isTrue();
         assertThat(xml2).isEqualTo(xml1);
@@ -68,23 +66,20 @@ class TestXMLMarshallUtil {
 
     @Test
     void testShort() {
-        ProcessorFilter processorFilter = new ProcessorFilter();
-        processorFilter.setData(
-                "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><QueryData></QueryData>");
-        processorFilter = getMarshaller().unmarshal(processorFilter);
-
-        final QueryData queryData = processorFilter.getQueryData();
+        final ProcessorFilter processorFilter = new ProcessorFilter();
+        final String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><QueryData></QueryData>";
+        final QueryData queryData = getSerialiser().deserialise(xml);
         assertThat(queryData).isNotNull();
     }
 
-    private ProcessorFilterMarshaller getMarshaller() {
-        if (marshaller == null) {
+    private QueryDataXMLSerialiser getSerialiser() {
+        if (serialiser == null) {
             try {
-                marshaller = new ProcessorFilterMarshaller();
+                serialiser = new QueryDataXMLSerialiser();
             } catch (final JAXBException e) {
                 throw new RuntimeException(e.getMessage(), e);
             }
         }
-        return marshaller;
+        return serialiser;
     }
 }

@@ -4,20 +4,19 @@
 package stroom.analytics.impl.db.jooq.tables;
 
 
-import stroom.analytics.impl.db.jooq.Indexes;
-import stroom.analytics.impl.db.jooq.Keys;
-import stroom.analytics.impl.db.jooq.Stroom;
-import stroom.analytics.impl.db.jooq.tables.records.ExecutionScheduleRecord;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Function;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function11;
+import org.jooq.Function12;
 import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Records;
-import org.jooq.Row11;
+import org.jooq.Row12;
 import org.jooq.Schema;
 import org.jooq.SelectField;
 import org.jooq.Table;
@@ -28,9 +27,10 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.function.Function;
+import stroom.analytics.impl.db.jooq.Indexes;
+import stroom.analytics.impl.db.jooq.Keys;
+import stroom.analytics.impl.db.jooq.Stroom;
+import stroom.analytics.impl.db.jooq.tables.records.ExecutionScheduleRecord;
 
 
 /**
@@ -109,6 +109,11 @@ public class ExecutionSchedule extends TableImpl<ExecutionScheduleRecord> {
      */
     public final TableField<ExecutionScheduleRecord, String> DOC_UUID = createField(DSL.name("doc_uuid"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
+    /**
+     * The column <code>stroom.execution_schedule.run_as_user_uuid</code>.
+     */
+    public final TableField<ExecutionScheduleRecord, String> RUN_AS_USER_UUID = createField(DSL.name("run_as_user_uuid"), SQLDataType.VARCHAR(255), this, "");
+
     private ExecutionSchedule(Name alias, Table<ExecutionScheduleRecord> aliased) {
         this(alias, aliased, null);
     }
@@ -149,7 +154,7 @@ public class ExecutionSchedule extends TableImpl<ExecutionScheduleRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.asList(Indexes.EXECUTION_SCHEDULE_EXECUTION_SCHEDULE_DOC_IDX);
+        return Arrays.asList(Indexes.EXECUTION_SCHEDULE_EXECUTION_SCHEDULE_DOC_IDX, Indexes.EXECUTION_SCHEDULE_EXECUTION_SCHEDULE_ENABLED_IDX);
     }
 
     @Override
@@ -202,18 +207,18 @@ public class ExecutionSchedule extends TableImpl<ExecutionScheduleRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row11 type methods
+    // Row12 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row11<Integer, String, Boolean, String, String, String, Boolean, Long, Long, String, String> fieldsRow() {
-        return (Row11) super.fieldsRow();
+    public Row12<Integer, String, Boolean, String, String, String, Boolean, Long, Long, String, String, String> fieldsRow() {
+        return (Row12) super.fieldsRow();
     }
 
     /**
      * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
      */
-    public <U> SelectField<U> mapping(Function11<? super Integer, ? super String, ? super Boolean, ? super String, ? super String, ? super String, ? super Boolean, ? super Long, ? super Long, ? super String, ? super String, ? extends U> from) {
+    public <U> SelectField<U> mapping(Function12<? super Integer, ? super String, ? super Boolean, ? super String, ? super String, ? super String, ? super Boolean, ? super Long, ? super Long, ? super String, ? super String, ? super String, ? extends U> from) {
         return convertFrom(Records.mapping(from));
     }
 
@@ -221,7 +226,7 @@ public class ExecutionSchedule extends TableImpl<ExecutionScheduleRecord> {
      * Convenience mapping calling {@link SelectField#convertFrom(Class,
      * Function)}.
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function11<? super Integer, ? super String, ? super Boolean, ? super String, ? super String, ? super String, ? super Boolean, ? super Long, ? super Long, ? super String, ? super String, ? extends U> from) {
+    public <U> SelectField<U> mapping(Class<U> toType, Function12<? super Integer, ? super String, ? super Boolean, ? super String, ? super String, ? super String, ? super Boolean, ? super Long, ? super Long, ? super String, ? super String, ? super String, ? extends U> from) {
         return convertFrom(toType, Records.mapping(from));
     }
 }

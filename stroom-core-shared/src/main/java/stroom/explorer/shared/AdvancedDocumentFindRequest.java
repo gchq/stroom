@@ -7,11 +7,14 @@ import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 import java.util.Set;
 
+@JsonInclude(Include.NON_NULL)
 public class AdvancedDocumentFindRequest extends ExpressionCriteria {
 
     @JsonProperty

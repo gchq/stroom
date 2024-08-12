@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,20 @@
  * limitations under the License.
  */
 
-package stroom.processor.impl.db;
+package stroom.storedquery.impl.db;
 
-interface Marshaller<E, O> {
+import stroom.dashboard.shared.StoredQuery;
+import stroom.query.api.v2.Query;
+import stroom.util.json.AbstractJsonSerialiser;
+import stroom.util.json.JsonUtil;
 
-    E marshal(E entity);
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-    E unmarshal(E entity);
+public class QueryJsonSerialiser extends AbstractJsonSerialiser<Query> {
 
-    O getObject(E entity);
-
-    void setObject(E entity, O object);
+    @Override
+    protected Class getSerialisableClass() {
+        return Query.class;
+    }
 }

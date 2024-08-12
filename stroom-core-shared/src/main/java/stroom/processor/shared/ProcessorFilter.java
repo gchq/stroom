@@ -73,8 +73,6 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
     @JsonProperty
     private String uuid;
     @JsonProperty
-    private String data;
-    @JsonProperty
     private QueryData queryData;
     @JsonProperty
     private ProcessorType processorType;
@@ -123,7 +121,6 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
                            @JsonProperty("updateTimeMs") final Long updateTimeMs,
                            @JsonProperty("updateUser") final String updateUser,
                            @JsonProperty("uuid") final String uuid,
-                           @JsonProperty("data") final String data,
                            @JsonProperty("queryData") final QueryData queryData,
                            @JsonProperty("processor") final Processor processor,
                            @JsonProperty("processorFilterTracker") final ProcessorFilterTracker processorFilterTracker,
@@ -146,7 +143,6 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
         this.updateTimeMs = updateTimeMs;
         this.updateUser = updateUser;
         this.uuid = uuid;
-        this.data = data;
         this.queryData = queryData;
         this.processor = processor;
         this.processorFilterTracker = processorFilterTracker;
@@ -232,14 +228,6 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
         this.uuid = uuid;
     }
 
-    public String getData() {
-        return data;
-    }
-
-    public void setData(final String data) {
-        this.data = data;
-    }
-
     public int getPriority() {
         return priority;
     }
@@ -320,19 +308,6 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
 
     public UserRef getRunAsUser() {
         return runAsUser;
-    }
-
-    @JsonIgnore
-    public String getRunAsUserUuid() {
-        if (runAsUser == null) {
-            return null;
-        }
-        return runAsUser.getUuid();
-    }
-
-    @JsonIgnore
-    public void setRunAsUserUuid(final String runAsUserUuid) {
-        runAsUser = UserRef.builder().uuid(runAsUserUuid).build();
     }
 
     public void setProcessor(final Processor processor) {
@@ -450,7 +425,6 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
                 ", updateTimeMs=" + updateTimeMs +
                 ", updateUser='" + updateUser + '\'' +
                 ", uuid='" + uuid + '\'' +
-                ", data='" + data + '\'' +
                 ", queryData=" + queryData +
                 ", processorType=" + processorType +
                 ", processorUuid='" + processorUuid + '\'' +
@@ -508,7 +482,6 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
         private Long updateTimeMs;
         private String updateUser;
         private String uuid;
-        private String data;
         private QueryData queryData;
         private ProcessorType processorType;
         private String processorUuid;
@@ -542,7 +515,6 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
             this.updateTimeMs = filter.updateTimeMs;
             this.updateUser = filter.updateUser;
             this.uuid = filter.uuid;
-            this.data = filter.data;
             this.queryData = filter.queryData != null
                     ? filter.queryData.copy().build()
                     : null;
@@ -594,11 +566,6 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
 
         public Builder uuid(final String uuid) {
             this.uuid = uuid;
-            return this;
-        }
-
-        public Builder data(final String data) {
-            this.data = data;
             return this;
         }
 
@@ -686,7 +653,6 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
                     updateTimeMs,
                     updateUser,
                     uuid,
-                    data,
                     queryData,
                     processor,
                     processorFilterTracker,

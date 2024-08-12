@@ -83,7 +83,9 @@ class TestStoredQueryDao {
         DbTestUtil.clear();
 
         final UserRef owner = UserRef.builder().uuid(UUID.randomUUID().toString()).build();
-        storedQueryDao = new StoredQueryDaoImpl(storedQueryDbConnProvider);
+        storedQueryDao = new StoredQueryDaoImpl(storedQueryDbConnProvider,
+                new QueryJsonSerialiser(),
+                () -> uuid -> Optional.of(owner));
 
         queryHistoryCleanExecutor = new StoredQueryHistoryCleanExecutor(
                 storedQueryDao,
@@ -140,13 +142,13 @@ class TestStoredQueryDao {
 
         assertThat(query).isNotNull();
         assertThat(query.getName()).isEqualTo("Test query");
-        assertThat(query.getData()).isNotNull();
+        assertThat(query.getQuery()).isNotNull();
 
         final ExpressionOperator root = query.getQuery().getExpression();
 
         assertThat(root.getChildren().size()).isEqualTo(1);
 
-        final String actual = query.getData();
+        final String actual = new QueryJsonSerialiser().serialise(query.getQuery());
         final String expected = """
                 {
                   "dataSource" : {
@@ -196,7 +198,6 @@ class TestStoredQueryDao {
             newQuery.setComponentId(query.getComponentId());
             newQuery.setFavourite(false);
             newQuery.setQuery(query.getQuery());
-            newQuery.setData(query.getData());
             newQuery.setOwner(query.getOwner());
             AuditUtil.stamp(securityContext, newQuery);
             storedQueryDao.create(newQuery);
@@ -215,7 +216,7 @@ class TestStoredQueryDao {
 
         assertThat(query).isNotNull();
         assertThat(query.getName()).isEqualTo("Test query");
-        assertThat(query.getData()).isNotNull();
+        assertThat(query.getQuery()).isNotNull();
         final ExpressionOperator root = query.getQuery().getExpression();
         assertThat(root.getChildren().size()).isEqualTo(1);
     }

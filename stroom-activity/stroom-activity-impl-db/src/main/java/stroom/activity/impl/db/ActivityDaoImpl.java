@@ -103,7 +103,7 @@ public class ActivityDaoImpl implements ActivityDao {
         final String json = getJson(activity);
 
         final int version = activity.getVersion() + 1;
-        final int res = JooqUtil.contextResult(activityDbConnProvider, context -> context
+        final int count = JooqUtil.contextResult(activityDbConnProvider, context -> context
                 .update(ACTIVITY)
                 .set(ACTIVITY.VERSION, version)
                 .set(ACTIVITY.UPDATE_TIME_MS, activity.getUpdateTimeMs())
@@ -114,8 +114,8 @@ public class ActivityDaoImpl implements ActivityDao {
                 .and(ACTIVITY.VERSION.eq(activity.getVersion()))
                 .execute());
 
-        if (res == 0) {
-            throw new DataChangedException("Unable to update");
+        if (count == 0) {
+            throw new DataChangedException("Unable to update activity");
         }
 
         return activity.copy().version(version).build();

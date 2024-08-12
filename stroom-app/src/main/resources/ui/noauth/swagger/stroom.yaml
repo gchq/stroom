@@ -12605,8 +12605,6 @@ components:
           format: int64
         createUser:
           type: string
-        data:
-          type: string
         deleted:
           type: boolean
         enabled:
@@ -15017,8 +15015,6 @@ components:
         createUser:
           type: string
         dashboardUuid:
-          type: string
-        data:
           type: string
         favourite:
           type: boolean

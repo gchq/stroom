@@ -1,7 +1,9 @@
 package stroom.processor.impl.db;
 
 import stroom.processor.shared.ProcessorFilter;
+import stroom.security.user.api.UserRefLookup;
 
+import jakarta.inject.Provider;
 import org.jooq.Record;
 
 import java.util.function.Function;
@@ -9,6 +11,15 @@ import java.util.function.Function;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
 
 class RecordToProcessorFilterMapper implements Function<Record, ProcessorFilter> {
+
+    private final QueryDataXMLSerialiser queryDataXMLSerialiser;
+    private final Provider<UserRefLookup> userRefLookupProvider;
+
+    public RecordToProcessorFilterMapper(final QueryDataXMLSerialiser queryDataXMLSerialiser,
+                                         final Provider<UserRefLookup> userRefLookupProvider) {
+        this.queryDataXMLSerialiser = queryDataXMLSerialiser;
+        this.userRefLookupProvider = userRefLookupProvider;
+    }
 
     @Override
     public ProcessorFilter apply(final Record record) {
@@ -20,7 +31,7 @@ class RecordToProcessorFilterMapper implements Function<Record, ProcessorFilter>
         processorFilter.setUpdateTimeMs(record.get(PROCESSOR_FILTER.UPDATE_TIME_MS));
         processorFilter.setUpdateUser(record.get(PROCESSOR_FILTER.UPDATE_USER));
         processorFilter.setUuid(record.get(PROCESSOR_FILTER.UUID));
-        processorFilter.setData(record.get(PROCESSOR_FILTER.DATA));
+        processorFilter.setQueryData(queryDataXMLSerialiser.deserialise(record.get(PROCESSOR_FILTER.DATA)));
         processorFilter.setPriority(record.get(PROCESSOR_FILTER.PRIORITY));
         processorFilter.setMaxProcessingTasks(record.get(PROCESSOR_FILTER.MAX_PROCESSING_TASKS));
         processorFilter.setReprocess(record.get(PROCESSOR_FILTER.REPROCESS));
@@ -28,7 +39,10 @@ class RecordToProcessorFilterMapper implements Function<Record, ProcessorFilter>
         processorFilter.setDeleted(record.get(PROCESSOR_FILTER.DELETED));
         processorFilter.setMinMetaCreateTimeMs(record.get(PROCESSOR_FILTER.MIN_META_CREATE_TIME_MS));
         processorFilter.setMaxMetaCreateTimeMs(record.get(PROCESSOR_FILTER.MAX_META_CREATE_TIME_MS));
-        processorFilter.setRunAsUserUuid(record.get(PROCESSOR_FILTER.RUN_AS_USER_UUID));
+        processorFilter.setRunAsUser(userRefLookupProvider
+                .get()
+                .getByUuid(record.get(PROCESSOR_FILTER.RUN_AS_USER_UUID))
+                .orElse(null));
         return processorFilter;
     }
 }

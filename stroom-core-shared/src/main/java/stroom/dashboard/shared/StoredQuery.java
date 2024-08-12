@@ -22,7 +22,6 @@ import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -52,8 +51,6 @@ public class StoredQuery implements HasAuditInfo, HasIntegerId {
     @JsonProperty
     private UserRef owner;
     @JsonProperty
-    private String data;
-    @JsonProperty
     private boolean favourite;
     @JsonProperty
     private Query query;
@@ -73,7 +70,6 @@ public class StoredQuery implements HasAuditInfo, HasIntegerId {
                        @JsonProperty("componentId") final String componentId,
                        @JsonProperty("name") final String name,
                        @JsonProperty("owner") final UserRef owner,
-                       @JsonProperty("data") final String data,
                        @JsonProperty("favourite") final boolean favourite,
                        @JsonProperty("query") final Query query) {
         this.id = id;
@@ -87,7 +83,6 @@ public class StoredQuery implements HasAuditInfo, HasIntegerId {
         this.componentId = componentId;
         this.name = name;
         this.owner = owner;
-        this.data = data;
         this.favourite = favourite;
         this.query = query;
     }
@@ -185,26 +180,6 @@ public class StoredQuery implements HasAuditInfo, HasIntegerId {
         this.owner = owner;
     }
 
-    // Included for basic JOOQ mapping.
-    @JsonIgnore
-    public String getOwnerUuid() {
-        return owner.getUuid();
-    }
-
-    // Included for basic JOOQ mapping.
-    @JsonIgnore
-    public void setOwnerUuid(final String uuid) {
-        owner = UserRef.builder().uuid(uuid).build();
-    }
-
-    public String getData() {
-        return data;
-    }
-
-    public void setData(final String data) {
-        this.data = data;
-    }
-
     public boolean isFavourite() {
         return favourite;
     }
@@ -235,7 +210,6 @@ public class StoredQuery implements HasAuditInfo, HasIntegerId {
                 ", componentId='" + componentId + '\'' +
                 ", name='" + name + '\'' +
                 ", owner='" + owner + '\'' +
-                ", data='" + data + '\'' +
                 ", favourite=" + favourite +
                 ", query=" + query +
                 '}';

@@ -17,9 +17,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-class TestProcessorFilterMarshaller {
+class TestProcessorFilterSerialiser {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestProcessorFilterMarshaller.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestProcessorFilterSerialiser.class);
 
     @Test
     void testMarshall() throws JAXBException {
@@ -50,28 +50,24 @@ class TestProcessorFilterMarshaller {
         processorFilter.setMinMetaCreateTimeMs(System.currentTimeMillis());
         processorFilter.setMaxMetaCreateTimeMs(System.currentTimeMillis());
 
-        final ProcessorFilterMarshaller processorFilterMarshaller = new ProcessorFilterMarshaller();
-        final ProcessorFilter marshalled1 = processorFilterMarshaller.marshal(processorFilter);
-
-        final String xml1 = marshalled1.getData();
+        final QueryDataXMLSerialiser serialiser = new QueryDataXMLSerialiser();
+        final String xml1 = serialiser.serialise(processorFilter.getQueryData());
         Assertions.assertThat(xml1)
                 .isNotBlank();
         LOGGER.debug("marshalled:\n{}", xml1);
 
         // Now un-marshall
 
+        final QueryData queryData2 = serialiser.deserialise(xml1);
         final ProcessorFilter processorFilter2 = new ProcessorFilter();
-        processorFilter2.setData(marshalled1.getData());
-        processorFilterMarshaller.unmarshal(processorFilter2);
+        processorFilter2.setQueryData(queryData2);
 
         Assertions.assertThat(processorFilter2)
                 .isEqualTo(processorFilter);
 
         // Now re-marshall and compare
 
-        final ProcessorFilter marshalled2 = processorFilterMarshaller.marshal(processorFilter2);
-        final String xml2 = marshalled2.getData();
-        Assertions.assertThat(xml2)
-                .isEqualTo(xml1);
+        final String xml2 = serialiser.serialise(processorFilter2.getQueryData());
+        Assertions.assertThat(xml2).isEqualTo(xml1);
     }
 }

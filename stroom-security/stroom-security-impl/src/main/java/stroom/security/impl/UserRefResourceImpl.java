@@ -1,5 +1,7 @@
 package stroom.security.impl;
 
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
@@ -21,6 +23,7 @@ public class UserRefResourceImpl implements UserRefResource {
         this.userServiceProvider = userServiceProvider;
     }
 
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
     public ResultPage<UserRef> find(final FindUserCriteria criteria) {
         // Apply default sort
