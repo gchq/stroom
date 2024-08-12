@@ -2,8 +2,8 @@ package stroom.node.client.presenter;
 
 import stroom.cell.info.client.CommandLink;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.PagerViewWithHeading;
 import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerViewWithHeading;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;

@@ -34,7 +34,6 @@ import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.DocumentUserPermissions;
 import stroom.security.shared.FetchDocumentUserPermissionsRequest;
 import stroom.security.shared.QuickFilterExpressionParser;
-import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
@@ -43,8 +42,6 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
-import stroom.widget.util.client.MultiSelectionModel;
-import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
@@ -68,7 +65,7 @@ public class DocumentUserPermissionsListPresenter
     private final RestFactory restFactory;
     private FetchDocumentUserPermissionsRequest criteria;
     private final MyDataGrid<DocumentUserPermissions> dataGrid;
-//    private final MultiSelectionModelImpl<DocumentUserPermissions> selectionModel;
+    //    private final MultiSelectionModelImpl<DocumentUserPermissions> selectionModel;
     private final PagerView pagerView;
     private RestDataProvider<DocumentUserPermissions, ResultPage<DocumentUserPermissions>> dataProvider;
     private DocumentTypes documentTypes;
@@ -171,20 +168,21 @@ public class DocumentUserPermissionsListPresenter
         dataGrid.addColumn(iconCol, "</br>", ColumnSizeConstants.ICON_COL);
 
         // User Or Group Name
-        final Column<DocumentUserPermissions, String> userCol = new Column<DocumentUserPermissions, String>(new TextCell()) {
-            @Override
-            public String getValue(final DocumentUserPermissions documentUserPermissions) {
-                final UserRef userRef = documentUserPermissions.getUserRef();
-                if (userRef.getDisplayName() != null) {
-                    if (!Objects.equals(userRef.getDisplayName(), userRef.getSubjectId())) {
-                        return userRef.getDisplayName() + " (" + userRef.getSubjectId() + ")";
-                    } else {
-                        return userRef.getDisplayName();
+        final Column<DocumentUserPermissions, String> userCol =
+                new Column<DocumentUserPermissions, String>(new TextCell()) {
+                    @Override
+                    public String getValue(final DocumentUserPermissions documentUserPermissions) {
+                        final UserRef userRef = documentUserPermissions.getUserRef();
+                        if (userRef.getDisplayName() != null) {
+                            if (!Objects.equals(userRef.getDisplayName(), userRef.getSubjectId())) {
+                                return userRef.getDisplayName() + " (" + userRef.getSubjectId() + ")";
+                            } else {
+                                return userRef.getDisplayName();
+                            }
+                        }
+                        return userRef.getSubjectId();
                     }
-                }
-                return userRef.getSubjectId();
-            }
-        };
+                };
         dataGrid.addResizableColumn(userCol, "User or Group", 400);
 
         // Permission

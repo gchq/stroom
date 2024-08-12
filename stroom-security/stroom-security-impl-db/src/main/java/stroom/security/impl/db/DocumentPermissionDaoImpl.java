@@ -383,7 +383,8 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
 //            }
 //
 //            // Find all users with permissions.
-//            final List<DocumentUserPermissions> list = JooqUtil.contextResult(securityDbConnProvider, context -> context
+//            final List<DocumentUserPermissions> list = JooqUtil.contextResult(securityDbConnProvider, context ->
+//            context
 //                            .selectDistinct(
 //                                    STROOM_USER.UUID,
 //                                    STROOM_USER.NAME,
@@ -414,7 +415,8 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
 //            final DocRef docRef = docRefs.iterator().next();
 //
 //            // If we have a single doc then try to deliver more useful permissions.
-//            final List<DocumentUserPermissions> list = JooqUtil.contextResult(securityDbConnProvider, context -> context
+//            final List<DocumentUserPermissions> list = JooqUtil.contextResult(securityDbConnProvider, context ->
+//            context
 //                            .select(
 //                                    PERMISSION_DOC.PERMISSION_ID,
 //                                    STROOM_USER.UUID,

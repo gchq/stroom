@@ -2341,6 +2341,46 @@ paths:
       summary: Add tags to explorer nodes
       tags:
       - Explorer (v2)
+  /explorer/v2/advancedFind:
+    post:
+      operationId: advancedFind
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvancedDocumentFindRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPageFindResult'
+          description: default response
+      summary: Find documents with names and types matching the supplied request
+      tags:
+      - Explorer (v2)
+  /explorer/v2/changeDocumentPermssions:
+    post:
+      operationId: changeDocumentPermssions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeDocumentPermissionsRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Change document permissions
+      tags:
+      - Explorer (v2)
   /explorer/v2/copy:
     post:
       operationId: copyExplorerItems
@@ -2571,7 +2611,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FindRequest'
+              $ref: '#/components/schemas/DocumentFindRequest'
         description: request
         required: true
       responses:
@@ -4263,26 +4303,6 @@ paths:
       summary: Fires a permission change event
       tags:
       - Application Permissions
-  /permission/doc/v1/changeDocumentPermissions:
-    post:
-      operationId: changeDocumentPermissions
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ChangeDocumentPermissionsRequest'
-        description: request
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: boolean
-          description: default response
-      summary: Change document permissions
-      tags:
-      - Doc Permissions
   /permission/doc/v1/checkDocumentPermission:
     post:
       operationId: checkDocumentPermission
@@ -4303,14 +4323,14 @@ paths:
       summary: Check document permission
       tags:
       - Doc Permissions
-  /permission/doc/v1/fetchDocumentUsers:
+  /permission/doc/v1/fetchDocumentUserPermissions:
     post:
-      operationId: fetchDocumentUsers
+      operationId: fetchDocumentUserPermissions
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FetchDocumentUsersRequest'
+              $ref: '#/components/schemas/FetchDocumentUserPermissionsRequest'
         description: request
         required: true
       responses:
@@ -4318,29 +4338,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResultPageUser'
+                $ref: '#/components/schemas/ResultPageDocumentUserPermissions'
           description: default response
-      summary: Fetch document users
-      tags:
-      - Doc Permissions
-  /permission/doc/v1/fetchPermissionChangeImpact:
-    post:
-      operationId: fetchPermissionChangeImpact
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ChangeDocumentPermissionsRequest'
-        description: request
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PermissionChangeImpactSummary'
-          description: default response
-      summary: Fetch impact summary for a change of document permissions
+      summary: Fetch document user permissions
       tags:
       - Doc Permissions
   /pipeline/v1/fetchPipelineData:
@@ -7306,6 +7306,31 @@ components:
           items:
             type: string
           uniqueItems: true
+    AdvancedDocumentFindRequest:
+      type: object
+      properties:
+        expression:
+          $ref: '#/components/schemas/ExpressionOperator'
+        pageRequest:
+          $ref: '#/components/schemas/PageRequest'
+        requiredPermissions:
+          type: array
+          items:
+            type: string
+            enum:
+            - OWNER
+            - DELETE
+            - EDIT
+            - VIEW
+            - USE
+          uniqueItems: true
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaFieldSort'
     AnalyticDataShard:
       type: object
       properties:
@@ -7742,16 +7767,34 @@ components:
     ChangeDocumentPermissionsRequest:
       type: object
       properties:
-        cascade:
-          type: string
-          enum:
-          - "NO"
-          - CHANGES_ONLY
-          - ALL
-        changes:
-          $ref: '#/components/schemas/Changes'
         docRef:
           $ref: '#/components/schemas/DocRef'
+        docType:
+          $ref: '#/components/schemas/DocumentType'
+        documentPermissionChange:
+          type: string
+          enum:
+          - SET_PERMSSION
+          - REMOVE_PERMISSION
+          - ADD_DOCUMENT_CREATE_PERMSSION
+          - REMOVE_DOCUMENT_CREATE_PERMSSION
+          - ADD_ALL_DOCUMENT_CREATE_PERMSSIONS
+          - REMOVE_ALL_DOCUMENT_CREATE_PERMSSIONS
+          - ADD_ALL_PERMSSIONS_FROM
+          - SET_ALL_PERMSSIONS_FROM
+          - REMOVE_ALL_PERMISSIONS
+        expression:
+          $ref: '#/components/schemas/ExpressionOperator'
+        permission:
+          type: string
+          enum:
+          - OWNER
+          - DELETE
+          - EDIT
+          - VIEW
+          - USE
+        userRef:
+          $ref: '#/components/schemas/UserRef'
     ChangePasswordRequest:
       type: object
       properties:
@@ -7837,19 +7880,6 @@ components:
             - EXPORT_CONFIGURATION
             - VIEW_SYSTEM_INFO_PERMISSION
           uniqueItems: true
-    ChangeSetString:
-      type: object
-      properties:
-        addSet:
-          type: array
-          items:
-            type: string
-          uniqueItems: true
-        removeSet:
-          type: array
-          items:
-            type: string
-          uniqueItems: true
     ChangeSetUserRef:
       type: object
       properties:
@@ -7872,13 +7902,6 @@ components:
           $ref: '#/components/schemas/ChangeSetUserRef'
         user:
           $ref: '#/components/schemas/UserRef'
-    Changes:
-      type: object
-      properties:
-        changes:
-          type: object
-          additionalProperties:
-            $ref: '#/components/schemas/UserDocPermissionChanges'
     CheckDocumentPermissionRequest:
       type: object
       properties:
@@ -8732,6 +8755,20 @@ components:
           items:
             $ref: '#/components/schemas/DocRef'
           uniqueItems: true
+    DocumentFindRequest:
+      type: object
+      properties:
+        filter:
+          $ref: '#/components/schemas/ExplorerTreeFilter'
+        pageRequest:
+          $ref: '#/components/schemas/PageRequest'
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaFieldSort'
     DocumentType:
       type: object
       properties:
@@ -8952,6 +8989,24 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DocumentType'
+    DocumentUserPermissions:
+      type: object
+      properties:
+        documentCreatePermissions:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        permission:
+          type: string
+          enum:
+          - OWNER
+          - DELETE
+          - EDIT
+          - VIEW
+          - USE
+        userRef:
+          $ref: '#/components/schemas/UserRef'
     Documentation:
       type: object
       properties:
@@ -9163,6 +9218,7 @@ components:
           - KEYWORD
           - IPV4_ADDRESS
           - DOC_REF
+          - USER_REF
         fldName:
           type: string
         fldType:
@@ -9179,6 +9235,7 @@ components:
           - KEYWORD
           - IPV4_ADDRESS
           - DOC_REF
+          - USER_REF
         indexed:
           type: boolean
         nativeType:
@@ -9839,6 +9896,13 @@ components:
             - IS_NULL
             - IS_NOT_NULL
             - MATCHES_REGEX
+            - OF_DOC_REF
+            - USER_HAS_PERM
+            - USER_HAS_OWNER
+            - USER_HAS_DELETE
+            - USER_HAS_EDIT
+            - USER_HAS_VIEW
+            - USER_HAS_USE
           docRef:
             $ref: '#/components/schemas/DocRef'
           field:
@@ -9955,11 +10019,13 @@ components:
           totalBytes:
             type: integer
             format: int64
-    FetchDocumentUsersRequest:
+    FetchDocumentUserPermissionsRequest:
       type: object
       properties:
         docRef:
           $ref: '#/components/schemas/DocRef'
+        expression:
+          $ref: '#/components/schemas/ExpressionOperator'
         pageRequest:
           $ref: '#/components/schemas/PageRequest'
         sort:
@@ -9969,8 +10035,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
-        stringMatch:
-          $ref: '#/components/schemas/StringMatch'
     FetchExplorerNodeResult:
       type: object
       properties:
@@ -10526,20 +10590,6 @@ components:
     FindNodeStatusCriteria:
       type: object
       properties:
-        pageRequest:
-          $ref: '#/components/schemas/PageRequest'
-        sort:
-          type: string
-          writeOnly: true
-        sortList:
-          type: array
-          items:
-            $ref: '#/components/schemas/CriteriaFieldSort'
-    FindRequest:
-      type: object
-      properties:
-        filter:
-          $ref: '#/components/schemas/ExplorerTreeFilter'
         pageRequest:
           $ref: '#/components/schemas/PageRequest'
         sort:
@@ -11669,6 +11719,7 @@ components:
           - KEYWORD
           - IPV4_ADDRESS
           - DOC_REF
+          - USER_REF
         indexed:
           type: boolean
         stored:
@@ -12029,13 +12080,6 @@ components:
           type: string
       required:
       - type
-    PermissionChangeImpactSummary:
-      type: object
-      properties:
-        impactDetail:
-          type: string
-        impactSummary:
-          type: string
     PermissionChangeRequest:
       type: object
       properties:
@@ -12955,6 +12999,10 @@ components:
           - "'=', '!=', 'in', 'in dictionary', 'is'"
           - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
           - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - '''is'''
+          - '''of'''
+          - "'has permissions', 'has owner permission', 'has delete permission', 'has\
+            \ edit permission', 'has view permission', 'has use permission'"
         docRefType:
           type: string
         fldName:
@@ -12973,6 +13021,7 @@ components:
           - KEYWORD
           - IPV4_ADDRESS
           - DOC_REF
+          - USER_REF
         name:
           type: string
         queryable:
@@ -13632,6 +13681,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Dependency'
+    ResultPageDocumentUserPermissions:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentUserPermissions'
     ResultPageDuplicateCheckRow:
       type: object
       description: A page of results.
@@ -14609,6 +14668,7 @@ components:
           - KEYWORD
           - IPV4_ADDRESS
           - DOC_REF
+          - USER_REF
         indexed:
           type: boolean
         multiValued:
@@ -15579,6 +15639,13 @@ components:
           - IS_NULL
           - IS_NOT_NULL
           - MATCHES_REGEX
+          - OF_DOC_REF
+          - USER_HAS_PERM
+          - USER_HAS_OWNER
+          - USER_HAS_DELETE
+          - USER_HAS_EDIT
+          - USER_HAS_VIEW
+          - USER_HAS_USE
         from:
           type: string
         name:
@@ -15801,19 +15868,6 @@ components:
           type: string
         subjectId:
           type: string
-    UserDocPermissionChanges:
-      type: object
-      properties:
-        createChanges:
-          $ref: '#/components/schemas/ChangeSetString'
-        permission:
-          type: string
-          enum:
-          - OWNER
-          - DELETE
-          - EDIT
-          - VIEW
-          - USE
     UserPreferences:
       type: object
       properties:

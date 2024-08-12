@@ -99,7 +99,8 @@ public class DocumentPermissionsPresenter
 //
 //    private void add() {
 //        final Consumer<User> consumer = user -> {
-//            final DocumentUserPermissionEditPresenter editPresenter = documentUserPermissionEditPresenterProvider.get();
+//            final DocumentUserPermissionEditPresenter editPresenter =
+//            documentUserPermissionEditPresenterProvider.get();
 //            final DocumentUserPermissions documentUserPermissions = new DocumentUserPermissions(
 //                    user.asRef(),
 //                    DocumentPermission.USE,

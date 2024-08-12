@@ -1,9 +1,7 @@
 package stroom.explorer.shared;
 
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.entity.shared.ExpressionCriteria.Builder;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionUtil;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
@@ -11,7 +9,6 @@ import stroom.util.shared.PageRequest;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -24,7 +21,8 @@ public class AdvancedDocumentFindRequest extends ExpressionCriteria {
     public AdvancedDocumentFindRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                        @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                        @JsonProperty("expression") final ExpressionOperator expression,
-                                       @JsonProperty("requiredPermissions") final Set<DocumentPermission> requiredPermissions) {
+                                       @JsonProperty("requiredPermissions") final Set<DocumentPermission>
+                                               requiredPermissions) {
         super(pageRequest, sortList, expression);
         this.requiredPermissions = requiredPermissions;
     }
@@ -34,6 +32,7 @@ public class AdvancedDocumentFindRequest extends ExpressionCriteria {
     }
 
     public static class Builder extends AbstractBuilder<AdvancedDocumentFindRequest, Builder> {
+
         private Set<DocumentPermission> requiredPermissions;
 
         public Builder() {

@@ -9,7 +9,6 @@ import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.CheckDocumentPermissionRequest;
-import stroom.security.shared.ChangeDocumentPermissionsRequest;
 import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.DocumentUserPermissions;
 import stroom.security.shared.FetchDocumentUserPermissionsRequest;
@@ -61,7 +60,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
-    public ResultPage<DocumentUserPermissions> fetchDocumentUserPermissions(final FetchDocumentUserPermissionsRequest request) {
+    public ResultPage<DocumentUserPermissions> fetchDocumentUserPermissions(final FetchDocumentUserPermissionsRequest
+                                                                                    request) {
         return documentPermissionServiceProvider.get().fetchDocumentUserPermissions(request);
     }
 
@@ -127,7 +127,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 ////                        "any descendant documents. Only this document will be modified.";
 ////            } else {
 ////                final int descendantsWithOwnerPermCount = descendantsWithOwnerPerm.size();
-////                final String descendantCountStr = permissionState.descendants.size() != descendantsWithOwnerPermCount
+////                final String descendantCountStr = permissionState.descendants.size() !=
+// descendantsWithOwnerPermCount
 ////                        ? descendantsWithOwnerPermCount
 ////                        + " descendant documents. You do not have permission to change some descendant documents."
 ////                        : "all " + permissionState.descendants.size() + " descendant documents.";
@@ -146,7 +147,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 //// but
 //////                        // we have to tolerate legacy data.
 //////                        final List<DocRef> descendantsWithMultipleOwners = descendantsWithOwnerPerm.stream()
-//////                                .filter(docRef -> permissionState.getCurrentOwnerUuid(docRef.getUuid()).size() > 1)
+//////                                .filter(docRef ->
+// permissionState.getCurrentOwnerUuid(docRef.getUuid()).size() > 1)
 //////                                .toList();
 //////                        if (!descendantsWithMultipleOwners.isEmpty()) {
 //////                            impactDetail.add("The following "

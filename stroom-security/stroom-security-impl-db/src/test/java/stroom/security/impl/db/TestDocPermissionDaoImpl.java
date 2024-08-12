@@ -61,7 +61,8 @@ class TestDocPermissionDaoImpl {
 
         documentPermissionDao.setDocumentUserPermission(docRef.getUuid(), user.getUuid(), DocumentPermission.USE);
 
-        DocumentPermission docPermission = documentPermissionDao.getDocumentUserPermission(docRef.getUuid(), user.getUuid());
+        DocumentPermission docPermission = documentPermissionDao
+                .getDocumentUserPermission(docRef.getUuid(), user.getUuid());
         assertThat(docPermission).isEqualTo(DocumentPermission.USE);
 
         // Check that we can add the same perm again without error
@@ -114,11 +115,16 @@ class TestDocPermissionDaoImpl {
         Stream.of(docRef1, docRef2)
                 .map(DocRef::getUuid)
                 .forEach(docRefUuid -> {
-                    documentPermissionDao.setDocumentUserPermission(docRefUuid, user1.getUuid(), DocumentPermission.USE);
-                    documentPermissionDao.setDocumentUserPermission(docRefUuid, user1.getUuid(), DocumentPermission.VIEW);
-                    documentPermissionDao.setDocumentUserPermission(docRefUuid, user2.getUuid(), DocumentPermission.USE);
-                    documentPermissionDao.setDocumentUserPermission(docRefUuid, user3.getUuid(), DocumentPermission.USE);
-                    documentPermissionDao.setDocumentUserPermission(docRefUuid, user3.getUuid(), DocumentPermission.EDIT);
+                    documentPermissionDao
+                            .setDocumentUserPermission(docRefUuid, user1.getUuid(), DocumentPermission.USE);
+                    documentPermissionDao
+                            .setDocumentUserPermission(docRefUuid, user1.getUuid(), DocumentPermission.VIEW);
+                    documentPermissionDao
+                            .setDocumentUserPermission(docRefUuid, user2.getUuid(), DocumentPermission.USE);
+                    documentPermissionDao
+                            .setDocumentUserPermission(docRefUuid, user3.getUuid(), DocumentPermission.USE);
+                    documentPermissionDao
+                            .setDocumentUserPermission(docRefUuid, user3.getUuid(), DocumentPermission.EDIT);
                 });
 
         // Get the permissions for all users to this document
