@@ -49,7 +49,7 @@ import stroom.explorer.shared.FetchHighlightsRequest;
 import stroom.explorer.shared.FindInContentRequest;
 import stroom.explorer.shared.FindInContentResult;
 import stroom.explorer.shared.FindResult;
-import stroom.security.shared.ChangeDocumentPermissionsRequest;
+import stroom.security.shared.BulkDocumentPermissionChangeRequest;
 import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
@@ -277,7 +277,7 @@ class ExplorerResourceImpl implements ExplorerResource {
     }
 
     @Override
-    public Boolean changeDocumentPermssions(final ChangeDocumentPermissionsRequest request) {
+    public Boolean changeDocumentPermssions(final BulkDocumentPermissionChangeRequest request) {
         return explorerServiceProvider.get().changeDocumentPermssions(request);
     }
 }

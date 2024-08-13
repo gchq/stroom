@@ -51,7 +51,8 @@ public class ManageUserPlugin extends NodeToolsPlugin {
     public ManageUserPlugin(final EventBus eventBus,
                             final ClientSecurityContext securityContext,
                             final AsyncProvider<DocumentPermissionsPresenter> documentPermissionsPresenterProvider,
-                            final AsyncProvider<DocumentPermissionsEditPresenter> documentPermissionsEditPresenterProvider) {
+                            final AsyncProvider<DocumentPermissionsEditPresenter>
+                                    documentPermissionsEditPresenterProvider) {
         super(eventBus, securityContext);
         this.documentPermissionsEditPresenterProvider = documentPermissionsEditPresenterProvider;
 //        this.usersAndGroupsPresenterProvider = usersAndGroupsPresenterProvider;

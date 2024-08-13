@@ -57,7 +57,9 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
         JooqUtil.contextResult(securityDbConnProvider, context -> context
                         .select(PERMISSION_DOC.DOC_UUID, PERMISSION_DOC.PERMISSION_ID)
                         .from(PERMISSION_DOC)
+                        .join(STROOM_USER).on(STROOM_USER.UUID.eq(PERMISSION_DOC.USER_UUID))
                         .where(PERMISSION_DOC.USER_UUID.eq(userUuid))
+                        .and(STROOM_USER.ENABLED.eq(true))
                         .fetch())
                 .forEach(r -> {
                     final String docUuid = r.get(PERMISSION_DOC.DOC_UUID);
@@ -75,8 +77,10 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
         return JooqUtil.contextResult(securityDbConnProvider, context -> context
                         .select(PERMISSION_DOC.PERMISSION_ID)
                         .from(PERMISSION_DOC)
+                        .join(STROOM_USER).on(STROOM_USER.UUID.eq(PERMISSION_DOC.USER_UUID))
                         .where(PERMISSION_DOC.DOC_UUID.eq(documentUuid))
                         .and(PERMISSION_DOC.USER_UUID.eq(userUuid))
+                        .and(STROOM_USER.ENABLED.eq(true))
                         .fetchOptional(PERMISSION_DOC.PERMISSION_ID))
                 .map(r -> DocumentPermission.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(r.byteValue()))
                 .orElse(null);
@@ -139,8 +143,10 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
         return JooqUtil.contextResult(securityDbConnProvider, context -> context
                         .select(PERMISSION_DOC_CREATE.DOC_TYPE_ID)
                         .from(PERMISSION_DOC_CREATE)
+                        .join(STROOM_USER).on(STROOM_USER.UUID.eq(PERMISSION_DOC_CREATE.USER_UUID))
                         .where(PERMISSION_DOC_CREATE.DOC_UUID.eq(documentUuid))
                         .and(PERMISSION_DOC_CREATE.USER_UUID.eq(userUuid))
+                        .and(STROOM_USER.ENABLED.eq(true))
                         .fetch())
                 .map(r -> r.get(PERMISSION_DOC_CREATE.DOC_TYPE_ID).intValue());
     }
@@ -328,6 +334,7 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
         final List<Condition> conditions = new ArrayList<>();
         conditions.add(PERMISSION_DOC.DOC_UUID.eq(docRef.getUuid()));
         conditions.add(userDao.getUserCondition(request.getExpression()));
+        conditions.add(STROOM_USER.ENABLED.eq(true));
 
         final Collection<OrderField<?>> orderFields = userDao.createOrderFields(request);
 

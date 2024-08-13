@@ -58,9 +58,10 @@ import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.Suggestions;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.ChangeDocumentPermissionsRequest;
+import stroom.security.shared.BulkDocumentPermissionChangeRequest;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
+import stroom.security.shared.SingleDocumentPermissionChangeRequest;
 import stroom.suggestions.api.SuggestionsQueryHandler;
 import stroom.svg.shared.SvgImage;
 import stroom.util.NullSafe;
@@ -1794,7 +1795,7 @@ class ExplorerServiceImpl
     }
 
     @Override
-    public Boolean changeDocumentPermssions(final ChangeDocumentPermissionsRequest request) {
+    public Boolean changeDocumentPermssions(final BulkDocumentPermissionChangeRequest request) {
         final AdvancedDocumentFindRequest advancedDocumentFindRequest = new AdvancedDocumentFindRequest.Builder()
                 .requiredPermissions(Set.of(DocumentPermission.OWNER))
                 .expression(request.getExpression())
@@ -1802,7 +1803,9 @@ class ExplorerServiceImpl
                 .build();
         final ResultPage<FindResult> results = advancedFind(advancedDocumentFindRequest);
         results.getValues().stream().map(FindResult::getDocRef).forEach(docRef -> {
-            documentPermissionService.changeDocumentPermissions(docRef, request);
+            final SingleDocumentPermissionChangeRequest singleDocumentPermissionChangeRequest =
+                    new SingleDocumentPermissionChangeRequest(docRef, request.getChange());
+            documentPermissionService.changeDocumentPermissions(singleDocumentPermissionChangeRequest);
         });
         return true;
     }

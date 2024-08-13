@@ -32,7 +32,7 @@ import stroom.explorer.shared.FindInContentRequest;
 import stroom.explorer.shared.FindInContentResult;
 import stroom.explorer.shared.FindResult;
 import stroom.explorer.shared.PermissionInheritance;
-import stroom.security.shared.ChangeDocumentPermissionsRequest;
+import stroom.security.shared.BulkDocumentPermissionChangeRequest;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 
@@ -110,5 +110,5 @@ public interface ExplorerService extends Clearable {
 
     String nodeTagsToString(final Set<String> tags);
 
-    Boolean changeDocumentPermssions(ChangeDocumentPermissionsRequest request);
+    Boolean changeDocumentPermssions(BulkDocumentPermissionChangeRequest request);
 }

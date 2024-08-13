@@ -21,13 +21,11 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.security.client.presenter.DocumentPermissionsPresenter.DocumentPermissionsView;
-import stroom.security.shared.DocPermissionResource;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
 
-import com.google.gwt.core.client.GWT;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -223,7 +221,7 @@ public class DocumentPermissionsPresenter
                 .fire();
     }
 
-//    @Override
+    //    @Override
 //    public void onAddPermissionsFromParentFolder(final TaskListener taskListener) {
 //        if (docRefs.size() > 1) {
 //            ConfirmEvent.fire(this, "Are you sure you want to add permissions from parent folders?",

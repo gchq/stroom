@@ -33,7 +33,7 @@ import stroom.explorer.shared.FindInContentRequest;
 import stroom.explorer.shared.FindInContentResult;
 import stroom.explorer.shared.FindResult;
 import stroom.explorer.shared.PermissionInheritance;
-import stroom.security.shared.ChangeDocumentPermissionsRequest;
+import stroom.security.shared.BulkDocumentPermissionChangeRequest;
 import stroom.util.shared.ResultPage;
 
 import java.util.Collection;
@@ -162,7 +162,7 @@ class MockExplorerService implements ExplorerService {
     }
 
     @Override
-    public Boolean changeDocumentPermssions(final ChangeDocumentPermissionsRequest request) {
+    public Boolean changeDocumentPermssions(final BulkDocumentPermissionChangeRequest request) {
         return null;
     }
 }

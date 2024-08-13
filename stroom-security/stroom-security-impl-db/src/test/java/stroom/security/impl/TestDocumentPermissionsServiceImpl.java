@@ -126,11 +126,6 @@ class TestDocumentPermissionsServiceImpl {
         }
     }
 
-    private void clearPermission(final DocRef docRef,
-                                 final User user) {
-        documentPermissionService.clearPermission(docRef, user.asRef());
-    }
-
     private void checkDocumentPermissions(final DocRef docRef,
                                           final User user,
                                           final DocumentPermission permission) {

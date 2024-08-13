@@ -19,10 +19,17 @@ package stroom.security.impl;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
-import stroom.security.impl.event.ClearDocumentPermissionsEvent;
 import stroom.security.impl.event.PermissionChangeEvent;
-import stroom.security.impl.event.SetPermissionEvent;
+import stroom.security.shared.AbstractDocumentPermissionsChange;
+import stroom.security.shared.AbstractDocumentPermissionsChange.AddAllPermissionsFrom;
+import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllPermissions;
+import stroom.security.shared.AbstractDocumentPermissionsChange.RemovePermission;
+import stroom.security.shared.AbstractDocumentPermissionsChange.SetAllPermissionsFrom;
+import stroom.security.shared.AbstractDocumentPermissionsChange.SetPermission;
+import stroom.security.shared.BulkDocumentPermissionChangeRequest;
 import stroom.security.shared.DocumentPermission;
+import stroom.security.shared.PermissionChangeRequest;
+import stroom.security.shared.SingleDocumentPermissionChangeRequest;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.UserRef;
 
@@ -67,20 +74,28 @@ public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handl
     }
 
     @Override
-    public void onChange(final PermissionChangeEvent event) {
+    public void onChange(final PermissionChangeRequest request) {
         if (cache != null) {
-            if (event instanceof final SetPermissionEvent addPermissionEvent) {
-                cache.getIfPresent(addPermissionEvent.getUserRef()).ifPresent(userDocumentPermissions ->
-                        userDocumentPermissions.setPermission(addPermissionEvent.getDocRef().getUuid(),
-                                addPermissionEvent.getPermission()));
+            AbstractDocumentPermissionsChange req = null;
 
-            } else if (event instanceof final ClearDocumentPermissionsEvent clearDocumentPermissionsEvent) {
-                cache.clear();
-//                cache.forEach((userUuid, userDocumentPermissions) -> {
-//                    if (userDocumentPermissions != null) {
-//                        userDocumentPermissions.clearPermission(clearDocumentPermissionsEvent.getDocRef());
-//                    }
-//                });
+            if (request instanceof final SingleDocumentPermissionChangeRequest change) {
+                req = change.getChange();
+            } else if (request instanceof final BulkDocumentPermissionChangeRequest change) {
+                req = change.getChange();
+            }
+
+            if (req != null) {
+                if (req instanceof final SetPermission change) {
+                    cache.invalidate(change.getUserRef());
+                } else if (req instanceof final RemovePermission change) {
+                    cache.invalidate(change.getUserRef());
+                } else if (req instanceof final AddAllPermissionsFrom change) {
+                    cache.clear();
+                } else if (req instanceof final SetAllPermissionsFrom change) {
+                    cache.clear();
+                } else if (req instanceof final RemoveAllPermissions change) {
+                    cache.clear();
+                }
             }
         }
     }

@@ -3449,7 +3449,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/ChangeDocumentPermissionsRequest"
+                "$ref" : "#/components/schemas/BulkDocumentPermissionChangeRequest"
               }
             }
           },
@@ -10329,6 +10329,18 @@
   },
   "components" : {
     "schemas" : {
+      "AbstractDocumentPermissionsChange" : {
+        "type" : "object",
+        "discriminator" : {
+          "propertyName" : "type"
+        },
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "type" ]
+      },
       "AbstractFetchDataResult" : {
         "type" : "object",
         "discriminator" : {
@@ -10558,18 +10570,41 @@
           }
         }
       },
-      "AddDocumentCreatePermissionEvent" : {
+      "AddAllDocumentCreatePermissions" : {
         "type" : "object",
         "allOf" : [ {
-          "$ref" : "#/components/schemas/PermissionChangeEvent"
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "userRef" : {
+              "$ref" : "#/components/schemas/UserRef"
+            }
+          }
+        } ]
+      },
+      "AddAllPermissionsFrom" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "sourceDocRef" : {
+              "$ref" : "#/components/schemas/DocRef"
+            }
+          }
+        } ]
+      },
+      "AddDocumentCreatePermission" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
         }, {
           "type" : "object",
           "properties" : {
             "documentType" : {
-              "type" : "string"
-            },
-            "folderRef" : {
-              "$ref" : "#/components/schemas/DocRef"
+              "$ref" : "#/components/schemas/DocumentType"
             },
             "userRef" : {
               "$ref" : "#/components/schemas/UserRef"
@@ -11185,6 +11220,22 @@
           }
         }
       },
+      "BulkDocumentPermissionChangeRequest" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/PermissionChangeRequest"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "change" : {
+              "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+            },
+            "expression" : {
+              "$ref" : "#/components/schemas/ExpressionOperator"
+            }
+          }
+        } ]
+      },
       "CacheIdentity" : {
         "type" : "object",
         "properties" : {
@@ -11241,31 +11292,6 @@
             "items" : {
               "$ref" : "#/components/schemas/CacheIdentity"
             }
-          }
-        }
-      },
-      "ChangeDocumentPermissionsRequest" : {
-        "type" : "object",
-        "properties" : {
-          "docRef" : {
-            "$ref" : "#/components/schemas/DocRef"
-          },
-          "docType" : {
-            "$ref" : "#/components/schemas/DocumentType"
-          },
-          "documentPermissionChange" : {
-            "type" : "string",
-            "enum" : [ "SET_PERMSSION", "REMOVE_PERMISSION", "ADD_DOCUMENT_CREATE_PERMSSION", "REMOVE_DOCUMENT_CREATE_PERMSSION", "ADD_ALL_DOCUMENT_CREATE_PERMSSIONS", "REMOVE_ALL_DOCUMENT_CREATE_PERMSSIONS", "ADD_ALL_PERMSSIONS_FROM", "SET_ALL_PERMSSIONS_FROM", "REMOVE_ALL_PERMISSIONS" ]
-          },
-          "expression" : {
-            "$ref" : "#/components/schemas/ExpressionOperator"
-          },
-          "permission" : {
-            "type" : "string",
-            "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
-          },
-          "userRef" : {
-            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },
@@ -11365,19 +11391,6 @@
             "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
           }
         }
-      },
-      "ClearDocumentPermissionsEvent" : {
-        "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/PermissionChangeEvent"
-        }, {
-          "type" : "object",
-          "properties" : {
-            "docRef" : {
-              "$ref" : "#/components/schemas/DocRef"
-            }
-          }
-        } ]
       },
       "ClientCredentials" : {
         "type" : "object",
@@ -15931,7 +15944,7 @@
           }
         }
       },
-      "PermissionChangeEvent" : {
+      "PermissionChangeRequest" : {
         "type" : "object",
         "discriminator" : {
           "propertyName" : "type"
@@ -15942,14 +15955,6 @@
           }
         },
         "required" : [ "type" ]
-      },
-      "PermissionChangeRequest" : {
-        "type" : "object",
-        "properties" : {
-          "event" : {
-            "$ref" : "#/components/schemas/PermissionChangeEvent"
-          }
-        }
       },
       "PipelineData" : {
         "type" : "object",
@@ -17353,18 +17358,51 @@
         },
         "required" : [ "loaderPipeline", "referenceFeed" ]
       },
-      "RemoveDocumentCreatePermissionEvent" : {
+      "RemoveAllDocumentCreatePermissions" : {
         "type" : "object",
         "allOf" : [ {
-          "$ref" : "#/components/schemas/PermissionChangeEvent"
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "userRef" : {
+              "$ref" : "#/components/schemas/UserRef"
+            }
+          }
+        } ]
+      },
+      "RemoveAllPermissions" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+        } ]
+      },
+      "RemoveDocumentCreatePermission" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
         }, {
           "type" : "object",
           "properties" : {
             "documentType" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/DocumentType"
             },
-            "folderRef" : {
-              "$ref" : "#/components/schemas/DocRef"
+            "userRef" : {
+              "$ref" : "#/components/schemas/UserRef"
+            }
+          }
+        } ]
+      },
+      "RemovePermission" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "permission" : {
+              "type" : "string",
+              "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
             },
             "userRef" : {
               "$ref" : "#/components/schemas/UserRef"
@@ -18593,6 +18631,19 @@
           }
         }
       },
+      "SetAllPermissionsFrom" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "sourceDocRef" : {
+              "$ref" : "#/components/schemas/DocRef"
+            }
+          }
+        } ]
+      },
       "SetAssignedToRequest" : {
         "type" : "object",
         "properties" : {
@@ -18608,16 +18659,13 @@
           }
         }
       },
-      "SetPermissionEvent" : {
+      "SetPermission" : {
         "type" : "object",
         "allOf" : [ {
-          "$ref" : "#/components/schemas/PermissionChangeEvent"
+          "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
         }, {
           "type" : "object",
           "properties" : {
-            "docRef" : {
-              "$ref" : "#/components/schemas/DocRef"
-            },
             "permission" : {
               "type" : "string",
               "enum" : [ "OWNER", "DELETE", "EDIT", "VIEW", "USE" ]
@@ -18689,6 +18737,22 @@
             "enum" : [ "NANOSECONDS", "MILLISECONDS", "SECONDS", "MINUTES", "HOURS", "DAYS", "WEEKS", "MONTHS", "YEARS" ]
           }
         }
+      },
+      "SingleDocumentPermissionChangeRequest" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/PermissionChangeRequest"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "change" : {
+              "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+            },
+            "docRef" : {
+              "$ref" : "#/components/schemas/DocRef"
+            }
+          }
+        } ]
       },
       "Size" : {
         "type" : "object",

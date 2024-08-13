@@ -150,6 +150,16 @@ public class Button extends ButtonBase implements ButtonView, TaskListener {
     }
 
     @Override
+    public void setEnabled(final boolean enabled) {
+        super.setEnabled(enabled);
+        if (enabled) {
+            getElement().removeClassName("Button--disabled");
+        } else {
+            getElement().addClassName("Button--disabled");
+        }
+    }
+
+    @Override
     public void setText(final String text) {
         this.text.setInnerHTML(text);
     }

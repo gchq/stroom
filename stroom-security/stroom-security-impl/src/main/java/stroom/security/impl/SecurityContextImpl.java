@@ -8,6 +8,9 @@ import stroom.security.api.exception.AuthenticationException;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.HasUserRef;
+import stroom.security.shared.User;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.UserRef;
@@ -16,17 +19,21 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
 @Singleton
 class SecurityContextImpl implements SecurityContext {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SecurityContextImpl.class);
+
     private final ThreadLocal<Boolean> checkTypeThreadLocal = ThreadLocal.withInitial(() -> Boolean.TRUE);
 
     private final UserDocumentPermissionsCache userDocumentPermissionsCache;
     private final UserDocumentCreatePermissionsCache userDocumentCreatePermissionsCache;
     private final UserGroupsCache userGroupsCache;
+    private final UserCache userCache;
     private final UserAppPermissionsCache userAppPermissionsCache;
     private final UserIdentityFactory userIdentityFactory;
 
@@ -35,11 +42,13 @@ class SecurityContextImpl implements SecurityContext {
             final UserDocumentPermissionsCache userDocumentPermissionsCache,
             final UserDocumentCreatePermissionsCache userDocumentCreatePermissionsCache,
             final UserGroupsCache userGroupsCache,
+            final UserCache userCache,
             final UserAppPermissionsCache userAppPermissionsCache,
             final UserIdentityFactory userIdentityFactory) {
         this.userDocumentPermissionsCache = userDocumentPermissionsCache;
         this.userDocumentCreatePermissionsCache = userDocumentCreatePermissionsCache;
         this.userGroupsCache = userGroupsCache;
+        this.userCache = userCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
         this.userIdentityFactory = userIdentityFactory;
     }
@@ -322,6 +331,7 @@ class SecurityContextImpl implements SecurityContext {
 
     @Override
     public <T> T asUserResult(final UserRef userRef, final Supplier<T> supplier) {
+        ensureValidUser(userRef);
         final UserIdentity userIdentity = new BasicUserIdentity(userRef);
         return asUserResult(userIdentity, supplier);
     }
@@ -345,8 +355,21 @@ class SecurityContextImpl implements SecurityContext {
 
     @Override
     public void asUser(final UserRef userRef, final Runnable runnable) {
+        ensureValidUser(userRef);
         final UserIdentity userIdentity = new BasicUserIdentity(userRef);
         asUser(userIdentity, runnable);
+    }
+
+    private void ensureValidUser(final UserRef userRef) {
+        final Optional<User> optional = userCache.getByRef(userRef);
+        if (optional.isEmpty()) {
+            try {
+                throw new PermissionException(userRef, "User '" + userRef.toDisplayString() + "' not found");
+            } catch (final PermissionException e) {
+                LOGGER.error(e::getMessage, e);
+                throw e;
+            }
+        }
     }
 
     /**

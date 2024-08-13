@@ -19,6 +19,7 @@ package stroom.security.impl.event;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
+import stroom.security.shared.PermissionChangeRequest;
 import stroom.util.shared.ResourcePaths;
 
 import jakarta.inject.Inject;
@@ -50,7 +51,7 @@ class PermissionChangeResourceImpl implements PermissionChangeResource {
                         PermissionChangeResource.FIRE_CHANGE_PATH_PART,
                         nodeName),
                 () -> {
-                    permissionChangeEventHandlersProvider.get().fireLocally(request.getEvent());
+                    permissionChangeEventHandlersProvider.get().fireLocally(request);
                     return true;
                 },
                 builder ->

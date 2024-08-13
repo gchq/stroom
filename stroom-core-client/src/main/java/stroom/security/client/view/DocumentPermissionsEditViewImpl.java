@@ -79,6 +79,7 @@ public final class DocumentPermissionsEditViewImpl
         documentPermissionChange.addItems(DocumentPermissionChange.LIST);
         documentPermissionChange.setValue(DocumentPermissionChange.SET_PERMSSION);
         update();
+        apply.setEnabled(false);
     }
 
     @Override
@@ -192,9 +193,24 @@ public final class DocumentPermissionsEditViewImpl
         }
     }
 
+    @Override
+    public void setApplyEnabled(final boolean enabled) {
+        apply.setEnabled(enabled);
+    }
+
     @UiHandler("documentPermissionChange")
     public void onDocumentPermissionChange(final ValueChangeEvent<DocumentPermissionChange> e) {
         update();
+    }
+
+    @UiHandler("permission")
+    public void onPermissionChange(final ValueChangeEvent<DocumentPermission> e) {
+        getUiHandlers().validate();
+    }
+
+    @UiHandler("docType")
+    public void onDocTypeChange(final ValueChangeEvent<DocumentType> e) {
+        getUiHandlers().validate();
     }
 
     @UiHandler("apply")

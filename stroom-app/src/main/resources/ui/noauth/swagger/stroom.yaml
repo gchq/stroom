@@ -2368,7 +2368,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ChangeDocumentPermissionsRequest'
+              $ref: '#/components/schemas/BulkDocumentPermissionChangeRequest'
         description: request
         required: true
       responses:
@@ -7123,6 +7123,15 @@ paths:
       - XSLTs
 components:
   schemas:
+    AbstractDocumentPermissionsChange:
+      type: object
+      discriminator:
+        propertyName: type
+      properties:
+        type:
+          type: string
+      required:
+      - type
     AbstractFetchDataResult:
       type: object
       discriminator:
@@ -7282,16 +7291,30 @@ components:
           type: string
         valid:
           type: boolean
-    AddDocumentCreatePermissionEvent:
+    AddAllDocumentCreatePermissions:
       type: object
       allOf:
-      - $ref: '#/components/schemas/PermissionChangeEvent'
+      - $ref: '#/components/schemas/AbstractDocumentPermissionsChange'
+      - type: object
+        properties:
+          userRef:
+            $ref: '#/components/schemas/UserRef'
+    AddAllPermissionsFrom:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AbstractDocumentPermissionsChange'
+      - type: object
+        properties:
+          sourceDocRef:
+            $ref: '#/components/schemas/DocRef'
+    AddDocumentCreatePermission:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AbstractDocumentPermissionsChange'
       - type: object
         properties:
           documentType:
-            type: string
-          folderRef:
-            $ref: '#/components/schemas/DocRef'
+            $ref: '#/components/schemas/DocumentType'
           userRef:
             $ref: '#/components/schemas/UserRef'
     AddRemoveTagsRequest:
@@ -7726,6 +7749,16 @@ components:
             $ref: '#/components/schemas/ExplorerNode'
         message:
           type: string
+    BulkDocumentPermissionChangeRequest:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/PermissionChangeRequest'
+      - type: object
+        properties:
+          change:
+            $ref: '#/components/schemas/AbstractDocumentPermissionsChange'
+          expression:
+            $ref: '#/components/schemas/ExpressionOperator'
     CacheIdentity:
       type: object
       properties:
@@ -7764,37 +7797,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CacheIdentity'
-    ChangeDocumentPermissionsRequest:
-      type: object
-      properties:
-        docRef:
-          $ref: '#/components/schemas/DocRef'
-        docType:
-          $ref: '#/components/schemas/DocumentType'
-        documentPermissionChange:
-          type: string
-          enum:
-          - SET_PERMSSION
-          - REMOVE_PERMISSION
-          - ADD_DOCUMENT_CREATE_PERMSSION
-          - REMOVE_DOCUMENT_CREATE_PERMSSION
-          - ADD_ALL_DOCUMENT_CREATE_PERMSSIONS
-          - REMOVE_ALL_DOCUMENT_CREATE_PERMSSIONS
-          - ADD_ALL_PERMSSIONS_FROM
-          - SET_ALL_PERMSSIONS_FROM
-          - REMOVE_ALL_PERMISSIONS
-        expression:
-          $ref: '#/components/schemas/ExpressionOperator'
-        permission:
-          type: string
-          enum:
-          - OWNER
-          - DELETE
-          - EDIT
-          - VIEW
-          - USE
-        userRef:
-          $ref: '#/components/schemas/UserRef'
     ChangePasswordRequest:
       type: object
       properties:
@@ -7915,14 +7917,6 @@ components:
           - EDIT
           - VIEW
           - USE
-    ClearDocumentPermissionsEvent:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/PermissionChangeEvent'
-      - type: object
-        properties:
-          docRef:
-            $ref: '#/components/schemas/DocRef'
     ClientCredentials:
       type: object
       properties:
@@ -12071,7 +12065,7 @@ components:
           enum:
           - OPTIONAL
           - MANDATORY
-    PermissionChangeEvent:
+    PermissionChangeRequest:
       type: object
       discriminator:
         propertyName: type
@@ -12080,11 +12074,6 @@ components:
           type: string
       required:
       - type
-    PermissionChangeRequest:
-      type: object
-      properties:
-        event:
-          $ref: '#/components/schemas/PermissionChangeEvent'
     PipelineData:
       type: object
       properties:
@@ -13544,16 +13533,42 @@ components:
       required:
       - loaderPipeline
       - referenceFeed
-    RemoveDocumentCreatePermissionEvent:
+    RemoveAllDocumentCreatePermissions:
       type: object
       allOf:
-      - $ref: '#/components/schemas/PermissionChangeEvent'
+      - $ref: '#/components/schemas/AbstractDocumentPermissionsChange'
+      - type: object
+        properties:
+          userRef:
+            $ref: '#/components/schemas/UserRef'
+    RemoveAllPermissions:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AbstractDocumentPermissionsChange'
+    RemoveDocumentCreatePermission:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AbstractDocumentPermissionsChange'
       - type: object
         properties:
           documentType:
+            $ref: '#/components/schemas/DocumentType'
+          userRef:
+            $ref: '#/components/schemas/UserRef'
+    RemovePermission:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AbstractDocumentPermissionsChange'
+      - type: object
+        properties:
+          permission:
             type: string
-          folderRef:
-            $ref: '#/components/schemas/DocRef'
+            enum:
+            - OWNER
+            - DELETE
+            - EDIT
+            - VIEW
+            - USE
           userRef:
             $ref: '#/components/schemas/UserRef'
     ReprocessDataInfo:
@@ -14466,6 +14481,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SessionDetails'
+    SetAllPermissionsFrom:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AbstractDocumentPermissionsChange'
+      - type: object
+        properties:
+          sourceDocRef:
+            $ref: '#/components/schemas/DocRef'
     SetAssignedToRequest:
       type: object
       properties:
@@ -14476,14 +14499,12 @@ components:
             format: int64
         assignedTo:
           $ref: '#/components/schemas/UserRef'
-    SetPermissionEvent:
+    SetPermission:
       type: object
       allOf:
-      - $ref: '#/components/schemas/PermissionChangeEvent'
+      - $ref: '#/components/schemas/AbstractDocumentPermissionsChange'
       - type: object
         properties:
-          docRef:
-            $ref: '#/components/schemas/DocRef'
           permission:
             type: string
             enum:
@@ -14544,6 +14565,16 @@ components:
           - WEEKS
           - MONTHS
           - YEARS
+    SingleDocumentPermissionChangeRequest:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/PermissionChangeRequest'
+      - type: object
+        properties:
+          change:
+            $ref: '#/components/schemas/AbstractDocumentPermissionsChange'
+          docRef:
+            $ref: '#/components/schemas/DocRef'
     Size:
       type: object
       properties:

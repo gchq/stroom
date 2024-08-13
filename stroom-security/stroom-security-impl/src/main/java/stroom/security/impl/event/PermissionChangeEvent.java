@@ -16,24 +16,17 @@
 
 package stroom.security.impl.event;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import stroom.security.shared.PermissionChangeRequest;
 
-@JsonTypeInfo(
-        use = JsonTypeInfo.Id.NAME,
-        property = "type"
-)
-@JsonSubTypes({
-        @Type(value = SetPermissionEvent.class, name = "addPermissionEvent"),
-        @Type(value = AddDocumentCreatePermissionEvent.class, name = "addDocumentCreatePermissionEvent"),
-        @Type(value = RemoveDocumentCreatePermissionEvent.class, name = "removeDocumentCreatePermissionEvent"),
-        @Type(value = ClearDocumentPermissionsEvent.class, name = "clearDocumentPermissionsEvent")
-})
-public interface PermissionChangeEvent {
+public class PermissionChangeEvent {
 
-    interface Handler {
+    public static void fire(final PermissionChangeEventBus eventBus,
+                            final PermissionChangeRequest request) {
+        eventBus.fire(request);
+    }
 
-        void onChange(PermissionChangeEvent event);
+    public interface Handler {
+
+        void onChange(PermissionChangeRequest request);
     }
 }

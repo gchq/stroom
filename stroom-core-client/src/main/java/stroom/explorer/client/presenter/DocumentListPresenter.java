@@ -42,6 +42,7 @@ public class DocumentListPresenter extends MyPresenterWidget<PagerView> {
     private ExpressionOperator lastFilter;
     private boolean initialised;
     private boolean focusText;
+    private ResultPage<FindResult> currentResults;
     private FindDocResultListHandler findResultListHandler = new FindDocResultListHandler() {
         @Override
         public void openDocument(final FindResult match) {
@@ -98,6 +99,7 @@ public class DocumentListPresenter extends MyPresenterWidget<PagerView> {
                         .create(EXPLORER_RESOURCE)
                         .method(res -> res.advancedFind(request))
                         .onSuccess(resultPage -> {
+                            currentResults = resultPage;
                             if (resultPage.getPageStart() != cellTable.getPageStart()) {
                                 cellTable.setPageStart(resultPage.getPageStart());
                             }
@@ -171,5 +173,9 @@ public class DocumentListPresenter extends MyPresenterWidget<PagerView> {
 
     public MultiSelectionModelImpl<FindResult> getSelectionModel() {
         return selectionModel;
+    }
+
+    public ResultPage<FindResult> getCurrentResults() {
+        return currentResults;
     }
 }

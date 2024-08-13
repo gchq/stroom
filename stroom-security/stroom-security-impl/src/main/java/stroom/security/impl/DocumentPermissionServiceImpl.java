@@ -21,16 +21,23 @@ import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerService;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
-import stroom.security.impl.event.AddDocumentCreatePermissionEvent;
-import stroom.security.impl.event.ClearDocumentPermissionsEvent;
+import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventBus;
-import stroom.security.impl.event.RemoveDocumentCreatePermissionEvent;
-import stroom.security.impl.event.SetPermissionEvent;
+import stroom.security.shared.AbstractDocumentPermissionsChange;
+import stroom.security.shared.AbstractDocumentPermissionsChange.AddAllDocumentCreatePermissions;
+import stroom.security.shared.AbstractDocumentPermissionsChange.AddAllPermissionsFrom;
+import stroom.security.shared.AbstractDocumentPermissionsChange.AddDocumentCreatePermission;
+import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllDocumentCreatePermissions;
+import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllPermissions;
+import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveDocumentCreatePermission;
+import stroom.security.shared.AbstractDocumentPermissionsChange.RemovePermission;
+import stroom.security.shared.AbstractDocumentPermissionsChange.SetAllPermissionsFrom;
+import stroom.security.shared.AbstractDocumentPermissionsChange.SetPermission;
 import stroom.security.shared.AppPermission;
-import stroom.security.shared.ChangeDocumentPermissionsRequest;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentUserPermissions;
 import stroom.security.shared.FetchDocumentUserPermissionsRequest;
+import stroom.security.shared.SingleDocumentPermissionChangeRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PermissionException;
@@ -80,178 +87,127 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     public void setPermission(final DocRef docRef, final UserRef userRef, final DocumentPermission permission) {
         checkSetPermission(docRef);
         documentPermissionDao.setDocumentUserPermission(docRef.getUuid(), userRef.getUuid(), permission);
-        SetPermissionEvent.fire(permissionChangeEventBus, userRef, docRef, permission);
+
+        final SetPermission req = new SetPermission(userRef, permission);
+        PermissionChangeEvent.fire(permissionChangeEventBus,
+                new SingleDocumentPermissionChangeRequest(docRef, req));
     }
 
     @Override
-    public void clearPermission(final DocRef docRef, final UserRef userRef) {
-        checkSetPermission(docRef);
-        documentPermissionDao.removeDocumentUserPermission(docRef.getUuid(), userRef.getUuid());
-        SetPermissionEvent.fire(permissionChangeEventBus, userRef, docRef, null);
-    }
-
-//    @Override
-//    public Set<String> getDocumentCreatePermissions(final DocRef docRef, final UserRef userRef) {
-//        checkGetPermission(docRef);
-//        return documentPermissionDao.getDocumentCreatePermissions(docRef.getUuid(), userRef.getUuid());
-//    }
-
-
-    @Override
-    public Boolean changeDocumentPermissions(final DocRef docRef, final ChangeDocumentPermissionsRequest request) {
+    public Boolean changeDocumentPermissions(final SingleDocumentPermissionChangeRequest request) {
+        final DocRef docRef = request.getDocRef();
+        final AbstractDocumentPermissionsChange change = request.getChange();
         Objects.requireNonNull(docRef, "docRef is null");
         Objects.requireNonNull(docRef.getUuid(), "docRef UUID is null");
 
         // Check we have permission to change permissions of the supplied document.
         checkSetPermission(docRef);
 
-        switch (request.getDocumentPermissionChange()) {
-            case SET_PERMSSION: {
-                Objects.requireNonNull(request.getUserRef(), "Null user ref");
-                Objects.requireNonNull(request.getPermission(), "Null permission");
-                final DocumentPermission current = documentPermissionDao
-                        .getDocumentUserPermission(docRef.getUuid(), request.getUserRef().getUuid());
-                if (current == null || !current.isEqualOrHigher(request.getPermission())) {
-                    documentPermissionDao.setDocumentUserPermission(
-                            docRef.getUuid(),
-                            request.getUserRef().getUuid(),
-                            request.getPermission());
-                    SetPermissionEvent.fire(
-                            permissionChangeEventBus,
-                            request.getUserRef(),
-                            docRef,
-                            request.getPermission());
-                }
-                break;
-            }
-            case REMOVE_PERMISSION: {
-                Objects.requireNonNull(request.getUserRef(), "Null user ref");
-                Objects.requireNonNull(request.getPermission(), "Null permission");
-                final DocumentPermission current = documentPermissionDao
-                        .getDocumentUserPermission(docRef.getUuid(), request.getUserRef().getUuid());
-                if (current == null || !current.isHigher(request.getPermission())) {
-                    documentPermissionDao.removeDocumentUserPermission(
-                            docRef.getUuid(),
-                            request.getUserRef().getUuid());
-                    SetPermissionEvent.fire(
-                            permissionChangeEventBus,
-                            request.getUserRef(),
-                            docRef,
-                            request.getPermission());
-                }
-                break;
+        if (change instanceof final SetPermission req) {
+            Objects.requireNonNull(req.getUserRef(), "Null user ref");
+            Objects.requireNonNull(req.getPermission(), "Null permission");
+            final DocumentPermission current = documentPermissionDao
+                    .getDocumentUserPermission(docRef.getUuid(), req.getUserRef().getUuid());
+            if (current == null || !current.isEqualOrHigher(req.getPermission())) {
+                documentPermissionDao.setDocumentUserPermission(
+                        docRef.getUuid(),
+                        req.getUserRef().getUuid(),
+                        req.getPermission());
+                PermissionChangeEvent.fire(permissionChangeEventBus, request);
             }
 
-
-            case ADD_DOCUMENT_CREATE_PERMSSION: {
-                // Only applies to folders.
-                if (isFolder(docRef)) {
-                    Objects.requireNonNull(request.getUserRef(), "Null user ref");
-                    Objects.requireNonNull(request.getDocType(), "Null doc type");
-                    documentPermissionDao.addDocumentUserCreatePermission(
-                            docRef.getUuid(),
-                            request.getUserRef().getUuid(),
-                            request.getDocType().getType());
-                    AddDocumentCreatePermissionEvent.fire(
-                            permissionChangeEventBus,
-                            request.getUserRef(),
-                            docRef,
-                            request.getDocType().getType());
-                }
-                break;
-            }
-            case REMOVE_DOCUMENT_CREATE_PERMSSION: {
-                // Only applies to folders.
-                if (isFolder(docRef)) {
-                    Objects.requireNonNull(request.getUserRef(), "Null user ref");
-                    Objects.requireNonNull(request.getDocType(), "Null doc type");
-                    documentPermissionDao.removeDocumentUserCreatePermission(
-                            docRef.getUuid(),
-                            request.getUserRef().getUuid(),
-                            request.getDocType().getType());
-                    RemoveDocumentCreatePermissionEvent.fire(
-                            permissionChangeEventBus,
-                            request.getUserRef(),
-                            docRef,
-                            request.getDocType().getType());
-                }
-                break;
+        } else if (change instanceof final RemovePermission req) {
+            Objects.requireNonNull(req.getUserRef(), "Null user ref");
+            Objects.requireNonNull(req.getPermission(), "Null permission");
+            final DocumentPermission current = documentPermissionDao
+                    .getDocumentUserPermission(docRef.getUuid(), req.getUserRef().getUuid());
+            if (current == null || !current.isHigher(req.getPermission())) {
+                documentPermissionDao.removeDocumentUserPermission(
+                        docRef.getUuid(),
+                        req.getUserRef().getUuid());
+                PermissionChangeEvent.fire(permissionChangeEventBus, request);
             }
 
-
-            case ADD_ALL_DOCUMENT_CREATE_PERMSSIONS: {
-                // Only applies to folders.
-                if (isFolder(docRef)) {
-                    Objects.requireNonNull(request.getUserRef(), "Null user ref");
-                    documentPermissionDao.removeDocumentUserCreatePermissions(
-                            docRef.getUuid(),
-                            request.getUserRef().getUuid());
-                    documentPermissionDao.addDocumentUserCreatePermission(
-                            docRef.getUuid(),
-                            request.getUserRef().getUuid(),
-                            ALL_CREATE_PERMISSIONS);
-                    AddDocumentCreatePermissionEvent.fire(
-                            permissionChangeEventBus,
-                            request.getUserRef(),
-                            docRef,
-                            ALL_CREATE_PERMISSIONS);
-                }
-                break;
-            }
-            case REMOVE_ALL_DOCUMENT_CREATE_PERMSSIONS: {
-                // Only applies to folders.
-                if (isFolder(docRef)) {
-                    Objects.requireNonNull(request.getUserRef(), "Null user ref");
-                    documentPermissionDao.removeDocumentUserCreatePermissions(
-                            docRef.getUuid(),
-                            request.getUserRef().getUuid());
-                    RemoveDocumentCreatePermissionEvent.fire(
-                            permissionChangeEventBus,
-                            request.getUserRef(),
-                            docRef,
-                            ALL_CREATE_PERMISSIONS);
-                }
-                break;
+        } else if (change instanceof final AddDocumentCreatePermission req) {
+            // Only applies to folders.
+            if (isFolder(docRef)) {
+                Objects.requireNonNull(req.getUserRef(), "Null user ref");
+                Objects.requireNonNull(req.getDocumentType(), "Null documentType");
+                documentPermissionDao.addDocumentUserCreatePermission(
+                        docRef.getUuid(),
+                        req.getUserRef().getUuid(),
+                        req.getDocumentType().getType());
+                PermissionChangeEvent.fire(permissionChangeEventBus, request);
             }
 
+        } else if (change instanceof final RemoveDocumentCreatePermission req) {
+            // Only applies to folders.
+            if (isFolder(docRef)) {
+                Objects.requireNonNull(req.getUserRef(), "Null user ref");
+                Objects.requireNonNull(req.getDocumentType(), "Null documentType");
+                documentPermissionDao.removeDocumentUserCreatePermission(
+                        docRef.getUuid(),
+                        req.getUserRef().getUuid(),
+                        req.getDocumentType().getType());
+                PermissionChangeEvent.fire(permissionChangeEventBus, request);
+            }
 
-            case ADD_ALL_PERMSSIONS_FROM: {
-                Objects.requireNonNull(request.getDocRef(), "Null doc ref");
-                documentPermissionDao.addDocumentPermissions(
-                        request.getDocRef().getUuid(),
+        } else if (change instanceof final AddAllDocumentCreatePermissions req) {
+            // Only applies to folders.
+            if (isFolder(docRef)) {
+                Objects.requireNonNull(req.getUserRef(), "Null user ref");
+                documentPermissionDao.removeDocumentUserCreatePermissions(
+                        docRef.getUuid(),
+                        req.getUserRef().getUuid());
+                documentPermissionDao.addDocumentUserCreatePermission(
+                        docRef.getUuid(),
+                        req.getUserRef().getUuid(),
+                        ALL_CREATE_PERMISSIONS);
+                PermissionChangeEvent.fire(permissionChangeEventBus, request);
+            }
+
+        } else if (change instanceof final RemoveAllDocumentCreatePermissions req) {
+            // Only applies to folders.
+            if (isFolder(docRef)) {
+                Objects.requireNonNull(req.getUserRef(), "Null user ref");
+                documentPermissionDao.removeDocumentUserCreatePermissions(
+                        docRef.getUuid(),
+                        req.getUserRef().getUuid());
+                PermissionChangeEvent.fire(permissionChangeEventBus, request);
+            }
+
+        } else if (change instanceof final AddAllPermissionsFrom req) {
+            Objects.requireNonNull(req.getSourceDocRef(), "Null sourceDocRef");
+            documentPermissionDao.addDocumentPermissions(
+                    req.getSourceDocRef().getUuid(),
+                    docRef.getUuid());
+            // Only applies to folders.
+            if (isFolder(docRef)) {
+                documentPermissionDao.addDocumentCreatePermissions(
+                        req.getSourceDocRef().getUuid(),
                         docRef.getUuid());
-                // Only applies to folders.
-                if (isFolder(docRef)) {
-                    documentPermissionDao.addDocumentCreatePermissions(
-                            request.getDocRef().getUuid(),
-                            docRef.getUuid());
-                }
-                ClearDocumentPermissionsEvent.fire(
-                        permissionChangeEventBus,
-                        docRef);
-                break;
             }
-            case SET_ALL_PERMSSIONS_FROM: {
-                Objects.requireNonNull(request.getDocRef(), "Null doc ref");
-                documentPermissionDao.setDocumentPermissions(
-                        request.getDocRef().getUuid(),
-                        docRef.getUuid());
-                // Only applies to folders.
-                if (isFolder(docRef)) {
-                    documentPermissionDao.setDocumentCreatePermissions(
-                            request.getDocRef().getUuid(),
-                            docRef.getUuid());
-                }
-                ClearDocumentPermissionsEvent.fire(
-                        permissionChangeEventBus,
-                        docRef);
-                break;
-            }
+            PermissionChangeEvent.fire(permissionChangeEventBus, request);
 
-            case REMOVE_ALL_PERMISSIONS: {
-                documentPermissionDao.removeAllDocumentPermissions(docRef.getUuid());
-                break;
+        } else if (change instanceof final SetAllPermissionsFrom req) {
+            Objects.requireNonNull(req.getSourceDocRef(), "Null sourceDocRef");
+            documentPermissionDao.setDocumentPermissions(
+                    req.getSourceDocRef().getUuid(),
+                    docRef.getUuid());
+            // Only applies to folders.
+            if (isFolder(docRef)) {
+                documentPermissionDao.setDocumentCreatePermissions(
+                        req.getSourceDocRef().getUuid(),
+                        docRef.getUuid());
             }
+            PermissionChangeEvent.fire(permissionChangeEventBus, request);
+
+        } else if (change instanceof final RemoveAllPermissions req) {
+            documentPermissionDao.removeAllDocumentPermissions(docRef.getUuid());
+            PermissionChangeEvent.fire(permissionChangeEventBus, request);
+
+        } else {
+            throw new RuntimeException("Unexpected request type: " + request.getClass().getName());
         }
 
         return true;
@@ -264,7 +220,9 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         if (isFolder(docRef)) {
             documentPermissionDao.removeAllDocumentCreatePermissions(docRef.getUuid());
         }
-        ClearDocumentPermissionsEvent.fire(permissionChangeEventBus, docRef);
+        final RemoveAllPermissions req = new RemoveAllPermissions();
+        PermissionChangeEvent.fire(permissionChangeEventBus,
+                new SingleDocumentPermissionChangeRequest(docRef, req));
     }
 
     @Override
@@ -280,7 +238,10 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         if (isFolder(sourceDocRef)) {
             documentPermissionDao.addDocumentCreatePermissions(sourceDocRef.getUuid(), destDocRef.getUuid());
         }
-        ClearDocumentPermissionsEvent.fire(permissionChangeEventBus, destDocRef);
+
+        final AddAllPermissionsFrom req = new AddAllPermissionsFrom(sourceDocRef);
+        PermissionChangeEvent.fire(permissionChangeEventBus,
+                new SingleDocumentPermissionChangeRequest(destDocRef, req));
     }
 
     private void checkGetPermission(final DocRef docRef) {

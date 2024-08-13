@@ -1,10 +1,10 @@
 package stroom.security.api;
 
 import stroom.docref.DocRef;
-import stroom.security.shared.ChangeDocumentPermissionsRequest;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentUserPermissions;
 import stroom.security.shared.FetchDocumentUserPermissionsRequest;
+import stroom.security.shared.SingleDocumentPermissionChangeRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 
@@ -29,7 +29,7 @@ public interface DocumentPermissionService {
 
     void setPermission(DocRef docRef, UserRef userRef, DocumentPermission permission);
 
-    void clearPermission(DocRef docRef, UserRef userRef);
+//    void clearPermission(DocRef docRef, UserRef userRef);
 
 
 //    Set<String> getDocumentCreatePermissions(DocRef docRef, UserRef userRef);
@@ -56,7 +56,7 @@ public interface DocumentPermissionService {
     void addDocumentPermissions(DocRef sourceDocRef,
                                 DocRef destDocRef);
 
-    Boolean changeDocumentPermissions(DocRef docRef, ChangeDocumentPermissionsRequest request);
+    Boolean changeDocumentPermissions(SingleDocumentPermissionChangeRequest request);
 
     ResultPage<DocumentUserPermissions> fetchDocumentUserPermissions(FetchDocumentUserPermissionsRequest request);
 }

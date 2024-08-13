@@ -16,6 +16,9 @@
 
 package stroom.security.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.ConfirmEvent;
+import stroom.config.global.client.presenter.ErrorEvent;
 import stroom.data.client.presenter.ExpressionPresenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -31,12 +34,15 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.client.presenter.DocumentPermissionsEditPresenter.DocumentPermissionsEditView;
-import stroom.security.shared.ChangeDocumentPermissionsRequest;
+import stroom.security.shared.AbstractDocumentPermissionsChange;
+import stroom.security.shared.BulkDocumentPermissionChangeRequest;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionChange;
 import stroom.security.shared.DocumentPermissionFields;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.client.Preset;
+import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskListener;
+import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -52,6 +58,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -99,9 +106,14 @@ public class DocumentPermissionsEditPresenter
         view.setUiHandlers(this);
 
         // Filter
-        docFilter = documentListPresenter.getView().addButton(SvgPresets.FILTER);
-        docView = documentListPresenter.getView().addButton(SvgPresets.LOCKED_AMBER);
-        docView.setEnabled(false);
+        docFilter = documentListPresenter.getView().addButton(new Preset(
+                SvgImage.FILTER,
+                "Filter Documents To Apply Permissions Changes On",
+                true));
+        docView = documentListPresenter.getView().addButton(new Preset(
+                SvgImage.EYE,
+                "View Permissions For Selected Document",
+                false));
         expression = ExpressionOperator.builder().op(Op.AND).build();
 
         documentTypeCache.fetch(types -> {
@@ -130,7 +142,6 @@ public class DocumentPermissionsEditPresenter
     @Override
     protected void onBind() {
         super.onBind();
-
 
         registerHandler(docFilter.addClickHandler(event -> {
             final ExpressionPresenter presenter = docFilterPresenterProvider.get();
@@ -245,17 +256,135 @@ public class DocumentPermissionsEditPresenter
     }
 
     @Override
+    public void validate() {
+        final ResultPage<FindResult> docs = documentListPresenter.getCurrentResults();
+        int docCount = 0;
+        if (docs != null) {
+            docCount = docs.getPageResponse().getLength();
+        }
+
+        if (docCount > 0) {
+            try {
+                final BulkDocumentPermissionChangeRequest request = createRequest();
+                // No error so valid.
+                getView().setApplyEnabled(true);
+            } catch (final Exception e) {
+                getView().setApplyEnabled(false);
+            }
+        } else {
+            getView().setApplyEnabled(false);
+        }
+    }
+
+    private BulkDocumentPermissionChangeRequest createRequest() {
+        final DocumentPermissionChange change = getView().getChange();
+        Objects.requireNonNull(change, "Change is null");
+
+        return new BulkDocumentPermissionChangeRequest(expression, createChange());
+    }
+
+    private AbstractDocumentPermissionsChange createChange() {
+        final DocumentPermissionChange change = getView().getChange();
+        Objects.requireNonNull(change, "Change is null");
+
+        switch (change) {
+            case SET_PERMSSION: {
+                return new AbstractDocumentPermissionsChange.SetPermission(
+                        userRefSelectionBoxPresenter.getSelected(),
+                        getView().getPermission());
+            }
+            case REMOVE_PERMISSION: {
+                return new AbstractDocumentPermissionsChange.RemovePermission(
+                        userRefSelectionBoxPresenter.getSelected(),
+                        getView().getPermission());
+            }
+
+
+            case ADD_DOCUMENT_CREATE_PERMSSION: {
+                return new AbstractDocumentPermissionsChange.AddDocumentCreatePermission(
+                        userRefSelectionBoxPresenter.getSelected(),
+                        getView().getDocType());
+            }
+            case REMOVE_DOCUMENT_CREATE_PERMSSION: {
+                return new AbstractDocumentPermissionsChange.RemoveDocumentCreatePermission(
+                        userRefSelectionBoxPresenter.getSelected(),
+                        getView().getDocType());
+            }
+
+
+            case ADD_ALL_DOCUMENT_CREATE_PERMSSIONS: {
+                return new AbstractDocumentPermissionsChange.AddAllDocumentCreatePermissions(
+                        userRefSelectionBoxPresenter.getSelected());
+            }
+            case REMOVE_ALL_DOCUMENT_CREATE_PERMSSIONS: {
+                return new AbstractDocumentPermissionsChange.RemoveAllDocumentCreatePermissions(
+                        userRefSelectionBoxPresenter.getSelected());
+            }
+
+
+            case ADD_ALL_PERMSSIONS_FROM: {
+                return new AbstractDocumentPermissionsChange.AddAllPermissionsFrom(
+                        docSelectionBoxPresenter.getSelectedEntityReference());
+            }
+            case SET_ALL_PERMSSIONS_FROM: {
+                return new AbstractDocumentPermissionsChange.SetAllPermissionsFrom(
+                        docSelectionBoxPresenter.getSelectedEntityReference());
+            }
+
+            case REMOVE_ALL_PERMISSIONS: {
+                return new AbstractDocumentPermissionsChange.RemoveAllPermissions();
+            }
+        }
+        throw new RuntimeException("Unexpected permission change type");
+    }
+
+    @Override
     public void apply(final TaskListener taskListener) {
-        final ChangeDocumentPermissionsRequest request = new ChangeDocumentPermissionsRequest(
-                expression,
-                getView().getChange(),
-                userRefSelectionBoxPresenter.getSelected(),
-                docSelectionBoxPresenter.getSelectedEntityReference(),
-                getView().getDocType(),
-                getView().getPermission());
+        final ResultPage<FindResult> docs = documentListPresenter.getCurrentResults();
+        int docCount = 0;
+        if (docs != null) {
+            docCount = docs.getPageResponse().getLength();
+        }
+
+        if (docCount == 0) {
+            ErrorEvent.fire(
+                    this,
+                    "No documents are included in the current filter for this permission change.");
+        } else {
+            String message = "Are you sure you want to change permissions on this document?";
+            if (docCount > 1) {
+                message = "Are you sure you want to change permissions for " + docCount + " documents?";
+            }
+            ConfirmEvent.fire(
+                    this,
+                    message,
+                    ok -> {
+                        if (ok) {
+                            doApply(taskListener);
+                        }
+                    }
+            );
+        }
+    }
+
+    private void doApply(final TaskListener taskListener) {
+        final BulkDocumentPermissionChangeRequest request = createRequest();
         restFactory
                 .create(EXPLORER_RESOURCE)
                 .method(res -> res.changeDocumentPermssions(request))
+                .onSuccess(result -> {
+                    if (result) {
+                        AlertEvent.fireInfo(
+                                this,
+                                "Successfully changed permissions.",
+                                null);
+                    } else {
+                        AlertEvent.fireError(
+                                this,
+                                "Failed to change permissions.",
+                                null);
+                    }
+                })
                 .taskListener(taskListener)
                 .exec();
     }
@@ -275,5 +404,7 @@ public class DocumentPermissionsEditPresenter
         DocumentType getDocType();
 
         DocumentPermission getPermission();
+
+        void setApplyEnabled(boolean enabled);
     }
 }

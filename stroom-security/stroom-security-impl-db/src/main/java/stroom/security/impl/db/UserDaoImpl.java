@@ -154,10 +154,15 @@ public class UserDaoImpl implements UserDao {
         return genericDao.update(user);
     }
 
+    /**
+     * Only do a logical delete.
+     * @param uuid
+     */
     @Override
     public void delete(final String uuid) {
         JooqUtil.context(securityDbConnProvider, context -> context
-                .deleteFrom(STROOM_USER)
+                .update(STROOM_USER)
+                .set(STROOM_USER.ENABLED, false)
                 .where(STROOM_USER.UUID.eq(uuid))
                 .execute()
         );
@@ -174,6 +179,7 @@ public class UserDaoImpl implements UserDao {
                         .select()
                         .from(STROOM_USER)
                         .where(condition)
+                        .and(STROOM_USER.ENABLED.eq(true))
                         .orderBy(orderFields)
                         .offset(offset)
                         .limit(limit)
@@ -228,6 +234,7 @@ public class UserDaoImpl implements UserDao {
                         .on(STROOM_USER.UUID.eq(STROOM_USER_GROUP.USER_UUID))
                         .where(STROOM_USER_GROUP.GROUP_UUID.eq(groupUuid))
                         .and(condition)
+                        .and(STROOM_USER.ENABLED.eq(true))
                         .orderBy(orderFields)
                         .offset(offset)
                         .limit(limit)
@@ -250,6 +257,7 @@ public class UserDaoImpl implements UserDao {
                         .join(STROOM_USER_GROUP)
                         .on(STROOM_USER.UUID.eq(STROOM_USER_GROUP.GROUP_UUID))
                         .where(STROOM_USER_GROUP.USER_UUID.eq(userUuid))
+                        .and(STROOM_USER.ENABLED.eq(true))
                         .and(condition)
                         .orderBy(orderFields)
                         .offset(offset)

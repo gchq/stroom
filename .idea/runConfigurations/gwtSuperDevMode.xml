@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Stroom Node 1 (GWT Super Dev)" type="GradleRunConfiguration" factoryName="Gradle">
+  <configuration default="false" name="gwtSuperDevMode" type="GradleRunConfiguration" factoryName="Gradle">
     <ExternalSystemSettings>
       <option name="executionName" />
-      <option name="externalProjectPath" value="$PROJECT_DIR$" />
+      <option name="externalProjectPath" value="$PROJECT_DIR$/stroom-app-gwt" />
       <option name="externalSystemIdString" value="GRADLE" />
       <option name="scriptParameters" value="" />
       <option name="taskDescriptions">
@@ -10,7 +10,7 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value="&quot;Stroom Node 1 (GWT Super Dev)&quot;" />
+          <option value="gwtSuperDevMode" />
         </list>
       </option>
       <option name="vmOptions" />

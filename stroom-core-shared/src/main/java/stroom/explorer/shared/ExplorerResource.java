@@ -18,7 +18,7 @@ package stroom.explorer.shared;
 
 import stroom.docref.DocContentHighlights;
 import stroom.docref.DocRef;
-import stroom.security.shared.ChangeDocumentPermissionsRequest;
+import stroom.security.shared.BulkDocumentPermissionChangeRequest;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
@@ -207,7 +207,7 @@ public interface ExplorerResource extends RestResource, DirectRestService {
             summary = "Change document permissions",
             operationId = "changeDocumentPermssions")
     Boolean changeDocumentPermssions(
-            @Parameter(description = "request", required = true) ChangeDocumentPermissionsRequest request);
+            @Parameter(description = "request", required = true) BulkDocumentPermissionChangeRequest request);
 
     // --------------------------------------------------------------------------------
 
