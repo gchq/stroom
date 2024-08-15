@@ -45,4 +45,28 @@ public class FindUserCriteria extends ExpressionCriteria {
                             @JsonProperty("expression") final ExpressionOperator expression) {
         super(pageRequest, sortList, expression);
     }
+
+    public static class Builder extends AbstractBuilder<FindUserCriteria, Builder> {
+
+        public Builder() {
+
+        }
+
+        public Builder(final FindUserCriteria expressionCriteria) {
+            super(expressionCriteria);
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        @Override
+        public FindUserCriteria build() {
+            return new FindUserCriteria(
+                    pageRequest,
+                    sortList,
+                    expression);
+        }
+    }
 }

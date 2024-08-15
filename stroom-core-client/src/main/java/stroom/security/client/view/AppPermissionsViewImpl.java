@@ -16,28 +16,27 @@
 
 package stroom.security.client.view;
 
-import stroom.security.client.presenter.UserEditPresenter.UserEditView;
-import stroom.security.client.presenter.UserEditUiHandlers;
+import stroom.security.client.presenter.AppPermissionsPresenter.AppPermissionsView;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+import com.gwtplatform.mvp.client.ViewImpl;
 
-public final class UserEditViewImpl extends ViewWithUiHandlers<UserEditUiHandlers> implements UserEditView {
+public final class AppPermissionsViewImpl
+        extends ViewImpl
+        implements AppPermissionsView {
 
     private final Widget widget;
+
     @UiField
-    SimplePanel userGroups;
-    @UiField
-    SimplePanel appPermissions;
+    SimplePanel permissions;
 
     @Inject
-    public UserEditViewImpl(final EventBus eventBus, final Binder binder) {
+    public AppPermissionsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -47,16 +46,11 @@ public final class UserEditViewImpl extends ViewWithUiHandlers<UserEditUiHandler
     }
 
     @Override
-    public void setUserGroupsView(View view) {
-        userGroups.setWidget(view.asWidget());
+    public void setPermissionsView(View view) {
+        permissions.setWidget(view.asWidget());
     }
 
-    @Override
-    public void setAppPermissionsView(View view) {
-        appPermissions.setWidget(view.asWidget());
-    }
-
-    public interface Binder extends UiBinder<Widget, UserEditViewImpl> {
+    public interface Binder extends UiBinder<Widget, AppPermissionsViewImpl> {
 
     }
 }

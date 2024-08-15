@@ -19,6 +19,7 @@ package stroom.security.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.config.global.client.presenter.ErrorEvent;
+import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.client.presenter.ExpressionPresenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -54,7 +55,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
@@ -64,7 +64,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 
 public class DocumentPermissionsEditPresenter
-        extends MyPresenterWidget<DocumentPermissionsEditView>
+        extends ContentTabPresenter<DocumentPermissionsEditView>
         implements DocumentPermissionsEditUiHandlers {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
@@ -214,20 +214,7 @@ public class DocumentPermissionsEditPresenter
     }
 
     public void show(final ExpressionOperator expression, final Runnable onClose) {
-        this.expression = expression;
-
-        // We only want to see documents tha the current user is effectively the owner of as they can't change
-        // permissions on anything else.
-        documentListPresenter.setRequiredPermissions(Set.of(DocumentPermission.OWNER));
-
-//        final ExplorerTreeFilterBuilder explorerTreeFilterBuilder =
-//                findDocResultListPresenter.getExplorerTreeFilterBuilder();
-//        // Don't want favourites in the recent items as they are effectively duplicates
-//        explorerTreeFilterBuilder.setIncludedRootTypes(ExplorerConstants.SYSTEM);
-//        explorerTreeFilterBuilder.setNameFilter("test", true);
-        documentListPresenter.setExpression(expression);
-        documentListPresenter.refresh();
-
+        setExpression(expression);
 
         final PopupSize popupSize = PopupSize.builder()
                 .width(Size
@@ -253,6 +240,22 @@ public class DocumentPermissionsEditPresenter
                     e.hide();
                 })
                 .fire();
+    }
+
+    public void setExpression(final ExpressionOperator expression) {
+        this.expression = expression;
+
+        // We only want to see documents tha the current user is effectively the owner of as they can't change
+        // permissions on anything else.
+        documentListPresenter.setRequiredPermissions(Set.of(DocumentPermission.OWNER));
+
+//        final ExplorerTreeFilterBuilder explorerTreeFilterBuilder =
+//                findDocResultListPresenter.getExplorerTreeFilterBuilder();
+//        // Don't want favourites in the recent items as they are effectively duplicates
+//        explorerTreeFilterBuilder.setIncludedRootTypes(ExplorerConstants.SYSTEM);
+//        explorerTreeFilterBuilder.setNameFilter("test", true);
+        documentListPresenter.setExpression(expression);
+        documentListPresenter.refresh();
     }
 
     @Override
@@ -387,6 +390,21 @@ public class DocumentPermissionsEditPresenter
                 })
                 .taskListener(taskListener)
                 .exec();
+    }
+
+    @Override
+    public SvgImage getIcon() {
+        return SvgImage.LOCKED;
+    }
+
+    @Override
+    public String getLabel() {
+        return "Document Permissions";
+    }
+
+    @Override
+    public String getType() {
+        return "DocumentPermissions";
     }
 
     public interface DocumentPermissionsEditView extends View, Focus, HasUiHandlers<DocumentPermissionsEditUiHandlers> {

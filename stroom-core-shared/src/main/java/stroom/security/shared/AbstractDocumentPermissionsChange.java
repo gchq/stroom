@@ -219,5 +219,19 @@ public abstract class AbstractDocumentPermissionsChange {
     @JsonInclude(Include.NON_NULL)
     public static class RemoveAllPermissions extends AbstractDocumentPermissionsChange {
 
+        /**
+         * We need to include at least one field for RestyGWT to work.
+         **/
+        @JsonProperty
+        private final Boolean ignore;
+
+        public RemoveAllPermissions() {
+            ignore = null;
+        }
+
+        @JsonCreator
+        public RemoveAllPermissions(@JsonProperty("ignore") final Boolean ignore) {
+            this.ignore = ignore;
+        }
     }
 }

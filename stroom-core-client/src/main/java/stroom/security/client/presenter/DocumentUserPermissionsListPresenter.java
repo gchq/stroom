@@ -41,7 +41,9 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.dropdowntree.client.view.QuickFilterDialogView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
+import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
@@ -57,8 +59,8 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class DocumentUserPermissionsListPresenter
-        extends MyPresenterWidget<UserListView>
-        implements UserListUiHandlers {
+        extends MyPresenterWidget<QuickFilterDialogView>
+        implements QuickFilterUiHandlers {
 
     private static final DocPermissionResource DOC_PERMISSION_RESOURCE = GWT.create(DocPermissionResource.class);
 
@@ -73,7 +75,7 @@ public class DocumentUserPermissionsListPresenter
 
     @Inject
     public DocumentUserPermissionsListPresenter(final EventBus eventBus,
-                                                final UserListView userListView,
+                                                final QuickFilterDialogView userListView,
                                                 final PagerView pagerView,
                                                 final RestFactory restFactory,
                                                 final UiConfigCache uiConfigCache,
@@ -98,21 +100,21 @@ public class DocumentUserPermissionsListPresenter
             }
         }, this);
 
-        userListView.setDatGridView(pagerView);
+        userListView.setDataView(pagerView);
         userListView.setUiHandlers(this);
     }
 
     @Override
-    public void changeNameFilter(String name) {
-        if (name != null) {
-            name = name.trim();
-            if (name.isEmpty()) {
-                name = null;
+    public void onFilterChange(String text) {
+        if (text != null) {
+            text = text.trim();
+            if (text.isEmpty()) {
+                text = null;
             }
         }
 
         final ExpressionOperator expression = QuickFilterExpressionParser
-                .parse(name, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELD_MAP);
+                .parse(text, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELD_MAP);
         criteria.setExpression(expression);
         refresh();
     }

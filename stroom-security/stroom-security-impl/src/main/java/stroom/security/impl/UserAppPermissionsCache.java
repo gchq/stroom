@@ -25,6 +25,7 @@ import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.UserDocRefUtil;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;

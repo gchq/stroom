@@ -14,6 +14,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.OrderField;
@@ -38,15 +39,15 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
 
     private final SecurityDbConnProvider securityDbConnProvider;
     private final DocTypeIdDao docTypeIdDao;
-    private final UserDaoImpl userDao;
+    private final Provider<UserDaoImpl> userDaoProvider;
 
     @Inject
     public DocumentPermissionDaoImpl(final SecurityDbConnProvider securityDbConnProvider,
                                      final DocTypeIdDao docTypeIdDao,
-                                     final UserDaoImpl userDao) {
+                                     final Provider<UserDaoImpl> userDaoProvider) {
         this.securityDbConnProvider = securityDbConnProvider;
         this.docTypeIdDao = docTypeIdDao;
-        this.userDao = userDao;
+        this.userDaoProvider = userDaoProvider;
     }
 
     @Override
@@ -325,6 +326,7 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
             final FetchDocumentUserPermissionsRequest request) {
         Objects.requireNonNull(request, "Null request");
         Objects.requireNonNull(request.getDocRef(), "Null doc ref");
+        final UserDaoImpl userDao = userDaoProvider.get();
 
         final DocRef docRef = request.getDocRef();
 

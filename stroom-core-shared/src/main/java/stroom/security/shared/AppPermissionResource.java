@@ -2,6 +2,7 @@ package stroom.security.shared;
 
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,6 +36,14 @@ public interface AppPermissionResource extends RestResource, DirectRestService {
             summary = "User and app permissions for the specified user",
             operationId = "fetchUserAppPermissions")
     Set<AppPermission> fetchUserAppPermissions(@Parameter(description = "user", required = true) UserRef user);
+
+    @POST
+    @Path("/fetchAppUserPermissions")
+    @Operation(
+            summary = "Fetch app user permissions",
+            operationId = "fetchAppUserPermissions")
+    ResultPage<AppUserPermissions> fetchAppUserPermissions(
+            @Parameter(description = "request", required = true) FetchAppUserPermissionsRequest request);
 
     @POST
     @Path("changeUser")

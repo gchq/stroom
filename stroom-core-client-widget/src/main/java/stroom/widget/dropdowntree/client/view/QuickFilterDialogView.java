@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.security.client.presenter;
+package stroom.widget.dropdowntree.client.view;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.Focus;
@@ -23,9 +23,9 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.function.Supplier;
 
-public interface UserListView extends View, Focus, HasUiHandlers<UserListUiHandlers> {
+public interface QuickFilterDialogView extends View, Focus, HasUiHandlers<QuickFilterUiHandlers> {
 
     void registerPopupTextProvider(Supplier<SafeHtml> popupTextSupplier);
 
-    void setDatGridView(View view);
+    void setDataView(View view);
 }

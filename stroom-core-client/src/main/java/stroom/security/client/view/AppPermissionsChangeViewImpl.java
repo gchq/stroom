@@ -16,33 +16,29 @@
 
 package stroom.security.client.view;
 
-import stroom.security.client.presenter.DocumentCreatePermissionsListPresenter.DocumentCreatePermissionsListView;
-import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
+import stroom.security.client.presenter.AppPermissionsChangePresenter.AppPermissionsChangeView;
+import stroom.security.client.presenter.AppPermissionsPresenter.AppPermissionsView;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+import com.gwtplatform.mvp.client.View;
+import com.gwtplatform.mvp.client.ViewImpl;
 
-public class DocumentCreatePermissionsListViewImpl
-        extends ViewWithUiHandlers<QuickFilterUiHandlers>
-        implements DocumentCreatePermissionsListView {
-
-    @UiField
-    SimplePanel dataGrid;
+public final class AppPermissionsChangeViewImpl
+        extends ViewImpl
+        implements AppPermissionsChangeView {
 
     private final Widget widget;
 
-    @Inject
-    public DocumentCreatePermissionsListViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
-    }
+    @UiField
+    SimplePanel permissions;
 
-    @Override
-    public void setTable(final Widget widget) {
-        dataGrid.setWidget(widget);
+    @Inject
+    public AppPermissionsChangeViewImpl(final Binder binder) {
+        widget = binder.createAndBindUi(this);
     }
 
     @Override
@@ -50,7 +46,12 @@ public class DocumentCreatePermissionsListViewImpl
         return widget;
     }
 
-    public interface Binder extends UiBinder<Widget, DocumentCreatePermissionsListViewImpl> {
+    @Override
+    public void setPermissionsView(View view) {
+        permissions.setWidget(view.asWidget());
+    }
+
+    public interface Binder extends UiBinder<Widget, AppPermissionsChangeViewImpl> {
 
     }
 }

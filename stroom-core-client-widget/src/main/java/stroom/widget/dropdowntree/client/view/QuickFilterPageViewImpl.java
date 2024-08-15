@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.security.client.view;
+package stroom.widget.dropdowntree.client.view;
 
-import stroom.security.client.presenter.UserListUiHandlers;
-import stroom.security.client.presenter.UserListView;
-import stroom.ui.config.client.UiConfigCache;
-import stroom.widget.dropdowntree.client.view.QuickFilter;
+import stroom.widget.form.client.FormLabel;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -34,38 +31,48 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.function.Supplier;
 
-public class UserListViewImpl extends ViewWithUiHandlers<UserListUiHandlers> implements UserListView {
+public class QuickFilterPageViewImpl extends ViewWithUiHandlers<QuickFilterUiHandlers>
+        implements QuickFilterPageView {
 
     @UiField
-    QuickFilter nameFilter;
+    FormLabel label;
     @UiField
-    SimplePanel dataGrid;
+    QuickFilter quickFilter;
+    @UiField
+    SimplePanel data;
+
     private final Widget widget;
 
     @Inject
-    public UserListViewImpl(final Binder binder,
-                            final UiConfigCache uiConfigCache) {
+    public QuickFilterPageViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        label.setVisible(false);
+    }
+
+    @Override
+    public void setLabel(final String label) {
+        this.label.setLabel(label);
+        this.label.setVisible(true);
     }
 
     @Override
     public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
-        nameFilter.registerPopupTextProvider(popupTextSupplier);
+        quickFilter.registerPopupTextProvider(popupTextSupplier);
     }
 
     @Override
     public void focus() {
-        nameFilter.forceFocus();
+        quickFilter.forceFocus();
     }
 
     @Override
-    public void setDatGridView(View view) {
-        dataGrid.setWidget(view.asWidget());
+    public void setDataView(View view) {
+        data.setWidget(view.asWidget());
     }
 
-    @UiHandler("nameFilter")
+    @UiHandler("quickFilter")
     void onFilterChange(final ValueChangeEvent<String> event) {
-        getUiHandlers().changeNameFilter(nameFilter.getText());
+        getUiHandlers().onFilterChange(quickFilter.getText());
     }
 
     @Override
@@ -73,7 +80,7 @@ public class UserListViewImpl extends ViewWithUiHandlers<UserListUiHandlers> imp
         return widget;
     }
 
-    public interface Binder extends UiBinder<Widget, UserListViewImpl> {
+    public interface Binder extends UiBinder<Widget, QuickFilterPageViewImpl> {
 
     }
 }

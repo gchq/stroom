@@ -4,8 +4,8 @@ import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
-import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.security.impl.UserDao;
 import stroom.security.impl.db.jooq.tables.records.StroomUserRecord;
 import stroom.security.shared.FindUserCriteria;
@@ -83,7 +83,6 @@ public class UserDaoImpl implements UserDao {
                 return record;
             };
 
-
     private final SecurityDbConnProvider securityDbConnProvider;
     private final GenericDao<StroomUserRecord, User, Integer> genericDao;
     private final ExpressionMapper expressionMapper;
@@ -105,6 +104,8 @@ public class UserDaoImpl implements UserDao {
         expressionMapper.map(UserFields.NAME, STROOM_USER.NAME, String::valueOf);
         expressionMapper.map(UserFields.DISPLAY_NAME, STROOM_USER.DISPLAY_NAME, String::valueOf);
         expressionMapper.map(UserFields.FULL_NAME, STROOM_USER.FULL_NAME, String::valueOf);
+        expressionMapper.map(UserFields.PARENT_GROUP, STROOM_USER_GROUP.USER_UUID, String::valueOf);
+        expressionMapper.map(UserFields.GROUP_CONTAINS, STROOM_USER_GROUP.GROUP_UUID, String::valueOf);
     }
 
     @Override
@@ -156,6 +157,7 @@ public class UserDaoImpl implements UserDao {
 
     /**
      * Only do a logical delete.
+     *
      * @param uuid
      */
     @Override
@@ -170,23 +172,58 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public ResultPage<User> find(final FindUserCriteria criteria) {
+        final List<String> fields = ExpressionUtil.fields(criteria.getExpression());
+
         final Condition condition = expressionMapper.apply(criteria.getExpression());
         final Collection<OrderField<?>> orderFields = createOrderFields(criteria);
         final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
         final int offset = JooqUtil.getOffset(criteria.getPageRequest());
 
-        final List<User> list = JooqUtil.contextResult(securityDbConnProvider, context -> context
-                        .select()
-                        .from(STROOM_USER)
-                        .where(condition)
-                        .and(STROOM_USER.ENABLED.eq(true))
-                        .orderBy(orderFields)
-                        .offset(offset)
-                        .limit(limit)
-                        .fetch())
-                .stream()
-                .map(RECORD_TO_USER_MAPPER)
-                .toList();
+        List<User> list = null;
+        if (fields.contains(UserFields.PARENT_GROUP.getFldName())) {
+            list = JooqUtil.contextResult(securityDbConnProvider, context -> context
+                            .selectDistinct()
+                            .from(STROOM_USER)
+                            .join(STROOM_USER_GROUP).on(STROOM_USER_GROUP.GROUP_UUID.eq(STROOM_USER.UUID))
+                            .where(condition)
+                            .and(STROOM_USER.ENABLED.eq(true))
+                            .orderBy(orderFields)
+                            .offset(offset)
+                            .limit(limit)
+                            .fetch())
+                    .stream()
+                    .map(RECORD_TO_USER_MAPPER)
+                    .toList();
+
+        } else if (fields.contains(UserFields.GROUP_CONTAINS.getFldName())) {
+            list = JooqUtil.contextResult(securityDbConnProvider, context -> context
+                            .selectDistinct()
+                            .from(STROOM_USER)
+                            .join(STROOM_USER_GROUP).on(STROOM_USER_GROUP.USER_UUID.eq(STROOM_USER.UUID))
+                            .where(condition)
+                            .and(STROOM_USER.ENABLED.eq(true))
+                            .orderBy(orderFields)
+                            .offset(offset)
+                            .limit(limit)
+                            .fetch())
+                    .stream()
+                    .map(RECORD_TO_USER_MAPPER)
+                    .toList();
+
+        } else {
+            list = JooqUtil.contextResult(securityDbConnProvider, context -> context
+                            .select()
+                            .from(STROOM_USER)
+                            .where(condition)
+                            .and(STROOM_USER.ENABLED.eq(true))
+                            .orderBy(orderFields)
+                            .offset(offset)
+                            .limit(limit)
+                            .fetch())
+                    .stream()
+                    .map(RECORD_TO_USER_MAPPER)
+                    .toList();
+        }
 
         return ResultPage.createCriterialBasedList(list, criteria);
     }

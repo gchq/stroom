@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.security.impl;
+package stroom.util.shared;
 
 import stroom.docref.DocRef;
-import stroom.util.shared.UserRef;
 
-final class UserDocRefUtil {
+public final class UserDocRefUtil {
 
     public static final String USER = "User";
 
@@ -27,7 +26,7 @@ final class UserDocRefUtil {
         // Utility class.
     }
 
-    static DocRef createDocRef(final UserRef userRef) {
+    public static DocRef createDocRef(final UserRef userRef) {
         if (userRef == null || userRef.getUuid() == null) {
             return null;
         }
@@ -35,7 +34,7 @@ final class UserDocRefUtil {
         return new DocRef(USER, userRef.getUuid(), null);
     }
 
-    static UserRef createUserRef(final DocRef docRef) {
+    public static UserRef createUserRef(final DocRef docRef) {
         if (docRef == null || docRef.getUuid() == null) {
             return null;
         }

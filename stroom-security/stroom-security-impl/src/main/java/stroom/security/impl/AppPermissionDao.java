@@ -1,6 +1,11 @@
 package stroom.security.impl;
 
 import stroom.security.shared.AppPermission;
+import stroom.security.shared.AppUserPermissions;
+import stroom.security.shared.DocumentUserPermissions;
+import stroom.security.shared.FetchAppUserPermissionsRequest;
+import stroom.security.shared.FetchDocumentUserPermissionsRequest;
+import stroom.util.shared.ResultPage;
 
 import java.util.Set;
 
@@ -10,4 +15,6 @@ public interface AppPermissionDao {
     void addPermission(String userUuid, AppPermission permission);
 
     void removePermission(String userUuid, AppPermission permission);
+
+    ResultPage<AppUserPermissions> fetchAppUserPermissions(FetchAppUserPermissionsRequest request);
 }

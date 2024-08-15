@@ -27,6 +27,7 @@ import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.UserDocRefUtil;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;

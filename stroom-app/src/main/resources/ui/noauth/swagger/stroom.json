@@ -6156,6 +6156,36 @@
         "tags" : [ "Application Permissions" ]
       }
     },
+    "/permission/app/v1/fetchAppUserPermissions" : {
+      "post" : {
+        "operationId" : "fetchAppUserPermissions",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FetchAppUserPermissionsRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageAppUserPermissions"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch app user permissions",
+        "tags" : [ "Application Permissions" ]
+      }
+    },
     "/permission/app/v1/fetchUserAppPermissions" : {
       "post" : {
         "operationId" : "fetchUserAppPermissions",
@@ -10961,6 +10991,22 @@
           }
         }
       },
+      "AppUserPermissions" : {
+        "type" : "object",
+        "properties" : {
+          "permissions" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "ADMINISTRATOR", "ANNOTATIONS", "MANAGE_CACHE_PERMISSION", "VIEW_DATA_PERMISSION", "VIEW_DATA_WITH_PIPELINE_PERMISSION", "DELETE_DATA_PERMISSION", "IMPORT_DATA_PERMISSION", "EXPORT_DATA_PERMISSION", "MANAGE_USERS_PERMISSION", "CHANGE_OWNER_PERMISSION", "STEPPING_PERMISSION", "MANAGE_PROCESSORS_PERMISSION", "MANAGE_TASKS_PERMISSION", "DOWNLOAD_SEARCH_RESULTS_PERMISSION", "MANAGE_API_KEYS", "MANAGE_JOBS_PERMISSION", "MANAGE_PROPERTIES_PERMISSION", "MANAGE_POLICIES_PERMISSION", "MANAGE_NODES_PERMISSION", "MANAGE_INDEX_SHARDS_PERMISSION", "MANAGE_VOLUMES_PERMISSION", "MANAGE_DB_PERMISSION", "IMPORT_CONFIGURATION", "EXPORT_CONFIGURATION", "VIEW_SYSTEM_INFO_PERMISSION" ]
+            },
+            "uniqueItems" : true
+          },
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
+          }
+        }
+      },
       "Arg" : {
         "type" : "object",
         "properties" : {
@@ -13508,7 +13554,7 @@
             "condition" : {
               "type" : "string",
               "description" : "The condition of the predicate term",
-              "enum" : [ "CONTAINS", "EQUALS", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX", "OF_DOC_REF", "USER_HAS_PERM", "USER_HAS_OWNER", "USER_HAS_DELETE", "USER_HAS_EDIT", "USER_HAS_VIEW", "USER_HAS_USE" ]
+              "enum" : [ "CONTAINS", "EQUALS", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_USER_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX", "OF_DOC_REF", "USER_HAS_PERM", "USER_HAS_OWNER", "USER_HAS_DELETE", "USER_HAS_EDIT", "USER_HAS_VIEW", "USER_HAS_USE" ]
             },
             "docRef" : {
               "$ref" : "#/components/schemas/DocRef"
@@ -13601,6 +13647,30 @@
           },
           "volumeGroup" : {
             "type" : "string"
+          }
+        }
+      },
+      "FetchAppUserPermissionsRequest" : {
+        "type" : "object",
+        "properties" : {
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "onlyUsersWithExplicitPermision" : {
+            "type" : "boolean"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
           }
         }
       },
@@ -17375,6 +17445,13 @@
         "type" : "object",
         "allOf" : [ {
           "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "ignore" : {
+              "type" : "boolean"
+            }
+          }
         } ]
       },
       "RemoveDocumentCreatePermission" : {
@@ -17501,6 +17578,21 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/AnalyticDataShard"
+            }
+          }
+        }
+      },
+      "ResultPageAppUserPermissions" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AppUserPermissions"
             }
           }
         }
@@ -20147,7 +20239,7 @@
         "properties" : {
           "condition" : {
             "type" : "string",
-            "enum" : [ "CONTAINS", "EQUALS", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX", "OF_DOC_REF", "USER_HAS_PERM", "USER_HAS_OWNER", "USER_HAS_DELETE", "USER_HAS_EDIT", "USER_HAS_VIEW", "USER_HAS_USE" ]
+            "enum" : [ "CONTAINS", "EQUALS", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_USER_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX", "OF_DOC_REF", "USER_HAS_PERM", "USER_HAS_OWNER", "USER_HAS_DELETE", "USER_HAS_EDIT", "USER_HAS_VIEW", "USER_HAS_USE" ]
           },
           "from" : {
             "type" : "string"

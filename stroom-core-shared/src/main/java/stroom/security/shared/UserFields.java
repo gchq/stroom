@@ -1,5 +1,7 @@
 package stroom.security.shared;
 
+import stroom.datasource.api.v2.ConditionSet;
+import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.QueryField;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
@@ -21,7 +23,20 @@ public class UserFields {
     public static final QueryField NAME = QueryField.createText(FIELD_NAME);
     public static final QueryField DISPLAY_NAME = QueryField.createText(FIELD_DISPLAY_NAME);
     public static final QueryField FULL_NAME = QueryField.createText(FIELD_FULL_NAME);
-
+    public static final QueryField GROUP_CONTAINS = QueryField
+            .builder()
+            .fldName("GroupContains")
+            .fldType(FieldType.USER_REF)
+            .conditionSet(ConditionSet.DEFAULT_TEXT)
+            .queryable(true)
+            .build();
+    public static final QueryField PARENT_GROUP = QueryField
+            .builder()
+            .fldName("ParentGroup")
+            .fldType(FieldType.USER_REF)
+            .conditionSet(ConditionSet.DEFAULT_TEXT)
+            .queryable(true)
+            .build();
 
     public static final FilterFieldDefinition FIELD_DEF_IS_GROUP = FilterFieldDefinition.qualifiedField(FIELD_IS_GROUP);
     public static final FilterFieldDefinition FIELD_DEF_NAME = FilterFieldDefinition.defaultField(FIELD_NAME);
@@ -48,5 +63,7 @@ public class UserFields {
         ALL_FIELD_MAP.put(NAME.getFldName(), NAME);
         ALL_FIELD_MAP.put(DISPLAY_NAME.getFldName(), DISPLAY_NAME);
         ALL_FIELD_MAP.put(FULL_NAME.getFldName(), FULL_NAME);
+        ALL_FIELD_MAP.put(GROUP_CONTAINS.getFldName(), GROUP_CONTAINS);
+        ALL_FIELD_MAP.put(PARENT_GROUP.getFldName(), PARENT_GROUP);
     }
 }

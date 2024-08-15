@@ -209,6 +209,7 @@ public final class ExpressionTerm extends ExpressionItem {
         IN_DICTIONARY("in dictionary"),
         IN_FOLDER("in folder"),
         IS_DOC_REF("is"),
+        IS_USER_REF("is"),
         IS_NULL("is null"),
         IS_NOT_NULL("is not null"),
         MATCHES_REGEX("matches regex"),

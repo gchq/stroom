@@ -40,7 +40,6 @@ public class DocumentPermissionsPresenter
 
     private final RestFactory restFactory;
     private final Provider<DocumentPermissionsEditPresenter> documentPermissionsEditPresenterProvider;
-    private final Provider<SelectUserPresenter> selectUserPresenterProvider;
     private final DocumentUserPermissionsListPresenter documentUserPermissionsListPresenter;
     private final Provider<DocSelectionPopup> docSelectionPopupProvider;
 
@@ -53,13 +52,11 @@ public class DocumentPermissionsPresenter
             final RestFactory restFactory,
             final DocumentUserPermissionsListPresenter documentUserPermissionsListPresenter,
             final Provider<DocumentPermissionsEditPresenter> documentPermissionsEditPresenterProvider,
-            final Provider<SelectUserPresenter> selectUserPresenterProvider,
             final Provider<DocSelectionPopup> docSelectionPopupProvider) {
 
         super(eventBus, view);
         this.restFactory = restFactory;
         this.documentPermissionsEditPresenterProvider = documentPermissionsEditPresenterProvider;
-        this.selectUserPresenterProvider = selectUserPresenterProvider;
         this.documentUserPermissionsListPresenter = documentUserPermissionsListPresenter;
         this.docSelectionPopupProvider = docSelectionPopupProvider;
         view.setPermissionsView(documentUserPermissionsListPresenter.getView());

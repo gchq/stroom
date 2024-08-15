@@ -14,11 +14,20 @@
  * limitations under the License.
  */
 
-package stroom.security.client.presenter;
+package stroom.widget.dropdowntree.client.view;
 
-import com.gwtplatform.mvp.client.UiHandlers;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.user.client.ui.Focus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.View;
 
-public interface UserListUiHandlers extends UiHandlers {
+import java.util.function.Supplier;
 
-    void changeNameFilter(String name);
+public interface QuickFilterPageView extends View, Focus, HasUiHandlers<QuickFilterUiHandlers> {
+
+    void setLabel(String label);
+
+    void registerPopupTextProvider(Supplier<SafeHtml> popupTextSupplier);
+
+    void setDataView(View view);
 }

@@ -1,0 +1,285 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.security.client.presenter;
+
+import stroom.cell.info.client.SvgCell;
+import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.presenter.PageRequestUtil;
+import stroom.data.client.presenter.RestDataProvider;
+import stroom.data.grid.client.DataGridSelectionEventManager;
+import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
+import stroom.dispatch.client.RestErrorHandler;
+import stroom.dispatch.client.RestFactory;
+import stroom.docref.HasDisplayValue;
+import stroom.explorer.client.presenter.DocumentTypeCache;
+import stroom.explorer.shared.DocumentTypes;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.security.shared.AppPermissionResource;
+import stroom.security.shared.AppUserPermissions;
+import stroom.security.shared.FetchAppUserPermissionsRequest;
+import stroom.security.shared.QuickFilterExpressionParser;
+import stroom.security.shared.UserFields;
+import stroom.svg.client.Preset;
+import stroom.svg.client.SvgPresets;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.dropdowntree.client.view.QuickFilterDialogView;
+import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
+import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
+import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
+import stroom.widget.util.client.MultiSelectionModelImpl;
+
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.ColumnSortEvent;
+import com.google.gwt.user.cellview.client.ColumnSortList;
+import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
+import com.google.gwt.view.client.Range;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+
+public class AppUserPermissionsListPresenter
+        extends MyPresenterWidget<QuickFilterPageView>
+        implements QuickFilterUiHandlers {
+
+    private static final AppPermissionResource APP_PERMISSION_RESOURCE = GWT.create(AppPermissionResource.class);
+
+    private final RestFactory restFactory;
+    private final FetchAppUserPermissionsRequest.Builder builder = new FetchAppUserPermissionsRequest.Builder();
+    private final MyDataGrid<AppUserPermissions> dataGrid;
+    private final PagerView pagerView;
+    private RestDataProvider<AppUserPermissions, ResultPage<AppUserPermissions>> dataProvider;
+    private DocumentTypes documentTypes;
+    private final MultiSelectionModelImpl<AppUserPermissions> selectionModel;
+    private final DataGridSelectionEventManager<AppUserPermissions> selectionEventManager;
+
+
+    @Inject
+    public AppUserPermissionsListPresenter(final EventBus eventBus,
+                                           final QuickFilterPageView view,
+                                           final PagerView pagerView,
+                                           final RestFactory restFactory,
+                                           final UiConfigCache uiConfigCache,
+                                           final DocumentTypeCache documentTypeCache) {
+        super(eventBus, view);
+        this.restFactory = restFactory;
+        this.pagerView = pagerView;
+        documentTypeCache.fetch(dt -> this.documentTypes = dt, this);
+
+        dataGrid = new MyDataGrid<>();
+        selectionModel = new MultiSelectionModelImpl<>(dataGrid);
+        selectionEventManager = new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
+        dataGrid.setSelectionModel(selectionModel, selectionEventManager);
+        pagerView.setDataWidget(dataGrid);
+
+        // Not easy to determine if we are dealing in users or groups at this point so just
+        // call it Quick Filter
+        uiConfigCache.get(uiConfig -> {
+            if (uiConfig != null) {
+                view.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
+                        "Quick Filter",
+                        UserFields.FILTER_FIELD_DEFINITIONS,
+                        uiConfig.getHelpUrlQuickFilter()));
+            }
+        }, this);
+
+        view.setDataView(pagerView);
+        view.setUiHandlers(this);
+
+        builder.sortList(List.of(
+                new CriteriaFieldSort(
+                        UserFields.DISPLAY_NAME.getFldName(),
+                        false,
+                        true),
+                new CriteriaFieldSort(
+                        UserFields.NAME.getFldName(),
+                        false,
+                        true)));
+
+        setupColumns();
+        refresh();
+    }
+
+    @Override
+    public void onFilterChange(String text) {
+        if (text != null) {
+            text = text.trim();
+            if (text.isEmpty()) {
+                text = null;
+            }
+        }
+
+        final ExpressionOperator expression = QuickFilterExpressionParser
+                .parse(text, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELD_MAP);
+        builder.expression(expression);
+        refresh();
+    }
+
+    public void refresh() {
+        if (dataProvider == null) {
+            dataProvider =
+                    new RestDataProvider<AppUserPermissions, ResultPage<AppUserPermissions>>(
+                            getEventBus()) {
+                        @Override
+                        protected void exec(final Range range,
+                                            final Consumer<ResultPage<AppUserPermissions>> dataConsumer,
+                                            final RestErrorHandler errorHandler) {
+                            builder.pageRequest(PageRequestUtil.createPageRequest(range));
+                            restFactory
+                                    .create(APP_PERMISSION_RESOURCE)
+                                    .method(res -> res.fetchAppUserPermissions(builder.build()))
+                                    .onSuccess(dataConsumer)
+                                    .onFailure(errorHandler)
+                                    .taskListener(pagerView)
+                                    .exec();
+                        }
+                    };
+            dataProvider.addDataDisplay(dataGrid);
+        } else {
+            dataProvider.refresh();
+        }
+    }
+
+    private void setupColumns() {
+        // Icon
+        final Column<AppUserPermissions, Preset> iconCol =
+                new Column<AppUserPermissions, Preset>(new SvgCell()) {
+                    @Override
+                    public Preset getValue(final AppUserPermissions documentUserPermissions) {
+                        final UserRef userRef = documentUserPermissions.getUserRef();
+                        if (!userRef.isGroup()) {
+                            return SvgPresets.USER;
+                        }
+
+                        return SvgPresets.USER_GROUP;
+                    }
+                };
+        iconCol.setSortable(true);
+        dataGrid.addColumn(iconCol, "</br>", ColumnSizeConstants.ICON_COL);
+
+        // User Or Group Name
+        final Column<AppUserPermissions, String> nameCol =
+                new Column<AppUserPermissions, String>(new TextCell()) {
+                    @Override
+                    public String getValue(final AppUserPermissions appUserPermissions) {
+                        return getUserOrGroupName(appUserPermissions);
+                    }
+                };
+        nameCol.setSortable(true);
+        dataGrid.addResizableColumn(nameCol, "User or Group", 400);
+
+//
+//        dataGrid.addAutoResizableColumn(DataGridUtil
+//                        .textColumnBuilder(this::getUserOrGroupName)
+//                        .withSorting(UserFields.DISPLAY_NAME.getFldName(), true)
+//                        .build(),
+//                "User or Group",
+//                400);
+
+        // Permissions
+        final Column<AppUserPermissions, String> permissionCol =
+                new Column<AppUserPermissions, String>(new TextCell()) {
+                    @Override
+                    public String getValue(final AppUserPermissions appUserPermissions) {
+                        if (appUserPermissions.getPermissions() != null) {
+                            return appUserPermissions
+                                    .getPermissions()
+                                    .stream()
+                                    .map(HasDisplayValue::getDisplayValue)
+                                    .sorted()
+                                    .collect(Collectors.joining(", "));
+                        }
+                        return "";
+                    }
+                };
+        dataGrid.addResizableColumn(permissionCol, "Permissions", 800);
+
+        dataGrid.addEndColumn(new EndColumn<AppUserPermissions>());
+
+
+        final ColumnSortEvent.Handler columnSortHandler = event -> {
+            final List<CriteriaFieldSort> sortList = new ArrayList<>();
+            if (event != null) {
+                final ColumnSortList columnSortList = event.getColumnSortList();
+                if (columnSortList != null) {
+                    for (int i = 0; i < columnSortList.size(); i++) {
+                        final ColumnSortInfo columnSortInfo = columnSortList.get(i);
+                        final Column<?, ?> column = columnSortInfo.getColumn();
+                        final boolean isAscending = columnSortInfo.isAscending();
+
+                        if (column.equals(iconCol)) {
+                            sortList.add(new CriteriaFieldSort(
+                                    UserFields.IS_GROUP.getFldName(),
+                                    !isAscending,
+                                    true));
+                        } else if (column.equals(nameCol)) {
+                            sortList.add(new CriteriaFieldSort(
+                                    UserFields.DISPLAY_NAME.getFldName(),
+                                    !isAscending,
+                                    true));
+                            sortList.add(new CriteriaFieldSort(
+                                    UserFields.NAME.getFldName(),
+                                    !isAscending,
+                                    true));
+                        }
+                    }
+                }
+            }
+            builder.sortList(sortList);
+            refresh();
+        };
+        dataGrid.addColumnSortHandler(columnSortHandler);
+        dataGrid.getColumnSortList().push(nameCol);
+    }
+
+    private String getUserOrGroupName(AppUserPermissions appUserPermissions) {
+        final UserRef userRef = appUserPermissions.getUserRef();
+        if (userRef.getDisplayName() != null) {
+            if (!Objects.equals(userRef.getDisplayName(), userRef.getSubjectId())) {
+                return userRef.getDisplayName() + " (" + userRef.getSubjectId() + ")";
+            } else {
+                return userRef.getDisplayName();
+            }
+        }
+        return userRef.getSubjectId();
+    }
+
+    public ButtonView addButton(final Preset preset) {
+        return pagerView.addButton(preset);
+    }
+
+    public PagerView getPagerView() {
+        return pagerView;
+    }
+
+    public MultiSelectionModelImpl<AppUserPermissions> getSelectionModel() {
+        return selectionModel;
+    }
+}

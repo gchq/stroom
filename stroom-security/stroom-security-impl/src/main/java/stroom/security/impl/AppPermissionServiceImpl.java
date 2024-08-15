@@ -16,12 +16,20 @@
 
 package stroom.security.impl;
 
+import stroom.docref.DocRef;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
+import stroom.security.shared.AppUserPermissions;
+import stroom.security.shared.DocumentPermission;
+import stroom.security.shared.DocumentUserPermissions;
+import stroom.security.shared.FetchAppUserPermissionsRequest;
+import stroom.security.shared.FetchDocumentUserPermissionsRequest;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserDocRefUtil;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
@@ -47,6 +55,19 @@ class AppPermissionServiceImpl implements AppPermissionService {
         this.appPermissionDao = appPermissionDao;
         this.entityEventBus = entityEventBus;
         this.securityContext = securityContext;
+    }
+
+    private void checkGetPermission() {
+        if (!securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
+            throw new PermissionException(securityContext.getUserRef(), "You do not have permission to fetch " +
+                    "application permissions");
+        }
+    }
+
+    @Override
+    public ResultPage<AppUserPermissions> fetchAppUserPermissions(final FetchAppUserPermissionsRequest request) {
+        checkGetPermission();
+        return appPermissionDao.fetchAppUserPermissions(request);
     }
 
     @Override

@@ -7,13 +7,16 @@ import stroom.security.api.UserIdentity;
 import stroom.security.api.exception.AuthenticationException;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppPermissionResource;
+import stroom.security.shared.AppUserPermissions;
 import stroom.security.shared.ChangeSet;
 import stroom.security.shared.ChangeUserRequest;
+import stroom.security.shared.FetchAppUserPermissionsRequest;
 import stroom.security.shared.HasUserRef;
 import stroom.security.shared.UserAndEffectivePermissions;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
@@ -28,7 +31,7 @@ class AppPermissionResourceImpl implements AppPermissionResource {
 
     private final Provider<SecurityContext> securityContextProvider;
     private final Provider<UserService> userServiceProvider;
-    private final Provider<AppPermissionService> userAppPermissionServiceProvider;
+    private final Provider<AppPermissionService> appPermissionServiceProvider;
     private final Provider<UserAndPermissionsHelper> userAndPermissionsHelperProvider;
     private final Provider<AuthenticationConfig> authenticationConfigProvider;
     private final Provider<AuthorisationEventLog> authorisationEventLogProvider;
@@ -38,7 +41,7 @@ class AppPermissionResourceImpl implements AppPermissionResource {
     @Inject
     AppPermissionResourceImpl(final Provider<SecurityContext> securityContextProvider,
                               final Provider<UserService> userServiceProvider,
-                              final Provider<AppPermissionService> userAppPermissionServiceProvider,
+                              final Provider<AppPermissionService> appPermissionServiceProvider,
                               final Provider<UserAndPermissionsHelper> userAndPermissionsHelperProvider,
                               final Provider<AuthenticationConfig> authenticationConfigProvider,
                               final Provider<AuthorisationEventLog> authorisationEventLogProvider,
@@ -46,12 +49,17 @@ class AppPermissionResourceImpl implements AppPermissionResource {
                               final Provider<UserAppPermissionsCache> userAppPermissionsCacheProvider) {
         this.securityContextProvider = securityContextProvider;
         this.userServiceProvider = userServiceProvider;
-        this.userAppPermissionServiceProvider = userAppPermissionServiceProvider;
+        this.appPermissionServiceProvider = appPermissionServiceProvider;
         this.userAndPermissionsHelperProvider = userAndPermissionsHelperProvider;
         this.authenticationConfigProvider = authenticationConfigProvider;
         this.authorisationEventLogProvider = authorisationEventLogProvider;
         this.userGroupsCacheProvider = userGroupsCacheProvider;
         this.userAppPermissionsCacheProvider = userAppPermissionsCacheProvider;
+    }
+
+    @Override
+    public ResultPage<AppUserPermissions> fetchAppUserPermissions(final FetchAppUserPermissionsRequest request) {
+        return appPermissionServiceProvider.get().fetchAppUserPermissions(request);
     }
 
     @Override
@@ -90,7 +98,7 @@ class AppPermissionResourceImpl implements AppPermissionResource {
     @Override
     @AutoLogged(OperationType.VIEW)
     public Set<AppPermission> fetchUserAppPermissions(final UserRef user) {
-        return userAppPermissionServiceProvider.get().getPermissions(user);
+        return appPermissionServiceProvider.get().getPermissions(user);
     }
 
     @Override
@@ -187,7 +195,7 @@ class AppPermissionResourceImpl implements AppPermissionResource {
 
     private void addPermission(UserRef user, AppPermission permission) {
         try {
-            userAppPermissionServiceProvider.get().addPermission(user, permission);
+            appPermissionServiceProvider.get().addPermission(user, permission);
             authorisationEventLogProvider.get()
                     .addPermission(user, permission.getDisplayValue(), true, null);
         } catch (final RuntimeException e) {
@@ -198,7 +206,7 @@ class AppPermissionResourceImpl implements AppPermissionResource {
 
     private void removePermission(UserRef user, AppPermission permission) {
         try {
-            userAppPermissionServiceProvider.get().removePermission(user, permission);
+            appPermissionServiceProvider.get().removePermission(user, permission);
             authorisationEventLogProvider.get()
                     .removePermission(user, permission.getDisplayValue(), true, null);
         } catch (final RuntimeException e) {

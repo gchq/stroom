@@ -41,11 +41,6 @@ public class UserResourceImpl implements UserResource {
 
     @Override
     public ResultPage<User> find(final FindUserCriteria criteria) {
-        // Apply default sort
-        if (criteria.getSortList() == null || criteria.getSortList().isEmpty()) {
-            criteria.addSort(UserFields.FIELD_IS_GROUP);
-            criteria.addSort(UserFields.FIELD_NAME);
-        }
         return userServiceProvider.get().find(criteria);
     }
 

@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:view="urn:import:stroom.widget.dropdowntree.client.view">
     <g:FlowPanel styleName="max dock-container-vertical quickFilter-container">
-        <view:QuickFilter ui:field="nameFilter" addStyleNames="dock-min"/>
-        <g:SimplePanel ui:field="dataGrid" styleName="dock-max form-control-border form-control-background"/>
+        <view:QuickFilter ui:field="quickFilter" addStyleNames="dock-min"/>
+        <g:SimplePanel ui:field="data" styleName="dock-max form-control-border form-control-background"/>
     </g:FlowPanel>
 </ui:UiBinder>

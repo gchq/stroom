@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.security.client.presenter;
+package stroom.widget.dropdowntree.client.view;
 
 import com.gwtplatform.mvp.client.UiHandlers;
 
-public interface UserEditUiHandlers extends UiHandlers {
+public interface QuickFilterUiHandlers extends UiHandlers {
 
+    void onFilterChange(String text);
 }
