@@ -18,13 +18,12 @@ package stroom.security.impl;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
-import stroom.docref.DocRef;
+import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
-import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserDocRefUtil;
@@ -38,8 +37,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Singleton
-@EntityEventHandler(type = UserDocRefUtil.USER, action = {EntityAction.CLEAR_CACHE})
-class UserGroupsCache implements EntityEvent.Handler, Clearable {
+class UserGroupsCache implements PermissionChangeEvent.Handler, Clearable {
 
     private static final String USER_GROUPS_CACHE_NAME = "User Groups Cache";
 
@@ -85,10 +83,10 @@ class UserGroupsCache implements EntityEvent.Handler, Clearable {
     }
 
     @Override
-    public void onChange(final EntityEvent event) {
-        final DocRef docRef = event.getDocRef();
-        if (docRef != null && UserDocRefUtil.USER.equals(docRef.getType())) {
-            cache.invalidate(UserDocRefUtil.createUserRef(docRef));
+    public void onChange(final PermissionChangeEvent event) {
+        final UserRef userRef = event.getUserRef();
+        if (userRef != null) {
+            cache.invalidate(userRef);
         }
     }
 }

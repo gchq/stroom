@@ -20,16 +20,7 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.security.impl.event.PermissionChangeEvent;
-import stroom.security.shared.AbstractDocumentPermissionsChange;
-import stroom.security.shared.AbstractDocumentPermissionsChange.AddAllPermissionsFrom;
-import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllPermissions;
-import stroom.security.shared.AbstractDocumentPermissionsChange.RemovePermission;
-import stroom.security.shared.AbstractDocumentPermissionsChange.SetAllPermissionsFrom;
-import stroom.security.shared.AbstractDocumentPermissionsChange.SetPermission;
-import stroom.security.shared.BulkDocumentPermissionChangeRequest;
 import stroom.security.shared.DocumentPermission;
-import stroom.security.shared.PermissionChangeRequest;
-import stroom.security.shared.SingleDocumentPermissionChangeRequest;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.UserRef;
 
@@ -74,28 +65,12 @@ public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handl
     }
 
     @Override
-    public void onChange(final PermissionChangeRequest request) {
+    public void onChange(final PermissionChangeEvent event) {
         if (cache != null) {
-            AbstractDocumentPermissionsChange req = null;
-
-            if (request instanceof final SingleDocumentPermissionChangeRequest change) {
-                req = change.getChange();
-            } else if (request instanceof final BulkDocumentPermissionChangeRequest change) {
-                req = change.getChange();
-            }
-
-            if (req != null) {
-                if (req instanceof final SetPermission change) {
-                    cache.invalidate(change.getUserRef());
-                } else if (req instanceof final RemovePermission change) {
-                    cache.invalidate(change.getUserRef());
-                } else if (req instanceof final AddAllPermissionsFrom change) {
-                    cache.clear();
-                } else if (req instanceof final SetAllPermissionsFrom change) {
-                    cache.clear();
-                } else if (req instanceof final RemoveAllPermissions change) {
-                    cache.clear();
-                }
+            if (event.getUserRef() != null) {
+                cache.invalidate(event.getUserRef());
+            } else {
+                cache.clear();
             }
         }
     }

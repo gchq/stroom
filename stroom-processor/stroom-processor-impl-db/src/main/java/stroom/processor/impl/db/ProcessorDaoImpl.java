@@ -127,12 +127,12 @@ class ProcessorDaoImpl implements ProcessorDao {
                             .execute();
 
                     if (count == 0) {
-                        throw new DataChangedException("Failed to update processor filter, " +
+                        throw new DataChangedException("Failed to update processor, " +
                                 "it may have been updated by another user or deleted");
                     }
 
-                    processor.setVersion(processor.getVersion() + 1);
-                    return processor;
+                    return fetch(processor.getId()).orElseThrow(() ->
+                            new RuntimeException("Error fetching updated processor"));
                 });
     }
 

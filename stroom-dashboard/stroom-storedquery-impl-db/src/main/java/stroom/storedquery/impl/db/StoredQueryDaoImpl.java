@@ -104,6 +104,7 @@ class StoredQueryDaoImpl implements StoredQueryDao {
         final String data = queryJsonSerialiser.serialise(storedQuery.getQuery());
         final int count = context
                 .update(QUERY)
+                .set(QUERY.VERSION, QUERY.VERSION.plus(1))
                 .set(QUERY.UPDATE_TIME_MS, storedQuery.getUpdateTimeMs())
                 .set(QUERY.UPDATE_USER, storedQuery.getUpdateUser())
                 .set(QUERY.DASHBOARD_UUID, storedQuery.getDashboardUuid())
@@ -122,8 +123,8 @@ class StoredQueryDaoImpl implements StoredQueryDao {
                     "it may have been updated by another user or deleted");
         }
 
-        storedQuery.setVersion(storedQuery.getVersion() + 1);
-        return storedQuery;
+        return fetch(storedQuery.getId()).orElseThrow(() ->
+                new RuntimeException("Error fetching updated stored query"));
     }
 
 

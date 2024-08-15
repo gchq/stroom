@@ -6236,11 +6236,11 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/PermissionChangeRequest"
+                "$ref" : "#/components/schemas/PermissionChangeEvent"
               }
             }
           },
-          "description" : "request",
+          "description" : "event",
           "required" : true
         },
         "responses" : {
@@ -9913,17 +9913,20 @@
         "tags" : [ "Authorisation" ]
       }
     },
-    "/users/v1/{userUuid}" : {
-      "get" : {
-        "operationId" : "fetchUser",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "userUuid",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
+    "/users/v1/updateUser" : {
+      "post" : {
+        "operationId" : "updateUser",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/User"
+              }
+            }
+          },
+          "description" : "user",
+          "required" : true
+        },
         "responses" : {
           "default" : {
             "content" : {
@@ -9936,7 +9939,7 @@
             "description" : "default response"
           }
         },
-        "summary" : "Fetches the user with the supplied UUID",
+        "summary" : "Updates a user",
         "tags" : [ "Authorisation" ]
       }
     },
@@ -10003,33 +10006,6 @@
           }
         },
         "summary" : "Adds user with UUID userUuid to the group with UUID groupUuid",
-        "tags" : [ "Authorisation" ]
-      }
-    },
-    "/users/v1/{uuid}" : {
-      "delete" : {
-        "operationId" : "deleteUser",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "uuid",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Deletes the user with the supplied UUID",
         "tags" : [ "Authorisation" ]
       }
     },
@@ -11268,19 +11244,14 @@
       },
       "BulkDocumentPermissionChangeRequest" : {
         "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/PermissionChangeRequest"
-        }, {
-          "type" : "object",
-          "properties" : {
-            "change" : {
-              "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
-            },
-            "expression" : {
-              "$ref" : "#/components/schemas/ExpressionOperator"
-            }
+        "properties" : {
+          "change" : {
+            "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+          },
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
           }
-        } ]
+        }
       },
       "CacheIdentity" : {
         "type" : "object",
@@ -16014,17 +15985,16 @@
           }
         }
       },
-      "PermissionChangeRequest" : {
+      "PermissionChangeEvent" : {
         "type" : "object",
-        "discriminator" : {
-          "propertyName" : "type"
-        },
         "properties" : {
-          "type" : {
-            "type" : "string"
+          "docRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
           }
-        },
-        "required" : [ "type" ]
+        }
       },
       "PipelineData" : {
         "type" : "object",
@@ -18830,22 +18800,6 @@
           }
         }
       },
-      "SingleDocumentPermissionChangeRequest" : {
-        "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/PermissionChangeRequest"
-        }, {
-          "type" : "object",
-          "properties" : {
-            "change" : {
-              "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
-            },
-            "docRef" : {
-              "$ref" : "#/components/schemas/DocRef"
-            }
-          }
-        } ]
-      },
       "Size" : {
         "type" : "object",
         "properties" : {
@@ -20468,6 +20422,9 @@
           },
           "displayName" : {
             "type" : "string"
+          },
+          "enabled" : {
+            "type" : "boolean"
           },
           "fullName" : {
             "type" : "string"

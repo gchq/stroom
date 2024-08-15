@@ -25,10 +25,7 @@ public interface UserDao {
 
     User update(User user);
 
-    /**
-     * Delete a user by their UUID
-     */
-    void delete(String uuid);
+//    void setEnabled(String uuid, boolean enabled);
 
     ResultPage<User> find(FindUserCriteria criteria);
 

@@ -1,6 +1,5 @@
 package stroom.security.shared;
 
-import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
@@ -11,7 +10,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -26,7 +24,7 @@ import java.util.List;
 @Path("/users" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface UserResource extends RestResource, DirectRestService, FetchWithUuid<User> {
+public interface UserResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/find")
@@ -37,12 +35,12 @@ public interface UserResource extends RestResource, DirectRestService, FetchWith
             operationId = "findUsersByCriteria")
     ResultPage<User> find(@Parameter(description = "criteria", required = true) FindUserCriteria criteria);
 
-    @GET
-    @Path("/{userUuid}")
-    @Operation(
-            summary = "Fetches the user with the supplied UUID",
-            operationId = "fetchUser")
-    User fetch(@PathParam("userUuid") String userUuid);
+//    @GET
+//    @Path("/{userUuid}")
+//    @Operation(
+//            summary = "Fetches the user with the supplied UUID",
+//            operationId = "fetchUser")
+//    User fetch(@PathParam("userUuid") String userUuid);
 
     @POST
     @Path("/createGroup")
@@ -66,12 +64,12 @@ public interface UserResource extends RestResource, DirectRestService, FetchWith
             operationId = "createUsers")
     List<User> createUsersFromCsv(@Parameter(description = "users", required = true) String usersCsvData);
 
-    @DELETE
-    @Path("/{uuid}")
+    @POST
+    @Path("/updateUser")
     @Operation(
-            summary = "Deletes the user with the supplied UUID",
-            operationId = "deleteUser")
-    Boolean delete(@PathParam("uuid") String uuid);
+            summary = "Updates a user",
+            operationId = "updateUser")
+    User update(@Parameter(description = "user", required = true) User user);
 
     @PUT
     @Path("/{userUuid}/{groupUuid}")

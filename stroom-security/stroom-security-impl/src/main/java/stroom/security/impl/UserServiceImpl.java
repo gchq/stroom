@@ -16,51 +16,46 @@
 
 package stroom.security.impl;
 
-import stroom.docref.DocRef;
 import stroom.security.api.ContentPackUserService;
 import stroom.security.api.SecurityContext;
+import stroom.security.impl.event.PermissionChangeEvent;
+import stroom.security.impl.event.PermissionChangeEventBus;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.util.AuditUtil;
 import stroom.util.NullSafe;
-import stroom.util.entityevent.EntityAction;
-import stroom.util.entityevent.EntityEvent;
-import stroom.util.entityevent.EntityEventBus;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserDesc;
-import stroom.util.shared.UserDocRefUtil;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 
 import java.util.Optional;
-import java.util.UUID;
 import java.util.function.Consumer;
 
 class UserServiceImpl implements UserService, ContentPackUserService {
 
     private final SecurityContext securityContext;
     private final UserDao userDao;
-    private final EntityEventBus eventBus;
+    private final PermissionChangeEventBus permissionChangeEventBus;
 
     @Inject
     UserServiceImpl(final SecurityContext securityContext,
                     final UserDao userDao,
-                    final EntityEventBus eventBus) {
+                    final PermissionChangeEventBus permissionChangeEventBus) {
         this.securityContext = securityContext;
         this.userDao = userDao;
-        this.eventBus = eventBus;
+        this.permissionChangeEventBus = permissionChangeEventBus;
     }
 
     @Override
     public User getOrCreateUser(final UserDesc userDesc, final Consumer<User> onCreateAction) {
         final Optional<User> optional = userDao.getUserBySubjectId(userDesc.getSubjectId());
-        return optional.orElseGet(() -> {
+        final User persisted = optional.orElseGet(() -> {
             final User user = new User();
             AuditUtil.stamp(securityContext, user);
-            user.setUuid(UUID.randomUUID().toString());
             user.setSubjectId(userDesc.getSubjectId());
             user.setDisplayName(userDesc.getDisplayName());
             user.setFullName(userDesc.getFullName());
@@ -68,33 +63,56 @@ class UserServiceImpl implements UserService, ContentPackUserService {
 
             return securityContext.secureResult(AppPermission.MANAGE_USERS_PERMISSION, () ->
                     userDao.tryCreate(user, persistedUser -> {
-                        fireEntityChangeEvent(persistedUser, EntityAction.CREATE);
+                        fireUserChangeEvent(persistedUser.getUuid());
                         if (onCreateAction != null) {
                             onCreateAction.accept(persistedUser);
                         }
                     }));
         });
+
+//        // Auto re-enable users if they are currently disabled.
+//        if (!persisted.isEnabled()) {
+//            userDao.setEnabled(persisted.getUuid(), true);
+//            persisted.setEnabled(true);
+//            fireEntityChangeEvent(persisted, EntityAction.CREATE);
+//            if (onCreateAction != null) {
+//                onCreateAction.accept(persisted);
+//            }
+//        }
+
+        return persisted;
     }
 
     @Override
     public User getOrCreateUserGroup(final String name, final Consumer<User> onCreateAction) {
         final Optional<User> optional = userDao.getGroupByName(name);
-        return optional.orElseGet(() -> {
+        final User persisted = optional.orElseGet(() -> {
             final User user = new User();
             AuditUtil.stamp(securityContext, user);
-            user.setUuid(UUID.randomUUID().toString());
             user.setSubjectId(name);
             user.setDisplayName(name);
             user.setGroup(true);
 
             return securityContext.secureResult(AppPermission.MANAGE_USERS_PERMISSION, () ->
                     userDao.tryCreate(user, persistedUser -> {
-                        fireEntityChangeEvent(persistedUser, EntityAction.CREATE);
+                        fireUserChangeEvent(persistedUser.getUuid());
                         if (onCreateAction != null) {
                             onCreateAction.accept(persistedUser);
                         }
                     }));
         });
+
+//        // Auto re-enable groups if they are currently disabled.
+//        if (!persisted.isEnabled()) {
+//            userDao.setEnabled(persisted.getUuid(), true);
+//            persisted.setEnabled(true);
+//            fireEntityChangeEvent(persisted, EntityAction.CREATE);
+//            if (onCreateAction != null) {
+//                onCreateAction.accept(persisted);
+//            }
+//        }
+
+        return persisted;
     }
 
     @Override
@@ -125,18 +143,9 @@ class UserServiceImpl implements UserService, ContentPackUserService {
         AuditUtil.stamp(securityContext, user);
         return securityContext.secureResult(AppPermission.MANAGE_USERS_PERMISSION, () -> {
             final User updatedUser = userDao.update(user);
-            fireEntityChangeEvent(updatedUser, EntityAction.UPDATE);
+            fireUserChangeEvent(updatedUser.getUuid());
             return updatedUser;
         });
-    }
-
-    @Override
-    public Boolean delete(final String userUuid) {
-        securityContext.secure(AppPermission.MANAGE_USERS_PERMISSION, () -> {
-            userDao.delete(userUuid);
-            fireEntityChangeEvent(userUuid, EntityAction.DELETE);
-        });
-        return true;
     }
 
     @Override
@@ -172,7 +181,7 @@ class UserServiceImpl implements UserService, ContentPackUserService {
     public Boolean addUserToGroup(final String userUuid, final String groupUuid) {
         securityContext.secure(AppPermission.MANAGE_USERS_PERMISSION, () -> {
             userDao.addUserToGroup(userUuid, groupUuid);
-            fireEntityChangeEvent(userUuid, EntityAction.UPDATE);
+            fireUserChangeEvent(userUuid);
         });
         return true;
     }
@@ -181,30 +190,16 @@ class UserServiceImpl implements UserService, ContentPackUserService {
     public Boolean removeUserFromGroup(final String userUuid, final String groupUuid) {
         securityContext.secure(AppPermission.MANAGE_USERS_PERMISSION, () -> {
             userDao.removeUserFromGroup(userUuid, groupUuid);
-            fireEntityChangeEvent(userUuid, EntityAction.UPDATE);
+            fireUserChangeEvent(userUuid);
         });
         return true;
     }
 
-    private void fireEntityChangeEvent(final User user, final EntityAction entityAction) {
-        EntityEvent.fire(
-                eventBus,
-                DocRef.builder()
-                        .name(user.getSubjectId())
-                        .uuid(user.getUuid())
-                        .type(UserDocRefUtil.USER)
-                        .build(),
-                entityAction);
-    }
-
-    private void fireEntityChangeEvent(final String userUuid, final EntityAction entityAction) {
-        EntityEvent.fire(
-                eventBus,
-                DocRef.builder()
-                        .uuid(userUuid)
-                        .type(UserDocRefUtil.USER)
-                        .build(),
-                entityAction);
+    private void fireUserChangeEvent(final String userUuid) {
+        PermissionChangeEvent.fire(permissionChangeEventBus, UserRef
+                .builder()
+                .uuid(userUuid)
+                .build(), null);
     }
 
     @Deprecated

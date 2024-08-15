@@ -16,17 +16,45 @@
 
 package stroom.security.impl.event;
 
-import stroom.security.shared.PermissionChangeRequest;
+import stroom.docref.DocRef;
+import stroom.util.shared.UserRef;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@JsonInclude(Include.NON_NULL)
 public class PermissionChangeEvent {
 
+    @JsonProperty
+    private final UserRef userRef;
+    @JsonProperty
+    private final DocRef docRef;
+
+    @JsonCreator
+    public PermissionChangeEvent(@JsonProperty("userRef") final UserRef userRef,
+                                 @JsonProperty("docRef") final DocRef docRef) {
+        this.userRef = userRef;
+        this.docRef = docRef;
+    }
+
+    public UserRef getUserRef() {
+        return userRef;
+    }
+
+    public DocRef getDocRef() {
+        return docRef;
+    }
+
     public static void fire(final PermissionChangeEventBus eventBus,
-                            final PermissionChangeRequest request) {
-        eventBus.fire(request);
+                            final UserRef userRef,
+                            final DocRef docRef) {
+        eventBus.fire(new PermissionChangeEvent(userRef, docRef));
     }
 
     public interface Handler {
 
-        void onChange(PermissionChangeRequest request);
+        void onChange(PermissionChangeEvent event);
     }
 }

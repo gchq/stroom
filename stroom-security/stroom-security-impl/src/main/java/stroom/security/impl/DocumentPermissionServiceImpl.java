@@ -87,10 +87,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     public void setPermission(final DocRef docRef, final UserRef userRef, final DocumentPermission permission) {
         checkSetPermission(docRef);
         documentPermissionDao.setDocumentUserPermission(docRef.getUuid(), userRef.getUuid(), permission);
-
-        final SetPermission req = new SetPermission(userRef, permission);
-        PermissionChangeEvent.fire(permissionChangeEventBus,
-                new SingleDocumentPermissionChangeRequest(docRef, req));
+        PermissionChangeEvent.fire(permissionChangeEventBus, userRef, docRef);
     }
 
     @Override
@@ -113,7 +110,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                         docRef.getUuid(),
                         req.getUserRef().getUuid(),
                         req.getPermission());
-                PermissionChangeEvent.fire(permissionChangeEventBus, request);
+                PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
             }
 
         } else if (change instanceof final RemovePermission req) {
@@ -125,7 +122,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                 documentPermissionDao.removeDocumentUserPermission(
                         docRef.getUuid(),
                         req.getUserRef().getUuid());
-                PermissionChangeEvent.fire(permissionChangeEventBus, request);
+                PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
             }
 
         } else if (change instanceof final AddDocumentCreatePermission req) {
@@ -137,7 +134,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                         docRef.getUuid(),
                         req.getUserRef().getUuid(),
                         req.getDocumentType().getType());
-                PermissionChangeEvent.fire(permissionChangeEventBus, request);
+                PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
             }
 
         } else if (change instanceof final RemoveDocumentCreatePermission req) {
@@ -149,7 +146,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                         docRef.getUuid(),
                         req.getUserRef().getUuid(),
                         req.getDocumentType().getType());
-                PermissionChangeEvent.fire(permissionChangeEventBus, request);
+                PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
             }
 
         } else if (change instanceof final AddAllDocumentCreatePermissions req) {
@@ -163,7 +160,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                         docRef.getUuid(),
                         req.getUserRef().getUuid(),
                         ALL_CREATE_PERMISSIONS);
-                PermissionChangeEvent.fire(permissionChangeEventBus, request);
+                PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
             }
 
         } else if (change instanceof final RemoveAllDocumentCreatePermissions req) {
@@ -173,7 +170,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                 documentPermissionDao.removeDocumentUserCreatePermissions(
                         docRef.getUuid(),
                         req.getUserRef().getUuid());
-                PermissionChangeEvent.fire(permissionChangeEventBus, request);
+                PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
             }
 
         } else if (change instanceof final AddAllPermissionsFrom req) {
@@ -187,7 +184,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                         req.getSourceDocRef().getUuid(),
                         docRef.getUuid());
             }
-            PermissionChangeEvent.fire(permissionChangeEventBus, request);
+            PermissionChangeEvent.fire(permissionChangeEventBus, null, docRef);
 
         } else if (change instanceof final SetAllPermissionsFrom req) {
             Objects.requireNonNull(req.getSourceDocRef(), "Null sourceDocRef");
@@ -200,11 +197,11 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                         req.getSourceDocRef().getUuid(),
                         docRef.getUuid());
             }
-            PermissionChangeEvent.fire(permissionChangeEventBus, request);
+            PermissionChangeEvent.fire(permissionChangeEventBus, null, docRef);
 
         } else if (change instanceof final RemoveAllPermissions req) {
             documentPermissionDao.removeAllDocumentPermissions(docRef.getUuid());
-            PermissionChangeEvent.fire(permissionChangeEventBus, request);
+            PermissionChangeEvent.fire(permissionChangeEventBus, null, docRef);
 
         } else {
             throw new RuntimeException("Unexpected request type: " + request.getClass().getName());
@@ -220,9 +217,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         if (isFolder(docRef)) {
             documentPermissionDao.removeAllDocumentCreatePermissions(docRef.getUuid());
         }
-        final RemoveAllPermissions req = new RemoveAllPermissions();
-        PermissionChangeEvent.fire(permissionChangeEventBus,
-                new SingleDocumentPermissionChangeRequest(docRef, req));
+        PermissionChangeEvent.fire(permissionChangeEventBus, null, docRef);
     }
 
     @Override
@@ -238,10 +233,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         if (isFolder(sourceDocRef)) {
             documentPermissionDao.addDocumentCreatePermissions(sourceDocRef.getUuid(), destDocRef.getUuid());
         }
-
-        final AddAllPermissionsFrom req = new AddAllPermissionsFrom(sourceDocRef);
-        PermissionChangeEvent.fire(permissionChangeEventBus,
-                new SingleDocumentPermissionChangeRequest(destDocRef, req));
+        PermissionChangeEvent.fire(permissionChangeEventBus, null, destDocRef);
     }
 
     private void checkGetPermission(final DocRef docRef) {

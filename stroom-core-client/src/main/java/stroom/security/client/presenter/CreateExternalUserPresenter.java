@@ -20,30 +20,33 @@ package stroom.security.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.entity.client.presenter.NameDocumentView;
+import stroom.security.client.presenter.CreateExternalUserPresenter.CreateExternalUserView;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
 import stroom.task.client.TaskListener;
+import stroom.util.shared.UserDesc;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.view.DialogActionUiHandlers;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
 import java.util.function.Consumer;
 
-public class CreateNewGroupPresenter extends MyPresenterWidget<NameDocumentView> {
+public class CreateExternalUserPresenter extends MyPresenterWidget<CreateExternalUserView> {
 
     private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
     private final RestFactory restFactory;
 
     @Inject
-    public CreateNewGroupPresenter(final EventBus eventBus,
-                                   final NameDocumentView view,
-                                   final RestFactory restFactory) {
+    public CreateExternalUserPresenter(final EventBus eventBus,
+                                       final CreateExternalUserView view,
+                                       final RestFactory restFactory) {
         super(eventBus, view);
         this.restFactory = restFactory;
     }
@@ -55,9 +58,13 @@ public class CreateNewGroupPresenter extends MyPresenterWidget<NameDocumentView>
     public void create(final Consumer<User> consumer,
                        final HidePopupRequestEvent event,
                        final TaskListener taskListener) {
+        final UserDesc userDesc = new UserDesc(
+                getView().getSubjectId(),
+                getView().getDisplayName(),
+                getView().getFullName());
         restFactory
                 .create(USER_RESOURCE)
-                .method(res -> res.createGroup(getView().getName()))
+                .method(res -> res.createUser(userDesc))
                 .onSuccess(result -> {
                     if (!result.isEnabled()) {
                         enable(result, consumer, event, taskListener);
@@ -76,8 +83,8 @@ public class CreateNewGroupPresenter extends MyPresenterWidget<NameDocumentView>
                         final HidePopupRequestEvent event,
                         final TaskListener taskListener) {
         ConfirmEvent.fire(this,
-                "A deleted group already exists with the same name, " +
-                        "would you like to restore the existing group?",
+                "A deleted user already exists with the same name, " +
+                        "would you like to restore the existing user?",
                 ok -> {
                     if (ok) {
                         user.setEnabled(true);
@@ -103,5 +110,18 @@ public class CreateNewGroupPresenter extends MyPresenterWidget<NameDocumentView>
                 .onFailure(RestErrorHandler.forPopup(this, event))
                 .taskListener(taskListener)
                 .exec();
+    }
+
+    public interface CreateExternalUserView extends View, HasUiHandlers<DialogActionUiHandlers> {
+
+        String getSubjectId();
+
+        String getDisplayName();
+
+        String getFullName();
+
+        void focus();
+
+        void clear();
     }
 }

@@ -18,16 +18,12 @@ package stroom.security.impl;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
-import stroom.docref.DocRef;
+import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.shared.User;
 import stroom.util.NullSafe;
-import stroom.util.entityevent.EntityAction;
-import stroom.util.entityevent.EntityEvent;
-import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
-import stroom.util.shared.UserDocRefUtil;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
@@ -38,11 +34,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 @Singleton
-@EntityEventHandler(type = UserDocRefUtil.USER, action = {
-        EntityAction.UPDATE,
-        EntityAction.DELETE,
-        EntityAction.CLEAR_CACHE})
-public class UserCache implements Clearable, EntityEvent.Handler {
+public class UserCache implements Clearable, PermissionChangeEvent.Handler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UserCache.class);
 
@@ -52,8 +44,8 @@ public class UserCache implements Clearable, EntityEvent.Handler {
 
     @Inject
     public UserCache(final CacheManager cacheManager,
-              final Provider<AuthorisationConfig> authorisationConfigProvider,
-              final Provider<UserDao> userDaoProvider) {
+                     final Provider<AuthorisationConfig> authorisationConfigProvider,
+                     final Provider<UserDao> userDaoProvider) {
         cacheByUuid = cacheManager.createLoadingCache(
                 CACHE_NAME_BY_UUID,
                 () -> authorisationConfigProvider.get().getUserByUuidCache(),
@@ -84,23 +76,9 @@ public class UserCache implements Clearable, EntityEvent.Handler {
     }
 
     @Override
-    public void onChange(final EntityEvent event) {
-        if (EntityAction.CLEAR_CACHE.equals(event.getAction())) {
-            clear();
-        } else if (UserDocRefUtil.USER.equals(event.getDocRef().getType())) {
-            // Special DocRef type as user is not a Doc
-            NullSafe.consume(event.getDocRef(), this::invalidateEntry);
-            NullSafe.consume(event.getOldDocRef(), this::invalidateEntry);
-        }
-    }
-
-    private void invalidateEntry(final DocRef docRef) {
-        // User is not a Doc so DocRef is being abused to make use of EntityEvent
-        // DocRef.name is User.subjectId
-        // DocRef.uuid is User.userUuid
-        final String userUuid = docRef.getUuid();
-        if (userUuid != null) {
-            cacheByUuid.invalidate(userUuid);
+    public void onChange(final PermissionChangeEvent event) {
+        if (event.getUserRef() != null) {
+            cacheByUuid.invalidate(event.getUserRef().getUuid());
         }
     }
 }

@@ -4310,8 +4310,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PermissionChangeRequest'
-        description: request
+              $ref: '#/components/schemas/PermissionChangeEvent'
+        description: event
         required: true
       responses:
         default:
@@ -6831,15 +6831,16 @@ paths:
         is admin or has Manage Users permission then they can see all users.
       tags:
       - Authorisation
-  /users/v1/{userUuid}:
-    get:
-      operationId: fetchUser
-      parameters:
-      - in: path
-        name: userUuid
+  /users/v1/updateUser:
+    post:
+      operationId: updateUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+        description: user
         required: true
-        schema:
-          type: string
       responses:
         default:
           content:
@@ -6847,7 +6848,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
           description: default response
-      summary: Fetches the user with the supplied UUID
+      summary: Updates a user
       tags:
       - Authorisation
   /users/v1/{userUuid}/{groupUuid}:
@@ -6895,25 +6896,6 @@ paths:
                 type: boolean
           description: default response
       summary: Adds user with UUID userUuid to the group with UUID groupUuid
-      tags:
-      - Authorisation
-  /users/v1/{uuid}:
-    delete:
-      operationId: deleteUser
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: boolean
-          description: default response
-      summary: Deletes the user with the supplied UUID
       tags:
       - Authorisation
   /view/v1/list:
@@ -7807,14 +7789,11 @@ components:
           type: string
     BulkDocumentPermissionChangeRequest:
       type: object
-      allOf:
-      - $ref: '#/components/schemas/PermissionChangeRequest'
-      - type: object
-        properties:
-          change:
-            $ref: '#/components/schemas/AbstractDocumentPermissionsChange'
-          expression:
-            $ref: '#/components/schemas/ExpressionOperator'
+      properties:
+        change:
+          $ref: '#/components/schemas/AbstractDocumentPermissionsChange'
+        expression:
+          $ref: '#/components/schemas/ExpressionOperator'
     CacheIdentity:
       type: object
       properties:
@@ -12138,15 +12117,13 @@ components:
           enum:
           - OPTIONAL
           - MANDATORY
-    PermissionChangeRequest:
+    PermissionChangeEvent:
       type: object
-      discriminator:
-        propertyName: type
       properties:
-        type:
-          type: string
-      required:
-      - type
+        docRef:
+          $ref: '#/components/schemas/DocRef'
+        userRef:
+          $ref: '#/components/schemas/UserRef'
     PipelineData:
       type: object
       properties:
@@ -14652,16 +14629,6 @@ components:
           - WEEKS
           - MONTHS
           - YEARS
-    SingleDocumentPermissionChangeRequest:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/PermissionChangeRequest'
-      - type: object
-        properties:
-          change:
-            $ref: '#/components/schemas/AbstractDocumentPermissionsChange'
-          docRef:
-            $ref: '#/components/schemas/DocRef'
     Size:
       type: object
       properties:
@@ -15919,6 +15886,8 @@ components:
           type: string
         displayName:
           type: string
+        enabled:
+          type: boolean
         fullName:
           type: string
         group:

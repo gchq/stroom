@@ -41,7 +41,6 @@ import stroom.security.shared.CreateHashedApiKeyResponse;
 import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.User;
 import stroom.security.user.api.UserRefLookup;
-import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
 import stroom.util.guice.GuiceUtil;
@@ -105,13 +104,11 @@ public class SecurityModule extends AbstractModule {
                 .addBinding(UserCache.class)
                 .addBinding(StroomUserIdentityFactory.class);
 
-        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
+        GuiceUtil.buildMultiBinder(binder(), PermissionChangeEvent.Handler.class)
                 .addBinding(UserCache.class)
                 .addBinding(UserGroupsCache.class)
                 .addBinding(UserAppPermissionsCache.class)
-                .addBinding(StroomUserIdentityFactory.class);
-
-        GuiceUtil.buildMultiBinder(binder(), PermissionChangeEvent.Handler.class)
+                .addBinding(StroomUserIdentityFactory.class)
                 .addBinding(UserDocumentPermissionsCache.class);
 
         RestResourcesBinder.create(binder())

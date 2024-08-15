@@ -363,12 +363,18 @@ class SecurityContextImpl implements SecurityContext {
     private void ensureValidUser(final UserRef userRef) {
         final Optional<User> optional = userCache.getByRef(userRef);
         if (optional.isEmpty()) {
-            try {
-                throw new PermissionException(userRef, "User '" + userRef.toDisplayString() + "' not found");
-            } catch (final PermissionException e) {
-                LOGGER.error(e::getMessage, e);
-                throw e;
-            }
+            throwPermissionException(userRef, "User '" + userRef.toDisplayString() + "' not found");
+        } else if (!optional.get().isEnabled()) {
+            throwPermissionException(userRef, "User '" + userRef.toDisplayString() + "' is not enabled");
+        }
+    }
+
+    private void throwPermissionException(final UserRef userRef, final String message) {
+        try {
+            throw new PermissionException(userRef, message);
+        } catch (final PermissionException e) {
+            LOGGER.error(e::getMessage, e);
+            throw e;
         }
     }
 

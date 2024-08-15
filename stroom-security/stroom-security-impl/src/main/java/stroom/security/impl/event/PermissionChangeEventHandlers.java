@@ -18,7 +18,6 @@ package stroom.security.impl.event;
 
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.event.PermissionChangeEvent.Handler;
-import stroom.security.shared.PermissionChangeRequest;
 import stroom.util.shared.PermissionException;
 
 import jakarta.inject.Inject;
@@ -47,7 +46,7 @@ class PermissionChangeEventHandlers {
         this.securityContext = securityContext;
     }
 
-    public void fireLocally(final PermissionChangeRequest request) {
+    public void fireLocally(final PermissionChangeEvent event) {
         if (!securityContext.isProcessingUser()) {
             throw new PermissionException(securityContext.getUserRef(),
                     "Only the processing user can fire permission change events");
@@ -57,7 +56,7 @@ class PermissionChangeEventHandlers {
             final Set<Handler> set = getHandlers();
             for (final Handler handler : set) {
                 try {
-                    handler.onChange(request);
+                    handler.onChange(event);
                 } catch (final Exception e) {
                     LOGGER.error("Unable to handle onChange request!", e);
                 }

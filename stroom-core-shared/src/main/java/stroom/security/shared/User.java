@@ -52,6 +52,8 @@ public class User implements HasAuditInfo, HasIntegerId {
     private String displayName;
     @JsonProperty
     private String fullName;
+    @JsonProperty
+    private boolean enabled;
 
     /**
      * Is this user a user group or a regular user?
@@ -73,7 +75,8 @@ public class User implements HasAuditInfo, HasIntegerId {
                 @JsonProperty("uuid") final String uuid,
                 @JsonProperty("group") final boolean group,
                 @JsonProperty("displayName") final String displayName,
-                @JsonProperty("fullName") final String fullName) {
+                @JsonProperty("fullName") final String fullName,
+                @JsonProperty("enabled") final boolean enabled) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -85,6 +88,7 @@ public class User implements HasAuditInfo, HasIntegerId {
         this.group = group;
         this.displayName = displayName;
         this.fullName = fullName;
+        this.enabled = enabled;
     }
 
     /**
@@ -232,6 +236,14 @@ public class User implements HasAuditInfo, HasIntegerId {
         this.group = group;
     }
 
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(final boolean enabled) {
+        this.enabled = enabled;
+    }
+
     public UserRef asRef() {
         return new UserRef(uuid, subjectId, displayName, fullName, group);
     }
@@ -332,6 +344,7 @@ public class User implements HasAuditInfo, HasIntegerId {
         private boolean group;
         private String displayName;
         private String fullName;
+        private boolean enabled = true;
 
         private Builder() {
         }
@@ -348,6 +361,7 @@ public class User implements HasAuditInfo, HasIntegerId {
             this.group = user.group;
             this.displayName = user.displayName;
             this.fullName = user.fullName;
+            this.enabled = user.enabled;
         }
 
         public Builder id(final int value) {
@@ -386,6 +400,11 @@ public class User implements HasAuditInfo, HasIntegerId {
             return this;
         }
 
+        public Builder enabled(final boolean value) {
+            enabled = value;
+            return this;
+        }
+
         public User build() {
             return new User(id,
                     version,
@@ -397,7 +416,8 @@ public class User implements HasAuditInfo, HasIntegerId {
                     uuid,
                     group,
                     displayName,
-                    fullName);
+                    fullName,
+                    enabled);
         }
     }
 }

@@ -33,7 +33,8 @@ public class DocumentPermissionsPlugin extends MonitoringPlugin<DocumentPermissi
     public DocumentPermissionsPlugin(final EventBus eventBus,
                                      final ContentManager contentManager,
                                      final Provider<DocumentPermissionsEditPresenter> presenterProvider,
-                                     final AsyncProvider<DocumentPermissionsPresenter> documentPermissionsPresenterProvider,
+                                     final AsyncProvider<DocumentPermissionsPresenter>
+                                             documentPermissionsPresenterProvider,
                                      final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, presenterProvider, securityContext);
 

@@ -20,17 +20,6 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.security.impl.event.PermissionChangeEvent;
-import stroom.security.shared.AbstractDocumentPermissionsChange;
-import stroom.security.shared.AbstractDocumentPermissionsChange.AddAllDocumentCreatePermissions;
-import stroom.security.shared.AbstractDocumentPermissionsChange.AddAllPermissionsFrom;
-import stroom.security.shared.AbstractDocumentPermissionsChange.AddDocumentCreatePermission;
-import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllDocumentCreatePermissions;
-import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllPermissions;
-import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveDocumentCreatePermission;
-import stroom.security.shared.AbstractDocumentPermissionsChange.SetAllPermissionsFrom;
-import stroom.security.shared.BulkDocumentPermissionChangeRequest;
-import stroom.security.shared.PermissionChangeRequest;
-import stroom.security.shared.SingleDocumentPermissionChangeRequest;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.UserRef;
 
@@ -99,52 +88,26 @@ public class UserDocumentCreatePermissionsCache implements PermissionChangeEvent
     }
 
     @Override
-    public void onChange(final PermissionChangeRequest request) {
+    public void onChange(final PermissionChangeEvent event) {
         if (createPermissionsCache != null) {
-            if (request instanceof final SingleDocumentPermissionChangeRequest
-                    singleDocumentPermissionChangeRequest) {
-                final AbstractDocumentPermissionsChange req = singleDocumentPermissionChangeRequest.getChange();
-                final DocRef docRef = singleDocumentPermissionChangeRequest.getDocRef();
-
-                if (request instanceof final AddDocumentCreatePermission change) {
-                    final UserDocKey key = new UserDocKey(change.getUserRef().getUuid(), docRef.getUuid());
-                    createPermissionsCache.invalidate(key);
-                } else if (request instanceof final RemoveDocumentCreatePermission change) {
-                    final UserDocKey key = new UserDocKey(change.getUserRef().getUuid(), docRef.getUuid());
-                    createPermissionsCache.invalidate(key);
-                } else if (request instanceof final AddAllDocumentCreatePermissions change) {
-                    final UserDocKey key = new UserDocKey(change.getUserRef().getUuid(), docRef.getUuid());
-                    createPermissionsCache.invalidate(key);
-                } else if (request instanceof final RemoveAllDocumentCreatePermissions change) {
-                    final UserDocKey key = new UserDocKey(change.getUserRef().getUuid(), docRef.getUuid());
-                    createPermissionsCache.invalidate(key);
-                } else if (request instanceof final AddAllPermissionsFrom change) {
-                    createPermissionsCache.clear();
-                } else if (request instanceof final SetAllPermissionsFrom change) {
-                    createPermissionsCache.clear();
-                } else if (request instanceof final RemoveAllPermissions change) {
-                    createPermissionsCache.clear();
-                }
-
-            } else if (request instanceof final BulkDocumentPermissionChangeRequest
-                    bulkDocumentPermissionChangeRequest) {
-                final AbstractDocumentPermissionsChange req = bulkDocumentPermissionChangeRequest.getChange();
-
-                if (request instanceof final AddDocumentCreatePermission change) {
-                    createPermissionsCache.clear();
-                } else if (request instanceof final RemoveDocumentCreatePermission change) {
-                    createPermissionsCache.clear();
-                } else if (request instanceof final AddAllDocumentCreatePermissions change) {
-                    createPermissionsCache.clear();
-                } else if (request instanceof final RemoveAllDocumentCreatePermissions change) {
-                    createPermissionsCache.clear();
-                } else if (request instanceof final AddAllPermissionsFrom change) {
-                    createPermissionsCache.clear();
-                } else if (request instanceof final SetAllPermissionsFrom change) {
-                    createPermissionsCache.clear();
-                } else if (request instanceof final RemoveAllPermissions change) {
-                    createPermissionsCache.clear();
-                }
+            if (event.getUserRef() != null && event.getDocRef() != null) {
+                createPermissionsCache.invalidate(new UserDocKey(
+                        event.getUserRef().getUuid(),
+                        event.getDocRef().getUuid()));
+            } else if (event.getUserRef() != null) {
+                createPermissionsCache.keySet().forEach(key -> {
+                    if (key.userUuid().equals(event.getUserRef().getUuid())) {
+                        createPermissionsCache.invalidate(key);
+                    }
+                });
+            } else if (event.getDocRef() != null) {
+                createPermissionsCache.keySet().forEach(key -> {
+                    if (key.docUuid().equals(event.getDocRef().getUuid())) {
+                        createPermissionsCache.invalidate(key);
+                    }
+                });
+            } else {
+                createPermissionsCache.clear();
             }
         }
     }

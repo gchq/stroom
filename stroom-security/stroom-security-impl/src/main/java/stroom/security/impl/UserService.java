@@ -51,7 +51,7 @@ public interface UserService {
 
     User update(User user);
 
-    Boolean delete(String userUuid);
+//    Boolean setEnabled(String userUuid, boolean enabled);
 
     ResultPage<User> find(FindUserCriteria criteria);
 

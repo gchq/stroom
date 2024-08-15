@@ -20,7 +20,6 @@ import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionChangeRequest;
 import stroom.task.api.TaskContextFactory;
 
 import jakarta.inject.Inject;
@@ -66,22 +65,22 @@ class PermissionChangeEventBusImpl implements PermissionChangeEventBus {
     }
 
     @Override
-    public void fire(final PermissionChangeRequest request) {
+    public void fire(final PermissionChangeEvent event) {
         if (started) {
-            securityContext.asProcessingUser(() -> fireGlobally(request));
+            securityContext.asProcessingUser(() -> fireGlobally(event));
         }
     }
 
-    private void fireGlobally(final PermissionChangeRequest request) {
+    private void fireGlobally(final PermissionChangeEvent event) {
         try {
             // Force a local update so that changes are immediately reflected
             // for the current user.
-            permissionChangeEventHandlers.fireLocally(request);
+            permissionChangeEventHandlers.fireLocally(event);
 
             if (started) {
                 // Dispatch the entity event to all nodes in the cluster.
                 final Runnable runnable = taskContextFactory.context("Fire Remote Permission Change",
-                        taskContext -> fireRemote(request));
+                        taskContext -> fireRemote(event));
                 CompletableFuture.runAsync(runnable, executor);
             }
         } catch (final RuntimeException e) {
@@ -89,7 +88,7 @@ class PermissionChangeEventBusImpl implements PermissionChangeEventBus {
         }
     }
 
-    private void fireRemote(final PermissionChangeRequest request) {
+    private void fireRemote(final PermissionChangeEvent event) {
         securityContext.secure(() -> {
             try {
                 // Get this node.
@@ -101,7 +100,7 @@ class PermissionChangeEventBusImpl implements PermissionChangeEventBus {
                 // Only send the event to remote nodes and not this one.
                 targetNodes.stream().filter(targetNode -> !targetNode.equals(sourceNode)).forEach(targetNode -> {
                     // Send the entity event.
-                    permissionChangeResource.fireChange(targetNode, request);
+                    permissionChangeResource.fireChange(targetNode, event);
                 });
             } catch (final NullClusterStateException | NodeNotFoundException e) {
                 LOGGER.warn(e.getMessage());

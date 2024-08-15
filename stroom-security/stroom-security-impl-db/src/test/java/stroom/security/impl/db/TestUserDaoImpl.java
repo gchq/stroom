@@ -92,14 +92,15 @@ class TestUserDaoImpl {
     }
 
     @Test
-    void deleteUser() {
+    void setEnabledUser() {
         // Given
         final String userName = String.format("SomeTestPerson_%s", UUID.randomUUID());
 
         // When
         final User userCreated = createUser(userName, false);
         final Optional<User> userFoundBeforeDelete = userDao.getByUuid(userCreated.getUuid());
-        userDao.delete(userCreated.getUuid());
+        userCreated.setEnabled(false);
+        userDao.update(userCreated);
         final Optional<User> userFoundAfterDelete = userDao.getByUuid(userCreated.getUuid());
 
         // Then

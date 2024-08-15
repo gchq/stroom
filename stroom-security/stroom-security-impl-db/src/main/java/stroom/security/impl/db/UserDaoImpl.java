@@ -2,22 +2,24 @@ package stroom.security.impl.db;
 
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
-import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.security.impl.UserDao;
-import stroom.security.impl.db.jooq.tables.records.StroomUserRecord;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
 import stroom.util.NullSafe;
+import stroom.util.exception.DataChangedException;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import org.jooq.Condition;
+import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
@@ -26,7 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.BiFunction;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -35,6 +37,8 @@ import static stroom.security.impl.db.jooq.Tables.STROOM_USER;
 import static stroom.security.impl.db.jooq.Tables.STROOM_USER_GROUP;
 
 public class UserDaoImpl implements UserDao {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UserDaoImpl.class);
 
     private static final Function<Record, User> RECORD_TO_USER_MAPPER = record -> {
         final User user = new User();
@@ -56,48 +60,17 @@ public class UserDaoImpl implements UserDao {
         user.setDisplayName(record.get(STROOM_USER.DISPLAY_NAME));
         // Optional
         user.setFullName(record.get(STROOM_USER.FULL_NAME));
+        user.setEnabled(record.get(STROOM_USER.ENABLED));
         return user;
     };
 
-    private static final BiFunction<User, StroomUserRecord, StroomUserRecord> USER_TO_RECORD_MAPPER =
-            (user, record) -> {
-                record.from(user);
-                record.set(STROOM_USER.ID, user.getId());
-                record.set(STROOM_USER.VERSION, user.getVersion());
-                record.set(STROOM_USER.CREATE_TIME_MS, user.getCreateTimeMs());
-                record.set(STROOM_USER.CREATE_USER, user.getCreateUser());
-                record.set(STROOM_USER.UPDATE_TIME_MS, user.getUpdateTimeMs());
-                record.set(STROOM_USER.UPDATE_USER, user.getUpdateUser());
-                // This is the unique 'sub'/'oid' when using OIDC
-                // or it is the username if using internal IDP
-                // or it is the group name.
-                record.set(STROOM_USER.NAME, user.getSubjectId());
-                // Our own UUID for the user, independent of any identity provider
-                record.set(STROOM_USER.UUID, user.getUuid());
-                record.set(STROOM_USER.IS_GROUP, user.isGroup());
-                record.set(STROOM_USER.ENABLED, true);
-                // Optional
-                record.set(STROOM_USER.DISPLAY_NAME, user.getDisplayName());
-                // Optional
-                record.set(STROOM_USER.FULL_NAME, user.getFullName());
-                return record;
-            };
-
     private final SecurityDbConnProvider securityDbConnProvider;
-    private final GenericDao<StroomUserRecord, User, Integer> genericDao;
     private final ExpressionMapper expressionMapper;
 
     @Inject
     public UserDaoImpl(final SecurityDbConnProvider securityDbConnProvider,
                        final ExpressionMapperFactory expressionMapperFactory) {
         this.securityDbConnProvider = securityDbConnProvider;
-
-        genericDao = new GenericDao<>(
-                securityDbConnProvider,
-                STROOM_USER,
-                STROOM_USER.ID,
-                USER_TO_RECORD_MAPPER,
-                RECORD_TO_USER_MAPPER);
 
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(UserFields.IS_GROUP, STROOM_USER.IS_GROUP, Boolean::valueOf);
@@ -110,12 +83,58 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public User create(final User user) {
-        return genericDao.create(user);
+        return JooqUtil.contextResult(securityDbConnProvider, context -> create(context, user));
+    }
+
+    private User create(final DSLContext context, final User user) {
+        user.setVersion(1);
+        user.setUuid(UUID.randomUUID().toString());
+        final int id = context
+                .insertInto(STROOM_USER)
+                .columns(STROOM_USER.VERSION,
+                        STROOM_USER.CREATE_TIME_MS,
+                        STROOM_USER.CREATE_USER,
+                        STROOM_USER.UPDATE_TIME_MS,
+                        STROOM_USER.UPDATE_USER,
+                        STROOM_USER.NAME,
+                        STROOM_USER.UUID,
+                        STROOM_USER.IS_GROUP,
+                        STROOM_USER.ENABLED,
+                        STROOM_USER.DISPLAY_NAME,
+                        STROOM_USER.FULL_NAME)
+                .values(user.getVersion(),
+                        user.getCreateTimeMs(),
+                        user.getCreateUser(),
+                        user.getUpdateTimeMs(),
+                        user.getUpdateUser(),
+                        user.getSubjectId(),
+                        user.getUuid(),
+                        user.isGroup(),
+                        user.isEnabled(),
+                        user.getDisplayName(),
+                        user.getFullName())
+                .returning(STROOM_USER.ID)
+                .fetchOne(STROOM_USER.ID);
+        user.setId(id);
+        return user;
     }
 
     @Override
     public User tryCreate(final User user, final Consumer<User> onUserCreateAction) {
-        return genericDao.tryCreate(user, STROOM_USER.NAME, STROOM_USER.IS_GROUP, onUserCreateAction);
+        try {
+            final User persisted = create(user);
+            onUserCreateAction.accept(persisted);
+            return persisted;
+        } catch (final Exception e) {
+            LOGGER.debug(e::getMessage, e);
+        }
+
+        if (user.isGroup()) {
+            return getGroupByName(user.getSubjectId()).orElseThrow(() ->
+                    new RuntimeException("Unable to create group"));
+        }
+        return getUserBySubjectId(user.getSubjectId()).orElseThrow(() ->
+                new RuntimeException("Unable to create user"));
     }
 
     @Override
@@ -152,23 +171,42 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public User update(final User user) {
-        return genericDao.update(user);
+        return JooqUtil.contextResult(securityDbConnProvider, context -> update(context, user));
     }
 
-    /**
-     * Only do a logical delete.
-     *
-     * @param uuid
-     */
-    @Override
-    public void delete(final String uuid) {
-        JooqUtil.context(securityDbConnProvider, context -> context
+    private User update(final DSLContext context, final User user) {
+        final int count = context
                 .update(STROOM_USER)
-                .set(STROOM_USER.ENABLED, false)
-                .where(STROOM_USER.UUID.eq(uuid))
-                .execute()
-        );
+                .set(STROOM_USER.VERSION, STROOM_USER.VERSION.plus(1))
+                .set(STROOM_USER.UPDATE_TIME_MS, user.getUpdateTimeMs())
+                .set(STROOM_USER.UPDATE_USER, user.getUpdateUser())
+                .set(STROOM_USER.NAME, user.getSubjectId())
+                .set(STROOM_USER.UUID, user.getUuid())
+                .set(STROOM_USER.IS_GROUP, user.isGroup())
+                .set(STROOM_USER.ENABLED, user.isEnabled())
+                .set(STROOM_USER.DISPLAY_NAME, user.getDisplayName())
+                .set(STROOM_USER.FULL_NAME, user.getFullName())
+                .where(STROOM_USER.ID.eq(user.getId()))
+                .and(STROOM_USER.VERSION.eq(user.getVersion()))
+                .execute();
+
+        if (count == 0) {
+            throw new DataChangedException("Failed to update user, " +
+                    "it may have been updated by another user or deleted");
+        }
+
+        return getByUuid(user.getUuid()).orElseThrow(() -> new RuntimeException("Error fetching updated user"));
     }
+
+//    @Override
+//    public void setEnabled(final String uuid, final boolean enabled) {
+//        JooqUtil.context(securityDbConnProvider, context -> context
+//                .update(STROOM_USER)
+//                .set(STROOM_USER.ENABLED, enabled)
+//                .where(STROOM_USER.UUID.eq(uuid))
+//                .execute()
+//        );
+//    }
 
     @Override
     public ResultPage<User> find(final FindUserCriteria criteria) {

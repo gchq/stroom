@@ -6,7 +6,6 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
-import stroom.security.shared.UserFields;
 import stroom.security.shared.UserResource;
 import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
@@ -44,7 +43,7 @@ public class UserResourceImpl implements UserResource {
         return userServiceProvider.get().find(criteria);
     }
 
-    @Override
+//    @Override
     public User fetch(String userUuid) {
         return userServiceProvider.get().loadByUuid(userUuid)
                 .orElseThrow(() -> new NotFoundException("User " + userUuid + " does not exist"));
@@ -136,8 +135,8 @@ public class UserResourceImpl implements UserResource {
     }
 
     @Override
-    public Boolean delete(final String uuid) {
-        return userServiceProvider.get().delete(uuid);
+    public User update(final User user) {
+        return userServiceProvider.get().update(user);
     }
 
     @Override

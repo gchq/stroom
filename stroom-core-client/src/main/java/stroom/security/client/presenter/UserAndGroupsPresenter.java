@@ -28,7 +28,6 @@ import stroom.security.shared.UserResource;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.ButtonView;
@@ -52,16 +51,12 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     private final UserListPresenter memberOfList;
     private final UserListPresenter membersInList;
 
-    private final CreateNewGroupPresenter createNewGroupPresenter;
-    private final CreateNewUserPresenter createNewUserPresenter;
-    private final CreateMultipleUsersPresenter createMultipleUsersPresenter;
+    private final CreateUserPresenter createUserPresenter;
     private final Provider<UserRefPopupPresenter> userRefPopupPresenterProvider;
     private final RestFactory restFactory;
 
-    private ButtonView createNewGroupButton = null;
-    private ButtonView createNewUserButton = null;
-    private ButtonView createMultipleUsersButton = null;
-    private ButtonView deleteUserButton = null;
+    private ButtonView createButton = null;
+    private ButtonView deleteButton = null;
 
     private ButtonView addMemberOfButton = null;
     private ButtonView removeMemberOfButton = null;
@@ -73,9 +68,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     public UserAndGroupsPresenter(final EventBus eventBus,
                                   final UserAndGroupsView view,
                                   final Provider<UserListPresenter> userListPresenterProvider,
-                                  final CreateNewGroupPresenter createNewGroupPresenter,
-                                  final CreateNewUserPresenter createNewUserPresenter,
-                                  final CreateMultipleUsersPresenter createMultipleUsersPresenter,
+                                  final CreateUserPresenter createUserPresenter,
                                   final Provider<UserRefPopupPresenter> userRefPopupPresenterProvider,
                                   final UiConfigCache uiConfigCache,
                                   final RestFactory restFactory) {
@@ -83,9 +76,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         this.userList = userListPresenterProvider.get();
         this.memberOfList = userListPresenterProvider.get();
         this.membersInList = userListPresenterProvider.get();
-        this.createNewGroupPresenter = createNewGroupPresenter;
-        this.createNewUserPresenter = createNewUserPresenter;
-        this.createMultipleUsersPresenter = createMultipleUsersPresenter;
+        this.createUserPresenter = createUserPresenter;
         this.userRefPopupPresenterProvider = userRefPopupPresenterProvider;
         this.restFactory = restFactory;
 
@@ -96,23 +87,19 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         membersInList.getView().setLabel("Members In Group");
         view.setMembersInView(membersInList.getView());
 
-        createNewGroupButton = userList.addButton(
-                SvgPresets.ADD.title("Add User Group"));
+        createButton = userList.addButton(SvgPresets.ADD.title("Create Group"));
 
         // Only want to let user create a stroom user if they are using an external IDP.
         // If internal then all users are available to be picked from the account tbl.
         uiConfigCache.get(config -> {
             if (config != null) {
                 if (config.isExternalIdentityProvider()) {
-                    createNewUserButton = userList.addButton(
-                            SvgPresets.ADD.title("Add Identity Provider User"));
-                    createMultipleUsersButton = userList.addButton(
-                            SvgPresets.ADD_MULTIPLE.title("Add Multiple Identity Provider Users"));
+                    createButton.setTitle("Create User Or Group");
                 }
             }
         }, this);
 
-        deleteUserButton = userList.addButton(SvgPresets.DELETE.title("Delete User"));
+        deleteButton = userList.addButton(SvgPresets.DELETE.title("Delete User"));
 
         addMemberOfButton = memberOfList.addButton(SvgPresets.ADD);
         removeMemberOfButton = memberOfList.addButton(SvgPresets.REMOVE);
@@ -124,25 +111,12 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(createNewGroupButton.addClickHandler(e -> {
+        registerHandler(createButton.addClickHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
-                onAddGroup();
+                onCreateUserOrGroup();
             }
         }));
-        GwtNullSafe.consume(createNewUserButton, button ->
-                registerHandler(createNewUserButton.addClickHandler(e -> {
-                    if (MouseUtil.isPrimary(e)) {
-                        onAddUser();
-                    }
-                })));
-        // addMultipleButton not always present
-        GwtNullSafe.consume(createMultipleUsersButton, button ->
-                registerHandler(createMultipleUsersButton.addClickHandler(e -> {
-                    if (MouseUtil.isPrimary(e)) {
-                        onAddMultiple();
-                    }
-                })));
-        registerHandler(deleteUserButton.addClickHandler(e -> {
+        registerHandler(deleteButton.addClickHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
                 onDelete();
             }
@@ -231,15 +205,15 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
             membersInList.refresh();
             getView().setMembersInVisible(selected.isGroup());
 
-            deleteUserButton.setTitle("Delete " + getDescription(selected));
-            deleteUserButton.setEnabled(true);
+            deleteButton.setTitle("Delete " + getDescription(selected));
+            deleteButton.setEnabled(true);
             addMemberOfButton.setEnabled(true);
             addMembersInButton.setEnabled(selected.isGroup());
 
         } else {
             getView().setMembersInVisible(false);
-            deleteUserButton.setTitle("No Selection");
-            deleteUserButton.setEnabled(false);
+            deleteButton.setTitle("No Selection");
+            deleteButton.setEnabled(false);
             addMemberOfButton.setEnabled(false);
             addMembersInButton.setEnabled(false);
         }
@@ -332,25 +306,9 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         return nextSelection;
     }
 
-    private void onAddGroup() {
-        createNewGroupPresenter.show(user -> {
+    private void onCreateUserOrGroup() {
+        createUserPresenter.show(user -> {
             userList.getSelectionModel().setSelected(user, new SelectionType(), true);
-            userList.refresh();
-        });
-    }
-
-    private void onAddUser() {
-        createNewUserPresenter.show(user -> {
-            userList.getSelectionModel().setSelected(user, new SelectionType(), true);
-            userList.refresh();
-        });
-    }
-
-    private void onAddMultiple() {
-        createMultipleUsersPresenter.show(users -> {
-            if (users != null && users.size() > 0) {
-                userList.getSelectionModel().setSelected(users.get(0), new SelectionType(), true);
-            }
             userList.refresh();
         });
     }
@@ -363,9 +321,10 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                             getDescription(user) + "?",
                     ok -> {
                         if (ok) {
+                            user.setEnabled(false);
                             restFactory
                                     .create(USER_RESOURCE)
-                                    .method(res -> res.delete(user.getUuid()))
+                                    .method(res -> res.update(user))
                                     .onSuccess(result -> {
                                         userList.getSelectionModel().clear(true);
                                         userList.refresh();

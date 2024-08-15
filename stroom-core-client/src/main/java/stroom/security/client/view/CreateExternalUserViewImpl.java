@@ -17,7 +17,7 @@
 
 package stroom.security.client.view;
 
-import stroom.security.client.presenter.CreateNewUserPresenter.CreateNewUserView;
+import stroom.security.client.presenter.CreateExternalUserPresenter.CreateExternalUserView;
 import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.popup.client.view.DialogActionUiHandlers;
 
@@ -31,9 +31,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class CreateNewUserViewImpl
+public class CreateExternalUserViewImpl
         extends ViewWithUiHandlers<DialogActionUiHandlers>
-        implements CreateNewUserView {
+        implements CreateExternalUserView {
 
     private final Widget widget;
 
@@ -45,7 +45,7 @@ public class CreateNewUserViewImpl
     TextBox fullName;
 
     @Inject
-    public CreateNewUserViewImpl(final Binder binder) {
+    public CreateExternalUserViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         widget.addAttachHandler(event -> focus());
     }
@@ -107,7 +107,7 @@ public class CreateNewUserViewImpl
     // --------------------------------------------------------------------------------
 
 
-    public interface Binder extends UiBinder<Widget, CreateNewUserViewImpl> {
+    public interface Binder extends UiBinder<Widget, CreateExternalUserViewImpl> {
 
     }
 }

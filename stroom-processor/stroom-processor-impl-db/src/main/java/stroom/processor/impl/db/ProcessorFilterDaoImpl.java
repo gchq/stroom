@@ -225,8 +225,8 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                     "it may have been updated by another user or deleted");
         }
 
-        filter.setVersion(filter.getVersion() + 1);
-        return filter;
+        return fetch(filter.getId()).orElseThrow(() ->
+                new RuntimeException("Error fetching updated processor filter"));
     }
 
     @Override

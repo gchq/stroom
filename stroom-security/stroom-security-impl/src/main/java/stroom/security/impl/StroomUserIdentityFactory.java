@@ -15,6 +15,7 @@ import stroom.security.common.impl.JwtUtil;
 import stroom.security.common.impl.RefreshManager;
 import stroom.security.common.impl.UpdatableToken;
 import stroom.security.impl.apikey.ApiKeyService;
+import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
@@ -27,7 +28,6 @@ import stroom.util.cert.CertificateExtractor;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
-import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.exception.DataChangedException;
 import stroom.util.exception.ThrowingFunction;
 import stroom.util.jersey.JerseyClientFactory;
@@ -53,13 +53,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
 @Singleton
-@EntityEventHandler(type = UserDocRefUtil.USER, action = {
-        EntityAction.UPDATE,
-        EntityAction.DELETE,
-        EntityAction.CLEAR_CACHE})
 public class StroomUserIdentityFactory
         extends AbstractUserIdentityFactory
-        implements Clearable, EntityEvent.Handler {
+        implements Clearable, PermissionChangeEvent.Handler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomUserIdentityFactory.class);
 
@@ -459,24 +455,16 @@ public class StroomUserIdentityFactory
     }
 
     @Override
-    public void onChange(final EntityEvent event) {
-        if (EntityAction.CLEAR_CACHE.equals(event.getAction())) {
-            clear();
-        } else if (UserDocRefUtil.USER.equals(event.getDocRef().getType())) {
-            // Special DocRef type as user is not a Doc
-            NullSafe.consume(event.getDocRef(), this::invalidateEntry);
-            NullSafe.consume(event.getOldDocRef(), this::invalidateEntry);
-        }
-    }
-
-    private void invalidateEntry(final DocRef docRef) {
-        // User is not a Doc so DocRef is being abused to make use of EntityEvent
-        // DocRef.name is User.subjectId
-        // DocRef.uuid is User.userUuid
-        String subjectId = docRef.getName();
-        if (subjectId != null) {
-            // Don't know if it is a user or a group so invalidate both
-            cacheBySubjectId.invalidate(subjectId);
+    public void onChange(final PermissionChangeEvent event) {
+        if (event.getUserRef() != null) {
+            // User is not a Doc so DocRef is being abused to make use of EntityEvent
+            // DocRef.name is User.subjectId
+            // DocRef.uuid is User.userUuid
+            String subjectId = event.getUserRef().getSubjectId();
+            if (subjectId != null) {
+                // Don't know if it is a user or a group so invalidate both
+                cacheBySubjectId.invalidate(subjectId);
+            }
         }
     }
 }

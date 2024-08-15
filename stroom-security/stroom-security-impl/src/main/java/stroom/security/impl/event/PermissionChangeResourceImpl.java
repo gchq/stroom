@@ -19,7 +19,6 @@ package stroom.security.impl.event;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
-import stroom.security.shared.PermissionChangeRequest;
 import stroom.util.shared.ResourcePaths;
 
 import jakarta.inject.Inject;
@@ -42,7 +41,7 @@ class PermissionChangeResourceImpl implements PermissionChangeResource {
     }
 
     @Override
-    public Boolean fireChange(final String nodeName, final PermissionChangeRequest request) {
+    public Boolean fireChange(final String nodeName, final PermissionChangeEvent event) {
         final Boolean result = nodeServiceProvider.get().remoteRestResult(
                 nodeName,
                 Boolean.class,
@@ -51,11 +50,11 @@ class PermissionChangeResourceImpl implements PermissionChangeResource {
                         PermissionChangeResource.FIRE_CHANGE_PATH_PART,
                         nodeName),
                 () -> {
-                    permissionChangeEventHandlersProvider.get().fireLocally(request);
+                    permissionChangeEventHandlersProvider.get().fireLocally(event);
                     return true;
                 },
                 builder ->
-                        builder.post(Entity.json(request)));
+                        builder.post(Entity.json(event)));
 
         return result;
     }

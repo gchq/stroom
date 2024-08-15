@@ -16,9 +16,7 @@
 
 package stroom.security.impl.event;
 
-import stroom.security.shared.PermissionChangeRequest;
-
 public interface PermissionChangeEventBus {
 
-    void fire(PermissionChangeRequest request);
+    void fire(PermissionChangeEvent event);
 }
