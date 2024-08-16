@@ -17,6 +17,7 @@
 
 package stroom.security.client.presenter;
 
+import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.presenter.CreateMultipleUsersPresenter.CreateMultipleUsersView;
@@ -31,7 +32,10 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class CreateMultipleUsersPresenter extends MyPresenterWidget<CreateMultipleUsersView> {
 
@@ -56,16 +60,59 @@ public class CreateMultipleUsersPresenter extends MyPresenterWidget<CreateMultip
                     .create(USER_RESOURCE)
                     .method(res -> res.createUsersFromCsv(usersCsvData))
                     .onSuccess(result -> {
-                        if (result != null && result.size() > 0) {
-                            consumer.accept(result.get(0));
+                        if (result != null) {
+                            final List<User> disabled = result
+                                    .stream()
+                                    .filter(user -> !user.isEnabled())
+                                    .collect(Collectors.toList());
+                            final Optional<User> nextSelection = result.stream().findFirst();
+                            if (disabled.size() > 0) {
+                                ConfirmEvent.fire(this,
+                                        "Some deleted users already exist with the same names, " +
+                                                "would you like to restore them?",
+                                        ok -> {
+                                            if (ok) {
+                                                enable(disabled, consumer, event, nextSelection, taskListener);
+                                            } else {
+                                                nextSelection.ifPresent(consumer);
+                                                event.hide();
+                                            }
+                                        });
+                            } else {
+                                nextSelection.ifPresent(consumer);
+                                event.hide();
+                            }
+                        } else {
+                            event.hide();
                         }
-                        event.hide();
                     })
                     .onFailure(RestErrorHandler.forPopup(this, event))
                     .taskListener(taskListener)
                     .exec();
         } else {
             event.hide();
+        }
+    }
+
+    private void enable(final List<User> disabled,
+                        final Consumer<User> consumer,
+                        final HidePopupRequestEvent event,
+                        final Optional<User> nextSelection,
+                        final TaskListener taskListener) {
+        if (disabled.size() == 0) {
+            nextSelection.ifPresent(consumer);
+            event.hide();
+        } else {
+            final User user = disabled.remove(0);
+            user.setEnabled(true);
+            restFactory
+                    .create(USER_RESOURCE)
+                    .method(res -> res.update(user))
+                    .onSuccess(result -> {
+                        enable(disabled, consumer, event, nextSelection, taskListener);
+                    })
+                    .taskListener(taskListener)
+                    .exec();
         }
     }
 

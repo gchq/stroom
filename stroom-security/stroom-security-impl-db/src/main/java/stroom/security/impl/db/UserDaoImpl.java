@@ -125,7 +125,7 @@ public class UserDaoImpl implements UserDao {
             final User persisted = create(user);
             onUserCreateAction.accept(persisted);
             return persisted;
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
         }
 
@@ -197,16 +197,6 @@ public class UserDaoImpl implements UserDao {
 
         return getByUuid(user.getUuid()).orElseThrow(() -> new RuntimeException("Error fetching updated user"));
     }
-
-//    @Override
-//    public void setEnabled(final String uuid, final boolean enabled) {
-//        JooqUtil.context(securityDbConnProvider, context -> context
-//                .update(STROOM_USER)
-//                .set(STROOM_USER.ENABLED, enabled)
-//                .where(STROOM_USER.UUID.eq(uuid))
-//                .execute()
-//        );
-//    }
 
     @Override
     public ResultPage<User> find(final FindUserCriteria criteria) {

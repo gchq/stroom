@@ -225,10 +225,20 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
             userService.getUserBySubjectId(userName.getSubjectId())
                     .ifPresentOrElse(
                             user -> {
-                                final String outcomeMsg = LogUtil.message("User '{}' already exists",
-                                        user.asRef().toInfoString());
-                                indentedWarn(LOGGER, outcomeMsg, "  ");
-                                logCreateUserEvent(userName, false, outcomeMsg);
+                                if (!user.isEnabled()) {
+                                    final String outcomeMsg = LogUtil
+                                            .message("User '{}' already exists but is disabled, enabling",
+                                                    user.asRef().toInfoString());
+                                    user.setEnabled(true);
+                                    userService.update(user);
+                                    indentedWarn(LOGGER, outcomeMsg, "  ");
+                                    logCreateUserEvent(userName, false, outcomeMsg);
+                                } else {
+                                    final String outcomeMsg = LogUtil.message("User '{}' already exists",
+                                            user.asRef().toInfoString());
+                                    indentedWarn(LOGGER, outcomeMsg, "  ");
+                                    logCreateUserEvent(userName, false, outcomeMsg);
+                                }
                             },
                             () -> {
                                 userService.getOrCreateUser(userName);
@@ -248,12 +258,21 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
         info(LOGGER, msg);
 
         try {
-            userService.getUserBySubjectId(groupName)
+            userService.getGroupByName(groupName)
                     .ifPresentOrElse(
                             user -> {
-                                final String outcomeMsg = LogUtil.message("Group '{}' already exists", groupName);
-                                indentedWarn(LOGGER, outcomeMsg, "  ");
-                                logCreateGroupEvent(groupName, false, outcomeMsg);
+                                if (!user.isEnabled()) {
+                                    final String outcomeMsg = LogUtil
+                                            .message("Group '{}' already exists but is disabled, enabling", groupName);
+                                    user.setEnabled(true);
+                                    userService.update(user);
+                                    indentedWarn(LOGGER, outcomeMsg, "  ");
+                                    logCreateGroupEvent(groupName, true, outcomeMsg);
+                                } else {
+                                    final String outcomeMsg = LogUtil.message("Group '{}' already exists", groupName);
+                                    indentedWarn(LOGGER, outcomeMsg, "  ");
+                                    logCreateGroupEvent(groupName, false, outcomeMsg);
+                                }
                             },
                             () -> {
                                 userService.getOrCreateUserGroup(groupName);

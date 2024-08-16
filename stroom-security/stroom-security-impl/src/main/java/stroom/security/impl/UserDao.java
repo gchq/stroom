@@ -25,8 +25,6 @@ public interface UserDao {
 
     User update(User user);
 
-//    void setEnabled(String uuid, boolean enabled);
-
     ResultPage<User> find(FindUserCriteria criteria);
 
     ResultPage<User> findUsersInGroup(String groupUuid, FindUserCriteria criteria);

@@ -70,16 +70,6 @@ class UserServiceImpl implements UserService, ContentPackUserService {
                     }));
         });
 
-//        // Auto re-enable users if they are currently disabled.
-//        if (!persisted.isEnabled()) {
-//            userDao.setEnabled(persisted.getUuid(), true);
-//            persisted.setEnabled(true);
-//            fireEntityChangeEvent(persisted, EntityAction.CREATE);
-//            if (onCreateAction != null) {
-//                onCreateAction.accept(persisted);
-//            }
-//        }
-
         return persisted;
     }
 
@@ -101,16 +91,6 @@ class UserServiceImpl implements UserService, ContentPackUserService {
                         }
                     }));
         });
-
-//        // Auto re-enable groups if they are currently disabled.
-//        if (!persisted.isEnabled()) {
-//            userDao.setEnabled(persisted.getUuid(), true);
-//            persisted.setEnabled(true);
-//            fireEntityChangeEvent(persisted, EntityAction.CREATE);
-//            if (onCreateAction != null) {
-//                onCreateAction.accept(persisted);
-//            }
-//        }
 
         return persisted;
     }
