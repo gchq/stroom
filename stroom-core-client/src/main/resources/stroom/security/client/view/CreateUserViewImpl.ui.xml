@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:i="urn:import:stroom.item.client">
     <g:FlowPanel styleName="form max dock-container-vertical">
-        <i:SelectionBox ui:field="createTypes"/>
-        <g:SimplePanel ui:field="panel"/>
+        <i:SelectionBox ui:field="createTypes" addStyleNames="dock-min w-100"/>
+        <g:SimplePanel ui:field="panel" addStyleNames="dock-max"/>
     </g:FlowPanel>
 </ui:UiBinder>
