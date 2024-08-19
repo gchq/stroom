@@ -2317,3 +2317,7 @@ button.main-menu svg {
     gap: 5px;
     flex-direction: column;
 }
+
+.inherited {
+    opacity: 0.4;
+}

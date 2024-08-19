@@ -3,6 +3,8 @@ package stroom.security.shared;
 import stroom.docref.HasDisplayValue;
 
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -90,11 +92,16 @@ public enum AppPermission implements HasDisplayValue {
             "");
 
     private static final Map<String, AppPermission> APP_PERMISSION_ENUM_MAP;
+    public static final List<AppPermission> LIST;
 
     static {
         APP_PERMISSION_ENUM_MAP = Arrays
                 .stream(AppPermission.values())
                 .collect(Collectors.toMap(AppPermission::getDisplayValue, Function.identity()));
+        LIST = Arrays
+                .stream(AppPermission.values())
+                .sorted(Comparator.comparing(AppPermission::getDisplayValue))
+                .collect(Collectors.toList());
     }
 
     public static AppPermission getPermissionForName(final String name) {

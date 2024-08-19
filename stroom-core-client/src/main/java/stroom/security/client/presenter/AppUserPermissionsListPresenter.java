@@ -26,10 +26,10 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.docref.HasDisplayValue;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppPermissionResource;
 import stroom.security.shared.AppUserPermissions;
 import stroom.security.shared.FetchAppUserPermissionsRequest;
@@ -42,14 +42,16 @@ import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.dropdowntree.client.view.QuickFilterDialogView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
+import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.ColumnSortList;
@@ -63,7 +65,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public class AppUserPermissionsListPresenter
         extends MyPresenterWidget<QuickFilterPageView>
@@ -195,28 +196,46 @@ public class AppUserPermissionsListPresenter
         nameCol.setSortable(true);
         dataGrid.addResizableColumn(nameCol, "User or Group", 400);
 
-//
-//        dataGrid.addAutoResizableColumn(DataGridUtil
-//                        .textColumnBuilder(this::getUserOrGroupName)
-//                        .withSorting(UserFields.DISPLAY_NAME.getFldName(), true)
-//                        .build(),
-//                "User or Group",
-//                400);
-
         // Permissions
-        final Column<AppUserPermissions, String> permissionCol =
-                new Column<AppUserPermissions, String>(new TextCell()) {
+        final Column<AppUserPermissions, SafeHtml> permissionCol =
+                new Column<AppUserPermissions, SafeHtml>(new SafeHtmlCell()) {
                     @Override
-                    public String getValue(final AppUserPermissions appUserPermissions) {
-                        if (appUserPermissions.getPermissions() != null) {
-                            return appUserPermissions
-                                    .getPermissions()
-                                    .stream()
-                                    .map(HasDisplayValue::getDisplayValue)
-                                    .sorted()
-                                    .collect(Collectors.joining(", "));
+                    public SafeHtml getValue(final AppUserPermissions appUserPermissions) {
+                        final SafeHtmlBuilder sb = new SafeHtmlBuilder();
+                        if (appUserPermissions.getPermissions() != null &&
+                                appUserPermissions.getPermissions().contains(AppPermission.ADMINISTRATOR)) {
+                            sb.appendHtmlConstant("<b>");
+                            addLine(sb, false, AppPermission.ADMINISTRATOR.getDisplayValue());
+                            sb.appendHtmlConstant("</b>");
+                        } else if (appUserPermissions.getInherited() != null &&
+                                appUserPermissions.getInherited().contains(AppPermission.ADMINISTRATOR)) {
+                            sb.appendHtmlConstant("<b>");
+                            addLine(sb, true, AppPermission.ADMINISTRATOR.getDisplayValue());
+                            sb.appendHtmlConstant("</b>");
+                        } else {
+                            boolean notEmpty = false;
+                            boolean lastInherited = false;
+                            for (final AppPermission permission : AppPermission.LIST) {
+                                if (appUserPermissions.getPermissions() != null &&
+                                        appUserPermissions.getPermissions().contains(permission)) {
+                                    if (notEmpty) {
+                                        addLine(sb, lastInherited, ", ");
+                                    }
+                                    addLine(sb, false, permission.getDisplayValue());
+                                    notEmpty = true;
+                                    lastInherited = false;
+                                } else if (appUserPermissions.getInherited() != null &&
+                                        appUserPermissions.getInherited().contains(permission)) {
+                                    if (notEmpty) {
+                                        addLine(sb, lastInherited, ", ");
+                                    }
+                                    addLine(sb, true, permission.getDisplayValue());
+                                    notEmpty = true;
+                                    lastInherited = true;
+                                }
+                            }
                         }
-                        return "";
+                        return sb.toSafeHtml();
                     }
                 };
         dataGrid.addResizableColumn(permissionCol, "Permissions", 800);
@@ -257,6 +276,18 @@ public class AppUserPermissionsListPresenter
         };
         dataGrid.addColumnSortHandler(columnSortHandler);
         dataGrid.getColumnSortList().push(nameCol);
+    }
+
+    private void addLine(final SafeHtmlBuilder sb,
+                         final boolean inherited,
+                         final String text) {
+        if (inherited) {
+            sb.appendHtmlConstant("<span class=\"inherited\">");
+        } else {
+            sb.appendHtmlConstant("<span>");
+        }
+        sb.appendEscaped(text);
+        sb.appendHtmlConstant("</span>");
     }
 
     private String getUserOrGroupName(AppUserPermissions appUserPermissions) {

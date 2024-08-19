@@ -72,7 +72,17 @@ class AppPermissionServiceImpl implements AppPermissionService {
     @Override
     public ResultPage<AppUserPermissions> fetchAppUserPermissions(final FetchAppUserPermissionsRequest request) {
         checkGetPermission();
-        return appPermissionDao.fetchAppUserPermissions(request);
+        final ResultPage<AppUserPermissions> resultPage = appPermissionDao.fetchAppUserPermissions(request);
+
+        // Add inherited permissions.
+        for (final AppUserPermissions permissions : resultPage.getValues()) {
+            final Set<AppPermission> inheritedPermissions = new HashSet<>();
+            final Set<UserRef> cyclicPrevention = new HashSet<>();
+            addDeepPermissions(permissions.getUserRef(), inheritedPermissions, cyclicPrevention);
+            permissions.setInherited(inheritedPermissions);
+        }
+
+        return resultPage;
     }
 
     @Override
@@ -93,11 +103,11 @@ class AppPermissionServiceImpl implements AppPermissionService {
         final Map<AppPermission, List<List<UserRef>>> inheritedPermissions = new HashMap<>();
         final Set<UserRef> cyclicPrevention = new HashSet<>();
         final List<UserRef> currentPath = List.of(userRef);
-        addDeepPermissions(userRef, currentPath, inheritedPermissions, cyclicPrevention);
+        addDeepPermissionsAndPaths(userRef, currentPath, inheritedPermissions, cyclicPrevention);
         return new AppUserPermissionsReport(inheritedPermissions);
     }
 
-    private void addDeepPermissions(final UserRef userRef,
+    private void addDeepPermissionsAndPaths(final UserRef userRef,
                                     final List<UserRef> currentPath,
                                     final Map<AppPermission, List<List<UserRef>>> inheritedPermissions,
                                     final Set<UserRef> cyclicPrevention) {
@@ -112,7 +122,22 @@ class AppPermissionServiceImpl implements AppPermissionService {
                 for (final UserRef group : parentGroups) {
                     final List<UserRef> parentPath = new ArrayList<>(currentPath);
                     parentPath.add(group);
-                    addDeepPermissions(group, parentPath, inheritedPermissions, cyclicPrevention);
+                    addDeepPermissionsAndPaths(group, parentPath, inheritedPermissions, cyclicPrevention);
+                }
+            }
+        }
+    }
+
+    private void addDeepPermissions(final UserRef userRef,
+                                    final Set<AppPermission> inheritedPermissions,
+                                    final Set<UserRef> cyclicPrevention) {
+        final Set<AppPermission> directPermissions = appPermissionDao.getPermissionsForUser(userRef.getUuid());
+        inheritedPermissions.addAll(directPermissions);
+        if (cyclicPrevention.add(userRef)) {
+            final Set<UserRef> parentGroups = userGroupsCache.getGroups(userRef);
+            if (parentGroups != null) {
+                for (final UserRef group : parentGroups) {
+                    addDeepPermissions(group, inheritedPermissions, cyclicPrevention);
                 }
             }
         }
