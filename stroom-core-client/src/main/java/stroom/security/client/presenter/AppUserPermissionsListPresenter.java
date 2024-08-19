@@ -238,7 +238,7 @@ public class AppUserPermissionsListPresenter
                         return sb.toSafeHtml();
                     }
                 };
-        dataGrid.addResizableColumn(permissionCol, "Permissions", 800);
+        dataGrid.addResizableColumn(permissionCol, "Permissions", 2000);
 
         dataGrid.addEndColumn(new EndColumn<AppUserPermissions>());
 
