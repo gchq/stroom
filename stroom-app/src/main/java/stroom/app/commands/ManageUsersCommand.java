@@ -477,7 +477,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
 
     private boolean hasPermission(final UserRef userOrGroup,
                                   final AppPermission permission) {
-        return userAppPermissionService.getPermissions(userOrGroup)
+        return userAppPermissionService.getDirectAppUserPermissions(userOrGroup)
                 .stream()
                 .anyMatch(perm -> perm.equals(permission));
     }

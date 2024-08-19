@@ -2,6 +2,7 @@ package stroom.security.impl;
 
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppUserPermissions;
+import stroom.security.shared.AppUserPermissionsReport;
 import stroom.security.shared.FetchAppUserPermissionsRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
@@ -12,7 +13,9 @@ public interface AppPermissionService {
 
     ResultPage<AppUserPermissions> fetchAppUserPermissions(FetchAppUserPermissionsRequest request);
 
-    Set<AppPermission> getPermissions(UserRef userRef);
+    Set<AppPermission> getDirectAppUserPermissions(UserRef userRef);
+
+    AppUserPermissionsReport getAppUserPermissionsReport(UserRef userRef);
 
     void addPermission(UserRef userRef, AppPermission permission);
 

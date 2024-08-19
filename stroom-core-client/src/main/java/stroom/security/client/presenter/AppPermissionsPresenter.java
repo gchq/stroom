@@ -18,6 +18,7 @@
 package stroom.security.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
+import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.security.client.presenter.AppPermissionsPresenter.AppPermissionsView;
@@ -29,6 +30,7 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -92,32 +94,6 @@ public class AppPermissionsPresenter
     public void refresh() {
         appUserPermissionsListPresenter.refresh();
     }
-
-//    public void show() {
-//        appUserPermissionsListPresenter.refresh();
-//
-//        final PopupSize popupSize = PopupSize.builder()
-//                .width(Size
-//                        .builder()
-//                        .initial(1000)
-//                        .min(1000)
-//                        .resizable(true)
-//                        .build())
-//                .height(Size
-//                        .builder()
-//                        .initial(800)
-//                        .min(800)
-//                        .resizable(true)
-//                        .build())
-//                .build();
-//
-//        ShowPopupEvent.builder(this)
-//                .popupType(PopupType.CLOSE_DIALOG)
-//                .popupSize(popupSize)
-//                .caption("Application Permissions")
-//                .modal()
-//                .fire();
-//    }
 
     @Override
     public SvgImage getIcon() {

@@ -59,7 +59,7 @@ public class LoginManager implements HasHandlers {
         TaskStartEvent.fire(this, "Fetching permissions...");
         restFactory
                 .create(APP_PERMISSION_RESOURCE)
-                .method(AppPermissionResource::getUserAndPermissions)
+                .method(AppPermissionResource::getEffectiveAppPermissions)
                 .onSuccess(userAndPermissions -> {
                     if (userAndPermissions != null) {
                         currentUser.setUserAndPermissions(userAndPermissions);

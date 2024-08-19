@@ -24,10 +24,10 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.api.event.CurrentUserChangedEvent;
 import stroom.security.client.api.event.RequestLogoutEvent;
 import stroom.security.shared.AppPermission;
+import stroom.security.shared.AppUserPermissions;
 import stroom.security.shared.CheckDocumentPermissionRequest;
 import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.DocumentPermission;
-import stroom.security.shared.UserAndEffectivePermissions;
 import stroom.task.client.TaskListener;
 import stroom.util.shared.UserRef;
 
@@ -70,16 +70,16 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
         this.permissions = null;
     }
 
-    public void setUserAndPermissions(final UserAndEffectivePermissions userAndPermissions) {
+    public void setUserAndPermissions(final AppUserPermissions userAndPermissions) {
         setUserAndPermissions(userAndPermissions, true);
     }
 
-    public void setUserAndPermissions(final UserAndEffectivePermissions userAndPermissions,
+    public void setUserAndPermissions(final AppUserPermissions userAndPermissions,
                                       final boolean fireUserChangedEvent) {
         clear();
         if (userAndPermissions != null) {
             this.userRef = userAndPermissions.getUserRef();
-            this.permissions = userAndPermissions.getEffectivePermissions();
+            this.permissions = userAndPermissions.getPermissions();
         }
 
         if (fireUserChangedEvent) {

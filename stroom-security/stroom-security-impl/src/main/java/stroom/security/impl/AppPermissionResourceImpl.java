@@ -8,11 +8,11 @@ import stroom.security.api.exception.AuthenticationException;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppPermissionResource;
 import stroom.security.shared.AppUserPermissions;
+import stroom.security.shared.AppUserPermissionsReport;
 import stroom.security.shared.ChangeSet;
 import stroom.security.shared.ChangeUserRequest;
 import stroom.security.shared.FetchAppUserPermissionsRequest;
 import stroom.security.shared.HasUserRef;
-import stroom.security.shared.UserAndEffectivePermissions;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -64,7 +64,7 @@ class AppPermissionResourceImpl implements AppPermissionResource {
 
     @Override
     @AutoLogged(OperationType.VIEW)
-    public UserAndEffectivePermissions getUserAndPermissions() {
+    public AppUserPermissions getEffectiveAppPermissions() {
         final SecurityContext securityContext = securityContextProvider.get();
         final UserIdentity userIdentity = securityContext.getUserIdentity();
         if (userIdentity == null) {
@@ -80,7 +80,7 @@ class AppPermissionResourceImpl implements AppPermissionResource {
                         throw new AuthenticationException("Stroom is down for maintenance. Please try again later.");
                     }
                 }
-                final UserAndEffectivePermissions userAndPermissions = new UserAndEffectivePermissions(
+                final AppUserPermissions userAndPermissions = new AppUserPermissions(
                         securityContext.getUserRef(),
                         userAndPermissionsHelperProvider.get().getCurrentAppPermissions());
 
@@ -97,8 +97,8 @@ class AppPermissionResourceImpl implements AppPermissionResource {
 
     @Override
     @AutoLogged(OperationType.VIEW)
-    public Set<AppPermission> fetchUserAppPermissions(final UserRef user) {
-        return appPermissionServiceProvider.get().getPermissions(user);
+    public AppUserPermissionsReport getAppUserPermissionsReport(final UserRef user) {
+        return appPermissionServiceProvider.get().getAppUserPermissionsReport(user);
     }
 
     @Override

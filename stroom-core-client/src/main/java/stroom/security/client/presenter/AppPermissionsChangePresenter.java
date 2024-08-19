@@ -19,6 +19,7 @@ package stroom.security.client.presenter;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
@@ -26,6 +27,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.AppPermissionsChangePresenter.AppPermissionsChangeView;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppPermissionResource;
+import stroom.security.shared.AppUserPermissionsReport;
 import stroom.security.shared.ChangeSet;
 import stroom.security.shared.ChangeUserRequest;
 import stroom.util.shared.UserRef;
@@ -33,9 +35,12 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -46,7 +51,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class AppPermissionsChangePresenter
@@ -57,8 +62,10 @@ public class AppPermissionsChangePresenter
     private final RestFactory restFactory;
     private final ClientSecurityContext securityContext;
     private final MyDataGrid<AppPermission> dataGrid;
+    private final MultiSelectionModelImpl<AppPermission> selectionModel;
+    private final DataGridSelectionEventManager<AppPermission> selectionEventManager;
 
-    private Set<AppPermission> currentPermissions;
+    private AppUserPermissionsReport currentPermissions;
     private List<AppPermission> allPermissions;
 
     private UserRef relatedUser;
@@ -74,10 +81,101 @@ public class AppPermissionsChangePresenter
         this.securityContext = securityContext;
 
         dataGrid = new MyDataGrid<>();
+        selectionModel = new MultiSelectionModelImpl<>(dataGrid);
+        selectionEventManager = new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
+        dataGrid.setSelectionModel(selectionModel, selectionEventManager);
         pagerView.setDataWidget(dataGrid);
         view.setPermissionsView(pagerView);
 
         addColumns();
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(selectionModel.addSelectionHandler(e -> updateDetails()));
+    }
+
+    private void updateDetails() {
+        final SafeHtml details = getDetails();
+        getView().setDetails(details);
+    }
+
+    private SafeHtml getDetails() {
+        final SafeHtmlBuilder sb = new SafeHtmlBuilder();
+        final AppPermission permission = selectionModel.getSelected();
+        if (permission != null) {
+            final List<List<UserRef>> paths = currentPermissions.getInheritedPermissions().get(permission);
+            if (paths != null) {
+                addPaths(
+                        paths,
+                        sb,
+                        "Explicit Permission",
+                        "Inherited Permission From:");
+            }
+
+            // See if implied by administrator.
+            if (!AppPermission.ADMINISTRATOR.equals(permission)) {
+                final List<List<UserRef>> adminPaths = currentPermissions
+                        .getInheritedPermissions()
+                        .get(AppPermission.ADMINISTRATOR);
+                if (adminPaths != null) {
+                    addPaths(
+                            adminPaths,
+                            sb,
+                            "Implied By Administrator",
+                            "Inherited Permission (Implied By Administrator) From:");
+                }
+            }
+
+            if (sb.toSafeHtml().asString().length() == 0) {
+                appendTitle(sb, "No Permission");
+            }
+        }
+
+        return sb.toSafeHtml();
+    }
+
+    private void addPaths(final List<List<UserRef>> paths,
+                          final SafeHtmlBuilder sb,
+                          final String directTitle,
+                          final String inheritedTitle) {
+        if (paths != null) {
+            final Optional<List<UserRef>> directPath = paths
+                    .stream()
+                    .filter(path -> path.size() == 1 && path.get(0).equals(relatedUser))
+                    .findAny();
+            if (directPath.isPresent()) {
+                appendTitle(sb, directTitle);
+                sb.appendHtmlConstant("<br/>");
+            }
+
+            final List<List<UserRef>> inheritedPaths = paths
+                    .stream()
+                    .filter(path -> path.size() > 1)
+                    .collect(Collectors.toList());
+            if (inheritedPaths.size() > 0) {
+                appendTitle(sb, inheritedTitle);
+
+                for (final List<UserRef> path : inheritedPaths) {
+                    sb.appendEscaped(path
+                            .stream()
+                            .filter(userRef -> !userRef.equals(relatedUser))
+                            .map(UserRef::toDisplayString)
+                            .collect(Collectors.joining(" > ")));
+                    sb.appendHtmlConstant("<br/>");
+                }
+
+                sb.appendHtmlConstant("<br/>");
+            }
+        }
+    }
+
+    private void appendTitle(final SafeHtmlBuilder sb, final String title) {
+        sb.appendHtmlConstant("<b>");
+        sb.appendEscaped(title);
+        sb.appendHtmlConstant("</b>");
+        sb.appendHtmlConstant("<br/>");
     }
 
     public void show(final UserRef userRef, final Runnable onClose) {
@@ -121,10 +219,11 @@ public class AppPermissionsChangePresenter
             // Fetch permissions and populate table.
             restFactory
                     .create(APP_PERMISSION_RESOURCE)
-                    .method(res -> res.fetchUserAppPermissions(relatedUser))
+                    .method(res -> res.getAppUserPermissionsReport(relatedUser))
                     .onSuccess(userAppPermissions -> {
                         AppPermissionsChangePresenter.this.currentPermissions = userAppPermissions;
                         updateAllPermissions();
+                        updateDetails();
                     })
                     .taskListener(this)
                     .exec();
@@ -154,11 +253,33 @@ public class AppPermissionsChangePresenter
                 TickBoxCell.create(appearance, true, true, updateable)) {
             @Override
             public TickBoxState getValue(final AppPermission permission) {
-                if (currentPermissions != null && currentPermissions.contains(permission)) {
-                    return TickBoxState.fromBoolean(true);
-                }
+                if (currentPermissions != null) {
+                    final List<List<UserRef>> paths = currentPermissions
+                            .getInheritedPermissions()
+                            .get(permission);
+                    if (paths != null) {
+                        final Optional<List<UserRef>> directPath = paths
+                                .stream()
+                                .filter(path -> path.size() == 1 && path.get(0).equals(relatedUser))
+                                .findAny();
+                        if (directPath.isPresent()) {
+                            return TickBoxState.TICK;
+                        } else {
+                            return TickBoxState.HALF_TICK;
+                        }
+                    }
 
-                return TickBoxState.fromBoolean(false);
+                    // See if implied by administrator.
+                    if (!AppPermission.ADMINISTRATOR.equals(permission)) {
+                        final List<List<UserRef>> adminPaths = currentPermissions
+                                .getInheritedPermissions()
+                                .get(AppPermission.ADMINISTRATOR);
+                        if (adminPaths != null) {
+                            return TickBoxState.HALF_TICK;
+                        }
+                    }
+                }
+                return TickBoxState.UNTICK;
             }
         };
 
@@ -207,5 +328,7 @@ public class AppPermissionsChangePresenter
     public interface AppPermissionsChangeView extends View {
 
         void setPermissionsView(View view);
+
+        void setDetails(SafeHtml details);
     }
 }

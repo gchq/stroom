@@ -16,14 +16,11 @@
 
 package stroom.security.impl;
 
-import stroom.docref.DocRef;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppUserPermissions;
-import stroom.security.shared.DocumentPermission;
-import stroom.security.shared.DocumentUserPermissions;
+import stroom.security.shared.AppUserPermissionsReport;
 import stroom.security.shared.FetchAppUserPermissionsRequest;
-import stroom.security.shared.FetchDocumentUserPermissionsRequest;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
@@ -37,6 +34,11 @@ import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Singleton
@@ -47,14 +49,17 @@ class AppPermissionServiceImpl implements AppPermissionService {
     private final AppPermissionDao appPermissionDao;
     private final EntityEventBus entityEventBus;
     private final SecurityContext securityContext;
+    private final UserGroupsCache userGroupsCache;
 
     @Inject
     AppPermissionServiceImpl(final AppPermissionDao appPermissionDao,
                              final EntityEventBus entityEventBus,
-                             final SecurityContext securityContext) {
+                             final SecurityContext securityContext,
+                             final UserGroupsCache userGroupsCache) {
         this.appPermissionDao = appPermissionDao;
         this.entityEventBus = entityEventBus;
         this.securityContext = securityContext;
+        this.userGroupsCache = userGroupsCache;
     }
 
     private void checkGetPermission() {
@@ -71,12 +76,46 @@ class AppPermissionServiceImpl implements AppPermissionService {
     }
 
     @Override
-    public Set<AppPermission> getPermissions(final UserRef userRef) {
+    public Set<AppPermission> getDirectAppUserPermissions(final UserRef userRef) {
         if (!securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
             throw new PermissionException(securityContext.getUserRef(),
                     "You do not have permission to get app permissions");
         }
         return appPermissionDao.getPermissionsForUser(userRef.getUuid());
+    }
+
+    @Override
+    public AppUserPermissionsReport getAppUserPermissionsReport(final UserRef userRef) {
+        if (!securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have permission to get app permissions");
+        }
+        final Map<AppPermission, List<List<UserRef>>> inheritedPermissions = new HashMap<>();
+        final Set<UserRef> cyclicPrevention = new HashSet<>();
+        final List<UserRef> currentPath = List.of(userRef);
+        addDeepPermissions(userRef, currentPath, inheritedPermissions, cyclicPrevention);
+        return new AppUserPermissionsReport(inheritedPermissions);
+    }
+
+    private void addDeepPermissions(final UserRef userRef,
+                                    final List<UserRef> currentPath,
+                                    final Map<AppPermission, List<List<UserRef>>> inheritedPermissions,
+                                    final Set<UserRef> cyclicPrevention) {
+        final Set<AppPermission> directPermissions = appPermissionDao.getPermissionsForUser(userRef.getUuid());
+        directPermissions.forEach(appPermission -> {
+            inheritedPermissions.computeIfAbsent(appPermission, k -> new ArrayList<>()).add(currentPath);
+        });
+
+        if (cyclicPrevention.add(userRef)) {
+            final Set<UserRef> parentGroups = userGroupsCache.getGroups(userRef);
+            if (parentGroups != null) {
+                for (final UserRef group : parentGroups) {
+                    final List<UserRef> parentPath = new ArrayList<>(currentPath);
+                    parentPath.add(group);
+                    addDeepPermissions(group, parentPath, inheritedPermissions, cyclicPrevention);
+                }
+            }
+        }
     }
 
     @Override

@@ -117,7 +117,7 @@ class TestAppPermissionServiceImpl {
 
     private void checkPermissions(final User user, final AppPermission... permissions) {
         final Set<AppPermission> permissionSet = userAppPermissionService
-                .getPermissions(user.asRef());
+                .getDirectAppUserPermissions(user.asRef());
         assertThat(permissionSet.size()).isEqualTo(permissions.length);
         for (final AppPermission permission : permissions) {
             assertThat(permissionSet.contains(permission)).isTrue();
@@ -134,7 +134,7 @@ class TestAppPermissionServiceImpl {
         final Set<AppPermission> combinedPermissions = new HashSet<>();
         for (final User userRef : allUsers) {
             final Set<AppPermission> permissionSet = userAppPermissionService
-                    .getPermissions(userRef.asRef());
+                    .getDirectAppUserPermissions(userRef.asRef());
             combinedPermissions.addAll(permissionSet);
         }
 

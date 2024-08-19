@@ -16,8 +16,6 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
 
-import java.util.Set;
-
 @Tag(name = "Application Permissions")
 @Path("/permission/app" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
@@ -27,15 +25,16 @@ public interface AppPermissionResource extends RestResource, DirectRestService {
     @GET
     @Operation(
             summary = "User and app permissions for the current session",
-            operationId = "getUserAndPermissions")
-    UserAndEffectivePermissions getUserAndPermissions();
+            operationId = "getEffectiveAppPermissions")
+    AppUserPermissions getEffectiveAppPermissions();
 
     @POST
-    @Path("fetchUserAppPermissions")
+    @Path("/getAppUserPermissionsReport")
     @Operation(
-            summary = "User and app permissions for the specified user",
-            operationId = "fetchUserAppPermissions")
-    Set<AppPermission> fetchUserAppPermissions(@Parameter(description = "user", required = true) UserRef user);
+            summary = "Get a detailed report of app permissions for the specified user",
+            operationId = "getAppUserPermissionsReport")
+    AppUserPermissionsReport getAppUserPermissionsReport(@Parameter(description = "user", required = true) UserRef
+                                                                 user);
 
     @POST
     @Path("/fetchAppUserPermissions")
@@ -46,7 +45,7 @@ public interface AppPermissionResource extends RestResource, DirectRestService {
             @Parameter(description = "request", required = true) FetchAppUserPermissionsRequest request);
 
     @POST
-    @Path("changeUser")
+    @Path("/changeUser")
     @Operation(
             summary = "User and app permissions for the current session",
             operationId = "changeUserPermissions")
