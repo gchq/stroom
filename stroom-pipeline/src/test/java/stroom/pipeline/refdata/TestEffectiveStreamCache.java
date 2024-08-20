@@ -22,6 +22,8 @@ import stroom.cache.impl.CacheManagerImpl;
 import stroom.data.shared.StreamTypeNames;
 import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaDataCriteria;
+import stroom.meta.api.EffectiveMetaSet;
+import stroom.meta.api.EffectiveMetaSet.Builder;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.mock.MockMetaService;
@@ -45,8 +47,6 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NavigableSet;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -70,28 +70,29 @@ class TestEffectiveStreamCache extends StroomUnitTest {
         final InnerStreamMetaService metaService = new InnerStreamMetaService() {
 
             @Override
-            public List<EffectiveMeta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
+            public EffectiveMetaSet findEffectiveData(final EffectiveMetaDataCriteria criteria) {
                 findEffectiveStreamSourceCount++;
-                final List<EffectiveMeta> results = new ArrayList<>();
+                final String type = StreamTypeNames.REFERENCE;
+                final Builder builder = EffectiveMetaSet.builder(refFeedName, type);
+
                 long workingDate = criteria.getEffectivePeriod().getFrom();
                 while (workingDate < criteria.getEffectivePeriod().getTo()) {
                     final Meta meta = create(
                             MetaProperties.builder()
                                     .feedName(refFeedName)
-                                    .typeName(StreamTypeNames.REFERENCE)
+                                    .typeName(type)
                                     .effectiveMs(workingDate)
                                     .build());
 
-                    final EffectiveMeta effectiveMeta = new EffectiveMeta(meta);
+                    builder.add(meta.getId(), meta.getEffectiveMs());
 
-                    results.add(effectiveMeta);
                     workingDate = Instant.ofEpochMilli(workingDate)
                             .atZone(ZoneOffset.UTC)
                             .plusDays(1)
                             .toInstant()
                             .toEpochMilli();
                 }
-                return results;
+                return builder.build();
             }
         };
 
@@ -158,7 +159,7 @@ class TestEffectiveStreamCache extends StroomUnitTest {
             long time = DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z");
             long fromMs = getFromMs(time);
             long toMs = getToMs(fromMs);
-            Set<EffectiveMeta> streams;
+            EffectiveMetaSet streams;
 
             // Make sure we've got no effective streams.
             streams = effectiveStreamCache.get(
@@ -209,20 +210,20 @@ class TestEffectiveStreamCache extends StroomUnitTest {
     @Test
     void testDuplicateStreams() {
 
-        final List<EffectiveMeta> effectiveMetaList = List.of(
-                createEffectiveMeta(1L, 1000L),
-                createEffectiveMeta(11L, 1000L), // dup
-                createEffectiveMeta(2L, 1100L),
-                createEffectiveMeta(22L, 1100L), // dup
-                createEffectiveMeta(222L, 1100L), // dup
-                createEffectiveMeta(3L, 1200L),
-                createEffectiveMeta(4L, 1300L),
-                createEffectiveMeta(5L, 1400L)
-        );
+        final EffectiveMetaSet effectiveMetaSet = EffectiveMetaSet.builder(FEED_NAME, TYPE_NAME)
+                .add(1L, 1000L)
+                .add(11L, 1000L) // dup
+                .add(2L, 1100L)
+                .add(22L, 1100L) // dup
+                .add(222L, 1100L) // dup
+                .add(3L, 1200L)
+                .add(4L, 1300L)
+                .add(5L, 1400L)
+                .build();
 
         final MetaService mockMetaService = Mockito.mock(MetaService.class);
         Mockito.when(mockMetaService.findEffectiveData(Mockito.any()))
-                .thenReturn(effectiveMetaList);
+                .thenReturn(effectiveMetaSet);
 
         try (CacheManager cacheManager = new CacheManagerImpl()) {
             final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(
@@ -232,14 +233,14 @@ class TestEffectiveStreamCache extends StroomUnitTest {
                     new MockSecurityContext(),
                     ReferenceDataConfig::new);
 
-            final NavigableSet<EffectiveMeta> effectiveStreams = effectiveStreamCache.get(new EffectiveStreamKey(
+            final EffectiveMetaSet effectiveStreams = effectiveStreamCache.get(new EffectiveStreamKey(
                     FEED_NAME,
                     TYPE_NAME,
                     0,
                     1_000_000));
 
-            assertThat(effectiveStreams)
-                    .hasSize(5); // 5 non-dups
+            assertThat(effectiveStreams.size())
+                    .isEqualTo(5); // 5 non-dups
 
             final List<Long> streamIds = effectiveStreams.stream()
                     .map(EffectiveMeta::getId)
@@ -253,7 +254,6 @@ class TestEffectiveStreamCache extends StroomUnitTest {
 
     @Test
     void testSystemInfo() throws JsonProcessingException {
-
         final MetaService mockMetaService = Mockito.mock(MetaService.class);
 
         try (CacheManager cacheManager = new CacheManagerImpl()) {
@@ -267,14 +267,15 @@ class TestEffectiveStreamCache extends StroomUnitTest {
                 final String feedName = FEED_NAME + i;
                 int id = i * 10;
                 Mockito.when(mockMetaService.findEffectiveData(Mockito.any()))
-                        .thenReturn(List.of(
-                                createEffectiveMeta(id++, feedName, i * 1000 + 1L),
-                                createEffectiveMeta(id++, feedName, i * 1000 + 2L),
-                                createEffectiveMeta(id++, feedName, i * 1000 + 3L),
-                                createEffectiveMeta(id++, feedName, i * 1000 + 4L),
-                                createEffectiveMeta(id++, feedName, i * 1000 + 5L),
-                                createEffectiveMeta(id++, feedName, i * 1000 + 5L), // 3 with same time
-                                createEffectiveMeta(id++, feedName, i * 1000 + 5L)));
+                        .thenReturn(EffectiveMetaSet.builder(feedName, TYPE_NAME)
+                                .add(id++, i * 1000 + 1L)
+                                .add(id++, i * 1000 + 2L)
+                                .add(id++, i * 1000 + 3L)
+                                .add(id++, i * 1000 + 4L)
+                                .add(id++, i * 1000 + 5L)
+                                .add(id++, i * 1000 + 5L) // 3 with same time
+                                .add(id++, i * 1000 + 5L)
+                                .build());
                 effectiveStreamCache.get(
                         new EffectiveStreamKey(feedName, TYPE_NAME, 0, 10_000));
             }
@@ -322,7 +323,7 @@ class TestEffectiveStreamCache extends StroomUnitTest {
         }
 
         @Override
-        public List<EffectiveMeta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
+        public EffectiveMetaSet findEffectiveData(final EffectiveMetaDataCriteria criteria) {
             callCount++;
 
             return streams.stream()
@@ -333,7 +334,7 @@ class TestEffectiveStreamCache extends StroomUnitTest {
                                             effMs >= criteria.getEffectivePeriod().getFromMs()
                                                     && effMs <= criteria.getEffectivePeriod().getToMs()))
                     .map(EffectiveMeta::new)
-                    .collect(Collectors.toList());
+                    .collect(EffectiveMetaSet.collector(criteria.getFeed(), criteria.getType()));
         }
 
         void addEffectiveStream(final String feedName, long effectiveTimeMs) {

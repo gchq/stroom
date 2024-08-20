@@ -30,6 +30,7 @@ import stroom.explorer.shared.PermissionInheritance;
 import stroom.feed.api.FeedStore;
 import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaDataCriteria;
+import stroom.meta.api.EffectiveMetaSet;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.impl.MetaValueConfig;
@@ -622,7 +623,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 feed2,
                 StreamTypeNames.REFERENCE);
 
-        List<EffectiveMeta> list = metaService.findEffectiveData(criteria);
+        EffectiveMetaSet list = metaService.findEffectiveData(criteria);
 
         // Make sure the list contains what it should.
         verifySet(list, refData1, refData2);
@@ -646,17 +647,18 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     /**
      * Check that the list of stream contains the items we expect.
      *
-     * @param list
+     * @param metaSet
      * @param expected
      */
-    private void verifySet(final List<EffectiveMeta> list, final Meta... expected) {
-        assertThat(list).isNotNull();
-        assertThat(list.size()).isEqualTo(expected.length);
+    private void verifySet(final EffectiveMetaSet metaSet, final Meta... expected) {
+        assertThat(metaSet).isNotNull();
+        assertThat(metaSet.size()).isEqualTo(expected.length);
         final Set<EffectiveMeta> expectedSet = Arrays.stream(expected)
                 .map(EffectiveMeta::new)
                 .collect(Collectors.toSet());
 
-        assertThat(list).containsAll(expectedSet);
+        assertThat(metaSet)
+                .containsAll(expectedSet);
     }
 
     private Meta buildRefData(final String feed,
