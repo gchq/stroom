@@ -586,7 +586,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         if (redistribute && outerWidth > 0 && outerWidth > tableWidth) {
             int totalWeight = 0;
             int totalColWidth = 0;
-            for (int i = 0; i < super.getColumnCount(); i++) {
+            for (int i = 0; i < super.getColumnCount() && i < colSettings.size(); i++) {
                 final Column<R, ?> col = super.getColumn(i);
                 final ColSettings settings = colSettings.get(i);
                 if (settings != null) {

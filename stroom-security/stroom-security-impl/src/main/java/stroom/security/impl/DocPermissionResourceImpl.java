@@ -11,6 +11,8 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.CheckDocumentPermissionRequest;
 import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.DocumentUserPermissions;
+import stroom.security.shared.DocumentUserPermissionsReport;
+import stroom.security.shared.DocumentUserPermissionsRequest;
 import stroom.security.shared.FetchDocumentUserPermissionsRequest;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
@@ -65,6 +67,11 @@ class DocPermissionResourceImpl implements DocPermissionResource {
         return documentPermissionServiceProvider.get().fetchDocumentUserPermissions(request);
     }
 
+    @Override
+    @AutoLogged(OperationType.VIEW)
+    public DocumentUserPermissionsReport getDocUserPermissionsReport(final DocumentUserPermissionsRequest request) {
+        return documentPermissionServiceProvider.get().getDocUserPermissionsReport(request);
+    }
 
     //    @Override
 //    public DocumentPermissionSet fetchDocumentPermissions(final FetchDocumentPermissionsRequest request) {

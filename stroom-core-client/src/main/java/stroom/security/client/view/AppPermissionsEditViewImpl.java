@@ -16,23 +16,21 @@
 
 package stroom.security.client.view;
 
-import stroom.security.client.presenter.AppPermissionsChangePresenter.AppPermissionsChangeView;
-import stroom.security.client.presenter.AppPermissionsPresenter.AppPermissionsView;
+import stroom.security.client.presenter.AppPermissionsEditPresenter.AppPermissionsEditView;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-public final class AppPermissionsChangeViewImpl
+public final class AppPermissionsEditViewImpl
         extends ViewImpl
-        implements AppPermissionsChangeView {
+        implements AppPermissionsEditView {
 
     private final Widget widget;
 
@@ -42,7 +40,7 @@ public final class AppPermissionsChangeViewImpl
     HTML details;
 
     @Inject
-    public AppPermissionsChangeViewImpl(final Binder binder) {
+    public AppPermissionsEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -61,7 +59,7 @@ public final class AppPermissionsChangeViewImpl
         this.details.setHTML(details);
     }
 
-    public interface Binder extends UiBinder<Widget, AppPermissionsChangeViewImpl> {
+    public interface Binder extends UiBinder<Widget, AppPermissionsEditViewImpl> {
 
     }
 }

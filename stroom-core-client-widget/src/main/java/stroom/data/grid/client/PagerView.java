@@ -31,8 +31,8 @@ public interface PagerView extends View, TaskListener {
 
     void addButton(ButtonView buttonView);
 
-    ToggleButtonView addToggleButton(final Preset primaryPreset,
-                                     final Preset secondaryPreset);
+    ToggleButtonView addToggleButton(Preset primaryPreset,
+                                     Preset secondaryPreset);
 
     RefreshButton getRefreshButton();
 

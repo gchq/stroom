@@ -20,8 +20,8 @@ public class AppUserPermissions {
     @JsonProperty
     private Set<AppPermission> inherited;
 
-    public AppUserPermissions(@JsonProperty("userRef") final UserRef userRef,
-                              @JsonProperty("permissions") final Set<AppPermission> permissions) {
+    public AppUserPermissions(final UserRef userRef,
+                              final Set<AppPermission> permissions) {
         this.userRef = userRef;
         this.permissions = permissions;
     }

@@ -32,6 +32,10 @@ public class QuickFilterExpressionParser {
     private static final String QUOTE_STR = Character.toString(QUOTE_CHAR);
     private static final String ESCAPED_QUOTE_STR = Character.toString(ESCAPE_CHAR) + QUOTE_CHAR;
 
+    private QuickFilterExpressionParser() {
+        // Utility.
+    }
+
     public static ExpressionOperator parse(final String userInput,
                                            final Set<QueryField> defaultFields,
                                            final Map<String, QueryField> fieldMap) {

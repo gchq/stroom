@@ -26,10 +26,12 @@ import stroom.security.client.LogoutPlugin;
 import stroom.security.client.UsersAndGroupsPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.ApiKeysPresenter;
-import stroom.security.client.presenter.AppPermissionsChangePresenter;
-import stroom.security.client.presenter.AppPermissionsChangePresenter.AppPermissionsChangeView;
+import stroom.security.client.presenter.AppPermissionsEditPresenter;
+import stroom.security.client.presenter.AppPermissionsEditPresenter.AppPermissionsEditView;
 import stroom.security.client.presenter.AppPermissionsPresenter;
 import stroom.security.client.presenter.AppPermissionsPresenter.AppPermissionsView;
+import stroom.security.client.presenter.BatchDocumentPermissionsEditPresenter;
+import stroom.security.client.presenter.BatchDocumentPermissionsEditPresenter.BatchDocumentPermissionsEditView;
 import stroom.security.client.presenter.CreateExternalUserPresenter;
 import stroom.security.client.presenter.CreateExternalUserPresenter.CreateExternalUserView;
 import stroom.security.client.presenter.CreateMultipleUsersPresenter;
@@ -38,22 +40,26 @@ import stroom.security.client.presenter.CreateUserPresenter;
 import stroom.security.client.presenter.CreateUserPresenter.CreateUserView;
 import stroom.security.client.presenter.DocumentCreatePermissionsListPresenter;
 import stroom.security.client.presenter.DocumentCreatePermissionsListPresenter.DocumentCreatePermissionsListView;
-import stroom.security.client.presenter.DocumentPermissionsEditPresenter;
-import stroom.security.client.presenter.DocumentPermissionsEditPresenter.DocumentPermissionsEditView;
-import stroom.security.client.presenter.DocumentPermissionsPresenter;
-import stroom.security.client.presenter.DocumentPermissionsPresenter.DocumentPermissionsView;
+import stroom.security.client.presenter.BatchDocumentPermissionsPresenter;
+import stroom.security.client.presenter.BatchDocumentPermissionsPresenter.BatchDocumentPermissionsView;
+import stroom.security.client.presenter.DocumentUserPermissionsEditPresenter;
+import stroom.security.client.presenter.DocumentUserPermissionsEditPresenter.DocumentUserPermissionsEditView;
+import stroom.security.client.presenter.DocumentUserPermissionsPresenter;
+import stroom.security.client.presenter.DocumentUserPermissionsPresenter.DocumentUserPermissionsView;
 import stroom.security.client.presenter.EditApiKeyPresenter;
 import stroom.security.client.presenter.UserAndGroupsPresenter;
 import stroom.security.client.presenter.UserAndGroupsPresenter.UserAndGroupsView;
 import stroom.security.client.view.ApiKeysViewImpl;
-import stroom.security.client.view.AppPermissionsChangeViewImpl;
+import stroom.security.client.view.AppPermissionsEditViewImpl;
 import stroom.security.client.view.AppPermissionsViewImpl;
+import stroom.security.client.view.BatchDocumentPermissionsEditViewImpl;
 import stroom.security.client.view.CreateExternalUserViewImpl;
 import stroom.security.client.view.CreateMultipleUsersViewImpl;
 import stroom.security.client.view.CreateUserViewImpl;
 import stroom.security.client.view.DocumentCreatePermissionsListViewImpl;
-import stroom.security.client.view.DocumentPermissionsEditViewImpl;
-import stroom.security.client.view.DocumentPermissionsViewImpl;
+import stroom.security.client.view.BatchDocumentPermissionsViewImpl;
+import stroom.security.client.view.DocumentUserPermissionsEditViewImpl;
+import stroom.security.client.view.DocumentUserPermissionsViewImpl;
 import stroom.security.client.view.EditApiKeyViewImpl;
 import stroom.security.client.view.UserAndGroupsViewImpl;
 import stroom.widget.dropdowntree.client.view.QuickFilterDialogView;
@@ -102,22 +108,30 @@ public class SecurityModule extends PluginModule {
                 AppPermissionsView.class,
                 AppPermissionsViewImpl.class);
         bindPresenterWidget(
-                AppPermissionsChangePresenter.class,
-                AppPermissionsChangeView.class,
-                AppPermissionsChangeViewImpl.class);
+                AppPermissionsEditPresenter.class,
+                AppPermissionsEditView.class,
+                AppPermissionsEditViewImpl.class);
 
         bindPresenterWidget(
-                DocumentPermissionsPresenter.class,
-                DocumentPermissionsView.class,
-                DocumentPermissionsViewImpl.class);
+                DocumentUserPermissionsPresenter.class,
+                DocumentUserPermissionsView.class,
+                DocumentUserPermissionsViewImpl.class);
         bindPresenterWidget(
-                DocumentPermissionsEditPresenter.class,
-                DocumentPermissionsEditView.class,
-                DocumentPermissionsEditViewImpl.class);
+                DocumentUserPermissionsEditPresenter.class,
+                DocumentUserPermissionsEditView.class,
+                DocumentUserPermissionsEditViewImpl.class);
         bindPresenterWidget(
                 DocumentCreatePermissionsListPresenter.class,
                 DocumentCreatePermissionsListView.class,
                 DocumentCreatePermissionsListViewImpl.class);
+        bindPresenterWidget(
+                BatchDocumentPermissionsPresenter.class,
+                BatchDocumentPermissionsView.class,
+                BatchDocumentPermissionsViewImpl.class);
+        bindPresenterWidget(
+                BatchDocumentPermissionsEditPresenter.class,
+                BatchDocumentPermissionsEditView.class,
+                BatchDocumentPermissionsEditViewImpl.class);
 
         bindPresenterWidget(
                 ApiKeysPresenter.class,

@@ -2,6 +2,7 @@ package stroom.security.impl.db;
 
 import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.impl.DocTypeIdDao;
 import stroom.security.impl.DocumentPermissionDao;
 import stroom.security.impl.UserDocumentPermissions;
@@ -22,11 +23,15 @@ import org.jooq.impl.DSL;
 import org.jooq.types.UByte;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import static stroom.security.impl.db.jooq.tables.PermissionDoc.PERMISSION_DOC;
 import static stroom.security.impl.db.jooq.tables.PermissionDocCreate.PERMISSION_DOC_CREATE;
@@ -34,6 +39,7 @@ import static stroom.security.impl.db.jooq.tables.StroomUser.STROOM_USER;
 
 public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
 
+    private static final BitSet EMPTY = new BitSet(0);
     private static final PermissionDoc PERMISSION_DOC_SOURCE = new PermissionDoc("pd_source");
     private static final PermissionDocCreate PERMISSION_DOC_CREATE_SOURCE = new PermissionDocCreate("pdc_source");
 
@@ -137,7 +143,33 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
     }
 
     @Override
-    public List<Integer> getDocumentUserCreatePermissions(final String documentUuid, final String userUuid) {
+    public BitSet getDocumentUserCreatePermissionsBitSet(final String documentUuid, final String userUuid) {
+        final List<Integer> docTypeIdList = getDocumentUserCreateDocTypeIds(documentUuid, userUuid);
+
+        if (docTypeIdList.isEmpty()) {
+            return EMPTY;
+        }
+
+        final int max = docTypeIdList.stream().mapToInt(v -> v).max().orElseThrow();
+        // Note that the bit set is created after we fetch the permissions just to be sure that the max id is correct.
+        final BitSet bitSet = new BitSet(max);
+        docTypeIdList.forEach(i -> bitSet.set(i, true));
+        return bitSet;
+    }
+
+    @Override
+    public Set<String> getDocumentUserCreatePermissions(final String documentUuid, final String userUuid) {
+        final List<Integer> docTypeIdList = getDocumentUserCreateDocTypeIds(documentUuid, userUuid);
+        if (docTypeIdList.isEmpty()) {
+            return Collections.emptySet();
+        }
+        return docTypeIdList
+                .stream()
+                .map(docTypeIdDao::get)
+                .collect(Collectors.toSet());
+    }
+
+    private List<Integer> getDocumentUserCreateDocTypeIds(final String documentUuid, final String userUuid) {
         Objects.requireNonNull(documentUuid, "Null document UUID");
         Objects.requireNonNull(userUuid, "Null user UUID");
 
@@ -333,29 +365,51 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
         final int offset = JooqUtil.getOffset(request.getPageRequest());
         final int limit = JooqUtil.getLimit(request.getPageRequest(), true);
 
-        final List<Condition> conditions = new ArrayList<>();
-        conditions.add(PERMISSION_DOC.DOC_UUID.eq(docRef.getUuid()));
-        conditions.add(userDao.getUserCondition(request.getExpression()));
-        conditions.add(STROOM_USER.ENABLED.eq(true));
-
         final Collection<OrderField<?>> orderFields = userDao.createOrderFields(request);
 
         // If we have a single doc then try to deliver more useful permissions.
-        final List<DocumentUserPermissions> list = JooqUtil.contextResult(securityDbConnProvider, context -> context
-                        .select(
-                                PERMISSION_DOC.PERMISSION_ID,
-                                STROOM_USER.UUID,
-                                STROOM_USER.NAME,
-                                STROOM_USER.DISPLAY_NAME,
-                                STROOM_USER.FULL_NAME,
-                                STROOM_USER.IS_GROUP)
-                        .from(PERMISSION_DOC)
-                        .leftOuterJoin(STROOM_USER).on(PERMISSION_DOC.USER_UUID.eq(STROOM_USER.UUID))
-                        .where(conditions)
-                        .orderBy(orderFields)
-                        .offset(offset)
-                        .limit(limit)
-                        .fetch())
+        final List<DocumentUserPermissions> list = JooqUtil.contextResult(securityDbConnProvider, context -> {
+                    if (request.isAllUsers()) {
+                        final List<Condition> conditions = new ArrayList<>();
+                        conditions.add(PERMISSION_DOC.DOC_UUID.eq(docRef.getUuid())
+                                .or(PERMISSION_DOC.DOC_UUID.isNull()));
+                        conditions.add(userDao.getUserCondition(request.getExpression()));
+                        conditions.add(STROOM_USER.ENABLED.eq(true));
+                        return context.select(
+                                        PERMISSION_DOC.PERMISSION_ID,
+                                        STROOM_USER.UUID,
+                                        STROOM_USER.NAME,
+                                        STROOM_USER.DISPLAY_NAME,
+                                        STROOM_USER.FULL_NAME,
+                                        STROOM_USER.IS_GROUP)
+                                .from(STROOM_USER)
+                                .leftOuterJoin(PERMISSION_DOC).on(PERMISSION_DOC.USER_UUID.eq(STROOM_USER.UUID))
+                                .where(conditions)
+                                .orderBy(orderFields)
+                                .offset(offset)
+                                .limit(limit)
+                                .fetch();
+                    } else {
+                        final List<Condition> conditions = new ArrayList<>();
+                        conditions.add(PERMISSION_DOC.DOC_UUID.eq(docRef.getUuid()));
+                        conditions.add(userDao.getUserCondition(request.getExpression()));
+                        conditions.add(STROOM_USER.ENABLED.eq(true));
+                        return context.select(
+                                        PERMISSION_DOC.PERMISSION_ID,
+                                        STROOM_USER.UUID,
+                                        STROOM_USER.NAME,
+                                        STROOM_USER.DISPLAY_NAME,
+                                        STROOM_USER.FULL_NAME,
+                                        STROOM_USER.IS_GROUP)
+                                .from(PERMISSION_DOC)
+                                .join(STROOM_USER).on(PERMISSION_DOC.USER_UUID.eq(STROOM_USER.UUID))
+                                .where(conditions)
+                                .orderBy(orderFields)
+                                .offset(offset)
+                                .limit(limit)
+                                .fetch();
+                    }
+                })
                 .map(r -> {
                     final UserRef userRef = UserRef
                             .builder()
@@ -365,9 +419,23 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                             .fullName(r.get(STROOM_USER.FULL_NAME))
                             .group(r.get(STROOM_USER.IS_GROUP))
                             .build();
-                    final DocumentPermission documentPermission = DocumentPermission.PRIMITIVE_VALUE_CONVERTER
-                            .fromPrimitiveValue(r.get(PERMISSION_DOC.PERMISSION_ID).byteValue());
-                    return new DocumentUserPermissions(userRef, documentPermission, null);
+                    final UByte value = r.get(PERMISSION_DOC.PERMISSION_ID);
+                    DocumentPermission documentPermission = null;
+                    if (value != null) {
+                        documentPermission = DocumentPermission.PRIMITIVE_VALUE_CONVERTER
+                                .fromPrimitiveValue(value.byteValue());
+                    }
+
+                    Set<String> documentCreatePermissions = null;
+                    if (ExplorerConstants.isFolder(docRef)) {
+                        documentCreatePermissions =
+                                getDocumentUserCreatePermissions(docRef.getUuid(), userRef.getUuid());
+                    }
+
+                    return new DocumentUserPermissions(
+                            userRef,
+                            documentPermission,
+                            documentCreatePermissions);
                 });
         return ResultPage.createCriterialBasedList(list, request);
 

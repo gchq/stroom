@@ -139,11 +139,15 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public Optional<User> getByUuid(final String uuid) {
-        return JooqUtil.contextResult(securityDbConnProvider, context -> context
-                        .select()
-                        .from(STROOM_USER)
-                        .where(STROOM_USER.UUID.eq(uuid))
-                        .fetchOptional())
+        return JooqUtil.contextResult(securityDbConnProvider, context -> getByUuid(context, uuid));
+    }
+
+    public Optional<User> getByUuid(final DSLContext context, final String uuid) {
+        return context
+                .select()
+                .from(STROOM_USER)
+                .where(STROOM_USER.UUID.eq(uuid))
+                .fetchOptional()
                 .map(RECORD_TO_USER_MAPPER);
     }
 
@@ -195,7 +199,8 @@ public class UserDaoImpl implements UserDao {
                     "it may have been updated by another user or deleted");
         }
 
-        return getByUuid(user.getUuid()).orElseThrow(() -> new RuntimeException("Error fetching updated user"));
+        return getByUuid(context, user.getUuid()).orElseThrow(() ->
+                new RuntimeException("Error fetching updated user"));
     }
 
     @Override

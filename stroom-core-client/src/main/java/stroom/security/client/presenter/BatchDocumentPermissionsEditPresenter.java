@@ -19,33 +19,21 @@ package stroom.security.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.config.global.client.presenter.ErrorEvent;
-import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.client.presenter.ExpressionPresenter;
 import stroom.dispatch.client.RestFactory;
-import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
-import stroom.explorer.client.presenter.DocumentListPresenter;
 import stroom.explorer.client.presenter.DocumentTypeCache;
-import stroom.explorer.client.presenter.FindDocResultListHandler;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.FindResult;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.security.client.presenter.DocumentPermissionsEditPresenter.DocumentPermissionsEditView;
+import stroom.security.client.presenter.BatchDocumentPermissionsEditPresenter.BatchDocumentPermissionsEditView;
 import stroom.security.shared.AbstractDocumentPermissionsChange;
 import stroom.security.shared.BulkDocumentPermissionChangeRequest;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionChange;
-import stroom.security.shared.DocumentPermissionFields;
-import stroom.svg.client.Preset;
-import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskListener;
 import stroom.util.shared.ResultPage;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -55,166 +43,53 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-public class DocumentPermissionsEditPresenter
-        extends ContentTabPresenter<DocumentPermissionsEditView>
-        implements DocumentPermissionsEditUiHandlers {
+public class BatchDocumentPermissionsEditPresenter
+        extends MyPresenterWidget<BatchDocumentPermissionsEditView>
+        implements BatchDocumentPermissionsEditUiHandlers {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
-    private final Provider<ExpressionPresenter> docFilterPresenterProvider;
     private final DocSelectionBoxPresenter docSelectionBoxPresenter;
     private final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
-    private final DocumentListPresenter documentListPresenter;
-    private final Provider<DocumentCreatePermissionsListPresenter> documentCreatePermissionsListPresenterProvider;
-    private final Provider<DocumentPermissionsPresenter> documentPermissionsPresenterProvider;
     private final RestFactory restFactory;
-    private final ButtonView docFilter;
-    private final ButtonView docView;
     private ExpressionOperator expression;
+    private ResultPage<FindResult> docs;
 
     @Inject
-    public DocumentPermissionsEditPresenter(final EventBus eventBus,
-                                            final DocumentPermissionsEditView view,
-                                            final Provider<ExpressionPresenter> docFilterPresenterProvider,
-                                            final DocumentListPresenter documentListPresenter,
-                                            final Provider<DocumentCreatePermissionsListPresenter>
-                                                    documentCreatePermissionsListPresenterProvider,
-                                            final Provider<DocumentPermissionsPresenter>
-                                                    documentPermissionsPresenterProvider,
-                                            final DocSelectionBoxPresenter docSelectionBoxPresenter,
-                                            final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter,
-                                            final RestFactory restFactory,
-                                            final DocumentTypeCache documentTypeCache) {
+    public BatchDocumentPermissionsEditPresenter(final EventBus eventBus,
+                                                 final BatchDocumentPermissionsEditView view,
+                                                 final Provider<ExpressionPresenter> docFilterPresenterProvider,
+                                                 final DocSelectionBoxPresenter docSelectionBoxPresenter,
+                                                 final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter,
+                                                 final RestFactory restFactory,
+                                                 final DocumentTypeCache documentTypeCache) {
         super(eventBus, view);
-        this.documentListPresenter = documentListPresenter;
         this.restFactory = restFactory;
         this.docSelectionBoxPresenter = docSelectionBoxPresenter;
         this.userRefSelectionBoxPresenter = userRefSelectionBoxPresenter;
-        this.documentCreatePermissionsListPresenterProvider = documentCreatePermissionsListPresenterProvider;
-        this.documentPermissionsPresenterProvider = documentPermissionsPresenterProvider;
-        this.docFilterPresenterProvider = docFilterPresenterProvider;
 
-        view.setDocList(documentListPresenter.getView());
         view.setUiHandlers(this);
-
-        // Filter
-        docFilter = documentListPresenter.getView().addButton(new Preset(
-                SvgImage.FILTER,
-                "Filter Documents To Apply Permissions Changes On",
-                true));
-        docView = documentListPresenter.getView().addButton(new Preset(
-                SvgImage.EYE,
-                "View Permissions For Selected Document",
-                false));
-        expression = ExpressionOperator.builder().op(Op.AND).build();
 
         documentTypeCache.fetch(types -> {
             getView().setDocTypes(types.getTypes());
         }, this);
         getView().setDocRefSelection(docSelectionBoxPresenter.getView());
         getView().setUserRefSelection(userRefSelectionBoxPresenter.getView());
-
-        documentListPresenter.setFindResultListHandler(new FindDocResultListHandler() {
-            @Override
-            public void openDocument(final FindResult match) {
-                final FindResult selected = documentListPresenter.getSelected();
-                if (match != null) {
-                    documentPermissionsPresenterProvider.get().show(match.getDocRef());
-                }
-                docView.setEnabled(match != null);
-            }
-
-            @Override
-            public void focus() {
-
-            }
-        });
     }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(docFilter.addClickHandler(event -> {
-            final ExpressionPresenter presenter = docFilterPresenterProvider.get();
-            final HidePopupRequestEvent.Handler handler = e -> {
-                if (e.isOk()) {
-                    expression = presenter.write();
-
-//                    expressionValidator.validateExpression(
-//                            MetaPresenter.this,
-//                            MetaFields.getAllFields(),
-//                            expression, expression2 -> {
-//                                if (!expression2.equals(getCriteria().getExpression())) {
-//                                    setExpression(expression2);
-//                                    e.hide();
-//                                } else {
-//                                    // Nothing changed!
-//                                    e.hide();
-//                                }
-//                            }, this);
-
-                    documentListPresenter.setExpression(expression);
-                    documentListPresenter.refresh();
-                }
-                e.hide();
-            };
-
-            presenter.read(expression,
-                    DocumentPermissionFields.DOCUMENT_STORE_DOC_REF,
-                    DocumentPermissionFields.getFields());
-
-            presenter.getWidget().getElement().addClassName("default-min-sizes");
-            final PopupSize popupSize = PopupSize.resizable(800, 600);
-            ShowPopupEvent.builder(presenter)
-                    .popupType(PopupType.OK_CANCEL_DIALOG)
-                    .popupSize(popupSize)
-                    .caption("Filter Documents")
-                    .onShow(e -> presenter.focus())
-                    .onHideRequest(handler)
-                    .fire();
-        }));
-
-        registerHandler(documentListPresenter.getSelectionModel().addSelectionHandler(e -> {
-            final FindResult selected = documentListPresenter.getSelected();
-//            if (selected != null) {
-//                if (e.getSelectionType().isDoubleSelect()) {
-//                    documentPermissionsPresenterProvider.get().show(selected.getDocRef());
-//                }
-//            }
-            docView.setEnabled(selected != null);
-        }));
-        registerHandler(docView.addClickHandler(e -> {
-            final FindResult selected = documentListPresenter.getSelected();
-            if (selected != null) {
-                documentPermissionsPresenterProvider.get().show(selected.getDocRef());
-            }
-        }));
-    }
-
-    public void show(final DocRef docRef, final Runnable onClose) {
-        if (docRef != null) {
-            docSelectionBoxPresenter.setSelectedEntityReference(docRef);
-            final ExpressionTerm term = new ExpressionTerm(
-                    true,
-                    DocumentPermissionFields.DOCUMENT.getFldName(),
-                    Condition.IS_DOC_REF,
-                    null,
-                    docRef);
-            show(ExpressionOperator.builder().op(Op.AND).addTerm(term).build(), onClose);
-        }
-    }
-
-    public void show(final ExpressionOperator expression, final Runnable onClose) {
-        setExpression(expression);
+    public void show(final ExpressionOperator expression,
+                     final ResultPage<FindResult> docs,
+                     final Runnable onClose) {
+        this.expression = expression;
+        this.docs = docs;
 
         final PopupSize popupSize = PopupSize.builder()
                 .width(Size
@@ -234,7 +109,7 @@ public class DocumentPermissionsEditPresenter
                 .popupType(PopupType.CLOSE_DIALOG)
                 .popupSize(popupSize)
                 .onShow(e -> getView().focus())
-                .caption("Change Permissions")
+                .caption("Batch Change Permissions For All Filtered Documents")
                 .onHideRequest(e -> {
                     onClose.run();
                     e.hide();
@@ -242,25 +117,8 @@ public class DocumentPermissionsEditPresenter
                 .fire();
     }
 
-    public void setExpression(final ExpressionOperator expression) {
-        this.expression = expression;
-
-        // We only want to see documents tha the current user is effectively the owner of as they can't change
-        // permissions on anything else.
-        documentListPresenter.setRequiredPermissions(Set.of(DocumentPermission.OWNER));
-
-//        final ExplorerTreeFilterBuilder explorerTreeFilterBuilder =
-//                findDocResultListPresenter.getExplorerTreeFilterBuilder();
-//        // Don't want favourites in the recent items as they are effectively duplicates
-//        explorerTreeFilterBuilder.setIncludedRootTypes(ExplorerConstants.SYSTEM);
-//        explorerTreeFilterBuilder.setNameFilter("test", true);
-        documentListPresenter.setExpression(expression);
-        documentListPresenter.refresh();
-    }
-
     @Override
     public void validate() {
-        final ResultPage<FindResult> docs = documentListPresenter.getCurrentResults();
         int docCount = 0;
         if (docs != null) {
             docCount = docs.getPageResponse().getLength();
@@ -296,11 +154,11 @@ public class DocumentPermissionsEditPresenter
                         userRefSelectionBoxPresenter.getSelected(),
                         getView().getPermission());
             }
-            case REMOVE_PERMISSION: {
-                return new AbstractDocumentPermissionsChange.RemovePermission(
-                        userRefSelectionBoxPresenter.getSelected(),
-                        getView().getPermission());
-            }
+//            case REMOVE_PERMISSION: {
+//                return new AbstractDocumentPermissionsChange.RemovePermission(
+//                        userRefSelectionBoxPresenter.getSelected(),
+//                        getView().getPermission());
+//            }
 
 
             case ADD_DOCUMENT_CREATE_PERMSSION: {
@@ -343,7 +201,6 @@ public class DocumentPermissionsEditPresenter
 
     @Override
     public void apply(final TaskListener taskListener) {
-        final ResultPage<FindResult> docs = documentListPresenter.getCurrentResults();
         int docCount = 0;
         if (docs != null) {
             docCount = docs.getPageResponse().getLength();
@@ -392,24 +249,8 @@ public class DocumentPermissionsEditPresenter
                 .exec();
     }
 
-    @Override
-    public SvgImage getIcon() {
-        return SvgImage.LOCKED;
-    }
-
-    @Override
-    public String getLabel() {
-        return "Document Permissions";
-    }
-
-    @Override
-    public String getType() {
-        return "DocumentPermissions";
-    }
-
-    public interface DocumentPermissionsEditView extends View, Focus, HasUiHandlers<DocumentPermissionsEditUiHandlers> {
-
-        void setDocList(View view);
+    public interface BatchDocumentPermissionsEditView
+            extends View, Focus, HasUiHandlers<BatchDocumentPermissionsEditUiHandlers> {
 
         DocumentPermissionChange getChange();
 

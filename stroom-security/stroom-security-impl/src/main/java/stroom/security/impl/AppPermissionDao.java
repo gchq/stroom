@@ -4,7 +4,6 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppUserPermissions;
 import stroom.security.shared.DocumentUserPermissions;
 import stroom.security.shared.FetchAppUserPermissionsRequest;
-import stroom.security.shared.FetchDocumentUserPermissionsRequest;
 import stroom.util.shared.ResultPage;
 
 import java.util.Set;

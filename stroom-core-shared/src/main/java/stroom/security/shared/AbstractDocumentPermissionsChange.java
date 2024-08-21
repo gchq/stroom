@@ -8,7 +8,6 @@ import stroom.security.shared.AbstractDocumentPermissionsChange.AddDocumentCreat
 import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllDocumentCreatePermissions;
 import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllPermissions;
 import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveDocumentCreatePermission;
-import stroom.security.shared.AbstractDocumentPermissionsChange.RemovePermission;
 import stroom.security.shared.AbstractDocumentPermissionsChange.SetAllPermissionsFrom;
 import stroom.security.shared.AbstractDocumentPermissionsChange.SetPermission;
 import stroom.util.shared.UserRef;
@@ -29,10 +28,10 @@ import java.util.Objects;
 )
 @JsonSubTypes({
         @JsonSubTypes.Type(value = SetPermission.class, name = "SetPermission"),
-        @JsonSubTypes.Type(value = RemovePermission.class, name = "RemovePermission"),
+//        @JsonSubTypes.Type(value = RemovePermission.class, name = "RemovePermission"),
         @JsonSubTypes.Type(value = AddDocumentCreatePermission.class, name = "AddDocumentCreatePermission"),
         @JsonSubTypes.Type(value = RemoveDocumentCreatePermission.class, name = "RemoveDocumentCreatePermission"),
-        @JsonSubTypes.Type(value = AddAllDocumentCreatePermissions.class, name = "AddDocumentCreatePermission"),
+        @JsonSubTypes.Type(value = AddAllDocumentCreatePermissions.class, name = "AddAllDocumentCreatePermissions"),
         @JsonSubTypes.Type(value = RemoveAllDocumentCreatePermissions.class,
                 name = "RemoveAllDocumentCreatePermissions"),
         @JsonSubTypes.Type(value = AddAllPermissionsFrom.class, name = "AddAllPermissionsFrom"),
@@ -54,7 +53,6 @@ public abstract class AbstractDocumentPermissionsChange {
                 @JsonProperty("userRef") final UserRef userRef,
                 @JsonProperty("permission") final DocumentPermission permission) {
             Objects.requireNonNull(userRef, "Null user ref");
-            Objects.requireNonNull(permission, "Null permission");
             this.userRef = userRef;
             this.permission = permission;
         }
@@ -68,31 +66,31 @@ public abstract class AbstractDocumentPermissionsChange {
         }
     }
 
-    @JsonInclude(Include.NON_NULL)
-    public static class RemovePermission extends AbstractDocumentPermissionsChange {
-
-        @JsonProperty
-        private final UserRef userRef;
-        @JsonProperty
-        private final DocumentPermission permission;
-
-        @JsonCreator
-        public RemovePermission(@JsonProperty("userRef") final UserRef userRef,
-                                @JsonProperty("permission") final DocumentPermission permission) {
-            Objects.requireNonNull(userRef, "Null user ref");
-            Objects.requireNonNull(permission, "Null permission");
-            this.userRef = userRef;
-            this.permission = permission;
-        }
-
-        public UserRef getUserRef() {
-            return userRef;
-        }
-
-        public DocumentPermission getPermission() {
-            return permission;
-        }
-    }
+//    @JsonInclude(Include.NON_NULL)
+//    public static class RemovePermission extends AbstractDocumentPermissionsChange {
+//
+//        @JsonProperty
+//        private final UserRef userRef;
+//        @JsonProperty
+//        private final DocumentPermission permission;
+//
+//        @JsonCreator
+//        public RemovePermission(@JsonProperty("userRef") final UserRef userRef,
+//                                @JsonProperty("permission") final DocumentPermission permission) {
+//            Objects.requireNonNull(userRef, "Null user ref");
+//            Objects.requireNonNull(permission, "Null permission");
+//            this.userRef = userRef;
+//            this.permission = permission;
+//        }
+//
+//        public UserRef getUserRef() {
+//            return userRef;
+//        }
+//
+//        public DocumentPermission getPermission() {
+//            return permission;
+//        }
+//    }
 
     @JsonInclude(Include.NON_NULL)
     public static class AddDocumentCreatePermission extends AbstractDocumentPermissionsChange {

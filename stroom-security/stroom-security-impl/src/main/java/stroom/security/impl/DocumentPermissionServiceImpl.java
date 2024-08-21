@@ -30,12 +30,14 @@ import stroom.security.shared.AbstractDocumentPermissionsChange.AddDocumentCreat
 import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllDocumentCreatePermissions;
 import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllPermissions;
 import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveDocumentCreatePermission;
-import stroom.security.shared.AbstractDocumentPermissionsChange.RemovePermission;
+//import stroom.security.shared.AbstractDocumentPermissionsChange.RemovePermission;
 import stroom.security.shared.AbstractDocumentPermissionsChange.SetAllPermissionsFrom;
 import stroom.security.shared.AbstractDocumentPermissionsChange.SetPermission;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentUserPermissions;
+import stroom.security.shared.DocumentUserPermissionsReport;
+import stroom.security.shared.DocumentUserPermissionsRequest;
 import stroom.security.shared.FetchDocumentUserPermissionsRequest;
 import stroom.security.shared.SingleDocumentPermissionChangeRequest;
 import stroom.util.logging.LambdaLogger;
@@ -48,8 +50,17 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 @Singleton
 public class DocumentPermissionServiceImpl implements DocumentPermissionService {
@@ -60,6 +71,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
 
     private final DocumentPermissionDao documentPermissionDao;
     private final UserCache userCache;
+    private final UserGroupsCache userGroupsCache;
     private final PermissionChangeEventBus permissionChangeEventBus;
     private final SecurityContext securityContext;
     private final Provider<ExplorerService> explorerServiceProvider;
@@ -67,11 +79,13 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     @Inject
     DocumentPermissionServiceImpl(final DocumentPermissionDao documentPermissionDao,
                                   final UserCache userCache,
+                                  final UserGroupsCache userGroupsCache,
                                   final PermissionChangeEventBus permissionChangeEventBus,
                                   final SecurityContext securityContext,
                                   final Provider<ExplorerService> explorerServiceProvider) {
         this.documentPermissionDao = documentPermissionDao;
         this.userCache = userCache;
+        this.userGroupsCache = userGroupsCache;
         this.permissionChangeEventBus = permissionChangeEventBus;
         this.securityContext = securityContext;
         this.explorerServiceProvider = explorerServiceProvider;
@@ -102,28 +116,29 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
 
         if (change instanceof final SetPermission req) {
             Objects.requireNonNull(req.getUserRef(), "Null user ref");
-            Objects.requireNonNull(req.getPermission(), "Null permission");
-            final DocumentPermission current = documentPermissionDao
-                    .getDocumentUserPermission(docRef.getUuid(), req.getUserRef().getUuid());
-            if (current == null || !current.isEqualOrHigher(req.getPermission())) {
+            if (req.getPermission() == null) {
+                documentPermissionDao.removeDocumentUserPermission(
+                        docRef.getUuid(),
+                        req.getUserRef().getUuid());
+            } else {
                 documentPermissionDao.setDocumentUserPermission(
                         docRef.getUuid(),
                         req.getUserRef().getUuid(),
                         req.getPermission());
-                PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
             }
+            PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
 
-        } else if (change instanceof final RemovePermission req) {
-            Objects.requireNonNull(req.getUserRef(), "Null user ref");
-            Objects.requireNonNull(req.getPermission(), "Null permission");
-            final DocumentPermission current = documentPermissionDao
-                    .getDocumentUserPermission(docRef.getUuid(), req.getUserRef().getUuid());
-            if (current == null || !current.isHigher(req.getPermission())) {
-                documentPermissionDao.removeDocumentUserPermission(
-                        docRef.getUuid(),
-                        req.getUserRef().getUuid());
-                PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
-            }
+//        } else if (change instanceof final RemovePermission req) {
+//            Objects.requireNonNull(req.getUserRef(), "Null user ref");
+//            Objects.requireNonNull(req.getPermission(), "Null permission");
+//            final DocumentPermission current = documentPermissionDao
+//                    .getDocumentUserPermission(docRef.getUuid(), req.getUserRef().getUuid());
+//            if (current == null || !current.isHigher(req.getPermission())) {
+//                documentPermissionDao.removeDocumentUserPermission(
+//                        docRef.getUuid(),
+//                        req.getUserRef().getUuid());
+//                PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
+//            }
 
         } else if (change instanceof final AddDocumentCreatePermission req) {
             // Only applies to folders.
@@ -317,8 +332,167 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     public ResultPage<DocumentUserPermissions> fetchDocumentUserPermissions(
             final FetchDocumentUserPermissionsRequest request) {
         checkGetPermission(request.getDocRef());
-        return documentPermissionDao.fetchDocumentUserPermissions(request);
+        final ResultPage<DocumentUserPermissions> resultPage =
+                documentPermissionDao.fetchDocumentUserPermissions(request);
+
+        // Add inherited permissions.
+        for (final DocumentUserPermissions permissions : resultPage.getValues()) {
+            final AtomicReference<DocumentPermission> inheritedPermission = new AtomicReference<>();
+            final Set<String> inheritedDocumentCreatePermissions = new HashSet<>();
+            final Set<UserRef> cyclicPrevention = new HashSet<>();
+            addDeepPermissions(
+                    request.getDocRef(),
+                    permissions.getUserRef(),
+                    inheritedPermission,
+                    inheritedDocumentCreatePermissions,
+                    cyclicPrevention);
+            permissions.setInheritedPermission(inheritedPermission.get());
+            permissions.setInheritedDocumentCreatePermissions(inheritedDocumentCreatePermissions);
+        }
+
+        return resultPage;
     }
+
+    public DocumentUserPermissionsReport getDocUserPermissionsReport(final DocumentUserPermissionsRequest request) {
+        final DocRef docRef = request.getDocRef();
+        final UserRef userRef = request.getUserRef();
+        checkGetPermission(docRef);
+
+        final Map<DocumentPermission, List<List<UserRef>>> inheritedPermissions = new HashMap<>();
+        final Map<String, List<List<UserRef>>> inheritedCreatePermissions = new HashMap<>();
+        final Set<UserRef> cyclicPrevention = new HashSet<>();
+        final List<UserRef> parentPath = Collections.emptyList();
+        addDeepPermissionsAndPaths(
+                userRef,
+                docRef,
+                parentPath,
+                inheritedPermissions,
+                inheritedCreatePermissions,
+                cyclicPrevention);
+
+        final DocumentPermission explicitPermission = documentPermissionDao
+                .getDocumentUserPermission(docRef.getUuid(), userRef.getUuid());
+        final Set<String> explicitCreatePermissions = documentPermissionDao
+                .getDocumentUserCreatePermissions(docRef.getUuid(), userRef.getUuid());
+
+        return new DocumentUserPermissionsReport(
+                explicitPermission,
+                explicitCreatePermissions,
+                convertToPaths(inheritedPermissions),
+                convertToPaths(inheritedCreatePermissions));
+    }
+
+    private <T> Map<T, List<String>> convertToPaths(final Map<T, List<List<UserRef>>> map) {
+        return map
+                .entrySet()
+                .stream()
+                .collect(Collectors.toMap(Entry::getKey, entry -> {
+                    return entry.getValue()
+                            .stream()
+                            .map(list -> list.stream()
+                                    .map(UserRef::toDisplayString)
+                                    .collect(Collectors.joining(" > ")))
+                            .toList();
+                }));
+    }
+
+    private void addDeepPermissionsAndPaths(final UserRef userRef,
+                                            final DocRef docRef,
+                                            final List<UserRef> parentPath,
+                                            final Map<DocumentPermission, List<List<UserRef>>> inheritedPermissions,
+                                            final Map<String, List<List<UserRef>>> inheritedCreatePermissions,
+                                            final Set<UserRef> cyclicPrevention) {
+        if (cyclicPrevention.add(userRef)) {
+            final Set<UserRef> parentGroups = userGroupsCache.getGroups(userRef);
+            if (parentGroups != null) {
+                for (final UserRef group : parentGroups) {
+
+                    final List<UserRef> path = new ArrayList<>(parentPath);
+                    path.add(group);
+
+                    final DocumentPermission permission = documentPermissionDao
+                            .getDocumentUserPermission(docRef.getUuid(), group.getUuid());
+                    if (permission != null) {
+                        inheritedPermissions.computeIfAbsent(permission, k -> new ArrayList<>()).add(path);
+                    }
+
+                    final Set<String> createPermissions = documentPermissionDao
+                            .getDocumentUserCreatePermissions(docRef.getUuid(), group.getUuid());
+                    if (createPermissions != null) {
+                        createPermissions.forEach(createPermission -> {
+                            inheritedCreatePermissions.computeIfAbsent(createPermission, k -> new ArrayList<>()).add(path);
+                        });
+                    }
+
+                    addDeepPermissionsAndPaths(
+                            group,
+                            docRef,
+                            path,
+                            inheritedPermissions,
+                            inheritedCreatePermissions,
+                            cyclicPrevention);
+                }
+            }
+        }
+    }
+
+
+//    private void addDeepPermissionsAndPaths(final UserRef userRef,
+//                                            final List<UserRef> currentPath,
+//                                            final AtomicReference<DocumentPermission> inheritedPermission,
+//                                            final Set<String> inheritedDocumentCreatePermissions,
+//                                            final Set<UserRef> cyclicPrevention) {
+//        final Set<AppPermission> directPermissions = appPermissionDao.getPermissionsForUser(userRef.getUuid());
+//        directPermissions.forEach(appPermission -> {
+//            inheritedPermissions.computeIfAbsent(appPermission, k -> new ArrayList<>()).add(currentPath);
+//        });
+//
+//        if (cyclicPrevention.add(userRef)) {
+//            final Set<UserRef> parentGroups = userGroupsCache.getGroups(userRef);
+//            if (parentGroups != null) {
+//                for (final UserRef group : parentGroups) {
+//                    final List<UserRef> parentPath = new ArrayList<>(currentPath);
+//                    parentPath.add(group);
+//                    addDeepPermissionsAndPaths(group, parentPath, inheritedPermissions, cyclicPrevention);
+//                }
+//            }
+//        }
+//    }
+
+    private void addDeepPermissions(final DocRef docRef,
+                                    final UserRef userRef,
+                                    final AtomicReference<DocumentPermission> inheritedPermission,
+                                    final Set<String> inheritedDocumentCreatePermissions,
+                                    final Set<UserRef> cyclicPrevention) {
+        if (cyclicPrevention.add(userRef)) {
+            final Set<UserRef> parentGroups = userGroupsCache.getGroups(userRef);
+            if (parentGroups != null) {
+                for (final UserRef group : parentGroups) {
+                    final DocumentPermission documentPermission = documentPermissionDao
+                            .getDocumentUserPermission(docRef.getUuid(), group.getUuid());
+                    if (documentPermission != null) {
+                        if (inheritedPermission.get() != null) {
+                            if (!inheritedPermission.get().isEqualOrHigher(documentPermission)) {
+                                inheritedPermission.set(documentPermission);
+                            }
+                        }
+                    }
+                    final Set<String> documentUserCreatePermissions = documentPermissionDao
+                            .getDocumentUserCreatePermissions(docRef.getUuid(), group.getUuid());
+                    inheritedDocumentCreatePermissions.addAll(documentUserCreatePermissions);
+
+                    addDeepPermissions(
+                            docRef,
+                            group,
+                            inheritedPermission,
+                            inheritedDocumentCreatePermissions,
+                            cyclicPrevention);
+                }
+            }
+        }
+    }
+
+
 //
 //    @Override
 //    public Set<DocRef> expandScope(final DocumentPermissionScope scope) {

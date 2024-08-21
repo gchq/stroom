@@ -4,7 +4,7 @@ import stroom.task.client.TaskListener;
 
 import com.gwtplatform.mvp.client.UiHandlers;
 
-public interface DocumentPermissionsEditUiHandlers extends UiHandlers {
+public interface BatchDocumentPermissionsEditUiHandlers extends UiHandlers {
 
     void validate();
 

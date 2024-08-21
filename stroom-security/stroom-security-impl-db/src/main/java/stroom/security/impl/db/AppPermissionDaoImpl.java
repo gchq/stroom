@@ -91,7 +91,23 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
         final Collection<OrderField<?>> orderFields = userDao.createOrderFields(request);
 
         List<AppUserPermissions> list = null;
-        if (request.isOnlyUsersWithExplicitPermision()) {
+        if (request.isAllUsers()) {
+            list = JooqUtil.contextResult(securityDbConnProvider, context -> context
+                            .select(
+                                    STROOM_USER.UUID,
+                                    STROOM_USER.NAME,
+                                    STROOM_USER.DISPLAY_NAME,
+                                    STROOM_USER.FULL_NAME,
+                                    STROOM_USER.IS_GROUP)
+                            .from(STROOM_USER)
+                            .where(conditions)
+                            .orderBy(orderFields)
+                            .offset(offset)
+                            .limit(limit)
+                            .fetch())
+                    .map(this::getAppUserPermissions);
+
+        } else {
             // If we are only delivering users with specific permissions then join and select distinct.}
             list = JooqUtil.contextResult(securityDbConnProvider, context -> context
                             .selectDistinct(
@@ -101,23 +117,7 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
                                     STROOM_USER.FULL_NAME,
                                     STROOM_USER.IS_GROUP)
                             .from(STROOM_USER)
-                            .join(STROOM_USER).on(PERMISSION_APP.USER_UUID.eq(STROOM_USER.UUID))
-                            .where(conditions)
-                            .orderBy(orderFields)
-                            .offset(offset)
-                            .limit(limit)
-                            .fetch())
-                    .map(this::getAppUserPermissions);
-
-        } else {
-            list = JooqUtil.contextResult(securityDbConnProvider, context -> context
-                            .select(
-                                    STROOM_USER.UUID,
-                                    STROOM_USER.NAME,
-                                    STROOM_USER.DISPLAY_NAME,
-                                    STROOM_USER.FULL_NAME,
-                                    STROOM_USER.IS_GROUP)
-                            .from(STROOM_USER)
+                            .join(PERMISSION_APP).on(PERMISSION_APP.USER_UUID.eq(STROOM_USER.UUID))
                             .where(conditions)
                             .orderBy(orderFields)
                             .offset(offset)

@@ -24,7 +24,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.AppPermissionsChangePresenter.AppPermissionsChangeView;
+import stroom.security.client.presenter.AppPermissionsEditPresenter.AppPermissionsEditView;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppPermissionResource;
 import stroom.security.shared.AppUserPermissionsReport;
@@ -40,7 +40,6 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -51,11 +50,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class AppPermissionsChangePresenter
-        extends MyPresenterWidget<AppPermissionsChangeView> {
+public class AppPermissionsEditPresenter
+        extends MyPresenterWidget<AppPermissionsEditView> {
 
     private static final AppPermissionResource APP_PERMISSION_RESOURCE = GWT.create(AppPermissionResource.class);
 
@@ -71,11 +69,11 @@ public class AppPermissionsChangePresenter
     private UserRef relatedUser;
 
     @Inject
-    public AppPermissionsChangePresenter(final EventBus eventBus,
-                                         final AppPermissionsChangeView view,
-                                         final PagerView pagerView,
-                                         final RestFactory restFactory,
-                                         final ClientSecurityContext securityContext) {
+    public AppPermissionsEditPresenter(final EventBus eventBus,
+                                       final AppPermissionsEditView view,
+                                       final PagerView pagerView,
+                                       final RestFactory restFactory,
+                                       final ClientSecurityContext securityContext) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.securityContext = securityContext;
@@ -102,80 +100,93 @@ public class AppPermissionsChangePresenter
     }
 
     private SafeHtml getDetails() {
-        final SafeHtmlBuilder sb = new SafeHtmlBuilder();
+        final DescriptionBuilder sb = new DescriptionBuilder();
         final AppPermission permission = selectionModel.getSelected();
         if (permission != null) {
-            final List<List<UserRef>> paths = currentPermissions.getInheritedPermissions().get(permission);
-            if (paths != null) {
-                addPaths(
-                        paths,
-                        sb,
-                        "Explicit Permission",
-                        "Inherited Permission From:");
-            }
+            addPaths(
+                    currentPermissions.getExplicitPermissions().contains(permission),
+                    currentPermissions.getInheritedPermissions().get(permission),
+                    sb,
+                    "Explicit Permission",
+                    "Inherited Permission From:");
 
             // See if implied by administrator.
             if (!AppPermission.ADMINISTRATOR.equals(permission)) {
-                final List<List<UserRef>> adminPaths = currentPermissions
-                        .getInheritedPermissions()
-                        .get(AppPermission.ADMINISTRATOR);
-                if (adminPaths != null) {
-                    addPaths(
-                            adminPaths,
-                            sb,
-                            "Implied By Administrator",
-                            "Inherited Permission (Implied By Administrator) From:");
-                }
+                addPaths(
+                        currentPermissions
+                                .getExplicitPermissions()
+                                .contains(AppPermission.ADMINISTRATOR),
+                        currentPermissions
+                                .getInheritedPermissions()
+                                .get(AppPermission.ADMINISTRATOR),
+                        sb,
+                        "Implied By Administrator",
+                        "Inherited Permission (Implied By Administrator) From:");
             }
 
             if (sb.toSafeHtml().asString().length() == 0) {
-                appendTitle(sb, "No Permission");
+                sb.addTitle("No Permission");
             }
         }
 
         return sb.toSafeHtml();
     }
 
-    private void addPaths(final List<List<UserRef>> paths,
-                          final SafeHtmlBuilder sb,
+//    private void addPaths(final List<List<UserRef>> paths,
+//                          final SafeHtmlBuilder sb,
+//                          final String directTitle,
+//                          final String inheritedTitle) {
+//        if (paths != null) {
+//            final Optional<List<UserRef>> directPath = paths
+//                    .stream()
+//                    .filter(path -> path.size() == 1 && path.get(0).equals(relatedUser))
+//                    .findAny();
+//            if (directPath.isPresent()) {
+//                appendTitle(sb, directTitle);
+//                sb.appendHtmlConstant("<br/>");
+//            }
+//
+//            final List<List<UserRef>> inheritedPaths = paths
+//                    .stream()
+//                    .filter(path -> path.size() > 1)
+//                    .collect(Collectors.toList());
+//            if (inheritedPaths.size() > 0) {
+//                appendTitle(sb, inheritedTitle);
+//
+//                for (final List<UserRef> path : inheritedPaths) {
+//                    sb.appendEscaped(path
+//                            .stream()
+//                            .filter(userRef -> !userRef.equals(relatedUser))
+//                            .map(UserRef::toDisplayString)
+//                            .collect(Collectors.joining(" > ")));
+//                    sb.appendHtmlConstant("<br/>");
+//                }
+//
+//                sb.appendHtmlConstant("<br/>");
+//            }
+//        }
+//    }
+
+    private void addPaths(final boolean direct,
+                          final List<String> paths,
+                          final DescriptionBuilder sb,
                           final String directTitle,
                           final String inheritedTitle) {
-        if (paths != null) {
-            final Optional<List<UserRef>> directPath = paths
-                    .stream()
-                    .filter(path -> path.size() == 1 && path.get(0).equals(relatedUser))
-                    .findAny();
-            if (directPath.isPresent()) {
-                appendTitle(sb, directTitle);
-                sb.appendHtmlConstant("<br/>");
-            }
+        if (direct) {
+            sb.addNewLine();
+            sb.addNewLine();
+            sb.addTitle(directTitle);
+        }
 
-            final List<List<UserRef>> inheritedPaths = paths
-                    .stream()
-                    .filter(path -> path.size() > 1)
-                    .collect(Collectors.toList());
-            if (inheritedPaths.size() > 0) {
-                appendTitle(sb, inheritedTitle);
-
-                for (final List<UserRef> path : inheritedPaths) {
-                    sb.appendEscaped(path
-                            .stream()
-                            .filter(userRef -> !userRef.equals(relatedUser))
-                            .map(UserRef::toDisplayString)
-                            .collect(Collectors.joining(" > ")));
-                    sb.appendHtmlConstant("<br/>");
-                }
-
-                sb.appendHtmlConstant("<br/>");
+        if (paths != null && paths.size() > 0) {
+            sb.addNewLine();
+            sb.addNewLine();
+            sb.addTitle(inheritedTitle);
+            for (final String path : paths) {
+                sb.addNewLine();
+                sb.addLine(path);
             }
         }
-    }
-
-    private void appendTitle(final SafeHtmlBuilder sb, final String title) {
-        sb.appendHtmlConstant("<b>");
-        sb.appendEscaped(title);
-        sb.appendHtmlConstant("</b>");
-        sb.appendHtmlConstant("<br/>");
     }
 
     public void show(final UserRef userRef, final Runnable onClose) {
@@ -211,9 +222,9 @@ public class AppPermissionsChangePresenter
     private void refresh() {
         if (relatedUser == null) {
             currentPermissions = null;
-            final List<AppPermission> features = new ArrayList<>();
-            dataGrid.setRowData(0, features);
-            dataGrid.setRowCount(features.size(), true);
+            final List<AppPermission> permissions = new ArrayList<>();
+            dataGrid.setRowData(0, permissions);
+            dataGrid.setRowCount(permissions.size(), true);
 
         } else {
             // Fetch permissions and populate table.
@@ -221,7 +232,7 @@ public class AppPermissionsChangePresenter
                     .create(APP_PERMISSION_RESOURCE)
                     .method(res -> res.getAppUserPermissionsReport(relatedUser))
                     .onSuccess(userAppPermissions -> {
-                        AppPermissionsChangePresenter.this.currentPermissions = userAppPermissions;
+                        AppPermissionsEditPresenter.this.currentPermissions = userAppPermissions;
                         updateAllPermissions();
                         updateDetails();
                     })
@@ -254,31 +265,22 @@ public class AppPermissionsChangePresenter
             @Override
             public TickBoxState getValue(final AppPermission permission) {
                 if (currentPermissions != null) {
-                    final List<List<UserRef>> paths = currentPermissions
-                            .getInheritedPermissions()
-                            .get(permission);
-                    if (paths != null) {
-                        final Optional<List<UserRef>> directPath = paths
-                                .stream()
-                                .filter(path -> path.size() == 1 && path.get(0).equals(relatedUser))
-                                .findAny();
-                        if (directPath.isPresent()) {
-                            return TickBoxState.TICK;
-                        } else {
-                            return TickBoxState.HALF_TICK;
-                        }
-                    }
-
-                    // See if implied by administrator.
-                    if (!AppPermission.ADMINISTRATOR.equals(permission)) {
-                        final List<List<UserRef>> adminPaths = currentPermissions
-                                .getInheritedPermissions()
-                                .get(AppPermission.ADMINISTRATOR);
-                        if (adminPaths != null) {
-                            return TickBoxState.HALF_TICK;
-                        }
+                    if (currentPermissions.getExplicitPermissions().contains(permission)) {
+                        return TickBoxState.TICK;
+                    } else if (currentPermissions.getInheritedPermissions().containsKey(permission)) {
+                        return TickBoxState.HALF_TICK;
                     }
                 }
+
+                // See if implied by administrator.
+                if (!AppPermission.ADMINISTRATOR.equals(permission)) {
+                    if (currentPermissions.getExplicitPermissions().contains(AppPermission.ADMINISTRATOR)) {
+                        return TickBoxState.HALF_TICK;
+                    } else if (currentPermissions.getInheritedPermissions().containsKey(AppPermission.ADMINISTRATOR)) {
+                        return TickBoxState.HALF_TICK;
+                    }
+                }
+
                 return TickBoxState.UNTICK;
             }
         };
@@ -325,7 +327,7 @@ public class AppPermissionsChangePresenter
         return securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION);
     }
 
-    public interface AppPermissionsChangeView extends View {
+    public interface AppPermissionsEditView extends View {
 
         void setPermissionsView(View view);
 

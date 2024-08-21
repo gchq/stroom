@@ -12,8 +12,11 @@ import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.FindResult;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.shared.DocumentPermission;
+import stroom.svg.client.Preset;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -42,7 +45,7 @@ public class DocumentListPresenter extends MyPresenterWidget<PagerView> {
     private ExpressionOperator lastFilter;
     private boolean initialised;
     private boolean focusText;
-    private ResultPage<FindResult> currentResults;
+    private Consumer<ResultPage<FindResult>> currentResulthandler;
     private FindDocResultListHandler findResultListHandler = new FindDocResultListHandler() {
         @Override
         public void openDocument(final FindResult match) {
@@ -99,7 +102,9 @@ public class DocumentListPresenter extends MyPresenterWidget<PagerView> {
                         .create(EXPLORER_RESOURCE)
                         .method(res -> res.advancedFind(request))
                         .onSuccess(resultPage -> {
-                            currentResults = resultPage;
+                            if (currentResulthandler != null) {
+                                currentResulthandler.accept(resultPage);
+                            }
                             if (resultPage.getPageStart() != cellTable.getPageStart()) {
                                 cellTable.setPageStart(resultPage.getPageStart());
                             }
@@ -175,7 +180,7 @@ public class DocumentListPresenter extends MyPresenterWidget<PagerView> {
         return selectionModel;
     }
 
-    public ResultPage<FindResult> getCurrentResults() {
-        return currentResults;
+    public void setCurrentResulthandler(final Consumer<ResultPage<FindResult>> currentResulthandler) {
+        this.currentResulthandler = currentResulthandler;
     }
 }

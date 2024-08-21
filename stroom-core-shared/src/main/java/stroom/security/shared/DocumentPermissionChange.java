@@ -8,9 +8,9 @@ public enum DocumentPermissionChange implements HasDisplayValue {
     SET_PERMSSION(
             "Set permission",
             "Set a specific user permission."),
-    REMOVE_PERMISSION(
-            "Remove permission",
-            "Remove permisison for the specified user."),
+//    REMOVE_PERMISSION(
+//            "Remove permission",
+//            "Remove permisison for the specified user."),
 
     ADD_DOCUMENT_CREATE_PERMSSION(
             "Add permission to create",
@@ -38,7 +38,7 @@ public enum DocumentPermissionChange implements HasDisplayValue {
 
     public static final List<DocumentPermissionChange> LIST = List.of(
             SET_PERMSSION,
-            REMOVE_PERMISSION,
+//            REMOVE_PERMISSION,
 
             ADD_DOCUMENT_CREATE_PERMSSION,
             REMOVE_DOCUMENT_CREATE_PERMSSION,

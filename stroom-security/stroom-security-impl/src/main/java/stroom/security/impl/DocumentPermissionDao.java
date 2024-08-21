@@ -5,7 +5,9 @@ import stroom.security.shared.DocumentUserPermissions;
 import stroom.security.shared.FetchDocumentUserPermissionsRequest;
 import stroom.util.shared.ResultPage;
 
+import java.util.BitSet;
 import java.util.List;
+import java.util.Set;
 
 public interface DocumentPermissionDao {
 
@@ -21,7 +23,9 @@ public interface DocumentPermissionDao {
 
     void clearAllDocumentPermissions();
 
-    List<Integer> getDocumentUserCreatePermissions(String documentUuid, String userUuid);
+    BitSet getDocumentUserCreatePermissionsBitSet(String documentUuid, String userUuid);
+
+    Set<String> getDocumentUserCreatePermissions(String documentUuid, String userUuid);
 
     void addDocumentUserCreatePermission(String documentUuid, String userUuid, String documentType);
 

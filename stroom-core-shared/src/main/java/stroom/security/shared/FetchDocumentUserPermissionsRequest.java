@@ -33,25 +33,68 @@ import java.util.List;
 public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
 
     @JsonProperty
-    private DocRef docRef;
-
-    public FetchDocumentUserPermissionsRequest() {
-    }
+    private final DocRef docRef;
+    @JsonProperty
+    private final boolean allUsers;
 
     @JsonCreator
     public FetchDocumentUserPermissionsRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                                @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                                @JsonProperty("expression") final ExpressionOperator expression,
-                                               @JsonProperty("docRef") final DocRef docRef) {
+                                               @JsonProperty("docRef") final DocRef docRef,
+                                               @JsonProperty("allUsers") boolean allUsers) {
         super(pageRequest, sortList, expression);
         this.docRef = docRef;
+        this.allUsers = allUsers;
     }
 
     public DocRef getDocRef() {
         return docRef;
     }
 
-    public void setDocRef(final DocRef docRef) {
-        this.docRef = docRef;
+    public boolean isAllUsers() {
+        return allUsers;
+    }
+
+    public static class Builder
+            extends ExpressionCriteria.AbstractBuilder<FetchDocumentUserPermissionsRequest, Builder> {
+
+        private DocRef docRef;
+        private boolean allUsers;
+
+        public Builder() {
+
+        }
+
+        public Builder(final FetchDocumentUserPermissionsRequest request) {
+            super(request);
+            this.docRef = request.docRef;
+            this.allUsers = request.allUsers;
+        }
+
+        public Builder docRef(final DocRef docRef) {
+            this.docRef = docRef;
+            return this;
+        }
+
+        public Builder allUsers(final boolean allUsers) {
+            this.allUsers = allUsers;
+            return this;
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        @Override
+        public FetchDocumentUserPermissionsRequest build() {
+            return new FetchDocumentUserPermissionsRequest(
+                    pageRequest,
+                    sortList,
+                    expression,
+                    docRef,
+                    allUsers);
+        }
     }
 }

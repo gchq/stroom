@@ -16,6 +16,7 @@
 
 package stroom.query.api.v2;
 
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.util.shared.StringUtil;
@@ -280,6 +281,11 @@ public final class ExpressionTerm extends ExpressionItem {
          */
         public Builder field(final String value) {
             this.field = value;
+            return this;
+        }
+
+        public Builder field(final QueryField value) {
+            this.field = value.getFldName();
             return this;
         }
 

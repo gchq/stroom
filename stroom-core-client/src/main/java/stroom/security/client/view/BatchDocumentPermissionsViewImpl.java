@@ -16,33 +16,27 @@
 
 package stroom.security.client.view;
 
-import stroom.security.client.presenter.DocumentPermissionsPresenter;
-import stroom.security.client.presenter.DocumentPermissionsUiHandlers;
-import stroom.widget.button.client.Button;
+import stroom.security.client.presenter.BatchDocumentPermissionsPresenter.BatchDocumentPermissionsView;
 
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+import com.gwtplatform.mvp.client.ViewImpl;
 
-public final class DocumentPermissionsViewImpl
-        extends ViewWithUiHandlers<DocumentPermissionsUiHandlers>
-        implements DocumentPermissionsPresenter.DocumentPermissionsView {
+public final class BatchDocumentPermissionsViewImpl
+        extends ViewImpl
+        implements BatchDocumentPermissionsView {
 
     private final Widget widget;
 
     @UiField
-    SimplePanel permissions;
-    @UiField
-    Button edit;
+    SimplePanel docList;
 
     @Inject
-    public DocumentPermissionsViewImpl(final Binder binder) {
+    public BatchDocumentPermissionsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -52,21 +46,11 @@ public final class DocumentPermissionsViewImpl
     }
 
     @Override
-    public void setPermissionsView(View view) {
-        permissions.setWidget(view.asWidget());
+    public void setDocList(final View view) {
+        docList.setWidget(view.asWidget());
     }
 
-    @Override
-    public void setEditVisible(final boolean visible) {
-        edit.setVisible(visible);
-    }
-
-    @UiHandler("edit")
-    public void onEdit(final ClickEvent e) {
-        getUiHandlers().editPermissions();
-    }
-
-    public interface Binder extends UiBinder<Widget, DocumentPermissionsViewImpl> {
+    public interface Binder extends UiBinder<Widget, BatchDocumentPermissionsViewImpl> {
 
     }
 }

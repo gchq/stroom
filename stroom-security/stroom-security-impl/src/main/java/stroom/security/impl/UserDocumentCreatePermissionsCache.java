@@ -28,14 +28,11 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.BitSet;
-import java.util.List;
 
 @Singleton
 public class UserDocumentCreatePermissionsCache implements PermissionChangeEvent.Handler, Clearable {
 
     private static final String CACHE_NAME = "User Document Create Permissions Cache";
-
-    private static final BitSet EMPTY = new BitSet(0);
 
     private final Provider<DocumentPermissionDao> documentPermissionDaoProvider;
     private final Provider<DocTypeIdDao> docTypeIdDaoProvider;
@@ -55,17 +52,8 @@ public class UserDocumentCreatePermissionsCache implements PermissionChangeEvent
     }
 
     private BitSet create(final UserDocKey key) {
-        final List<Integer> list = documentPermissionDaoProvider.get()
-                .getDocumentUserCreatePermissions(key.docUuid, key.userUuid);
-        if (list.isEmpty()) {
-            return EMPTY;
-        }
-
-        final int max = list.stream().mapToInt(v -> v).max().orElseThrow();
-        // Note that the bit set is created after we fetch the permissions just to be sure that the max id is correct.
-        final BitSet bitSet = new BitSet(max);
-        list.forEach(i -> bitSet.set(i, true));
-        return bitSet;
+        return documentPermissionDaoProvider.get()
+                .getDocumentUserCreatePermissionsBitSet(key.docUuid, key.userUuid);
     }
 
     boolean hasDocumentCreatePermission(final UserRef userRef,

@@ -51,7 +51,6 @@ import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.ColumnSortList;
@@ -125,7 +124,6 @@ public class AppUserPermissionsListPresenter
                         true)));
 
         setupColumns();
-        refresh();
     }
 
     @Override
@@ -141,6 +139,10 @@ public class AppUserPermissionsListPresenter
                 .parse(text, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELD_MAP);
         builder.expression(expression);
         refresh();
+    }
+
+    public void setAllUsers(final boolean allUsers) {
+        builder.allUsers(allUsers);
     }
 
     public void refresh() {
@@ -201,17 +203,13 @@ public class AppUserPermissionsListPresenter
                 new Column<AppUserPermissions, SafeHtml>(new SafeHtmlCell()) {
                     @Override
                     public SafeHtml getValue(final AppUserPermissions appUserPermissions) {
-                        final SafeHtmlBuilder sb = new SafeHtmlBuilder();
+                        final DescriptionBuilder sb = new DescriptionBuilder();
                         if (appUserPermissions.getPermissions() != null &&
                                 appUserPermissions.getPermissions().contains(AppPermission.ADMINISTRATOR)) {
-                            sb.appendHtmlConstant("<b>");
-                            addLine(sb, false, AppPermission.ADMINISTRATOR.getDisplayValue());
-                            sb.appendHtmlConstant("</b>");
+                            sb.addLine(true, false, AppPermission.ADMINISTRATOR.getDisplayValue());
                         } else if (appUserPermissions.getInherited() != null &&
                                 appUserPermissions.getInherited().contains(AppPermission.ADMINISTRATOR)) {
-                            sb.appendHtmlConstant("<b>");
-                            addLine(sb, true, AppPermission.ADMINISTRATOR.getDisplayValue());
-                            sb.appendHtmlConstant("</b>");
+                            sb.addLine(true, true, AppPermission.ADMINISTRATOR.getDisplayValue());
                         } else {
                             boolean notEmpty = false;
                             boolean lastInherited = false;
@@ -219,17 +217,17 @@ public class AppUserPermissionsListPresenter
                                 if (appUserPermissions.getPermissions() != null &&
                                         appUserPermissions.getPermissions().contains(permission)) {
                                     if (notEmpty) {
-                                        addLine(sb, lastInherited, ", ");
+                                        sb.addLine(false, lastInherited, ", ");
                                     }
-                                    addLine(sb, false, permission.getDisplayValue());
+                                    sb.addLine(permission.getDisplayValue());
                                     notEmpty = true;
                                     lastInherited = false;
                                 } else if (appUserPermissions.getInherited() != null &&
                                         appUserPermissions.getInherited().contains(permission)) {
                                     if (notEmpty) {
-                                        addLine(sb, lastInherited, ", ");
+                                        sb.addLine(false, lastInherited, ", ");
                                     }
-                                    addLine(sb, true, permission.getDisplayValue());
+                                    sb.addLine(false, true, permission.getDisplayValue());
                                     notEmpty = true;
                                     lastInherited = true;
                                 }
@@ -278,18 +276,6 @@ public class AppUserPermissionsListPresenter
         dataGrid.getColumnSortList().push(nameCol);
     }
 
-    private void addLine(final SafeHtmlBuilder sb,
-                         final boolean inherited,
-                         final String text) {
-        if (inherited) {
-            sb.appendHtmlConstant("<span class=\"inherited\">");
-        } else {
-            sb.appendHtmlConstant("<span>");
-        }
-        sb.appendEscaped(text);
-        sb.appendHtmlConstant("</span>");
-    }
-
     private String getUserOrGroupName(AppUserPermissions appUserPermissions) {
         final UserRef userRef = appUserPermissions.getUserRef();
         if (userRef.getDisplayName() != null) {
@@ -304,6 +290,10 @@ public class AppUserPermissionsListPresenter
 
     public ButtonView addButton(final Preset preset) {
         return pagerView.addButton(preset);
+    }
+
+    public void addButton(final ButtonView buttonView) {
+        pagerView.addButton(buttonView);
     }
 
     public PagerView getPagerView() {

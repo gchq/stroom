@@ -18,8 +18,8 @@ package stroom.security.client.view;
 
 import stroom.explorer.shared.DocumentType;
 import stroom.item.client.SelectionBox;
-import stroom.security.client.presenter.DocumentPermissionsEditPresenter.DocumentPermissionsEditView;
-import stroom.security.client.presenter.DocumentPermissionsEditUiHandlers;
+import stroom.security.client.presenter.BatchDocumentPermissionsEditPresenter.BatchDocumentPermissionsEditView;
+import stroom.security.client.presenter.BatchDocumentPermissionsEditUiHandlers;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionChange;
 import stroom.widget.button.client.Button;
@@ -30,7 +30,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -39,16 +38,14 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.List;
 
-public final class DocumentPermissionsEditViewImpl
-        extends ViewWithUiHandlers<DocumentPermissionsEditUiHandlers>
-        implements DocumentPermissionsEditView {
+public final class BatchDocumentPermissionsEditViewImpl
+        extends ViewWithUiHandlers<BatchDocumentPermissionsEditUiHandlers>
+        implements BatchDocumentPermissionsEditView {
 
     private static final String NONE_TITLE = "[ none ]";
 
     private final Widget widget;
 
-    @UiField
-    SimplePanel docList;
     @UiField
     SelectionBox<DocumentPermissionChange> documentPermissionChange;
 
@@ -73,7 +70,7 @@ public final class DocumentPermissionsEditViewImpl
     Button apply;
 
     @Inject
-    public DocumentPermissionsEditViewImpl(final Binder binder) {
+    public BatchDocumentPermissionsEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         permission.addItems(DocumentPermission.LIST);
         documentPermissionChange.addItems(DocumentPermissionChange.LIST);
@@ -90,11 +87,6 @@ public final class DocumentPermissionsEditViewImpl
     @Override
     public void focus() {
         documentPermissionChange.focus();
-    }
-
-    @Override
-    public void setDocList(final View view) {
-        docList.setWidget(view.asWidget());
     }
 
     @Override
@@ -145,11 +137,11 @@ public final class DocumentPermissionsEditViewImpl
                 permission.setVisible(true);
                 break;
             }
-            case REMOVE_PERMISSION: {
-                userRefLabel.setVisible(true);
-                userRef.setVisible(true);
-                break;
-            }
+//            case REMOVE_PERMISSION: {
+//                userRefLabel.setVisible(true);
+//                userRef.setVisible(true);
+//                break;
+//            }
 
             case ADD_DOCUMENT_CREATE_PERMSSION: {
                 userRefLabel.setVisible(true);
@@ -218,7 +210,7 @@ public final class DocumentPermissionsEditViewImpl
         getUiHandlers().apply(apply);
     }
 
-    public interface Binder extends UiBinder<Widget, DocumentPermissionsEditViewImpl> {
+    public interface Binder extends UiBinder<Widget, BatchDocumentPermissionsEditViewImpl> {
 
     }
 }

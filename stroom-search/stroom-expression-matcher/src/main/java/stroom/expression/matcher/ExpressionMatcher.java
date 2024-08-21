@@ -343,7 +343,8 @@ public class ExpressionMatcher {
     }
 
     private boolean isStringMatch(final String termValue, final Object attribute) {
-        final Pattern pattern = patternMap.computeIfAbsent(termValue, t -> Pattern.compile(t.replaceAll("\\*", ".*")));
+        final Pattern pattern = patternMap.computeIfAbsent(termValue, t ->
+                Pattern.compile(t.replaceAll("\\*", ".*"), Pattern.CASE_INSENSITIVE));
 
         if (attribute instanceof final DocRef docRef) {
             if (pattern.matcher(docRef.getUuid()).matches()) {

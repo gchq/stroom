@@ -28,6 +28,14 @@ public interface DocPermissionResource extends RestResource, DirectRestService {
     ResultPage<DocumentUserPermissions> fetchDocumentUserPermissions(
             @Parameter(description = "request", required = true) FetchDocumentUserPermissionsRequest request);
 
+    @POST
+    @Path("/getDocUserPermissionsReport")
+    @Operation(
+            summary = "Get a detailed report of doc permissions for the specified user",
+            operationId = "getDocUserPermissionsReport")
+    DocumentUserPermissionsReport getDocUserPermissionsReport(@Parameter(description = "request", required = true)
+                                                              DocumentUserPermissionsRequest request);
+
     /**
      * Check that the current user has the requested document permission.
      * This allows the UI to make some decisions but is not used for security purposes.

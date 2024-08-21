@@ -18,6 +18,7 @@ package stroom.security.shared;
 
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.security.shared.FetchDocumentUserPermissionsRequest.Builder;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 
@@ -32,25 +33,24 @@ import java.util.List;
 public class FetchAppUserPermissionsRequest extends ExpressionCriteria {
 
     @JsonProperty
-    private final boolean onlyUsersWithExplicitPermision;
+    private boolean allUsers;
 
     @JsonCreator
     public FetchAppUserPermissionsRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                           @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                           @JsonProperty("expression") final ExpressionOperator expression,
-                                          @JsonProperty("onlyUsersWithExplicitPermision") final boolean
-                                                  onlyUsersWithExplicitPermision) {
+                                          @JsonProperty("allUsers") boolean allUsers) {
         super(pageRequest, sortList, expression);
-        this.onlyUsersWithExplicitPermision = onlyUsersWithExplicitPermision;
+        this.allUsers = allUsers;
     }
 
-    public boolean isOnlyUsersWithExplicitPermision() {
-        return onlyUsersWithExplicitPermision;
+    public boolean isAllUsers() {
+        return allUsers;
     }
 
     public static class Builder extends AbstractBuilder<FetchAppUserPermissionsRequest, Builder> {
 
-        private boolean onlyUsersWithExplicitPermision;
+        private boolean allUsers;
 
         public Builder() {
 
@@ -60,8 +60,8 @@ public class FetchAppUserPermissionsRequest extends ExpressionCriteria {
             super(expressionCriteria);
         }
 
-        public Builder onlyUsersWithExplicitPermision(final boolean onlyUsersWithExplicitPermision) {
-            this.onlyUsersWithExplicitPermision = onlyUsersWithExplicitPermision;
+        public Builder allUsers(final boolean allUsers) {
+            this.allUsers = allUsers;
             return this;
         }
 
@@ -76,7 +76,7 @@ public class FetchAppUserPermissionsRequest extends ExpressionCriteria {
                     pageRequest,
                     sortList,
                     expression,
-                    onlyUsersWithExplicitPermision);
+                    allUsers);
         }
     }
 }

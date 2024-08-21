@@ -43,8 +43,7 @@ public class UserResourceImpl implements UserResource {
         return userServiceProvider.get().find(criteria);
     }
 
-//    @Override
-    public User fetch(String userUuid) {
+    private User fetch(String userUuid) {
         return userServiceProvider.get().loadByUuid(userUuid)
                 .orElseThrow(() -> new NotFoundException("User " + userUuid + " does not exist"));
     }

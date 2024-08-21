@@ -10,8 +10,8 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.DocumentPermissionsEditPresenter;
-import stroom.security.client.presenter.DocumentPermissionsPresenter;
+import stroom.security.client.presenter.BatchDocumentPermissionsPresenter;
+import stroom.security.client.presenter.DocumentUserPermissionsPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermissionFields;
 import stroom.svg.shared.SvgImage;
@@ -27,22 +27,22 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class DocumentPermissionsPlugin extends MonitoringPlugin<DocumentPermissionsEditPresenter> {
+public class DocumentPermissionsPlugin extends MonitoringPlugin<BatchDocumentPermissionsPresenter> {
 
     @Inject
     public DocumentPermissionsPlugin(final EventBus eventBus,
                                      final ContentManager contentManager,
-                                     final Provider<DocumentPermissionsEditPresenter> presenterProvider,
-                                     final AsyncProvider<DocumentPermissionsPresenter>
+                                     final Provider<BatchDocumentPermissionsPresenter> presenterProvider,
+                                     final AsyncProvider<DocumentUserPermissionsPresenter>
                                              documentPermissionsPresenterProvider,
                                      final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, presenterProvider, securityContext);
 
         // Add handler for showing the document permissions dialog in the explorer tree context menu
         eventBus.addHandler(ShowPermissionsDialogEvent.getType(),
-                event -> documentPermissionsPresenterProvider.get(new AsyncCallback<DocumentPermissionsPresenter>() {
+                event -> documentPermissionsPresenterProvider.get(new AsyncCallback<DocumentUserPermissionsPresenter>() {
                     @Override
-                    public void onSuccess(final DocumentPermissionsPresenter presenter) {
+                    public void onSuccess(final DocumentUserPermissionsPresenter presenter) {
                         presenter.show(event.getDocRef());
                     }
 
@@ -68,8 +68,8 @@ public class DocumentPermissionsPlugin extends MonitoringPlugin<DocumentPermissi
     }
 
     @Override
-    public DocumentPermissionsEditPresenter open() {
-        final DocumentPermissionsEditPresenter presenter = super.open();
+    public BatchDocumentPermissionsPresenter open() {
+        final BatchDocumentPermissionsPresenter presenter = super.open();
         final ExpressionTerm term = new ExpressionTerm(
                 true,
                 DocumentPermissionFields.DESCENDANTS.getFldName(),

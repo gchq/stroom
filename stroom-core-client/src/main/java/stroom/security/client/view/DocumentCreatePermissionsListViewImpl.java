@@ -18,9 +18,12 @@ package stroom.security.client.view;
 
 import stroom.security.client.presenter.DocumentCreatePermissionsListPresenter.DocumentCreatePermissionsListView;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -32,6 +35,10 @@ public class DocumentCreatePermissionsListViewImpl
 
     @UiField
     SimplePanel dataGrid;
+    @UiField
+    HTML details;
+    @UiField
+    CustomCheckBox includeDescendants;
 
     private final Widget widget;
 
@@ -43,6 +50,16 @@ public class DocumentCreatePermissionsListViewImpl
     @Override
     public void setTable(final Widget widget) {
         dataGrid.setWidget(widget);
+    }
+
+    @Override
+    public void setDetails(final SafeHtml details) {
+        this.details.setHTML(details);
+    }
+
+    @Override
+    public boolean isIncludeDescendants() {
+        return includeDescendants.getValue();
     }
 
     @Override

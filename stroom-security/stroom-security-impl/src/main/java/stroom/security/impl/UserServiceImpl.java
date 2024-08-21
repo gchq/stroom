@@ -123,6 +123,16 @@ class UserServiceImpl implements UserService, ContentPackUserService {
         AuditUtil.stamp(securityContext, user);
         return securityContext.secureResult(AppPermission.MANAGE_USERS_PERMISSION, () -> {
             final User updatedUser = userDao.update(user);
+
+            // If the updated user is a group then we need to let all chldren know there has been a change as we cache
+            // parent groups for children.
+            if (updatedUser.isGroup()) {
+                final ResultPage<User> resultPage = findUsersInGroup(updatedUser.getUuid(), new FindUserCriteria());
+                for (final User child : resultPage.getValues()) {
+                    fireUserChangeEvent(child.getUuid());
+                }
+            }
+
             fireUserChangeEvent(updatedUser.getUuid());
             return updatedUser;
         });
