@@ -13,6 +13,10 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#4403** : Fix to make elastic indexes searchable with StroomQL.
+
+* Issue **#2897** : Fix issue of the effective stream intern pool returning incorrect sets of streams.
+
 * Issue **#4397** : Fix search API to not require node name.
 
 * Issue **#4394** : Fix a bug that was causing stepping filters to ignore the top level null prefixed namespace (e.g. `xmlns="event-logging:3"`. This meant all elements in the xpath had to be fully qualified.

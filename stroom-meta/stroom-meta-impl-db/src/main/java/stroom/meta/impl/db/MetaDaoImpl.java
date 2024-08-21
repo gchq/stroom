@@ -17,8 +17,9 @@ import stroom.db.util.ValueMapper.Mapper;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaDataCriteria;
+import stroom.meta.api.EffectiveMetaSet;
+import stroom.meta.api.EffectiveMetaSet.Builder;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.impl.MetaDao;
 import stroom.meta.impl.MetaServiceConfig;
@@ -1742,7 +1743,7 @@ public class MetaDaoImpl implements MetaDao {
     }
 
     @Override
-    public List<EffectiveMeta> getEffectiveStreams(final EffectiveMetaDataCriteria effectiveMetaDataCriteria) {
+    public EffectiveMetaSet getEffectiveStreams(final EffectiveMetaDataCriteria effectiveMetaDataCriteria) {
 
         LOGGER.debug("getEffectiveStreams({})", effectiveMetaDataCriteria);
 
@@ -1760,21 +1761,20 @@ public class MetaDaoImpl implements MetaDao {
         if (optFeedId.isEmpty()) {
             LOGGER.debug("Feed {} not found in the {} table.",
                     feedName, META_FEED.NAME);
-            return Collections.emptyList();
+            return EffectiveMetaSet.empty();
         }
         final int feedId = optFeedId.get();
 
         final Optional<Integer> optTypeId = metaTypeDao.get(typeName);
         if (optTypeId.isEmpty()) {
             LOGGER.warn("Meta Type {} not found in the database", typeName);
-            return Collections.emptyList();
+            return EffectiveMetaSet.empty();
         }
         final int typeId = optTypeId.get();
 
-        final Function<Record2<Long, Long>, EffectiveMeta> mapper = rec ->
-                new EffectiveMeta(rec.get(meta.ID), feedName, typeName, rec.get(meta.EFFECTIVE_TIME));
+        final Builder metaSetBuilder = EffectiveMetaSet.builder(feedName, typeName);
 
-        final List<EffectiveMeta> streamsInOrBelowRange = JooqUtil.contextResult(metaDbConnProvider,
+        JooqUtil.context(metaDbConnProvider,
                 context -> {
                     // Try to get a single stream that is just before our range.  This is so that we always
                     // have a stream (unless there are no streams at all) that was effective at the start
@@ -1796,14 +1796,19 @@ public class MetaDaoImpl implements MetaDao {
 
                     LOGGER.debug("select:\n{}", select);
 
-                    return select.fetch()
-                            .map(mapper::apply);
+                    select.fetch()
+                            .forEach(rec ->
+                                    metaSetBuilder.add(
+                                            rec.get(meta.ID),
+                                            rec.get(meta.EFFECTIVE_TIME)));
                 });
+
+        final EffectiveMetaSet streamsInOrBelowRange = metaSetBuilder.build();
 
         LOGGER.debug(() -> LogUtil.message("returning {} effective streams for feedId: {}, typeId: {}, criteria: {}",
                 streamsInOrBelowRange.size(),
-                feedId,
-                typeId,
+                streamsInOrBelowRange.getFeedName(),
+                streamsInOrBelowRange.getTypeName(),
                 effectiveMetaDataCriteria));
 
         return streamsInOrBelowRange;

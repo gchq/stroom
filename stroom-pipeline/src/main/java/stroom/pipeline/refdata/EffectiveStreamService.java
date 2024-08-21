@@ -1,6 +1,7 @@
 package stroom.pipeline.refdata;
 
 import stroom.meta.api.EffectiveMeta;
+import stroom.meta.api.EffectiveMetaSet;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
@@ -13,7 +14,6 @@ import jakarta.inject.Inject;
 
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -49,9 +49,9 @@ public class EffectiveStreamService {
         final EffectiveStreamKey effectiveStreamKey = EffectiveStreamKey.forLookupTime(feedName, streamType, time);
 
         // Try and fetch a tree set of effective streams for this key.
-        final NavigableSet<EffectiveMeta> effectiveStreams = effectiveStreamCache.get(effectiveStreamKey);
+        final EffectiveMetaSet effectiveStreams = effectiveStreamCache.get(effectiveStreamKey);
 
-        final EffectiveMeta effectiveStream;
+        final Optional<EffectiveMeta> optEffectiveStream;
 
         if (NullSafe.hasItems(effectiveStreams)) {
             result.logLazyTemplate(Severity.INFO,
@@ -60,8 +60,8 @@ public class EffectiveStreamService {
                     () -> Arrays.asList(
                             effectiveStreams.size(),
                             StringUtil.pluralSuffix(effectiveStreams.size()),
-                            Instant.ofEpochMilli(effectiveStreams.first().getEffectiveMs()),
-                            Instant.ofEpochMilli(effectiveStreams.last().getEffectiveMs()),
+                            effectiveStreams.first().map(EffectiveMeta::getEffectiveTime),
+                            effectiveStreams.last().map(EffectiveMeta::getEffectiveTime),
                             feedName,
                             streamType,
                             Instant.ofEpochMilli(effectiveStreamKey.getFromMs()),
@@ -77,13 +77,13 @@ public class EffectiveStreamService {
 
             // Try and find the stream before the requested time that is less
             // than or equal to it.
-            effectiveStream = EffectiveMeta.findLatestBefore(time, effectiveStreams);
+            optEffectiveStream = effectiveStreams.findLatestBefore(time);
         } else {
             // No need to log here as it will get logged by the caller
-            effectiveStream = null;
+            optEffectiveStream = Optional.empty();
         }
 
-        if (effectiveStream == null) {
+        if (optEffectiveStream.isEmpty()) {
             result.logLazyTemplate(
                     Severity.WARNING,
                     "No effective stream can be found for feed '{}', stream type '{}' " +
@@ -95,7 +95,8 @@ public class EffectiveStreamService {
                             streamType,
                             Instant.ofEpochMilli(time).toString()));
         }
-        return Optional.ofNullable(effectiveStream);
+        LOGGER.debug("Determined optEffectiveStream to be {}", optEffectiveStream);
+        return optEffectiveStream;
     }
 
     /**
