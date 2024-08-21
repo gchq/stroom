@@ -78,7 +78,6 @@ public class DocumentCreatePermissionsListPresenter
 
     private final DocumentTypeCache documentTypeCache;
     private DocumentTypes documentTypes;
-//    private Set<String> documentPermissions = new HashSet<>();
 
     private DocumentUserPermissionsReport currentPermissions;
     private UserRef relatedUser;
@@ -252,14 +251,6 @@ public class DocumentCreatePermissionsListPresenter
                 );
     }
 
-    //    private void addDocumentCreatePermission(final DocumentType documentType) {
-//        documentPermissions.add(documentType.getType());
-//    }
-//
-//    private void removeDocumentCreatePermission(final DocumentType documentType) {
-//        documentPermissions.remove(documentType.getType());
-//    }
-//
     private void refreshDocTypeIcons() {
         // Hold map of doc type icons keyed on type to save constructing for each row
         documentTypeCache.fetch(documentTypes -> {
@@ -267,58 +258,6 @@ public class DocumentCreatePermissionsListPresenter
             refresh();
         }, this);
     }
-//
-//    private void toggle(final DocumentType documentType) {
-//        // Determine if it is present in the model
-//        boolean hasPermission = false;
-//        if (documentPermissions != null) {
-//            hasPermission = documentPermissions.contains(documentType.getType());
-//        }
-//
-////        GWT.log("toggle, userUuid: " + userUuid
-////                + ", permission: '" + permission
-////                + ", hasPermission: " + hasPermission);
-//
-//        if (hasPermission) {
-//            removeDocumentCreatePermission(documentType);
-//        } else {
-//            addDocumentCreatePermission(documentType);
-//        }
-//    }
-//
-//    private void toggleSelectAll() {
-//        final boolean select = documentPermissions == null || documentPermissions.size() <
-//                documentTypes.getTypes().size();
-//        for (final DocumentType documentType : documentTypes.getTypes()) {
-//            boolean hasPermission = false;
-//            if (documentPermissions != null) {
-//                hasPermission = documentPermissions.contains(documentType.getType());
-//            }
-//
-//            if (select) {
-//                if (!hasPermission) {
-//                    addDocumentCreatePermission(documentType);
-//                }
-//            } else {
-//                if (hasPermission) {
-//                    removeDocumentCreatePermission(documentType);
-//                }
-//            }
-//        }
-//        refresh();
-//    }
-
-//    private void setCurrentPermissions(final DocumentUserPermissionsReport currentPermissions) {
-//        this.currentPermissions = currentPermissions;
-////        documentPermissions.clear();
-////        if (currentPermissions != null) {
-////            documentPermissions.addAll(currentPermissions.getExplicitCreatePermissions());
-////        }
-//    }
-
-//    private Set<String> getDocumentPermissions() {
-//        return documentPermissions;
-//    }
 
     private void refresh() {
         if (documentTypes != null) {
@@ -346,25 +285,6 @@ public class DocumentCreatePermissionsListPresenter
         this.currentPermissions = permissions;
 
         refresh();
-
-//        if (relatedUser == null || relatedDoc == null) {
-//            setCurrentPermissions(null);
-//            refresh();
-//
-//        } else {
-//            // Fetch permissions and populate table.
-//            final DocumentUserPermissionsRequest request = new DocumentUserPermissionsRequest(relatedDoc, relatedUser);
-//            restFactory
-//                    .create(DOC_PERMISSION_RESOURCE)
-//                    .method(res -> res.getDocUserPermissionsReport(request))
-//                    .onSuccess(response -> {
-//                        currentPermissions = response;
-//                        setCurrentPermissions(currentPermissions);
-//                        refresh();
-//                    })
-//                    .taskListener(this)
-//                    .exec();
-//        }
     }
 
     public void onChange(final DocumentType documentType, final boolean selected) {

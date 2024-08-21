@@ -106,7 +106,7 @@ class TestUserDaoImpl {
         // Then
         assertThat(userCreated).isNotNull();
         assertThat(userFoundBeforeDelete).isPresent();
-        assertThat(userFoundAfterDelete).isEmpty();
+        assertThat(!userFoundAfterDelete.get().isEnabled()).isTrue();
     }
 
     @Test

@@ -39,8 +39,8 @@ public class DocumentPermissionsPlugin extends MonitoringPlugin<BatchDocumentPer
         super(eventBus, contentManager, presenterProvider, securityContext);
 
         // Add handler for showing the document permissions dialog in the explorer tree context menu
-        eventBus.addHandler(ShowPermissionsDialogEvent.getType(),
-                event -> documentPermissionsPresenterProvider.get(new AsyncCallback<DocumentUserPermissionsPresenter>() {
+        eventBus.addHandler(ShowPermissionsDialogEvent.getType(), event ->
+                documentPermissionsPresenterProvider.get(new AsyncCallback<DocumentUserPermissionsPresenter>() {
                     @Override
                     public void onSuccess(final DocumentUserPermissionsPresenter presenter) {
                         presenter.show(event.getDocRef());

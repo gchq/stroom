@@ -19,6 +19,7 @@ import jakarta.inject.Provider;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.OrderField;
+import org.jooq.Result;
 import org.jooq.impl.DSL;
 import org.jooq.types.UByte;
 
@@ -367,358 +368,79 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
 
         final Collection<OrderField<?>> orderFields = userDao.createOrderFields(request);
 
+        final List<Condition> conditions = new ArrayList<>();
+
+        conditions.add(userDao.getUserCondition(request.getExpression()));
+        conditions.add(STROOM_USER.ENABLED.eq(true));
+
         // If we have a single doc then try to deliver more useful permissions.
-        final List<DocumentUserPermissions> list = JooqUtil.contextResult(securityDbConnProvider, context -> {
-                    if (request.isAllUsers()) {
-                        final List<Condition> conditions = new ArrayList<>();
-                        conditions.add(PERMISSION_DOC.DOC_UUID.eq(docRef.getUuid())
-                                .or(PERMISSION_DOC.DOC_UUID.isNull()));
-                        conditions.add(userDao.getUserCondition(request.getExpression()));
-                        conditions.add(STROOM_USER.ENABLED.eq(true));
-                        return context.select(
-                                        PERMISSION_DOC.PERMISSION_ID,
-                                        STROOM_USER.UUID,
-                                        STROOM_USER.NAME,
-                                        STROOM_USER.DISPLAY_NAME,
-                                        STROOM_USER.FULL_NAME,
-                                        STROOM_USER.IS_GROUP)
-                                .from(STROOM_USER)
-                                .leftOuterJoin(PERMISSION_DOC).on(PERMISSION_DOC.USER_UUID.eq(STROOM_USER.UUID))
-                                .where(conditions)
-                                .orderBy(orderFields)
-                                .offset(offset)
-                                .limit(limit)
-                                .fetch();
-                    } else {
-                        final List<Condition> conditions = new ArrayList<>();
-                        conditions.add(PERMISSION_DOC.DOC_UUID.eq(docRef.getUuid()));
-                        conditions.add(userDao.getUserCondition(request.getExpression()));
-                        conditions.add(STROOM_USER.ENABLED.eq(true));
-                        return context.select(
-                                        PERMISSION_DOC.PERMISSION_ID,
-                                        STROOM_USER.UUID,
-                                        STROOM_USER.NAME,
-                                        STROOM_USER.DISPLAY_NAME,
-                                        STROOM_USER.FULL_NAME,
-                                        STROOM_USER.IS_GROUP)
-                                .from(PERMISSION_DOC)
-                                .join(STROOM_USER).on(PERMISSION_DOC.USER_UUID.eq(STROOM_USER.UUID))
-                                .where(conditions)
-                                .orderBy(orderFields)
-                                .offset(offset)
-                                .limit(limit)
-                                .fetch();
-                    }
-                })
-                .map(r -> {
-                    final UserRef userRef = UserRef
-                            .builder()
-                            .uuid(r.get(STROOM_USER.UUID))
-                            .subjectId(r.get(STROOM_USER.NAME))
-                            .displayName(r.get(STROOM_USER.DISPLAY_NAME))
-                            .fullName(r.get(STROOM_USER.FULL_NAME))
-                            .group(r.get(STROOM_USER.IS_GROUP))
-                            .build();
-                    final UByte value = r.get(PERMISSION_DOC.PERMISSION_ID);
-                    DocumentPermission documentPermission = null;
-                    if (value != null) {
-                        documentPermission = DocumentPermission.PRIMITIVE_VALUE_CONVERTER
-                                .fromPrimitiveValue(value.byteValue());
-                    }
+        final Result<?> result = JooqUtil.contextResult(securityDbConnProvider, context -> {
+            if (request.isAllUsers()) {
+                conditions.add(PERMISSION_DOC.DOC_UUID.eq(docRef.getUuid())
+                        .or(PERMISSION_DOC.DOC_UUID.isNull()));
 
-                    Set<String> documentCreatePermissions = null;
-                    if (ExplorerConstants.isFolder(docRef)) {
-                        documentCreatePermissions =
-                                getDocumentUserCreatePermissions(docRef.getUuid(), userRef.getUuid());
-                    }
+                return context.select(
+                                PERMISSION_DOC.PERMISSION_ID,
+                                STROOM_USER.UUID,
+                                STROOM_USER.NAME,
+                                STROOM_USER.DISPLAY_NAME,
+                                STROOM_USER.FULL_NAME,
+                                STROOM_USER.IS_GROUP)
+                        .from(STROOM_USER)
+                        .leftOuterJoin(PERMISSION_DOC).on(PERMISSION_DOC.USER_UUID.eq(STROOM_USER.UUID))
+                        .where(conditions)
+                        .orderBy(orderFields)
+                        .offset(offset)
+                        .limit(limit)
+                        .fetch();
+            } else {
+                conditions.add(PERMISSION_DOC.DOC_UUID.eq(docRef.getUuid()));
 
-                    return new DocumentUserPermissions(
-                            userRef,
-                            documentPermission,
-                            documentCreatePermissions);
-                });
+                return context.select(
+                                PERMISSION_DOC.PERMISSION_ID,
+                                STROOM_USER.UUID,
+                                STROOM_USER.NAME,
+                                STROOM_USER.DISPLAY_NAME,
+                                STROOM_USER.FULL_NAME,
+                                STROOM_USER.IS_GROUP)
+                        .from(PERMISSION_DOC)
+                        .join(STROOM_USER).on(PERMISSION_DOC.USER_UUID.eq(STROOM_USER.UUID))
+                        .where(conditions)
+                        .orderBy(orderFields)
+                        .offset(offset)
+                        .limit(limit)
+                        .fetch();
+            }
+        });
+
+        final List<DocumentUserPermissions> list = result.map(r -> {
+            final UserRef userRef = UserRef
+                    .builder()
+                    .uuid(r.get(STROOM_USER.UUID))
+                    .subjectId(r.get(STROOM_USER.NAME))
+                    .displayName(r.get(STROOM_USER.DISPLAY_NAME))
+                    .fullName(r.get(STROOM_USER.FULL_NAME))
+                    .group(r.get(STROOM_USER.IS_GROUP))
+                    .build();
+            final UByte value = r.get(PERMISSION_DOC.PERMISSION_ID);
+            DocumentPermission documentPermission = null;
+            if (value != null) {
+                documentPermission = DocumentPermission.PRIMITIVE_VALUE_CONVERTER
+                        .fromPrimitiveValue(value.byteValue());
+            }
+
+            Set<String> documentCreatePermissions = null;
+            if (ExplorerConstants.isFolder(docRef)) {
+                documentCreatePermissions =
+                        getDocumentUserCreatePermissions(docRef.getUuid(), userRef.getUuid());
+            }
+
+            return new DocumentUserPermissions(
+                    userRef,
+                    documentPermission,
+                    documentCreatePermissions);
+        });
+
         return ResultPage.createCriterialBasedList(list, request);
-
-
-//        // Don't return any results if we have no docrefs to filter on.
-//        if (docRefs != null && docRefs.isEmpty()) {
-//            return ResultPage.empty();
-//        }
-//
-//        final int offset = JooqUtil.getOffset(request.getPageRequest());
-//        final int limit = JooqUtil.getLimit(request.getPageRequest(), true);
-//
-//        if (docRefs == null || docRefs.size() > 1) {
-//            final Condition condition;
-//            if (docRefs.size() > 1) {
-//                condition = PERMISSION_DOC.DOC_UUID.in(docRefs
-//                        .stream()
-//                        .map(DocRef::getUuid)
-//                        .collect(Collectors.toSet()));
-//            } else {
-//                condition = null;
-//            }
-//
-//            // Find all users with permissions.
-//            final List<DocumentUserPermissions> list = JooqUtil.contextResult(securityDbConnProvider, context ->
-//            context
-//                            .selectDistinct(
-//                                    STROOM_USER.UUID,
-//                                    STROOM_USER.NAME,
-//                                    STROOM_USER.DISPLAY_NAME,
-//                                    STROOM_USER.FULL_NAME,
-//                                    STROOM_USER.IS_GROUP)
-//                            .from(STROOM_USER)
-//                            .leftOuterJoin(PERMISSION_DOC).on(PERMISSION_DOC.USER_UUID.eq(STROOM_USER.UUID))
-//                            .where(condition)
-//                            .orderBy(STROOM_USER.DISPLAY_NAME, STROOM_USER.NAME)
-//                            .offset(offset)
-//                            .limit(limit)
-//                            .fetch())
-//                    .map(r -> {
-//                        final UserRef userRef = UserRef
-//                                .builder()
-//                                .uuid(r.get(STROOM_USER.UUID))
-//                                .subjectId(r.get(STROOM_USER.NAME))
-//                                .displayName(r.get(STROOM_USER.DISPLAY_NAME))
-//                                .fullName(r.get(STROOM_USER.FULL_NAME))
-//                                .group(r.get(STROOM_USER.IS_GROUP))
-//                                .build();
-//                        return new DocumentUserPermissions(userRef, null, null);
-//                    });
-//            return ResultPage.createCriterialBasedList(list, request);
-//
-//        } else {
-//            final DocRef docRef = docRefs.iterator().next();
-//
-//            // If we have a single doc then try to deliver more useful permissions.
-//            final List<DocumentUserPermissions> list = JooqUtil.contextResult(securityDbConnProvider, context ->
-//            context
-//                            .select(
-//                                    PERMISSION_DOC.PERMISSION_ID,
-//                                    STROOM_USER.UUID,
-//                                    STROOM_USER.NAME,
-//                                    STROOM_USER.DISPLAY_NAME,
-//                                    STROOM_USER.FULL_NAME,
-//                                    STROOM_USER.IS_GROUP)
-//                            .from(PERMISSION_DOC)
-//                            .leftOuterJoin(STROOM_USER).on(PERMISSION_DOC.USER_UUID.eq(STROOM_USER.UUID))
-//                            .where(PERMISSION_DOC.DOC_UUID.eq(docRef.getUuid()))
-//                            .orderBy(STROOM_USER.DISPLAY_NAME, STROOM_USER.NAME)
-//                            .offset(offset)
-//                            .limit(limit)
-//                            .fetch())
-//                    .map(r -> {
-//                        final UserRef userRef = UserRef
-//                                .builder()
-//                                .uuid(r.get(STROOM_USER.UUID))
-//                                .subjectId(r.get(STROOM_USER.NAME))
-//                                .displayName(r.get(STROOM_USER.DISPLAY_NAME))
-//                                .fullName(r.get(STROOM_USER.FULL_NAME))
-//                                .group(r.get(STROOM_USER.IS_GROUP))
-//                                .build();
-//                        final DocumentPermission documentPermission = DocumentPermission.PRIMITIVE_VALUE_CONVERTER
-//                                .fromPrimitiveValue(r.get(PERMISSION_DOC.PERMISSION_ID).byteValue());
-//                        return new DocumentUserPermissions(userRef, documentPermission, null);
-//                    });
-//            return ResultPage.createCriterialBasedList(list, request);
-//        }
     }
-
-    //
-//    @Override
-//    public DocumentPermissionSet getPermissionsForDocumentForUser(final String docUuid,
-//                                                                  final String userUuid) {
-//        final Set<DocumentPermissionEnum> permissions = new HashSet<>();
-//        final Set<String> folderCreatePermissions = new HashSet<>();
-//
-//        JooqUtil.contextResult(securityDbConnProvider, context -> context
-//                        .select()
-//                        .from(DOC_PERMISSION)
-//                        .where(DOC_PERMISSION.USER_UUID.eq(userUuid))
-//                        .and(DOC_PERMISSION.DOC_UUID.eq(docUuid))
-//                        .fetch())
-//                .forEach(r -> {
-//                    final String permission = r.get(DOC_PERMISSION.PERMISSION);
-//                    if (permission.startsWith(DocumentPermissionSet.CREATE_PREFIX)) {
-//                        final String docType = permission.substring(DocumentPermissionSet.CREATE_PREFIX.length());
-//                        folderCreatePermissions.add(docType);
-//                    } else {
-//                        DocumentPermissionEnum.valueOf(permission);
-//                    }
-//                });
-//        return new DocumentPermissionSet(permissions, folderCreatePermissions);
-//    }
-//
-//    @Override
-//    public UserDocumentPermissions getPermissionsForUser(final String userUuid) {
-//        final UserDocumentPermissions userDocumentPermissions = new UserDocumentPermissions();
-//
-//        JooqUtil.contextResult(securityDbConnProvider, context -> context
-//                        .selectDistinct(DOC_PERMISSION.DOC_UUID, DOC_PERMISSION.PERMISSION)
-//                        .from(DOC_PERMISSION)
-//                        .where(DOC_PERMISSION.USER_UUID.eq(userUuid))
-//                        .fetch())
-//                .forEach(r -> {
-//                    final String docUuid = r.get(DOC_PERMISSION.DOC_UUID);
-//                    final String permission = r.get(DOC_PERMISSION.PERMISSION);
-//                    if (permission.startsWith(DocumentPermissionSet.CREATE_PREFIX)) {
-//                        final String documentType = permission
-//                        .substring(DocumentPermissionSet.CREATE_PREFIX.length());
-//                        userDocumentPermissions.addDocumentCreatePermission(docUuid, documentType);
-//                    } else {
-//                        final DocumentPermissionEnum permissionEnum = DocumentPermissionEnum.valueOf(permission);
-//                        userDocumentPermissions.addPermission(docUuid, permissionEnum);
-//                    }
-//                });
-//
-//        return userDocumentPermissions;
-//    }
-//
-//    @Override
-//    public void addPermission(final String docRefUuid,
-//    final String userUuid,
-//    final DocumentPermissionEnum permission) {
-//        final DocPermissionRecord rec = DOC_PERMISSION.newRecord();
-//        rec.setDocUuid(docRefUuid);
-//        rec.setUserUuid(userUuid);
-//        rec.setPermission(permission.name());
-//
-//        // Don't complain if we insert a perm record that we already have.
-//        JooqUtil.context(securityDbConnProvider, context ->
-//                JooqUtil.tryCreate(context, rec));
-//    }
-//
-//    @Override
-//    public void removePermission(final String docRefUuid,
-//                                 final String userUuid,
-//                                 final DocumentPermissionEnum permission) {
-//        JooqUtil.context(securityDbConnProvider, context -> context
-//                .deleteFrom(DOC_PERMISSION)
-//                .where(DOC_PERMISSION.USER_UUID.eq(userUuid))
-//                .and(DOC_PERMISSION.DOC_UUID.equal(docRefUuid))
-//                .and(DOC_PERMISSION.PERMISSION.equalIgnoreCase(permission.name()))
-//                .execute()
-//        );
-//    }
-//
-//    @Override
-//    public void addFolderCreatePermission(final String docRefUuid, final String userUuid, final String documentType) {
-//        final DocPermissionRecord rec = DOC_PERMISSION.newRecord();
-//        rec.setDocUuid(docRefUuid);
-//        rec.setUserUuid(userUuid);
-//        rec.setPermission(DocumentPermissionSet.CREATE_PREFIX + documentType);
-//
-//        // Don't complain if we insert a perm record that we already have.
-//        JooqUtil.context(securityDbConnProvider, context ->
-//                JooqUtil.tryCreate(context, rec));
-//    }
-//
-//    @Override
-//    public void removeFolderCreatePermission(final String docRefUuid,
-//                                             final String userUuid,
-//                                             final String documentType) {
-//        JooqUtil.context(securityDbConnProvider, context -> context
-//                .deleteFrom(DOC_PERMISSION)
-//                .where(DOC_PERMISSION.USER_UUID.eq(userUuid))
-//                .and(DOC_PERMISSION.DOC_UUID.equal(docRefUuid))
-//                .and(DOC_PERMISSION.PERMISSION.equalIgnoreCase(DocumentPermissionSet.CREATE_PREFIX + documentType))
-//                .execute()
-//        );
-//    }
-//
-//    @Override
-//    public void addPermissions(final String docRefUuid,
-//                               final String userUuid,
-//                               final DocumentPermissionSet permissions) {
-//        permissions.getPermissions().forEach(permission ->
-//                addPermission(docRefUuid, userUuid, permission));
-//        permissions.getDocumentCreatePermissions().forEach(docType ->
-//                addFolderCreatePermission(docRefUuid, userUuid, docType));
-//    }
-//
-//    @Override
-//    public void removePermissions(final String docRefUuid,
-//                                  final String userUuid,
-//                                  final DocumentPermissionSet permissions) {
-//        if (permissions != null && !permissions.isEmpty()) {
-//            final Set<String> permissionNames = new HashSet<>();
-//            permissions
-//                    .getPermissions()
-//                    .stream()
-//                    .map(DocumentPermissionEnum::name)
-//                    .forEach(permissionNames::add);
-//            permissions
-//                    .getDocumentCreatePermissions()
-//                    .stream()
-//                    .map(name -> DocumentPermissionSet.CREATE_PREFIX + name)
-//                    .forEach(permissionNames::add);
-//
-//            Objects.requireNonNull(docRefUuid);
-//            Objects.requireNonNull(userUuid);
-//            JooqUtil.context(securityDbConnProvider, context -> context
-//                    .deleteFrom(DOC_PERMISSION)
-//                    .where(DOC_PERMISSION.USER_UUID.eq(userUuid))
-//                    .and(DOC_PERMISSION.DOC_UUID.equal(docRefUuid))
-//                    .and(DOC_PERMISSION.PERMISSION.in(permissionNames))
-//                    .execute()
-//            );
-//        }
-//    }
-//
-//    @Override
-//    public void clearDocumentPermissionsForUser(String docRefUuid, String userUuid) {
-//        JooqUtil.context(securityDbConnProvider, context -> context
-//                .deleteFrom(DOC_PERMISSION)
-//                .where(DOC_PERMISSION.USER_UUID.eq(userUuid))
-//                .and(DOC_PERMISSION.DOC_UUID.equal(docRefUuid))
-//                .execute()
-//        );
-//    }
-//
-//    @Override
-//    public void clearDocumentPermissionsForDoc(final String docRefUuid) {
-//        JooqUtil.context(securityDbConnProvider, context -> context
-//                .deleteFrom(DOC_PERMISSION)
-//                .where(DOC_PERMISSION.DOC_UUID.equal(docRefUuid))
-//                .execute()
-//        );
-//    }
-//
-//    @Override
-//    public void clearDocumentPermissionsForDocs(final Set<String> docRefUuids) {
-//        clearDocumentPermissionsForDocs(docRefUuids, IN_LIST_LIMIT);
-//    }
-//
-//    // Pkg private to aid testing with a smaller batch size
-//    void clearDocumentPermissionsForDocs(final Set<String> docRefUuids,
-//                                         final int batchSize) {
-//        if (NullSafe.hasItems(docRefUuids)) {
-//            LOGGER.debug(() -> LogUtil.message("Deleting permission records for {} proc filter UUIDs",
-//                    docRefUuids.size()));
-//            final List<String> workingList = new ArrayList<>(docRefUuids);
-//            final AtomicInteger totalCnt = new AtomicInteger();
-//            JooqUtil.transaction(securityDbConnProvider, txnContext -> {
-//                while (!workingList.isEmpty()) {
-//                    // The in clause has limits so do a batch at a time. A view on workingList
-//                    final List<String> subListView = workingList.subList(
-//                            0,
-//                            Math.min(workingList.size(), batchSize));
-//                    if (!subListView.isEmpty()) {
-//                        final int cnt = txnContext.deleteFrom(DOC_PERMISSION)
-//                                .where(DOC_PERMISSION.DOC_UUID.in(subListView))
-//                                .execute();
-//                        totalCnt.addAndGet(cnt);
-//                        LOGGER.debug(() -> LogUtil.message(
-//                                "Deleted {} doc_permission records for a batch of {} doc UUIDs",
-//                                cnt, subListView.size()));
-//                        // Now clear limitedListView which clears the items from workingList
-//                        subListView.clear();
-//                    }
-//                }
-//            });
-//            LOGGER.debug(() -> LogUtil.message("Deleted a total of {} doc_permission records for {} doc UUIDs",
-//                    totalCnt, docRefUuids.size()));
-//        }
-//    }
 }

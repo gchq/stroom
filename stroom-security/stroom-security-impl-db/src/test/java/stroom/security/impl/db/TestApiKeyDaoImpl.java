@@ -10,6 +10,7 @@ import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.FindApiKeyCriteria;
 import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.User;
+import stroom.util.AuditUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
@@ -38,15 +39,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestApiKeyDaoImpl {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestApiKeyDaoImpl.class);
-
-    private static final Map<String, String> SUBJECT_ID_TO_UUID_MAP = Map.of(
-            "user1", "user1_uuid",
-            "user2", "user2_uuid",
-            "user3", "user3_uuid");
-
-    private static final Map<String, String> UUID_TO_SUBJECT_ID_MAP = SUBJECT_ID_TO_UUID_MAP.entrySet()
-            .stream()
-            .collect(Collectors.toMap(Entry::getValue, Entry::getKey));
 
     private static final Instant EXPIRY_IN_PAST = Instant.now().minus(10, ChronoUnit.DAYS);
     private static final Instant EXPIRY_IN_FUTURE = Instant.now().plus(10, ChronoUnit.DAYS);
@@ -198,15 +190,12 @@ class TestApiKeyDaoImpl {
         final String saltedApiKeyHash = "myHash";
         final String prefix = "sak_1234567_";
 
-        final UserRef owner = UserRef.builder()
-                .subjectId("user1")
-                .uuid("user1_uuid")
-                .build();
+        final UserRef user = createUser("user1");
 
         final CreateHashedApiKeyRequest request = CreateHashedApiKeyRequest.builder()
                 .withExpireTimeMs(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli())
                 .withName("myKey")
-                .withOwner(owner)
+                .withOwner(user)
                 .withEnabled(true)
                 .withComments("myComments")
                 .build();
@@ -243,15 +232,12 @@ class TestApiKeyDaoImpl {
         final String hash2 = hash1;
         final String prefix2 = "sak_7654321_";
 
-        final UserRef owner = UserRef.builder()
-                .subjectId("user1")
-                .uuid("user1_uuid")
-                .build();
+        final UserRef user = createUser("user1");
 
         final CreateHashedApiKeyRequest request1 = CreateHashedApiKeyRequest.builder()
                 .withExpireTimeMs(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli())
                 .withName("myKey1")
-                .withOwner(owner)
+                .withOwner(user)
                 .withEnabled(true)
                 .withComments("myComments")
                 .build();
@@ -263,7 +249,7 @@ class TestApiKeyDaoImpl {
         final CreateHashedApiKeyRequest request2 = CreateHashedApiKeyRequest.builder()
                 .withExpireTimeMs(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli())
                 .withName("myKey2")
-                .withOwner(owner)
+                .withOwner(user)
                 .withEnabled(true)
                 .withComments("myComments")
                 .build();
@@ -285,15 +271,12 @@ class TestApiKeyDaoImpl {
         final String hash2 = "myHash2";
         final String prefix2 = "sak_7654321_";
 
-        final UserRef owner = UserRef.builder()
-                .subjectId("user1")
-                .uuid("user1_uuid")
-                .build();
+        final UserRef user = createUser("user1");
 
         final CreateHashedApiKeyRequest request1 = CreateHashedApiKeyRequest.builder()
                 .withExpireTimeMs(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli())
                 .withName("myKey1")
-                .withOwner(owner)
+                .withOwner(user)
                 .withEnabled(true)
                 .withComments("myComments")
                 .build();
@@ -305,7 +288,7 @@ class TestApiKeyDaoImpl {
         final CreateHashedApiKeyRequest request2 = CreateHashedApiKeyRequest.builder()
                 .withExpireTimeMs(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli())
                 .withName("myKey1")
-                .withOwner(owner)
+                .withOwner(user)
                 .withEnabled(true)
                 .withComments("myComments")
                 .build();
@@ -333,21 +316,6 @@ class TestApiKeyDaoImpl {
     }
 
     private void loadData() {
-        final long nowMs = Instant.now().toEpochMilli();
-
-        UUID_TO_SUBJECT_ID_MAP.forEach((uuid, subjectId) -> {
-            final User user = User.builder()
-                    .subjectId(subjectId)
-                    .uuid(uuid)
-                    .group(false)
-                    .build();
-            user.setCreateUser(subjectId);
-            user.setUpdateUser(subjectId);
-            user.setCreateTimeMs(nowMs);
-            user.setUpdateTimeMs(nowMs);
-            userDao.create(user);
-        });
-
         user1ApiKey1 = apiKey("user1 key 1 valid", "user1", EXPIRY_IN_FUTURE, true);
         user1ApiKey2 = apiKey("user1 key 2 valid", "user1", EXPIRY_IN_FUTURE, true);
         user1ApiKey3 = apiKey("user1 key 3 invalid", "user1", EXPIRY_IN_PAST, true);
@@ -370,11 +338,12 @@ class TestApiKeyDaoImpl {
         // Doesn't matter what the values are for these tests
         final String hash = StringUtil.createRandomCode(secureRandom, 20);
         final String prefixHash = StringUtil.createRandomCode(secureRandom, 7);
+        final UserRef user = createUser(userSubjectId);
 
         final CreateHashedApiKeyRequest createHashedApiKeyRequest = CreateHashedApiKeyRequest.builder()
                 .withName(keyName)
                 .withOwner(UserRef.builder()
-                        .uuid(userSubjectId + "_uuid")
+                        .uuid(user.getUuid())
                         .subjectId(userSubjectId)
                         .build())
                 .withEnabled(enabled)
@@ -388,5 +357,20 @@ class TestApiKeyDaoImpl {
         } catch (DuplicateHashException | DuplicatePrefixException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private UserRef createUser(final String subjectId) {
+        final long nowMs = Instant.now().toEpochMilli();
+        final User user = User.builder()
+                .subjectId(subjectId)
+                .group(false)
+                .enabled(true)
+                .build();
+        user.setCreateUser(subjectId);
+        user.setUpdateUser(subjectId);
+        user.setCreateTimeMs(nowMs);
+        user.setUpdateTimeMs(nowMs);
+        final User persistedUser = userDao.tryCreate(user);
+        return persistedUser.asRef();
     }
 }

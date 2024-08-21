@@ -4197,13 +4197,13 @@ paths:
       - Authentication
   /permission/app/v1:
     get:
-      operationId: getUserAndPermissions
+      operationId: getEffectiveAppPermissions
       responses:
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserAndEffectivePermissions'
+                $ref: '#/components/schemas/AppUserPermissions'
           description: default response
       summary: User and app permissions for the current session
       tags:
@@ -4248,9 +4248,9 @@ paths:
       summary: Fetch app user permissions
       tags:
       - Application Permissions
-  /permission/app/v1/fetchUserAppPermissions:
+  /permission/app/v1/getAppUserPermissionsReport:
     post:
-      operationId: fetchUserAppPermissions
+      operationId: getAppUserPermissionsReport
       requestBody:
         content:
           application/json:
@@ -4263,38 +4263,9 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: string
-                  enum:
-                  - ADMINISTRATOR
-                  - ANNOTATIONS
-                  - MANAGE_CACHE_PERMISSION
-                  - VIEW_DATA_PERMISSION
-                  - VIEW_DATA_WITH_PIPELINE_PERMISSION
-                  - DELETE_DATA_PERMISSION
-                  - IMPORT_DATA_PERMISSION
-                  - EXPORT_DATA_PERMISSION
-                  - MANAGE_USERS_PERMISSION
-                  - CHANGE_OWNER_PERMISSION
-                  - STEPPING_PERMISSION
-                  - MANAGE_PROCESSORS_PERMISSION
-                  - MANAGE_TASKS_PERMISSION
-                  - DOWNLOAD_SEARCH_RESULTS_PERMISSION
-                  - MANAGE_API_KEYS
-                  - MANAGE_JOBS_PERMISSION
-                  - MANAGE_PROPERTIES_PERMISSION
-                  - MANAGE_POLICIES_PERMISSION
-                  - MANAGE_NODES_PERMISSION
-                  - MANAGE_INDEX_SHARDS_PERMISSION
-                  - MANAGE_VOLUMES_PERMISSION
-                  - MANAGE_DB_PERMISSION
-                  - IMPORT_CONFIGURATION
-                  - EXPORT_CONFIGURATION
-                  - VIEW_SYSTEM_INFO_PERMISSION
-                uniqueItems: true
+                $ref: '#/components/schemas/AppUserPermissionsReport'
           description: default response
-      summary: User and app permissions for the specified user
+      summary: Get a detailed report of app permissions for the specified user
       tags:
       - Application Permissions
   /permission/changeEvent/v1/fireChange/{nodeName}:
@@ -4361,6 +4332,26 @@ paths:
                 $ref: '#/components/schemas/ResultPageDocumentUserPermissions'
           description: default response
       summary: Fetch document user permissions
+      tags:
+      - Doc Permissions
+  /permission/doc/v1/getDocUserPermissionsReport:
+    post:
+      operationId: getDocUserPermissionsReport
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentUserPermissionsRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentUserPermissionsReport'
+          description: default response
+      summary: Get a detailed report of doc permissions for the specified user
       tags:
       - Doc Permissions
   /pipeline/v1/fetchPipelineData:
@@ -7570,6 +7561,37 @@ components:
     AppUserPermissions:
       type: object
       properties:
+        inherited:
+          type: array
+          items:
+            type: string
+            enum:
+            - ADMINISTRATOR
+            - ANNOTATIONS
+            - MANAGE_CACHE_PERMISSION
+            - VIEW_DATA_PERMISSION
+            - VIEW_DATA_WITH_PIPELINE_PERMISSION
+            - DELETE_DATA_PERMISSION
+            - IMPORT_DATA_PERMISSION
+            - EXPORT_DATA_PERMISSION
+            - MANAGE_USERS_PERMISSION
+            - CHANGE_OWNER_PERMISSION
+            - STEPPING_PERMISSION
+            - MANAGE_PROCESSORS_PERMISSION
+            - MANAGE_TASKS_PERMISSION
+            - DOWNLOAD_SEARCH_RESULTS_PERMISSION
+            - MANAGE_API_KEYS
+            - MANAGE_JOBS_PERMISSION
+            - MANAGE_PROPERTIES_PERMISSION
+            - MANAGE_POLICIES_PERMISSION
+            - MANAGE_NODES_PERMISSION
+            - MANAGE_INDEX_SHARDS_PERMISSION
+            - MANAGE_VOLUMES_PERMISSION
+            - MANAGE_DB_PERMISSION
+            - IMPORT_CONFIGURATION
+            - EXPORT_CONFIGURATION
+            - VIEW_SYSTEM_INFO_PERMISSION
+          uniqueItems: true
         permissions:
           type: array
           items:
@@ -7603,6 +7625,46 @@ components:
           uniqueItems: true
         userRef:
           $ref: '#/components/schemas/UserRef'
+    AppUserPermissionsReport:
+      type: object
+      properties:
+        explicitPermissions:
+          type: array
+          items:
+            type: string
+            enum:
+            - ADMINISTRATOR
+            - ANNOTATIONS
+            - MANAGE_CACHE_PERMISSION
+            - VIEW_DATA_PERMISSION
+            - VIEW_DATA_WITH_PIPELINE_PERMISSION
+            - DELETE_DATA_PERMISSION
+            - IMPORT_DATA_PERMISSION
+            - EXPORT_DATA_PERMISSION
+            - MANAGE_USERS_PERMISSION
+            - CHANGE_OWNER_PERMISSION
+            - STEPPING_PERMISSION
+            - MANAGE_PROCESSORS_PERMISSION
+            - MANAGE_TASKS_PERMISSION
+            - DOWNLOAD_SEARCH_RESULTS_PERMISSION
+            - MANAGE_API_KEYS
+            - MANAGE_JOBS_PERMISSION
+            - MANAGE_PROPERTIES_PERMISSION
+            - MANAGE_POLICIES_PERMISSION
+            - MANAGE_NODES_PERMISSION
+            - MANAGE_INDEX_SHARDS_PERMISSION
+            - MANAGE_VOLUMES_PERMISSION
+            - MANAGE_DB_PERMISSION
+            - IMPORT_CONFIGURATION
+            - EXPORT_CONFIGURATION
+            - VIEW_SYSTEM_INFO_PERMISSION
+          uniqueItems: true
+        inheritedPermissions:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
     Arg:
       type: object
       properties:
@@ -9026,6 +9088,19 @@ components:
           items:
             type: string
           uniqueItems: true
+        inheritedDocumentCreatePermissions:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        inheritedPermission:
+          type: string
+          enum:
+          - OWNER
+          - DELETE
+          - EDIT
+          - VIEW
+          - USE
         permission:
           type: string
           enum:
@@ -9034,6 +9109,41 @@ components:
           - EDIT
           - VIEW
           - USE
+        userRef:
+          $ref: '#/components/schemas/UserRef'
+    DocumentUserPermissionsReport:
+      type: object
+      properties:
+        explicitCreatePermissions:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        explicitPermission:
+          type: string
+          enum:
+          - OWNER
+          - DELETE
+          - EDIT
+          - VIEW
+          - USE
+        inheritedCreatePermissionPaths:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        inheritedPermissionPaths:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+    DocumentUserPermissionsRequest:
+      type: object
+      properties:
+        docRef:
+          $ref: '#/components/schemas/DocRef'
         userRef:
           $ref: '#/components/schemas/UserRef'
     Documentation:
@@ -10006,10 +10116,10 @@ components:
     FetchAppUserPermissionsRequest:
       type: object
       properties:
+        allUsers:
+          type: boolean
         expression:
           $ref: '#/components/schemas/ExpressionOperator'
-        onlyUsersWithExplicitPermision:
-          type: boolean
         pageRequest:
           $ref: '#/components/schemas/PageRequest'
         sort:
@@ -10068,6 +10178,8 @@ components:
     FetchDocumentUserPermissionsRequest:
       type: object
       properties:
+        allUsers:
+          type: boolean
         docRef:
           $ref: '#/components/schemas/DocRef'
         expression:
@@ -13609,22 +13721,6 @@ components:
             $ref: '#/components/schemas/DocumentType'
           userRef:
             $ref: '#/components/schemas/UserRef'
-    RemovePermission:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/AbstractDocumentPermissionsChange'
-      - type: object
-        properties:
-          permission:
-            type: string
-            enum:
-            - OWNER
-            - DELETE
-            - EDIT
-            - VIEW
-            - USE
-          userRef:
-            $ref: '#/components/schemas/UserRef'
     ReprocessDataInfo:
       type: object
       properties:
@@ -15907,42 +16003,6 @@ components:
         version:
           type: integer
           format: int32
-    UserAndEffectivePermissions:
-      type: object
-      properties:
-        effectivePermissions:
-          type: array
-          items:
-            type: string
-            enum:
-            - ADMINISTRATOR
-            - ANNOTATIONS
-            - MANAGE_CACHE_PERMISSION
-            - VIEW_DATA_PERMISSION
-            - VIEW_DATA_WITH_PIPELINE_PERMISSION
-            - DELETE_DATA_PERMISSION
-            - IMPORT_DATA_PERMISSION
-            - EXPORT_DATA_PERMISSION
-            - MANAGE_USERS_PERMISSION
-            - CHANGE_OWNER_PERMISSION
-            - STEPPING_PERMISSION
-            - MANAGE_PROCESSORS_PERMISSION
-            - MANAGE_TASKS_PERMISSION
-            - DOWNLOAD_SEARCH_RESULTS_PERMISSION
-            - MANAGE_API_KEYS
-            - MANAGE_JOBS_PERMISSION
-            - MANAGE_PROPERTIES_PERMISSION
-            - MANAGE_POLICIES_PERMISSION
-            - MANAGE_NODES_PERMISSION
-            - MANAGE_INDEX_SHARDS_PERMISSION
-            - MANAGE_VOLUMES_PERMISSION
-            - MANAGE_DB_PERMISSION
-            - IMPORT_CONFIGURATION
-            - EXPORT_CONFIGURATION
-            - VIEW_SYSTEM_INFO_PERMISSION
-          uniqueItems: true
-        userRef:
-          $ref: '#/components/schemas/UserRef'
     UserDesc:
       type: object
       properties:

@@ -12,7 +12,8 @@ public interface UserDao {
     User create(User user);
 
     default User tryCreate(User user) {
-        return tryCreate(user, null);
+        return tryCreate(user, u -> {
+        });
     }
 
     User tryCreate(User user, final Consumer<User> onUserCreateAction);

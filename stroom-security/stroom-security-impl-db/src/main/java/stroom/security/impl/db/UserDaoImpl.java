@@ -23,6 +23,7 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
+import org.jooq.exception.IntegrityConstraintViolationException;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -125,7 +126,7 @@ public class UserDaoImpl implements UserDao {
             final User persisted = create(user);
             onUserCreateAction.accept(persisted);
             return persisted;
-        } catch (final RuntimeException e) {
+        } catch (final IntegrityConstraintViolationException e) {
             LOGGER.debug(e::getMessage, e);
         }
 

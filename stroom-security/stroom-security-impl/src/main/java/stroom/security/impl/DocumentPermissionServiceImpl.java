@@ -30,7 +30,6 @@ import stroom.security.shared.AbstractDocumentPermissionsChange.AddDocumentCreat
 import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllDocumentCreatePermissions;
 import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveAllPermissions;
 import stroom.security.shared.AbstractDocumentPermissionsChange.RemoveDocumentCreatePermission;
-//import stroom.security.shared.AbstractDocumentPermissionsChange.RemovePermission;
 import stroom.security.shared.AbstractDocumentPermissionsChange.SetAllPermissionsFrom;
 import stroom.security.shared.AbstractDocumentPermissionsChange.SetPermission;
 import stroom.security.shared.AppPermission;
@@ -420,7 +419,8 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                             .getDocumentUserCreatePermissions(docRef.getUuid(), group.getUuid());
                     if (createPermissions != null) {
                         createPermissions.forEach(createPermission -> {
-                            inheritedCreatePermissions.computeIfAbsent(createPermission, k -> new ArrayList<>()).add(path);
+                            inheritedCreatePermissions.computeIfAbsent(createPermission, k ->
+                                    new ArrayList<>()).add(path);
                         });
                     }
 

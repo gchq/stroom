@@ -60,6 +60,7 @@ class UserServiceImpl implements UserService, ContentPackUserService {
             user.setDisplayName(userDesc.getDisplayName());
             user.setFullName(userDesc.getFullName());
             user.setGroup(false);
+            user.setEnabled(true);
 
             return securityContext.secureResult(AppPermission.MANAGE_USERS_PERMISSION, () ->
                     userDao.tryCreate(user, persistedUser -> {
@@ -82,6 +83,7 @@ class UserServiceImpl implements UserService, ContentPackUserService {
             user.setSubjectId(name);
             user.setDisplayName(name);
             user.setGroup(true);
+            user.setEnabled(true);
 
             return securityContext.secureResult(AppPermission.MANAGE_USERS_PERMISSION, () ->
                     userDao.tryCreate(user, persistedUser -> {
