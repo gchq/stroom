@@ -29,6 +29,12 @@ import stroom.dashboard.client.main.RenameTabPresenter.RenameTabView;
 import stroom.dashboard.client.main.RenameTabViewImpl;
 import stroom.dashboard.client.unknown.HTMLView;
 import stroom.dashboard.client.unknown.HTMLViewImpl;
+import stroom.data.client.presenter.EditExpressionPresenter;
+import stroom.data.client.presenter.EditExpressionPresenter.EditExpressionView;
+import stroom.data.client.presenter.ExpressionPresenter;
+import stroom.data.client.presenter.ExpressionPresenter.ExpressionView;
+import stroom.data.client.view.EditExpressionViewImpl;
+import stroom.data.client.view.ExpressionViewImpl;
 import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
 import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 import stroom.widget.tab.client.view.LinkTabsLayoutViewImpl;
@@ -57,6 +63,14 @@ public class DashboardModule extends PluginModule {
                 LayoutConstraintPresenter.class,
                 LayoutConstraintView.class,
                 LayoutConstraintViewImpl.class);
+        bindPresenterWidget(
+                ExpressionPresenter.class,
+                ExpressionView.class,
+                ExpressionViewImpl.class);
+        bindPresenterWidget(
+                EditExpressionPresenter.class,
+                EditExpressionView.class,
+                EditExpressionViewImpl.class);
 
         bindSharedView(LinkTabsLayoutView.class, LinkTabsLayoutViewImpl.class);
         bindSharedView(HTMLView.class, HTMLViewImpl.class);
