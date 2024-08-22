@@ -63,14 +63,6 @@ public class DashboardModule extends PluginModule {
                 LayoutConstraintPresenter.class,
                 LayoutConstraintView.class,
                 LayoutConstraintViewImpl.class);
-        bindPresenterWidget(
-                ExpressionPresenter.class,
-                ExpressionView.class,
-                ExpressionViewImpl.class);
-        bindPresenterWidget(
-                EditExpressionPresenter.class,
-                EditExpressionView.class,
-                EditExpressionViewImpl.class);
 
         bindSharedView(LinkTabsLayoutView.class, LinkTabsLayoutViewImpl.class);
         bindSharedView(HTMLView.class, HTMLViewImpl.class);
