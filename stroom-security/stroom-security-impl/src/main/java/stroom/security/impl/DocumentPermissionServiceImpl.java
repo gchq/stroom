@@ -19,6 +19,7 @@ package stroom.security.impl;
 
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerService;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.event.PermissionChangeEvent;
@@ -141,7 +142,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
 
         } else if (change instanceof final AddDocumentCreatePermission req) {
             // Only applies to folders.
-            if (isFolder(docRef)) {
+            if (ExplorerConstants.isFolderOrSystem(docRef)) {
                 Objects.requireNonNull(req.getUserRef(), "Null user ref");
                 Objects.requireNonNull(req.getDocumentType(), "Null documentType");
                 documentPermissionDao.addDocumentUserCreatePermission(
@@ -153,7 +154,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
 
         } else if (change instanceof final RemoveDocumentCreatePermission req) {
             // Only applies to folders.
-            if (isFolder(docRef)) {
+            if (ExplorerConstants.isFolderOrSystem(docRef)) {
                 Objects.requireNonNull(req.getUserRef(), "Null user ref");
                 Objects.requireNonNull(req.getDocumentType(), "Null documentType");
                 documentPermissionDao.removeDocumentUserCreatePermission(
@@ -165,7 +166,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
 
         } else if (change instanceof final AddAllDocumentCreatePermissions req) {
             // Only applies to folders.
-            if (isFolder(docRef)) {
+            if (ExplorerConstants.isFolderOrSystem(docRef)) {
                 Objects.requireNonNull(req.getUserRef(), "Null user ref");
                 documentPermissionDao.removeDocumentUserCreatePermissions(
                         docRef.getUuid(),
@@ -179,7 +180,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
 
         } else if (change instanceof final RemoveAllDocumentCreatePermissions req) {
             // Only applies to folders.
-            if (isFolder(docRef)) {
+            if (ExplorerConstants.isFolderOrSystem(docRef)) {
                 Objects.requireNonNull(req.getUserRef(), "Null user ref");
                 documentPermissionDao.removeDocumentUserCreatePermissions(
                         docRef.getUuid(),
@@ -193,7 +194,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                     req.getSourceDocRef().getUuid(),
                     docRef.getUuid());
             // Only applies to folders.
-            if (isFolder(docRef)) {
+            if (ExplorerConstants.isFolderOrSystem(docRef)) {
                 documentPermissionDao.addDocumentCreatePermissions(
                         req.getSourceDocRef().getUuid(),
                         docRef.getUuid());
@@ -206,7 +207,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                     req.getSourceDocRef().getUuid(),
                     docRef.getUuid());
             // Only applies to folders.
-            if (isFolder(docRef)) {
+            if (ExplorerConstants.isFolderOrSystem(docRef)) {
                 documentPermissionDao.setDocumentCreatePermissions(
                         req.getSourceDocRef().getUuid(),
                         docRef.getUuid());
@@ -228,7 +229,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     public void removeAllDocumentPermissions(final DocRef docRef) {
         checkSetPermission(docRef);
         documentPermissionDao.removeAllDocumentPermissions(docRef.getUuid());
-        if (isFolder(docRef)) {
+        if (ExplorerConstants.isFolderOrSystem(docRef)) {
             documentPermissionDao.removeAllDocumentCreatePermissions(docRef.getUuid());
         }
         PermissionChangeEvent.fire(permissionChangeEventBus, null, docRef);
@@ -244,7 +245,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         checkSetPermission(destDocRef);
         documentPermissionDao.addDocumentPermissions(sourceDocRef.getUuid(), destDocRef.getUuid());
         // Copy create permissions if the source is a folder.
-        if (isFolder(sourceDocRef)) {
+        if (ExplorerConstants.isFolderOrSystem(sourceDocRef)) {
             documentPermissionDao.addDocumentCreatePermissions(sourceDocRef.getUuid(), destDocRef.getUuid());
         }
         PermissionChangeEvent.fire(permissionChangeEventBus, null, destDocRef);
@@ -268,9 +269,6 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         }
     }
 
-    private boolean isFolder(final DocRef docRef) {
-        return docRef.getType() != null && "Folder".equalsIgnoreCase(docRef.getType());
-    }
 //
 //    @Override
 //    public Boolean setDocumentUserPermissions(final SetDocumentUserPermissionsRequest request) {

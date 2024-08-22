@@ -1631,10 +1631,7 @@ class ExplorerServiceImpl
                              final ExpressionOperator expression) {
         if (nodes != null) {
             for (final ExplorerNode node : nodes) {
-                if (node.hasNodeFlag(NodeFlag.FILTER_MATCH) &&
-                        node.getDocRef() != null &&
-                        !ExplorerConstants.isRootNode(node)) {
-
+                if (node.hasNodeFlag(NodeFlag.FILTER_MATCH) && node.getDocRef() != null) {
                     final Set<String> fields = ExpressionUtil.fields(expression).stream().collect(Collectors.toSet());
                     final Map<String, Object> attributes = new HashMap<>();
                     attributes.put(DocumentPermissionFields.DOCUMENT.getFldName(), node.getDocRef());

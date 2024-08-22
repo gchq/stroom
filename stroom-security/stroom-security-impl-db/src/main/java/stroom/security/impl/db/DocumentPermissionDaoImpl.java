@@ -376,9 +376,6 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
         // If we have a single doc then try to deliver more useful permissions.
         final Result<?> result = JooqUtil.contextResult(securityDbConnProvider, context -> {
             if (request.isAllUsers()) {
-                conditions.add(PERMISSION_DOC.DOC_UUID.eq(docRef.getUuid())
-                        .or(PERMISSION_DOC.DOC_UUID.isNull()));
-
                 return context.select(
                                 PERMISSION_DOC.PERMISSION_ID,
                                 STROOM_USER.UUID,
@@ -387,15 +384,40 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                                 STROOM_USER.FULL_NAME,
                                 STROOM_USER.IS_GROUP)
                         .from(STROOM_USER)
-                        .leftOuterJoin(PERMISSION_DOC).on(PERMISSION_DOC.USER_UUID.eq(STROOM_USER.UUID))
+                        .leftOuterJoin(PERMISSION_DOC)
+                        .on(PERMISSION_DOC.USER_UUID.eq(STROOM_USER.UUID)
+                                .and(PERMISSION_DOC.DOC_UUID.eq(docRef.getUuid())))
                         .where(conditions)
                         .orderBy(orderFields)
                         .offset(offset)
                         .limit(limit)
                         .fetch();
-            } else {
-                conditions.add(PERMISSION_DOC.DOC_UUID.eq(docRef.getUuid()));
 
+            } else if (ExplorerConstants.isFolderOrSystem(docRef)) {
+                conditions
+                        .add(PERMISSION_DOC.DOC_UUID.eq(docRef.getUuid())
+                                .or(PERMISSION_DOC_CREATE.DOC_UUID.eq(docRef.getUuid())));
+                return context.selectDistinct(
+                                PERMISSION_DOC.PERMISSION_ID,
+                                STROOM_USER.UUID,
+                                STROOM_USER.NAME,
+                                STROOM_USER.DISPLAY_NAME,
+                                STROOM_USER.FULL_NAME,
+                                STROOM_USER.IS_GROUP)
+                        .from(STROOM_USER)
+                        .leftOuterJoin(PERMISSION_DOC)
+                        .on(PERMISSION_DOC.USER_UUID.eq(STROOM_USER.UUID))
+                        .leftOuterJoin(PERMISSION_DOC_CREATE)
+                        .on(PERMISSION_DOC_CREATE.USER_UUID.eq(STROOM_USER.UUID))
+                        .where(conditions)
+                        .orderBy(orderFields)
+                        .offset(offset)
+                        .limit(limit)
+                        .fetch();
+
+            } else {
+                conditions
+                        .add(PERMISSION_DOC.DOC_UUID.eq(docRef.getUuid()));
                 return context.select(
                                 PERMISSION_DOC.PERMISSION_ID,
                                 STROOM_USER.UUID,
@@ -403,8 +425,9 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                                 STROOM_USER.DISPLAY_NAME,
                                 STROOM_USER.FULL_NAME,
                                 STROOM_USER.IS_GROUP)
-                        .from(PERMISSION_DOC)
-                        .join(STROOM_USER).on(PERMISSION_DOC.USER_UUID.eq(STROOM_USER.UUID))
+                        .from(STROOM_USER)
+                        .join(PERMISSION_DOC)
+                        .on(PERMISSION_DOC.USER_UUID.eq(STROOM_USER.UUID))
                         .where(conditions)
                         .orderBy(orderFields)
                         .offset(offset)
@@ -430,7 +453,7 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
             }
 
             Set<String> documentCreatePermissions = null;
-            if (ExplorerConstants.isFolder(docRef)) {
+            if (ExplorerConstants.isFolderOrSystem(docRef)) {
                 documentCreatePermissions =
                         getDocumentUserCreatePermissions(docRef.getUuid(), userRef.getUuid());
             }

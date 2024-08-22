@@ -22,12 +22,10 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MyDataGrid;
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
-import stroom.explorer.shared.ExplorerResource;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
@@ -37,11 +35,9 @@ import stroom.security.client.presenter.DocumentCreatePermissionsListPresenter.D
 import stroom.security.shared.AbstractDocumentPermissionsChange;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.BulkDocumentPermissionChangeRequest;
-import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
 import stroom.security.shared.DocumentUserPermissionsReport;
-import stroom.security.shared.DocumentUserPermissionsRequest;
 import stroom.svg.client.Preset;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.GwtNullSafe;
@@ -49,9 +45,9 @@ import stroom.util.shared.UserRef;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
@@ -59,13 +55,11 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
+import java.util.function.Consumer;
 import javax.inject.Inject;
 
 public class DocumentCreatePermissionsListPresenter
         extends MyPresenterWidget<DocumentCreatePermissionsListView> {
-
-    private static final DocPermissionResource DOC_PERMISSION_RESOURCE = GWT.create(DocPermissionResource.class);
-    private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
     public static final int CHECKBOX_COL_WIDTH = 26;
     public static final int ICON_COL_WIDTH = 26;
@@ -74,7 +68,6 @@ public class DocumentCreatePermissionsListPresenter
     private final MyDataGrid<DocumentType> dataGrid;
     private final MultiSelectionModelImpl<DocumentType> selectionModel;
     private final DataGridSelectionEventManager<DocumentType> selectionEventManager;
-    private final RestFactory restFactory;
 
     private final DocumentTypeCache documentTypeCache;
     private DocumentTypes documentTypes;
@@ -82,17 +75,17 @@ public class DocumentCreatePermissionsListPresenter
     private DocumentUserPermissionsReport currentPermissions;
     private UserRef relatedUser;
     private DocRef relatedDoc;
+    private DocPermissionRestClient docPermissionClient;
+    private ExplorerClient explorerClient;
 
     @Inject
     public DocumentCreatePermissionsListPresenter(final EventBus eventBus,
                                                   final DocumentCreatePermissionsListView view,
                                                   final DocumentTypeCache documentTypeCache,
-                                                  final ClientSecurityContext securityContext,
-                                                  final RestFactory restFactory) {
+                                                  final ClientSecurityContext securityContext) {
         super(eventBus, view);
         this.documentTypeCache = documentTypeCache;
         this.securityContext = securityContext;
-        this.restFactory = restFactory;
 
         refreshDocTypeIcons();
 
@@ -176,6 +169,33 @@ public class DocumentCreatePermissionsListPresenter
         }
     }
 
+    private TickBoxState getPermissionState(final DocumentType documentType) {
+        if (currentPermissions != null) {
+            if (currentPermissions.getExplicitCreatePermissions() != null &&
+                    currentPermissions
+                            .getExplicitCreatePermissions()
+                            .contains(documentType.getType())) {
+                return TickBoxState.TICK;
+            } else if (currentPermissions.getExplicitPermission() != null &&
+                    currentPermissions
+                            .getExplicitPermission()
+                            .equals(DocumentPermission.OWNER)) {
+                return TickBoxState.HALF_TICK;
+            } else if (currentPermissions.getInheritedPermissionPaths() != null &&
+                    currentPermissions
+                            .getInheritedPermissionPaths()
+                            .containsKey(DocumentPermission.OWNER)) {
+                return TickBoxState.HALF_TICK;
+            } else if (currentPermissions.getInheritedCreatePermissionPaths() != null &&
+                    currentPermissions
+                            .getInheritedCreatePermissionPaths()
+                            .containsKey(documentType.getType())) {
+                return TickBoxState.HALF_TICK;
+            }
+        }
+        return TickBoxState.UNTICK;
+    }
+
     private void addColumns() {
         final boolean updateable = isCurrentUserUpdate();
         final TickBoxCell.Appearance appearance = updateable
@@ -187,40 +207,50 @@ public class DocumentCreatePermissionsListPresenter
                 TickBoxCell.create(appearance, true, true, updateable)) {
             @Override
             public TickBoxState getValue(final DocumentType documentType) {
-                if (currentPermissions != null) {
-                    if (currentPermissions.getExplicitCreatePermissions() != null &&
-                            currentPermissions
-                                    .getExplicitCreatePermissions()
-                                    .contains(documentType.getType())) {
-                        return TickBoxState.TICK;
-                    } else if (currentPermissions.getExplicitPermission() != null &&
-                            currentPermissions
-                                    .getExplicitPermission()
-                                    .equals(DocumentPermission.OWNER)) {
-                        return TickBoxState.HALF_TICK;
-                    } else if (currentPermissions.getInheritedPermissionPaths() != null &&
-                            currentPermissions
-                                    .getInheritedPermissionPaths()
-                                    .containsKey(DocumentPermission.OWNER)) {
-                        return TickBoxState.HALF_TICK;
-                    } else if (currentPermissions.getInheritedCreatePermissionPaths() != null &&
-                            currentPermissions
-                                    .getInheritedCreatePermissionPaths()
-                                    .containsKey(documentType.getType())) {
-                        return TickBoxState.HALF_TICK;
-                    }
-                }
-                return TickBoxState.UNTICK;
+                return getPermissionState(documentType);
             }
         };
 
         if (updateable) {
+            final Header<TickBoxState> header = new Header<TickBoxState>(
+                    TickBoxCell.create(false, false)) {
+                @Override
+                public TickBoxState getValue() {
+                    boolean all = true;
+                    boolean some = false;
+                    for (final DocumentType documentType : documentTypes.getTypes()) {
+                        final TickBoxState state = getPermissionState(documentType);
+                        if (TickBoxState.HALF_TICK.equals(state)) {
+                            return TickBoxState.HALF_TICK;
+                        } else if (TickBoxState.TICK.equals(state)) {
+                            some = true;
+                        } else if (TickBoxState.UNTICK.equals(state)) {
+                            all = false;
+                        }
+                    }
+
+                    if (all) {
+                        return TickBoxState.TICK;
+                    } else if (some) {
+                        return TickBoxState.HALF_TICK;
+                    }
+                    return TickBoxState.UNTICK;
+                }
+            };
+            header.setUpdater(value -> {
+                if (value.equals(TickBoxState.UNTICK)) {
+                    onChangeAll(false);
+                } else if (value.equals(TickBoxState.TICK)) {
+                    onChangeAll(true);
+                }
+            });
             selectionColumn.setFieldUpdater((index, permission, value) -> {
                 onChange(permission, TickBoxState.TICK.equals(value));
             });
+            dataGrid.addColumn(selectionColumn, header, ColumnSizeConstants.CHECKBOX_COL);
+        } else {
+            dataGrid.addColumn(selectionColumn, "<br/>", ColumnSizeConstants.ICON_COL);
         }
-
-        dataGrid.addColumn(selectionColumn, "<br/>", ColumnSizeConstants.ICON_COL);
 
         // Icon
         final Column<DocumentType, Preset> iconColumn = DataGridUtil.svgPresetColumnBuilder(
@@ -269,13 +299,6 @@ public class DocumentCreatePermissionsListPresenter
         updateDetails();
     }
 
-    private Preset getDocTypeIcon(final DocumentType documentType) {
-        if (documentType != null) {
-            return new Preset(documentType.getIcon(), documentType.getDisplayType(), true);
-        } else {
-            return null;
-        }
-    }
 
     public void setup(final UserRef relatedUser,
                       final DocRef relatedDoc,
@@ -287,8 +310,32 @@ public class DocumentCreatePermissionsListPresenter
         refresh();
     }
 
-    public void onChange(final DocumentType documentType, final boolean selected) {
-        if (relatedUser != null) {
+    private void refreshAll() {
+        docPermissionClient.getDocUserPermissionsReport(relatedDoc, relatedUser, response ->
+                setup(relatedUser, relatedDoc, response));
+    }
+
+    private void onChangeAll(final boolean selected) {
+        final CountdownAndRun countdownAndRun = new CountdownAndRun(documentTypes.getTypes().size(), this::refreshAll);
+        for (final DocumentType documentType : documentTypes.getTypes()) {
+            onChange(documentType, selected, ok -> countdownAndRun.countdown());
+        }
+    }
+
+    private void onChange(final DocumentType documentType,
+                          final boolean selected) {
+        onChange(documentType, selected, ok -> refreshAll());
+    }
+
+    private void onChange(final DocumentType documentType,
+                          final boolean selected,
+                          final Consumer<Boolean> consumer) {
+        // Get current value.
+        final boolean currentSelectionState = currentPermissions != null &&
+                currentPermissions.getExplicitCreatePermissions() != null &&
+                currentPermissions.getExplicitCreatePermissions().contains(documentType.getType());
+
+        if (selected != currentSelectionState && relatedUser != null) {
             final AbstractDocumentPermissionsChange change;
             if (selected) {
                 change = new AbstractDocumentPermissionsChange
@@ -315,27 +362,30 @@ public class DocumentCreatePermissionsListPresenter
 
             final BulkDocumentPermissionChangeRequest request = new BulkDocumentPermissionChangeRequest(expression,
                     change);
-            restFactory
-                    .create(EXPLORER_RESOURCE)
-                    .method(res -> res.changeDocumentPermssions(request))
-                    .onSuccess(response -> afterChange())
-                    .taskListener(this)
-                    .exec();
+            explorerClient.changeDocumentPermssions(request, response -> consumer.accept(response));
+        } else {
+            consumer.accept(false);
         }
-    }
-
-    private void afterChange() {
-        final DocumentUserPermissionsRequest request = new DocumentUserPermissionsRequest(relatedDoc, relatedUser);
-        restFactory
-                .create(DOC_PERMISSION_RESOURCE)
-                .method(res -> res.getDocUserPermissionsReport(request))
-                .onSuccess(response -> setup(relatedUser, relatedDoc, response))
-                .taskListener(this)
-                .exec();
     }
 
     public boolean isIncludeDescendants() {
         return getView().isIncludeDescendants();
+    }
+
+    private Preset getDocTypeIcon(final DocumentType documentType) {
+        if (documentType != null) {
+            return new Preset(documentType.getIcon(), documentType.getDisplayType(), true);
+        } else {
+            return null;
+        }
+    }
+
+    public void setDocPermissionClient(final DocPermissionRestClient docPermissionClient) {
+        this.docPermissionClient = docPermissionClient;
+    }
+
+    public void setExplorerClient(final ExplorerClient explorerClient) {
+        this.explorerClient = explorerClient;
     }
 
     public interface DocumentCreatePermissionsListView extends View {
@@ -345,5 +395,23 @@ public class DocumentCreatePermissionsListPresenter
         void setDetails(SafeHtml details);
 
         boolean isIncludeDescendants();
+    }
+
+    private static class CountdownAndRun {
+
+        private int count;
+        private Runnable runnable;
+
+        public CountdownAndRun(final int count, final Runnable runnable) {
+            this.count = count;
+            this.runnable = runnable;
+        }
+
+        public synchronized void countdown() {
+            count--;
+            if (count == 0) {
+                runnable.run();
+            }
+        }
     }
 }

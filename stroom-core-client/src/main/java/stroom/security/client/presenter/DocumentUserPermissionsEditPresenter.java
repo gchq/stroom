@@ -16,10 +16,8 @@
 
 package stroom.security.client.presenter;
 
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.explorer.shared.ExplorerResource;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
@@ -27,21 +25,17 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.client.presenter.DocumentUserPermissionsEditPresenter.DocumentUserPermissionsEditView;
 import stroom.security.shared.AbstractDocumentPermissionsChange;
 import stroom.security.shared.BulkDocumentPermissionChangeRequest;
-import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
 import stroom.security.shared.DocumentUserPermissions;
 import stroom.security.shared.DocumentUserPermissionsReport;
-import stroom.security.shared.DocumentUserPermissionsRequest;
 import stroom.util.shared.UserRef;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -56,16 +50,14 @@ public class DocumentUserPermissionsEditPresenter
         extends MyPresenterWidget<DocumentUserPermissionsEditView>
         implements ChangeUiHandlers {
 
-    private static final DocPermissionResource DOC_PERMISSION_RESOURCE = GWT.create(DocPermissionResource.class);
-    private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
-
     private final Provider<DocumentCreatePermissionsListPresenter>
             documentCreatePermissionsListPresenterProvider;
+    private final DocPermissionRestClient docPermissionClient;
+    private final ExplorerClient explorerClient;
 
     private DocumentUserPermissionsReport currentPermissions;
     private UserRef relatedUser;
     private DocRef relatedDoc;
-    private final RestFactory restFactory;
     private DocumentCreatePermissionsListPresenter documentCreatePermissionsListPresenter;
 
     @Inject
@@ -73,11 +65,15 @@ public class DocumentUserPermissionsEditPresenter
                                                 final DocumentUserPermissionsEditView view,
                                                 final Provider<DocumentCreatePermissionsListPresenter>
                                                         documentCreatePermissionsListPresenterProvider,
-                                                final RestFactory restFactory) {
+                                                final DocPermissionRestClient docPermissionClient,
+                                                final ExplorerClient explorerClient) {
         super(eventBus, view);
         this.documentCreatePermissionsListPresenterProvider = documentCreatePermissionsListPresenterProvider;
-        this.restFactory = restFactory;
+        this.docPermissionClient = docPermissionClient;
+        this.explorerClient = explorerClient;
         view.setUiHandlers(this);
+        docPermissionClient.setTaskListener(this);
+        explorerClient.setTaskListener(this);
     }
 
     public void show(final DocRef docRef,
@@ -86,14 +82,8 @@ public class DocumentUserPermissionsEditPresenter
         relatedDoc = docRef;
         relatedUser = permissions.getUserRef();
 
-        // Fetch permissions.
-        final DocumentUserPermissionsRequest request = new DocumentUserPermissionsRequest(relatedDoc, relatedUser);
-        restFactory
-                .create(DOC_PERMISSION_RESOURCE)
-                .method(res -> res.getDocUserPermissionsReport(request))
-                .onSuccess(response -> onLoad(response, onClose))
-                .taskListener(this)
-                .exec();
+        // Fetch detailed permissions report.
+        docPermissionClient.getDocUserPermissionsReport(relatedDoc, relatedUser, response -> onLoad(response, onClose));
     }
 
     private void onLoad(final DocumentUserPermissionsReport permissions,
@@ -101,8 +91,10 @@ public class DocumentUserPermissionsEditPresenter
         this.currentPermissions = permissions;
 
         final PopupSize popupSize;
-        if (ExplorerConstants.isFolder(relatedDoc)) {
+        if (ExplorerConstants.isFolderOrSystem(relatedDoc)) {
             documentCreatePermissionsListPresenter = documentCreatePermissionsListPresenterProvider.get();
+            documentCreatePermissionsListPresenter.setDocPermissionClient(docPermissionClient);
+            documentCreatePermissionsListPresenter.setExplorerClient(explorerClient);
             documentCreatePermissionsListPresenter.setup(relatedUser, relatedDoc, permissions);
             getView().setDocumentTypeView(documentCreatePermissionsListPresenter.getView());
             popupSize = PopupSize.builder()
@@ -143,14 +135,8 @@ public class DocumentUserPermissionsEditPresenter
     }
 
     private void refresh() {
-        // Fetch permissions.
-        final DocumentUserPermissionsRequest request = new DocumentUserPermissionsRequest(relatedDoc, relatedUser);
-        restFactory
-                .create(DOC_PERMISSION_RESOURCE)
-                .method(res -> res.getDocUserPermissionsReport(request))
-                .onSuccess(response -> onRefresh(response))
-                .taskListener(this)
-                .exec();
+        // Fetch detailed permissions report.
+        docPermissionClient.getDocUserPermissionsReport(relatedDoc, relatedUser, response -> onRefresh(response));
     }
 
     private void onRefresh(final DocumentUserPermissionsReport permissions) {
@@ -236,12 +222,7 @@ public class DocumentUserPermissionsEditPresenter
 
             final BulkDocumentPermissionChangeRequest request = new BulkDocumentPermissionChangeRequest(expression,
                     change);
-            restFactory
-                    .create(EXPLORER_RESOURCE)
-                    .method(res -> res.changeDocumentPermssions(request))
-                    .onSuccess(response -> refresh())
-                    .taskListener(this)
-                    .exec();
+            explorerClient.changeDocumentPermssions(request, response -> refresh());
         }
     }
 
