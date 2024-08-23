@@ -122,10 +122,10 @@ public class DocumentUserPermissionsEditPresenter
                 .popupType(PopupType.CLOSE_DIALOG)
                 .popupSize(popupSize)
                 .onShow(e -> getView().focus())
-                .caption("Change '" +
-                        relatedUser.toDisplayString() +
-                        "' Permissions For '" +
+                .caption("Change Permissions On '" +
                         relatedDoc.getDisplayValue() +
+                        "' For '" +
+                        relatedUser.toDisplayString() +
                         "'")
                 .onHideRequest(e -> {
                     onClose.run();

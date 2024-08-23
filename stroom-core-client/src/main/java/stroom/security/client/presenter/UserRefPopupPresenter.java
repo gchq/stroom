@@ -239,7 +239,7 @@ public class UserRefPopupPresenter
         initialSelection = getSelected();
         refresh();
 
-        final PopupSize popupSize = PopupSize.resizable(1_000, 400);
+        final PopupSize popupSize = PopupSize.resizable(800, 600);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)

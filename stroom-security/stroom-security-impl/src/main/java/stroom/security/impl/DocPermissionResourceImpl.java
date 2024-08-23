@@ -60,15 +60,15 @@ class DocPermissionResourceImpl implements DocPermissionResource {
         this.docRefInfoServiceProvider = docRefInfoServiceProvider;
     }
 
-    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @AutoLogged(OperationType.VIEW)
     @Override
     public ResultPage<DocumentUserPermissions> fetchDocumentUserPermissions(final FetchDocumentUserPermissionsRequest
                                                                                     request) {
         return documentPermissionServiceProvider.get().fetchDocumentUserPermissions(request);
     }
 
-    @Override
     @AutoLogged(OperationType.VIEW)
+    @Override
     public DocumentUserPermissionsReport getDocUserPermissionsReport(final DocumentUserPermissionsRequest request) {
         return documentPermissionServiceProvider.get().getDocUserPermissionsReport(request);
     }

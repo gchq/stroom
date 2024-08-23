@@ -33,6 +33,7 @@ import stroom.security.shared.BulkDocumentPermissionChangeRequest;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionChange;
 import stroom.task.client.TaskListener;
+import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -61,7 +62,7 @@ public class BatchDocumentPermissionsEditPresenter
     private final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
     private final RestFactory restFactory;
     private ExpressionOperator expression;
-    private ResultPage<FindResult> docs;
+    private PageResponse currentResultPageResponse;
 
     @Inject
     public BatchDocumentPermissionsEditPresenter(final EventBus eventBus,
@@ -86,10 +87,10 @@ public class BatchDocumentPermissionsEditPresenter
     }
 
     public void show(final ExpressionOperator expression,
-                     final ResultPage<FindResult> docs,
+                     final PageResponse currentResultPageResponse,
                      final Runnable onClose) {
         this.expression = expression;
-        this.docs = docs;
+        this.currentResultPageResponse = currentResultPageResponse;
 
         final PopupSize popupSize = PopupSize.builder()
                 .width(Size
@@ -120,8 +121,8 @@ public class BatchDocumentPermissionsEditPresenter
     @Override
     public void validate() {
         int docCount = 0;
-        if (docs != null) {
-            docCount = docs.getPageResponse().getLength();
+        if (currentResultPageResponse != null) {
+            docCount = currentResultPageResponse.getLength();
         }
 
         if (docCount > 0) {
@@ -202,8 +203,8 @@ public class BatchDocumentPermissionsEditPresenter
     @Override
     public void apply(final TaskListener taskListener) {
         int docCount = 0;
-        if (docs != null) {
-            docCount = docs.getPageResponse().getLength();
+        if (currentResultPageResponse != null) {
+            docCount = currentResultPageResponse.getLength();
         }
 
         if (docCount == 0) {
@@ -247,6 +248,10 @@ public class BatchDocumentPermissionsEditPresenter
                 })
                 .taskListener(taskListener)
                 .exec();
+    }
+
+    public UserRefSelectionBoxPresenter getUserRefSelectionBoxPresenter() {
+        return userRefSelectionBoxPresenter;
     }
 
     public interface BatchDocumentPermissionsEditView

@@ -46,7 +46,7 @@ public class DocumentListPresenter extends MyPresenterWidget<PagerView> {
     private boolean initialised;
     private boolean focusText;
     private Consumer<ResultPage<FindResult>> currentResulthandler;
-    private FindDocResultListHandler findResultListHandler = new FindDocResultListHandler() {
+    private FindDocResultListHandler<FindResult> findResultListHandler = new FindDocResultListHandler<FindResult>() {
         @Override
         public void openDocument(final FindResult match) {
 

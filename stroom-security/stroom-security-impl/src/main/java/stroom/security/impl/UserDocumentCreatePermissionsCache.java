@@ -61,11 +61,9 @@ public class UserDocumentCreatePermissionsCache implements PermissionChangeEvent
                                         final String documentType) {
         final UserDocKey userDocKey = new UserDocKey(userRef.getUuid(), folderRef.getUuid());
         final BitSet bitSet = createPermissionsCache.get(userDocKey);
-        if (bitSet != null) {
-            final int documentTypeId = docTypeIdDaoProvider.get().getOrCreateId(documentType);
-            if (bitSet.size() > documentTypeId) {
-                return bitSet.get(documentTypeId);
-            }
+        final int documentTypeId = docTypeIdDaoProvider.get().getOrCreateId(documentType);
+        if (bitSet.size() > documentTypeId) {
+            return bitSet.get(documentTypeId);
         }
         return false;
     }

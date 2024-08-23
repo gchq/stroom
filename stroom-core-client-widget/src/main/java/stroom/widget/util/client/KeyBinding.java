@@ -644,6 +644,7 @@ public class KeyBinding {
         GOTO_USER_ACCOUNTS,
         GOTO_USER_GROUPS,
         GOTO_USER_PREFERENCES,
+        GOTO_USER_PERMISSION_REPORT,
 
         // Create Doc key sequences
         CREATE_ELASTIC_INDEX, // C

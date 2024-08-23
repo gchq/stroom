@@ -29,6 +29,7 @@ import stroom.explorer.api.ExplorerFavService;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.AdvancedDocumentFindRequest;
+import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentFindRequest;
 import stroom.explorer.shared.DocumentType;
@@ -45,6 +46,7 @@ import stroom.explorer.shared.FetchHighlightsRequest;
 import stroom.explorer.shared.FindInContentRequest;
 import stroom.explorer.shared.FindInContentResult;
 import stroom.explorer.shared.FindResult;
+import stroom.explorer.shared.FindResultWithPermissions;
 import stroom.explorer.shared.NodeFlag;
 import stroom.explorer.shared.NodeFlag.NodeFlagGroups;
 import stroom.explorer.shared.PermissionInheritance;
@@ -61,6 +63,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.BulkDocumentPermissionChangeRequest;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
+import stroom.security.shared.DocumentUserPermissions;
 import stroom.security.shared.SingleDocumentPermissionChangeRequest;
 import stroom.suggestions.api.SuggestionsQueryHandler;
 import stroom.svg.shared.SvgImage;
@@ -99,6 +102,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -1521,7 +1525,15 @@ class ExplorerServiceImpl
                     metrics,
                     false);
             final List<FindResult> results = new ArrayList<>();
-            addResults("", result.getRootNodes(), results);
+
+            final Predicate<ContextualNode> contextualNodePredicate = contextualNode -> {
+                final ExplorerNode node = contextualNode.explorerNode;
+                return node.hasNodeFlag(NodeFlag.FILTER_MATCH) &&
+                        node.getDocRef() != null &&
+                        !ExplorerConstants.isRootNode(node);
+            };
+
+            addResults("", result.getRootNodes(), Collections.emptyList(), results, contextualNodePredicate);
 
             // If this is recent items mode then filter by recent items.
             if (recentItemsMode) {
@@ -1551,29 +1563,29 @@ class ExplorerServiceImpl
         }
     }
 
-    private void addResults(final String parent,
-                            final List<ExplorerNode> nodes,
-                            final List<FindResult> results) {
-        if (nodes != null) {
-            for (final ExplorerNode node : nodes) {
-                if (node.hasNodeFlag(NodeFlag.FILTER_MATCH) &&
-                        node.getDocRef() != null &&
-                        !ExplorerConstants.isRootNode(node)) {
-
-                    results.add(new FindResult(
-                            node.getDocRef(),
-                            parent,
-                            node.getIcon()));
-                }
-                addResults(
-                        parent.isEmpty()
-                                ? node.getName()
-                                : parent + " / " + node.getName(),
-                        node.getChildren(),
-                        results);
-            }
-        }
-    }
+//    private void addResults(final String parent,
+//                            final List<ExplorerNode> nodes,
+//                            final List<FindResult> results) {
+//        if (nodes != null) {
+//            for (final ExplorerNode node : nodes) {
+//                if (node.hasNodeFlag(NodeFlag.FILTER_MATCH) &&
+//                        node.getDocRef() != null &&
+//                        !ExplorerConstants.isRootNode(node)) {
+//
+//                    results.add(new FindResult(
+//                            node.getDocRef(),
+//                            parent,
+//                            node.getIcon()));
+//                }
+//                addResults(
+//                        parent.isEmpty()
+//                                ? node.getName()
+//                                : parent + " / " + node.getName(),
+//                        node.getChildren(),
+//                        results);
+//            }
+//        }
+//    }
 
     @Override
     public ResultPage<FindResult> advancedFind(final AdvancedDocumentFindRequest request) {
@@ -1597,16 +1609,15 @@ class ExplorerServiceImpl
                     metrics,
                     false);
 
-            final ExpressionMatcher expressionMatcher =
-                    new ExpressionMatcher(DocumentPermissionFields.getAllFieldMap());
+            final Predicate<ContextualNode> contextualNodePredicate =
+                    createExpressionPredicate(request.getExpression());
 
             final List<FindResult> results = new ArrayList<>();
-            addResults2("",
+            addResults("",
                     result.getRootNodes(),
                     Collections.emptyList(),
                     results,
-                    expressionMatcher,
-                    request.getExpression());
+                    contextualNodePredicate);
 
             // If this is recent items mode then filter by recent items.
             results.sort(Comparator
@@ -1623,106 +1634,136 @@ class ExplorerServiceImpl
         }
     }
 
-    private void addResults2(final String parent,
-                             final List<ExplorerNode> nodes,
-                             final List<DocRef> ancestors,
-                             final List<FindResult> results,
-                             final ExpressionMatcher expressionMatcher,
-                             final ExpressionOperator expression) {
+    @Override
+    public ResultPage<FindResultWithPermissions> advancedFindWithPermissions(
+            final AdvancedDocumentFindWithPermissionsRequest request) {
+        // First find the results then decorate them with user permissions.
+        final ResultPage<FindResult> resultPage = advancedFind(request);
+
+        // Now decorate with permissions.
+        final List<FindResultWithPermissions> list = new ArrayList<>();
+        for (final FindResult findResult : resultPage.getValues()) {
+            final DocumentUserPermissions permissions = documentPermissionService
+                    .getPermissions(findResult.getDocRef(), request.getUserRef());
+            list.add(new FindResultWithPermissions(findResult, permissions));
+        }
+
+        // Return the decorated result.
+        return new ResultPage<>(list, resultPage.getPageResponse());
+    }
+
+    private void addResults(final String parent,
+                            final List<ExplorerNode> nodes,
+                            final List<DocRef> ancestors,
+                            final List<FindResult> results,
+                            final Predicate<ContextualNode> contextualNodePredicate) {
         if (nodes != null) {
             for (final ExplorerNode node : nodes) {
-                if (node.hasNodeFlag(NodeFlag.FILTER_MATCH) && node.getDocRef() != null) {
-                    final Set<String> fields = ExpressionUtil.fields(expression).stream().collect(Collectors.toSet());
-                    final Map<String, Object> attributes = new HashMap<>();
-                    attributes.put(DocumentPermissionFields.DOCUMENT.getFldName(), node.getDocRef());
-                    attributes.put(DocumentPermissionFields.CHILDREN.getFldName(), new TermMatcher() {
-                        @Override
-                        public boolean match(final QueryField queryField,
-                                             final Condition condition,
-                                             final String termValue,
-                                             final DocRef docRef) {
-                            if (Condition.OF_DOC_REF.equals(condition)) {
-                                if (docRef == null) {
-                                    return false;
-                                }
-                                if (ancestors != null && ancestors.size() > 0) {
-                                    final DocRef parent = ancestors.getLast();
-                                    return docRef.equals(parent);
-                                }
-                            }
-                            return false;
-                        }
-                    });
-                    attributes.put(DocumentPermissionFields.DESCENDANTS.getFldName(), new TermMatcher() {
-                        @Override
-                        public boolean match(final QueryField queryField,
-                                             final Condition condition,
-                                             final String termValue,
-                                             final DocRef docRef) {
-                            if (Condition.OF_DOC_REF.equals(condition)) {
-                                if (docRef == null) {
-                                    return false;
-                                }
-                                if (ancestors != null && ancestors.size() > 0) {
-                                    return ancestors.contains(docRef);
-                                }
-                            }
-                            return false;
-                        }
-                    });
-                    attributes.put(DocumentPermissionFields.USER.getFldName(), new TermMatcher() {
-                        @Override
-                        public boolean match(final QueryField queryField,
-                                             final Condition condition,
-                                             final String termValue,
-                                             final DocRef docRef) {
-                            if (docRef == null) {
-                                return false;
-                            }
-
-                            final DocumentPermission permission = documentPermissionService
-                                    .getPermission(
-                                            node.getDocRef(),
-                                            UserRef.builder().uuid(docRef.getUuid()).build());
-
-                            return switch (condition) {
-                                case USER_HAS_PERM -> permission != null;
-                                case USER_HAS_OWNER -> DocumentPermission.OWNER.equals(permission);
-                                case USER_HAS_DELETE -> DocumentPermission.DELETE.equals(permission);
-                                case USER_HAS_EDIT -> DocumentPermission.EDIT.equals(permission);
-                                case USER_HAS_VIEW -> DocumentPermission.VIEW.equals(permission);
-                                case USER_HAS_USE -> DocumentPermission.USE.equals(permission);
-                                default -> false;
-                            };
-                        }
-                    });
-                    attributes.put(DocumentPermissionFields.DOCUMENT_TYPE.getFldName(), node.getDocRef().getType());
-                    attributes.put(DocumentPermissionFields.DOCUMENT_UUID.getFldName(), node.getDocRef().getUuid());
-                    attributes.put(DocumentPermissionFields.DOCUMENT_NAME.getFldName(), node.getDocRef().getName());
-                    attributes.put(DocumentPermissionFields.DOCUMENT_TAG.getFldName(), node.getTags());
-
-                    if (expressionMatcher.match(attributes, expression)) {
-                        results.add(new FindResult(
-                                node.getDocRef(),
-                                parent,
-                                node.getIcon()));
-                    }
+                final ContextualNode contextualNode = new ContextualNode(ancestors, node);
+                if (contextualNodePredicate.test(contextualNode)) {
+                    results.add(new FindResult(
+                            node.getDocRef(),
+                            parent,
+                            node.getIcon()));
                 }
                 final List<DocRef> newAncestors = new ArrayList<>(ancestors);
                 if (node.getDocRef() != null) {
                     newAncestors.add(node.getDocRef());
                 }
-                addResults2(
+                addResults(
                         parent.isEmpty()
                                 ? node.getName()
                                 : parent + " / " + node.getName(),
                         node.getChildren(),
                         newAncestors,
                         results,
-                        expressionMatcher,
-                        expression);
+                        contextualNodePredicate);
             }
         }
+    }
+
+    private Predicate<ContextualNode> createExpressionPredicate(final ExpressionOperator expression) {
+        final Set<String> fields = ExpressionUtil.fields(expression).stream().collect(Collectors.toSet());
+        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(DocumentPermissionFields.getAllFieldMap());
+
+        return contextualNode -> {
+            final ExplorerNode node = contextualNode.explorerNode;
+            final List<DocRef> ancestors = contextualNode.ancestors;
+
+            if (node.hasNodeFlag(NodeFlag.FILTER_MATCH) && node.getDocRef() != null) {
+                final Map<String, Object> attributes = new HashMap<>();
+                attributes.put(DocumentPermissionFields.DOCUMENT.getFldName(), node.getDocRef());
+                attributes.put(DocumentPermissionFields.CHILDREN.getFldName(), new TermMatcher() {
+                    @Override
+                    public boolean match(final QueryField queryField,
+                                         final Condition condition,
+                                         final String termValue,
+                                         final DocRef docRef) {
+                        if (Condition.OF_DOC_REF.equals(condition)) {
+                            if (docRef == null) {
+                                return false;
+                            }
+                            if (ancestors != null && ancestors.size() > 0) {
+                                final DocRef parent = ancestors.getLast();
+                                return docRef.equals(parent);
+                            }
+                        }
+                        return false;
+                    }
+                });
+                attributes.put(DocumentPermissionFields.DESCENDANTS.getFldName(), new TermMatcher() {
+                    @Override
+                    public boolean match(final QueryField queryField,
+                                         final Condition condition,
+                                         final String termValue,
+                                         final DocRef docRef) {
+                        if (Condition.OF_DOC_REF.equals(condition)) {
+                            if (docRef == null) {
+                                return false;
+                            }
+                            if (ancestors != null && ancestors.size() > 0) {
+                                return ancestors.contains(docRef);
+                            }
+                        }
+                        return false;
+                    }
+                });
+                attributes.put(DocumentPermissionFields.USER.getFldName(), new TermMatcher() {
+                    @Override
+                    public boolean match(final QueryField queryField,
+                                         final Condition condition,
+                                         final String termValue,
+                                         final DocRef docRef) {
+                        if (docRef == null) {
+                            return false;
+                        }
+
+                        final DocumentPermission permission = documentPermissionService
+                                .getPermission(
+                                        node.getDocRef(),
+                                        UserRef.builder().uuid(docRef.getUuid()).build());
+
+                        return switch (condition) {
+                            case USER_HAS_PERM -> permission != null;
+                            case USER_HAS_OWNER -> DocumentPermission.OWNER.equals(permission);
+                            case USER_HAS_DELETE -> DocumentPermission.DELETE.equals(permission);
+                            case USER_HAS_EDIT -> DocumentPermission.EDIT.equals(permission);
+                            case USER_HAS_VIEW -> DocumentPermission.VIEW.equals(permission);
+                            case USER_HAS_USE -> DocumentPermission.USE.equals(permission);
+                            default -> false;
+                        };
+                    }
+                });
+                attributes.put(DocumentPermissionFields.DOCUMENT_TYPE.getFldName(), node.getDocRef().getType());
+                attributes.put(DocumentPermissionFields.DOCUMENT_UUID.getFldName(), node.getDocRef().getUuid());
+                attributes.put(DocumentPermissionFields.DOCUMENT_NAME.getFldName(), node.getDocRef().getName());
+                attributes.put(DocumentPermissionFields.DOCUMENT_TAG.getFldName(), node.getTags());
+
+                return expressionMatcher.match(attributes, expression);
+            }
+
+            return false;
+        };
     }
 
     @Override
@@ -1832,5 +1873,15 @@ class ExplorerServiceImpl
     private enum TagOperation {
         ADD,
         REMOVE
+    }
+
+    /**
+     * Remember the path to the node, i.e. the context.
+     *
+     * @param ancestors    The ancestral path to the node.
+     * @param explorerNode The node.
+     */
+    private record ContextualNode(List<DocRef> ancestors, ExplorerNode explorerNode) {
+
     }
 }

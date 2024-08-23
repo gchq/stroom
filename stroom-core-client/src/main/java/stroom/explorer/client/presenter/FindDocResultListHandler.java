@@ -2,9 +2,9 @@ package stroom.explorer.client.presenter;
 
 import stroom.explorer.shared.FindResult;
 
-public interface FindDocResultListHandler {
+public interface FindDocResultListHandler<T> {
 
-    void openDocument(FindResult match);
+    void openDocument(T match);
 
     void focus();
 }

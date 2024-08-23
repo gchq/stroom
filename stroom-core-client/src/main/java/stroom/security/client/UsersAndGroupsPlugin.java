@@ -15,6 +15,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.function.Consumer;
 import javax.inject.Singleton;
 
 @Singleton
@@ -44,10 +45,11 @@ public class UsersAndGroupsPlugin extends MonitoringPlugin<UserAndGroupsPresente
     }
 
     @Override
-    public UserAndGroupsPresenter open() {
-        final UserAndGroupsPresenter presenter = super.open();
-        presenter.refresh();
-        return presenter;
+    public void open(final Consumer<UserAndGroupsPresenter> consumer) {
+        super.open(presenter -> {
+            presenter.refresh();
+            consumer.accept(presenter);
+        });
     }
 
     @Override

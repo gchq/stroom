@@ -48,11 +48,7 @@ public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handl
     boolean hasDocumentPermission(final UserRef userRef,
                                   final DocRef docRef,
                                   final DocumentPermission permission) {
-        final UserDocumentPermissions userDocumentPermissions = get(userRef);
-        if (userDocumentPermissions != null) {
-            return userDocumentPermissions.hasDocumentPermission(docRef, permission);
-        }
-        return false;
+        return get(userRef).hasDocumentPermission(docRef, permission);
     }
 
     private UserDocumentPermissions get(final UserRef userRef) {

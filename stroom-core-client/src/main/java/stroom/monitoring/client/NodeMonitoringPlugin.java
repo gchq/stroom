@@ -49,12 +49,13 @@ public class NodeMonitoringPlugin extends MonitoringPlugin<NodePresenter> {
         registerHandler(getEventBus().addHandler(
                 OpenNodeEvent.getType(), openNodeEvent -> {
                     final JobNode jobNode = openNodeEvent.getJobNode();
-                    final NodePresenter nodePresenter = open();
-                    if (jobNode != null) {
-                        nodePresenter.setSelected(jobNode);
-                    } else {
-                        nodePresenter.setSelected(openNodeEvent.getNodeName());
-                    }
+                    open(nodePresenter -> {
+                        if (jobNode != null) {
+                            nodePresenter.setSelected(jobNode);
+                        } else {
+                            nodePresenter.setSelected(openNodeEvent.getNodeName());
+                        }
+                    });
                 }));
     }
 

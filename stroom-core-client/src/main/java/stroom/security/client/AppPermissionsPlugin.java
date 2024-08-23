@@ -6,7 +6,6 @@ import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.AppPermissionsPresenter;
-import stroom.security.client.presenter.UserAndGroupsPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem.Builder;
@@ -16,6 +15,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.function.Consumer;
 import javax.inject.Singleton;
 
 @Singleton
@@ -45,10 +45,11 @@ public class AppPermissionsPlugin extends MonitoringPlugin<AppPermissionsPresent
     }
 
     @Override
-    public AppPermissionsPresenter open() {
-        final AppPermissionsPresenter presenter = super.open();
-        presenter.refresh();
-        return presenter;
+    public void open(final Consumer<AppPermissionsPresenter> consumer) {
+        super.open(presenter -> {
+            presenter.refresh();
+            consumer.accept(presenter);
+        });
     }
 
     @Override

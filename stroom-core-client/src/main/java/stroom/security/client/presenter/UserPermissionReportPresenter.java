@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,8 @@ package stroom.security.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.client.presenter.ExpressionPresenter;
-import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.DocumentListPresenter;
-import stroom.explorer.client.presenter.FindDocResultListHandler;
-import stroom.explorer.shared.FindResult;
+import stroom.explorer.client.presenter.DocumentPermissionsListPresenter;
+import stroom.explorer.shared.FindResultWithPermissions;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
@@ -33,6 +31,7 @@ import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
@@ -40,23 +39,21 @@ import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.popup.client.presenter.Size;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-public class BatchDocumentPermissionsPresenter
+public class UserPermissionReportPresenter
         extends ContentTabPresenter<QuickFilterPageView>
         implements QuickFilterUiHandlers {
 
     private final Provider<ExpressionPresenter> docFilterPresenterProvider;
-    private final DocumentListPresenter documentListPresenter;
-    private final Provider<DocumentUserPermissionsPresenter> documentPermissionsPresenterProvider;
+    private final DocumentPermissionsListPresenter documentListPresenter;
+    private final Provider<DocumentUserPermissionsEditPresenter> documentUserPermissionsEditPresenterProvider;
     private final Provider<BatchDocumentPermissionsEditPresenter> batchDocumentPermissionsEditPresenterProvider;
     private final ButtonView docFilter;
     private final ButtonView docEdit;
@@ -64,20 +61,21 @@ public class BatchDocumentPermissionsPresenter
     private ExpressionOperator filterExpression;
     private ExpressionOperator quickFilterExpression;
     private ExpressionOperator combinedExpression;
-    private ResultPage<FindResult> docs;
+    private ResultPage<FindResultWithPermissions> docs;
+    private UserRef userRef;
 
     @Inject
-    public BatchDocumentPermissionsPresenter(final EventBus eventBus,
-                                             final QuickFilterPageView view,
-                                             final Provider<ExpressionPresenter> docFilterPresenterProvider,
-                                             final DocumentListPresenter documentListPresenter,
-                                             final Provider<DocumentUserPermissionsPresenter>
-                                                     documentPermissionsPresenterProvider,
-                                             final Provider<BatchDocumentPermissionsEditPresenter>
-                                                     batchDocumentPermissionsEditPresenterProvider) {
+    public UserPermissionReportPresenter(final EventBus eventBus,
+                                         final QuickFilterPageView view,
+                                         final Provider<ExpressionPresenter> docFilterPresenterProvider,
+                                         final DocumentPermissionsListPresenter documentListPresenter,
+                                         final Provider<DocumentUserPermissionsEditPresenter>
+                                                 documentUserPermissionsEditPresenterProvider,
+                                         final Provider<BatchDocumentPermissionsEditPresenter>
+                                                 batchDocumentPermissionsEditPresenterProvider) {
         super(eventBus, view);
         this.documentListPresenter = documentListPresenter;
-        this.documentPermissionsPresenterProvider = documentPermissionsPresenterProvider;
+        this.documentUserPermissionsEditPresenterProvider = documentUserPermissionsEditPresenterProvider;
         this.batchDocumentPermissionsEditPresenterProvider = batchDocumentPermissionsEditPresenterProvider;
         this.docFilterPresenterProvider = docFilterPresenterProvider;
 
@@ -85,7 +83,7 @@ public class BatchDocumentPermissionsPresenter
         getView().setUiHandlers(this);
 
         filterExpression = ExpressionOperator.builder().op(Op.AND).build();
-        quickFilterExpression = ExpressionOperator.builder().op(Op.AND).build();
+        quickFilterExpression = getShowAllExpression();
 
         // Filter
         docFilter = documentListPresenter.getView().addButton(new Preset(
@@ -101,18 +99,6 @@ public class BatchDocumentPermissionsPresenter
                 "Batch Edit Permissions For Filtered Documents",
                 false));
 
-        documentListPresenter.setFindResultListHandler(new FindDocResultListHandler<FindResult>() {
-            @Override
-            public void openDocument(final FindResult match) {
-                docEdit.setEnabled(documentListPresenter.getSelected() != null);
-                onEdit();
-            }
-
-            @Override
-            public void focus() {
-
-            }
-        });
 
         documentListPresenter.setCurrentResulthandler(resultPage -> {
             docs = resultPage;
@@ -129,12 +115,6 @@ public class BatchDocumentPermissionsPresenter
                 onFilter();
             }
         }));
-//        registerHandler(documentListPresenter.getSelectionModel().addSelectionHandler(e -> {
-//            docEdit.setEnabled(documentListPresenter.getSelected() != null);
-//            if (e.getSelectionType().isDoubleSelect()) {
-//                onEdit();
-//            }
-//        }));
         registerHandler(docEdit.addClickHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
                 onEdit();
@@ -145,6 +125,16 @@ public class BatchDocumentPermissionsPresenter
                 onBatchEdit();
             }
         }));
+        registerHandler(documentListPresenter.getSelectionModel().addSelectionHandler(e -> {
+            final FindResultWithPermissions selected = documentListPresenter.getSelectionModel().getSelected();
+            docEdit.setEnabled(selected != null);
+            if (selected != null && e.getSelectionType().isDoubleSelect()) {
+                onEdit();
+            }
+        }));
+//        registerHandler(documentListPresenter.addFocusHandler(e -> {
+//            getView().focus();
+//        }));
     }
 
     private void onFilter() {
@@ -173,16 +163,19 @@ public class BatchDocumentPermissionsPresenter
     }
 
     private void onEdit() {
-        final FindResult selected = documentListPresenter.getSelected();
+        final FindResultWithPermissions selected = documentListPresenter.getSelectionModel().getSelected();
         if (selected != null) {
-            final DocumentUserPermissionsPresenter presenter = documentPermissionsPresenterProvider.get();
-            presenter.show(selected.getDocRef());
+            final DocumentUserPermissionsEditPresenter presenter = documentUserPermissionsEditPresenterProvider.get();
+            presenter.show(selected.getFindResult().getDocRef(), selected.getPermissions(), () -> {
+                documentListPresenter.refresh();
+            });
         }
     }
 
     private void onBatchEdit() {
         final BatchDocumentPermissionsEditPresenter presenter =
                 batchDocumentPermissionsEditPresenterProvider.get();
+        presenter.getUserRefSelectionBoxPresenter().setSelected(userRef);
         presenter.show(combinedExpression, GwtNullSafe.get(docs, ResultPage::getPageResponse), () ->
                 documentListPresenter.refresh());
     }
@@ -201,81 +194,100 @@ public class BatchDocumentPermissionsPresenter
         documentListPresenter.refresh();
     }
 
-    @Override
-    public void onFilterChange(final String text) {
-        quickFilterExpression = QuickFilterExpressionParser.parse(text,
-                Set.of(DocumentPermissionFields.DOCUMENT_NAME,
-                        DocumentPermissionFields.DOCUMENT_UUID),
-                DocumentPermissionFields.getAllFieldMap());
-        refresh();
-    }
-
-    public void show(final DocRef docRef, final Runnable onClose) {
-        if (docRef != null) {
-            final ExpressionTerm term = new ExpressionTerm(
-                    true,
-                    DocumentPermissionFields.DOCUMENT.getFldName(),
-                    Condition.IS_DOC_REF,
-                    null,
-                    docRef);
-            show(ExpressionOperator.builder().op(Op.AND).addTerm(term).build(), onClose);
-        }
-    }
-
-    public void show(final ExpressionOperator expression, final Runnable onClose) {
-        setExpression(expression);
-
-        final PopupSize popupSize = PopupSize.builder()
-                .width(Size
-                        .builder()
-                        .initial(800)
-                        .min(400)
-                        .resizable(true)
-                        .build())
-                .height(Size
-                        .builder()
-                        .initial(800)
-                        .min(400)
-                        .resizable(true)
+    private ExpressionOperator getShowAllExpression() {
+        return ExpressionOperator
+                .builder()
+                .addTerm(ExpressionTerm.builder()
+                        .field(DocumentPermissionFields.DOCUMENT_NAME)
+                        .condition(Condition.EQUALS)
+                        .value("*")
                         .build())
                 .build();
-        ShowPopupEvent.builder(this)
-                .popupType(PopupType.CLOSE_DIALOG)
-                .popupSize(popupSize)
-                .caption("Change Permissions")
-                .onHideRequest(e -> {
-                    onClose.run();
-                    e.hide();
-                })
-                .fire();
     }
 
-    public void setExpression(final ExpressionOperator expression) {
-        this.filterExpression = expression;
+    @Override
+    public void onFilterChange(final String text) {
+        if (GwtNullSafe.isNonBlankString(text)) {
+            quickFilterExpression = QuickFilterExpressionParser.parse(text,
+                    Set.of(DocumentPermissionFields.DOCUMENT_NAME),
+                    DocumentPermissionFields.getAllFieldMap());
+        } else {
+            quickFilterExpression = getShowAllExpression();
+        }
+        refresh();
+    }
+//
+//    public void show(final DocRef docRef, final Runnable onClose) {
+//        if (docRef != null) {
+//            final ExpressionTerm term = new ExpressionTerm(
+//                    true,
+//                    DocumentPermissionFields.DOCUMENT.getFldName(),
+//                    Condition.IS_DOC_REF,
+//                    null,
+//                    docRef);
+//            show(ExpressionOperator.builder().op(Op.AND).addTerm(term).build(), onClose);
+//        }
+//    }
+//
+//    public void show(final ExpressionOperator expression, final Runnable onClose) {
+//        setExpression(expression);
+//
+//        final PopupSize popupSize = PopupSize.builder()
+//                .width(Size
+//                        .builder()
+//                        .initial(800)
+//                        .min(400)
+//                        .resizable(true)
+//                        .build())
+//                .height(Size
+//                        .builder()
+//                        .initial(800)
+//                        .min(400)
+//                        .resizable(true)
+//                        .build())
+//                .build();
+//        ShowPopupEvent.builder(this)
+//                .popupType(PopupType.CLOSE_DIALOG)
+//                .popupSize(popupSize)
+//                .caption("Change Permissions")
+//                .onHideRequest(e -> {
+//                    onClose.run();
+//                    e.hide();
+//                })
+//                .fire();
+//    }
+//
+//    public void setExpression(final ExpressionOperator expression) {
+//        this.filterExpression = expression;
+//
+//        // We only want to see documents tha the current user is effectively the owner of as they can't change
+//        // permissions on anything else.
+//        documentListPresenter.setRequiredPermissions(Set.of(DocumentPermission.OWNER));
+//        refresh();
+//    }
+
+    public void setUserRef(final UserRef userRef) {
+        this.userRef = userRef;
+        documentListPresenter.setUserRef(userRef);
 
         // We only want to see documents tha the current user is effectively the owner of as they can't change
         // permissions on anything else.
-        documentListPresenter.setRequiredPermissions(Set.of(DocumentPermission.OWNER));
+        documentListPresenter.setRequiredPermissions(Set.of(DocumentPermission.VIEW));
         refresh();
     }
 
     @Override
     public SvgImage getIcon() {
-        return SvgImage.LOCKED;
+        return SvgImage.FILE_RAW;
     }
 
     @Override
     public String getLabel() {
-        return "Document Permissions";
+        return "Document Permission Report For '" + userRef.toDisplayString() + "'";
     }
 
     @Override
     public String getType() {
-        return "DocumentPermissions";
-    }
-
-    public interface BatchDocumentPermissionsView extends View {
-
-        void setDocList(View view);
+        return "DocumentPermissionReport";
     }
 }

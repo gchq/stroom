@@ -70,7 +70,6 @@ public class DocumentCreatePermissionsListPresenter
     private final DataGridSelectionEventManager<DocumentType> selectionEventManager;
 
     private final DocumentTypeCache documentTypeCache;
-    private DocumentTypes documentTypes;
 
     private DocumentUserPermissionsReport currentPermissions;
     private UserRef relatedUser;
@@ -87,8 +86,6 @@ public class DocumentCreatePermissionsListPresenter
         this.documentTypeCache = documentTypeCache;
         this.securityContext = securityContext;
 
-        refreshDocTypeIcons();
-
         final boolean updatable = true;
         final Appearance appearance = updatable
                 ? new TickBoxCell.DefaultAppearance()
@@ -99,7 +96,12 @@ public class DocumentCreatePermissionsListPresenter
         selectionEventManager = new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);
         view.setTable(dataGrid);
-        addColumns();
+
+        // Hold map of doc type icons keyed on type to save constructing for each row
+        documentTypeCache.fetch(documentTypes -> {
+            addColumns(documentTypes);
+            refresh(documentTypes);
+        }, this);
     }
 
     @Override
@@ -196,7 +198,7 @@ public class DocumentCreatePermissionsListPresenter
         return TickBoxState.UNTICK;
     }
 
-    private void addColumns() {
+    private void addColumns(final DocumentTypes documentTypes) {
         final boolean updateable = isCurrentUserUpdate();
         final TickBoxCell.Appearance appearance = updateable
                 ? new TickBoxCell.DefaultAppearance()
@@ -281,15 +283,13 @@ public class DocumentCreatePermissionsListPresenter
                 );
     }
 
-    private void refreshDocTypeIcons() {
-        // Hold map of doc type icons keyed on type to save constructing for each row
+    private void refresh() {
         documentTypeCache.fetch(documentTypes -> {
-            this.documentTypes = documentTypes;
-            refresh();
+            refresh(documentTypes);
         }, this);
     }
 
-    private void refresh() {
+    private void refresh(final DocumentTypes documentTypes) {
         if (documentTypes != null) {
             dataGrid.setRowData(0, documentTypes.getTypes());
             dataGrid.setRowCount(documentTypes.getTypes().size());
@@ -298,7 +298,6 @@ public class DocumentCreatePermissionsListPresenter
         }
         updateDetails();
     }
-
 
     public void setup(final UserRef relatedUser,
                       final DocRef relatedDoc,
@@ -316,10 +315,13 @@ public class DocumentCreatePermissionsListPresenter
     }
 
     private void onChangeAll(final boolean selected) {
-        final CountdownAndRun countdownAndRun = new CountdownAndRun(documentTypes.getTypes().size(), this::refreshAll);
-        for (final DocumentType documentType : documentTypes.getTypes()) {
-            onChange(documentType, selected, ok -> countdownAndRun.countdown());
-        }
+        documentTypeCache.fetch(documentTypes -> {
+            final CountdownAndRun countdownAndRun = new CountdownAndRun(documentTypes.getTypes().size(),
+                    this::refreshAll);
+            for (final DocumentType documentType : documentTypes.getTypes()) {
+                onChange(documentType, selected, ok -> countdownAndRun.countdown());
+            }
+        }, this);
     }
 
     private void onChange(final DocumentType documentType,

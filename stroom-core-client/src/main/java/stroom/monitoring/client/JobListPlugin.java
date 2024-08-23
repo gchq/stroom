@@ -49,8 +49,9 @@ public class JobListPlugin extends MonitoringPlugin<JobPresenter> {
         registerHandler(getEventBus().addHandler(
                 OpenJobNodeEvent.getType(), openJobNodeEvent -> {
                     final JobNode jobNode = openJobNodeEvent.getJobNode();
-                    final JobPresenter jobPresenter = open();
-                    jobPresenter.setSelected(jobNode);
+                    open(jobPresenter -> {
+                        jobPresenter.setSelected(jobNode);
+                    });
                 }));
     }
 

@@ -29,6 +29,7 @@ import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.AddRemoveTagsRequest;
 import stroom.explorer.shared.AdvancedDocumentFindRequest;
+import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentFindRequest;
 import stroom.explorer.shared.DocumentType;
@@ -49,6 +50,7 @@ import stroom.explorer.shared.FetchHighlightsRequest;
 import stroom.explorer.shared.FindInContentRequest;
 import stroom.explorer.shared.FindInContentResult;
 import stroom.explorer.shared.FindResult;
+import stroom.explorer.shared.FindResultWithPermissions;
 import stroom.security.shared.BulkDocumentPermissionChangeRequest;
 import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
@@ -264,6 +266,11 @@ class ExplorerResourceImpl implements ExplorerResource {
     @Override
     public ResultPage<FindResult> advancedFind(final AdvancedDocumentFindRequest request) {
         return explorerServiceProvider.get().advancedFind(request);
+    }
+
+    @Override
+    public ResultPage<FindResultWithPermissions> advancedFindWithPermissions(final AdvancedDocumentFindWithPermissionsRequest request) {
+        return explorerServiceProvider.get().advancedFindWithPermissions(request);
     }
 
     @Override

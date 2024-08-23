@@ -17,7 +17,7 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 
 public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
         extends MyPresenter<FindView, T_PROXY>
-        implements FindUiHandlers, FindDocResultListHandler {
+        implements FindUiHandlers, FindDocResultListHandler<FindResult> {
 
     private final NameFilterTimer timer = new NameFilterTimer();
     private final FindDocResultListPresenter findResultListPresenter;

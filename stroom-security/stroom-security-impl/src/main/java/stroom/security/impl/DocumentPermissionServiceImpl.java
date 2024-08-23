@@ -325,6 +325,28 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
 //        return true;
 //    }
 
+
+    @Override
+    public DocumentUserPermissions getPermissions(final DocRef docRef, final UserRef userRef) {
+        if (!securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION) &&
+                !userRef.equals(securityContext.getUserRef())) {
+            throw new PermissionException(securityContext.getUserRef(), "You do not have permission to view user " +
+                    "permissions");
+        }
+
+        final DocumentPermission permission = documentPermissionDao
+                .getDocumentUserPermission(docRef.getUuid(), userRef.getUuid());
+        Set<String> documentCreatePermissions = null;
+        if (ExplorerConstants.isFolderOrSystem(docRef)) {
+            documentCreatePermissions = documentPermissionDao
+                    .getDocumentUserCreatePermissions(docRef.getUuid(), userRef.getUuid());
+        }
+        final DocumentUserPermissions documentUserPermissions =
+                new DocumentUserPermissions(userRef, permission, documentCreatePermissions);
+        addDeepPermissions(docRef, documentUserPermissions);
+        return documentUserPermissions;
+    }
+
     @Override
     public ResultPage<DocumentUserPermissions> fetchDocumentUserPermissions(
             final FetchDocumentUserPermissionsRequest request) {
@@ -334,17 +356,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
 
         // Add inherited permissions.
         for (final DocumentUserPermissions permissions : resultPage.getValues()) {
-            final AtomicReference<DocumentPermission> inheritedPermission = new AtomicReference<>();
-            final Set<String> inheritedDocumentCreatePermissions = new HashSet<>();
-            final Set<UserRef> cyclicPrevention = new HashSet<>();
-            addDeepPermissions(
-                    request.getDocRef(),
-                    permissions.getUserRef(),
-                    inheritedPermission,
-                    inheritedDocumentCreatePermissions,
-                    cyclicPrevention);
-            permissions.setInheritedPermission(inheritedPermission.get());
-            permissions.setInheritedDocumentCreatePermissions(inheritedDocumentCreatePermissions);
+            addDeepPermissions(request.getDocRef(), permissions);
         }
 
         return resultPage;
@@ -456,6 +468,21 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
 //            }
 //        }
 //    }
+
+    private void addDeepPermissions(final DocRef docRef,
+                                    final DocumentUserPermissions documentUserPermissions) {
+        final AtomicReference<DocumentPermission> inheritedPermission = new AtomicReference<>();
+        final Set<String> inheritedDocumentCreatePermissions = new HashSet<>();
+        final Set<UserRef> cyclicPrevention = new HashSet<>();
+        addDeepPermissions(
+                docRef,
+                documentUserPermissions.getUserRef(),
+                inheritedPermission,
+                inheritedDocumentCreatePermissions,
+                cyclicPrevention);
+        documentUserPermissions.setInheritedPermission(inheritedPermission.get());
+        documentUserPermissions.setInheritedDocumentCreatePermissions(inheritedDocumentCreatePermissions);
+    }
 
     private void addDeepPermissions(final DocRef docRef,
                                     final UserRef userRef,

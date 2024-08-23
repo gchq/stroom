@@ -24,6 +24,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.function.Consumer;
 import javax.inject.Singleton;
 
 @Singleton
@@ -68,20 +69,21 @@ public class DocumentPermissionsPlugin extends MonitoringPlugin<BatchDocumentPer
     }
 
     @Override
-    public BatchDocumentPermissionsPresenter open() {
-        final BatchDocumentPermissionsPresenter presenter = super.open();
-        final ExpressionTerm term = new ExpressionTerm(
-                true,
-                DocumentPermissionFields.DESCENDANTS.getFldName(),
-                Condition.OF_DOC_REF,
-                null,
-                ExplorerConstants.SYSTEM_DOC_REF);
-        final ExpressionOperator operator = ExpressionOperator
-                .builder()
-                .addTerm(term)
-                .build();
-        presenter.setExpression(operator);
-        return presenter;
+    public void open(final Consumer<BatchDocumentPermissionsPresenter> consumer) {
+        super.open(presenter -> {
+            final ExpressionTerm term = new ExpressionTerm(
+                    true,
+                    DocumentPermissionFields.DESCENDANTS.getFldName(),
+                    Condition.OF_DOC_REF,
+                    null,
+                    ExplorerConstants.SYSTEM_DOC_REF);
+            final ExpressionOperator operator = ExpressionOperator
+                    .builder()
+                    .addTerm(term)
+                    .build();
+            presenter.setExpression(operator);
+            consumer.accept(presenter);
+        });
     }
 
     @Override

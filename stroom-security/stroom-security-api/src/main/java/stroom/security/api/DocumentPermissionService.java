@@ -59,4 +59,6 @@ public interface DocumentPermissionService {
     Boolean changeDocumentPermissions(SingleDocumentPermissionChangeRequest request);
 
     ResultPage<DocumentUserPermissions> fetchDocumentUserPermissions(FetchDocumentUserPermissionsRequest request);
+
+    DocumentUserPermissions getPermissions(DocRef docRef, UserRef userRef);
 }

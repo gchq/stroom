@@ -1,5 +1,6 @@
 package stroom.security.shared;
 
+import stroom.docref.DocRef;
 import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;

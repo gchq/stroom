@@ -186,6 +186,15 @@ public interface ExplorerResource extends RestResource, DirectRestService {
             @Parameter(description = "request", required = true) AdvancedDocumentFindRequest request);
 
     @POST
+    @Path("/advancedFindWithPermissions")
+    @Operation(
+            summary = "Find documents with names and types matching the supplied request and the accociated " +
+                    "permissions for a given user",
+            operationId = "advancedFindWithPermissions")
+    ResultPage<FindResultWithPermissions> advancedFindWithPermissions(
+            @Parameter(description = "request", required = true) AdvancedDocumentFindWithPermissionsRequest request);
+
+    @POST
     @Path("/findInContent")
     @Operation(
             summary = "Find documents with content matching the supplied request",

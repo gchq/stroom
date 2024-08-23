@@ -23,6 +23,7 @@ import stroom.security.client.CurrentUser;
 import stroom.security.client.DocumentPermissionsPlugin;
 import stroom.security.client.LoginManager;
 import stroom.security.client.LogoutPlugin;
+import stroom.security.client.UserPermissionsReportPlugin;
 import stroom.security.client.UsersAndGroupsPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.ApiKeysPresenter;
@@ -83,6 +84,7 @@ public class SecurityModule extends PluginModule {
         bindPlugin(AppPermissionsPlugin.class);
         bindPlugin(DocumentPermissionsPlugin.class);
         bindPlugin(UsersAndGroupsPlugin.class);
+        bindPlugin(UserPermissionsReportPlugin.class);
         bindPlugin(ApiKeysPlugin.class);
         bindSharedView(QuickFilterDialogView.class, QuickFilterDialogViewImpl.class);
         bindSharedView(QuickFilterPageView.class, QuickFilterPageViewImpl.class);

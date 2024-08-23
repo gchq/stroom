@@ -53,28 +53,28 @@ public class DocumentPermissionFields {
             .build();
     public static final QueryField DOCUMENT_TYPE = QueryField
             .builder()
-            .fldName("Document Type")
+            .fldName("DocumentType")
             .fldType(FieldType.TEXT)
             .conditionSet(ConditionSet.DEFAULT_TEXT)
             .queryable(true)
             .build();
     public static final QueryField DOCUMENT_NAME = QueryField
             .builder()
-            .fldName("Document Name")
+            .fldName("DocumentName")
             .fldType(FieldType.TEXT)
             .conditionSet(ConditionSet.DEFAULT_TEXT)
             .queryable(true)
             .build();
     public static final QueryField DOCUMENT_UUID = QueryField
             .builder()
-            .fldName("Document UUID")
+            .fldName("DocumentUUID")
             .fldType(FieldType.TEXT)
             .conditionSet(ConditionSet.DEFAULT_TEXT)
             .queryable(true)
             .build();
     public static final QueryField DOCUMENT_TAG = QueryField
             .builder()
-            .fldName("Document Tag")
+            .fldName("DocumentTag")
             .fldType(FieldType.TEXT)
             .conditionSet(ConditionSet.DEFAULT_TEXT)
             .queryable(true)
