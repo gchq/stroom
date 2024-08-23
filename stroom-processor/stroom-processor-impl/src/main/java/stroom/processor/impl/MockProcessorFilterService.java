@@ -13,6 +13,7 @@ import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.security.api.SecurityContext;
+import stroom.util.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
@@ -47,7 +48,7 @@ public class MockProcessorFilterService implements ProcessorFilterService {
         filter.setEnabled(request.isEnabled());
         filter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
         filter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
-        filter.setRunAsUser(securityContext.getUserRef());
+        setRunAs(request, filter);
         Processor processor = processorService.create(
                 request.getProcessorType(),
                 request.getPipeline(),
@@ -55,6 +56,12 @@ public class MockProcessorFilterService implements ProcessorFilterService {
 
         filter.setProcessor(processor);
         return dao.create(filter);
+    }
+
+    private void setRunAs(final CreateProcessFilterRequest request, final ProcessorFilter filter) {
+        filter.setRunAsUser(NullSafe.getOrElse(request,
+                CreateProcessFilterRequest::getRunAsUser,
+                securityContext.getUserRef()));
     }
 
     //    @Override
@@ -74,7 +81,7 @@ public class MockProcessorFilterService implements ProcessorFilterService {
         filter.setEnabled(request.isEnabled());
         filter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
         filter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
-        filter.setRunAsUser(securityContext.getUserRef());
+        setRunAs(request, filter);
         return dao.create(filter);
     }
 
@@ -96,7 +103,7 @@ public class MockProcessorFilterService implements ProcessorFilterService {
         filter.setEnabled(request.isEnabled());
         filter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
         filter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
-        filter.setRunAsUser(securityContext.getUserRef());
+        setRunAs(request, filter);
         return dao.create(filter);
     }
 

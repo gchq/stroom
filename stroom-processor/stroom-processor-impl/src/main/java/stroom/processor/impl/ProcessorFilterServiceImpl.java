@@ -47,6 +47,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.AuditUtil;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Expander;
@@ -139,7 +140,14 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         processorFilter.setQueryData(request.getQueryData());
         processorFilter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
         processorFilter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
+        setRunAs(request, processorFilter);
         return create(processorFilter);
+    }
+
+    private void setRunAs(final CreateProcessFilterRequest request, final ProcessorFilter filter) {
+        filter.setRunAsUser(NullSafe.getOrElse(request,
+                CreateProcessFilterRequest::getRunAsUser,
+                securityContext.getUserRef()));
     }
 
     @Override
@@ -175,6 +183,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         processorFilter.setQueryData(request.getQueryData());
         processorFilter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
         processorFilter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
+        setRunAs(request, processorFilter);
         if (processorFilterDocRef != null) {
             processorFilter.setUuid(processorFilterDocRef.getUuid());
         }
@@ -191,8 +200,10 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         } else if (!Objects.equals(processorFilter.getRunAsUser(), currentUser) &&
                 !securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
             throw new PermissionException(securityContext.getUserRef(),
-                    "You do not have permission to set the run as user to " +
-                            processorFilter.getRunAsUser().toDisplayString());
+                    "You do not have permission to set the run as user to '" +
+                            processorFilter.getRunAsUser().toDisplayString() +
+                            "'. You can only run a filter as " +
+                            "yourself unless you have manage users permission");
         }
     }
 
