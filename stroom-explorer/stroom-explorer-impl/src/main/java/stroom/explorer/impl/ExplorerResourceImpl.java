@@ -269,7 +269,8 @@ class ExplorerResourceImpl implements ExplorerResource {
     }
 
     @Override
-    public ResultPage<FindResultWithPermissions> advancedFindWithPermissions(final AdvancedDocumentFindWithPermissionsRequest request) {
+    public ResultPage<FindResultWithPermissions> advancedFindWithPermissions(
+            final AdvancedDocumentFindWithPermissionsRequest request) {
         return explorerServiceProvider.get().advancedFindWithPermissions(request);
     }
 

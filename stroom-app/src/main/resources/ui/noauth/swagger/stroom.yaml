@@ -2361,6 +2361,27 @@ paths:
       summary: Find documents with names and types matching the supplied request
       tags:
       - Explorer (v2)
+  /explorer/v2/advancedFindWithPermissions:
+    post:
+      operationId: advancedFindWithPermissions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvancedDocumentFindWithPermissionsRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPageFindResultWithPermissions'
+          description: default response
+      summary: Find documents with names and types matching the supplied request and
+        the accociated permissions for a given user
+      tags:
+      - Explorer (v2)
   /explorer/v2/changeDocumentPermssions:
     post:
       operationId: changeDocumentPermssions
@@ -7347,6 +7368,33 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
+    AdvancedDocumentFindWithPermissionsRequest:
+      type: object
+      properties:
+        expression:
+          $ref: '#/components/schemas/ExpressionOperator'
+        pageRequest:
+          $ref: '#/components/schemas/PageRequest'
+        requiredPermissions:
+          type: array
+          items:
+            type: string
+            enum:
+            - OWNER
+            - DELETE
+            - EDIT
+            - VIEW
+            - USE
+          uniqueItems: true
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaFieldSort'
+        userRef:
+          $ref: '#/components/schemas/UserRef'
     AnalyticDataShard:
       type: object
       properties:
@@ -10969,6 +11017,13 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
+    FindResultWithPermissions:
+      type: object
+      properties:
+        findResult:
+          $ref: '#/components/schemas/FindResult'
+        permissions:
+          $ref: '#/components/schemas/DocumentUserPermissions'
     FindStoredQueryCriteria:
       type: object
       properties:
@@ -13914,6 +13969,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FindResult'
+    ResultPageFindResultWithPermissions:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/FindResultWithPermissions'
     ResultPageFsVolume:
       type: object
       description: A page of results.
