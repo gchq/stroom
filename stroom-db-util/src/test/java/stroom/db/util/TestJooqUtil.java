@@ -54,7 +54,7 @@ class TestJooqUtil {
                 () -> {
                     attempt.incrementAndGet();
                     if (attempt.get() <= 2) {
-                        throw new DataAccessException("foo", new SQLTransactionRollbackException("a DEADLock"));
+                        throwDeadlock();
                     }
                     success.set(true);
                 },
@@ -70,19 +70,24 @@ class TestJooqUtil {
         final AtomicInteger attempt = new AtomicInteger(0);
         final AtomicBoolean success = new AtomicBoolean(false);
 
-        Assertions.assertThatThrownBy(() -> {
-                    JooqUtil.withDeadlockRetries(
-                            () -> {
-                                attempt.incrementAndGet();
-                                throw new DataAccessException("foo", new SQLTransactionRollbackException("a deadlock"));
-                            },
-                            () -> "Do stuff");
-                })
+        Assertions.assertThatThrownBy(
+                        () -> JooqUtil.withDeadlockRetries(
+                                () -> {
+                                    attempt.incrementAndGet();
+                                    throwDeadlock();
+                                },
+                                () -> "Do stuff"))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("deadlock");
         assertThat(attempt)
                 .hasValue(JooqUtil.MAX_DEADLOCK_RETRY_ATTEMPTS);
         assertThat(success)
                 .isFalse();
+    }
+
+    private void throwDeadlock() {
+        throw new DataAccessException(
+                "foo",
+                new SQLTransactionRollbackException("a deadlock"));
     }
 }
