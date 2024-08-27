@@ -20,12 +20,15 @@ package stroom.processor.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.data.client.presenter.ExpressionPresenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.ShowPermissionsDialogEvent;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorListRow;
@@ -34,8 +37,16 @@ import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.security.shared.DocPermissionResource;
+import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.core.client.GWT;
@@ -46,7 +57,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.Collections;
 import java.util.function.Supplier;
 
 public class ProcessorPresenter
@@ -61,6 +71,7 @@ public class ProcessorPresenter
     private final ExpressionTreePresenter expressionPresenter;
     private final RestFactory restFactory;
     private final ProcessorInfoBuilder processorInfoBuilder;
+    private final Provider<ExpressionPresenter> filterPresenterProvider;
 
     private ProcessorType processorType;
     private DocRef docRef;
@@ -70,6 +81,8 @@ public class ProcessorPresenter
     private ButtonView duplicateButton;
     private ButtonView removeButton;
     private ButtonView permissionsButton;
+    private ButtonView filterButton;
+    private ButtonView batchEditButton;
 
     private boolean allowCreate;
     private boolean allowUpdate;
@@ -85,13 +98,15 @@ public class ProcessorPresenter
                               final Provider<ProcessorEditPresenter> processorEditPresenterProvider,
                               final ExpressionTreePresenter expressionPresenter,
                               final RestFactory restFactory,
-                              final ProcessorInfoBuilder processorInfoBuilder) {
+                              final ProcessorInfoBuilder processorInfoBuilder,
+                              final Provider<ExpressionPresenter> filterPresenterProvider) {
         super(eventBus, view);
         this.processorListPresenter = processorListPresenter;
         this.processorEditPresenterProvider = processorEditPresenterProvider;
         this.expressionPresenter = expressionPresenter;
         this.restFactory = restFactory;
         this.processorInfoBuilder = processorInfoBuilder;
+        this.filterPresenterProvider = filterPresenterProvider;
 
         // Stop users from selecting expression items.
         expressionPresenter.setSelectionModel(null);
@@ -175,8 +190,50 @@ public class ProcessorPresenter
                 }));
             }
 
+            filterButton = processorListPresenter.getView().addButton(new Preset(
+                    SvgImage.FILTER,
+                    "Filter Processors",
+                    true));
+            registerHandler(filterButton.addClickHandler(e -> {
+                if (MouseUtil.isPrimary(e)) {
+                    onFilter();
+                }
+            }));
+
+            if (allowUpdate) {
+                batchEditButton = processorListPresenter.getView().addButton(new Preset(
+                        SvgImage.GENERATE,
+                        "Batch Edit Processors",
+                        false));
+            }
+
             enableButtons(false);
         }
+    }
+
+    private void onFilter() {
+        final ExpressionPresenter presenter = filterPresenterProvider.get();
+        final HidePopupRequestEvent.Handler handler = e -> {
+            if (e.isOk()) {
+                processorListPresenter.setExpression(presenter.write());
+                refresh();
+            }
+            e.hide();
+        };
+
+        presenter.read(processorListPresenter.getExpression(),
+                ProcessorFilterFields.PROCESSOR_FILTERS_DOC_REF,
+                ProcessorFilterFields.getFields());
+
+        presenter.getWidget().getElement().addClassName("default-min-sizes");
+        final PopupSize popupSize = PopupSize.resizable(800, 600);
+        ShowPopupEvent.builder(presenter)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Filter Processors")
+                .onShow(e -> presenter.focus())
+                .onHideRequest(handler)
+                .fire();
     }
 
     private void enableButtons(final boolean enabled) {
@@ -360,13 +417,23 @@ public class ProcessorPresenter
         }
     }
 
+    public void refresh() {
+        refresh(processorListPresenter.getSelectionModel().getSelected());
+    }
+
     public void refresh(final ProcessorFilter processorFilter) {
-        final ProcessorListRow processorListRow = new ProcessorFilterRow(processorFilter);
-        processorListPresenter.setNextSelection(processorListRow);
+        refresh(GwtNullSafe.get(processorFilter, ProcessorFilterRow::new));
+    }
+
+    public void refresh(final ProcessorListRow row) {
+        processorListPresenter.setNextSelection(row);
         processorListPresenter.refresh();
 
-        processorListPresenter.getSelectionModel().clear();
-        processorListPresenter.getSelectionModel().setSelected(processorListRow, true);
+        if (row != null) {
+            processorListPresenter.getSelectionModel().clear();
+            processorListPresenter.getSelectionModel().setSelected(row, true);
+        }
+
         updateData();
     }
 

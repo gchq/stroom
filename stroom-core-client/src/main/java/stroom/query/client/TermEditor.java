@@ -269,6 +269,8 @@ public class TermEditor extends Composite {
                 selected = term.getCondition();
             } else if (conditions.contains(Condition.IS_DOC_REF)) {
                 selected = Condition.IS_DOC_REF;
+            } else if (conditions.contains(Condition.IS_USER_REF)) {
+                selected = Condition.IS_USER_REF;
             } else if (conditions.contains(Condition.USER_HAS_PERM)) {
                 selected = Condition.USER_HAS_PERM;
             } else if (conditions.contains(Condition.EQUALS)) {
@@ -351,6 +353,9 @@ public class TermEditor extends Composite {
                     break;
                 case OF_DOC_REF:
                     enterDocRefMode(field, condition);
+                    break;
+                case IS_USER_REF:
+                    enterUserRefMode(field, condition);
                     break;
                 case USER_HAS_PERM:
                     enterUserRefMode(field, condition);

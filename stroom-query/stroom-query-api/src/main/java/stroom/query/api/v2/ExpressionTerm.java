@@ -224,14 +224,6 @@ public final class ExpressionTerm extends ExpressionItem {
         USER_HAS_VIEW("has view permission"),
         USER_HAS_USE("has use permission");
 
-//        public static final List<Condition> SIMPLE_CONDITIONS = Arrays.asList(
-//                EQUALS,
-//                GREATER_THAN,
-//                GREATER_THAN_OR_EQUAL_TO,
-//                LESS_THAN,
-//                LESS_THAN_OR_EQUAL_TO,
-//                BETWEEN);
-
         public static final String IN_CONDITION_DELIMITER = ",";
 
         private final String displayValue;

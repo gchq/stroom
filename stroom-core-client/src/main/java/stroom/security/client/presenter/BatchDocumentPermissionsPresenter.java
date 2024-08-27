@@ -43,12 +43,12 @@ import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
 import stroom.widget.util.client.MouseUtil;
 
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class BatchDocumentPermissionsPresenter
         extends ContentTabPresenter<QuickFilterPageView>

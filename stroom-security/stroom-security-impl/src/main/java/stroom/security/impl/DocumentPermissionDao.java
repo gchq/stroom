@@ -3,11 +3,9 @@ package stroom.security.impl;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentUserPermissions;
 import stroom.security.shared.FetchDocumentUserPermissionsRequest;
-import stroom.security.shared.UserPermissionsReportRequest;
 import stroom.util.shared.ResultPage;
 
 import java.util.BitSet;
-import java.util.List;
 import java.util.Set;
 
 public interface DocumentPermissionDao {

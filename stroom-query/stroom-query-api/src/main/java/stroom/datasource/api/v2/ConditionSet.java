@@ -183,7 +183,9 @@ public enum ConditionSet {
             Condition.USER_HAS_DELETE,
             Condition.USER_HAS_EDIT,
             Condition.USER_HAS_VIEW,
-            Condition.USER_HAS_USE);
+            Condition.USER_HAS_USE),
+    RUN_AS_USER(
+            Condition.IS_USER_REF);
 
     private final List<Condition> conditionList;
     private final Set<Condition> conditionSet;
