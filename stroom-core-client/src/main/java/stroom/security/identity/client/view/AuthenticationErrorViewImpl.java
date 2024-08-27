@@ -19,8 +19,10 @@ package stroom.security.identity.client.view;
 import stroom.security.identity.client.presenter.AuthenticationErrorPresenter.AuthenticationErrorView;
 import stroom.svg.shared.SvgImage;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -35,6 +37,8 @@ public class AuthenticationErrorViewImpl extends ViewImpl implements Authenticat
     SimplePanel image;
     @UiField
     Label errorText;
+    @UiField
+    HTML genericMessage;
 
     @Inject
     public AuthenticationErrorViewImpl(final Binder binder) {
@@ -56,6 +60,11 @@ public class AuthenticationErrorViewImpl extends ViewImpl implements Authenticat
     @Override
     public void setErrorText(final String errorText) {
         this.errorText.setText(errorText);
+    }
+
+    @Override
+    public void setGenericMessage(final SafeHtml genericMessage) {
+        this.genericMessage.setHTML(genericMessage);
     }
 
 

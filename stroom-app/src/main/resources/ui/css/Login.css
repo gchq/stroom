@@ -148,3 +148,7 @@
 .AuthErrorView .AuthErrorViewFormPanel .AuthErrorViewForm .form-group-label {
     font-size: var(--font-size-15);
 }
+
+.AuthErrorView .AuthErrorViewGenericMessageContainer > div {
+    padding-top: 1em;
+}

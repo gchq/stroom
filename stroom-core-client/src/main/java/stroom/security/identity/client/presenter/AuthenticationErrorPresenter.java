@@ -18,8 +18,13 @@ package stroom.security.identity.client.presenter;
 
 import stroom.security.identity.client.presenter.AuthenticationErrorPresenter.AuthenticationErrorProxy;
 import stroom.security.identity.client.presenter.AuthenticationErrorPresenter.AuthenticationErrorView;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.ExtendedUiConfig;
+import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -36,12 +41,15 @@ public class AuthenticationErrorPresenter
 
     private final Element loadingText;
     private final Element loading;
+    private final UiConfigCache uiConfigCache;
 
     @Inject
     public AuthenticationErrorPresenter(final EventBus eventBus,
                                         final AuthenticationErrorView authenticationErrorView,
-                                        final AuthenticationErrorProxy authenticationErrorProxy) {
+                                        final AuthenticationErrorProxy authenticationErrorProxy,
+                                        final UiConfigCache uiConfigCache) {
         super(eventBus, authenticationErrorView, authenticationErrorProxy);
+        this.uiConfigCache = uiConfigCache;
 
         loadingText = RootPanel.get("loadingText").getElement();
         loading = RootPanel.get("loading").getElement();
@@ -49,11 +57,17 @@ public class AuthenticationErrorPresenter
 
     @Override
     protected void revealInParent() {
-        RevealRootContentEvent.fire(this, this);
-        final String error = Window.Location.getParameter("error");
-        getView().setErrorText(error);
-        getView().focus();
-        loading.getStyle().setOpacity(0);
+        uiConfigCache.get(extendedUiConfig -> {
+            RevealRootContentEvent.fire(this, this);
+            final String error = Window.Location.getParameter("error");
+            getView().setErrorText(error);
+            getView().focus();
+            final String authErrorMessage = GwtNullSafe.get(extendedUiConfig, ExtendedUiConfig::getAuthErrorMessage);
+            if (GwtNullSafe.isNonBlankString(authErrorMessage)) {
+                getView().setGenericMessage(SafeHtmlUtils.fromTrustedString(authErrorMessage));
+            }
+            loading.getStyle().setOpacity(0);
+        });
     }
 
 
@@ -72,5 +86,7 @@ public class AuthenticationErrorPresenter
     public interface AuthenticationErrorView extends View, Focus {
 
         void setErrorText(final String errorText);
+
+        void setGenericMessage(final SafeHtml genericMessage);
     }
 }

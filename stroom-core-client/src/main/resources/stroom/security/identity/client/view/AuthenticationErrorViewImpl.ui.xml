@@ -17,6 +17,10 @@
                     <g:Label ui:field="errorText" styleName="authErrorText"/>
                 </form:FormGroup>
 
+                <g:SimplePanel styleName="AuthErrorViewGenericMessageContainer">
+                    <g:HTML ui:field="genericMessage"/>
+                </g:SimplePanel>
+
             </g:FlowPanel>
         </g:FlowPanel>
     </g:FlowPanel>
