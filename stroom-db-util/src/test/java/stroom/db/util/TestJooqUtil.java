@@ -28,7 +28,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestJooqUtil {
 
-
     @Test
     void testWithDeadlockRetry_success() {
         final AtomicInteger attempt = new AtomicInteger(0);
