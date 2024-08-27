@@ -26,7 +26,6 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.ShowPermissionsDialogEvent;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.ProcessorFilterResource;
@@ -41,6 +40,7 @@ import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -72,6 +72,7 @@ public class ProcessorPresenter
     private final RestFactory restFactory;
     private final ProcessorInfoBuilder processorInfoBuilder;
     private final Provider<ExpressionPresenter> filterPresenterProvider;
+    private final Provider<BatchProcessorFilterEditPresenter> batchProcessorFilterEditPresenterProvider;
 
     private ProcessorType processorType;
     private DocRef docRef;
@@ -99,7 +100,8 @@ public class ProcessorPresenter
                               final ExpressionTreePresenter expressionPresenter,
                               final RestFactory restFactory,
                               final ProcessorInfoBuilder processorInfoBuilder,
-                              final Provider<ExpressionPresenter> filterPresenterProvider) {
+                              final Provider<ExpressionPresenter> filterPresenterProvider,
+                              final Provider<BatchProcessorFilterEditPresenter> batchProcessorFilterEditPresenterProvider) {
         super(eventBus, view);
         this.processorListPresenter = processorListPresenter;
         this.processorEditPresenterProvider = processorEditPresenterProvider;
@@ -107,6 +109,7 @@ public class ProcessorPresenter
         this.restFactory = restFactory;
         this.processorInfoBuilder = processorInfoBuilder;
         this.filterPresenterProvider = filterPresenterProvider;
+        this.batchProcessorFilterEditPresenterProvider = batchProcessorFilterEditPresenterProvider;
 
         // Stop users from selecting expression items.
         expressionPresenter.setSelectionModel(null);
@@ -203,12 +206,25 @@ public class ProcessorPresenter
             if (allowUpdate) {
                 batchEditButton = processorListPresenter.getView().addButton(new Preset(
                         SvgImage.GENERATE,
-                        "Batch Edit Processors",
-                        false));
+                        "Batch Edit Current Processors",
+                        true));
+                registerHandler(batchEditButton.addClickHandler(e -> {
+                    if (MouseUtil.isPrimary(e)) {
+                        onBatchEdit();
+                    }
+                }));
             }
 
             enableButtons(false);
         }
+    }
+
+    private void onBatchEdit() {
+        final BatchProcessorFilterEditPresenter presenter =
+                batchProcessorFilterEditPresenterProvider.get();
+        presenter.show(processorListPresenter.getExpression(),
+                GwtNullSafe.get(processorListPresenter.getCurrentResultPageResponse(), ResultPage::getPageResponse),
+                () -> processorListPresenter.refresh());
     }
 
     private void onFilter() {

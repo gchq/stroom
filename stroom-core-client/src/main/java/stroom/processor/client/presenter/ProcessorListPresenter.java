@@ -53,7 +53,6 @@ import stroom.processor.shared.ProcessorResource;
 import stroom.processor.shared.ProcessorRow;
 import stroom.processor.shared.ProcessorType;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
@@ -100,6 +99,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
     private boolean allowUpdate;
     private ExpressionOperator expression;
     private boolean initiated;
+    private ProcessorListRowResultPage currentResultPageResponse;
 
     @Inject
     public ProcessorListPresenter(final EventBus eventBus,
@@ -195,6 +195,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
 
             @Override
             protected void changeData(final ProcessorListRowResultPage data) {
+                currentResultPageResponse = data;
                 super.changeData(data);
                 onChangeData(data);
             }
@@ -583,5 +584,9 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
 
     void setNextSelection(final ProcessorListRow nextSelection) {
         this.nextSelection = nextSelection;
+    }
+
+    public ProcessorListRowResultPage getCurrentResultPageResponse() {
+        return currentResultPageResponse;
     }
 }

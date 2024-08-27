@@ -8,6 +8,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.client.event.FocusEvent;
 import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest;
@@ -90,7 +91,11 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
                 new Column<FindResultWithPermissions, String>(new TextCell()) {
                     @Override
                     public String getValue(final FindResultWithPermissions row) {
-                        return row.getFindResult().getDocRef().getDisplayValue();
+                        return GwtNullSafe.get(
+                                row,
+                                FindResultWithPermissions::getFindResult,
+                                FindResult::getDocRef,
+                                DocRef::getDisplayValue);
                     }
                 };
         nameCol.setSortable(true);
@@ -102,7 +107,8 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
                     @Override
                     public String getValue(final FindResultWithPermissions row) {
                         return GwtNullSafe.get(
-                                row.getPermissions(),
+                                row,
+                                FindResultWithPermissions::getPermissions,
                                 DocumentUserPermissions::getPermission,
                                 DocumentPermission::getDisplayValue);
                     }
@@ -115,7 +121,8 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
                     @Override
                     public String getValue(final FindResultWithPermissions row) {
                         return GwtNullSafe.get(
-                                row.getPermissions(),
+                                row,
+                                FindResultWithPermissions::getPermissions,
                                 DocumentUserPermissions::getInheritedPermission,
                                 DocumentPermission::getDisplayValue);
                     }
@@ -128,7 +135,8 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
                     @Override
                     public String getValue(final FindResultWithPermissions row) {
                         return GwtNullSafe.get(
-                                row.getFindResult(),
+                                row,
+                                FindResultWithPermissions::getFindResult,
                                 FindResult::getPath);
                     }
                 };
