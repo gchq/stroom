@@ -20,17 +20,20 @@ import stroom.test.common.TestUtil;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.CompareUtil;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -240,7 +243,7 @@ public class TestCIKey {
 
         assertThat(map.keySet()
                 .stream()
-                .sorted()
+                .sorted(Comparator.nullsFirst(CIKey.COMPARATOR))
                 .toList())
                 .extracting(CIKey::get)
                 .containsExactly(null, "", "0", "1", "A", "aa", "b", "C", "d");
@@ -331,5 +334,87 @@ public class TestCIKey {
         });
         assertThat(map2)
                 .isEqualTo(map);
+    }
+
+    @Test
+    void trimmed() {
+        CIKey ciKey1 = CIKey.trimmed("  Foo   ");
+        CIKey ciKey2 = CIKey.of("Foo");
+
+        assertThat(ciKey1)
+                .isEqualTo(ciKey2);
+        assertThat(ciKey1)
+                .isNotSameAs(ciKey2);
+        assertThat(ciKey1.get())
+                .isEqualTo("Foo");
+        assertThat(ciKey1.getAsLowerCase())
+                .isEqualTo("foo");
+    }
+
+    @Test
+    void testOfLowerCase() {
+        final String key = "foo";
+        CIKey ciKey = CIKey.ofLowerCase(key);
+        assertThat(ciKey.get())
+                .isSameAs(key);
+        assertThat(ciKey.getAsLowerCase())
+                .isSameAs(key);
+    }
+
+    @Test
+    void testOfDynamicKey() {
+        final String key = "UUID";
+        CIKey ciKey1 = CIKeys.UUID;
+        CIKey ciKey2 = CIKey.of(key);
+        CIKey ciKey3 = CIKey.ofDynamicKey(key);
+        CIKey ciKey4 = CIKey.ofDynamicKey(key);
+
+        assertThat(ciKey1)
+                .isSameAs(ciKey2);
+        assertThat(ciKey1)
+                .isNotSameAs(ciKey3);
+        assertThat(ciKey1)
+                .isNotSameAs(ciKey4);
+
+        assertThat(ciKey1)
+                .isEqualTo(ciKey3);
+        assertThat(ciKey1)
+                .isEqualTo(ciKey4);
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testComparator() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(CIKey.class, CIKey.class)
+                .withOutputType(int.class)
+                .withTestFunction(testCase -> {
+                    final int result = CompareUtil.normalise(CIKey.COMPARATOR.compare(
+                            testCase.getInput()._1,
+                            testCase.getInput()._2));
+
+                    // Reverse it
+                    final int result2 = CompareUtil.normalise(CIKey.COMPARATOR.compare(
+                            testCase.getInput()._2,
+                            testCase.getInput()._1));
+
+                    if (result == 0) {
+                        Assertions.assertThat(result2)
+                                .isEqualTo(0);
+                    } else {
+                        Assertions.assertThat(result2)
+                                .isEqualTo(-1 * result);
+                    }
+                    return result;
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(null, CIKey.ofDynamicKey("a")), -1)
+                .addCase(Tuple.of(CIKey.NULL_STRING, CIKey.EMPTY_STRING), -1)
+                .addCase(Tuple.of(CIKey.NULL_STRING, CIKey.ofDynamicKey("a")), -1)
+                .addCase(Tuple.of(CIKey.NULL_STRING, CIKey.EMPTY_STRING), -1)
+                .addCase(Tuple.of(CIKey.ofDynamicKey("aaa"), CIKey.ofDynamicKey("bbb")), -1)
+                .addCase(Tuple.of(CIKey.ofDynamicKey("aaa"), CIKey.ofDynamicKey("BBB")), -1)
+                .addCase(Tuple.of(CIKey.ofDynamicKey("aaa"), CIKey.ofDynamicKey("AAA")), 0)
+                .addCase(Tuple.of(CIKey.ofDynamicKey("a"), CIKey.ofDynamicKey("aaa")), -1)
+                .build();
     }
 }

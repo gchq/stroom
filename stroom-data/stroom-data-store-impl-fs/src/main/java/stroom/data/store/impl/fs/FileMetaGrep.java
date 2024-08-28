@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.ArgsUtil;
 import stroom.util.io.AbstractFileVisitor;
+import stroom.util.shared.string.CIKey;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,14 +39,14 @@ import java.util.Map;
 class FileMetaGrep extends AbstractCommandLineTool {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileMetaGrep.class);
-    private final Map<String, String> matchMap;
+    private final Map<CIKey, String> matchMap;
     private String[] repoPathParts = null;
     private String feedId;
 
     private FileMetaGrep(String[] args) {
         matchMap = ArgsUtil.parse(args);
-        matchMap.remove("repoPath");
-        matchMap.remove("feedId");
+        matchMap.remove(CIKey.of("repoPath"));
+        matchMap.remove(CIKey.of("feedId"));
 
         doMain(args);
     }
@@ -128,7 +129,7 @@ class FileMetaGrep extends AbstractCommandLineTool {
 
                             boolean match = true;
 
-                            for (String matchKey : matchMap.keySet()) {
+                            for (CIKey matchKey : matchMap.keySet()) {
                                 if (!attributeMap.containsKey(matchKey)) {
                                     // No Good
                                     match = false;

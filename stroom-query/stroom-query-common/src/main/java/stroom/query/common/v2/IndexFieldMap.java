@@ -17,115 +17,85 @@
 package stroom.query.common.v2;
 
 import stroom.datasource.api.v2.IndexField;
+import stroom.query.common.v2.IndexFieldMapImpl.EmptyIndexFieldMap;
+import stroom.query.common.v2.IndexFieldMapImpl.SingleIndexField;
 import stroom.util.NullSafe;
-import stroom.util.logging.LogUtil;
 import stroom.util.shared.string.CIKey;
 import stroom.util.string.MultiCaseMap.MultipleMatchException;
 
-import java.util.Collections;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-/**
- * Holds a map of case-sensitive field names to their respective {@link IndexField} object.
- * All field names held in the map are equal when ignoring case.
- * <p>
- * This object acts as the link between case-insensitive field naming in stroom and the potentially
- * case-sensitive field naming in the index provider.
- * </p>
- */
-public class IndexFieldMap {
-
-    private final CIKey fieldName;
-    public final Map<String, IndexField> fieldNameToFieldMap;
+public interface IndexFieldMap {
 
     /**
      * @param fieldName           A case-insensitive field name. The string it wraps may or may not exactly match
-     *                            one of the field names in the map, but it will match all when ignoring case.
-     * @param fieldNameToFieldMap A map of
+     *                            one of the field names in the map, but it must match all when ignoring case.
+     * @param fieldNameToFieldMap A map of case-sensitive field names to their respective {@link IndexField} object.
+     *                            All keys must be equal ignoring case to each other and to fieldName.
      */
-    public IndexFieldMap(final CIKey fieldName,
-                         final Map<String, IndexField> fieldNameToFieldMap) {
-        Objects.requireNonNull(fieldName);
-        this.fieldName = fieldName;
-        this.fieldNameToFieldMap = Objects.requireNonNullElseGet(fieldNameToFieldMap, Collections::emptyMap);
-
-        fieldNameToFieldMap.keySet()
-                .forEach(exactFieldName -> {
-                    if (!fieldName.equalsIgnoreCase(exactFieldName)) {
-                        throw new IllegalArgumentException(LogUtil.message(
-                                "fieldName '{}' and exactFieldName '{}' do not match (case insensitive)"));
-                    }
-                });
-    }
-
-    public static IndexFieldMap empty(final CIKey fieldName) {
-        return new IndexFieldMap(fieldName, Collections.emptyMap());
-    }
-
-    public CIKey getFieldName() {
-        return fieldName;
-    }
-
-    /**
-     * @return The value associated with ciKey (case-insensitive) or null if there
-     * is no associated value. If ciKey matches multiple keys with different case then
-     * it will attempt to do a case-sensitive match. If there is no case-sensitive match
-     * it will throw a {@link MultipleMatchException}.
-     * @throws MultipleMatchException if multiple values are associated with ciKey
-     */
-    public IndexField getCaseSensitive(final String fieldName) {
-        if (this.fieldName.equalsIgnoreCase()) {
-            if (NullSafe.isEmptyMap(fieldNameToFieldMap)) {
-                return null;
-            } else {
-                final int count = fieldNameToFieldMap.size();
-                if (count == 0) {
-                    return null;
-                } else if (count == 1) {
-                    // There is only one, so we don't need to check for an exact match
-                    return fieldNameToFieldMap.values().iterator().next();
-                } else {
-                    final IndexField exactMatch = fieldNameToFieldMap.get(fieldName);
-                    if (exactMatch != null) {
-                        return exactMatch;
-                    } else {
-                        throw new MultipleMatchException("Multiple fields (" + fieldNameToFieldMap.keySet()
-                                + ") exist with the same name (ignoring case). You must use the exact case " +
-                                "for the field that you require.");
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * @return The value associated with ciKey (case-insensitive) or null if there
-     * is no associated value. If ciKey matches multiple keys with different case then
-     * it will attempt to do a case-sensitive match. If there is no case-sensitive match
-     * it will throw a {@link MultipleMatchException}.
-     * @throws MultipleMatchException if multiple values are associated with ciKey
-     */
-    public IndexField getCaseSensitive(final CIKey ciKey) {
-        if (NullSafe.isEmptyMap(fieldNameToFieldMap)) {
-            return null;
+    static IndexFieldMap fromFieldsMap(final CIKey fieldName,
+                                       final Map<String, ? extends IndexField> fieldNameToFieldMap) {
+        final int size = NullSafe.size(fieldNameToFieldMap);
+        if (size == 0) {
+            return new EmptyIndexFieldMap(fieldName);
+        } else if (size == 1) {
+            return IndexFieldMap.forSingleField(fieldName, fieldNameToFieldMap.values().iterator().next());
         } else {
-            final int count = fieldNameToFieldMap.size();
-            if (count == 0) {
-                // Should never happen.  Shouldn't have an empty subMap
-                throw new RuntimeException("Empty subMap");
-            } else if (count == 1) {
-                // There is only one, so we don't need to check for an exact match
-                return fieldNameToFieldMap.values().iterator().next();
-            } else {
-                final IndexField exactMatch = fieldNameToFieldMap.get(ciKey.get());
-                if (exactMatch != null) {
-                    return exactMatch;
-                } else {
-                    throw new MultipleMatchException("Multiple values (" + fieldNameToFieldMap.size()
-                            + ") exist for case-insensitive key '" + ciKey.get() + "'");
-                }
-            }
+            return new IndexFieldMapImpl(fieldName, fieldNameToFieldMap);
         }
     }
+
+    /**
+     * @param fieldName   A case-insensitive field name. The string it wraps may or may not exactly match
+     *                    one of the field names in the map, but it must match all when ignoring case.
+     * @param indexFields A collection of {@link IndexField} whose field names are ALL equal (ignoring case).
+     */
+    static IndexFieldMap fromFieldList(final CIKey fieldName,
+                                       final Collection<? extends IndexField> indexFields) {
+        final int size = NullSafe.size(indexFields);
+        if (size == 0) {
+            return new EmptyIndexFieldMap(fieldName);
+        } else if (size == 1) {
+            return IndexFieldMap.forSingleField(fieldName, indexFields.iterator().next());
+        } else {
+            return new IndexFieldMapImpl(fieldName, indexFields.stream()
+                    .collect(Collectors.toMap(IndexField::getFldName, Function.identity())));
+        }
+    }
+
+    /**
+     * Constructor for use when you know there is only one {@link IndexField} corresponding
+     * to fieldName (ignoring case).
+     */
+    static IndexFieldMap forSingleField(final CIKey fieldName,
+                                        final IndexField indexField) {
+        if (indexField == null) {
+            return new EmptyIndexFieldMap(fieldName);
+        } else {
+            return new SingleIndexField(fieldName, indexField);
+        }
+    }
+
+    /**
+     * @return The case-insensitive field name.
+     */
+    CIKey getFieldName();
+
+    /**
+     * @return The list of {@link IndexField} matching the case-insensitive {@link CIKey} fieldName.
+     */
+    List<IndexField> getFields();
+
+    /**
+     * @return The {@link IndexField} associated with ciKey (case-insensitive) or null if there
+     * is no associated value. If ciKey matches multiple keys with different case then
+     * it will attempt to do a case-sensitive match. If there is no case-sensitive match
+     * it will throw a {@link MultipleMatchException}.
+     * @throws MultipleMatchException if multiple values are associated with ciKey
+     */
+    IndexField getMatchingField(final CIKey ciKey);
 }

@@ -180,7 +180,7 @@ public class CIKeys {
             final String k = key.intern();
             ciKey = new CIKey(k, CIKey.toLowerCase(k).intern());
         }
-        // Add it to our static maps so we can get a common CIKey either from its
+        // Add it to our static maps, so we can get a common CIKey either from its
         // exact case or its lower case form.
         CIKeys.KEY_TO_COMMON_CIKEY_MAP.put(key, ciKey);
         CIKeys.LOWER_KEY_TO_COMMON_CIKEY_MAP.put(ciKey.getAsLowerCase(), ciKey);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import stroom.util.ArgsUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.string.CIKey;
 
 import com.google.common.base.Strings;
 
@@ -38,6 +39,7 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 abstract class ManualCheckStreamPerformance {
+
     private static int testThreadCount = 10;
     private static int testSize = 100000;
 
@@ -86,13 +88,13 @@ abstract class ManualCheckStreamPerformance {
     }
 
     public static void main(final String[] args) throws InterruptedException {
-        final Map<String, String> map = ArgsUtil.parse(args);
+        final Map<CIKey, String> map = ArgsUtil.parse(args);
 
-        if (map.containsKey("testThreadCount")) {
-            testThreadCount = Integer.parseInt(map.get("testThreadCount"));
+        if (map.containsKey(CIKey.of("testThreadCount"))) {
+            testThreadCount = Integer.parseInt(map.get(CIKey.of("testThreadCount")));
         }
-        if (map.containsKey("testSize")) {
-            testSize = Integer.parseInt(map.get("testSize"));
+        if (map.containsKey(CIKey.of("testSize"))) {
+            testSize = Integer.parseInt(map.get(CIKey.of("testSize")));
         }
 
         averageTimeCheck("W BGZIP 1000000",
@@ -205,10 +207,12 @@ abstract class ManualCheckStreamPerformance {
     }
 
     public interface TimedAction {
+
         long newTimedAction() throws IOException;
     }
 
     public static class BlockGzipManualCheckStreamPerformance extends ManualCheckStreamPerformance {
+
         Path tempFile;
         int blockSize;
         long blockCount;
@@ -245,6 +249,7 @@ abstract class ManualCheckStreamPerformance {
     }
 
     public static class UncompressedCheckStreamPerformance extends ManualCheckStreamPerformance {
+
         Path tempFile;
 
         @Override
@@ -274,6 +279,7 @@ abstract class ManualCheckStreamPerformance {
     }
 
     public static class GzipCheckStreamPerformance extends ManualCheckStreamPerformance {
+
         Path tempFile;
 
         @Override

@@ -111,10 +111,12 @@ public class MockIndexFieldService implements IndexFieldService {
                 StringMatch.equalsIgnoreCase(fieldName.get()),
                 null);
         final ResultPage<IndexField> resultPage = findFields(findIndexFieldCriteria);
+
         if (resultPage.size() > 0) {
-            return resultPage.getFirst();
+            return IndexFieldMap.fromFieldList(fieldName, resultPage.getValues());
+        } else {
+            return null;
         }
-        return null;
     }
 
     @Override

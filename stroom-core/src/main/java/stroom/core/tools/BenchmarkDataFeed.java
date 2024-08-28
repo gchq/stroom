@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import stroom.util.ArgsUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.string.CIKey;
 import stroom.util.thread.CustomThreadFactory;
 import stroom.util.thread.StroomThreadGroup;
 
@@ -61,7 +62,7 @@ public class BenchmarkDataFeed {
 
     public static void main(final String[] args) throws IOException {
         final BenchmarkDataFeed benchmarkDataFeed = new BenchmarkDataFeed();
-        final Map<String, String> map = ArgsUtil.parse(args);
+        final Map<CIKey, String> map = ArgsUtil.parse(args);
         benchmarkDataFeed.setOptionalArgs(map);
         benchmarkDataFeed.run();
     }
@@ -80,7 +81,7 @@ public class BenchmarkDataFeed {
         }
     }
 
-    public void setOptionalArgs(final Map<String, String> args) {
+    public void setOptionalArgs(final Map<CIKey, String> args) {
         batchSize = readOptionalArgument(args, "BatchSize", batchSize);
         batchFileSize = readOptionalArgument(args, "BatchFileSize", batchFileSize);
         serverUrl = readOptionalArgument(args, "ServerUrl", serverUrl);
@@ -90,38 +91,42 @@ public class BenchmarkDataFeed {
         debug = readOptionalArgument(args, "Debug", debug);
     }
 
-    private String readOptionalArgument(final Map<String, String> args, final String name, final String defValue) {
-        if (!args.containsKey(name)) {
+    private String readOptionalArgument(final Map<CIKey, String> args, final String name, final String defValue) {
+        final CIKey key = CIKey.of(name);
+        if (!args.containsKey(key)) {
             return defValue;
         }
-        final String val = args.get(name);
+        final String val = args.get(key);
         log("Set " + name + "=" + val);
         return val;
     }
 
-    private int readOptionalArgument(final Map<String, String> args, final String name, final int defValue) {
-        if (!args.containsKey(name)) {
+    private int readOptionalArgument(final Map<CIKey, String> args, final String name, final int defValue) {
+        final CIKey key = CIKey.of(name);
+        if (!args.containsKey(key)) {
             return defValue;
         }
-        final int val = Integer.valueOf(args.get(name));
+        final int val = Integer.parseInt(args.get(key));
         log("Set " + name + "=" + val);
         return val;
     }
 
-    private long readOptionalArgument(final Map<String, String> args, final String name, final long defValue) {
-        if (!args.containsKey(name)) {
+    private long readOptionalArgument(final Map<CIKey, String> args, final String name, final long defValue) {
+        final CIKey key = CIKey.of(name);
+        if (!args.containsKey(key)) {
             return defValue;
         }
-        final long val = Long.valueOf(args.get(name));
+        final long val = Long.parseLong(args.get(key));
         log("Set " + name + "=" + val);
         return val;
     }
 
-    private boolean readOptionalArgument(final Map<String, String> args, final String name, final boolean defValue) {
-        if (!args.containsKey(name)) {
+    private boolean readOptionalArgument(final Map<CIKey, String> args, final String name, final boolean defValue) {
+        final CIKey key = CIKey.of(name);
+        if (!args.containsKey(key)) {
             return defValue;
         }
-        final boolean val = Boolean.valueOf(args.get(name));
+        final boolean val = Boolean.parseBoolean(args.get(key));
         log("Set " + name + "=" + val);
         return val;
     }
@@ -129,7 +134,12 @@ public class BenchmarkDataFeed {
     private byte[] buildSampleData() {
         final StringBuilder builder = new StringBuilder();
         for (int i = 1; i < 1000; i++) {
-            builder.append("BenchmarkDataFeed," + i + "," + DateUtil.createNormalDateTimeString() + "\n");
+            builder.append("BenchmarkDataFeed,")
+                    .append(i)
+                    .append(",")
+                    .append(DateUtil.createNormalDateTimeString())
+                    .append(
+                            "\n");
         }
         return builder.toString().getBytes(StreamUtil.DEFAULT_CHARSET);
 
@@ -381,7 +391,7 @@ public class BenchmarkDataFeed {
         final String upperLine = line.toUpperCase();
         if (upperLine.startsWith("SET ")) {
             final String[] args = line.substring(4).split(" ");
-            final Map<String, String> map = ArgsUtil.parse(args);
+            final Map<CIKey, String> map = ArgsUtil.parse(args);
             setOptionalArgs(map);
         }
         if (upperLine.startsWith("START")) {
@@ -395,7 +405,7 @@ public class BenchmarkDataFeed {
             System.exit(0);
         }
 
-        if (upperLine.equals("") || upperLine.startsWith("STATUS")) {
+        if (upperLine.isEmpty() || upperLine.startsWith("STATUS")) {
             statusConfig();
             statusBatch();
         }

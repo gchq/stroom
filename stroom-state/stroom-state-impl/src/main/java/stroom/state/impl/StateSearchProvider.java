@@ -120,13 +120,17 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
         final StateDoc doc = getStateDoc(docRef);
         final Map<CIKey, QueryField> fieldMap = StateFieldUtil.getFieldMap(doc.getStateType());
         final QueryField queryField = fieldMap.get(fieldName);
+
         if (queryField == null) {
             return null;
+        } else {
+            final IndexFieldImpl indexField = IndexFieldImpl.builder()
+                    .fldName(queryField.getFldName())
+                    .fldType(queryField.getFldType())
+                    .build();
+
+            return IndexFieldMap.forSingleField(fieldName, indexField);
         }
-        return IndexFieldImpl.builder()
-                .fldName(queryField.getFldName())
-                .fldType(queryField.getFldType())
-                .build();
     }
 
     @Override

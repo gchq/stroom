@@ -77,9 +77,9 @@ public class IndexFieldCacheImpl implements IndexFieldCache, Clearable {
         final Key key = new Key(docRef, fieldName);
         final IndexFieldMap indexFieldMap = cache.get(key);
 
-        final IndexField indexField = indexFieldMap.getCaseSensitive(fieldName);
-
-        return indexField;
+        // Attempt to get an IndexField matching the user's input. This may throw if there are multiple
+        // fields with the same name (ignoring case) and none match exactly with fieldName.
+        return indexFieldMap.getMatchingField(key.fieldName);
     }
 
     @Override
@@ -95,7 +95,7 @@ public class IndexFieldCacheImpl implements IndexFieldCache, Clearable {
     static class Key {
 
         private final DocRef docRef;
-        // field names are case-insensitive
+        // field names are case-insensitive in stroom but may not be in the index provider
         private final CIKey fieldName;
 
         private int hash = 0;

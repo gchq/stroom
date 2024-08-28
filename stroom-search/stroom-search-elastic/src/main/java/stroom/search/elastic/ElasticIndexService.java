@@ -19,7 +19,6 @@ package stroom.search.elastic;
 import stroom.datasource.api.v2.QueryField;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
-import stroom.util.string.MultiCaseMap;
 
 import java.util.List;
 
@@ -29,5 +28,5 @@ public interface ElasticIndexService {
 
     List<ElasticIndexField> getFields(ElasticIndexDoc index);
 
-    MultiCaseMap<ElasticIndexField> getFieldsMap(ElasticIndexDoc index);
+//    Map<CIKey, IndexFieldMap<ElasticIndexField>> getFieldsMap(ElasticIndexDoc index);
 }

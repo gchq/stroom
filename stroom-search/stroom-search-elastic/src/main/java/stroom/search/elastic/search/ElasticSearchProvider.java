@@ -46,14 +46,11 @@ import stroom.search.elastic.shared.ElasticNativeTypes;
 import stroom.search.elastic.shared.UnsupportedTypeException;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
-import stroom.util.shared.CompareUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.string.CIKey;
-import stroom.util.string.MultiCaseMap;
-import stroom.util.string.MultiCaseMap.MultipleMatchException;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ExpandWildcard;
@@ -80,10 +77,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
@@ -184,18 +179,13 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     public IndexFieldMap getIndexFields(final DocRef docRef, final CIKey fieldName) {
         final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
         if (index != null) {
-            final MultiCaseMap<ElasticIndexField> indexFieldMap = getFieldsMap(index);
-            ElasticIndexField elasticIndexField;
-            try {
-                elasticIndexField = indexFieldMap.getCaseSensitive(fieldName);
-            } catch (MultipleMatchException e) {
-                final Set<String> matchingFieldNames = indexFieldMap.get(fieldName)
-                        .keySet();
-                throw new RuntimeException(LogUtil.message(
-                        "Multiple fields match '{}' (ignoring case). Matching fields: {}",
-                        fieldName.get(), matchingFieldNames));
+            final Map<CIKey, Map<String, ElasticIndexField>> indexFieldMap = getFieldsMap(index);
+            final Map<String, ElasticIndexField> caseSenseNameToFieldMap = indexFieldMap.get(fieldName);
+            if (NullSafe.hasEntries(caseSenseNameToFieldMap)) {
+                return IndexFieldMap.fromFieldsMap(fieldName, caseSenseNameToFieldMap);
+            } else {
+                return null;
             }
-            return elasticIndexField;
         }
         return null;
     }
@@ -323,17 +313,18 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     @Override
     public List<ElasticIndexField> getFields(final ElasticIndexDoc index) {
         return getFieldsMap(index)
-                .entrySet()
+                .values()
                 .stream()
-                .sorted(CompareUtil.getNullSafeCaseInsensitiveComparator(Entry::getKey))
-                .map(Entry::getValue)
+                .filter(Objects::nonNull)
+                .flatMap(map ->
+                        map.values().stream())
                 .toList();
     }
 
-    @Override
-    public MultiCaseMap<ElasticIndexField> getFieldsMap(final ElasticIndexDoc index) {
+    private Map<CIKey, Map<String, ElasticIndexField>> getFieldsMap(final ElasticIndexDoc index) {
         final Map<String, FieldMapping> fieldMappings = getFieldMappings(index);
-        final MultiCaseMap<ElasticIndexField> fieldsMap = new MultiCaseMap<>();
+        // Nested map, so we can group fields with the same name, ignoring case
+        final Map<CIKey, Map<String, ElasticIndexField>> fieldsMap = new HashMap<>();
 
         fieldMappings.forEach((key, fieldMeta) -> {
             try {
@@ -355,14 +346,17 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 }
 
                 final FieldType type = ElasticNativeTypes.fromNativeType(fieldName, nativeType);
-                fieldsMap.put(fieldName, new ElasticIndexField(
+                final CIKey fieldNameKey = CIKey.of(fieldName);
+                final ElasticIndexField elasticIndexField = new ElasticIndexField(
                         null,
                         null,
                         null,
                         fieldName,
                         type,
                         nativeType,
-                        indexed));
+                        indexed);
+                fieldsMap.computeIfAbsent(fieldNameKey, k -> new HashMap<>())
+                        .put(fieldName, elasticIndexField);
             } catch (UnsupportedTypeException e) {
                 LOGGER.debug(e::getMessage, e);
             } catch (Exception e) {

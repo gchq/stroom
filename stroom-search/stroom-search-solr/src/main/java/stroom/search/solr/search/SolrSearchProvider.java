@@ -17,6 +17,7 @@
 package stroom.search.solr.search;
 
 import stroom.datasource.api.v2.FindFieldCriteria;
+import stroom.datasource.api.v2.IndexField;
 import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
@@ -40,8 +41,8 @@ import stroom.search.solr.SolrIndexStore;
 import stroom.search.solr.search.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.search.solr.shared.SolrIndexDataSourceFieldUtil;
 import stroom.search.solr.shared.SolrIndexDoc;
-import stroom.search.solr.shared.SolrIndexField;
 import stroom.security.api.SecurityContext;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.string.CIKey;
 
@@ -51,8 +52,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 // used by DI
 @SuppressWarnings("unused")
@@ -108,15 +112,22 @@ public class SolrSearchProvider implements SearchProvider, IndexFieldProvider {
     public IndexFieldMap getIndexFields(final DocRef docRef, final CIKey fieldName) {
         final SolrIndexDoc index = solrIndexStore.readDocument(docRef);
         if (index != null && index.getFields() != null) {
-            final Optional<SolrIndexField> optionalSolrIndexField = index
+            final Map<String, IndexField> fieldMap = index
                     .getFields()
                     .stream()
                     .filter(field ->
                             CIKey.equalsIgnoreCase(fieldName, field.getFldName()))
-                    .findFirst();
-            return optionalSolrIndexField.orElse(null);
+                    .map(solrIndexField -> (IndexField) solrIndexField)
+                    .collect(Collectors.toMap(IndexField::getFldName, Function.identity()));
+
+            if (GwtNullSafe.hasEntries(fieldMap)) {
+                return IndexFieldMap.fromFieldsMap(fieldName, fieldMap);
+            } else {
+                return null;
+            }
+        } else {
+            return null;
         }
-        return null;
     }
 
     @Override

@@ -47,12 +47,12 @@ class TestCIHashMap {
         assertThat(map.get("bar"))
                 .isEqualTo(map.get(CIKey.of("Bar")));
 
-        assertThat(map.containsStringKey("foo"))
+        assertThat(map.containsKey("foo"))
                 .isTrue();
         assertThat(map.containsKey(CIKey.of("foo")))
                 .isTrue();
 
-        assertThat(map.containsStringKey("bar"))
+        assertThat(map.containsKey("bar"))
                 .isTrue();
         assertThat(map.containsKey(CIKey.of("bar")))
                 .isTrue();
@@ -78,5 +78,30 @@ class TestCIHashMap {
                         "c",
                         "d",
                         "e");
+    }
+
+    @Test
+    void testContainsKey() {
+        final CIHashMap<Integer> map = CIHashMap.of(
+                "a", 100,
+                "b", 200);
+
+        assertThat(map.containsKey("a"))
+                .isTrue();
+        assertThat(map.containsKey("A"))
+                .isTrue();
+        assertThat(map.containsKey("B"))
+                .isTrue();
+        assertThat(map.containsKey("z"))
+                .isFalse();
+
+        assertThat(map.containsKey(CIKey.of("a")))
+                .isTrue();
+        assertThat(map.containsKey(CIKey.of("A")))
+                .isTrue();
+        assertThat(map.containsKey(CIKey.of("B")))
+                .isTrue();
+        assertThat(map.containsKey(CIKey.of("z")))
+                .isFalse();
     }
 }
