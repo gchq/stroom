@@ -18,6 +18,8 @@ public interface AuthenticationService {
 
     URI createSignInUri(String redirectUri);
 
+    URI createErrorUri(BadRequestException badRequestException);
+
 
     // --------------------------------------------------------------------------------
 
