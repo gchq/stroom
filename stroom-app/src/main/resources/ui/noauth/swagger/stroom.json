@@ -6767,6 +6767,36 @@
         "tags" : [ "Processor Filters" ]
       }
     },
+    "/processorFilter/v1/bulkChange" : {
+      "post" : {
+        "operationId" : "bulkChange",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/BulkProcessorFilterChangeRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Bulk change processors",
+        "tags" : [ "Processor Filters" ]
+      }
+    },
     "/processorFilter/v1/find" : {
       "post" : {
         "operationId" : "findProcessorFilters",
@@ -10723,6 +10753,9 @@
       "AdvancedDocumentFindWithPermissionsRequest" : {
         "type" : "object",
         "properties" : {
+          "explicitPermission" : {
+            "type" : "boolean"
+          },
           "expression" : {
             "$ref" : "#/components/schemas/ExpressionOperator"
           },
@@ -11367,6 +11400,21 @@
           },
           "expression" : {
             "$ref" : "#/components/schemas/ExpressionOperator"
+          }
+        }
+      },
+      "BulkProcessorFilterChangeRequest" : {
+        "type" : "object",
+        "properties" : {
+          "change" : {
+            "type" : "string",
+            "enum" : [ "ENABLE", "DISABLE", "DELETE", "SET_RUN_AS_USER" ]
+          },
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },
@@ -12031,6 +12079,9 @@
           },
           "reprocess" : {
             "type" : "boolean"
+          },
+          "runAsUser" : {
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },
@@ -17134,7 +17185,7 @@
         "properties" : {
           "conditionSet" : {
             "type" : "string",
-            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'=', '!=', 'in'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'is'", "'of'", "'has permissions', 'has owner permission', 'has delete permission', 'has edit permission', 'has view permission', 'has use permission'" ]
+            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'=', '!=', 'in'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'is'", "'of'", "'has permissions', 'has owner permission', 'has delete permission', 'has edit permission', 'has view permission', 'has use permission'", "'is'" ]
           },
           "docRefType" : {
             "type" : "string"

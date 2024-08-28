@@ -23,7 +23,6 @@ import stroom.svg.client.Preset;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.UserRef;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -36,7 +35,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.Consumer;
 
 public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerView> {
@@ -271,17 +269,8 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
         }
     }
 
-
-    public void setUserRef(final UserRef userRef) {
-        criteriaBuilder.userRef(userRef);
-    }
-
-    public void setExpression(final ExpressionOperator expression) {
-        criteriaBuilder.expression(expression);
-    }
-
-    public void setRequiredPermissions(final Set<DocumentPermission> requiredPermissions) {
-        criteriaBuilder.requiredPermissions(requiredPermissions);
+    public Builder getCriteriaBuilder() {
+        return criteriaBuilder;
     }
 
     public MultiSelectionModel<FindResultWithPermissions> getSelectionModel() {

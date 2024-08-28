@@ -19,6 +19,8 @@ public class AdvancedDocumentFindWithPermissionsRequest extends AdvancedDocument
 
     @JsonProperty
     private final UserRef userRef;
+    @JsonProperty
+    private final boolean explicitPermission;
 
     @JsonCreator
     public AdvancedDocumentFindWithPermissionsRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
@@ -26,19 +28,27 @@ public class AdvancedDocumentFindWithPermissionsRequest extends AdvancedDocument
                                                       @JsonProperty("expression") final ExpressionOperator expression,
                                                       @JsonProperty("requiredPermissions") final Set<DocumentPermission>
                                                               requiredPermissions,
-                                                      @JsonProperty("userRef") final UserRef userRef) {
+                                                      @JsonProperty("userRef") final UserRef userRef,
+                                                      @JsonProperty("explicitPermission") final boolean
+                                                              explicitPermission) {
         super(pageRequest, sortList, expression, requiredPermissions);
         this.userRef = userRef;
+        this.explicitPermission = explicitPermission;
     }
 
     public UserRef getUserRef() {
         return userRef;
     }
 
+    public boolean isExplicitPermission() {
+        return explicitPermission;
+    }
+
     public static class Builder extends AbstractBuilder<AdvancedDocumentFindWithPermissionsRequest, Builder> {
 
         private Set<DocumentPermission> requiredPermissions;
         private UserRef userRef;
+        private boolean explicitPermission = true;
 
         public Builder() {
 
@@ -60,6 +70,11 @@ public class AdvancedDocumentFindWithPermissionsRequest extends AdvancedDocument
             return self();
         }
 
+        public Builder explicitPermission(final boolean explicitPermission) {
+            this.explicitPermission = explicitPermission;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -72,7 +87,8 @@ public class AdvancedDocumentFindWithPermissionsRequest extends AdvancedDocument
                     sortList,
                     expression,
                     requiredPermissions,
-                    userRef);
+                    userRef,
+                    explicitPermission);
         }
     }
 }

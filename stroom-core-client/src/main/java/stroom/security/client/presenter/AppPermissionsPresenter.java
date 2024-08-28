@@ -64,7 +64,7 @@ public class AppPermissionsPresenter
 
         showAllToggleButton = new InlineSvgToggleButton();
         showAllToggleButton.setSvg(SvgImage.EYE);
-        showAllToggleButton.setTitle("Show Users Without Direct Permissions");
+        showAllToggleButton.setTitle("Show Users Without Explicit Permissions");
         showAllToggleButton.setState(false);
         appUserPermissionsListPresenter.addButton(showAllToggleButton);
     }
@@ -82,10 +82,10 @@ public class AppPermissionsPresenter
         registerHandler(edit.addClickHandler(e -> editPermissions()));
         registerHandler(showAllToggleButton.addClickHandler(e -> {
             if (showAllToggleButton.getState()) {
-                showAllToggleButton.setTitle("Hide Users Without Direct Permissions");
+                showAllToggleButton.setTitle("Hide Users Without Explicit Permissions");
                 showAllToggleButton.setSvg(SvgImage.EYE_OFF);
             } else {
-                showAllToggleButton.setTitle("Show Users Without Direct Permissions");
+                showAllToggleButton.setTitle("Show Users Without Explicit Permissions");
                 showAllToggleButton.setSvg(SvgImage.EYE);
             }
             appUserPermissionsListPresenter.setAllUsers(showAllToggleButton.getState());

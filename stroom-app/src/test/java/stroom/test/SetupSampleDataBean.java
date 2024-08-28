@@ -631,11 +631,11 @@ public final class SetupSampleDataBean {
 
     private void createSampleUsers() {
         for (final AppPermission permission : AppPermission.values()) {
-            // Create a user that has direct permission.
+            // Create a user that has explicit permission.
             final User user = createUser("user__" + permission.name().toLowerCase(Locale.ROOT));
             appPermissionDao.addPermission(user.getUuid(), permission);
 
-            // Create a group that has direct permission.
+            // Create a group that has explicit permission.
             final User group1 = createGroup("group1__" + permission.name().toLowerCase(Locale.ROOT));
             appPermissionDao.addPermission(group1.getUuid(), permission);
 

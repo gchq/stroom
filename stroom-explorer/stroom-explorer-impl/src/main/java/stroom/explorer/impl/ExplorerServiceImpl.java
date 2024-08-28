@@ -1526,14 +1526,17 @@ class ExplorerServiceImpl
                     false);
             final List<FindResult> results = new ArrayList<>();
 
-            final Predicate<ContextualNode> contextualNodePredicate = contextualNode -> {
-                final ExplorerNode node = contextualNode.explorerNode;
-                return node.hasNodeFlag(NodeFlag.FILTER_MATCH) &&
+            walk(Collections.emptyList(), result.getRootNodes(), (path, node) -> {
+                if (node.hasNodeFlag(NodeFlag.FILTER_MATCH) &&
                         node.getDocRef() != null &&
-                        !ExplorerConstants.isRootNode(node);
-            };
-
-            addResults("", result.getRootNodes(), Collections.emptyList(), results, contextualNodePredicate);
+                        !ExplorerConstants.isRootNode(node)) {
+                    results.add(new FindResult(
+                            node.getDocRef(),
+                            path.stream().map(ExplorerNode::getDisplayValue).collect(Collectors.joining(" / ")),
+                            node.getIcon()));
+                }
+                return true;
+            });
 
             // If this is recent items mode then filter by recent items.
             if (recentItemsMode) {
@@ -1609,15 +1612,23 @@ class ExplorerServiceImpl
                     metrics,
                     false);
 
-            final Predicate<ContextualNode> contextualNodePredicate =
-                    createExpressionPredicate(request.getExpression());
-
+            final ExpressionOperator expression = request.getExpression();
+            final Set<String> fields = ExpressionUtil.fields(expression).stream().collect(Collectors.toSet());
+            final ExpressionMatcher expressionMatcher =
+                    new ExpressionMatcher(DocumentPermissionFields.getAllFieldMap());
             final List<FindResult> results = new ArrayList<>();
-            addResults("",
-                    result.getRootNodes(),
-                    Collections.emptyList(),
-                    results,
-                    contextualNodePredicate);
+            walk(Collections.emptyList(), result.getRootNodes(), (path, node) -> {
+                if (matchExpression(path, node, expressionMatcher, expression)) {
+                    results.add(new FindResult(
+                            node.getDocRef(),
+                            path
+                                    .stream()
+                                    .map(ExplorerNode::getDisplayValue)
+                                    .collect(Collectors.joining(" / ")),
+                            node.getIcon()));
+                }
+                return true;
+            });
 
             // If this is recent items mode then filter by recent items.
             results.sort(Comparator
@@ -1652,118 +1663,130 @@ class ExplorerServiceImpl
         return new ResultPage<>(list, resultPage.getPageResponse());
     }
 
-    private void addResults(final String parent,
-                            final List<ExplorerNode> nodes,
-                            final List<DocRef> ancestors,
-                            final List<FindResult> results,
-                            final Predicate<ContextualNode> contextualNodePredicate) {
+
+    private void walk(final List<ExplorerNode> path,
+                      final List<ExplorerNode> nodes,
+                      final TreeConsumer consumer) {
         if (nodes != null) {
             for (final ExplorerNode node : nodes) {
-                final ContextualNode contextualNode = new ContextualNode(ancestors, node);
-                if (contextualNodePredicate.test(contextualNode)) {
-                    results.add(new FindResult(
-                            node.getDocRef(),
-                            parent,
-                            node.getIcon()));
+                if (consumer.consume(path, node)) {
+                    final List<ExplorerNode> newAncestors = new ArrayList<>(path);
+                    newAncestors.add(node);
+                    walk(newAncestors,
+                            node.getChildren(),
+                            consumer);
                 }
-                final List<DocRef> newAncestors = new ArrayList<>(ancestors);
-                if (node.getDocRef() != null) {
-                    newAncestors.add(node.getDocRef());
-                }
-                addResults(
-                        parent.isEmpty()
-                                ? node.getName()
-                                : parent + " / " + node.getName(),
-                        node.getChildren(),
-                        newAncestors,
-                        results,
-                        contextualNodePredicate);
             }
         }
     }
 
-    private Predicate<ContextualNode> createExpressionPredicate(final ExpressionOperator expression) {
-        final Set<String> fields = ExpressionUtil.fields(expression).stream().collect(Collectors.toSet());
-        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(DocumentPermissionFields.getAllFieldMap());
+//    private void addResults(final String parent,
+//                            final List<ExplorerNode> nodes,
+//                            final List<DocRef> ancestors,
+//                            final List<FindResult> results,
+//                            final Predicate<ContextualNode> contextualNodePredicate) {
+//        if (nodes != null) {
+//            for (final ExplorerNode node : nodes) {
+//                final ContextualNode contextualNode = new ContextualNode(ancestors, node);
+//                if (contextualNodePredicate.test(contextualNode)) {
+//                    results.add(new FindResult(
+//                            node.getDocRef(),
+//                            parent,
+//                            node.getIcon()));
+//                }
+//                final List<DocRef> newAncestors = new ArrayList<>(ancestors);
+//                if (node.getDocRef() != null) {
+//                    newAncestors.add(node.getDocRef());
+//                }
+//                addResults(
+//                        parent.isEmpty()
+//                                ? node.getName()
+//                                : parent + " / " + node.getName(),
+//                        node.getChildren(),
+//                        newAncestors,
+//                        results,
+//                        contextualNodePredicate);
+//            }
+//        }
+//    }
 
-        return contextualNode -> {
-            final ExplorerNode node = contextualNode.explorerNode;
-            final List<DocRef> ancestors = contextualNode.ancestors;
-
-            if (node.hasNodeFlag(NodeFlag.FILTER_MATCH) && node.getDocRef() != null) {
-                final Map<String, Object> attributes = new HashMap<>();
-                attributes.put(DocumentPermissionFields.DOCUMENT.getFldName(), node.getDocRef());
-                attributes.put(DocumentPermissionFields.CHILDREN.getFldName(), new TermMatcher() {
-                    @Override
-                    public boolean match(final QueryField queryField,
-                                         final Condition condition,
-                                         final String termValue,
-                                         final DocRef docRef) {
-                        if (Condition.OF_DOC_REF.equals(condition)) {
-                            if (docRef == null) {
-                                return false;
-                            }
-                            if (ancestors != null && ancestors.size() > 0) {
-                                final DocRef parent = ancestors.getLast();
-                                return docRef.equals(parent);
-                            }
-                        }
-                        return false;
-                    }
-                });
-                attributes.put(DocumentPermissionFields.DESCENDANTS.getFldName(), new TermMatcher() {
-                    @Override
-                    public boolean match(final QueryField queryField,
-                                         final Condition condition,
-                                         final String termValue,
-                                         final DocRef docRef) {
-                        if (Condition.OF_DOC_REF.equals(condition)) {
-                            if (docRef == null) {
-                                return false;
-                            }
-                            if (ancestors != null && ancestors.size() > 0) {
-                                return ancestors.contains(docRef);
-                            }
-                        }
-                        return false;
-                    }
-                });
-                attributes.put(DocumentPermissionFields.USER.getFldName(), new TermMatcher() {
-                    @Override
-                    public boolean match(final QueryField queryField,
-                                         final Condition condition,
-                                         final String termValue,
-                                         final DocRef docRef) {
+    private boolean matchExpression(final List<ExplorerNode> path,
+                                    final ExplorerNode node,
+                                    final ExpressionMatcher expressionMatcher,
+                                    final ExpressionOperator expression) {
+        if (node.hasNodeFlag(NodeFlag.FILTER_MATCH) && node.getDocRef() != null) {
+            final Map<String, Object> attributes = new HashMap<>();
+            attributes.put(DocumentPermissionFields.DOCUMENT.getFldName(), node.getDocRef());
+            attributes.put(DocumentPermissionFields.CHILDREN.getFldName(), new TermMatcher() {
+                @Override
+                public boolean match(final QueryField queryField,
+                                     final Condition condition,
+                                     final String termValue,
+                                     final DocRef docRef) {
+                    if (Condition.OF_DOC_REF.equals(condition)) {
                         if (docRef == null) {
                             return false;
                         }
-
-                        final DocumentPermission permission = documentPermissionService
-                                .getPermission(
-                                        node.getDocRef(),
-                                        UserRef.builder().uuid(docRef.getUuid()).build());
-
-                        return switch (condition) {
-                            case USER_HAS_PERM -> permission != null;
-                            case USER_HAS_OWNER -> DocumentPermission.OWNER.equals(permission);
-                            case USER_HAS_DELETE -> DocumentPermission.DELETE.equals(permission);
-                            case USER_HAS_EDIT -> DocumentPermission.EDIT.equals(permission);
-                            case USER_HAS_VIEW -> DocumentPermission.VIEW.equals(permission);
-                            case USER_HAS_USE -> DocumentPermission.USE.equals(permission);
-                            default -> false;
-                        };
+                        if (!path.isEmpty()) {
+                            final DocRef parent = path.getLast().getDocRef();
+                            return docRef.equals(parent);
+                        }
                     }
-                });
-                attributes.put(DocumentPermissionFields.DOCUMENT_TYPE.getFldName(), node.getDocRef().getType());
-                attributes.put(DocumentPermissionFields.DOCUMENT_UUID.getFldName(), node.getDocRef().getUuid());
-                attributes.put(DocumentPermissionFields.DOCUMENT_NAME.getFldName(), node.getDocRef().getName());
-                attributes.put(DocumentPermissionFields.DOCUMENT_TAG.getFldName(), node.getTags());
+                    return false;
+                }
+            });
+            attributes.put(DocumentPermissionFields.DESCENDANTS.getFldName(), new TermMatcher() {
+                @Override
+                public boolean match(final QueryField queryField,
+                                     final Condition condition,
+                                     final String termValue,
+                                     final DocRef docRef) {
+                    if (Condition.OF_DOC_REF.equals(condition)) {
+                        if (docRef == null) {
+                            return false;
+                        }
+                        if (!path.isEmpty()) {
+                            return path.stream().anyMatch(n -> Objects.equals(docRef, n.getDocRef()));
+                        }
+                    }
+                    return false;
+                }
+            });
+            attributes.put(DocumentPermissionFields.USER.getFldName(), new TermMatcher() {
+                @Override
+                public boolean match(final QueryField queryField,
+                                     final Condition condition,
+                                     final String termValue,
+                                     final DocRef docRef) {
+                    if (docRef == null) {
+                        return false;
+                    }
 
-                return expressionMatcher.match(attributes, expression);
-            }
+                    final DocumentPermission permission = documentPermissionService
+                            .getPermission(
+                                    node.getDocRef(),
+                                    UserRef.builder().uuid(docRef.getUuid()).build());
 
-            return false;
-        };
+                    return switch (condition) {
+                        case USER_HAS_PERM -> permission != null;
+                        case USER_HAS_OWNER -> DocumentPermission.OWNER.equals(permission);
+                        case USER_HAS_DELETE -> DocumentPermission.DELETE.equals(permission);
+                        case USER_HAS_EDIT -> DocumentPermission.EDIT.equals(permission);
+                        case USER_HAS_VIEW -> DocumentPermission.VIEW.equals(permission);
+                        case USER_HAS_USE -> DocumentPermission.USE.equals(permission);
+                        default -> false;
+                    };
+                }
+            });
+            attributes.put(DocumentPermissionFields.DOCUMENT_TYPE.getFldName(), node.getDocRef().getType());
+            attributes.put(DocumentPermissionFields.DOCUMENT_UUID.getFldName(), node.getDocRef().getUuid());
+            attributes.put(DocumentPermissionFields.DOCUMENT_NAME.getFldName(), node.getDocRef().getName());
+            attributes.put(DocumentPermissionFields.DOCUMENT_TAG.getFldName(), node.getTags());
+
+            return expressionMatcher.match(attributes, expression);
+        }
+
+        return false;
     }
 
     @Override
@@ -1875,13 +1898,9 @@ class ExplorerServiceImpl
         REMOVE
     }
 
-    /**
-     * Remember the path to the node, i.e. the context.
-     *
-     * @param ancestors    The ancestral path to the node.
-     * @param explorerNode The node.
-     */
-    private record ContextualNode(List<DocRef> ancestors, ExplorerNode explorerNode) {
+    private interface TreeConsumer {
 
+        // Consume a node and return true if we should keep descending.
+        boolean consume(List<ExplorerNode> path, ExplorerNode node);
     }
 }

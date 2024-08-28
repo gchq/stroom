@@ -4643,6 +4643,26 @@ paths:
       summary: Creates a filter
       tags:
       - Processor Filters
+  /processorFilter/v1/bulkChange:
+    post:
+      operationId: bulkChange
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkProcessorFilterChangeRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Bulk change processors
+      tags:
+      - Processor Filters
   /processorFilter/v1/find:
     post:
       operationId: findProcessorFilters
@@ -7371,6 +7391,8 @@ components:
     AdvancedDocumentFindWithPermissionsRequest:
       type: object
       properties:
+        explicitPermission:
+          type: boolean
         expression:
           $ref: '#/components/schemas/ExpressionOperator'
         pageRequest:
@@ -7904,6 +7926,20 @@ components:
           $ref: '#/components/schemas/AbstractDocumentPermissionsChange'
         expression:
           $ref: '#/components/schemas/ExpressionOperator'
+    BulkProcessorFilterChangeRequest:
+      type: object
+      properties:
+        change:
+          type: string
+          enum:
+          - ENABLE
+          - DISABLE
+          - DELETE
+          - SET_RUN_AS_USER
+        expression:
+          $ref: '#/components/schemas/ExpressionOperator'
+        userRef:
+          $ref: '#/components/schemas/UserRef'
     CacheIdentity:
       type: object
       properties:
@@ -8419,6 +8455,8 @@ components:
           $ref: '#/components/schemas/QueryData'
         reprocess:
           type: boolean
+        runAsUser:
+          $ref: '#/components/schemas/UserRef'
     CriteriaFieldSort:
       type: object
       properties:
@@ -13207,6 +13245,7 @@ components:
           - '''of'''
           - "'has permissions', 'has owner permission', 'has delete permission', 'has\
             \ edit permission', 'has view permission', 'has use permission'"
+          - '''is'''
         docRefType:
           type: string
         fldName:

@@ -33,6 +33,7 @@ import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -55,8 +56,9 @@ public class UserPermissionReportPresenter
     private final DocumentPermissionsListPresenter documentListPresenter;
     private final Provider<DocumentUserPermissionsEditPresenter> documentUserPermissionsEditPresenterProvider;
     private final Provider<BatchDocumentPermissionsEditPresenter> batchDocumentPermissionsEditPresenterProvider;
-    private final ButtonView docFilter;
     private final ButtonView docEdit;
+    private final InlineSvgToggleButton showAllToggleButton;
+    private final ButtonView docFilter;
     private final ButtonView batchEdit;
     private ExpressionOperator filterExpression;
     private ExpressionOperator quickFilterExpression;
@@ -85,15 +87,19 @@ public class UserPermissionReportPresenter
         filterExpression = ExpressionOperator.builder().op(Op.AND).build();
         quickFilterExpression = getShowAllExpression();
 
-        // Filter
-        docFilter = documentListPresenter.getView().addButton(new Preset(
-                SvgImage.FILTER,
-                "Filter Documents To Apply Permissions Changes On",
-                true));
         docEdit = documentListPresenter.getView().addButton(new Preset(
                 SvgImage.EDIT,
                 "Edit Permissions For Selected Document",
                 false));
+        showAllToggleButton = new InlineSvgToggleButton();
+        showAllToggleButton.setSvg(SvgImage.EYE);
+        showAllToggleButton.setTitle("Show Users Without Explicit Permissions");
+        showAllToggleButton.setState(false);
+        documentListPresenter.getView().addButton(showAllToggleButton);
+        docFilter = documentListPresenter.getView().addButton(new Preset(
+                SvgImage.FILTER,
+                "Filter Documents To Apply Permissions Changes On",
+                true));
         batchEdit = documentListPresenter.getView().addButton(new Preset(
                 SvgImage.GENERATE,
                 "Batch Edit Permissions For Filtered Documents",
@@ -110,14 +116,25 @@ public class UserPermissionReportPresenter
     protected void onBind() {
         super.onBind();
 
-        registerHandler(docFilter.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                onFilter();
-            }
-        }));
         registerHandler(docEdit.addClickHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
                 onEdit();
+            }
+        }));
+        registerHandler(showAllToggleButton.addClickHandler(e -> {
+            if (showAllToggleButton.getState()) {
+                showAllToggleButton.setTitle("Hide Documents Without Explicit Permissions");
+                showAllToggleButton.setSvg(SvgImage.EYE_OFF);
+            } else {
+                showAllToggleButton.setTitle("Show Documents Without Explicit Permissions");
+                showAllToggleButton.setSvg(SvgImage.EYE);
+            }
+            documentListPresenter.getCriteriaBuilder().explicitPermission(!showAllToggleButton.getState());
+            documentListPresenter.refresh();
+        }));
+        registerHandler(docFilter.addClickHandler(e -> {
+            if (MouseUtil.isPrimary(e)) {
+                onFilter();
             }
         }));
         registerHandler(batchEdit.addClickHandler(e -> {
@@ -190,7 +207,7 @@ public class UserPermissionReportPresenter
         }
 
         combinedExpression = builder.build();
-        documentListPresenter.setExpression(combinedExpression);
+        documentListPresenter.getCriteriaBuilder().expression(combinedExpression);
         documentListPresenter.refresh();
     }
 
@@ -268,11 +285,11 @@ public class UserPermissionReportPresenter
 
     public void setUserRef(final UserRef userRef) {
         this.userRef = userRef;
-        documentListPresenter.setUserRef(userRef);
+        documentListPresenter.getCriteriaBuilder().userRef(userRef);
 
         // We only want to see documents tha the current user is effectively the owner of as they can't change
         // permissions on anything else.
-        documentListPresenter.setRequiredPermissions(Set.of(DocumentPermission.VIEW));
+        documentListPresenter.getCriteriaBuilder().requiredPermissions(Set.of(DocumentPermission.VIEW));
         refresh();
     }
 

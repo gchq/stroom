@@ -39,6 +39,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
 import stroom.security.shared.DocumentUserPermissionsReport;
 import stroom.svg.client.Preset;
+import stroom.util.client.CountDownAndRun;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.UserRef;
@@ -316,7 +317,7 @@ public class DocumentCreatePermissionsListPresenter
 
     private void onChangeAll(final boolean selected) {
         documentTypeCache.fetch(documentTypes -> {
-            final CountdownAndRun countdownAndRun = new CountdownAndRun(documentTypes.getTypes().size(),
+            final CountDownAndRun countdownAndRun = new CountDownAndRun(documentTypes.getTypes().size(),
                     this::refreshAll);
             for (final DocumentType documentType : documentTypes.getTypes()) {
                 onChange(documentType, selected, ok -> countdownAndRun.countdown());
@@ -397,23 +398,5 @@ public class DocumentCreatePermissionsListPresenter
         void setDetails(SafeHtml details);
 
         boolean isIncludeDescendants();
-    }
-
-    private static class CountdownAndRun {
-
-        private int count;
-        private Runnable runnable;
-
-        public CountdownAndRun(final int count, final Runnable runnable) {
-            this.count = count;
-            this.runnable = runnable;
-        }
-
-        public synchronized void countdown() {
-            count--;
-            if (count == 0) {
-                runnable.run();
-            }
-        }
     }
 }
