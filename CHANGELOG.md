@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.4.14] - 2024-08-28
+
+* Issue **#4408** : Fix SQL deadlock between task queuing and task physical deletion.
+
+* Issue **#4410** : Allow over creation of processor tasks for bounded filters.
+
+
 ## [v7.4.13] - 2024-08-08
 
 * Issue **#4403** : Fix to make elastic indexes searchable with StroomQL.
@@ -717,7 +724,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4.13...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4.14...HEAD
+[v7.4.14]: https://github.com/gchq/stroom/compare/v7.4.13...v7.4.14
 [v7.4.13]: https://github.com/gchq/stroom/compare/v7.4.12...v7.4.13
 [v7.4.12]: https://github.com/gchq/stroom/compare/v7.4.11...v7.4.12
 [v7.4.11]: https://github.com/gchq/stroom/compare/v7.4.10...v7.4.11
