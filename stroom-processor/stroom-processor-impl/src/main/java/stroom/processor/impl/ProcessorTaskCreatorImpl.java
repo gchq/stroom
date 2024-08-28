@@ -169,7 +169,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         try {
             // We need to create enough tasks to keep the queue full, so we need to either over create or create as
             // many as the queue has capacity.
-            final int tasksToCreatePerFilter =
+            final int tasksToCreate =
                     Math.max(processorConfig.getTasksToCreate(), processorConfig.getQueueSize());
             final LinkedBlockingQueue<ProcessorFilter> filterQueue = new LinkedBlockingQueue<>(filters);
             final AtomicInteger filterCount = new AtomicInteger();
@@ -182,7 +182,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                 futures[i] = CompletableFuture.runAsync(() -> {
                     boolean run = true;
                     while (run) {
-                        final int remaining = tasksToCreatePerFilter - totalTasksCreated.intValue();
+                        final int remaining = tasksToCreate - totalTasksCreated.intValue();
                         final ProcessorFilter filter = filterQueue.poll();
                         if (remaining > 0 && filter != null && !Thread.currentThread().isInterrupted()) {
                             try {
@@ -316,7 +316,8 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                         .isBefore(Instant.now())) {
             final int currentCreatedTasks = processorTaskDao.countTasksForFilter(filter.getId(), TaskStatus.CREATED);
             int maxTasks;
-            if (filter.isProcessingTaskCountBounded()) {
+            if (filter.isProcessingTaskCountBounded() &&
+                    !processorConfigProvider.get().isCreateTasksBeyondProcessLimit()) {
                 // The max concurrent tasks for this filter is bounded, so only create tasks up to that limit
                 maxTasks = Math.min(tasksToCreatePerFilter, filter.getMaxProcessingTasks()) - currentCreatedTasks;
             } else {
