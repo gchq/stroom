@@ -102,7 +102,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -1594,8 +1593,43 @@ class ExplorerServiceImpl
     public ResultPage<FindResult> advancedFind(final AdvancedDocumentFindRequest request) {
         final LocalMetrics metrics = Metrics.createLocalMetrics(LOGGER.isDebugEnabled());
         try {
+            final List<FindResult> results = new ArrayList<>();
+            applyExpressionFilter(request, (path, node) -> {
+                results.add(createFindResult(path, node));
+                return true;
+            });
+
+            // If this is recent items mode then filter by recent items.
+            results.sort(Comparator
+                    .<FindResult, String>comparing(res -> res.getDocRef().getName(), Comparator.naturalOrder())
+                    .thenComparing(FindResult::getPath)
+                    .thenComparing(res -> res.getDocRef().getType())
+                    .thenComparing(res -> res.getDocRef().getUuid()));
+
+            return ResultPage.createPageLimitedList(results, request.getPageRequest());
+
+        } catch (Exception e) {
+            LOGGER.error("Error finding nodes with request {}", request, e);
+            throw e;
+        }
+    }
+
+    private FindResult createFindResult(final List<ExplorerNode> path, final ExplorerNode node) {
+        return new FindResult(
+                node.getDocRef(),
+                path
+                        .stream()
+                        .map(ExplorerNode::getDisplayValue)
+                        .collect(Collectors.joining(" / ")),
+                node.getIcon());
+    }
+
+    private void applyExpressionFilter(final AdvancedDocumentFindRequest request,
+                                       final TreeConsumer consumer) {
+        final LocalMetrics metrics = Metrics.createLocalMetrics(LOGGER.isDebugEnabled());
+        try {
             if (request.getExpression() == null || ExpressionUtil.termCount(request.getExpression()) == 0) {
-                return ResultPage.empty();
+                return;
             }
 
             // Get a copy of the master tree model, so we can add the favourites into it.
@@ -1616,28 +1650,12 @@ class ExplorerServiceImpl
             final Set<String> fields = ExpressionUtil.fields(expression).stream().collect(Collectors.toSet());
             final ExpressionMatcher expressionMatcher =
                     new ExpressionMatcher(DocumentPermissionFields.getAllFieldMap());
-            final List<FindResult> results = new ArrayList<>();
             walk(Collections.emptyList(), result.getRootNodes(), (path, node) -> {
                 if (matchExpression(path, node, expressionMatcher, expression)) {
-                    results.add(new FindResult(
-                            node.getDocRef(),
-                            path
-                                    .stream()
-                                    .map(ExplorerNode::getDisplayValue)
-                                    .collect(Collectors.joining(" / ")),
-                            node.getIcon()));
+                    return consumer.consume(path, node);
                 }
                 return true;
             });
-
-            // If this is recent items mode then filter by recent items.
-            results.sort(Comparator
-                    .<FindResult, String>comparing(res -> res.getDocRef().getName(), Comparator.naturalOrder())
-                    .thenComparing(FindResult::getPath)
-                    .thenComparing(res -> res.getDocRef().getType())
-                    .thenComparing(res -> res.getDocRef().getUuid()));
-
-            return ResultPage.createPageLimitedList(results, request.getPageRequest());
 
         } catch (Exception e) {
             LOGGER.error("Error finding nodes with request {}", request, e);
@@ -1649,20 +1667,34 @@ class ExplorerServiceImpl
     public ResultPage<FindResultWithPermissions> advancedFindWithPermissions(
             final AdvancedDocumentFindWithPermissionsRequest request) {
         // First find the results then decorate them with user permissions.
-        final ResultPage<FindResult> resultPage = advancedFind(request);
-
-        // Now decorate with permissions.
-        final List<FindResultWithPermissions> list = new ArrayList<>();
-        for (final FindResult findResult : resultPage.getValues()) {
+        final List<FindResultWithPermissions> results = new ArrayList<>();
+        applyExpressionFilter(request, (path, node) -> {
             final DocumentUserPermissions permissions = documentPermissionService
-                    .getPermissions(findResult.getDocRef(), request.getUserRef());
-            list.add(new FindResultWithPermissions(findResult, permissions));
-        }
+                    .getPermissions(node.getDocRef(), request.getUserRef());
+            if (request.isExplicitPermission()) {
+                if (permissions.getPermission() != null ||
+                        (permissions.getDocumentCreatePermissions() != null &&
+                                !permissions.getDocumentCreatePermissions().isEmpty())) {
+                    results.add(new FindResultWithPermissions(createFindResult(path, node), permissions));
+                }
+            } else {
+                results.add(new FindResultWithPermissions(createFindResult(path, node), permissions));
+            }
+
+            return true;
+        });
+
+        // If this is recent items mode then filter by recent items.
+        results.sort(Comparator
+                .<FindResultWithPermissions, String>comparing(res ->
+                        res.getFindResult().getDocRef().getName(), Comparator.naturalOrder())
+                .thenComparing(res -> res.getFindResult().getPath())
+                .thenComparing(res -> res.getFindResult().getDocRef().getType())
+                .thenComparing(res -> res.getFindResult().getDocRef().getUuid()));
 
         // Return the decorated result.
-        return new ResultPage<>(list, resultPage.getPageResponse());
+        return ResultPage.createPageLimitedList(results, request.getPageRequest());
     }
-
 
     private void walk(final List<ExplorerNode> path,
                       final List<ExplorerNode> nodes,
@@ -1862,11 +1894,11 @@ class ExplorerServiceImpl
                 .expression(request.getExpression())
                 .pageRequest(PageRequest.unlimited())
                 .build();
-        final ResultPage<FindResult> results = advancedFind(advancedDocumentFindRequest);
-        results.getValues().stream().map(FindResult::getDocRef).forEach(docRef -> {
+        applyExpressionFilter(advancedDocumentFindRequest, (path, node) -> {
             final SingleDocumentPermissionChangeRequest singleDocumentPermissionChangeRequest =
-                    new SingleDocumentPermissionChangeRequest(docRef, request.getChange());
+                    new SingleDocumentPermissionChangeRequest(node.getDocRef(), request.getChange());
             documentPermissionService.changeDocumentPermissions(singleDocumentPermissionChangeRequest);
+            return true;
         });
         return true;
     }
