@@ -27,8 +27,8 @@ import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.AttributeMap;
-import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaDataCriteria;
+import stroom.meta.api.EffectiveMetaSet;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaSecurityFilter;
 import stroom.meta.api.MetaService;
@@ -454,7 +454,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     @Override
-    public List<EffectiveMeta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
+    public EffectiveMetaSet findEffectiveData(final EffectiveMetaDataCriteria criteria) {
         LOGGER.debug("findEffectiveData({})", criteria);
 
         return securityContext.asProcessingUserResult(() ->

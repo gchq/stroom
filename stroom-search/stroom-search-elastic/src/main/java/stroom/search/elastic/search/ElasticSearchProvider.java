@@ -460,7 +460,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
 
     @Override
     public List<DocRef> list() {
-        return elasticClusterStore.list();
+        return elasticIndexStore.list();
     }
 
     @Override

@@ -31,6 +31,7 @@ import stroom.explorer.shared.PermissionInheritance;
 import stroom.feed.api.FeedStore;
 import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaDataCriteria;
+import stroom.meta.api.EffectiveMetaSet;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.impl.MetaValueConfig;
@@ -620,7 +621,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
                 feed2,
                 StreamTypeNames.REFERENCE);
 
-        List<EffectiveMeta> list = metaService.findEffectiveData(criteria);
+        EffectiveMetaSet list = metaService.findEffectiveData(criteria);
 
         // Make sure the list contains what it should.
         verifySet(list, refData1, refData2);
@@ -629,7 +630,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
         // the last one as it would be the most effective.
         criteria = new EffectiveMetaDataCriteria(
                 new Period(DateUtil.parseNormalDateTimeString("2013-01-01T00:00:00.000Z"),
-                DateUtil.parseNormalDateTimeString("2014-01-01T00:00:00.000Z")),
+                        DateUtil.parseNormalDateTimeString("2014-01-01T00:00:00.000Z")),
                 feed2,
                 StreamTypeNames.REFERENCE);
 
@@ -647,14 +648,17 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
      * @param list
      * @param expected
      */
-    private void verifySet(final List<EffectiveMeta> list, final Meta... expected) {
-        assertThat(list).isNotNull();
-        assertThat(list.size()).isEqualTo(expected.length);
+    private void verifySet(final EffectiveMetaSet list, final Meta... expected) {
+        assertThat(list)
+                .isNotNull();
+        assertThat(list.size())
+                .isEqualTo(expected.length);
         final Set<EffectiveMeta> expectedSet = Arrays.stream(expected)
                 .map(EffectiveMeta::new)
                 .collect(Collectors.toSet());
 
-        assertThat(list).containsAll(expectedSet);
+        assertThat(list)
+                .containsAll(expectedSet);
     }
 
     private Meta buildRefData(final String feed,
