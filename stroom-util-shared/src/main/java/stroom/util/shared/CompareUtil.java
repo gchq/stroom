@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,9 +156,15 @@ public final class CompareUtil {
         return comparator;
     }
 
+    /**
+     * Case in-sensitive comparator that places any null values first.
+     * Copes with null values for T and for the String extracted from T.
+     */
     public static <T> Comparator<T> getNullSafeCaseInsensitiveComparator(final Function<T, String> extractor) {
         return Comparator.nullsFirst(
-                Comparator.comparing(extractor, String.CASE_INSENSITIVE_ORDER));
+                Comparator.comparing(
+                        extractor,
+                        Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER)));
     }
 
     /**
