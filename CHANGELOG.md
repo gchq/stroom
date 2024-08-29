@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.4.15] - 2024-08-29
+
+* Issue **#4411** : Prevent queueing too many processor tasks.
+
+
 ## [v7.4.14] - 2024-08-28
 
 * Issue **#4408** : Fix SQL deadlock between task queuing and task physical deletion.
@@ -724,7 +729,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4.14...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4.15...HEAD
+[v7.4.15]: https://github.com/gchq/stroom/compare/v7.4.14...v7.4.15
 [v7.4.14]: https://github.com/gchq/stroom/compare/v7.4.13...v7.4.14
 [v7.4.13]: https://github.com/gchq/stroom/compare/v7.4.12...v7.4.13
 [v7.4.12]: https://github.com/gchq/stroom/compare/v7.4.11...v7.4.12
