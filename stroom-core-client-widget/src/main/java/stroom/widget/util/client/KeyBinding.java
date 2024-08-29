@@ -200,28 +200,33 @@ public class KeyBinding {
      */
     public static Action test(final NativeEvent e) {
         Action action = null;
-        if (BrowserEvents.KEYDOWN.equals(e.getType())) {
-            final Shortcut shortcut = getShortcut(e);
-            action = testKeyDownEvent(e, shortcut);
-            if (action == null) {
-                action = onKeyDown(e, shortcut);
-            }
+        logKey(e);
 
-            final Command command = COMMANDS.get(action);
-            if (command == null) {
-                // No command assigned so return the action for the caller to do something with
+        // We don't want to test key binds in text input else we pick up things like the user typing '/'
+        if (shouldCheckKeySequence(e)) {
+            if (BrowserEvents.KEYDOWN.equals(e.getType())) {
+                final Shortcut shortcut = getShortcut(e);
+                action = testKeyDownEvent(e, shortcut);
+                if (action == null) {
+                    action = onKeyDown(e, shortcut);
+                }
+
+                final Command command = COMMANDS.get(action);
+                if (command == null) {
+                    // No command assigned so return the action for the caller to do something with
 //                action = onKeyDown(e, shortcut);
-            } else {
-                // Swallow the event and run the command
-                e.preventDefault();
-                e.stopPropagation();
-                command.execute();
-                // Clear the action as we have executed the command
-                action = null;
+                } else {
+                    // Swallow the event and run the command
+                    e.preventDefault();
+                    e.stopPropagation();
+                    command.execute();
+                    // Clear the action as we have executed the command
+                    action = null;
+                }
+            } else if (BrowserEvents.KEYUP.equals(e.getType())) {
+                final Shortcut shortcut = getShortcut(e);
+                testKeyUpEvent(e, shortcut);
             }
-        } else if (BrowserEvents.KEYUP.equals(e.getType())) {
-            final Shortcut shortcut = getShortcut(e);
-            testKeyUpEvent(e, shortcut);
         }
         return action;
     }
@@ -253,7 +258,8 @@ public class KeyBinding {
     }
 
     private static boolean isTextBox(final Element element, final String tagName) {
-        return "INPUT".equalsIgnoreCase(tagName) && isTextualInputType(element);
+        return "INPUT".equalsIgnoreCase(tagName)
+                && isTextualInputType(element);
     }
 
     private static boolean isTextualInputType(final Element element) {
@@ -270,30 +276,27 @@ public class KeyBinding {
     private static Action testKeyDownEvent(final NativeEvent e,
                                            final Shortcut shortcut) {
         Action action = null;
-        logKey(e);
-        if (shouldCheckKeySequence(e)) {
-            if (firstInSequence == null) {
-                if (KEY_SEQUENCES_BY_FIRST_KEY.containsKey(shortcut)) {
-                    // Might be a key sequence so allow the user a short time to press
-                    // the second key bind in the sequence
-                    firstInSequence = shortcut;
-                    eventTargetKey = deriveEventTargetKey(e);
-                    KEY_SEQUENCE_TIMER.cancel();
-                    KEY_SEQUENCE_TIMER.schedule(KEY_SEQUENCE_TIMER_DELAY);
-                }
-            } else {
-                // Check for key up in between so we know it is two distinct key binds
-                if (seenKeyUpBetween
-                        && KEY_SEQUENCES_BY_SECOND_KEY.containsKey(shortcut)
-                        && Objects.equals(eventTargetKey, deriveEventTargetKey(e))) {
-                    final KeySequence keySequence = new KeySequence(firstInSequence, shortcut);
-                    action = KEY_SEQUENCE_TO_ACTION_MAP.get(keySequence);
-//                    GWT.log("Got action: " + action + " for sequence " + keySequence);
-                    // We have seen a second key so regardless of whether the pair matched on one of our binds
-                    // clear out the state ready for another go
-                    clearKeySequenceState();
-                    KEY_SEQUENCE_TIMER.cancel();
-                }
+        if (firstInSequence == null) {
+            if (KEY_SEQUENCES_BY_FIRST_KEY.containsKey(shortcut)) {
+                // Might be a key sequence so allow the user a short time to press
+                // the second key bind in the sequence
+                firstInSequence = shortcut;
+                eventTargetKey = deriveEventTargetKey(e);
+                KEY_SEQUENCE_TIMER.cancel();
+                KEY_SEQUENCE_TIMER.schedule(KEY_SEQUENCE_TIMER_DELAY);
+            }
+        } else {
+            // Check for key up in between so we know it is two distinct key binds
+            if (seenKeyUpBetween
+                    && KEY_SEQUENCES_BY_SECOND_KEY.containsKey(shortcut)
+                    && Objects.equals(eventTargetKey, deriveEventTargetKey(e))) {
+                final KeySequence keySequence = new KeySequence(firstInSequence, shortcut);
+                action = KEY_SEQUENCE_TO_ACTION_MAP.get(keySequence);
+//                GWT.log("Got action: " + action + " for sequence " + keySequence);
+                // We have seen a second key so regardless of whether the pair matched on one of our binds
+                // clear out the state ready for another go
+                clearKeySequenceState();
+                KEY_SEQUENCE_TIMER.cancel();
             }
         }
         return action;
@@ -301,12 +304,9 @@ public class KeyBinding {
 
     private static void testKeyUpEvent(final NativeEvent e,
                                        final Shortcut shortcut) {
-        logKey(e);
-        if (shouldCheckKeySequence(e)) {
-            if (firstInSequence != null
-                    && Objects.equals(eventTargetKey, deriveEventTargetKey(e))) {
-                seenKeyUpBetween = true;
-            }
+        if (firstInSequence != null
+                && Objects.equals(eventTargetKey, deriveEventTargetKey(e))) {
+            seenKeyUpBetween = true;
         }
     }
 
