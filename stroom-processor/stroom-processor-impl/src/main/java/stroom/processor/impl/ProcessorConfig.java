@@ -142,8 +142,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         return queueSize;
     }
 
-    @JsonPropertyDescription("How many tasks should we try to create in the DB. If the queue size is " +
-            "larger then that figure will be used instead as we want to be able to fill the queue. " +
+    @JsonPropertyDescription("How many tasks should we try to create in the DB ready to be queued." +
             "Note that the number of tasks created may be greater than this number as each task creation thread will " +
             "try and create the same number of tasks.")
     public int getTasksToCreate() {
