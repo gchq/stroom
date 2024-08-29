@@ -49,6 +49,7 @@ import stroom.task.api.TaskContextFactory;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.CompareUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.string.CIKey;
 
@@ -318,6 +319,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 .filter(Objects::nonNull)
                 .flatMap(map ->
                         map.values().stream())
+                .sorted(CompareUtil.getNullSafeCaseInsensitiveComparator(ElasticIndexField::getFldName))
                 .toList();
     }
 

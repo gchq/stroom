@@ -27,6 +27,4 @@ public interface ElasticIndexService {
     List<QueryField> getDataSourceFields(ElasticIndexDoc index);
 
     List<ElasticIndexField> getFields(ElasticIndexDoc index);
-
-//    Map<CIKey, IndexFieldMap<ElasticIndexField>> getFieldsMap(ElasticIndexDoc index);
 }
