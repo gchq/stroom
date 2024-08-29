@@ -142,7 +142,7 @@ public class AttributeMapUtil {
                     if (splitPos != -1) {
                         final String key = line.substring(0, splitPos);
                         String value = line.substring(splitPos + 1);
-                        attributeMap.put(key.trim(), value.trim());
+                        attributeMap.put(key, value);
                     } else {
                         attributeMap.put(line, null);
                     }

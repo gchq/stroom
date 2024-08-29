@@ -82,9 +82,9 @@ class TestCIHashMap {
 
     @Test
     void testContainsKey() {
-        final CIHashMap<Integer> map = CIHashMap.of(
+        final CIHashMap<Integer> map = new CIHashMap<>(CIKey.mapOf(
                 "a", 100,
-                "b", 200);
+                "b", 200));
 
         assertThat(map.containsKey("a"))
                 .isTrue();

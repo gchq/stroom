@@ -18,7 +18,6 @@ package stroom.receive.common;
 
 import stroom.meta.api.AttributeMap;
 import stroom.security.api.UserIdentity;
-import stroom.util.shared.string.CIKey;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -45,11 +44,11 @@ public interface RequestAuthenticator {
      */
     boolean hasAuthenticationToken(final HttpServletRequest request);
 
-    /**
-     * Remove any headers relating to authorisations, e.g. 'Authorisation',
-     * from the passed map
-     */
-    void removeAuthorisationEntries(final Map<CIKey, String> headers);
+//    /**
+//     * Remove any headers relating to authorisations, e.g. 'Authorisation',
+//     * from the passed map
+//     */
+//    void removeAuthorisationEntries(final Map<CIKey, String> headers);
 
     /**
      * @return The authentication/authorisation headers to enable authentication with this user

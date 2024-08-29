@@ -42,6 +42,7 @@ public class CIKeys {
     public static final CIKey EVENT_ID = commonKey("EventId");
     public static final CIKey EVENT_TIME = commonKey("EventTime");
     public static final CIKey FEED = commonKey("Feed");
+    public static final CIKey FORWARD_ERROR = commonKey("ForwardError");
     public static final CIKey FILES = commonKey("Files");
     public static final CIKey GUID = commonKey("GUID");
     public static final CIKey ID = commonKey("Id");
@@ -54,6 +55,7 @@ public class CIKeys {
     public static final CIKey NODE = commonKey("Node");
     public static final CIKey PARTITION = commonKey("Partition");
     public static final CIKey PIPELINE = commonKey("Pipeline");
+    public static final CIKey PROXY_FORWARD_ID = commonKey("ProxyForwardId");
     public static final CIKey RECEIVED_PATH = commonKey("ReceivedPath");
     public static final CIKey RECEIVED_TIME = commonKey("ReceivedTime");
     public static final CIKey RECEIVED_TIME_HISTORY = commonKey("ReceivedTimeHistory");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@ final class S3Target implements Target {
 
     private void updateAttribute(final S3Target target, final QueryField key, final String value) {
         if (!target.getAttributes().containsKey(key.getFldName())) {
-            target.getAttributes().put(key.getFldName(), value);
+            target.getAttributes().put(key.getFldNameAsCIKey(), value);
         }
     }
 

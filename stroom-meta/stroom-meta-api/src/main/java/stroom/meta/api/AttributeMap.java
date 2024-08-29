@@ -19,12 +19,12 @@ package stroom.meta.api;
 import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.GwtNullSafe;
-import stroom.util.shared.string.CIHashMap;
 import stroom.util.shared.string.CIKey;
 
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -38,11 +38,12 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 /**
- * Map that does not care about key case.
+ * Mutable map that does not care about key case.
  */
-public class AttributeMap extends CIHashMap<String> {
+public class AttributeMap implements Map<CIKey, String> {
 
     private final boolean overrideEmbeddedMeta;
+    private final Map<CIKey, String> map = new HashMap<>();
 
     public AttributeMap(final boolean overrideEmbeddedMeta) {
         this.overrideEmbeddedMeta = overrideEmbeddedMeta;
@@ -63,19 +64,24 @@ public class AttributeMap extends CIHashMap<String> {
         putAll(values);
     }
 
-//    public AttributeMap(final Map<String, String> values) {
-//        this.overrideEmbeddedMeta = false;
-//        putAllStringKeys(values);
-//    }
-
     private AttributeMap(final Builder builder) {
         overrideEmbeddedMeta = builder.overrideEmbeddedMeta;
         putAll(builder.attributes);
     }
 
-    public Map<String, String> asStringKeyedMap() {
+    /**
+     * @return An unmodifiable view of the underlying map.
+     */
+    public Map<String, String> asUnmodifiableStringKeyedMap() {
         return entrySet().stream()
-                .collect(Collectors.toMap(entry -> entry.getKey().get(), Entry::getValue));
+                .collect(Collectors.toUnmodifiableMap(entry -> entry.getKey().get(), Entry::getValue));
+    }
+
+    /**
+     * @return An unmodifiable view of the underlying map.
+     */
+    public Map<CIKey, String> asUnmodifiableMap() {
+        return Collections.unmodifiableMap(map);
     }
 
     public Set<Entry<String, String>> stringEntrySet() {
@@ -91,6 +97,21 @@ public class AttributeMap extends CIHashMap<String> {
                 .collect(Collectors.toSet());
     }
 
+    @Override
+    public int size() {
+        return map.size();
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return map.isEmpty();
+    }
+
+    @Override
+    public void clear() {
+        map.clear();
+    }
+
     public String put(final String key, final String value) {
         // CIString used to trim all keys
         return put(CIKey.trimmed(key), value);
@@ -99,42 +120,118 @@ public class AttributeMap extends CIHashMap<String> {
     @Override
     public String put(final CIKey key, final String value) {
         Objects.requireNonNull(key);
+        String normalisedValue = value;
         if (StandardHeaderArguments.DATE_HEADER_KEYS.contains(key)) {
-            final String normalisedValue = DateUtil.normaliseDate(value, true);
-            return super.put(key, normalisedValue);
-        } else {
-            return super.put(key, value);
+            normalisedValue = DateUtil.normaliseDate(value, true);
+        }
+        if (normalisedValue != null) {
+            normalisedValue = normalisedValue.trim();
+        }
+        return map.put(key, normalisedValue);
+    }
+
+    @Override
+    public void putAll(final Map<? extends CIKey, ? extends String> map) {
+        if (NullSafe.hasEntries(map)) {
+            // Delegate to put so its extra logic gets called
+            map.forEach(this::put);
         }
     }
 
+    public void putAll(final AttributeMap attributeMap) {
+        if (attributeMap != null) {
+            // Delegate to put so its extra logic gets called
+            attributeMap.map.forEach(this::put);
+        }
+    }
+
+    @Deprecated // Should be using String or CIKey
+    @Override
+    public String get(final Object key) {
+        return map.get(key);
+    }
+
+    // Make it clearer that we expect a CIKey rather than an Object
+    public String get(final CIKey key) {
+        return map.get(key);
+    }
+
+    /**
+     * Equivalent to calling
+     * <pre>{@code get(CIKey.ofTrimmed(key))}</pre>
+     */
     // Overload all the super methods that take key as an Object as the compiler
     // won't spot people using a String key.
     public String get(final String key) {
         // CIString used to trim all keys
-        return super.get(CIKey.trimmed(key));
+        return map.get(CIKey.trimmed(key));
+    }
+
+    @Deprecated // Should be using String or CIKey
+    @Override
+    public String getOrDefault(final Object key, final String defaultValue) {
+        return map.getOrDefault(key, defaultValue);
     }
 
     public String getOrDefault(final String key, final String defaultValue) {
         // CIString used to trim all keys
-        return super.getOrDefault(CIKey.trimmed(key), defaultValue);
+        return map.getOrDefault(CIKey.trimmed(key), defaultValue);
     }
 
-    public boolean remove(final String key, final Object value) {
+    public String getOrDefault(final CIKey key, final String defaultValue) {
+        return map.getOrDefault(key, defaultValue);
+    }
+
+    public boolean remove(final String key, final String value) {
         // CIString used to trim all keys
-        return super.remove(CIKey.trimmed(key), value);
+        return map.remove(CIKey.trimmed(key), value);
+    }
+
+    @Deprecated // Should be using String or CIKey
+    @Override
+    public String remove(final Object key) {
+        return map.remove(key);
+    }
+
+    public String remove(final String key) {
+        // CIString used to trim all keys
+        return map.remove(CIKey.trimmed(key));
+    }
+
+    // Make it clearer that we expect a CIKey rather than an Object
+    public String remove(final CIKey key) {
+        return map.remove(key);
+    }
+
+    @Deprecated // Should be using String or CIKey
+    @Override
+    public boolean containsKey(final Object key) {
+        return map.containsKey(key);
+    }
+
+    // Make it clearer that we expect a CIKey rather than an Object
+    public boolean containsKey(final CIKey key) {
+        return map.containsKey(key);
     }
 
     public boolean containsKey(final String key) {
         // CIString used to trim all keys
-        return super.containsKey(CIKey.trimmed(key));
+        return map.containsKey(CIKey.trimmed(key));
     }
 
-    /**
-     * @return True if the key is in the map (ignoring case)
-     */
-    public boolean containsStringKey(final String key) {
-        // CIString used to trim all keys
-        return super.containsKey(CIKey.trimmed(key));
+    @Deprecated // Should be using String
+    @Override
+    public boolean containsValue(final Object value) {
+        return map.containsValue(value);
+    }
+
+    public boolean containsValue(final String value) {
+        return map.containsValue(value);
+    }
+
+    @Override
+    public void forEach(final BiConsumer<? super CIKey, ? super String> action) {
+        map.forEach(action);
     }
 
     /**
@@ -145,8 +242,8 @@ public class AttributeMap extends CIHashMap<String> {
                 .forEach(this::put);
     }
 
-    public Set<String> keySetAsString() {
-        return keySet()
+    public Set<String> keySetAsStrings() {
+        return map.keySet()
                 .stream()
                 .map(CIKey::get)
                 .collect(Collectors.toSet());
@@ -159,8 +256,8 @@ public class AttributeMap extends CIHashMap<String> {
      * @return The previous value for the key.
      */
     public String putCurrentDateTime(final CIKey key) {
-        // Already normalised, so use super.put not the local one
-        return super.put(key, DateUtil.createNormalDateTimeString());
+        // Already normalised, so use map.put not the local one
+        return map.put(key, DateUtil.createNormalDateTimeString());
     }
 
     /**
@@ -171,8 +268,8 @@ public class AttributeMap extends CIHashMap<String> {
      */
     public String putDateTime(final CIKey key, final Long epochMs) {
         final String dateStr = DateUtil.createNormalDateTimeString(epochMs);
-        // Already normalised, so use super.put not the local one
-        return super.put(key, dateStr);
+        // Already normalised, so use map.put not the local one
+        return map.put(key, dateStr);
     }
 
     /**
@@ -183,11 +280,11 @@ public class AttributeMap extends CIHashMap<String> {
      */
     public String putDateTime(final CIKey key, final Instant instant) {
         if (instant == null) {
-            return super.put(key, null);
+            return map.put(key, null);
         } else {
             final String dateStr = DateUtil.createNormalDateTimeString(instant.toEpochMilli());
-            // Already normalised, so use super.put not the local one
-            return super.put(key, dateStr);
+            // Already normalised, so use map.put not the local one
+            return map.put(key, dateStr);
         }
     }
 
@@ -199,7 +296,7 @@ public class AttributeMap extends CIHashMap<String> {
      */
     public String appendDateTime(final CIKey key, final Instant instant) {
         if (instant != null) {
-            String val = super.get(key);
+            String val = map.get(key);
             final String dateStr = DateUtil.createNormalDateTimeString(instant.toEpochMilli());
             if (NullSafe.isEmptyString(val)) {
                 val = dateStr;
@@ -209,7 +306,7 @@ public class AttributeMap extends CIHashMap<String> {
                 }
                 val += dateStr;
             }
-            return super.put(key, val);
+            return map.put(key, val);
         } else {
             return null;
         }
@@ -227,7 +324,7 @@ public class AttributeMap extends CIHashMap<String> {
             if (key != null && StandardHeaderArguments.DATE_HEADER_KEYS.contains(key)) {
                 normalisedItem = DateUtil.normaliseDate(item, true);
             }
-            String val = super.get(key);
+            String val = map.get(key);
             if (NullSafe.isEmptyString(val)) {
                 val = normalisedItem;
             } else {
@@ -236,7 +333,7 @@ public class AttributeMap extends CIHashMap<String> {
                 }
                 val += normalisedItem;
             }
-            return super.put(key, val);
+            return map.put(key, val);
         } else {
             return null;
         }
@@ -260,7 +357,7 @@ public class AttributeMap extends CIHashMap<String> {
             if (key != null && StandardHeaderArguments.DATE_HEADER_KEYS.contains(key)) {
                 normalisedItem = DateUtil.normaliseDate(item, true);
             }
-            String val = super.get(key);
+            String val = map.get(key);
             Objects.requireNonNull(currentValuePredicate);
             if (currentValuePredicate.test(val)) {
                 if (NullSafe.isEmptyString(val)) {
@@ -271,7 +368,7 @@ public class AttributeMap extends CIHashMap<String> {
                     }
                     val += normalisedItem;
                 }
-                return super.put(key, val);
+                return map.put(key, val);
             } else {
                 return val;
             }
@@ -279,13 +376,6 @@ public class AttributeMap extends CIHashMap<String> {
             return null;
         }
     }
-
-//    /**
-//     * Put an entry where the value is itself a collection of values, e.g. a list of files
-//     */
-//    public String putCollection(final String key, Collection<String> values) {
-//        return putCollection(CIKey.of(key), values);
-//    }
 
     /**
      * Put an entry where the value is itself a collection of values, e.g. a list of files
@@ -305,21 +395,40 @@ public class AttributeMap extends CIHashMap<String> {
         return put(key, value);
     }
 
-//    /**
-//     * Get the value for a given key as a {@link List}, e.g. where the value is known to be a
-//     * delimited collection of items. If the value only contains one item, then a singleton
-//     * {@link List} is returned.
-//     */
-//    public List<String> getAsList(final String key) {
-//        return getAsList(CIKey.of(key));
-//    }
+    public Set<CIKey> keySet() {
+        return map.keySet();
+    }
+
+    public Collection<String> values() {
+        return map.values();
+    }
+
+    public Set<Entry<CIKey, String>> entrySet() {
+        return map.entrySet();
+    }
+
+    public Set<Entry<String, String>> entrySetAsString() {
+        return map.entrySet()
+                .stream()
+                .map(entry -> Map.entry(entry.getKey().get(), entry.getValue()))
+                .collect(Collectors.toSet());
+    }
+
+    public String putIfAbsent(final CIKey key, final String value) {
+        return map.putIfAbsent(key, value);
+    }
+
+    public String computeIfAbsent(final CIKey key,
+                                  final Function<? super CIKey, ? extends String> mappingFunction) {
+        return map.computeIfAbsent(key, mappingFunction);
+    }
 
     /**
      * Get the value for a given key as a {@link List}, e.g. where the value is known to be a
-     * delimited collection of items. If the value only contains one item, then a singleton
-     * {@link List} is returned.
+     * delimited collection of items (delimited by {@link AttributeMapUtil#VALUE_DELIMITER}).
+     * If the value only contains one item, then a singleton {@link List} is returned.
      */
-    public List<String> getAsList(final CIKey key) {
+    public List<String> getValueAsList(final CIKey key) {
         final String val = get(key);
         if (NullSafe.isEmptyString(val)) {
             return Collections.emptyList();
@@ -352,7 +461,7 @@ public class AttributeMap extends CIHashMap<String> {
     public static Builder copy(final AttributeMap copy) {
         final Builder builder = new Builder();
         builder.overrideEmbeddedMeta = copy.overrideEmbeddedMeta;
-        builder.attributes = new AttributeMap();
+        builder.attributes = new AttributeMap(copy);
         return builder;
     }
 
@@ -370,9 +479,7 @@ public class AttributeMap extends CIHashMap<String> {
 
     public void removeAll(final Collection<CIKey> keySet) {
         if (keySet != null) {
-            for (final CIKey key : keySet) {
-                remove(key);
-            }
+            keySet.forEach(this::remove);
         }
     }
 
@@ -415,10 +522,22 @@ public class AttributeMap extends CIHashMap<String> {
         return AttributeMapCollector.INSTANCE;
     }
 
+    @Override
+    public String toString() {
+        return map.toString();
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        return map.equals(o);
+    }
 
     // --------------------------------------------------------------------------------
 
 
+    /**
+     * {@link Collector} for use with {@link java.util.stream.Stream} API.
+     */
     public static class AttributeMapCollector
             implements Collector<Entry<CIKey, String>, AttributeMap, AttributeMap> {
 
@@ -487,15 +606,13 @@ public class AttributeMap extends CIHashMap<String> {
         /**
          * You really ought to be using a {@link CIKey} key.
          */
-        @Deprecated
         public Builder put(final String key, final String value) {
             this.put(CIKey.trimmed(key), value);
             return this;
         }
 
         public Builder put(final CIKey key, final String value) {
-            Objects.requireNonNull(key);
-            attributes.put(key, GwtNullSafe.trim(value));
+            attributes.put(key, value);
             return this;
         }
 

@@ -80,12 +80,12 @@ public class CIKey implements Comparable<CIKey> {
     }
 
     /**
-     * Create a {@link CIKey} for an upper or mixed case key, e.g. "FOO", or "Foo".
-     * If key is all lower case then user {@link CIKey#ofLowerCase(String)}.
+     * Create a {@link CIKey} for an unknown, upper or mixed case key, e.g. "FOO", or "Foo".
+     * If key is known to be all lower case then use {@link CIKey#ofLowerCase(String)}.
      * If key is a common key this method will return an existing {@link CIKey} instance
      * else it will create a new instance.
      * <p>
-     * The returned {@link CIKey} will wrap key with no change of case.
+     * The returned {@link CIKey} will wrap key with no change of case and no trimming.
      * </p>
      */
     public static CIKey of(final String key) {

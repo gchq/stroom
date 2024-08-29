@@ -168,8 +168,7 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
         return userIdentityFactory.hasAuthenticationToken(request);
     }
 
-    @Override
-    public void removeAuthorisationEntries(final Map<CIKey, String> headers) {
+    private void removeAuthorisationEntries(final Map<CIKey, String> headers) {
         NullSafe.consume(headers, userIdentityFactory::removeAuthEntries);
     }
 

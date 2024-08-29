@@ -83,9 +83,30 @@ class TestAttributeMap {
         attributeMap.put("a", "a1");
         attributeMap.put("B", "b1");
 
+        attributeMap.remove(CIKey.of("A"));
+
+        assertThat(attributeMap.size())
+                .isEqualTo(1);
+
+        attributeMap.remove(" b ");
+
+        assertThat(attributeMap.size())
+                .isEqualTo(0);
+    }
+
+    @Test
+    void testRemoveAll() {
+        AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put("a", "a1");
+        attributeMap.put("B", "b1");
+        attributeMap.put("c", "c1");
+
         attributeMap.removeAll(CIKey.listOf("A", "b"));
 
-        assertThat(attributeMap.size()).isEqualTo(0);
+        assertThat(attributeMap.size())
+                .isEqualTo(1);
+        assertThat(attributeMap.keySet())
+                .contains(CIKey.of("c"));
     }
 
     @Test
@@ -96,8 +117,8 @@ class TestAttributeMap {
         assertThat(attributeMap.get("b")).isEqualTo("2");
         assertThat(attributeMap.get("z")).isNull();
 
-        assertThat(new String(AttributeMapUtil.toByteArray(attributeMap), AttributeMapUtil.DEFAULT_CHARSET)).isEqualTo(
-                "a:1\nb:2\nz\n");
+        assertThat(new String(AttributeMapUtil.toByteArray(attributeMap), AttributeMapUtil.DEFAULT_CHARSET))
+                .isEqualTo("a:1\nb:2\nz\n");
     }
 
     @Test
@@ -176,12 +197,12 @@ class TestAttributeMap {
 
         assertThat(attributeMap.get(CIKeys.FILES))
                 .isEqualTo("/some/path/file1,/some/path/file2,/some/path/file3");
-        assertThat(attributeMap.getAsList(CIKeys.FILES))
+        assertThat(attributeMap.getValueAsList(CIKeys.FILES))
                 .containsExactly(
                         "/some/path/file1",
                         "/some/path/file2",
                         "/some/path/file3");
-        assertThat(attributeMap.getAsList(FOO))
+        assertThat(attributeMap.getValueAsList(FOO))
                 .containsExactly("123");
     }
 
@@ -301,6 +322,34 @@ class TestAttributeMap {
     }
 
     @TestFactory
+    Stream<DynamicTest> testGet2() {
+        final AttributeMap attributeMap1 = AttributeMap.builder()
+                .put(FOO, "123")
+                .put(BAR, "456")
+                .build();
+        final AttributeMap attributeMapEmpty = new AttributeMap();
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(AttributeMap.class, CIKey.class)
+                .withOutputType(String.class)
+                .withTestFunction(testCase -> {
+                    var attrMap = testCase.getInput()._1;
+                    return attrMap.get(testCase.getInput()._2);
+                })
+                .withSimpleEqualityAssertion()
+                .addThrowsCase(Tuple.of(attributeMapEmpty, null), null)
+                .addCase(Tuple.of(attributeMapEmpty, CIKey.of("foo")), null)
+                .addCase(Tuple.of(attributeMap1, CIKey.of("")), null)
+                .addCase(Tuple.of(attributeMap1, CIKey.of("foo")), "123")
+                .addCase(Tuple.of(attributeMap1, CIKey.of("FOO")), "123")
+                .addCase(Tuple.of(attributeMap1, CIKey.of("Foo")), "123")
+                .addCase(Tuple.of(attributeMap1, CIKey.trimmed(" Foo")), "123")
+                .addCase(Tuple.of(attributeMap1, CIKey.trimmed("Foo ")), "123")
+                .addCase(Tuple.of(attributeMap1, CIKey.trimmed(" Foo ")), "123")
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testContainsKey() {
         final AttributeMap attributeMap1 = new AttributeMap();
         attributeMap1.putAll(CIKey.mapOf(
@@ -325,6 +374,34 @@ class TestAttributeMap {
                 .addCase(Tuple.of(attributeMap1, " Foo"), true)
                 .addCase(Tuple.of(attributeMap1, "Foo "), true)
                 .addCase(Tuple.of(attributeMap1, " Foo "), true)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testContainsKey2() {
+        final AttributeMap attributeMap1 = new AttributeMap();
+        attributeMap1.putAll(CIKey.mapOf(
+                "foo", "123",
+                "bar", "456"));
+        final AttributeMap attributeMapEmpty = new AttributeMap();
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(AttributeMap.class, CIKey.class)
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    var attrMap = testCase.getInput()._1;
+                    return attrMap.containsKey(testCase.getInput()._2);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(attributeMapEmpty, null), false)
+                .addCase(Tuple.of(attributeMapEmpty, CIKey.of("foo")), false)
+                .addCase(Tuple.of(attributeMap1, CIKey.of("")), false)
+                .addCase(Tuple.of(attributeMap1, CIKey.of("foo")), true)
+                .addCase(Tuple.of(attributeMap1, CIKey.of("FOO")), true)
+                .addCase(Tuple.of(attributeMap1, CIKey.of("Foo")), true)
+                .addCase(Tuple.of(attributeMap1, CIKey.trimmed(" Foo")), true)
+                .addCase(Tuple.of(attributeMap1, CIKey.trimmed("Foo ")), true)
+                .addCase(Tuple.of(attributeMap1, CIKey.trimmed(" Foo ")), true)
                 .build();
     }
 
@@ -359,24 +436,40 @@ class TestAttributeMap {
     void testPut() {
         final AttributeMap attributeMap1 = new AttributeMap();
 
-        assertThat(attributeMap1)
-                .isEmpty();
+        assertThat(attributeMap1.isEmpty())
+                .isTrue();
 
         attributeMap1.put("foo", "value1a");
-        assertThat(attributeMap1)
-                .hasSize(1);
+        assertThat(attributeMap1.size())
+                .isEqualTo(1);
         assertThat(attributeMap1.get("Foo"))
+                .isEqualTo("value1a");
+        assertThat(attributeMap1.get(CIKey.of("Foo")))
                 .isEqualTo("value1a");
 
         attributeMap1.put("FOO", "value1b"); // 'same' key, new val
-        assertThat(attributeMap1)
-                .hasSize(1);
+        assertThat(attributeMap1.size())
+                .isEqualTo(1);
         assertThat(attributeMap1.get("Foo"))
                 .isEqualTo("value1b");
 
+        attributeMap1.put(CIKey.of("FoO"), "value1c"); // 'same' key, new val
+        assertThat(attributeMap1.size())
+                .isEqualTo(1);
+        assertThat(attributeMap1.get(CIKey.of("fOO")))
+                .isEqualTo("value1c");
+
+        attributeMap1.put("  foo  ", "  value1d  "); // Same after trimming
+        assertThat(attributeMap1.size())
+                .isEqualTo(1);
+        assertThat(attributeMap1.get("Foo"))
+                .isEqualTo("value1d");
+        assertThat(attributeMap1.get(CIKey.of("Foo")))
+                .isEqualTo("value1d");
+
         attributeMap1.put("bar", "value2a");
-        assertThat(attributeMap1)
-                .hasSize(2);
+        assertThat(attributeMap1.size())
+                .isEqualTo(2);
         assertThat(attributeMap1.get("BAR"))
                 .isEqualTo("value2a");
     }
@@ -389,13 +482,13 @@ class TestAttributeMap {
 
         for (final CIKey key : StandardHeaderArguments.DATE_HEADER_KEYS) {
             attributeMap1.clear();
-            assertThat(attributeMap1)
-                    .isEmpty();
+            assertThat(attributeMap1.isEmpty())
+                    .isTrue();
 
             attributeMap1.put(key, dateStrIn);
 
-            assertThat(attributeMap1)
-                    .hasSize(1);
+            assertThat(attributeMap1.size())
+                    .isEqualTo(1);
 
             assertThat(attributeMap1.get(key))
                     .isEqualTo(dateStrOut);
@@ -410,13 +503,13 @@ class TestAttributeMap {
         final long epochMs = Instant.parse(dateStrIn).toEpochMilli();
         final CIKey key = FOO;
 
-        assertThat(attributeMap1)
-                .isEmpty();
+        assertThat(attributeMap1.isEmpty())
+                .isTrue();
 
         attributeMap1.putDateTime(key, epochMs);
 
-        assertThat(attributeMap1)
-                .hasSize(1);
+        assertThat(attributeMap1.size())
+                .isEqualTo(1);
 
         assertThat(attributeMap1.get(key))
                 .isEqualTo(dateStrOut);
@@ -430,13 +523,13 @@ class TestAttributeMap {
         final Instant instant = Instant.parse(dateStrIn);
         final CIKey key = FOO;
 
-        assertThat(attributeMap1)
-                .isEmpty();
+        assertThat(attributeMap1.isEmpty())
+                .isTrue();
 
         attributeMap1.putDateTime(key, instant);
 
-        assertThat(attributeMap1)
-                .hasSize(1);
+        assertThat(attributeMap1.size())
+                .isEqualTo(1);
 
         assertThat(attributeMap1.get(key))
                 .isEqualTo(dateStrOut);
@@ -449,14 +542,14 @@ class TestAttributeMap {
         final String dateStrOut = "2010-01-01T23:59:59.123Z";
         final CIKey key = FOO;
 
-        assertThat(attributeMap1)
-                .isEmpty();
+        assertThat(attributeMap1.isEmpty())
+                .isTrue();
 
         final Instant now = Instant.now();
         attributeMap1.putCurrentDateTime(key);
 
-        assertThat(attributeMap1)
-                .hasSize(1);
+        assertThat(attributeMap1.size())
+                .isEqualTo(1);
 
         final String val = attributeMap1.get(key);
         assertThat(val)
@@ -659,8 +752,8 @@ class TestAttributeMap {
     void testComputeIfAbsent1() {
 
         final AttributeMap attributeMap1 = new AttributeMap();
-        assertThat(attributeMap1)
-                .isEmpty();
+        assertThat(attributeMap1.isEmpty())
+                .isTrue();
         final AtomicInteger callCount = new AtomicInteger();
 
         final String computedVal = attributeMap1.computeIfAbsent(FOO, k -> {
@@ -679,8 +772,8 @@ class TestAttributeMap {
 
         final AttributeMap attributeMap1 = new AttributeMap();
         attributeMap1.put("foo", "value(initial)");
-        assertThat(attributeMap1)
-                .hasSize(1);
+        assertThat(attributeMap1.size())
+                .isEqualTo(1);
         final AtomicInteger callCount = new AtomicInteger();
 
         final String computedVal = attributeMap1.computeIfAbsent(FOO, k -> {
@@ -715,7 +808,7 @@ class TestAttributeMap {
         attributeMap.put("D", "1");
         attributeMap.put("e", "1");
 
-        final Map<CIKey, String> map = attributeMap.filterIncluding(CIKey.setOf("b", "d"));
+        final AttributeMap map = attributeMap.filterIncluding(CIKey.setOf("b", "d"));
 
         assertThat(map.keySet())
                 .extracting(CIKey::getAsLowerCase)
@@ -731,7 +824,7 @@ class TestAttributeMap {
         attributeMap.put("D", "1");
         attributeMap.put("e", "1");
 
-        final Map<CIKey, String> map = attributeMap.filterExcluding(CIKey.setOf("b", "d"));
+        final AttributeMap map = attributeMap.filterExcluding(CIKey.setOf("b", "d"));
 
         assertThat(map.keySet())
                 .extracting(CIKey::getAsLowerCase)
@@ -763,7 +856,7 @@ class TestAttributeMap {
                 .map(key -> Map.entry(CIKey.of(key), key))
                 .collect(AttributeMap.collector());
 
-        assertThat(attributeMap.keySetAsString())
+        assertThat(attributeMap.keySetAsStrings())
                 .containsExactlyInAnyOrder("a", "B", "c", "D", "e");
     }
 }

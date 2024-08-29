@@ -152,17 +152,16 @@ public class CIHashMap<V> extends HashMap<CIKey, V> {
      * Create a {@link CIKey} keyed map
      */
     public static <V> CIHashMap<V> of(String k1, V v1) {
-        return (CIHashMap<V>) CIKey.mapOf(k1, v1);
+        return new CIHashMap<>(CIKey.mapOf(k1, v1));
     }
 
     /**
      * Create a {@link CIKey} keyed map
      */
     public static <V> CIHashMap<V> of(String k1, V v1, String k2, V v2) {
-        final Map<CIKey, V> map = CIKey.mapOf(
+        return new CIHashMap<>(CIKey.mapOf(
                 k1, v1,
-                k2, v2);
-        return (CIHashMap<V>) map;
+                k2, v2));
     }
 
     /**
@@ -171,10 +170,10 @@ public class CIHashMap<V> extends HashMap<CIKey, V> {
     public static <V> CIHashMap<V> of(String k1, V v1,
                                       String k2, V v2,
                                       String k3, V v3) {
-        return (CIHashMap<V>) Map.of(
-                CIKey.of(k1), v1,
-                CIKey.of(k2), v2,
-                CIKey.of(k3), v3);
+        return new CIHashMap<>(CIKey.mapOf(
+                k1, v1,
+                k2, v2,
+                k3, v3));
     }
 
     /**
@@ -184,11 +183,11 @@ public class CIHashMap<V> extends HashMap<CIKey, V> {
                                       String k2, V v2,
                                       String k3, V v3,
                                       String k4, V v4) {
-        return (CIHashMap<V>) Map.of(
-                CIKey.of(k1), v1,
-                CIKey.of(k2), v2,
-                CIKey.of(k3), v3,
-                CIKey.of(k4), v4);
+        return new CIHashMap<>(CIKey.mapOf(
+                k1, v1,
+                k2, v2,
+                k3, v3,
+                k4, v4));
     }
 
     /**
@@ -199,12 +198,12 @@ public class CIHashMap<V> extends HashMap<CIKey, V> {
                                       String k3, V v3,
                                       String k4, V v4,
                                       String k5, V v5) {
-        return (CIHashMap<V>) Map.of(
-                CIKey.of(k1), v1,
-                CIKey.of(k2), v2,
-                CIKey.of(k3), v3,
-                CIKey.of(k4), v4,
-                CIKey.of(k5), v5);
+        return new CIHashMap<>(CIKey.mapOf(
+                k1, v1,
+                k2, v2,
+                k3, v3,
+                k4, v4,
+                k5, v5));
     }
 
     /**
@@ -216,13 +215,13 @@ public class CIHashMap<V> extends HashMap<CIKey, V> {
                                       String k4, V v4,
                                       String k5, V v5,
                                       String k6, V v6) {
-        return (CIHashMap<V>) Map.of(
-                CIKey.of(k1), v1,
-                CIKey.of(k2), v2,
-                CIKey.of(k3), v3,
-                CIKey.of(k4), v4,
-                CIKey.of(k5), v5,
-                CIKey.of(k6), v6);
+        return new CIHashMap<>(CIKey.mapOf(
+                k1, v1,
+                k2, v2,
+                k3, v3,
+                k4, v4,
+                k5, v5,
+                k6, v6));
     }
 
     /**
@@ -235,14 +234,14 @@ public class CIHashMap<V> extends HashMap<CIKey, V> {
                                       String k5, V v5,
                                       String k6, V v6,
                                       String k7, V v7) {
-        return (CIHashMap<V>) Map.of(
-                CIKey.of(k1), v1,
-                CIKey.of(k2), v2,
-                CIKey.of(k3), v3,
-                CIKey.of(k4), v4,
-                CIKey.of(k5), v5,
-                CIKey.of(k6), v6,
-                CIKey.of(k7), v7);
+        return new CIHashMap<>(CIKey.mapOf(
+                k1, v1,
+                k2, v2,
+                k3, v3,
+                k4, v4,
+                k5, v5,
+                k6, v6,
+                k7, v7));
     }
 
     /**
@@ -256,15 +255,15 @@ public class CIHashMap<V> extends HashMap<CIKey, V> {
                                       String k6, V v6,
                                       String k7, V v7,
                                       String k8, V v8) {
-        return (CIHashMap<V>) Map.of(
-                CIKey.of(k1), v1,
-                CIKey.of(k2), v2,
-                CIKey.of(k3), v3,
-                CIKey.of(k4), v4,
-                CIKey.of(k5), v5,
-                CIKey.of(k6), v6,
-                CIKey.of(k7), v7,
-                CIKey.of(k8), v8);
+        return new CIHashMap<>(CIKey.mapOf(
+                k1, v1,
+                k2, v2,
+                k3, v3,
+                k4, v4,
+                k5, v5,
+                k6, v6,
+                k7, v7,
+                k8, v8));
     }
 
     /**

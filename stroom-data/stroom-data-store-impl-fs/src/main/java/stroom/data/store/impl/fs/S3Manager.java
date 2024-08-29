@@ -514,7 +514,7 @@ public class S3Manager {
                                                     final String key,
                                                     final Meta meta,
                                                     final AttributeMap attributeMap) {
-        final Map<String, String> metadata = attributeMap.asStringKeyedMap()
+        final Map<String, String> metadata = attributeMap.asUnmodifiableStringKeyedMap()
                 .entrySet()
                 .stream()
                 .collect(Collectors.toMap(e -> createS3Name(e.getKey()), Entry::getValue));

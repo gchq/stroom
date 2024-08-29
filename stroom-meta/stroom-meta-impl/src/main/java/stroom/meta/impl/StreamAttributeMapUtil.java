@@ -22,12 +22,12 @@ import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
 import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
-import stroom.util.shared.string.CIHashMap;
 import stroom.util.shared.string.CIKey;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Map;
 
 class StreamAttributeMapUtil {
@@ -43,7 +43,7 @@ class StreamAttributeMapUtil {
      */
     static Map<CIKey, Object> createAttributeMap(final Meta meta,
                                                  final Map<String, String> attributeMap) {
-        final CIHashMap<Object> map = new CIHashMap<>();
+        final Map<CIKey, Object> map = new HashMap<>();
 
         if (meta != null) {
             map.put(MetaFields.ID.getFldNameAsCIKey(), meta.getId());

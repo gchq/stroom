@@ -38,7 +38,6 @@ import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.impl.TaskContextModule;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.pipeline.scope.PipelineScopeModule;
-import stroom.util.shared.string.CIKey;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -93,11 +92,6 @@ public class TestBaseModule extends AbstractModule {
             @Override
             public boolean hasAuthenticationToken(final HttpServletRequest request) {
                 return false;
-            }
-
-            @Override
-            public void removeAuthorisationEntries(final Map<CIKey, String> headers) {
-
             }
 
             @Override

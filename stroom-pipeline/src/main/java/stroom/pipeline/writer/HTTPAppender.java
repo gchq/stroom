@@ -341,7 +341,7 @@ public class HTTPAppender extends AbstractAppender {
     }
 
     private String attributeMapToLines(final AttributeMap attributeMap, final String indent) {
-        if (NullSafe.isEmptyMap(attributeMap)) {
+        if (NullSafe.isTrue(attributeMap, AttributeMap::isEmpty)) {
             return "";
         } else {
             return attributeMap.entrySet()

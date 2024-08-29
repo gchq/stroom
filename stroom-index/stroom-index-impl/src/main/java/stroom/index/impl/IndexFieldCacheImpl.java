@@ -79,7 +79,11 @@ public class IndexFieldCacheImpl implements IndexFieldCache, Clearable {
 
         // Attempt to get an IndexField matching the user's input. This may throw if there are multiple
         // fields with the same name (ignoring case) and none match exactly with fieldName.
-        return indexFieldMap.getMatchingField(key.fieldName);
+        if (indexFieldMap != null) {
+            return indexFieldMap.getMatchingField(key.fieldName);
+        } else {
+            return null;
+        }
     }
 
     @Override
