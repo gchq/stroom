@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import stroom.preferences.client.UserPreferencesManager;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.Window.Location;
 import com.gwtplatform.mvp.client.DelayedBindRegistry;
 
 import java.util.Arrays;
@@ -60,9 +61,14 @@ public class App implements EntryPoint {
 //        });
 
         final String path = Window.Location.getPath();
-        if (path.contains("signIn")) {
-            ginjector.getLoginPresenter().get().forceReveal();
-
+        GWT.log("path: " + path + ", queryString: " + Window.Location.getQueryString());
+        if (path.startsWith("/signIn")) {
+            final String error = Location.getParameter("error");
+            if ("login_required".equals(error)) {
+                ginjector.getLoginPresenter().get().forceReveal();
+            } else {
+                ginjector.getAuthenticationErrorPresenter().get().forceReveal();
+            }
         } else {
             final UserPreferencesManager userPreferencesManager = ginjector.getPreferencesManager();
             userPreferencesManager.fetch(preferences -> {

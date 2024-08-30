@@ -655,16 +655,6 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
 
             // Queue tasks for this filter.
             final int initialQueueSize = queue.size();
-
-            // If the filter specifies a maximum number of concurrent processing tasks then limit the number we
-            // report as being added to the queue otherwise we might stop adding other tasks early.
-            if (filter.isProcessingTaskCountBounded()) {
-                queueProcessTasksState
-                        .addCurrentlyQueuedTasks(Math.min(filter.getMaxProcessingTasks(), initialQueueSize));
-            } else {
-                queueProcessTasksState.addCurrentlyQueuedTasks(initialQueueSize);
-            }
-
             final FilterProgressMonitor filterProgressMonitor = progressMonitor.logFilter(filter,
                     initialQueueSize);
 
@@ -697,9 +687,13 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                                   final ProcessorTaskQueue queue,
                                   final QueueProcessTasksState queueProcessTasksState,
                                   final FilterProgressMonitor filterProgressMonitor) {
+        // Queue tasks for this filter.
+        final int initialQueueSize = queue.size();
+        queueProcessTasksState.addCurrentlyQueuedTasks(initialQueueSize);
+
         int totalTasks = 0;
         int totalAddedTasks = 0;
-        int tasksToAdd = queueProcessTasksState.getRequiredTaskCount();
+        int tasksToAdd = queueProcessTasksState.getRequiredTaskCount() - initialQueueSize;
         final int batchSize = Math.max(BATCH_SIZE, tasksToAdd);
         long lastTaskId = 0;
 
@@ -778,19 +772,20 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
 
             if (totalAddedTasks > 0) {
                 filterProgressMonitor.add(totalAddedTasks);
-                if (filter.isProcessingTaskCountBounded()) {
-                    // If the filter specifies a maximum number of concurrent processing tasks then limit the number we
-                    // report as being added to the queue otherwise we might stop adding other tasks early.
-                    queueProcessTasksState
-                            .addUnownedTasksToQueue(Math.min(filter.getMaxProcessingTasks(), totalAddedTasks));
-                } else {
-                    queueProcessTasksState.addUnownedTasksToQueue(totalAddedTasks);
-                }
                 LOGGER.debug("doCreateTasks() - Added {} tasks that are no longer locked", totalAddedTasks);
             }
 
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
+        }
+
+        if (filter.isProcessingTaskCountBounded()) {
+            // If the filter specifies a maximum number of concurrent processing tasks then limit the number we
+            // report as being added to the queue otherwise we might stop adding other tasks early.
+            queueProcessTasksState
+                    .addTotalQueuedTasks(Math.min(filter.getMaxProcessingTasks(), initialQueueSize + totalAddedTasks));
+        } else {
+            queueProcessTasksState.addTotalQueuedTasks(initialQueueSize + totalAddedTasks);
         }
 
         return totalAddedTasks;
