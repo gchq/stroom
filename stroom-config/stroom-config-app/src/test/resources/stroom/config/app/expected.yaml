@@ -590,6 +590,7 @@ appConfig:
       maxElements: 1000000
   processor:
     assignTasks: true
+    createTasksBeyondProcessLimit: true
     databaseMultiInsertMaxBatchSize: 500
     db:
       connection:

@@ -13,6 +13,12 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#4411** : Prevent queueing too many processor tasks.
+
+* Issue **#4408** : Fix SQL deadlock between task queuing and task physical deletion.
+
+* Issue **#4410** : Allow over creation of processor tasks for bounded filters.
+
 * Issue **#4403** : Fix to make elastic indexes searchable with StroomQL.
 
 * Issue **#2897** : Fix issue of the effective stream intern pool returning incorrect sets of streams.
