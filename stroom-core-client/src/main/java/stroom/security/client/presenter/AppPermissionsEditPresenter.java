@@ -108,7 +108,7 @@ public class AppPermissionsEditPresenter
                     currentPermissions.getInheritedPermissions().get(permission),
                     sb,
                     "Explicit Permission",
-                    "Inherited Permission From:");
+                    "Inherited From:");
 
             // See if implied by administrator.
             if (!AppPermission.ADMINISTRATOR.equals(permission)) {
@@ -121,7 +121,7 @@ public class AppPermissionsEditPresenter
                                 .get(AppPermission.ADMINISTRATOR),
                         sb,
                         "Implied By Administrator",
-                        "Inherited Permission (Implied By Administrator) From:");
+                        "Implied By Administrator Inherited From:");
             }
 
             if (sb.toSafeHtml().asString().length() == 0) {

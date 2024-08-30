@@ -168,9 +168,4 @@ class MockExplorerService implements ExplorerService {
     public String nodeTagsToString(final Set<String> tags) {
         return null;
     }
-
-    @Override
-    public Boolean changeDocumentPermssions(final BulkDocumentPermissionChangeRequest request) {
-        return null;
-    }
 }

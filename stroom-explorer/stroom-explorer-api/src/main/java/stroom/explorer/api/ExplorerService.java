@@ -114,6 +114,4 @@ public interface ExplorerService extends Clearable {
     Set<String> parseNodeTags(final String tagsStr);
 
     String nodeTagsToString(final Set<String> tags);
-
-    Boolean changeDocumentPermssions(BulkDocumentPermissionChangeRequest request);
 }

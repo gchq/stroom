@@ -25,7 +25,6 @@ import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerResource;
-import stroom.explorer.shared.FindResult;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.client.presenter.BatchDocumentPermissionsEditPresenter.BatchDocumentPermissionsEditView;
 import stroom.security.shared.AbstractDocumentPermissionsChange;
@@ -34,7 +33,6 @@ import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionChange;
 import stroom.task.client.TaskListener;
 import stroom.util.shared.PageResponse;
-import stroom.util.shared.ResultPage;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -116,6 +114,14 @@ public class BatchDocumentPermissionsEditPresenter
                     e.hide();
                 })
                 .fire();
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(userRefSelectionBoxPresenter.addDataSelectionHandler(e -> {
+            validate();
+        }));
     }
 
     @Override
@@ -232,7 +238,7 @@ public class BatchDocumentPermissionsEditPresenter
         final BulkDocumentPermissionChangeRequest request = createRequest();
         restFactory
                 .create(EXPLORER_RESOURCE)
-                .method(res -> res.changeDocumentPermssions(request))
+                .method(res -> res.changeDocumentPermissions(request))
                 .onSuccess(result -> {
                     if (result) {
                         AlertEvent.fireInfo(

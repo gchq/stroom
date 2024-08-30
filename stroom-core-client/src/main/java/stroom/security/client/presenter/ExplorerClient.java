@@ -25,7 +25,7 @@ public class ExplorerClient extends AbstractRestClient {
                                          final Consumer<Boolean> consumer) {
         restFactory
                 .create(EXPLORER_RESOURCE)
-                .method(res -> res.changeDocumentPermssions(request))
+                .method(res -> res.changeDocumentPermissions(request))
                 .onSuccess(consumer)
                 .onFailure(new DefaultErrorHandler(this, () -> consumer.accept(false)))
                 .taskListener(taskListener)

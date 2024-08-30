@@ -1887,22 +1887,6 @@ class ExplorerServiceImpl
         });
     }
 
-    @Override
-    public Boolean changeDocumentPermssions(final BulkDocumentPermissionChangeRequest request) {
-        final AdvancedDocumentFindRequest advancedDocumentFindRequest = new AdvancedDocumentFindRequest.Builder()
-                .requiredPermissions(Set.of(DocumentPermission.OWNER))
-                .expression(request.getExpression())
-                .pageRequest(PageRequest.unlimited())
-                .build();
-        applyExpressionFilter(advancedDocumentFindRequest, (path, node) -> {
-            final SingleDocumentPermissionChangeRequest singleDocumentPermissionChangeRequest =
-                    new SingleDocumentPermissionChangeRequest(node.getDocRef(), request.getChange());
-            documentPermissionService.changeDocumentPermissions(singleDocumentPermissionChangeRequest);
-            return true;
-        });
-        return true;
-    }
-
     // --------------------------------------------------------------------------------
 
 

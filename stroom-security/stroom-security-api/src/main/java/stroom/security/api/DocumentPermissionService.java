@@ -12,7 +12,6 @@ import java.util.Set;
 
 public interface DocumentPermissionService {
 
-
 //
 //    /**
 //     * Clear the permissions for an existing document, i.e. change the permissions.

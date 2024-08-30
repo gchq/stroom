@@ -67,8 +67,6 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocumentPermissionServiceImpl.class);
 
-    private static final String ALL_CREATE_PERMISSIONS = "[ all ]";
-
     private final DocumentPermissionDao documentPermissionDao;
     private final UserCache userCache;
     private final UserGroupsCache userGroupsCache;
@@ -174,7 +172,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                 documentPermissionDao.addDocumentUserCreatePermission(
                         docRef.getUuid(),
                         req.getUserRef().getUuid(),
-                        ALL_CREATE_PERMISSIONS);
+                        ExplorerConstants.ALL_CREATE_PERMISSIONS);
                 PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
             }
 

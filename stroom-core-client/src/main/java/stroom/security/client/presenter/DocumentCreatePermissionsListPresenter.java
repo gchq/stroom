@@ -26,6 +26,7 @@ import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
@@ -39,7 +40,6 @@ import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
 import stroom.security.shared.DocumentUserPermissionsReport;
 import stroom.svg.client.Preset;
-import stroom.util.client.CountDownAndRun;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.UserRef;
@@ -121,26 +121,50 @@ public class DocumentCreatePermissionsListPresenter
         final DescriptionBuilder sb = new DescriptionBuilder();
         final DocumentType documentType = selectionModel.getSelected();
         if (documentType != null && currentPermissions != null) {
+
+            // See if explicit permission.
+            if (GwtNullSafe.set(GwtNullSafe.get(currentPermissions,
+                            DocumentUserPermissionsReport::getExplicitCreatePermissions))
+                    .contains(documentType.getType())) {
+                addDirect(sb, "Explicit Permission");
+            }
+
+            // See if implied by 'Create All' permission.
+            if (GwtNullSafe.set(GwtNullSafe.get(currentPermissions,
+                            DocumentUserPermissionsReport::getExplicitCreatePermissions))
+                    .contains(ExplorerConstants.ALL_CREATE_PERMISSIONS)) {
+                addDirect(sb, "Implied By 'Create All' Permission");
+            }
+
+            // See if implied by ownership.
+            if (DocumentPermission.OWNER.equals(currentPermissions.getExplicitPermission())) {
+                addDirect(sb, "Implied By Ownership");
+            }
+
+            // See if implied by inherited 'Create All' permission.
             addPaths(
-                    GwtNullSafe.set(GwtNullSafe.get(currentPermissions,
-                                    DocumentUserPermissionsReport::getExplicitCreatePermissions))
-                            .contains(documentType.getType()),
+                    sb,
+                    GwtNullSafe.map(GwtNullSafe.get(currentPermissions,
+                                    DocumentUserPermissionsReport::getInheritedCreatePermissionPaths))
+                            .get(ExplorerConstants.ALL_CREATE_PERMISSIONS),
+                    "Implied By 'Create All' Permission Inherited From:");
+
+            // See if inherited.
+            addPaths(
+                    sb,
                     GwtNullSafe.map(GwtNullSafe.get(currentPermissions,
                                     DocumentUserPermissionsReport::getInheritedCreatePermissionPaths))
                             .get(documentType.getType()),
-                    sb,
-                    "Explicit Permission",
-                    "Inherited Permission From:");
+                    "Inherited From:");
 
-            // See if implied by ownership.
+            // See if inherited and implied by ownership.
             addPaths(
-                    DocumentPermission.OWNER.equals(currentPermissions.getExplicitPermission()),
+                    sb,
                     GwtNullSafe.map(GwtNullSafe.get(currentPermissions,
                                     DocumentUserPermissionsReport::getInheritedPermissionPaths))
                             .get(DocumentPermission.OWNER),
-                    sb,
-                    "Implied By Ownership",
-                    "Inherited Permission (Implied By Ownership) From:");
+
+                    "Implied By Ownership Inherited From:");
 
             if (sb.toSafeHtml().asString().length() == 0) {
                 sb.addTitle("No Permission");
@@ -150,21 +174,20 @@ public class DocumentCreatePermissionsListPresenter
         return sb.toSafeHtml();
     }
 
-    private void addPaths(final boolean direct,
-                          final List<String> paths,
-                          final DescriptionBuilder sb,
-                          final String directTitle,
-                          final String inheritedTitle) {
-        if (direct) {
-            sb.addNewLine();
-            sb.addNewLine();
-            sb.addTitle(directTitle);
-        }
+    private void addDirect(final DescriptionBuilder sb,
+                           final String message) {
+        sb.addNewLine();
+        sb.addNewLine();
+        sb.addTitle(message);
+    }
 
+    private void addPaths(final DescriptionBuilder sb,
+                          final List<String> paths,
+                          final String message) {
         if (paths != null && paths.size() > 0) {
             sb.addNewLine();
             sb.addNewLine();
-            sb.addTitle(inheritedTitle);
+            sb.addTitle(message);
             for (final String path : paths) {
                 sb.addNewLine();
                 sb.addLine(path);
@@ -179,6 +202,11 @@ public class DocumentCreatePermissionsListPresenter
                             .getExplicitCreatePermissions()
                             .contains(documentType.getType())) {
                 return TickBoxState.TICK;
+            } else if (currentPermissions.getExplicitCreatePermissions() != null &&
+                    currentPermissions
+                            .getExplicitCreatePermissions()
+                            .contains(ExplorerConstants.ALL_CREATE_PERMISSIONS)) {
+                return TickBoxState.HALF_TICK;
             } else if (currentPermissions.getExplicitPermission() != null &&
                     currentPermissions
                             .getExplicitPermission()
@@ -219,24 +247,20 @@ public class DocumentCreatePermissionsListPresenter
                     TickBoxCell.create(false, false)) {
                 @Override
                 public TickBoxState getValue() {
-                    boolean all = true;
-                    boolean some = false;
+                    final boolean all = GwtNullSafe.set(GwtNullSafe.get(currentPermissions,
+                                    DocumentUserPermissionsReport::getExplicitCreatePermissions))
+                            .contains(ExplorerConstants.ALL_CREATE_PERMISSIONS);
+                    if (all) {
+                        return TickBoxState.TICK;
+                    }
+
                     for (final DocumentType documentType : documentTypes.getTypes()) {
                         final TickBoxState state = getPermissionState(documentType);
-                        if (TickBoxState.HALF_TICK.equals(state)) {
+                        if (!TickBoxState.UNTICK.equals(state)) {
                             return TickBoxState.HALF_TICK;
-                        } else if (TickBoxState.TICK.equals(state)) {
-                            some = true;
-                        } else if (TickBoxState.UNTICK.equals(state)) {
-                            all = false;
                         }
                     }
 
-                    if (all) {
-                        return TickBoxState.TICK;
-                    } else if (some) {
-                        return TickBoxState.HALF_TICK;
-                    }
                     return TickBoxState.UNTICK;
                 }
             };
@@ -316,13 +340,28 @@ public class DocumentCreatePermissionsListPresenter
     }
 
     private void onChangeAll(final boolean selected) {
-        documentTypeCache.fetch(documentTypes -> {
-            final CountDownAndRun countdownAndRun = new CountDownAndRun(documentTypes.getTypes().size(),
-                    this::refreshAll);
-            for (final DocumentType documentType : documentTypes.getTypes()) {
-                onChange(documentType, selected, ok -> countdownAndRun.countdown());
+        onChangeAll(selected, ok -> refreshAll());
+    }
+
+    private void onChangeAll(final boolean selected,
+                             final Consumer<Boolean> consumer) {
+        if (relatedUser != null) {
+            final AbstractDocumentPermissionsChange change;
+            if (selected) {
+                change = new AbstractDocumentPermissionsChange
+                        .AddAllDocumentCreatePermissions(relatedUser);
+            } else {
+                change = new AbstractDocumentPermissionsChange
+                        .RemoveAllDocumentCreatePermissions(relatedUser);
             }
-        }, this);
+
+            final BulkDocumentPermissionChangeRequest request = new BulkDocumentPermissionChangeRequest(
+                    createExpression(),
+                    change);
+            explorerClient.changeDocumentPermssions(request, response -> consumer.accept(response));
+        } else {
+            consumer.accept(false);
+        }
     }
 
     private void onChange(final DocumentType documentType,
@@ -352,23 +391,26 @@ public class DocumentCreatePermissionsListPresenter
                         documentType);
             }
 
-            final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.OR);
-            builder.addDocRefTerm(DocumentPermissionFields.DOCUMENT, Condition.IS_DOC_REF, relatedDoc);
-            if (getView().isIncludeDescendants()) {
-                builder.addTerm(ExpressionTerm.builder()
-                        .field(DocumentPermissionFields.DESCENDANTS)
-                        .condition(Condition.OF_DOC_REF)
-                        .docRef(relatedDoc)
-                        .build());
-            }
-            final ExpressionOperator expression = builder.build();
-
-            final BulkDocumentPermissionChangeRequest request = new BulkDocumentPermissionChangeRequest(expression,
+            final BulkDocumentPermissionChangeRequest request = new BulkDocumentPermissionChangeRequest(
+                    createExpression(),
                     change);
             explorerClient.changeDocumentPermssions(request, response -> consumer.accept(response));
         } else {
             consumer.accept(false);
         }
+    }
+
+    private ExpressionOperator createExpression() {
+        final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.OR);
+        builder.addDocRefTerm(DocumentPermissionFields.DOCUMENT, Condition.IS_DOC_REF, relatedDoc);
+        if (getView().isIncludeDescendants()) {
+            builder.addTerm(ExpressionTerm.builder()
+                    .field(DocumentPermissionFields.DESCENDANTS)
+                    .condition(Condition.OF_DOC_REF)
+                    .docRef(relatedDoc)
+                    .build());
+        }
+        return builder.build();
     }
 
     public boolean isIncludeDescendants() {

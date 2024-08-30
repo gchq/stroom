@@ -1,6 +1,8 @@
 package stroom.security.impl;
 
 import stroom.docref.DocRef;
+import stroom.explorer.shared.ExplorerConstants;
+import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
@@ -307,7 +309,20 @@ class SecurityContextImpl implements SecurityContext {
     private boolean hasUserDocumentCreatePermission(final UserRef userUuid,
                                                     final DocRef folderRef,
                                                     final String documentType) {
-        return userDocumentCreatePermissionsCache.hasDocumentCreatePermission(userUuid, folderRef, documentType);
+        boolean result = userDocumentCreatePermissionsCache.hasDocumentCreatePermission(
+                userUuid,
+                folderRef,
+                documentType);
+
+        // See if we need to check if the user has `all` create permissions.
+        if (!result && !ExplorerConstants.ALL_CREATE_PERMISSIONS.equals(documentType)) {
+            result = userDocumentCreatePermissionsCache.hasDocumentCreatePermission(
+                    userUuid,
+                    folderRef,
+                    ExplorerConstants.ALL_CREATE_PERMISSIONS);
+        }
+
+        return result;
     }
 
     /**

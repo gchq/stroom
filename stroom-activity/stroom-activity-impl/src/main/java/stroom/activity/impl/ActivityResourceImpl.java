@@ -8,6 +8,7 @@ import stroom.activity.shared.ActivityResource;
 import stroom.activity.shared.ActivityValidationResult;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
+import stroom.event.logging.api.ThreadLocalLogState;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.rest.RestUtil;
@@ -50,6 +51,9 @@ class ActivityResourceImpl implements ActivityResource {
     @AutoLogged(value = OperationType.MANUALLY_LOGGED)
     @Override
     public QuickFilterResultPage<Activity> list(final String filter) {
+        final boolean loggingRequired = !Strings.isNullOrEmpty(filter);
+        ThreadLocalLogState.setLogged(!loggingRequired);
+
         LOGGER.debug("filter: {}", filter);
 
         final StroomEventLoggingService eventLoggingService = eventLoggingServiceProvider.get();
@@ -72,7 +76,7 @@ class ActivityResourceImpl implements ActivityResource {
 
                     return ComplexLoggedOutcome.success(result, newSearchEventAction);
                 })
-                .withLoggingRequiredWhen(!Strings.isNullOrEmpty(filter)) // Don't log non-filtered searches
+                .withLoggingRequiredWhen(loggingRequired) // Don't log non-filtered searches
                 .getResultAndLog();
     }
 

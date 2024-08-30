@@ -57,6 +57,7 @@ class AppPermissionResourceImpl implements AppPermissionResource {
         this.userAppPermissionsCacheProvider = userAppPermissionsCacheProvider;
     }
 
+    @AutoLogged(OperationType.VIEW)
     @Override
     public ResultPage<AppUserPermissions> fetchAppUserPermissions(final FetchAppUserPermissionsRequest request) {
         return appPermissionServiceProvider.get().fetchAppUserPermissions(request);

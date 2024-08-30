@@ -103,7 +103,6 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
                 if (OperationType.MANUALLY_LOGGED.equals(requestInfo.getContainerResourceInfo().getOperationType())) {
                     if (!ThreadLocalLogState.hasLogged()) {
                         LOGGER.error("Expected manual logging to have happened: " + requestInfo);
-                        ThreadLocalLogState.setLogged(false);
                     }
                 } else {
                     requestEventLogProvider.get().log(requestInfo, null, exception);
@@ -113,6 +112,8 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
         } else {
             LOGGER.warn("Unable to create audit log for exception, request is null", exception);
         }
+
+        ThreadLocalLogState.setLogged(false);
 
         if (exception instanceof WebApplicationException) {
             WebApplicationException wae = (WebApplicationException) exception;
@@ -137,13 +138,14 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
             if (OperationType.MANUALLY_LOGGED.equals(requestInfo.getContainerResourceInfo().getOperationType())) {
                 if (!ThreadLocalLogState.hasLogged()) {
                     LOGGER.error("Expected manual logging to have happened: " + requestInfo);
-                    ThreadLocalLogState.setLogged(false);
                 }
             } else {
                 requestEventLogProvider.get().log(requestInfo, writerInterceptorContext.getEntity());
             }
             request.setAttribute(REQUEST_LOG_INFO_PROPERTY, null);
         }
+
+        ThreadLocalLogState.setLogged(false);
     }
 
     @Override

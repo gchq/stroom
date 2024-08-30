@@ -391,10 +391,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                 msg,
                 AuthoriseEventAction.builder()
                         .withAction(AuthorisationActionType.REQUEST)
-                        .addDocument(Document.builder()
-                                .withId(docRef.getUuid())
-                                .withName(docRef.getName())
-                                .build())
+                        .addObject(StroomEventLoggingUtil.createOtherObject(docRef))
                         .withOutcome(Outcome.builder()
                                 .withSuccess(false)
                                 .withDescription(NullSafe.getOrElse(e, Throwable::getMessage, msg))

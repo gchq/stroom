@@ -211,11 +211,11 @@ public interface ExplorerResource extends RestResource, DirectRestService {
             @Parameter(description = "request", required = true) FetchHighlightsRequest request);
 
     @POST
-    @Path("/changeDocumentPermssions")
+    @Path("/changeDocumentPermissions")
     @Operation(
             summary = "Change document permissions",
-            operationId = "changeDocumentPermssions")
-    Boolean changeDocumentPermssions(
+            operationId = "changeDocumentPermissions")
+    Boolean changeDocumentPermissions(
             @Parameter(description = "request", required = true) BulkDocumentPermissionChangeRequest request);
 
     // --------------------------------------------------------------------------------

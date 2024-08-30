@@ -8,6 +8,6 @@
             <form:FormLabel ui:field="label"/>
             <view:QuickFilter ui:field="quickFilter"/>
         </g:FlowPanel>
-        <g:SimplePanel ui:field="data" styleName="dock-max"/>
+        <g:SimplePanel ui:field="data" styleName="dock-max overflow-hidden"/>
     </g:FlowPanel>
 </ui:UiBinder>

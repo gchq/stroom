@@ -19,6 +19,7 @@ package stroom.security.impl;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
+import stroom.security.api.DocumentPermissionService;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.UserRef;

@@ -8,6 +8,7 @@ import java.util.Objects;
 
 public final class ExplorerConstants {
 
+    public static final String ALL_CREATE_PERMISSIONS = "[ all ]";
     public static final String SYSTEM = "System";
     public static final String FAVOURITES = "Favourites";
     public static final String FOLDER = "Folder";
