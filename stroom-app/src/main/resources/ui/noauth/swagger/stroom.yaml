@@ -2382,9 +2382,9 @@ paths:
         the accociated permissions for a given user
       tags:
       - Explorer (v2)
-  /explorer/v2/changeDocumentPermssions:
+  /explorer/v2/changeDocumentPermissions:
     post:
-      operationId: changeDocumentPermssions
+      operationId: changeDocumentPermissions
       requestBody:
         content:
           application/json:
@@ -4229,14 +4229,14 @@ paths:
       summary: User and app permissions for the current session
       tags:
       - Application Permissions
-  /permission/app/v1/changeUser:
+  /permission/app/v1/changeAppPermission:
     post:
-      operationId: changeUserPermissions
+      operationId: changeAppPermission
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ChangeUserRequest'
+              $ref: '#/components/schemas/AbstractAppPermissionChange'
         description: changeUserRequest
         required: true
       responses:
@@ -7157,6 +7157,45 @@ paths:
       - XSLTs
 components:
   schemas:
+    AbstractAppPermissionChange:
+      type: object
+      discriminator:
+        propertyName: type
+      properties:
+        permission:
+          type: string
+          enum:
+          - ADMINISTRATOR
+          - ANNOTATIONS
+          - MANAGE_CACHE_PERMISSION
+          - VIEW_DATA_PERMISSION
+          - VIEW_DATA_WITH_PIPELINE_PERMISSION
+          - DELETE_DATA_PERMISSION
+          - IMPORT_DATA_PERMISSION
+          - EXPORT_DATA_PERMISSION
+          - MANAGE_USERS_PERMISSION
+          - CHANGE_OWNER_PERMISSION
+          - STEPPING_PERMISSION
+          - MANAGE_PROCESSORS_PERMISSION
+          - MANAGE_TASKS_PERMISSION
+          - DOWNLOAD_SEARCH_RESULTS_PERMISSION
+          - MANAGE_API_KEYS
+          - MANAGE_JOBS_PERMISSION
+          - MANAGE_PROPERTIES_PERMISSION
+          - MANAGE_POLICIES_PERMISSION
+          - MANAGE_NODES_PERMISSION
+          - MANAGE_INDEX_SHARDS_PERMISSION
+          - MANAGE_VOLUMES_PERMISSION
+          - MANAGE_DB_PERMISSION
+          - IMPORT_CONFIGURATION
+          - EXPORT_CONFIGURATION
+          - VIEW_SYSTEM_INFO_PERMISSION
+        type:
+          type: string
+        userRef:
+          $ref: '#/components/schemas/UserRef'
+      required:
+      - type
     AbstractDocumentPermissionsChange:
       type: object
       discriminator:
@@ -7341,6 +7380,10 @@ components:
         properties:
           sourceDocRef:
             $ref: '#/components/schemas/DocRef'
+    AddAppPermission:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AbstractAppPermissionChange'
     AddDocumentCreatePermission:
       type: object
       allOf:
@@ -7998,93 +8041,6 @@ components:
           type: boolean
         message:
           type: string
-    ChangeSetAppPermission:
-      type: object
-      properties:
-        addSet:
-          type: array
-          items:
-            type: string
-            enum:
-            - ADMINISTRATOR
-            - ANNOTATIONS
-            - MANAGE_CACHE_PERMISSION
-            - VIEW_DATA_PERMISSION
-            - VIEW_DATA_WITH_PIPELINE_PERMISSION
-            - DELETE_DATA_PERMISSION
-            - IMPORT_DATA_PERMISSION
-            - EXPORT_DATA_PERMISSION
-            - MANAGE_USERS_PERMISSION
-            - CHANGE_OWNER_PERMISSION
-            - STEPPING_PERMISSION
-            - MANAGE_PROCESSORS_PERMISSION
-            - MANAGE_TASKS_PERMISSION
-            - DOWNLOAD_SEARCH_RESULTS_PERMISSION
-            - MANAGE_API_KEYS
-            - MANAGE_JOBS_PERMISSION
-            - MANAGE_PROPERTIES_PERMISSION
-            - MANAGE_POLICIES_PERMISSION
-            - MANAGE_NODES_PERMISSION
-            - MANAGE_INDEX_SHARDS_PERMISSION
-            - MANAGE_VOLUMES_PERMISSION
-            - MANAGE_DB_PERMISSION
-            - IMPORT_CONFIGURATION
-            - EXPORT_CONFIGURATION
-            - VIEW_SYSTEM_INFO_PERMISSION
-          uniqueItems: true
-        removeSet:
-          type: array
-          items:
-            type: string
-            enum:
-            - ADMINISTRATOR
-            - ANNOTATIONS
-            - MANAGE_CACHE_PERMISSION
-            - VIEW_DATA_PERMISSION
-            - VIEW_DATA_WITH_PIPELINE_PERMISSION
-            - DELETE_DATA_PERMISSION
-            - IMPORT_DATA_PERMISSION
-            - EXPORT_DATA_PERMISSION
-            - MANAGE_USERS_PERMISSION
-            - CHANGE_OWNER_PERMISSION
-            - STEPPING_PERMISSION
-            - MANAGE_PROCESSORS_PERMISSION
-            - MANAGE_TASKS_PERMISSION
-            - DOWNLOAD_SEARCH_RESULTS_PERMISSION
-            - MANAGE_API_KEYS
-            - MANAGE_JOBS_PERMISSION
-            - MANAGE_PROPERTIES_PERMISSION
-            - MANAGE_POLICIES_PERMISSION
-            - MANAGE_NODES_PERMISSION
-            - MANAGE_INDEX_SHARDS_PERMISSION
-            - MANAGE_VOLUMES_PERMISSION
-            - MANAGE_DB_PERMISSION
-            - IMPORT_CONFIGURATION
-            - EXPORT_CONFIGURATION
-            - VIEW_SYSTEM_INFO_PERMISSION
-          uniqueItems: true
-    ChangeSetUserRef:
-      type: object
-      properties:
-        addSet:
-          type: array
-          items:
-            $ref: '#/components/schemas/UserRef'
-          uniqueItems: true
-        removeSet:
-          type: array
-          items:
-            $ref: '#/components/schemas/UserRef'
-          uniqueItems: true
-    ChangeUserRequest:
-      type: object
-      properties:
-        changedAppPermissions:
-          $ref: '#/components/schemas/ChangeSetAppPermission'
-        changedLinkedUsers:
-          $ref: '#/components/schemas/ChangeSetUserRef'
-        user:
-          $ref: '#/components/schemas/UserRef'
     CheckDocumentPermissionRequest:
       type: object
       properties:
@@ -13805,6 +13761,10 @@ components:
         properties:
           ignore:
             type: boolean
+    RemoveAppPermission:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AbstractAppPermissionChange'
     RemoveDocumentCreatePermission:
       type: object
       allOf:

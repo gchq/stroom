@@ -505,7 +505,8 @@ class ExplorerResourceImpl implements ExplorerResource {
                     .withDescription("Set document permission")
                     .withDefaultEventAction(action)
                     .withComplexLoggedResult(searchEventAction -> {
-                        final DocumentPermissionService documentPermissionService = documentPermissionServiceProvider.get();
+                        final DocumentPermissionService documentPermissionService =
+                                documentPermissionServiceProvider.get();
                         final Boolean result = documentPermissionService.changeDocumentPermissions(request);
                         return ComplexLoggedOutcome.success(result, action);
                     })
