@@ -25,11 +25,12 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.AppPermissionsEditPresenter.AppPermissionsEditView;
+import stroom.security.shared.AbstractAppPermissionChange;
+import stroom.security.shared.AbstractAppPermissionChange.AddAppPermission;
+import stroom.security.shared.AbstractAppPermissionChange.RemoveAppPermission;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppPermissionResource;
 import stroom.security.shared.AppUserPermissionsReport;
-import stroom.security.shared.ChangeSet;
-import stroom.security.shared.ChangeUserRequest;
 import stroom.util.shared.UserRef;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -287,17 +288,16 @@ public class AppPermissionsEditPresenter
 
         if (updateable) {
             selectionColumn.setFieldUpdater((index, permission, value) -> {
-                final ChangeUserRequest request = new ChangeUserRequest(
-                        relatedUser, new ChangeSet<>(), new ChangeSet<>());
+                final AbstractAppPermissionChange request;
                 if (value.toBoolean()) {
-                    request.getChangedAppPermissions().add(permission);
+                    request = new AddAppPermission(relatedUser, permission);
                 } else {
-                    request.getChangedAppPermissions().remove(permission);
+                    request = new RemoveAppPermission(relatedUser, permission);
                 }
 
                 restFactory
                         .create(APP_PERMISSION_RESOURCE)
-                        .method(res -> res.changeUser(request))
+                        .method(res -> res.changeAppPermission(request))
                         .onSuccess(result -> refresh())
                         .taskListener(this)
                         .exec();

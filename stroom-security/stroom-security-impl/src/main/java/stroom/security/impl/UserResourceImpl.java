@@ -116,7 +116,7 @@ public class UserResourceImpl implements UserResource {
                         stroomEventLoggingServiceProvider.get().log("UserResourceImpl.createGroup",
                                 "Creating new user group " + name, builder.build());
                     });
-        } catch (Exception ex) {
+        } catch (final Exception ex) {
             builder.withObjects(
                     event.logging.Group.builder()
                             .withName(name)
@@ -145,26 +145,22 @@ public class UserResourceImpl implements UserResource {
         final User userIdForLogging = fetch(userUuid);
         final User groupIdForLogging = fetch(groupUuid);
 
-        boolean success = false;
-        String errorMessage = null;
-
         try {
-            Boolean result = userServiceProvider.get().addUserToGroup(userUuid, groupUuid);
-
-            if (result != null) {
-                success = result;
-            }
-        } catch (Exception e) {
-            errorMessage = e.getMessage();
+            final Boolean result = userServiceProvider.get().addUserToGroup(userUuid, groupUuid);
+            authorisationEventLogProvider.get().addPermission(
+                    userIdForLogging.asRef(),
+                    groupIdForLogging.asRef().toDisplayString(),
+                    result,
+                    null);
+            return result;
+        } catch (final Exception e) {
+            authorisationEventLogProvider.get().addPermission(
+                    userIdForLogging.asRef(),
+                    groupIdForLogging.asRef().toDisplayString(),
+                    false,
+                    e.getMessage());
+            throw e;
         }
-
-        authorisationEventLogProvider.get().addPermission(
-                userIdForLogging.asRef(),
-                groupIdForLogging.asRef().toDisplayString(),
-                success,
-                errorMessage);
-
-        return success;
     }
 
     @Override
@@ -174,25 +170,21 @@ public class UserResourceImpl implements UserResource {
         final User userIdForLogging = fetch(userUuid);
         final User groupIdForLogging = fetch(groupUuid);
 
-        boolean success = false;
-        String errorMessage = null;
-
         try {
-            Boolean result = userServiceProvider.get().removeUserFromGroup(userUuid, groupUuid);
-
-            if (result != null) {
-                success = result;
-            }
+            final Boolean result = userServiceProvider.get().removeUserFromGroup(userUuid, groupUuid);
+            authorisationEventLogProvider.get().removePermission(
+                    userIdForLogging.asRef(),
+                    groupIdForLogging.asRef().toDisplayString(),
+                    result,
+                    null);
+            return result;
         } catch (Exception e) {
-            errorMessage = e.getMessage();
+            authorisationEventLogProvider.get().removePermission(
+                    userIdForLogging.asRef(),
+                    groupIdForLogging.asRef().toDisplayString(),
+                    false,
+                    e.getMessage());
+            throw e;
         }
-
-        authorisationEventLogProvider.get().removePermission(
-                userIdForLogging.asRef(),
-                groupIdForLogging.asRef().toDisplayString(),
-                success,
-                errorMessage);
-
-        return success;
     }
 }

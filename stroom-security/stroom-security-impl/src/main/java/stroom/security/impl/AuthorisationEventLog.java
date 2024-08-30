@@ -42,7 +42,7 @@ public class AuthorisationEventLog {
         this.eventLoggingService = eventLoggingService;
     }
 
-    public void addPermission(final UserRef userName,
+    public void addPermission(final UserRef userRef,
                               final String permission,
                               final boolean success,
                               final String outcomeDescription) {
@@ -55,7 +55,7 @@ public class AuthorisationEventLog {
         authorisationEvent(
                 "addUserToGroup",
                 "Adding user to group",
-                userName,
+                userRef,
                 addGroups,
                 null,
                 success,

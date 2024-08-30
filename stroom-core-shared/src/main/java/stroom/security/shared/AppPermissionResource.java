@@ -45,10 +45,10 @@ public interface AppPermissionResource extends RestResource, DirectRestService {
             @Parameter(description = "request", required = true) FetchAppUserPermissionsRequest request);
 
     @POST
-    @Path("/changeUser")
+    @Path("/changeAppPermission")
     @Operation(
             summary = "User and app permissions for the current session",
-            operationId = "changeUserPermissions")
-    Boolean changeUser(
-            @Parameter(description = "changeUserRequest", required = true) ChangeUserRequest changeUserRequest);
+            operationId = "changeAppPermission")
+    Boolean changeAppPermission(
+            @Parameter(description = "changeUserRequest", required = true) AbstractAppPermissionChange request);
 }

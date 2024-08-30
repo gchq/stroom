@@ -21,12 +21,8 @@ import stroom.cache.api.LoadingStroomCache;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
-import stroom.util.entityevent.EntityAction;
-import stroom.util.entityevent.EntityEvent;
-import stroom.util.entityevent.EntityEventBus;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.UserDocRefUtil;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
@@ -42,16 +38,13 @@ class UserGroupsCache implements PermissionChangeEvent.Handler, Clearable {
     private static final String USER_GROUPS_CACHE_NAME = "User Groups Cache";
 
     private final Provider<UserDao> userDaoProvider;
-    private final Provider<EntityEventBus> eventBusProvider;
     private final LoadingStroomCache<UserRef, Set<UserRef>> cache;
 
     @Inject
     UserGroupsCache(final CacheManager cacheManager,
                     final Provider<UserDao> userDaoProvider,
-                    final Provider<EntityEventBus> eventBusProvider,
                     final Provider<AuthorisationConfig> authorisationConfigProvider) {
         this.userDaoProvider = userDaoProvider;
-        this.eventBusProvider = eventBusProvider;
         cache = cacheManager.createLoadingCache(
                 USER_GROUPS_CACHE_NAME,
                 () -> authorisationConfigProvider.get().getUserGroupsCache(),
@@ -66,15 +59,6 @@ class UserGroupsCache implements PermissionChangeEvent.Handler, Clearable {
 
     Set<UserRef> getGroups(final UserRef userRef) {
         return cache.get(userRef);
-    }
-
-    void remove(final UserRef userRef) {
-        cache.invalidate(userRef);
-        final EntityEventBus entityEventBus = eventBusProvider.get();
-        EntityEvent.fire(
-                entityEventBus,
-                UserDocRefUtil.createDocRef(userRef),
-                EntityAction.CLEAR_CACHE);
     }
 
     @Override

@@ -137,13 +137,6 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
     }
 
     @Override
-    public void clearAllDocumentPermissions() {
-        JooqUtil.context(securityDbConnProvider, context -> context
-                .deleteFrom(PERMISSION_DOC)
-                .execute());
-    }
-
-    @Override
     public BitSet getDocumentUserCreatePermissionsBitSet(final String documentUuid, final String userUuid) {
         final List<Integer> docTypeIdList = getDocumentUserCreateDocTypeIds(documentUuid, userUuid);
 
@@ -241,13 +234,6 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
         JooqUtil.context(securityDbConnProvider, context -> context
                 .deleteFrom(PERMISSION_DOC_CREATE)
                 .where(PERMISSION_DOC_CREATE.DOC_UUID.eq(documentUuid))
-                .execute());
-    }
-
-    @Override
-    public void clearAllDocumentCreatePermissions() {
-        JooqUtil.context(securityDbConnProvider, context -> context
-                .deleteFrom(PERMISSION_DOC_CREATE)
                 .execute());
     }
 

@@ -51,8 +51,6 @@ public interface UserService {
 
     User update(User user);
 
-//    Boolean setEnabled(String userUuid, boolean enabled);
-
     ResultPage<User> find(FindUserCriteria criteria);
 
     ResultPage<User> findUsersInGroup(String groupUuid, FindUserCriteria criteria);

@@ -480,7 +480,7 @@ class ExplorerResourceImpl implements ExplorerResource {
                 .build();
     }
 
-    private Boolean changeDocumentPermissions(final SingleDocumentPermissionChangeRequest request) {
+    private void changeDocumentPermissions(final SingleDocumentPermissionChangeRequest request) {
         final AbstractDocumentPermissionsChange change = request.getChange();
         if (change instanceof final SetPermission setPermission) {
             final Group group = createGroup(setPermission.getUserRef(), setPermission.getPermission());
@@ -500,7 +500,7 @@ class ExplorerResourceImpl implements ExplorerResource {
                         .withAddGroups(AddGroups.builder().addGroups(group).build())
                         .build();
             }
-            return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+            stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                     .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "changeDocumentPermissions"))
                     .withDescription("Set document permission")
                     .withDefaultEventAction(action)
@@ -531,7 +531,7 @@ class ExplorerResourceImpl implements ExplorerResource {
                     .addObject(StroomEventLoggingUtil.createOtherObject(request.getDocRef()))
                     .withAddGroups(AddGroups.builder().addGroups(group).build())
                     .build();
-            return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+            stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                     .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "changeDocumentPermissions"))
                     .withDescription("Add document create permission for folder")
                     .withDefaultEventAction(action)
@@ -563,7 +563,7 @@ class ExplorerResourceImpl implements ExplorerResource {
                     .addObject(StroomEventLoggingUtil.createOtherObject(request.getDocRef()))
                     .withRemoveGroups(RemoveGroups.builder().addGroups(group).build())
                     .build();
-            return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+            stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                     .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "changeDocumentPermissions"))
                     .withDescription("Remove document create permission for folder")
                     .withDefaultEventAction(action)
@@ -592,7 +592,7 @@ class ExplorerResourceImpl implements ExplorerResource {
                     .addObject(StroomEventLoggingUtil.createOtherObject(request.getDocRef()))
                     .withAddGroups(AddGroups.builder().addGroups(group).build())
                     .build();
-            return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+            stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                     .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "changeDocumentPermissions"))
                     .withDescription("Add all document create permissions for folder")
                     .withDefaultEventAction(action)
@@ -621,7 +621,7 @@ class ExplorerResourceImpl implements ExplorerResource {
                     .addObject(StroomEventLoggingUtil.createOtherObject(request.getDocRef()))
                     .withRemoveGroups(RemoveGroups.builder().addGroups(group).build())
                     .build();
-            return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+            stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                     .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "changeDocumentPermissions"))
                     .withDescription("Remove all document create permissions for folder")
                     .withDefaultEventAction(action)
@@ -646,7 +646,7 @@ class ExplorerResourceImpl implements ExplorerResource {
                     .addObject(StroomEventLoggingUtil.createOtherObject(request.getDocRef()))
                     .withAddGroups(AddGroups.builder().addGroups(group).build())
                     .build();
-            return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+            stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                     .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "changeDocumentPermissions"))
                     .withDescription("Copy all document permissions from other document")
                     .withDefaultEventAction(action)
@@ -671,7 +671,7 @@ class ExplorerResourceImpl implements ExplorerResource {
                     .addObject(StroomEventLoggingUtil.createOtherObject(request.getDocRef()))
                     .withAddGroups(AddGroups.builder().addGroups(group).build())
                     .build();
-            return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+            stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                     .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "changeDocumentPermissions"))
                     .withDescription("Set all document permissions from other document")
                     .withDefaultEventAction(action)
@@ -683,13 +683,13 @@ class ExplorerResourceImpl implements ExplorerResource {
                     })
                     .getResultAndLog();
 
-        } else if (change instanceof final RemoveAllPermissions removeAllPermissions) {
+        } else if (change instanceof RemoveAllPermissions) {
             final AuthoriseEventAction action = AuthoriseEventAction
                     .builder()
                     .withAction(AuthorisationActionType.MODIFY)
                     .addObject(StroomEventLoggingUtil.createOtherObject(request.getDocRef()))
                     .build();
-            return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+            stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                     .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "changeDocumentPermissions"))
                     .withDescription("Remove all permissions from document")
                     .withDefaultEventAction(action)

@@ -18,7 +18,6 @@
 package stroom.security.impl;
 
 import stroom.docref.DocRef;
-import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
@@ -40,14 +39,11 @@ import stroom.security.shared.DocumentUserPermissionsReport;
 import stroom.security.shared.DocumentUserPermissionsRequest;
 import stroom.security.shared.FetchDocumentUserPermissionsRequest;
 import stroom.security.shared.SingleDocumentPermissionChangeRequest;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.ArrayList;
@@ -65,28 +61,20 @@ import java.util.stream.Collectors;
 @Singleton
 public class DocumentPermissionServiceImpl implements DocumentPermissionService {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocumentPermissionServiceImpl.class);
-
     private final DocumentPermissionDao documentPermissionDao;
-    private final UserCache userCache;
     private final UserGroupsCache userGroupsCache;
     private final PermissionChangeEventBus permissionChangeEventBus;
     private final SecurityContext securityContext;
-    private final Provider<ExplorerService> explorerServiceProvider;
 
     @Inject
     DocumentPermissionServiceImpl(final DocumentPermissionDao documentPermissionDao,
-                                  final UserCache userCache,
                                   final UserGroupsCache userGroupsCache,
                                   final PermissionChangeEventBus permissionChangeEventBus,
-                                  final SecurityContext securityContext,
-                                  final Provider<ExplorerService> explorerServiceProvider) {
+                                  final SecurityContext securityContext) {
         this.documentPermissionDao = documentPermissionDao;
-        this.userCache = userCache;
         this.userGroupsCache = userGroupsCache;
         this.permissionChangeEventBus = permissionChangeEventBus;
         this.securityContext = securityContext;
-        this.explorerServiceProvider = explorerServiceProvider;
     }
 
     @Override
@@ -125,18 +113,6 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                         req.getPermission());
             }
             PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
-
-//        } else if (change instanceof final RemovePermission req) {
-//            Objects.requireNonNull(req.getUserRef(), "Null user ref");
-//            Objects.requireNonNull(req.getPermission(), "Null permission");
-//            final DocumentPermission current = documentPermissionDao
-//                    .getDocumentUserPermission(docRef.getUuid(), req.getUserRef().getUuid());
-//            if (current == null || !current.isHigher(req.getPermission())) {
-//                documentPermissionDao.removeDocumentUserPermission(
-//                        docRef.getUuid(),
-//                        req.getUserRef().getUuid());
-//                PermissionChangeEvent.fire(permissionChangeEventBus, req.getUserRef(), docRef);
-//            }
 
         } else if (change instanceof final AddDocumentCreatePermission req) {
             // Only applies to folders.
@@ -212,7 +188,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
             }
             PermissionChangeEvent.fire(permissionChangeEventBus, null, docRef);
 
-        } else if (change instanceof final RemoveAllPermissions req) {
+        } else if (change instanceof RemoveAllPermissions) {
             documentPermissionDao.removeAllDocumentPermissions(docRef.getUuid());
             PermissionChangeEvent.fire(permissionChangeEventBus, null, docRef);
 

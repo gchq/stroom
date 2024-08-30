@@ -20,8 +20,6 @@ public interface DocumentPermissionDao {
 
     void removeAllDocumentPermissions(String documentUuid);
 
-    void clearAllDocumentPermissions();
-
     BitSet getDocumentUserCreatePermissionsBitSet(String documentUuid, String userUuid);
 
     Set<String> getDocumentUserCreatePermissions(String documentUuid, String userUuid);
@@ -33,8 +31,6 @@ public interface DocumentPermissionDao {
     void removeDocumentUserCreatePermissions(String documentUuid, String userUuid);
 
     void removeAllDocumentCreatePermissions(String documentUuid);
-
-    void clearAllDocumentCreatePermissions();
 
     /**
      * BULK operation to add all permssions from a source document to a target document.

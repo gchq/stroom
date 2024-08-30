@@ -25,6 +25,7 @@ import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.util.AuditUtil;
 import stroom.util.NullSafe;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserDesc;
@@ -32,7 +33,9 @@ import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 
 class UserServiceImpl implements UserService, ContentPackUserService {
@@ -172,10 +175,31 @@ class UserServiceImpl implements UserService, ContentPackUserService {
     @Override
     public Boolean addUserToGroup(final String userUuid, final String groupUuid) {
         securityContext.secure(AppPermission.MANAGE_USERS_PERMISSION, () -> {
+            // Make sure we aren't creating a cyclic dependency.
+            checkCyclicDependency(userUuid, groupUuid, new HashSet<>());
+
             userDao.addUserToGroup(userUuid, groupUuid);
             fireUserChangeEvent(userUuid);
         });
         return true;
+    }
+
+    private void checkCyclicDependency(final String userUuid,
+                                       final String groupUuid,
+                                       final Set<String> examined) {
+        if (userUuid.equals(groupUuid)) {
+            throw new RuntimeException("Attempt to add a user/group to a group that would create a cyclic dependency");
+        }
+        if (!examined.contains(groupUuid)) {
+            examined.add(groupUuid);
+
+            final ResultPage<User> groups = userDao.findGroupsForUser(
+                    groupUuid,
+                    new FindUserCriteria.Builder().pageRequest(PageRequest.unlimited()).build());
+            for (final User group : groups.getValues()) {
+                checkCyclicDependency(userUuid, group.getUuid(), examined);
+            }
+        }
     }
 
     @Override
