@@ -64,19 +64,14 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     private final ProcessorDbConnProvider processorDbConnProvider;
     private final QueryDataXMLSerialiser queryDataXMLSerialiser;
     private final ExpressionMapper expressionMapper;
-    private final ProcessorFilterTrackerDaoImpl processorFilterTrackerDaoImpl;
-    private final Provider<UserRefLookup> userRefLookupProvider;
 
     @Inject
     ProcessorFilterDaoImpl(final ProcessorDbConnProvider processorDbConnProvider,
                            final ExpressionMapperFactory expressionMapperFactory,
-                           final ProcessorFilterTrackerDaoImpl processorFilterTrackerDaoImpl,
                            final QueryDataXMLSerialiser queryDataXMLSerialiser,
                            final Provider<UserRefLookup> userRefLookupProvider) {
         this.processorDbConnProvider = processorDbConnProvider;
-        this.processorFilterTrackerDaoImpl = processorFilterTrackerDaoImpl;
         this.queryDataXMLSerialiser = queryDataXMLSerialiser;
-        this.userRefLookupProvider = userRefLookupProvider;
         recordToProcessorFilterMapper = new RecordToProcessorFilterMapper(
                 queryDataXMLSerialiser,
                 userRefLookupProvider);
@@ -258,12 +253,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         return count;
     }
 
-    public int logicalDeleteByProcessorId(final int processorId) {
-        return JooqUtil.contextResult(processorDbConnProvider, context ->
-                logicalDeleteByProcessorId(processorId, context));
-    }
-
-    public int logicalDeleteByProcessorId(final int processorId, final DSLContext context) {
+    public void logicalDeleteByProcessorId(final int processorId, final DSLContext context) {
         final int count = context
                 .update(PROCESSOR_FILTER)
                 .set(PROCESSOR_FILTER.DELETED, true)
@@ -275,7 +265,6 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         LOGGER.debug("Logically deleted {} processor filters for processor Id {}",
                 count,
                 processorId);
-        return count;
     }
 
     /**
