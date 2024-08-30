@@ -1479,6 +1479,26 @@ paths:
       summary: Download a query
       tags:
       - Dashboards
+  /dashboard/v1/downloadSearchResults:
+    post:
+      operationId: downloadDashboardSearchResultsLocal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DownloadSearchResultsRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceGeneration'
+          description: default response
+      summary: Download search results
+      tags:
+      - Dashboards
   /dashboard/v1/downloadSearchResults/{nodeName}:
     post:
       operationId: downloadDashboardSearchResultsNode
@@ -1505,9 +1525,29 @@ paths:
       summary: Download search results
       tags:
       - Dashboards
-  /dashboard/v1/search/{nodeName}:
+  /dashboard/v1/search:
     post:
       operationId: dashboardSearch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardSearchRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSearchResponse'
+          description: default response
+      summary: Perform a new search or get new results
+      tags:
+      - Dashboards
+  /dashboard/v1/search/{nodeName}:
+    post:
+      operationId: dashboardSearch_1
       parameters:
       - in: path
         name: nodeName
@@ -1675,6 +1715,28 @@ paths:
                   $ref: '#/components/schemas/DataInfoSection'
           description: default response
       summary: Find full info about a data item
+      tags:
+      - Data
+  /data/v1/{id}/metaAttributes:
+    post:
+      operationId: getDataMetaAttributes
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+          description: default response
+      summary: Get extended attributes for a data item
       tags:
       - Data
   /data/v1/{id}/parts/{partNo}/child-types:
@@ -4938,6 +5000,26 @@ paths:
       summary: Finds processor task summaries
       tags:
       - Processor Tasks
+  /query/v1/downloadSearchResults:
+    post:
+      operationId: downloadQuerySearchResultsLocal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DownloadQueryResultsRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceGeneration'
+          description: default response
+      summary: Download search results
+      tags:
+      - Queries
   /query/v1/downloadSearchResults/{nodeName}:
     post:
       operationId: downloadQuerySearchResultsNode
@@ -5033,6 +5115,26 @@ paths:
                 $ref: '#/components/schemas/ResultPageQueryHelpRow'
           description: default response
       summary: Fetch all (optionally filtered) query help items
+      tags:
+      - Queries
+  /query/v1/search:
+    post:
+      operationId: querySearchLocal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuerySearchRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSearchResponse'
+          description: default response
+      summary: Perform a new search or get new results
       tags:
       - Queries
   /query/v1/search/{nodeName}:
@@ -15932,6 +16034,8 @@ components:
           $ref: '#/components/schemas/ActivityConfig'
         analyticUiDefaultConfig:
           $ref: '#/components/schemas/AnalyticUiDefaultConfig'
+        authErrorMessage:
+          type: string
         defaultMaxResults:
           type: string
         helpSubPathDocumentation:

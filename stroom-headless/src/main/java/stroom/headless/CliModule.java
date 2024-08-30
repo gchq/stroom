@@ -18,6 +18,7 @@ package stroom.headless;
 
 import stroom.activity.mock.MockActivityModule;
 import stroom.cache.impl.CacheModule;
+import stroom.data.store.mock.MockStreamStoreModule;
 import stroom.dictionary.impl.DictionaryModule;
 import stroom.docstore.impl.DocStoreModule;
 import stroom.explorer.impl.DocRefInfoModule;
@@ -93,6 +94,7 @@ public class CliModule extends AbstractModule {
         install(new MockSecurityContextModule());
 //        install(new DataStoreHandlerModule());
         install(new DocStoreModule());
+        install(new MockStreamStoreModule());
         install(new stroom.docstore.impl.fs.FSPersistenceModule());
 //        install(new stroom.streamtask.StreamTaskModule());
 //        install(new stroom.task.impl.TaskModule());

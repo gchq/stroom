@@ -16,13 +16,11 @@
 
 package stroom.pipeline.refdata;
 
-import stroom.meta.api.EffectiveMeta;
+import stroom.meta.api.EffectiveMetaSet;
 
 import jakarta.inject.Singleton;
 
-import java.util.NavigableSet;
-
 @Singleton
-class EffectiveStreamInternPool extends InternPool<NavigableSet<EffectiveMeta>> {
+class EffectiveStreamInternPool extends InternPool<EffectiveMetaSet> {
 
 }

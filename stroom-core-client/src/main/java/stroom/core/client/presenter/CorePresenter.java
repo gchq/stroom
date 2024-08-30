@@ -115,6 +115,10 @@ public class CorePresenter extends MyPresenter<CoreView, CoreProxy>
 
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface CoreView extends View {
 
         void showWorking(final String message);

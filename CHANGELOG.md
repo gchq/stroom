@@ -13,6 +13,41 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.5-beta.9] - 2024-08-30
+
+* Issue **#4383** : Add an authentication error screen to be shown when a user tries to login and there is an authentication problem or the user's account has been locked/disabled. Previously the user was re-directed to the sign-in screen even if cert auth was enabled.  Added the new property `stroom.ui.authErrorMessage` to allow setting generic HTML content to show the user when an authentication error occurs.
+
+* Issue **#4412** : Fix `/` key not working in quick filter text input fields.
+
+* Issue **#4400** : Fix missing styling on `sessionList` servlet.
+
+* Fix broken description pane in the stroomQL code completion.
+
+* Issue **#4411** : Prevent queueing too many processor tasks.
+
+* Issue **#4408** : Fix SQL deadlock between task queuing and task physical deletion.
+
+* Issue **#4410** : Allow over creation of processor tasks for bounded filters.
+
+* Issue **#4403** : Fix to make elastic indexes searchable with StroomQL.
+
+* Issue **#2897** : Fix issue of the effective stream intern pool returning incorrect sets of streams.
+
+* Issue **#4397** : Fix search API to not require node name.
+
+* Issue **#4394** : Fix a bug that was causing stepping filters to ignore the top level null prefixed namespace (e.g. `xmlns="event-logging:3"`. This meant all elements in the xpath had to be fully qualified.
+
+* Issue **#4395** : Fix ClassCastException when using a stepping xpath filter that returns something other than a list of nodes, e.g. a double, long, boolean, etc.. This means you can now do something like `/Events/Event/Meta/sm:source/sm:recordNo > 2` `equals` `true`, or `/Events/Event/Meta/sm:source/sm:recordNo mod 2` `equals` `0`.
+
+* Issue **#3960** : Migrate to Elasticsearch Java API Client.
+
+* Issue **#4385** : Fix error when trying to change permissions on a folder with no current owner.
+
+* Issue **#4384** : Stop logging to ERROR when stroomQL contains a malformed function.
+
+* Issue **#4389** : Fix the Query table re-drawing too frequently.
+
+
 ## [v7.5-beta.8] - 2024-07-23
 
 * Change API endpoint `/Authentication/v1/noauth/reset` from GET to POST and from a path parameter to a POST body.
@@ -719,7 +754,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-beta.8...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-beta.9...HEAD
+[v7.5-beta.9]: https://github.com/gchq/stroom/compare/v7.5-beta.8...v7.5-beta.9
 [v7.5-beta.8]: https://github.com/gchq/stroom/compare/v7.5-beta.7...v7.5-beta.8
 [v7.5-beta.7]: https://github.com/gchq/stroom/compare/v7.5-beta.6...v7.5-beta.7
 [v7.5-beta.6]: https://github.com/gchq/stroom/compare/v7.5-beta.5...v7.5-beta.6

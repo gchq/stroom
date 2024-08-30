@@ -28,6 +28,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
 
 
     private final int tasksToCreate;
+    private final boolean createTasksBeyondProcessLimit;
     private final int taskCreationThreadCount;
     private final int databaseMultiInsertMaxBatchSize;
 
@@ -48,6 +49,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         fillTaskQueue = true;
         queueSize = 1000;
         tasksToCreate = 1000;
+        createTasksBeyondProcessLimit = true;
         taskCreationThreadCount = 5;
         databaseMultiInsertMaxBatchSize = 500;
 
@@ -81,6 +83,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                            @JsonProperty("fillTaskQueue") final boolean fillTaskQueue,
                            @JsonProperty("queueSize") final int queueSize,
                            @JsonProperty("tasksToCreate") final int tasksToCreate,
+                           @JsonProperty("createTasksBeyondProcessLimit") final boolean createTasksBeyondProcessLimit,
                            @JsonProperty("taskCreationThreadCount") final int taskCreationThreadCount,
                            @JsonProperty("databaseMultiInsertMaxBatchSize") final int databaseMultiInsertMaxBatchSize,
                            @JsonProperty("processorCache") final CacheConfig processorCache,
@@ -97,6 +100,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         this.fillTaskQueue = fillTaskQueue;
         this.queueSize = queueSize;
         this.tasksToCreate = tasksToCreate;
+        this.createTasksBeyondProcessLimit = createTasksBeyondProcessLimit;
         this.taskCreationThreadCount = taskCreationThreadCount;
         this.databaseMultiInsertMaxBatchSize = databaseMultiInsertMaxBatchSize;
         this.processorCache = processorCache;
@@ -138,12 +142,18 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         return queueSize;
     }
 
-    @JsonPropertyDescription("How many tasks should we try to create in the DB. If the queue size is " +
-            "larger then that figure will be used instead as we want to be able to fill the queue. " +
+    @JsonPropertyDescription("How many tasks should we try to create in the DB ready to be queued." +
             "Note that the number of tasks created may be greater than this number as each task creation thread will " +
             "try and create the same number of tasks.")
     public int getTasksToCreate() {
         return tasksToCreate;
+    }
+
+    @JsonPropertyDescription("Do we want to eagerly create tasks beyond the concurrent processing limit specified by " +
+            "filters? If we don't then those filters will likely run out of queued tasks to process before new tasks " +
+            "are created.")
+    public boolean isCreateTasksBeyondProcessLimit() {
+        return createTasksBeyondProcessLimit;
     }
 
     @JsonPropertyDescription("The number of concurrent threads to use for task creation.")

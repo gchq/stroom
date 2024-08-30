@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,12 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty
     @JsonPropertyDescription("Provide a warning message to users about an outage or other significant event.")
     private final String maintenanceMessage;
+
+    @JsonProperty
+    @JsonPropertyDescription("Provide a generic message to the users about an authentication error, " +
+            "e.g. 'Contact support on 01234 567890.'. This message will be displayed in addition to the actual " +
+            "authentication error message. The message is in HTML format. Can be null.")
+    private final String authErrorMessage;
 
     @JsonProperty
     @JsonPropertyDescription("The default maximum number of search results that new dashboard tables will request.")
@@ -158,6 +164,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         welcomeHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
         aboutHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
         maintenanceMessage = null;
+        authErrorMessage = null;
         defaultMaxResults = "1000000,100,10,1";
         process = new ProcessConfig();
         helpUrl = "https://gchq.github.io/stroom-docs/7.5/docs";
@@ -188,6 +195,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
     public UiConfig(@JsonProperty("welcomeHtml") final String welcomeHtml,
                     @JsonProperty("aboutHtml") final String aboutHtml,
                     @JsonProperty("maintenanceMessage") final String maintenanceMessage,
+                    @JsonProperty("authErrorMessage") final String authErrorMessage,
                     @JsonProperty("defaultMaxResults") final String defaultMaxResults,
                     @JsonProperty("process") final ProcessConfig process,
                     @JsonProperty("helpUrl") final String helpUrl,
@@ -213,6 +221,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         this.welcomeHtml = welcomeHtml;
         this.aboutHtml = aboutHtml;
         this.maintenanceMessage = maintenanceMessage;
+        this.authErrorMessage = authErrorMessage;
         this.defaultMaxResults = defaultMaxResults;
         this.process = process;
         this.helpUrl = helpUrl;
@@ -247,6 +256,10 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
 
     public String getMaintenanceMessage() {
         return maintenanceMessage;
+    }
+
+    public String getAuthErrorMessage() {
+        return authErrorMessage;
     }
 
     public String getDefaultMaxResults() {

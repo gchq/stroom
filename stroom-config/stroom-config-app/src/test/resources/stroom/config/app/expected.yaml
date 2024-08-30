@@ -330,7 +330,9 @@ appConfig:
     indexing:
       initialRetryBackoffPeriodMs: 1000
       maxNestedElementDepth: 10
-      retryCount: 10
+      retryCount: 5
+    retention:
+      scrollSize: 10000
     search:
       highlight: true
       scrollDuration: "PT1M"
@@ -588,6 +590,7 @@ appConfig:
       maxElements: 1000000
   processor:
     assignTasks: true
+    createTasksBeyondProcessLimit: true
     databaseMultiInsertMaxBatchSize: 500
     db:
       connection:

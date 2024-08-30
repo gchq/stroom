@@ -18,6 +18,7 @@ package stroom.security.identity.client.gin;
 
 import stroom.security.identity.client.AccountsPlugin;
 import stroom.security.identity.client.ChangePasswordPlugin;
+import stroom.security.identity.client.presenter.AuthenticationErrorPresenter;
 import stroom.security.identity.client.presenter.ChangePasswordPresenter;
 import stroom.security.identity.client.presenter.LoginPresenter;
 
@@ -27,6 +28,8 @@ import com.google.inject.Provider;
 public interface ChangePasswordGinjector {
 
     Provider<LoginPresenter> getLoginPresenter();
+
+    Provider<AuthenticationErrorPresenter> getAuthenticationErrorPresenter();
 
     AsyncProvider<AccountsPlugin> getAccountsPlugin();
 

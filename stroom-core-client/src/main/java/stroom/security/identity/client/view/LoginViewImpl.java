@@ -179,6 +179,10 @@ public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implement
         getUiHandlers().emailResetPassword();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Binder extends UiBinder<Widget, LoginViewImpl> {
 
     }

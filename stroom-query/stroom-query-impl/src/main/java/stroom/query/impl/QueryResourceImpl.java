@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Crown Copyright
+ * Copyright 2022-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,7 +186,7 @@ class QueryResourceImpl implements QueryResource {
         final List<CompletionItem> list = new ArrayList<>();
         final PageRequest pageRequest = request.getPageRequest();
         if (request.isShowAll()) {
-            dataSourcesProvider.get().addCompletions(request, reducePageRequest(pageRequest, list.size()), list);
+            dataSourcesProvider.get().addCompletions(request, reducePageRequest(pageRequest, 0), list);
             structuresProvider.get().addCompletions(request, reducePageRequest(pageRequest, list.size()), list);
         }
         fieldsProvider.get().addCompletions(request, reducePageRequest(pageRequest, list.size()), list);
