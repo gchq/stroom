@@ -684,8 +684,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Fix Hard coded XSLT editor snippets.
 
-* Add editor snippets for StroomQL. `ids` => `eval StreamId = first(StreamId)
-eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `str` => `eval StreamId = first(StreamId)`.
+* Add editor snippets for StroomQL. `ids` => `eval StreamId = first(StreamId)\neval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `str` => `eval StreamId = first(StreamId)`.
 
 * Add XSLT completion snippets for stroom identity skeletons.
 
