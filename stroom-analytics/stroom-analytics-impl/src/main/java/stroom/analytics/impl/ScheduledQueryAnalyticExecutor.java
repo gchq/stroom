@@ -439,20 +439,27 @@ public class ScheduledQueryAnalyticExecutor {
 
                         // Create the row creator.
                         Optional<ItemMapper<Row>> optionalRowCreator = FilteredRowCreator.create(
+                                dataStore.getColumns(),
+                                tableSettings,
                                 fieldFormatter,
                                 keyFactory,
                                 tableSettings.getAggregateFilter(),
-                                dataStore.getColumns(),
                                 expressionContext.getDateTimeSettings(),
                                 errorConsumer);
 
                         if (optionalRowCreator.isEmpty()) {
-                            optionalRowCreator = SimpleRowCreator.create(fieldFormatter, keyFactory, errorConsumer);
+                            optionalRowCreator = SimpleRowCreator.create(
+                                    dataStore.getColumns(),
+                                    tableSettings,
+                                    fieldFormatter,
+                                    keyFactory,
+                                    errorConsumer);
                         }
 
                         final ItemMapper<Row> rowCreator = optionalRowCreator.orElse(null);
 
                         dataStore.fetch(
+                                dataStore.getColumns(),
                                 OffsetRange.UNBOUNDED,
                                 OpenGroups.NONE,
                                 resultRequest.getTimeFilter(),

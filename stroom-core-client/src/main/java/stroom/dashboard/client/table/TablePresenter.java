@@ -996,7 +996,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         return list;
     }
 
-    private void refresh() {
+    void refresh() {
         if (currentSearchModel != null) {
             currentRequestCount++;
             pagerView.getRefreshButton().setRefreshing(true);

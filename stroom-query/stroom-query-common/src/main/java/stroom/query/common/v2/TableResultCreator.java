@@ -16,7 +16,6 @@
 
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.Column;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest;
@@ -31,7 +30,6 @@ import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
@@ -76,40 +74,46 @@ public class TableResultCreator implements ResultCreator {
             // What is the interaction between the paging and the maxResults? The assumption is that
             // maxResults defines the max number of records to come back and the paging can happen up to
             // that maxResults threshold
-            final List<Column> columns = dataStore.getColumns();
             TableSettings tableSettings = resultRequest.getMappings().get(0);
-
-            resultBuilder.columns(columns);
+            resultBuilder.columns(tableSettings.getColumns());
 
             // Create the row creator.
             Optional<ItemMapper<Row>> optionalRowCreator = Optional.empty();
             if (tableSettings != null) {
                 optionalRowCreator = ConditionalFormattingRowCreator.create(
+                        dataStore.getColumns(),
+                        tableSettings,
                         columnFormatter,
                         keyFactory,
                         tableSettings.getAggregateFilter(),
                         tableSettings.getConditionalFormattingRules(),
-                        columns,
                         dataStore.getDateTimeSettings(),
                         errorConsumer);
                 if (optionalRowCreator.isEmpty()) {
                     optionalRowCreator = FilteredRowCreator.create(
+                            dataStore.getColumns(),
+                            tableSettings,
                             columnFormatter,
                             keyFactory,
                             tableSettings.getAggregateFilter(),
-                            columns,
                             dataStore.getDateTimeSettings(),
                             errorConsumer);
                 }
             }
 
             if (optionalRowCreator.isEmpty()) {
-                optionalRowCreator = SimpleRowCreator.create(columnFormatter, keyFactory, errorConsumer);
+                optionalRowCreator = SimpleRowCreator.create(
+                        dataStore.getColumns(),
+                        tableSettings,
+                        columnFormatter,
+                        keyFactory,
+                        errorConsumer);
             }
 
             final ItemMapper<Row> rowCreator = optionalRowCreator.orElse(null);
             final Set<Key> openGroups = keyFactory.decodeSet(resultRequest.getOpenGroups());
             dataStore.fetch(
+                    tableSettings.getColumns(),
                     range,
                     new OpenGroupsImpl(openGroups),
                     resultRequest.getTimeFilter(),
@@ -133,6 +137,7 @@ public class TableResultCreator implements ResultCreator {
         }
 
         resultBuilder.componentId(resultRequest.getComponentId());
+        resultBuilder.errors(errorConsumer.getErrors());
         resultBuilder.resultRange(new OffsetRange(offset, pageLength.get()));
         TableResult result = resultBuilder.build();
 

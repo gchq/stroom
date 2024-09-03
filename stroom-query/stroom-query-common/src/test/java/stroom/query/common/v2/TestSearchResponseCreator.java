@@ -306,13 +306,14 @@ class TestSearchResponseCreator {
             }
 
             @Override
-            public <R> void fetch(final OffsetRange range,
+            public <R> void fetch(final List<Column> columns,
+                                  final OffsetRange range,
                                   final OpenGroups openGroups,
                                   final TimeFilter timeFilter,
                                   final ItemMapper<R> mapper,
                                   final Consumer<R> resultConsumer,
                                   final Consumer<Long> totalRowCountConsumer) {
-                resultConsumer.accept(mapper.create(getColumns(), item));
+                resultConsumer.accept(mapper.create(item));
                 if (totalRowCountConsumer != null) {
                     totalRowCountConsumer.accept(1L);
                 }
