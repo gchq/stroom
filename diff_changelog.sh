@@ -2,7 +2,9 @@
 
 ######################################################
 #  Gets all the issues in one CHANGELOG that are not #
-#  also in a previous CHNAGELOG                      #
+#  also in a previous CHNAGELOG.                     #
+#  Useful if you want to see what changes are in a   #
+#  release branch without merged up changes.         #
 ######################################################
 
 set -e
