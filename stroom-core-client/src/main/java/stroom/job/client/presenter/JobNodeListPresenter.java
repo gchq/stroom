@@ -328,6 +328,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> implement
                         .rightAligned()
                         .build(),
                 DataGridUtil.headingBuilder("Current Tasks")
+                        .rightAligned()
                         .withToolTip("The number of the currently executing tasks on this node for this job")
                         .build(),
                 100);
