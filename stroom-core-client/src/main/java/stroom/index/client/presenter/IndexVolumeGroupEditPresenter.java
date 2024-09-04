@@ -285,6 +285,10 @@ public class IndexVolumeGroupEditPresenter
                 .exec();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface IndexVolumeGroupEditView extends View, Focus {
 
         String getName();
