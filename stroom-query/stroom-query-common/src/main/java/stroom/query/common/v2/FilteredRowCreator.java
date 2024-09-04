@@ -4,7 +4,6 @@ import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Row;
-import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.logging.LambdaLogger;
@@ -24,12 +23,12 @@ public class FilteredRowCreator extends SimpleRowCreator {
     private final ColumnExpressionMatcher expressionMatcher;
 
     FilteredRowCreator(final List<Column> originalColumns,
-                               final List<Column> newColumns,
-                               final ColumnFormatter columnFormatter,
-                               final KeyFactory keyFactory,
-                               final ExpressionOperator rowFilter,
-                               final ColumnExpressionMatcher expressionMatcher,
-                               final ErrorConsumer errorConsumer) {
+                       final List<Column> newColumns,
+                       final ColumnFormatter columnFormatter,
+                       final KeyFactory keyFactory,
+                       final ExpressionOperator rowFilter,
+                       final ColumnExpressionMatcher expressionMatcher,
+                       final ErrorConsumer errorConsumer) {
         super(originalColumns, newColumns, columnFormatter, keyFactory, errorConsumer);
 
         this.rowFilter = rowFilter;
@@ -37,14 +36,13 @@ public class FilteredRowCreator extends SimpleRowCreator {
     }
 
     public static Optional<ItemMapper<Row>> create(final List<Column> originalColumns,
-                                                   final TableSettings tableSettings,
+                                                   final List<Column> newColumns,
                                                    final ColumnFormatter columnFormatter,
                                                    final KeyFactory keyFactory,
                                                    final ExpressionOperator rowFilter,
                                                    final DateTimeSettings dateTimeSettings,
                                                    final ErrorConsumer errorConsumer) {
         if (rowFilter != null) {
-            final List<Column> newColumns = SimpleRowCreator.modifyColumns(tableSettings);
             final ColumnExpressionMatcher expressionMatcher =
                     new ColumnExpressionMatcher(newColumns, dateTimeSettings);
             return Optional.of(new FilteredRowCreator(

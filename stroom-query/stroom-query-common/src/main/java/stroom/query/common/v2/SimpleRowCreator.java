@@ -2,7 +2,6 @@ package stroom.query.common.v2;
 
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.Row;
-import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ref.ErrorConsumer;
@@ -70,20 +69,14 @@ public class SimpleRowCreator implements ItemMapper<Row> {
         }
     }
 
-    public static List<Column> modifyColumns(final TableSettings tableSettings) {
-        final WindowSupport windowSupport = new WindowSupport(tableSettings);
-        final TableSettings modifiedTableSettings = windowSupport.getTableSettings();
-        return modifiedTableSettings.getColumns();
-    }
-
     public static Optional<ItemMapper<Row>> create(final List<Column> originalColumns,
-                                                   final TableSettings tableSettings,
+                                                   final List<Column> newColumns,
                                                    final ColumnFormatter columnFormatter,
                                                    final KeyFactory keyFactory,
                                                    final ErrorConsumer errorConsumer) {
         return Optional.of(new SimpleRowCreator(
                 originalColumns,
-                modifyColumns(tableSettings),
+                newColumns,
                 columnFormatter,
                 keyFactory,
                 errorConsumer));

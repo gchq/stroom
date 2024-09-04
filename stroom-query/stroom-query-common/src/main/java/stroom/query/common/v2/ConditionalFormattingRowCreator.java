@@ -5,7 +5,6 @@ import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Row;
-import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.logging.LambdaLogger;
@@ -40,7 +39,7 @@ public class ConditionalFormattingRowCreator extends FilteredRowCreator {
     }
 
     public static Optional<ItemMapper<Row>> create(final List<Column> originalColumns,
-                                                   final TableSettings tableSettings,
+                                                   final List<Column> newColumns,
                                                    final ColumnFormatter columnFormatter,
                                                    final KeyFactory keyFactory,
                                                    final ExpressionOperator rowFilter,
@@ -54,7 +53,6 @@ public class ConditionalFormattingRowCreator extends FilteredRowCreator {
                     .filter(ConditionalFormattingRule::isEnabled)
                     .collect(Collectors.toList());
             if (activeRules.size() > 0) {
-                final List<Column> newColumns = SimpleRowCreator.modifyColumns(tableSettings);
                 final ColumnExpressionMatcher expressionMatcher =
                         new ColumnExpressionMatcher(newColumns, dateTimeSettings);
                 return Optional.of(new ConditionalFormattingRowCreator(
