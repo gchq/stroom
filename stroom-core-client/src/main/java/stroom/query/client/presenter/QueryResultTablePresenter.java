@@ -66,7 +66,6 @@ public class QueryResultTablePresenter
     private QueryModel currentSearchModel;
     private boolean ignoreRangeChange;
     private boolean pause;
-    private int currentRequestCount;
 
     private OffsetRange requestedRange = OffsetRange.ZERO_100;
     private Set<String> openGroups = null;
@@ -159,21 +158,23 @@ public class QueryResultTablePresenter
 //        }));
 
         registerHandler(pagerView.getRefreshButton().addClickHandler(event -> {
-            if (pause) {
-                this.pause = false;
-                refresh();
-            } else {
-                this.pause = true;
-            }
-            pagerView.getRefreshButton().setPaused(this.pause);
+            setPause(!pause, true);
         }));
+    }
+
+    private void setPause(final boolean pause,
+                          final boolean refresh) {
+        // If curently paused then refresh if we are allowed.
+        if (refresh && this.pause) {
+            refresh();
+        }
+        this.pause = pause;
+        pagerView.getRefreshButton().setPaused(this.pause);
     }
 
     private void refresh() {
         if (currentSearchModel != null) {
-            currentRequestCount++;
             pagerView.getRefreshButton().setRefreshing(true);
-            pagerView.getRefreshButton().setPaused(pause && currentRequestCount == 0);
             currentSearchModel.refresh(QueryModel.TABLE_COMPONENT_ID, result -> {
                 try {
                     if (result != null) {
@@ -182,8 +183,6 @@ public class QueryResultTablePresenter
                 } catch (final Exception e) {
                     GWT.log(e.getMessage());
                 }
-                currentRequestCount--;
-                pagerView.getRefreshButton().setPaused(pause && currentRequestCount == 0);
                 pagerView.getRefreshButton().setRefreshing(currentSearchModel.isSearching());
             });
         } else {
@@ -281,6 +280,7 @@ public class QueryResultTablePresenter
 //                .tableSettings(tableSettings)
 //                .build();
 
+        setPause(false, false);
         pagerView.getRefreshButton().setRefreshing(true);
     }
 
@@ -492,26 +492,6 @@ public class QueryResultTablePresenter
 
         return processed;
     }
-
-
-//    private void refresh() {
-//        currentRequestCount++;
-//        getView().setPaused(pause && currentRequestCount == 0);
-//        getView().setRefreshing(true);
-//        currentSearchModel.refresh("table", result -> {
-//            try {
-//                if (result != null) {
-//                    setDataInternal(result);
-//                }
-//            } catch (final Exception e) {
-//                GWT.log(e.getMessage());
-//            }
-//            currentRequestCount--;
-//            getView().setPaused(pause && currentRequestCount == 0);
-//            getView().setRefreshing(currentSearchModel.getMode());
-//        });
-//    }
-
 
     public HandlerRegistration addRefreshRequestHandler(RefreshRequestEvent.Handler handler) {
         return addHandler(RefreshRequestEvent.getType(), handler);
