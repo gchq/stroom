@@ -302,7 +302,6 @@ public class QueryResultVisPresenter
             visFrame.end();
             updateStatusMessage();
         }
-        setPause(false, true);
         getView().getRefreshButton().setRefreshing(false);
     }
 

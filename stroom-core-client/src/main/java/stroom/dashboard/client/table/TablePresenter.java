@@ -471,7 +471,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     @Override
     public void endSearch() {
-        setPause(false, true);
         pagerView.getRefreshButton().setRefreshing(false);
     }
 

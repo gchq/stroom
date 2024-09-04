@@ -286,7 +286,6 @@ public class QueryResultTablePresenter
 
     @Override
     public void endSearch() {
-        setPause(false, true);
         pagerView.getRefreshButton().setRefreshing(false);
     }
 
