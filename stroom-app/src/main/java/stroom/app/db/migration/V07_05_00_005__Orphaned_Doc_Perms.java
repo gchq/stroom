@@ -27,18 +27,18 @@ import javax.sql.DataSource;
  * in doc, processor_filter or explorer_node and is not the System doc (uuid == 0).
  * <p>
  * The migration copies the orphaned doc_permission records to a backup table
- * ({@link V07_04_00_005__Orphaned_Doc_Perms#BACKUP_TBL_NAME}) before deleting them.
+ * ({@link V07_05_00_005__Orphaned_Doc_Perms#BACKUP_TBL_NAME}) before deleting them.
  * </p>
  */
-public class V07_04_00_005__Orphaned_Doc_Perms extends AbstractCrossModuleJavaDbMigration {
+public class V07_05_00_005__Orphaned_Doc_Perms extends AbstractCrossModuleJavaDbMigration {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(V07_04_00_005__Orphaned_Doc_Perms.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(V07_05_00_005__Orphaned_Doc_Perms.class);
 
     static final String SYSTEM_DOC_UUID = "0";
     // Mutable so we can test with a diff value
     static int BATCH_SIZE = 1_000;
 
-    static final String BACKUP_TBL_NAME = "doc_permission_backup_V07_04_00_005";
+    static final String BACKUP_TBL_NAME = "doc_permission_backup_V07_05_00_005";
 
     private final SecurityDbConnProvider securityDbConnProvider;
     private final ProcessorDbConnProvider processorDbConnProvider;
@@ -46,7 +46,7 @@ public class V07_04_00_005__Orphaned_Doc_Perms extends AbstractCrossModuleJavaDb
     private final DocStoreDbConnProvider docStoreDbConnProvider;
 
     @Inject
-    public V07_04_00_005__Orphaned_Doc_Perms(final SecurityDbConnProvider securityDbConnProvider,
+    public V07_05_00_005__Orphaned_Doc_Perms(final SecurityDbConnProvider securityDbConnProvider,
                                              final ProcessorDbConnProvider processorDbConnProvider,
                                              final ExplorerDbConnProvider explorerDbConnProvider,
                                              final DocStoreDbConnProvider docStoreDbConnProvider) {
