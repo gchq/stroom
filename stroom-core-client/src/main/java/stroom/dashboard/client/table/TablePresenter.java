@@ -941,7 +941,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     @Override
     public ComponentResultRequest getResultRequest(final Fetch fetch) {
-        return tableResultRequest.copy().fetch(fetch).build();
+        final TableSettings tableSettings = getTableSettings()
+                .copy()
+                .buildTableSettings();
+        return tableResultRequest.copy().tableSettings(tableSettings).fetch(fetch).build();
     }
 
     @Override
