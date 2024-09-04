@@ -49,17 +49,17 @@ public class ColumnExpressionMatcher {
 
     private final Map<String, Pattern> patternCache = new ConcurrentHashMap<>();
 
-    private final Map<String, Column> fieldNameToFieldMap;
+    private final Map<String, Column> columnNameToColumnMap;
     private final DateTimeSettings dateTimeSettings;
 
     public ColumnExpressionMatcher(final List<Column> columns,
                                    final DateTimeSettings dateTimeSettings) {
         this.dateTimeSettings = dateTimeSettings;
-        this.fieldNameToFieldMap = new HashMap<>();
+        this.columnNameToColumnMap = new HashMap<>();
         for (final Column column : NullSafe.list(columns)) {
             // Allow match by id and name.
-            fieldNameToFieldMap.putIfAbsent(column.getId(), column);
-            fieldNameToFieldMap.putIfAbsent(column.getName(), column);
+            columnNameToColumnMap.putIfAbsent(column.getId(), column);
+            columnNameToColumnMap.putIfAbsent(column.getName(), column);
         }
     }
 
@@ -125,7 +125,7 @@ public class ColumnExpressionMatcher {
             throw new MatchException("Field not set");
         }
         termField = termField.trim();
-        final Column column = fieldNameToFieldMap.get(termField);
+        final Column column = columnNameToColumnMap.get(termField);
         if (column == null) {
             throw new MatchException("Column not found: " + termField);
         }
