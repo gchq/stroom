@@ -272,6 +272,10 @@ public class FsVolumeGroupEditPresenter
                 .exec();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface FsVolumeGroupEditView extends View, Focus {
 
         String getName();

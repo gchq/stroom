@@ -252,7 +252,6 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
                         .enabledWhen(this::isEnabled)
                         .build(),
                 DataGridUtil.headingBuilder("Usage Date")
-                        .centerAligned()
                         .withToolTip("The date/time this volume was last written to.")
                         .build(),
                 ColumnSizeConstants.DATE_AND_DURATION_COL);
