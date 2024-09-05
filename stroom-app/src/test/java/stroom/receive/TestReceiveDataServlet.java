@@ -24,21 +24,32 @@ import stroom.data.store.mock.MockStore;
 import stroom.feed.api.FeedStore;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.receive.common.ReceiveDataServlet;
+import stroom.test.common.ComparisonHelper;
 import stroom.util.date.DateUtil;
+import stroom.util.io.ByteSize;
 import stroom.util.io.StreamUtil;
+import stroom.util.zip.ZipUtil;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
@@ -306,7 +317,7 @@ class TestReceiveDataServlet {
 
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try (final InputStream inputStream = new ByteArrayInputStream("SOME TEST DATA".getBytes())) {
-            try (final ZipArchiveOutputStream zipOutputStream = new ZipArchiveOutputStream(outputStream)) {
+            try (final ZipArchiveOutputStream zipOutputStream = ZipUtil.createOutputStream(outputStream)) {
                 zipOutputStream.putArchiveEntry(new ZipArchiveEntry("TEST.txt"));
                 StreamUtil.streamToStream(inputStream, zipOutputStream);
                 zipOutputStream.closeArchiveEntry();
@@ -375,7 +386,7 @@ class TestReceiveDataServlet {
 
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try (final InputStream inputStream = new ByteArrayInputStream("SOME TEST DATA".getBytes())) {
-            try (final ZipArchiveOutputStream zipOutputStream = new ZipArchiveOutputStream(outputStream)) {
+            try (final ZipArchiveOutputStream zipOutputStream = ZipUtil.createOutputStream(outputStream)) {
                 zipOutputStream.putArchiveEntry(new ZipArchiveEntry("TEST.txt"));
                 StreamUtil.streamToStream(inputStream, zipOutputStream);
                 zipOutputStream.closeArchiveEntry();

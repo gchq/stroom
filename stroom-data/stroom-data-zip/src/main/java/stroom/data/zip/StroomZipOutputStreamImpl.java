@@ -4,6 +4,7 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.task.api.TaskContext;
 import stroom.util.io.WrappedOutputStream;
+import stroom.util.zip.ZipUtil;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
@@ -58,7 +59,7 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
         final OutputStream bufferedOutputStream = new BufferedOutputStream(rawOutputStream, BufferSizeUtil.get());
         final OutputStream progressOutputStream = new FilterOutputStreamProgressMonitor(bufferedOutputStream,
                 streamProgressMonitor);
-        zipOutputStream = new ZipArchiveOutputStream(progressOutputStream);
+        zipOutputStream = ZipUtil.createOutputStream(progressOutputStream);
         if (monitorEntries) {
             stroomZipNameSet = new StroomZipNameSet(false);
         }

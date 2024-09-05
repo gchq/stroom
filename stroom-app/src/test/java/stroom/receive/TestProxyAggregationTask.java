@@ -51,6 +51,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
+import stroom.util.zip.ZipUtil;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
@@ -621,7 +622,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
             throws IOException {
         Files.createDirectories(testFile.getParent());
         final ZipArchiveOutputStream zipOutputStream =
-                new ZipArchiveOutputStream(Files.newOutputStream(testFile));
+                ZipUtil.createOutputStream(Files.newOutputStream(testFile));
         zipOutputStream.putArchiveEntry(new ZipArchiveEntry(StroomZipFile.SINGLE_META_ENTRY.getFullName()));
         PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(zipOutputStream,
                 StreamUtil.DEFAULT_CHARSET));
@@ -641,7 +642,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
                                           final String context) throws IOException {
         Files.createDirectories(testFile.getParent());
         try (final ZipArchiveOutputStream zipOutputStream =
-                new ZipArchiveOutputStream(Files.newOutputStream(testFile))) {
+                ZipUtil.createOutputStream(Files.newOutputStream(testFile))) {
             zipOutputStream.putArchiveEntry(new ZipArchiveEntry("file1.meta"));
             final PrintWriter printWriter = new PrintWriter(zipOutputStream);
             printWriter.println("Feed:" + eventFeed);
@@ -663,7 +664,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
             throws IOException {
         Files.createDirectories(testFile.getParent());
         try (final ZipArchiveOutputStream zipOutputStream =
-                new ZipArchiveOutputStream(Files.newOutputStream(testFile))) {
+                ZipUtil.createOutputStream(Files.newOutputStream(testFile))) {
             zipOutputStream.putArchiveEntry(new ZipArchiveEntry(StroomZipFile.SINGLE_META_ENTRY.getFullName()));
             PrintWriter printWriter = new PrintWriter(zipOutputStream);
             printWriter.println("Feed:" + eventFeed);
@@ -683,7 +684,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
             throws IOException {
         Files.createDirectories(testFile.getParent());
         try (final ZipArchiveOutputStream zipOutputStream =
-                new ZipArchiveOutputStream(Files.newOutputStream(testFile))) {
+                ZipUtil.createOutputStream(Files.newOutputStream(testFile))) {
 
             LOGGER.debug(() -> LogUtil.message("Creating file {}", testFile.toAbsolutePath().toString()));
 

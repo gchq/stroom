@@ -26,6 +26,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.zip.ZipUtil;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
@@ -194,7 +195,7 @@ public class ManualProxyAggregationTest {
     private void writeTestFileWithManyEntries(final Path testFile, final List<String> eventFeeds, final int count)
             throws IOException {
         Files.createDirectories(testFile.getParent());
-        try (final ZipArchiveOutputStream zipOutputStream = new ZipArchiveOutputStream(
+        try (final ZipArchiveOutputStream zipOutputStream = ZipUtil.createOutputStream(
                 new BufferedOutputStream(Files.newOutputStream(testFile)))) {
 
             LAMBDA_LOGGER.debug(() ->

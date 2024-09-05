@@ -18,6 +18,7 @@ import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.zip.ZipUtil;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
@@ -192,7 +193,7 @@ public class HTTPAppender extends AbstractAppender {
             connection.connect();
 
             if (useCompression) {
-                zipOutputStream = new ZipArchiveOutputStream(connection.getOutputStream());
+                zipOutputStream = ZipUtil.createOutputStream(connection.getOutputStream());
                 outputStream = zipOutputStream;
                 nextEntry();
             } else {

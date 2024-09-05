@@ -2,6 +2,7 @@ package stroom.receive;
 
 import stroom.data.zip.StroomZipFile;
 import stroom.util.io.FileUtil;
+import stroom.util.zip.ZipUtil;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
@@ -23,7 +24,7 @@ public class ProxyAggregationLoader {
 
         FileUtil.mkdirs(testFile.getParent());
         try (final ZipArchiveOutputStream zipOutputStream =
-                new ZipArchiveOutputStream(Files.newOutputStream(testFile))) {
+                ZipUtil.createOutputStream(Files.newOutputStream(testFile))) {
             zipOutputStream.putArchiveEntry(new ZipArchiveEntry(StroomZipFile.SINGLE_META_ENTRY.getFullName()));
             PrintWriter printWriter = new PrintWriter(zipOutputStream);
             printWriter.println("Feed:" + feedName);

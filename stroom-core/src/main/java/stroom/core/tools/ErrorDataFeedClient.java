@@ -17,6 +17,7 @@
 package stroom.core.tools;
 
 import stroom.util.io.StreamUtil;
+import stroom.util.zip.ZipUtil;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
@@ -115,7 +116,7 @@ public final class ErrorDataFeedClient {
             // Using Zip Compression we just have 1 file (called 1)
             if (ZIP.equalsIgnoreCase(argsMap.get(ARG_COMPRESSION))) {
                 System.out.println("Using ZIP");
-                try (final ZipArchiveOutputStream zout = new ZipArchiveOutputStream(connection.getOutputStream())) {
+                try (final ZipArchiveOutputStream zout = ZipUtil.createOutputStream(connection.getOutputStream())) {
                     zout.putArchiveEntry(new ZipArchiveEntry("1"));
                     try {
                         write(zout, bufferSize, writeSize);

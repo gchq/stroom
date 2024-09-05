@@ -11,6 +11,7 @@ import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamHandler;
 import stroom.receive.common.StroomStreamProcessor;
 import stroom.util.io.StreamUtil;
+import stroom.util.zip.ZipUtil;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
@@ -108,7 +109,7 @@ class TestStroomStreamProcessor {
     @Test
     void testZIPErrorSimple() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        try (final ZipArchiveOutputStream zipOutputStream = new ZipArchiveOutputStream(byteArrayOutputStream)) {
+        try (final ZipArchiveOutputStream zipOutputStream = ZipUtil.createOutputStream(byteArrayOutputStream)) {
             zipOutputStream.putArchiveEntry(new ZipArchiveEntry("001.hdr"));
             zipOutputStream.write("Feed:FEED".getBytes(StreamUtil.DEFAULT_CHARSET));
             zipOutputStream.closeArchiveEntry();
@@ -187,7 +188,7 @@ class TestStroomStreamProcessor {
     @Test
     void testOrder1() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        try (final ZipArchiveOutputStream zipOutputStream = new ZipArchiveOutputStream(byteArrayOutputStream)) {
+        try (final ZipArchiveOutputStream zipOutputStream = ZipUtil.createOutputStream(byteArrayOutputStream)) {
             for (int i = 1; i <= 10; i++) {
                 zipOutputStream.putArchiveEntry(new ZipArchiveEntry(i + ".txt"));
                 zipOutputStream.write("data".getBytes(StreamUtil.DEFAULT_CHARSET));
@@ -215,7 +216,7 @@ class TestStroomStreamProcessor {
     @Test
     void testOrder2() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        try (final ZipArchiveOutputStream zipOutputStream = new ZipArchiveOutputStream(byteArrayOutputStream)) {
+        try (final ZipArchiveOutputStream zipOutputStream = ZipUtil.createOutputStream(byteArrayOutputStream)) {
             for (int i = 1; i <= 10; i++) {
                 zipOutputStream.putArchiveEntry(new ZipArchiveEntry(i + ".txt"));
                 zipOutputStream.write("data".getBytes(StreamUtil.DEFAULT_CHARSET));
@@ -245,7 +246,7 @@ class TestStroomStreamProcessor {
     @Test
     void testOrder3() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        try (final ZipArchiveOutputStream zipOutputStream = new ZipArchiveOutputStream(byteArrayOutputStream)) {
+        try (final ZipArchiveOutputStream zipOutputStream = ZipUtil.createOutputStream(byteArrayOutputStream)) {
             for (int i = 1; i <= 10; i++) {
                 zipOutputStream.putArchiveEntry(new ZipArchiveEntry(i + ".txt"));
                 zipOutputStream.write("data".getBytes(StreamUtil.DEFAULT_CHARSET));
@@ -275,7 +276,7 @@ class TestStroomStreamProcessor {
     @Test
     void testOrder4() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        try (final ZipArchiveOutputStream zipOutputStream = new ZipArchiveOutputStream(byteArrayOutputStream)) {
+        try (final ZipArchiveOutputStream zipOutputStream = ZipUtil.createOutputStream(byteArrayOutputStream)) {
             for (int i = 10; i > 0; i--) {
                 zipOutputStream.putArchiveEntry(new ZipArchiveEntry(i + ".hdr"));
                 zipOutputStream.write(("META:VALUE" + i).getBytes(StreamUtil.DEFAULT_CHARSET));
@@ -305,7 +306,7 @@ class TestStroomStreamProcessor {
     @Test
     void testOrder5_Pass() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        try (final ZipArchiveOutputStream zipOutputStream = new ZipArchiveOutputStream(byteArrayOutputStream)) {
+        try (final ZipArchiveOutputStream zipOutputStream = ZipUtil.createOutputStream(byteArrayOutputStream)) {
             for (int i = 10; i > 0; i--) {
                 zipOutputStream.putArchiveEntry(new ZipArchiveEntry(i + ".hdr"));
                 zipOutputStream.write(("META:VALUE" + i).getBytes(StreamUtil.DEFAULT_CHARSET));
@@ -336,7 +337,7 @@ class TestStroomStreamProcessor {
     @Test
     void testOrder5_PassDueToHeaderBuffer() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        try (final ZipArchiveOutputStream zipOutputStream = new ZipArchiveOutputStream(byteArrayOutputStream)) {
+        try (final ZipArchiveOutputStream zipOutputStream = ZipUtil.createOutputStream(byteArrayOutputStream)) {
             for (int i = 10; i > 0; i--) {
                 zipOutputStream.putArchiveEntry(new ZipArchiveEntry(i + ".hdr"));
                 zipOutputStream.write(("META:VALUE" + i).getBytes(StreamUtil.DEFAULT_CHARSET));
@@ -368,7 +369,7 @@ class TestStroomStreamProcessor {
     @Test
     void testOrder5_FailDueToHeaderBufferNotUsed() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        try (final ZipArchiveOutputStream zipOutputStream = new ZipArchiveOutputStream(byteArrayOutputStream)) {
+        try (final ZipArchiveOutputStream zipOutputStream = ZipUtil.createOutputStream(byteArrayOutputStream)) {
             for (int i = 10; i > 0; i--) {
                 zipOutputStream.putArchiveEntry(new ZipArchiveEntry(i + ".hdr"));
                 zipOutputStream.write(("streamSize:1\nMETA:VALUE" + i).getBytes(StreamUtil.DEFAULT_CHARSET));

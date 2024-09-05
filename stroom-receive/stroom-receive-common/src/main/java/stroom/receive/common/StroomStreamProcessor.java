@@ -156,6 +156,7 @@ public class StroomStreamProcessor {
                         inputStream = new GzipCompressorInputStream(inputStream, true);
                         compressed = true;
                     } catch (final IOException ioEx) {
+                        LOGGER.debug(ioEx.getMessage(), ioEx);
                         throw new StroomStreamException(
                                 StroomStatusCode.COMPRESSED_STREAM_INVALID, globalAttributeMap, ioEx.getMessage());
                     }

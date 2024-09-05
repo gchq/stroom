@@ -9,6 +9,7 @@ import stroom.receive.common.StroomStreamException;
 import stroom.util.cert.SSLUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.zip.ZipUtil;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
@@ -108,7 +109,7 @@ class ForwardStreamHandler implements StreamHandler {
             connection.setChunkedStreamingMode(forwardChunkSize);
         }
         connection.connect();
-        zipOutputStream = new ZipArchiveOutputStream(connection.getOutputStream());
+        zipOutputStream = ZipUtil.createOutputStream(connection.getOutputStream());
     }
 
     @Override

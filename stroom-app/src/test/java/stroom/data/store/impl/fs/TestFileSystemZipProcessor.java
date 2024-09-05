@@ -30,6 +30,7 @@ import stroom.receive.common.StroomStreamProcessor;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.zip.ZipUtil;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
@@ -66,7 +67,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
         final Path file = getCurrentTestDir().resolve(
                 FileSystemTestUtil.getUniqueTestString() + "TestFileSystemZipProcessor.zip");
         try {
-            try (final ZipArchiveOutputStream zipOut = new ZipArchiveOutputStream(Files.newOutputStream(file))) {
+            try (final ZipArchiveOutputStream zipOut = ZipUtil.createOutputStream(Files.newOutputStream(file))) {
                 zipOut.putArchiveEntry(new ZipArchiveEntry("tom1.dat"));
                 zipOut.write("File1\nFile1\n".getBytes());
                 zipOut.closeArchiveEntry();
@@ -92,7 +93,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
         final Path file = getCurrentTestDir().resolve(
                 FileSystemTestUtil.getUniqueTestString() + "TestFileSystemZipProcessor.zip");
         try {
-            try (final ZipArchiveOutputStream zipOut = new ZipArchiveOutputStream(Files.newOutputStream(file))) {
+            try (final ZipArchiveOutputStream zipOut = ZipUtil.createOutputStream(Files.newOutputStream(file))) {
                 zipOut.putArchiveEntry(new ZipArchiveEntry("tom1.dat"));
                 zipOut.write("File1\nFile1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
                 zipOut.closeArchiveEntry();
@@ -126,7 +127,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
         final Path file = getCurrentTestDir().resolve(
                 FileSystemTestUtil.getUniqueTestString() + "TestFileSystemZipProcessor.zip");
         try {
-            try (final ZipArchiveOutputStream zipOut = new ZipArchiveOutputStream(Files.newOutputStream(file))) {
+            try (final ZipArchiveOutputStream zipOut = ZipUtil.createOutputStream(Files.newOutputStream(file))) {
                 zipOut.putArchiveEntry(new ZipArchiveEntry("tom1.dat"));
                 zipOut.write("File1\nFile1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
                 zipOut.closeArchiveEntry();
@@ -165,7 +166,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                 FileSystemTestUtil.getUniqueTestString() + "TestFileSystemZipProcessor.zip");
         try {
             // Build a zip with an odd order
-            try (final ZipArchiveOutputStream zipOut = new ZipArchiveOutputStream(Files.newOutputStream(file))) {
+            try (final ZipArchiveOutputStream zipOut = ZipUtil.createOutputStream(Files.newOutputStream(file))) {
                 zipOut.putArchiveEntry(new ZipArchiveEntry("entry1.dat"));
                 zipOut.write("File1\nFile1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
                 zipOut.closeArchiveEntry();
@@ -216,7 +217,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
         final Path file = getCurrentTestDir().resolve(
                 FileSystemTestUtil.getUniqueTestString() + "TestFileSystemZipProcessor.zip");
         try {
-            try (final ZipArchiveOutputStream zipOut = new ZipArchiveOutputStream(Files.newOutputStream(file))) {
+            try (final ZipArchiveOutputStream zipOut = ZipUtil.createOutputStream(Files.newOutputStream(file))) {
                 zipOut.putArchiveEntry(new ZipArchiveEntry("entry1.dat"));
                 zipOut.write("File1\nFile1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
                 zipOut.closeArchiveEntry();

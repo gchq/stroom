@@ -1,6 +1,8 @@
 package stroom.data.zip;
 
 
+import stroom.util.zip.ZipUtil;
+
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.junit.jupiter.api.Test;
@@ -22,7 +24,7 @@ class TestStroomZipFile {
                 .isTrue();
         final Path file = Files.createTempFile(uniqueTestDir, "TestStroomZipFile", ".zip");
         System.out.println(file.toAbsolutePath());
-        try (final ZipArchiveOutputStream zipOutputStream = new ZipArchiveOutputStream(Files.newOutputStream(file))) {
+        try (final ZipArchiveOutputStream zipOutputStream = ZipUtil.createOutputStream(Files.newOutputStream(file))) {
             zipOutputStream.putArchiveEntry(new ZipArchiveEntry("test/test.dat"));
             zipOutputStream.write("data".getBytes(CharsetConstants.DEFAULT_CHARSET));
             zipOutputStream.closeArchiveEntry();
@@ -42,7 +44,7 @@ class TestStroomZipFile {
     @Test
     void testRealZip2() throws IOException {
         final Path file = Files.createTempFile(Files.createTempDirectory("stroom"), "TestStroomZipFile", ".zip");
-        try (final ZipArchiveOutputStream zipOutputStream = new ZipArchiveOutputStream(Files.newOutputStream(file))) {
+        try (final ZipArchiveOutputStream zipOutputStream = ZipUtil.createOutputStream(Files.newOutputStream(file))) {
             zipOutputStream.putArchiveEntry(new ZipArchiveEntry("request.hdr"));
             zipOutputStream.write("header".getBytes(CharsetConstants.DEFAULT_CHARSET));
             zipOutputStream.closeArchiveEntry();
