@@ -2,6 +2,7 @@ package stroom.data.client.view;
 
 import stroom.data.client.presenter.SourcePresenter.SourceView;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.TaskHandler;
 import stroom.widget.button.client.FabButton;
 import stroom.widget.spinner.client.SpinnerLarge;
 
@@ -111,13 +112,8 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
     }
 
     @Override
-    public void incrementTaskCount() {
-        spinner.incrementTaskCount();
-    }
-
-    @Override
-    public void decrementTaskCount() {
-        spinner.decrementTaskCount();
+    public TaskHandler createTaskHandler(final String message) {
+        return spinner.createTaskHandler(message);
     }
 
     public interface Binder extends UiBinder<Widget, SourceViewImpl> {

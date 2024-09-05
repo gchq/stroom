@@ -16,6 +16,7 @@
 
 package stroom.widget.tab.client.view;
 
+import stroom.task.client.TaskHandler;
 import stroom.task.client.TaskListener;
 
 import com.google.gwt.dom.client.Element;
@@ -52,12 +53,17 @@ public abstract class AbstractTab extends Widget implements TaskListener {
     }
 
     @Override
-    public void incrementTaskCount() {
+    public TaskHandler createTaskHandler(final String message) {
+        return new TaskHandler() {
+            @Override
+            public void onStart() {
 
-    }
+            }
 
-    @Override
-    public void decrementTaskCount() {
+            @Override
+            public void onEnd() {
 
+            }
+        };
     }
 }

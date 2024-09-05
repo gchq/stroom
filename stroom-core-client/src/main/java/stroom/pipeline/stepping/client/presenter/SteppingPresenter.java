@@ -47,8 +47,7 @@ import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskEndEvent;
-import stroom.task.client.TaskStartEvent;
+import stroom.task.client.TaskHandler;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Indicators;
@@ -772,7 +771,8 @@ public class SteppingPresenter
 
     private void onSelect(final PipelineElement element) {
         if (element != null) {
-            TaskStartEvent.fire(SteppingPresenter.this);
+            final TaskHandler taskHandler = createTaskHandler("Stepping");
+            taskHandler.onStart();
             Scheduler.get().scheduleDeferred(() -> {
                 final PresenterWidget<?> content = getContent(element);
                 if (content != null) {
@@ -781,8 +781,7 @@ public class SteppingPresenter
 
                     updateElementSeverities();
                 }
-
-                TaskEndEvent.fire(SteppingPresenter.this);
+                taskHandler.onEnd();
             });
         }
     }

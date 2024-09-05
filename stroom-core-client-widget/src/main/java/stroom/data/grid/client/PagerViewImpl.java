@@ -19,6 +19,7 @@ package stroom.data.grid.client;
 import stroom.data.pager.client.Pager;
 import stroom.data.pager.client.RefreshButton;
 import stroom.svg.client.Preset;
+import stroom.task.client.TaskHandler;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
@@ -104,25 +105,26 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
     }
 
     @Override
-    public void incrementTaskCount() {
-        taskCount++;
-        pager.getRefreshButton().setRefreshing(taskCount > 0);
+    public TaskHandler createTaskHandler(final String message) {
+        return new TaskHandler() {
+            @Override
+            public void onStart() {
+                taskCount++;
+                pager.getRefreshButton().setRefreshing(taskCount > 0);
+            }
+
+            @Override
+            public void onEnd() {
+                taskCount--;
+
+                if (taskCount < 0) {
+                    GWT.log("Negative task count");
+                }
+
+                pager.getRefreshButton().setRefreshing(taskCount > 0);
+            }
+        };
     }
-
-    @Override
-    public void decrementTaskCount() {
-        taskCount--;
-
-        if (taskCount < 0) {
-            GWT.log("Negative task count");
-        }
-
-        pager.getRefreshButton().setRefreshing(taskCount > 0);
-    }
-
-
-    // --------------------------------------------------------------------------------
-
 
     public interface Binder extends UiBinder<Widget, PagerViewImpl> {
 

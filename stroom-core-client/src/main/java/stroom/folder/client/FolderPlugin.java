@@ -90,19 +90,14 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
                                 final DocumentTabData tabData,
                                 final boolean fullScreen,
                                 final TaskListener taskListener) {
-        try {
-            if (documentEditPresenter instanceof FolderPresenter) {
-                ((FolderPresenter) documentEditPresenter).read(docRef);
-            } else if (documentEditPresenter instanceof FolderRootPresenter) {
-                ((FolderRootPresenter) documentEditPresenter).read();
-            }
-
-            // Open the tab.
-            contentManager.open(closeHandler, tabData, documentEditPresenter);
-        } finally {
-            // Stop spinning.
-            taskListener.decrementTaskCount();
+        if (documentEditPresenter instanceof FolderPresenter) {
+            ((FolderPresenter) documentEditPresenter).read(docRef);
+        } else if (documentEditPresenter instanceof FolderRootPresenter) {
+            ((FolderRootPresenter) documentEditPresenter).read();
         }
+
+        // Open the tab.
+        contentManager.open(closeHandler, tabData, documentEditPresenter);
     }
 
     @Override

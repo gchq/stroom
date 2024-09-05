@@ -5,9 +5,9 @@ import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
 import stroom.query.client.DataSourceClient;
+import stroom.task.client.DefaultTaskListener;
 import stroom.task.client.HasTaskListener;
 import stroom.task.client.TaskListener;
-import stroom.task.client.TaskListenerImpl;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
@@ -30,7 +30,7 @@ public class DynamicFieldSelectionListModel
     private DocRef dataSourceRef;
     private Boolean queryable;
     private FindFieldCriteria lastCriteria;
-    private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
+    private TaskListener taskListener = new DefaultTaskListener(this);
 
     @Inject
     public DynamicFieldSelectionListModel(final EventBus eventBus,
@@ -135,7 +135,7 @@ public class DynamicFieldSelectionListModel
 
     @Override
     public void setTaskListener(final TaskListener taskListener) {
-        this.taskListener.setTaskListener(taskListener);
+        this.taskListener = taskListener;
     }
 
     @Override

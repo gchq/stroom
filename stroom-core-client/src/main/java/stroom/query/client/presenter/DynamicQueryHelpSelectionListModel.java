@@ -10,9 +10,9 @@ import stroom.query.shared.QueryHelpRequest;
 import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpType;
 import stroom.query.shared.QueryResource;
+import stroom.task.client.DefaultTaskListener;
 import stroom.task.client.HasTaskListener;
 import stroom.task.client.TaskListener;
-import stroom.task.client.TaskListenerImpl;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
@@ -38,7 +38,7 @@ public class DynamicQueryHelpSelectionListModel
 
     private final EventBus eventBus;
     private final RestFactory restFactory;
-    private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
+    private TaskListener taskListener = new DefaultTaskListener(this);
 
     private DocRef dataSourceRef;
     private String query;
@@ -174,7 +174,7 @@ public class DynamicQueryHelpSelectionListModel
 
     @Override
     public void setTaskListener(final TaskListener taskListener) {
-        this.taskListener.setTaskListener(taskListener);
+        this.taskListener = taskListener;
     }
 
     @Override

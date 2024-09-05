@@ -16,9 +16,10 @@
 
 package com.gwtplatform.mvp.client;
 
+import stroom.task.client.DefaultTaskListener;
 import stroom.task.client.HasTaskListener;
+import stroom.task.client.TaskHandler;
 import stroom.task.client.TaskListener;
-import stroom.task.client.TaskListenerImpl;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.user.client.ui.RequiresResize;
@@ -32,7 +33,7 @@ public abstract class MyPresenter<T_VIEW extends View, T_PROXY extends Proxy<?>>
         extends Presenter<T_VIEW, T_PROXY>
         implements Layer, TaskListener, HasTaskListener {
 
-    private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
+    private TaskListener taskListener = new DefaultTaskListener(this);
     private boolean firstReveal = true;
 
     public MyPresenter(final EventBus eventBus, final T_VIEW view, final T_PROXY proxy) {
@@ -89,17 +90,12 @@ public abstract class MyPresenter<T_VIEW extends View, T_PROXY extends Proxy<?>>
     }
 
     @Override
-    public synchronized void setTaskListener(final TaskListener taskListener) {
-        this.taskListener.setTaskListener(taskListener);
+    public void setTaskListener(final TaskListener taskListener) {
+        this.taskListener = taskListener;
     }
 
     @Override
-    public synchronized void incrementTaskCount() {
-        taskListener.incrementTaskCount();
-    }
-
-    @Override
-    public synchronized void decrementTaskCount() {
-        taskListener.decrementTaskCount();
+    public TaskHandler createTaskHandler(final String message) {
+        return taskListener.createTaskHandler(message);
     }
 }

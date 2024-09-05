@@ -35,6 +35,7 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.task.client.HasTaskListener;
+import stroom.task.client.TaskHandler;
 import stroom.task.client.TaskListener;
 
 import com.google.web.bindery.event.shared.EventBus;
@@ -98,107 +99,99 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                                      final boolean fullScreen,
                                      final TaskListener taskListener) {
         MyPresenterWidget<?> presenter = null;
-
-        final DocumentTabData existing = documentToTabDataMap.get(docRef);
-        // If we already have a tab item for this document then make sure it is
-        // visible.
-        if (existing != null) {
+        final TaskHandler taskHandler = taskListener.createTaskHandler("Opening: " + docRef);
+        try {
             // Start spinning.
-            taskListener.incrementTaskCount();
+            taskHandler.onStart();
 
-            // Tell the content presenter to select this existing tab.
-            SelectContentTabEvent.fire(this, existing);
+            final DocumentTabData existing = documentToTabDataMap.get(docRef);
+            // If we already have a tab item for this document then make sure it is
+            // visible.
+            if (existing != null) {
+                // Tell the content presenter to select this existing tab.
+                SelectContentTabEvent.fire(this, existing);
 
+                if (existing instanceof DocumentEditPresenter) {
+                    presenter = (DocumentEditPresenter<?, D>) existing;
+                }
+
+            } else if (forceOpen) {
+                // If the item isn't already open but we are forcing it open then,
+                // create a new presenter and register it as open.
+                final MyPresenterWidget<?> documentEditPresenter = createEditor();
+                presenter = documentEditPresenter;
+
+                if (documentEditPresenter instanceof HasTaskListener) {
+                    ((HasTaskListener) documentEditPresenter).setTaskListener(taskListener);
+                }
+
+                if (documentEditPresenter instanceof DocumentTabData) {
+                    final DocumentTabData tabData = (DocumentTabData) documentEditPresenter;
+
+                    // Register the tab as being open.
+                    documentToTabDataMap.put(docRef, tabData);
+                    tabDataToDocumentMap.put(tabData, docRef);
+
+                    // Load the document and show the tab.
+                    final CloseContentEvent.Handler closeHandler = new EntityCloseHandler(tabData);
+                    showDocument(docRef, documentEditPresenter, closeHandler, tabData, fullScreen, taskListener);
+                }
+            }
+
+        } finally {
             // Stop spinning.
-            taskListener.decrementTaskCount();
-
-            if (existing instanceof DocumentEditPresenter) {
-                presenter = (DocumentEditPresenter<?, D>) existing;
-            }
-
-        } else if (forceOpen) {
-            // Start spinning.
-            taskListener.incrementTaskCount();
-
-            // If the item isn't already open but we are forcing it open then,
-            // create a new presenter and register it as open.
-            final MyPresenterWidget<?> documentEditPresenter = createEditor();
-            presenter = documentEditPresenter;
-
-            if (documentEditPresenter instanceof HasTaskListener) {
-                ((HasTaskListener) documentEditPresenter).setTaskListener(taskListener);
-            }
-
-            if (documentEditPresenter instanceof DocumentTabData) {
-                final DocumentTabData tabData = (DocumentTabData) documentEditPresenter;
-
-                // Register the tab as being open.
-                documentToTabDataMap.put(docRef, tabData);
-                tabDataToDocumentMap.put(tabData, docRef);
-
-                // Load the document and show the tab.
-                final CloseContentEvent.Handler closeHandler = new EntityCloseHandler(tabData);
-                showDocument(docRef, documentEditPresenter, closeHandler, tabData, fullScreen, taskListener);
-
-            } else {
-                // Stop spinning.
-                taskListener.decrementTaskCount();
-            }
+            taskHandler.onEnd();
         }
 
         return presenter;
     }
 
+    @SuppressWarnings("unchecked")
     protected void showDocument(final DocRef docRef,
                                 final MyPresenterWidget<?> documentEditPresenter,
                                 final CloseContentEvent.Handler closeHandler,
                                 final DocumentTabData tabData,
                                 final boolean fullScreen,
                                 final TaskListener taskListener) {
-        final RestErrorHandler errorHandler = caught -> {
-            AlertEvent.fireError(DocumentPlugin.this, "Unable to load document " + docRef, caught.getMessage(), null);
-            // Stop spinning.
-            taskListener.decrementTaskCount();
-        };
+        final RestErrorHandler errorHandler = caught ->
+                AlertEvent.fireError(
+                        DocumentPlugin.this,
+                        "Unable to load document " + docRef, caught.getMessage(),
+                        null);
 
         final Consumer<D> loadConsumer = doc -> {
-            try {
-                if (doc == null) {
-                    AlertEvent.fireError(DocumentPlugin.this, "Unable to load document " + docRef, null);
+            if (doc == null) {
+                AlertEvent.fireError(DocumentPlugin.this, "Unable to load document " + docRef, null);
+            } else {
+                // Read the newly loaded document.
+                if (documentEditPresenter instanceof HasDocumentRead) {
+                    // Check document permissions and read.
+                    securityContext
+                            .hasDocumentPermission(
+                                    docRef.getUuid(),
+                                    DocumentPermissionNames.UPDATE,
+                                    allowUpdate -> {
+                                        ((HasDocumentRead<D>) documentEditPresenter).read(
+                                                getDocRef(doc),
+                                                doc,
+                                                !allowUpdate);
+                                        // Open the tab.
+                                        if (fullScreen) {
+                                            showFullScreen(documentEditPresenter);
+                                        } else {
+                                            contentManager.open(closeHandler, tabData, documentEditPresenter);
+                                        }
+                                    },
+                                    throwable -> AlertEvent.fireErrorFromException(this, throwable, null),
+                                    taskListener);
                 } else {
-                    // Read the newly loaded document.
-                    if (documentEditPresenter instanceof HasDocumentRead) {
-                        // Check document permissions and read.
-                        securityContext
-                                .hasDocumentPermission(
-                                        docRef.getUuid(),
-                                        DocumentPermissionNames.UPDATE,
-                                        allowUpdate -> {
-                                            ((HasDocumentRead<D>) documentEditPresenter).read(
-                                                    getDocRef(doc),
-                                                    doc,
-                                                    !allowUpdate);
-                                            // Open the tab.
-                                            if (fullScreen) {
-                                                showFullScreen(documentEditPresenter);
-                                            } else {
-                                                contentManager.open(closeHandler, tabData, documentEditPresenter);
-                                            }
-                                        },
-                                        throwable -> AlertEvent.fireErrorFromException(this, throwable, null),
-                                        taskListener);
+                    // Open the tab.
+                    if (fullScreen) {
+                        showFullScreen(documentEditPresenter);
                     } else {
-                        // Open the tab.
-                        if (fullScreen) {
-                            showFullScreen(documentEditPresenter);
-                        } else {
-                            contentManager.open(closeHandler, tabData, documentEditPresenter);
-                        }
+                        contentManager.open(closeHandler, tabData, documentEditPresenter);
                     }
                 }
-            } finally {
-                // Stop spinning.
-                taskListener.decrementTaskCount();
             }
         };
 
@@ -489,7 +482,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
         // Get the existing tab data for this document.
         final DocumentTabData tabData = documentToTabDataMap.get(docRef);
         // If we have an document edit presenter then reload the document.
-        if (tabData != null && tabData instanceof DocumentEditPresenter<?, ?>) {
+        if (tabData instanceof DocumentEditPresenter<?, ?>) {
             final DocumentEditPresenter<?, D> presenter = (DocumentEditPresenter<?, D>) tabData;
 
             // Reload the document.

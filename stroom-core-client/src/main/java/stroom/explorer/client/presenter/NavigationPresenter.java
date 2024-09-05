@@ -60,6 +60,7 @@ import stroom.query.shared.QueryDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.TaskHandler;
 import stroom.task.client.TaskListener;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
@@ -307,10 +308,9 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         registerHandler(getEventBus().addHandler(FocusExplorerTreeEvent.getType(), this));
 
         // Deal with task listeners.
-        registerHandler(getEventBus().addHandler(ExplorerStartTaskEvent.getType(), e ->
-                getView().getTaskListener().incrementTaskCount()));
-        registerHandler(getEventBus().addHandler(ExplorerEndTaskEvent.getType(), e ->
-                getView().getTaskListener().decrementTaskCount()));
+        final TaskHandler taskHandler = getView().getTaskListener().createTaskHandler("Explorer update");
+        registerHandler(getEventBus().addHandler(ExplorerStartTaskEvent.getType(), e -> taskHandler.onStart()));
+        registerHandler(getEventBus().addHandler(ExplorerEndTaskEvent.getType(), e -> taskHandler.onEnd()));
 
         registerHandler(typeFilterPresenter.addDataSelectionHandler(event -> explorerTree.setIncludedTypeSet(
                 typeFilterPresenter.getIncludedTypes().orElse(null))));

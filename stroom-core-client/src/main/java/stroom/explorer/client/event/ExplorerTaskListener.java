@@ -1,5 +1,6 @@
 package stroom.explorer.client.event;
 
+import stroom.task.client.TaskHandler;
 import stroom.task.client.TaskListener;
 
 import com.google.gwt.event.shared.GwtEvent;
@@ -14,13 +15,18 @@ public class ExplorerTaskListener implements TaskListener, HasHandlers {
     }
 
     @Override
-    public void incrementTaskCount() {
-        ExplorerStartTaskEvent.fire(this);
-    }
+    public TaskHandler createTaskHandler(final String message) {
+        return new TaskHandler() {
+            @Override
+            public void onStart() {
+                ExplorerStartTaskEvent.fire(ExplorerTaskListener.this);
+            }
 
-    @Override
-    public void decrementTaskCount() {
-        ExplorerEndTaskEvent.fire(this);
+            @Override
+            public void onEnd() {
+                ExplorerEndTaskEvent.fire(ExplorerTaskListener.this);
+            }
+        };
     }
 
     @Override

@@ -23,15 +23,12 @@ import com.google.gwt.event.shared.HasHandlers;
 public class TaskEndEvent extends GwtEvent<TaskEndEvent.TaskEndHandler> {
 
     private static Type<TaskEndHandler> TYPE;
-    private final int taskCount;
 
-    private TaskEndEvent(final int taskCount) {
-        this.taskCount = taskCount;
+    private TaskEndEvent() {
     }
 
     public static void fire(final HasHandlers handlers) {
-        final int count = TaskCount.decrement();
-        handlers.fireEvent(new TaskEndEvent(count));
+        handlers.fireEvent(new TaskEndEvent());
     }
 
     public static Type<TaskEndHandler> getType() {
@@ -49,10 +46,6 @@ public class TaskEndEvent extends GwtEvent<TaskEndEvent.TaskEndHandler> {
     @Override
     protected void dispatch(final TaskEndHandler handler) {
         handler.onTaskEnd(this);
-    }
-
-    public int getTaskCount() {
-        return taskCount;
     }
 
     public interface TaskEndHandler extends EventHandler {

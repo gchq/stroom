@@ -10,9 +10,9 @@ import stroom.query.shared.CompletionSnippet;
 import stroom.query.shared.CompletionValue;
 import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.QueryResource;
+import stroom.task.client.DefaultTaskListener;
 import stroom.task.client.HasTaskListener;
 import stroom.task.client.TaskListener;
-import stroom.task.client.TaskListenerImpl;
 import stroom.util.shared.PageRequest;
 
 import com.google.gwt.core.client.GWT;
@@ -38,7 +38,7 @@ public class QueryHelpAceCompletionProvider
     private final EventBus eventBus;
     private final RestFactory restFactory;
     private final MarkdownConverter markdownConverter;
-    private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
+    private TaskListener taskListener = new DefaultTaskListener(this);
 
     private DocRef dataSourceRef;
     private boolean showAll = true;
@@ -132,7 +132,7 @@ public class QueryHelpAceCompletionProvider
 
     @Override
     public void setTaskListener(final TaskListener taskListener) {
-        this.taskListener.setTaskListener(taskListener);
+        this.taskListener = taskListener;
     }
 
     @Override

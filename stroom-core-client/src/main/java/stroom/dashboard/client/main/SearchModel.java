@@ -39,9 +39,9 @@ import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
+import stroom.task.client.DefaultTaskListener;
 import stroom.task.client.HasTaskListener;
 import stroom.task.client.TaskListener;
-import stroom.task.client.TaskListenerImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -68,7 +68,7 @@ public class SearchModel implements HasTaskListener, HasHandlers {
     private String componentId;
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
     private final ResultStoreModel resultStoreModel;
-    private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
+    private TaskListener taskListener = new DefaultTaskListener(this);
     private Map<String, ResultComponent> resultComponents = new HashMap<>();
     private DashboardSearchResponse currentResponse;
     private String currentNode;
@@ -541,7 +541,7 @@ public class SearchModel implements HasTaskListener, HasHandlers {
 
     @Override
     public void setTaskListener(final TaskListener taskListener) {
-        this.taskListener.setTaskListener(taskListener);
+        this.taskListener = taskListener;
     }
 
     @Override

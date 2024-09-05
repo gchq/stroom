@@ -31,6 +31,7 @@ import stroom.task.client.TaskEndEvent.TaskEndHandler;
 import stroom.task.client.TaskStartEvent;
 import stroom.task.client.TaskStartEvent.TaskStartHandler;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -51,6 +52,7 @@ public class CorePresenter extends MyPresenter<CoreView, CoreProxy>
 
     private final ClientSecurityContext securityContext;
     private final UrlParameters urlParameters;
+    private int taskCount;
 
     @Inject
     public CorePresenter(final EventBus eventBus, final CoreView view, final CoreProxy proxy,
@@ -64,15 +66,29 @@ public class CorePresenter extends MyPresenter<CoreView, CoreProxy>
     @ProxyEvent
     @Override
     public void onTaskStart(final TaskStartEvent event) {
-        if (!securityContext.isLoggedIn()) {
-            getView().showWorking(event.getMessage());
+        taskCount++;
+
+        if (taskCount < 0) {
+            GWT.log("Negative task count");
+        }
+
+        if (taskCount > 0) {
+            if (!securityContext.isLoggedIn()) {
+                getView().showWorking(event.getMessage());
+            }
         }
     }
 
     @ProxyEvent
     @Override
     public void onTaskEnd(final TaskEndEvent event) {
-        if (event.getTaskCount() == 0) {
+        taskCount--;
+
+        if (taskCount < 0) {
+            GWT.log("Negative task count");
+        }
+
+        if (taskCount == 0) {
             getView().hideWorking();
         }
     }

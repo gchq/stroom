@@ -16,8 +16,7 @@
 
 package stroom.widget.menu.client.presenter;
 
-import stroom.task.client.TaskEndEvent;
-import stroom.task.client.TaskStartEvent;
+import stroom.task.client.TaskHandler;
 import stroom.widget.menu.client.presenter.MenuPresenter.MenuView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -167,13 +166,14 @@ public class MenuPresenter
     @Override
     public void execute(final MenuItem menuItem) {
         if (menuItem != null && menuItem.getCommand() != null) {
-            TaskStartEvent.fire(MenuPresenter.this);
+            final TaskHandler taskHandler = createTaskHandler("Executing menu item " + menuItem.getText());
+            taskHandler.onStart();
             Scheduler.get().scheduleDeferred(() -> {
                 try {
                     hideAll(false, false);
                     menuItem.getCommand().execute();
                 } finally {
-                    TaskEndEvent.fire(MenuPresenter.this);
+                    taskHandler.onEnd();
                 }
             });
         }

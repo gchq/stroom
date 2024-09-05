@@ -4,9 +4,9 @@ import stroom.dispatch.client.RestFactory;
 import stroom.query.shared.QueryHelpDetail;
 import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryResource;
+import stroom.task.client.DefaultTaskListener;
 import stroom.task.client.HasTaskListener;
 import stroom.task.client.TaskListener;
-import stroom.task.client.TaskListenerImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -22,7 +22,7 @@ public class QueryHelpDetailProvider implements HasTaskListener, HasHandlers {
 
     private final EventBus eventBus;
     private final RestFactory restFactory;
-    private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
+    private TaskListener taskListener = new DefaultTaskListener(this);
 
     @Inject
     public QueryHelpDetailProvider(final EventBus eventBus,
@@ -43,7 +43,7 @@ public class QueryHelpDetailProvider implements HasTaskListener, HasHandlers {
 
     @Override
     public void setTaskListener(final TaskListener taskListener) {
-        this.taskListener.setTaskListener(taskListener);
+        this.taskListener = taskListener;
     }
 
     @Override

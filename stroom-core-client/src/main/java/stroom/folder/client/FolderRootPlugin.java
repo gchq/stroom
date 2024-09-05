@@ -130,17 +130,12 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
                                 final DocumentTabData tabData,
                                 final boolean fullScreen,
                                 final TaskListener taskListener) {
-        try {
-            if (documentEditPresenter instanceof FolderRootPresenter) {
-                ((FolderRootPresenter) documentEditPresenter).read();
-            }
-
-            // Open the tab.
-            contentManager.open(closeHandler, tabData, documentEditPresenter);
-        } finally {
-            // Stop spinning.
-            taskListener.decrementTaskCount();
+        if (documentEditPresenter instanceof FolderRootPresenter) {
+            ((FolderRootPresenter) documentEditPresenter).read();
         }
+
+        // Open the tab.
+        contentManager.open(closeHandler, tabData, documentEditPresenter);
     }
 
     @Override

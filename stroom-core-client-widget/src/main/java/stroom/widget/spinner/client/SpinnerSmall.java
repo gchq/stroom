@@ -17,6 +17,7 @@
 package stroom.widget.spinner.client;
 
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.TaskHandler;
 import stroom.task.client.TaskListener;
 
 import com.google.gwt.core.client.GWT;
@@ -51,19 +52,24 @@ public class SpinnerSmall extends Widget implements TaskListener {
     }
 
     @Override
-    public void incrementTaskCount() {
-        taskCount++;
-        setRefreshing(taskCount > 0);
-    }
+    public TaskHandler createTaskHandler(final String message) {
+        return new TaskHandler() {
+            @Override
+            public void onStart() {
+                taskCount++;
+                setRefreshing(taskCount > 0);
+            }
 
-    @Override
-    public void decrementTaskCount() {
-        taskCount--;
+            @Override
+            public void onEnd() {
+                taskCount--;
 
-        if (taskCount < 0) {
-            GWT.log("Negative task count");
-        }
+                if (taskCount < 0) {
+                    GWT.log("Negative task count");
+                }
 
-        setRefreshing(taskCount > 0);
+                setRefreshing(taskCount > 0);
+            }
+        };
     }
 }

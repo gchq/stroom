@@ -1,6 +1,7 @@
 package stroom.dispatch.client;
 
 import stroom.task.client.DefaultTaskListener;
+import stroom.task.client.TaskHandler;
 import stroom.task.client.TaskListener;
 import stroom.util.shared.GwtNullSafe;
 
@@ -143,13 +144,18 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
                     .requireNonNullElseGet(this.errorHandler, () -> new DefaultErrorHandler(hasHandlers, null));
             final TaskListener taskListener = GwtNullSafe
                     .requireNonNullElseGet(this.taskListener, () -> new DefaultTaskListener(hasHandlers));
+            final TaskHandler taskHandler = taskListener.createTaskHandler(
+                    "Calling " +
+                            service +
+                            " function "
+                            + function);
             final MethodCallbackImpl<R> methodCallback = new MethodCallbackImpl<>(
                     hasHandlers,
                     resultConsumer,
                     errorHandler,
-                    taskListener);
+                    taskHandler);
             final REST<R> rest = REST.withCallback(methodCallback);
-            taskListener.incrementTaskCount();
+            taskHandler.onStart();
             function.apply(rest.call(service));
         }
     }
@@ -165,16 +171,16 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         private final HasHandlers hasHandlers;
         private final Consumer<R> resultConsumer;
         private final RestErrorHandler errorHandler;
-        private final TaskListener taskListener;
+        private final TaskHandler taskHandler;
 
         public MethodCallbackImpl(final HasHandlers hasHandlers,
                                   final Consumer<R> resultConsumer,
                                   final RestErrorHandler errorHandler,
-                                  final TaskListener taskListener) {
+                                  final TaskHandler taskHandler) {
             this.hasHandlers = hasHandlers;
             this.resultConsumer = resultConsumer;
             this.errorHandler = errorHandler;
-            this.taskListener = taskListener;
+            this.taskHandler = taskHandler;
         }
 
         @Override
@@ -184,7 +190,7 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
             } catch (final Throwable t) {
                 new DefaultErrorHandler(hasHandlers, null).onError(new RestError(method, t));
             } finally {
-                taskListener.decrementTaskCount();
+                taskHandler.onEnd();
             }
         }
 
@@ -197,7 +203,7 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
             } catch (final Throwable t) {
                 new DefaultErrorHandler(hasHandlers, null).onError(new RestError(method, t));
             } finally {
-                taskListener.decrementTaskCount();
+                taskHandler.onEnd();
             }
         }
     }

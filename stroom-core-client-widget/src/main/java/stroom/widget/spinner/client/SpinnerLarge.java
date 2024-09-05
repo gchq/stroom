@@ -16,6 +16,7 @@
 
 package stroom.widget.spinner.client;
 
+import stroom.task.client.TaskHandler;
 import stroom.task.client.TaskListener;
 
 import com.google.gwt.core.client.GWT;
@@ -45,20 +46,25 @@ public class SpinnerLarge extends Composite implements TaskListener {
     }
 
     @Override
-    public void incrementTaskCount() {
-        taskCount++;
-        setVisible(taskCount > 0);
-    }
+    public TaskHandler createTaskHandler(final String message) {
+        return new TaskHandler() {
+            @Override
+            public void onStart() {
+                taskCount++;
+                setVisible(taskCount > 0);
+            }
 
-    @Override
-    public void decrementTaskCount() {
-        taskCount--;
+            @Override
+            public void onEnd() {
+                taskCount--;
 
-        if (taskCount < 0) {
-            GWT.log("Negative task count");
-        }
+                if (taskCount < 0) {
+                    GWT.log("Negative task count");
+                }
 
-        setVisible(taskCount > 0);
+                setVisible(taskCount > 0);
+            }
+        };
     }
 
     @Override

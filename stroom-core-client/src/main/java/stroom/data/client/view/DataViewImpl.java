@@ -18,6 +18,7 @@ package stroom.data.client.view;
 
 import stroom.data.client.presenter.DataPresenter.DataView;
 import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
+import stroom.task.client.TaskHandler;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 import stroom.widget.spinner.client.SpinnerLarge;
@@ -129,13 +130,8 @@ public class DataViewImpl extends ViewImpl implements DataView {
     }
 
     @Override
-    public void incrementTaskCount() {
-        spinner.incrementTaskCount();
-    }
-
-    @Override
-    public void decrementTaskCount() {
-        spinner.decrementTaskCount();
+    public TaskHandler createTaskHandler(final String message) {
+        return spinner.createTaskHandler(message);
     }
 
     public interface Binder extends UiBinder<Widget, DataViewImpl> {

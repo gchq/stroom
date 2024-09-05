@@ -1,6 +1,7 @@
 package stroom.data.pager.client;
 
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.TaskHandler;
 import stroom.task.client.TaskListener;
 import stroom.widget.button.client.SvgButton;
 
@@ -105,23 +106,27 @@ public class RefreshButton
     }
 
     @Override
-    public void incrementTaskCount() {
-        taskCount++;
-        updateRefreshState();
+    public TaskHandler createTaskHandler(final String message) {
+        return new TaskHandler() {
+            @Override
+            public void onStart() {
+                taskCount++;
+                updateRefreshState();
+            }
+
+            @Override
+            public void onEnd() {
+                taskCount--;
+                updateRefreshState();
+            }
+        };
     }
 
-    @Override
-    public void decrementTaskCount() {
-        taskCount--;
-
+    public void updateRefreshState() {
         if (taskCount < 0) {
             GWT.log("Negative task count");
         }
 
-        updateRefreshState();
-    }
-
-    public void updateRefreshState() {
         final boolean refreshState = refreshing || taskCount > 0;
         if (refreshState != this.refreshState) {
             this.refreshState = refreshState;

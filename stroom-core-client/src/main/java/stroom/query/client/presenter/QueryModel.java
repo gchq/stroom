@@ -28,9 +28,9 @@ import stroom.query.api.v2.TimeRange;
 import stroom.query.shared.QueryContext;
 import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;
+import stroom.task.client.DefaultTaskListener;
 import stroom.task.client.HasTaskListener;
 import stroom.task.client.TaskListener;
-import stroom.task.client.TaskListenerImpl;
 import stroom.util.shared.TokenError;
 
 import com.google.gwt.core.client.GWT;
@@ -58,7 +58,7 @@ public class QueryModel implements HasTaskListener, HasHandlers {
     private String queryUuid;
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
     private final ResultStoreModel resultStoreModel;
-    private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
+    private TaskListener taskListener = new DefaultTaskListener(this);
 
     private String currentNode;
     private QueryKey currentQueryKey;
@@ -452,7 +452,7 @@ public class QueryModel implements HasTaskListener, HasHandlers {
 
     @Override
     public void setTaskListener(final TaskListener taskListener) {
-        this.taskListener.setTaskListener(taskListener);
+        this.taskListener = taskListener;
     }
 
     @Override

@@ -17,9 +17,9 @@ import stroom.query.client.presenter.DynamicColumnSelectionListModel.ColumnSelec
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.DefaultTaskListener;
 import stroom.task.client.HasTaskListener;
 import stroom.task.client.TaskListener;
-import stroom.task.client.TaskListenerImpl;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
@@ -48,7 +48,7 @@ public class DynamicColumnSelectionListModel
     private final ClientSecurityContext clientSecurityContext;
     private DocRef dataSourceRef;
     private FindFieldCriteria lastCriteria;
-    private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
+    private TaskListener taskListener = new DefaultTaskListener(this);
 
     @Inject
     public DynamicColumnSelectionListModel(final EventBus eventBus,
@@ -250,7 +250,7 @@ public class DynamicColumnSelectionListModel
 
     @Override
     public void setTaskListener(final TaskListener taskListener) {
-        this.taskListener.setTaskListener(taskListener);
+        this.taskListener = taskListener;
     }
 
     @Override

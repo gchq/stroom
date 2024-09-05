@@ -31,6 +31,7 @@ import stroom.explorer.client.presenter.RecentItems;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.task.client.DefaultTaskListener;
 import stroom.task.client.HasTaskListener;
+import stroom.task.client.TaskHandler;
 import stroom.task.client.TaskListener;
 import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.tab.client.presenter.CurveTabLayoutPresenter;
@@ -238,13 +239,8 @@ public class ContentTabPanePresenter
         }
 
         @Override
-        public void incrementTaskCount() {
-            tab.incrementTaskCount();
-        }
-
-        @Override
-        public void decrementTaskCount() {
-            tab.decrementTaskCount();
+        public TaskHandler createTaskHandler(final String message) {
+            return tab.createTaskHandler(message);
         }
     }
 }

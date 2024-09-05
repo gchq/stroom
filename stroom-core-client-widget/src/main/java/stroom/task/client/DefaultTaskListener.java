@@ -6,21 +6,24 @@ public class DefaultTaskListener implements TaskListener {
 
     private final HasHandlers hasHandlers;
 
-    private final String name = this.getClass().getName();
-
     public DefaultTaskListener(final HasHandlers hasHandlers) {
         this.hasHandlers = hasHandlers;
     }
 
     @Override
-    public void incrementTaskCount() {
-        // Add the task to the map.
-        TaskStartEvent.fire(hasHandlers);
-    }
+    public TaskHandler createTaskHandler(final String message) {
+        return new TaskHandler() {
+            @Override
+            public void onStart() {
+                // Add the task to the map.
+                TaskStartEvent.fire(hasHandlers, message);
+            }
 
-    @Override
-    public void decrementTaskCount() {
-        // Remove the task from the task count.
-        TaskEndEvent.fire(hasHandlers);
+            @Override
+            public void onEnd() {
+                // Remove the task from the task count.
+                TaskEndEvent.fire(hasHandlers);
+            }
+        };
     }
 }

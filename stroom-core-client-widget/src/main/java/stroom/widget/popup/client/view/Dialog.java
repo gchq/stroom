@@ -17,6 +17,7 @@
 package stroom.widget.popup.client.view;
 
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.TaskHandler;
 import stroom.task.client.TaskListener;
 import stroom.widget.spinner.client.SpinnerLarge;
 import stroom.widget.util.client.MouseUtil;
@@ -270,13 +271,8 @@ public class Dialog extends AbstractPopupPanel implements TaskListener {
     }
 
     @Override
-    public void incrementTaskCount() {
-        spinner.incrementTaskCount();
-    }
-
-    @Override
-    public void decrementTaskCount() {
-        spinner.decrementTaskCount();
+    public TaskHandler createTaskHandler(final String message) {
+        return spinner.createTaskHandler(message);
     }
 
     public interface Binder extends UiBinder<Widget, Dialog> {

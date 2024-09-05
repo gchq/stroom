@@ -1,18 +1,22 @@
 package stroom.dispatch.client;
 
+import stroom.task.client.TaskHandler;
 import stroom.task.client.TaskListener;
 
 public class QuietTaskListener implements TaskListener {
 
-    private final String name = this.getClass().getName();
-
     @Override
-    public void incrementTaskCount() {
+    public TaskHandler createTaskHandler(final String message) {
+        return new TaskHandler() {
+            @Override
+            public void onStart() {
 
-    }
+            }
 
-    @Override
-    public void decrementTaskCount() {
+            @Override
+            public void onEnd() {
 
+            }
+        };
     }
 }

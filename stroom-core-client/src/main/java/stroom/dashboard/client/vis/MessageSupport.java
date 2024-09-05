@@ -19,9 +19,9 @@ package stroom.dashboard.client.vis;
 import stroom.dashboard.client.vis.PostMessage.FrameListener;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.task.client.DefaultTaskListener;
 import stroom.task.client.HasTaskListener;
 import stroom.task.client.TaskListener;
-import stroom.task.client.TaskListenerImpl;
 import stroom.util.client.JSONUtil;
 
 import com.google.gwt.core.client.Callback;
@@ -50,7 +50,7 @@ public class MessageSupport
     private final EventBus eventBus;
     private final Element frame;
     private final int frameId;
-    private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
+    private TaskListener taskListener = new DefaultTaskListener(this);
 
     private SelectionUiHandlers uiHandlers;
 
@@ -168,6 +168,6 @@ public class MessageSupport
 
     @Override
     public void setTaskListener(final TaskListener taskListener) {
-        this.taskListener.setTaskListener(taskListener);
+        this.taskListener = taskListener;
     }
 }
