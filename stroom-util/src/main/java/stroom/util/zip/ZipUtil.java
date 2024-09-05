@@ -20,6 +20,7 @@ import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
 
+import org.apache.commons.compress.archivers.zip.Zip64Mode;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
@@ -52,6 +53,12 @@ public final class ZipUtil {
         // Utility class.
     }
 
+    public static ZipArchiveOutputStream createOutputStream(final OutputStream outputStream) {
+        final ZipArchiveOutputStream zipArchiveOutputStream = new ZipArchiveOutputStream(outputStream);
+        zipArchiveOutputStream.setUseZip64(Zip64Mode.Always);
+        return zipArchiveOutputStream;
+    }
+
     public static void zip(final Path zipFile, final Path dir) throws IOException {
         zip(zipFile, dir, null, null);
     }
@@ -61,7 +68,7 @@ public final class ZipUtil {
                            final Pattern includePattern,
                            final Pattern excludePattern) throws IOException {
         try (final ZipArchiveOutputStream zipOutputStream =
-                new ZipArchiveOutputStream(new BufferedOutputStream(Files.newOutputStream(zipFile)))) {
+                createOutputStream(new BufferedOutputStream(Files.newOutputStream(zipFile)))) {
             zip(zipFile, dir, zipOutputStream, includePattern, excludePattern);
         }
     }

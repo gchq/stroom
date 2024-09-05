@@ -2,6 +2,7 @@ package stroom.proxy.app.handler;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
+import stroom.util.zip.ZipUtil;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
@@ -21,11 +22,11 @@ public class ZipWriter implements AutoCloseable {
     private final byte[] buffer;
 
     public ZipWriter(final Path path, final byte[] buffer) throws IOException {
-        this(new ZipArchiveOutputStream(new BufferedOutputStream(Files.newOutputStream(path))), buffer);
+        this(new BufferedOutputStream(Files.newOutputStream(path)), buffer);
     }
 
     public ZipWriter(final OutputStream outputStream, final byte[] buffer) {
-        this(new ZipArchiveOutputStream(new BufferedOutputStream(outputStream)), buffer);
+        this(ZipUtil.createOutputStream(outputStream), buffer);
     }
 
     public ZipWriter(final ZipArchiveOutputStream zipArchiveOutputStream,
