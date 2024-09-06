@@ -31,19 +31,25 @@ import stroom.data.store.impl.fs.client.ManageFsVolumesPlugin;
 import stroom.index.client.ManageIndexVolumesPlugin;
 import stroom.job.client.presenter.JobPresenter;
 import stroom.job.client.presenter.JobPresenter.JobView;
-import stroom.job.client.presenter.SchedulePresenter;
-import stroom.job.client.presenter.SchedulePresenter.ScheduleView;
 import stroom.job.client.view.JobViewImpl;
-import stroom.job.client.view.ScheduleViewImpl;
 import stroom.monitoring.client.DatabaseTablesMonitoringPlugin;
 import stroom.monitoring.client.JobListPlugin;
 import stroom.monitoring.client.NodeMonitoringPlugin;
 import stroom.node.client.ManageGlobalPropertiesPlugin;
+import stroom.node.client.presenter.NodePresenter;
+import stroom.node.client.presenter.NodePresenter.NodeView;
+import stroom.node.client.view.NodeViewImpl;
+import stroom.schedule.client.SchedulePopup;
+import stroom.schedule.client.SchedulePopup.ScheduleView;
+import stroom.schedule.client.ScheduleViewImpl;
 import stroom.task.client.TaskManagerPlugin;
 import stroom.task.client.presenter.TaskManagerPresenter;
 import stroom.task.client.presenter.TaskManagerPresenter.TaskManagerView;
 import stroom.task.client.view.TaskManagerViewImpl;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.widget.datepicker.client.DateTimePopup;
+import stroom.widget.datepicker.client.DateTimePopup.DateTimeView;
+import stroom.widget.datepicker.client.DateTimeViewImpl;
 
 public class MonitoringModule extends PluginModule {
 
@@ -56,12 +62,21 @@ public class MonitoringModule extends PluginModule {
         // Job management.
         bindPlugin(JobListPlugin.class);
         bindPresenterWidget(
-                SchedulePresenter.class,
+                SchedulePopup.class,
                 ScheduleView.class,
                 ScheduleViewImpl.class);
+        bindPresenterWidget(
+                DateTimePopup.class,
+                DateTimeView.class,
+                DateTimeViewImpl.class);
 
         // Node management.
         bindPlugin(NodeMonitoringPlugin.class);
+
+        bindPresenterWidget(
+                NodePresenter.class,
+                NodeView.class,
+                NodeViewImpl.class);
 
         bindPlugin(ManageFsVolumesPlugin.class);
         bindPlugin(ManageIndexVolumesPlugin.class);

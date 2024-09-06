@@ -23,6 +23,7 @@ import stroom.search.impl.SearchException;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 
+import org.apache.lucene553.index.CorruptIndexException;
 import org.apache.lucene553.index.IndexWriter;
 import org.apache.lucene553.search.IndexSearcher;
 import org.apache.lucene553.search.SearcherFactory;
@@ -111,8 +112,12 @@ class IndexShardSearcher {
                     searcherManager.release(indexSearcher);
                 }
             }
+        } catch (final CorruptIndexException e) {
+            throw new SearchException("Corrupt index shard (id=" + indexShard.getId() + "). " + e.getMessage(),
+                    e);
         } catch (final IOException e) {
-            throw new SearchException(e.getMessage(), e);
+            throw new SearchException("Error reading index shard (id=" + indexShard.getId() + "). " + e.getMessage(),
+                    e);
         }
 
         this.directory = directory;

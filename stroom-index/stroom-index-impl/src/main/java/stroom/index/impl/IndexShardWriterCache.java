@@ -16,12 +16,13 @@
 
 package stroom.index.impl;
 
-import stroom.index.shared.IndexShardKey;
+import java.util.Optional;
 
 public interface IndexShardWriterCache {
-    IndexShardWriter getWriterByShardKey(IndexShardKey key);
 
-    IndexShardWriter getWriterByShardId(long indexShardId);
+    Optional<IndexShardWriter> getIfPresent(long indexShardId);
+
+    IndexShardWriter getOrOpenWriter(long indexShardId);
 
     void flush(long indexShardId);
 

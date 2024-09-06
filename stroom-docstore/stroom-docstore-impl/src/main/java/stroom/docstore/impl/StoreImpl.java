@@ -17,10 +17,8 @@
 
 package stroom.docstore.impl;
 
-import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docref.StringMatch;
 import stroom.docrefinfo.api.DocRefDecorator;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
@@ -47,8 +45,6 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.Message;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.Severity;
-import stroom.util.string.StringMatcher;
-import stroom.util.string.StringMatcher.Match;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -58,12 +54,10 @@ import java.io.UncheckedIOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -306,6 +300,11 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     public D writeDocument(final D document) {
         Objects.requireNonNull(document);
         return update(document);
+    }
+
+    @Override
+    public String getType() {
+        return type;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -695,61 +694,33 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     }
 
     @Override
-    public List<DocContentMatch> findByContent(final StringMatch filter) {
-        final List<DocContentMatch> matches = new ArrayList<>();
-
-        final StringMatcher stringMatcher = new StringMatcher(filter);
-        final List<DocRef> list = persistence
-                .list(type)
-                .stream()
-                .filter(this::canRead)
-                .toList();
-
-        for (final DocRef docRef : list) {
-            final String uuid = docRef.getUuid();
-            final Map<String, byte[]> data = persistence.getLockFactory().lockResult(uuid, () -> {
-                try {
-                    return persistence.read(new DocRef(type, uuid));
-                } catch (final IOException e) {
-                    LOGGER.error(e.getMessage(), e);
-                    throw new UncheckedIOException(
-                            LogUtil.message("Error reading {} from store {}, {}",
-                                    toDocRefDisplayString(uuid),
-                                    persistence.getClass().getSimpleName(),
-                                    e.getMessage()), e);
-                }
-            });
-
-            if (data != null) {
-                for (final byte[] bytes : data.values()) {
-                    try {
-                        final String string = new String(bytes, StandardCharsets.UTF_8);
-                        final Optional<Match> optional = stringMatcher.match(string);
-                        optional.ifPresent(match -> {
-                            String sample = string.substring(
-                                    Math.max(0, match.offset()),
-                                    Math.min(string.length() - 1, match.offset() + match.length()));
-                            if (sample.length() > 100) {
-                                sample = sample.substring(0, 100);
-                            }
-
-                            final DocContentMatch docContentMatch = DocContentMatch
-                                    .builder()
-                                    .docRef(docRef)
-                                    .matchOffset(match.offset())
-                                    .matchLength(match.length())
-                                    .sample(sample)
-                                    .build();
-                            matches.add(docContentMatch);
-                        });
-                    } catch (final RuntimeException e) {
-                        LOGGER.debug(e::getMessage, e);
-                    }
-                }
-            }
+    public Map<String, String> getIndexableData(final DocRef docRef) {
+        if (!canRead(docRef)) {
+            return Collections.emptyMap();
         }
 
-        return matches;
+        final String uuid = docRef.getUuid();
+        final Map<String, byte[]> data = persistence.getLockFactory().lockResult(uuid, () -> {
+            try {
+                return persistence.read(new DocRef(type, uuid));
+            } catch (final IOException e) {
+                LOGGER.error(e.getMessage(), e);
+                throw new UncheckedIOException(
+                        LogUtil.message("Error reading {} from store {}, {}",
+                                toDocRefDisplayString(uuid),
+                                persistence.getClass().getSimpleName(),
+                                e.getMessage()), e);
+            }
+        });
+
+        if (data == null) {
+            return Collections.emptyMap();
+        }
+
+        return data
+                .entrySet()
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> new String(e.getValue(), StandardCharsets.UTF_8)));
     }
 
     private String toDocRefDisplayString(final String uuid) {

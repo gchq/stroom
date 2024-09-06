@@ -16,15 +16,16 @@
 
 package stroom.query.common.v2;
 
-import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.Column;
 import stroom.query.language.functions.Expression;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.ExpressionParser;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Generator;
 import stroom.query.language.functions.Null;
 import stroom.query.language.functions.ParamFactory;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
+import stroom.util.NullSafe;
 
 import java.text.ParseException;
 import java.util.Collections;
@@ -77,7 +78,7 @@ public class CompiledColumns {
             Generator generator = Null.GEN;
             boolean hasAggregate = false;
             boolean requiresChildData = false;
-            if (column.getExpression() != null && column.getExpression().trim().length() > 0) {
+            if (!NullSafe.isBlankString(column.getExpression())) {
                 try {
                     final Expression expression = expressionParser.parse(
                             expressionContext,
@@ -99,7 +100,13 @@ public class CompiledColumns {
             }
 
             final CompiledColumn compiledField =
-                    new CompiledColumn(column, groupDepth, generator, hasAggregate, requiresChildData, filter);
+                    new CompiledColumn(
+                            column,
+                            groupDepth,
+                            generator,
+                            hasAggregate,
+                            requiresChildData,
+                            filter);
 
             // Only include this field if it is used for display, grouping,
             // sorting.

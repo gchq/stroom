@@ -16,7 +16,7 @@
 
 package stroom.query.client.presenter;
 
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.QuietTaskListener;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.shared.QueryResource;
 
@@ -25,36 +25,45 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 @Singleton
 public class TimeZones {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
+    private final RestFactory restFactory;
     private String localTimeZoneId;
     private List<String> ids;
 
     @Inject
     public TimeZones(final RestFactory restFactory) {
+        this.restFactory = restFactory;
         try {
             localTimeZoneId = getIntlTimeZone();
         } catch (final RuntimeException e) {
             localTimeZoneId = "Z";
         }
-
-        final Rest<List<String>> rest = restFactory.create();
-        rest
-                .onSuccess(result -> ids = result)
-                .call(QUERY_RESOURCE)
-                .fetchTimeZones();
     }
 
     public String getLocalTimeZoneId() {
         return localTimeZoneId;
     }
 
-    public List<String> getIds() {
-        return ids;
+    public void getIds(final Consumer<List<String>> consumer) {
+        if (this.ids != null) {
+            consumer.accept(ids);
+        } else {
+            restFactory
+                    .create(QUERY_RESOURCE)
+                    .method(QueryResource::fetchTimeZones)
+                    .onSuccess(result -> {
+                        ids = result;
+                        consumer.accept(ids);
+                    })
+                    .taskListener(new QuietTaskListener())
+                    .exec();
+        }
     }
 
     /**

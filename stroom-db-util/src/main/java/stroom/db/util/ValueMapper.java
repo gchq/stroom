@@ -21,8 +21,8 @@ public class ValueMapper {
     private final Map<String, Mapper<?>> mappers = new HashMap<>();
 
     public <T> void map(final QueryField dataSourceField, final Field<T> field, final Function<T, Val> handler) {
-        fieldNameMap.put(dataSourceField.getName(), field);
-        mappers.put(dataSourceField.getName(), new Mapper<>(field, handler));
+        fieldNameMap.put(dataSourceField.getFldName(), field);
+        mappers.put(dataSourceField.getFldName(), new Mapper<>(field, handler));
     }
 
     public List<Field<?>> getDbFieldsByName(final String[] fieldNames) {

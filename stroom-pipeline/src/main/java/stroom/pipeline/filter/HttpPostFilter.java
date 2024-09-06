@@ -41,6 +41,11 @@ import org.xml.sax.SAXException;
 @Deprecated // This is pretty limited in what it can do. HttpAppender is much better and more configurable
 @ConfigurableElement(type = "HttpPostFilter",
         category = PipelineElementType.Category.FILTER,
+        description = """
+                This element is deprecated, you should instead use the much more flexible \
+                {{< pipe-elm "HTTPAppender" >}}.
+                This element will simply POST the output of the XML events to the configured URL.
+                """,
         roles = {
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_HAS_TARGETS,

@@ -19,37 +19,39 @@ package stroom.index.impl;
 
 import stroom.docref.DocRef;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.node.api.NodeInfo;
-import stroom.search.extraction.IndexStructure;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 
-@EntityEventHandler(type = IndexDoc.DOCUMENT_TYPE)
+import java.util.Optional;
+
+@EntityEventHandler(type = LuceneIndexDoc.DOCUMENT_TYPE)
 class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
+
     private final NodeInfo nodeInfo;
-    private final IndexStructureCacheImpl indexStructureCache;
-    private final IndexShardService indexShardService;
+    private final LuceneIndexDocCacheImpl indexStructureCache;
+    private final IndexShardDao indexShardDao;
     private final IndexShardWriterCache indexShardWriterCache;
 
     @Inject
     IndexConfigCacheEntityEventHandler(final NodeInfo nodeInfo,
-                                       final IndexStructureCacheImpl indexStructureCache,
-                                       final IndexShardService indexShardService,
+                                       final LuceneIndexDocCacheImpl indexStructureCache,
+                                       final IndexShardDao indexShardDao,
                                        final IndexShardWriterCache indexShardWriterCache) {
         this.nodeInfo = nodeInfo;
         this.indexStructureCache = indexStructureCache;
-        this.indexShardService = indexShardService;
+        this.indexShardDao = indexShardDao;
         this.indexShardWriterCache = indexShardWriterCache;
     }
 
     @Override
     public void onChange(final EntityEvent event) {
-        if (IndexDoc.DOCUMENT_TYPE.equals(event.getDocRef().getType())) {
+        if (LuceneIndexDoc.DOCUMENT_TYPE.equals(event.getDocRef().getType())) {
             indexStructureCache.remove(event.getDocRef());
             updateIndex(event.getDocRef());
         }
@@ -60,13 +62,13 @@ class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
         criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
         criteria.getIndexUuidSet().add(indexRef.getUuid());
 
-        final ResultPage<IndexShard> shards = indexShardService.find(criteria);
+        final ResultPage<IndexShard> shards = indexShardDao.find(criteria);
         shards.getValues().forEach(shard -> {
-            final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardId(shard.getId());
-            if (indexShardWriter != null) {
-                final IndexStructure indexStructure = indexStructureCache.get(indexRef);
-                indexShardWriter.updateIndexStructure(indexStructure);
-            }
+            final Optional<IndexShardWriter> optional = indexShardWriterCache.getIfPresent(shard.getId());
+            optional.ifPresent(indexShardWriter -> {
+                final LuceneIndexDoc index = indexStructureCache.get(indexRef);
+                indexShardWriter.setMaxDocumentCount(index.getMaxDocsPerShard());
+            });
         });
     }
 }

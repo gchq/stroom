@@ -21,7 +21,7 @@ import stroom.core.client.ContentManager;
 import stroom.dictionary.client.presenter.DictionaryPresenter;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.DictionaryResource;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -29,6 +29,7 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.task.client.TaskListener;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -66,26 +67,30 @@ public class DictionaryPlugin extends DocumentPlugin<DictionaryDoc> {
     @Override
     public void load(final DocRef docRef,
                      final Consumer<DictionaryDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<DictionaryDoc> rest = restFactory.create();
-        rest
+                     final RestErrorHandler errorHandler,
+                     final TaskListener taskListener) {
+        restFactory
+                .create(DICTIONARY_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
-                .call(DICTIONARY_RESOURCE)
-                .fetch(docRef.getUuid());
+                .onFailure(errorHandler)
+                .taskListener(taskListener)
+                .exec();
     }
 
     @Override
     public void save(final DocRef docRef,
                      final DictionaryDoc document,
                      final Consumer<DictionaryDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<DictionaryDoc> rest = restFactory.create();
-        rest
+                     final RestErrorHandler errorHandler,
+                     final TaskListener taskListener) {
+        restFactory
+                .create(DICTIONARY_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
-                .call(DICTIONARY_RESOURCE)
-                .update(document.getUuid(), document);
+                .onFailure(errorHandler)
+                .taskListener(taskListener)
+                .exec();
     }
 
     @Override

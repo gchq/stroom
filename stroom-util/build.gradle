@@ -25,6 +25,7 @@ dependencies {
     implementation libs.javassist
     implementation libs.jakarta_inject
     implementation libs.jaxb_api
+    implementation libs.quartz
     implementation libs.saxon_he
     implementation libs.slf4j_api
     implementation libs.ws_rs_api

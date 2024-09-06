@@ -18,7 +18,7 @@ package stroom.query.client;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.structure.client.view.DraggableTreePanel;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.client.ExpressionTreePresenter.ExpressionTreeView;
@@ -34,14 +34,16 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class ExpressionTreeViewImpl extends ViewWithUiHandlers<ExpressionUiHandlers> implements ExpressionTreeView {
+public class ExpressionTreeViewImpl
+        extends ViewWithUiHandlers<ExpressionUiHandlers>
+        implements ExpressionTreeView {
 
     private final ExpressionTreePanel treePanel;
     private final DraggableTreePanel<Item> layoutPanel;
     private MySingleSelectionModel<Item> selectionModel;
 
     @Inject
-    public ExpressionTreeViewImpl(final Provider<EntityDropDownPresenter> docRefProvider,
+    public ExpressionTreeViewImpl(final Provider<DocSelectionBoxPresenter> docRefProvider,
                                   final UserPreferencesManager userPreferencesManager) {
         treePanel = new ExpressionTreePanel(
                 docRefProvider,

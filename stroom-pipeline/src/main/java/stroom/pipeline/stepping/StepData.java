@@ -58,7 +58,7 @@ public class StepData {
         return NullSafe.map(elementMap).values()
                 .stream()
                 .map(data -> data.getElementId() + ":" + Objects.requireNonNullElse(
-                        data.getAllIndicators().getMaxSeverity(), "-"))
+                        data.getIndicators().getMaxSeverity(), "-"))
                 .collect(Collectors.joining(", "));
     }
 }

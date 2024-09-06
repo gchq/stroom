@@ -17,16 +17,20 @@
 package stroom.job.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
+import stroom.data.table.client.Refreshable;
 import stroom.job.shared.Job;
+import stroom.job.shared.JobNode;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.GwtNullSafe;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
-public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> {
+public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> implements Refreshable {
 
+    public static final String TAB_TYPE = "Jobs";
     public static final String JOB_LIST = "JOB_LIST";
     public static final String JOB_NODE_LIST = "JOB_NODE_LIST";
     private final JobListPresenter jobListPresenter;
@@ -53,6 +57,9 @@ public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> {
             final Job row = jobListPresenter.getSelectionModel().getSelected();
             jobNodeListPresenter.read(row);
         }));
+
+        jobListPresenter.setChangeHandler(job ->
+                jobNodeListPresenter.refresh());
     }
 
     @Override
@@ -69,6 +76,30 @@ public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> {
     public String getLabel() {
         return "Jobs";
     }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
+    }
+
+    public void setSelected(final Job job) {
+        jobListPresenter.setSelected(job);
+        jobNodeListPresenter.setSelected(null);
+    }
+
+    public void setSelected(final JobNode jobNode) {
+        jobListPresenter.setSelected(GwtNullSafe.get(jobNode, JobNode::getJob));
+        jobNodeListPresenter.setSelected(jobNode);
+    }
+
+    @Override
+    public void refresh() {
+        jobNodeListPresenter.refresh();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface JobView extends View {
 

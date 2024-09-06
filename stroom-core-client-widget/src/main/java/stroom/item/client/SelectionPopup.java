@@ -1,8 +1,12 @@
 package stroom.item.client;
 
 import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
+import stroom.widget.popup.client.presenter.Position;
+import stroom.widget.popup.client.presenter.PositionUtil;
 import stroom.widget.popup.client.view.SimplePopupLayout;
 import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.Rect;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
@@ -23,6 +27,7 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
         protected void onBind() {
             super.onBind();
             registerHandler(popupPanel.addCloseHandler(event -> hide()));
+            registerHandler(selectionList.addCloseHandler(event -> hide()));
         }
     };
 
@@ -57,23 +62,41 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
         }
     }
 
-    public void show(final Widget displayTarget) {
-        final PopupPosition position = new PopupPosition(displayTarget.getAbsoluteLeft() - 4,
-                displayTarget.getAbsoluteTop() + displayTarget.getOffsetHeight() + 4);
+    public void show(final Element relativeElement) {
+        final Rect relativeRect = new Rect(relativeElement);
+        final PopupPosition position = new PopupPosition(relativeRect, PopupLocation.BELOW);
         show(position);
     }
 
-    public void show(final PopupPosition position) {
+    private void show(final PopupPosition popupPosition) {
         if (popupPanel.isShowing()) {
             hide();
         } else {
             eventBinder.bind();
-            popupPanel.setPopupPositionAndShow((offsetWidth, offsetHeight) -> {
+            popupPanel.setPopupPosition(-1000, -1000);
+            popupPanel.show();
+            // Defer the command to position and make visible because we need the
+            // popup to size first.
+            Scheduler.get().scheduleDeferred(() -> {
+                // Now get the popup size.
+                final int offsetWidth = popupPanel.getOffsetWidth();
+                final int offsetHeight = popupPanel.getOffsetHeight();
+                final Position position = PositionUtil
+                        .getPosition(4, popupPosition, offsetWidth, offsetHeight);
                 popupPanel.setPopupPosition(
-                        (int) position.getRelativeRect().getLeft(),
-                        (int) position.getRelativeRect().getTop());
+                        (int) position.getLeft(),
+                        (int) position.getTop());
                 afterShow();
             });
+
+//            popupPanel.setPopupPositionAndShow((offsetWidth, offsetHeight) -> {
+//                final Position position = PositionUtil
+//                        .getPosition(4, popupPosition, offsetWidth, offsetHeight);
+//                popupPanel.setPopupPosition(
+//                        (int) position.getLeft(),
+//                        (int) position.getTop());
+//                afterShow();
+//            });
         }
     }
 

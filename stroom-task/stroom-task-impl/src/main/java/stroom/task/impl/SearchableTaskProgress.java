@@ -3,9 +3,8 @@ package stroom.task.impl;
 import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
-import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.FieldInfo;
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.expression.matcher.ExpressionMatcher;
@@ -13,6 +12,8 @@ import stroom.expression.matcher.ExpressionMatcherFactory;
 import stroom.query.common.v2.FieldInfoResultPageBuilder;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValDate;
+import stroom.query.language.functions.ValDuration;
 import stroom.query.language.functions.ValInteger;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
@@ -79,7 +80,7 @@ class SearchableTaskProgress implements Searchable {
     }
 
     @Override
-    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+    public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
         return FieldInfoResultPageBuilder.builder(criteria).addAll(TaskManagerFields.getFields()).build();
     }
 
@@ -89,7 +90,7 @@ class SearchableTaskProgress implements Searchable {
     }
 
     @Override
-    public DateField getTimeField() {
+    public QueryField getTimeField() {
         return TaskManagerFields.SUBMIT_TIME;
     }
 
@@ -130,7 +131,14 @@ class SearchableTaskProgress implements Searchable {
                                     if (o instanceof String) {
                                         val = ValString.create((String) o);
                                     } else if (o instanceof Long) {
-                                        val = ValLong.create((long) o);
+                                        final long aLong = (long) o;
+                                        if (TaskManagerFields.FIELD_SUBMIT_TIME.equals(fieldName)) {
+                                            val = ValDate.create(aLong);
+                                        } else if (TaskManagerFields.FIELD_AGE.equals(fieldName)) {
+                                            val = ValDuration.create(aLong);
+                                        } else {
+                                            val = ValLong.create(aLong);
+                                        }
                                     } else if (o instanceof Integer) {
                                         val = ValInteger.create((int) o);
                                     }

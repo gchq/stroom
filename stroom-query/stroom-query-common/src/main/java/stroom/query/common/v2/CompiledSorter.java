@@ -16,8 +16,6 @@
 
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.language.functions.Val;
 
@@ -31,44 +29,11 @@ public class CompiledSorter<E extends Item> implements Comparator<E>, Function<S
 
     private final List<CompiledSort> compiledSorts = new ArrayList<>();
 
-    private CompiledSorter() {
+    public CompiledSorter() {
     }
 
     public List<CompiledSort> getCompiledSorts() {
         return compiledSorts;
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <E extends Item> CompiledSorter<E>[] create(final int maxDepth,
-                                                              final CompiledColumn[] compiledColumns) {
-        final CompiledSorter<E>[] sorters = new CompiledSorter[maxDepth + 1];
-
-        if (compiledColumns != null) {
-            for (int depth = 0; depth <= maxDepth; depth++) {
-                for (int columnIndex = 0; columnIndex < compiledColumns.length; columnIndex++) {
-                    final CompiledColumn compiledColumn = compiledColumns[columnIndex];
-                    final Column column = compiledColumn.getColumn();
-                    if (column.getSort() != null && (column.getGroup() == null || column.getGroup() >= depth)) {
-                        // Get an appropriate comparator.
-                        final Comparator<Val> comparator = ComparatorFactory.create(column);
-
-                        // Remember sorting info.
-                        final Sort sort = column.getSort();
-                        final CompiledSort compiledSort = new CompiledSort(columnIndex, sort, comparator);
-
-                        CompiledSorter<E> sorter = sorters[depth];
-                        if (sorter == null) {
-                            sorter = new CompiledSorter<>();
-                            sorters[depth] = sorter;
-                        }
-
-                        sorter.add(compiledSort);
-                    }
-                }
-            }
-        }
-
-        return sorters;
     }
 
     public void add(final CompiledSort compiledSort) {

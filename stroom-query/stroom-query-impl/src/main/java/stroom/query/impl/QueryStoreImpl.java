@@ -17,10 +17,8 @@
 
 package stroom.query.impl;
 
-import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docref.StringMatch;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
@@ -53,6 +51,11 @@ import java.util.function.BiConsumer;
 class QueryStoreImpl implements QueryStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(QueryStoreImpl.class);
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            QueryDoc.DOCUMENT_TYPE,
+            QueryDoc.DOCUMENT_TYPE,
+            QueryDoc.ICON);
 
     private final Store<QueryDoc> store;
     private final SecurityContext securityContext;
@@ -121,11 +124,7 @@ class QueryStoreImpl implements QueryStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.SEARCH,
-                QueryDoc.DOCUMENT_TYPE,
-                QueryDoc.DOCUMENT_TYPE,
-                QueryDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -269,7 +268,7 @@ class QueryStoreImpl implements QueryStore {
     }
 
     @Override
-    public List<DocContentMatch> findByContent(final StringMatch filter) {
-        return store.findByContent(filter);
+    public Map<String, String> getIndexableData(final DocRef docRef) {
+        return store.getIndexableData(docRef);
     }
 }

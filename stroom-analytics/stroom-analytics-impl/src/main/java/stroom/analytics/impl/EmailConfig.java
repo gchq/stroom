@@ -78,9 +78,9 @@ public class EmailConfig extends AbstractConfig implements IsStroomConfig {
     @Override
     public String toString() {
         return "EmailConfig{" +
-                "smtpConfig=" + smtpConfig +
-                ", fromAddress='" + fromAddress + '\'' +
-                ", fromName='" + fromName + '\'' +
-                '}';
+               "smtpConfig=" + smtpConfig +
+               ", fromAddress='" + fromAddress + '\'' +
+               ", fromName='" + fromName + '\'' +
+               '}';
     }
 }

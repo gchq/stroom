@@ -27,46 +27,44 @@ import java.util.Objects;
 public class JobNodeInfo {
 
     @JsonProperty
-    private Integer currentTaskCount;
+    private final Integer currentTaskCount;
     @JsonProperty
-    private Long scheduleReferenceTime;
+    private final Long scheduleReferenceTime;
     @JsonProperty
-    private Long lastExecutedTime;
-
-    public JobNodeInfo() {
-    }
+    private final Long lastExecutedTime;
+    @JsonProperty
+    private final Long nextScheduledTime;
 
     @JsonCreator
     public JobNodeInfo(@JsonProperty("currentTaskCount") final Integer currentTaskCount,
                        @JsonProperty("scheduleReferenceTime") final Long scheduleReferenceTime,
-                       @JsonProperty("lastExecutedTime") final Long lastExecutedTime) {
+                       @JsonProperty("lastExecutedTime") final Long lastExecutedTime,
+                       @JsonProperty("nextScheduledTime") final Long nextScheduledTime) {
         this.currentTaskCount = currentTaskCount;
         this.scheduleReferenceTime = scheduleReferenceTime;
         this.lastExecutedTime = lastExecutedTime;
+        this.nextScheduledTime = nextScheduledTime;
+    }
+
+    public static JobNodeInfo empty() {
+        return new JobNodeInfo(
+                null, null, null, null);
     }
 
     public Integer getCurrentTaskCount() {
         return currentTaskCount;
     }
 
-    public void setCurrentTaskCount(final Integer currentTaskCount) {
-        this.currentTaskCount = currentTaskCount;
-    }
-
     public Long getScheduleReferenceTime() {
         return scheduleReferenceTime;
-    }
-
-    public void setScheduleReferenceTime(final Long scheduleReferenceTime) {
-        this.scheduleReferenceTime = scheduleReferenceTime;
     }
 
     public Long getLastExecutedTime() {
         return lastExecutedTime;
     }
 
-    public void setLastExecutedTime(final Long lastExecutedTime) {
-        this.lastExecutedTime = lastExecutedTime;
+    public Long getNextScheduledTime() {
+        return nextScheduledTime;
     }
 
     @Override
@@ -75,6 +73,7 @@ public class JobNodeInfo {
                 "currentTaskCount=" + currentTaskCount +
                 ", scheduleReferenceTime=" + scheduleReferenceTime +
                 ", lastExecutedTime=" + lastExecutedTime +
+                ", nextScheduledTime=" + nextScheduledTime +
                 '}';
     }
 
@@ -89,11 +88,12 @@ public class JobNodeInfo {
         final JobNodeInfo that = (JobNodeInfo) o;
         return Objects.equals(currentTaskCount, that.currentTaskCount) &&
                 Objects.equals(scheduleReferenceTime, that.scheduleReferenceTime) &&
-                Objects.equals(lastExecutedTime, that.lastExecutedTime);
+                Objects.equals(lastExecutedTime, that.lastExecutedTime) &&
+                Objects.equals(nextScheduledTime, that.nextScheduledTime);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(currentTaskCount, scheduleReferenceTime, lastExecutedTime);
+        return Objects.hash(currentTaskCount, scheduleReferenceTime, lastExecutedTime, nextScheduledTime);
     }
 }

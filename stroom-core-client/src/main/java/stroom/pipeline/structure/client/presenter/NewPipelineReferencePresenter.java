@@ -16,10 +16,9 @@
 
 package stroom.pipeline.structure.client.presenter;
 
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.feed.shared.FeedDoc;
 import stroom.item.client.SelectionBox;
@@ -27,6 +26,7 @@ import stroom.meta.shared.MetaResource;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.state.shared.StateDoc;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.GwtNullSafe;
 
@@ -39,17 +39,16 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.List;
-
 public class NewPipelineReferencePresenter
         extends MyPresenterWidget<NewPipelineReferencePresenter.NewPipelineReferenceView>
         implements Focus {
 
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
 
-    private final EntityDropDownPresenter pipelinePresenter;
-    private final EntityDropDownPresenter feedPresenter;
+    private final DocSelectionBoxPresenter pipelinePresenter;
+    private final DocSelectionBoxPresenter feedPresenter;
     private final RestFactory restFactory;
+    private final UiConfigCache uiConfigCache;
     private final SelectionBox<String> dataTypeWidget;
     private boolean dirty;
     private boolean initialised;
@@ -57,23 +56,18 @@ public class NewPipelineReferencePresenter
     @Inject
     public NewPipelineReferencePresenter(final EventBus eventBus,
                                          final NewPipelineReferenceView view,
-                                         final EntityDropDownPresenter pipelinePresenter,
-                                         final EntityDropDownPresenter feedPresenter,
+                                         final DocSelectionBoxPresenter pipelinePresenter,
+                                         final DocSelectionBoxPresenter feedPresenter,
                                          final RestFactory restFactory,
                                          final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         this.pipelinePresenter = pipelinePresenter;
         this.feedPresenter = feedPresenter;
         this.restFactory = restFactory;
+        this.uiConfigCache = uiConfigCache;
 
-        // Filter the pipeline picker by tags, if configured
-        uiConfigCache.get().onSuccess(extendedUiConfig ->
-                GwtNullSafe.consume(
-                        extendedUiConfig.getReferencePipelineSelectorIncludedTags(),
-                        ExplorerTreeFilter::createTagQuickFilterInput,
-                        pipelinePresenter::setQuickFilter));
-
-        pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
+        // TODO : @66 FIX TEMPORARY ABUSE OF PIPELINE REF
+        pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE, StateDoc.DOCUMENT_TYPE);
         pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 
         feedPresenter.setIncludedTypes(FeedDoc.DOCUMENT_TYPE);
@@ -96,6 +90,16 @@ public class NewPipelineReferencePresenter
     }
 
     public void read(final PipelineReference pipelineReference) {
+        // Filter the pipeline picker by tags, if configured
+        uiConfigCache.get(extendedUiConfig -> {
+            if (extendedUiConfig != null) {
+                GwtNullSafe.consume(
+                        extendedUiConfig.getReferencePipelineSelectorIncludedTags(),
+                        ExplorerTreeFilter::createTagQuickFilterInput,
+                        pipelinePresenter::setQuickFilter);
+            }
+        }, this);
+
         getView().setElement(pipelineReference.getElement());
 
         pipelinePresenter.setSelectedEntityReference(pipelineReference.getPipeline());
@@ -142,8 +146,9 @@ public class NewPipelineReferencePresenter
     private void updateDataTypes(final String selectedDataType) {
         dataTypeWidget.clear();
 
-        final Rest<List<String>> rest = restFactory.create();
-        rest
+        restFactory
+                .create(META_RESOURCE)
+                .method(MetaResource::getTypes)
                 .onSuccess(result -> {
                     if (result != null) {
                         dataTypeWidget.addItems(result);
@@ -155,8 +160,8 @@ public class NewPipelineReferencePresenter
 
                     initialised = true;
                 })
-                .call(META_RESOURCE)
-                .getTypes();
+                .taskListener(this)
+                .exec();
     }
 
     public boolean isDirty() {

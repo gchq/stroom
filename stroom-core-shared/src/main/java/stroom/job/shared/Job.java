@@ -145,6 +145,11 @@ public final class Job implements HasAuditInfo, HasIntegerId {
         this.description = description;
     }
 
+    /**
+     * This is used to distinguish jobs in the UI. The idea is that users are more likely to
+     * need to change the schedules of non-advanced jobs so these jobs go at the top of the
+     * list. 'Advanced' jobs are expected to be ones that are not typically changed by an admin.
+     */
     public boolean isAdvanced() {
         return advanced;
     }

@@ -17,6 +17,7 @@
 package stroom.data.client.view;
 
 import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
+import stroom.data.pager.client.RefreshButton;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Count;
 import stroom.util.shared.HasCharacterData;
@@ -56,8 +57,8 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
     @UiField(provided = true)
     SvgButton advanceCharactersBackwardBtn;
 
-    @UiField(provided = true)
-    SvgButton refreshBtn;
+    @UiField
+    RefreshButton refresh;
 
     private HasCharacterData display;
 
@@ -70,6 +71,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
                                       final Binder binder) {
         initButtons();
         widget = binder.createAndBindUi(this);
+        refresh.setEnabled(false);
     }
 
     private void initButtons() {
@@ -84,10 +86,6 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
         setupButton(showHeadCharactersBtn, true, false);
         setupButton(advanceCharactersBackwardBtn, true, false);
         setupButton(advanceCharactersForwardBtn, true, false);
-
-        refreshBtn = SvgButton.create(SvgPresets.REFRESH_BLUE);
-
-        setupButton(refreshBtn, true, true);
     }
 
     private HasCharacterData getDisplay() {
@@ -142,7 +140,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
                                 .asOptional()
                                 .map(total -> total - 1)
                                 .orElse(Long.MAX_VALUE));
-                refreshBtn.setEnabled(true);
+                refresh.setEnabled(true);
 
             } else if (NavigationMode.BYTES.equals(display.getNavigationMode())
                     && display.getByteOffsetFrom().isPresent()
@@ -160,7 +158,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
                         byteTo < display.getTotalBytes()
                                 .map(total -> total - 1)
                                 .orElse(Long.MAX_VALUE));
-                refreshBtn.setEnabled(true);
+                refresh.setEnabled(true);
             } else {
                 // No char range, must be an error
                 lblLines.setText(LINES_TITLE + " 0 to 0");
@@ -170,7 +168,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
                 showHeadCharactersBtn.setEnabled(false);
                 advanceCharactersBackwardBtn.setEnabled(false);
                 advanceCharactersForwardBtn.setEnabled(false);
-                refreshBtn.setEnabled(false);
+                refresh.setEnabled(false);
             }
             setCharactersControlVisibility(true);
         } else {
@@ -276,11 +274,11 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
         }
     }
 
-    @UiHandler("refreshBtn")
+    @UiHandler("refresh")
     void onClickRefresh(final ClickEvent event) {
         final HasCharacterData display = getDisplay();
         if (display != null) {
-            refreshBtn.setEnabled(false);
+            refresh.setEnabled(false);
             display.refresh();
         }
     }
@@ -299,15 +297,6 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
 //    }
     public void refreshNavigator() {
         refreshCharacterControls();
-    }
-
-
-    public void setRefreshing(final boolean refreshing) {
-        if (refreshing) {
-            refreshBtn.getElement().addClassName("fa-spin");
-        } else {
-            refreshBtn.getElement().removeClassName("fa-spin");
-        }
     }
 
     public void setLabelClickHandler(final ClickHandler labelClickHandler) {

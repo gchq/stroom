@@ -27,8 +27,11 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
+import java.util.stream.Stream;
 
 @Singleton
 class ExplorerActionHandlers {
@@ -64,6 +67,25 @@ class ExplorerActionHandlers {
             handlers = new Handlers(explorerActionHandlers);
         }
         return handlers;
+    }
+
+    /**
+     * @param consumer {@link BiConsumer} of the document type and {@link ExplorerActionHandler}
+     */
+    public void forEach(final BiConsumer<String, ExplorerActionHandler> consumer) {
+        getHandlers().allHandlers.forEach((type, handler) -> {
+            if (handler != null) {
+                consumer.accept(type, handler);
+            }
+        });
+    }
+
+    public Stream<ExplorerActionHandler> stream() {
+        return getHandlers()
+                .allHandlers
+                .values()
+                .stream()
+                .filter(Objects::nonNull);
     }
 
 

@@ -6,17 +6,13 @@ import stroom.analytics.shared.AnalyticTracker;
 import stroom.analytics.shared.AnalyticTrackerData;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.analytics.shared.TableBuilderAnalyticTrackerData;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
-import stroom.feed.shared.FeedDoc;
 import stroom.node.client.NodeManager;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -33,7 +29,6 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
-import java.util.Objects;
 
 public class TableBuilderProcessingPresenter
         extends MyPresenterWidget<TableBuilderProcessingPresenter.TableBuilderProcessingView>
@@ -42,31 +37,26 @@ public class TableBuilderProcessingPresenter
     private static final AnalyticProcessResource ANALYTIC_PROCESS_RESOURCE =
             GWT.create(AnalyticProcessResource.class);
 
-    private final EntityDropDownPresenter errorFeedPresenter;
     private final DateTimeFormatter dateTimeFormatter;
     private final RestFactory restFactory;
-    private DocRef currentErrorFeed;
-    private boolean isErrorFeedInitialised = false;
+    private final NodeManager nodeManager;
 
     private DocRef ruleDocRef;
 
     @Inject
     public TableBuilderProcessingPresenter(final EventBus eventBus,
                                            final TableBuilderProcessingView view,
-                                           final EntityDropDownPresenter errorFeedPresenter,
                                            final DateTimeFormatter dateTimeFormatter,
                                            final RestFactory restFactory,
                                            final NodeManager nodeManager) {
         super(eventBus, view);
-        this.errorFeedPresenter = errorFeedPresenter;
         this.dateTimeFormatter = dateTimeFormatter;
         this.restFactory = restFactory;
+        this.nodeManager = nodeManager;
+    }
 
-        errorFeedPresenter.setIncludedTypes(FeedDoc.DOCUMENT_TYPE);
-        errorFeedPresenter.setRequiredPermissions(DocumentPermissionNames.READ);
-
-        getView().setErrorFeedView(errorFeedPresenter.getView());
-
+    public void read(final DocRef ruleDocRef,
+                     final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
         nodeManager.listAllNodes(
                 list -> {
                     if (list != null && list.size() > 0) {
@@ -77,32 +67,10 @@ public class TableBuilderProcessingPresenter
                         .fireError(this,
                                 "Error",
                                 throwable.getMessage(),
-                                null));
-    }
+                                null),
+                this);
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(errorFeedPresenter.addDataSelectionHandler(e -> {
-            final DocRef selectedEntityReference = errorFeedPresenter.getSelectedEntityReference();
-            // Don't want to fire dirty event when the entity is first set
-            if (isErrorFeedInitialised) {
-                if (!Objects.equals(selectedEntityReference, currentErrorFeed)) {
-                    currentErrorFeed = selectedEntityReference;
-                    onDirty();
-                }
-            } else {
-                isErrorFeedInitialised = true;
-            }
-        }));
-    }
-
-    public void read(final DocRef ruleDocRef,
-                     final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
         this.ruleDocRef = ruleDocRef;
-        this.currentErrorFeed = tableBuilderAnalyticProcessConfig.getErrorFeed();
-        errorFeedPresenter.setSelectedEntityReference(currentErrorFeed);
-
         getView().setEnabled(tableBuilderAnalyticProcessConfig.isEnabled());
         getView().setNode(tableBuilderAnalyticProcessConfig.getNode());
         getView().setMinMetaCreateTimeMs(tableBuilderAnalyticProcessConfig.getMinMetaCreateTimeMs());
@@ -118,7 +86,6 @@ public class TableBuilderProcessingPresenter
                 .builder()
                 .enabled(getView().isEnabled())
                 .node(getView().getNode())
-                .errorFeed(currentErrorFeed)
                 .minMetaCreateTimeMs(getView().getMinMetaCreateTimeMs())
                 .maxMetaCreateTimeMs(getView().getMaxMetaCreateTimeMs())
                 .timeToWaitForData(getView().getTimeToWaitForData())
@@ -133,14 +100,15 @@ public class TableBuilderProcessingPresenter
 
     private void refreshTracker() {
         if (ruleDocRef != null && ruleDocRef.getUuid() != null) {
-            final Rest<AnalyticTracker> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(ANALYTIC_PROCESS_RESOURCE)
+                    .method(res -> res.getTracker(ruleDocRef.getUuid()))
                     .onSuccess(result -> {
                         final SafeHtml safeHtml = getInfo(result);
                         getView().setInfo(safeHtml);
                     })
-                    .call(ANALYTIC_PROCESS_RESOURCE)
-                    .getTracker(ruleDocRef.getUuid());
+                    .taskListener(this)
+                    .exec();
         }
     }
 
@@ -203,8 +171,6 @@ public class TableBuilderProcessingPresenter
         String getNode();
 
         void setNode(String node);
-
-        void setErrorFeedView(View view);
 
         Long getMinMetaCreateTimeMs();
 

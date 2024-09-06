@@ -8,6 +8,7 @@ import stroom.db.util.DataSourceKey;
 import stroom.db.util.DbUrl;
 import stroom.db.util.HikariUtil;
 import stroom.util.ConsoleColour;
+import stroom.util.NullSafe;
 import stroom.util.db.ForceLegacyMigration;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -97,7 +98,8 @@ public class DbTestUtil {
                 () -> config,
                 new TestDataSourceFactory(CommonDbConfig::new),
                 new ForceLegacyMigration() {
-                });
+                },
+                null);
     }
 
     public static String getGradleWorker() {
@@ -295,11 +297,17 @@ public class DbTestUtil {
 
     /**
      * Drop the database used by the current thread
+     *
      * @param isSharedDatabase True if you want to drop the current shared database or
      *                         false if you want to drop the current independent database.
      */
     public static void dropThreadTestDatabase(final boolean isSharedDatabase) {
         final String dbName = getDbNameThreadLocal(isSharedDatabase).get();
+
+        LOGGER.info("dropThreadTestDatabase - isSharedDatabase: {}, testDbConfig: {}, dbName: {}",
+                isSharedDatabase,
+                NullSafe.get(getDbConfigThreadLocal(isSharedDatabase), ThreadLocal::get, Objects::toIdentityString),
+                dbName);
 
         if (dbName != null) {
             final ConnectionConfig connectionConfig = createConnectionConfig(new CommonDbConfig());
@@ -324,6 +332,8 @@ public class DbTestUtil {
                     statement.executeUpdate("DROP DATABASE IF EXISTS `" + dbName + "`;");
                     DB_NAMES_IN_USE.remove(dbName);
                     getDbNameThreadLocal(isSharedDatabase).remove();
+                    // Clear out the config so a new DB gets built next time if required on this thread
+                    getDbConfigThreadLocal(isSharedDatabase).remove();
                 }
             } catch (final SQLException e) {
                 throw new RuntimeException(e.getMessage(), e);
@@ -340,9 +350,9 @@ public class DbTestUtil {
     }
 
     /**
-     * @param dbConfig The config to use
-     * @param name The name of the datasource, i.e. the module name
-     * @param unique True if we want our own dedicated connection pool
+     * @param dbConfig         The config to use
+     * @param name             The name of the datasource, i.e. the module name
+     * @param unique           True if we want our own dedicated connection pool
      * @param isSharedDatabase True if we want to re-use the DB between tests. We normally do
      *                         to save on the cost of running migrations, but not for
      *                         migration tests as for those we want a blank db.
@@ -357,15 +367,19 @@ public class DbTestUtil {
             return new HikariDataSource(hikariConfig);
         }
 
+
         // See if we have a local data source.
         AbstractDbConfig testDbConfig = getDbConfigThreadLocal(isSharedDatabase).get();
-        if (testDbConfig == null || !isSharedDatabase) {
-            // Create a merged config using the common db config as a base.
-            ConnectionConfig connectionConfig;
-            ConnectionConfig rootConnectionConfig;
+        String dbName = getDbNameThreadLocal(isSharedDatabase).get();
 
-            connectionConfig = createConnectionConfig(dbConfig);
-            rootConnectionConfig = createRootConnectionConfig(connectionConfig);
+        LOGGER.info("createDataSource - isSharedDatabase: {}, testDbConfig: {}, dbName: {}",
+                isSharedDatabase,
+                NullSafe.get(testDbConfig, Objects::toIdentityString),
+                dbName);
+        if (testDbConfig == null || dbName == null || !isSharedDatabase) {
+            // Create a merged config using the common db config as a base.
+            final ConnectionConfig connectionConfig = createConnectionConfig(dbConfig);
+            final ConnectionConfig rootConnectionConfig = createRootConnectionConfig(connectionConfig);
 
             // Create new db.
             final Properties connectionProps = new Properties();
@@ -375,15 +389,14 @@ public class DbTestUtil {
             LOGGER.debug("Connecting to DB as root connection with URL: {}",
                     rootConnectionConfig.getUrl());
 
-            final String dbName;
-            if (isSharedDatabase) {
-                dbName = Objects.requireNonNullElseGet(
-                        getDbNameThreadLocal(isSharedDatabase).get(),
-                        DbTestUtil::createTestDbName);
-            } else {
+            if (dbName == null || !isSharedDatabase) {
                 dbName = createTestDbName();
+                LOGGER.info("Created new database name '{}'", dbName);
+//                dbName = Objects.requireNonNullElseGet(
+//                        getDbNameThreadLocal(isSharedDatabase).get(),
+//                        DbTestUtil::createTestDbName);
+                getDbNameThreadLocal(isSharedDatabase).set(dbName);
             }
-            getDbNameThreadLocal(isSharedDatabase).set(dbName);
 
             LOGGER.info(LogUtil.inBoxOnNewLine("Creating {} test database: {} for thread: {}",
                     (isSharedDatabase
@@ -439,7 +452,7 @@ public class DbTestUtil {
             getDbConfigThreadLocal(isSharedDatabase).set(testDbConfig);
         } else {
             LOGGER.info(LogUtil.inBoxOnNewLine("Reusing shared database: {}, on thread: {}",
-                    getDbNameThreadLocal(true),
+                    getDbNameThreadLocal(true).get(),
                     Thread.currentThread().getName()));
         }
 
@@ -537,11 +550,11 @@ public class DbTestUtil {
         if (!HAVE_ALREADY_SHOWN_DB_MSG) {
             if (useEmbeddedDb) {
                 String msg = """
-                                            Using embedded MySQL
-                         To use an external DB for better performance add the following
-                           -D{}=false
-                         to Run Configurations -> Templates -> Junit -> VM Options
-                         You many need to restart IntelliJ for this to work""";
+                                           Using embedded MySQL
+                        To use an external DB for better performance add the following
+                          -D{}=false
+                        to Run Configurations -> Templates -> Junit -> VM Options
+                        You many need to restart IntelliJ for this to work""";
                 LOGGER.info(ConsoleColour.cyan(LogUtil.inBoxOnNewLine(msg, USE_EMBEDDED_MYSQL_PROP_NAME)));
             } else {
                 LOGGER.info(ConsoleColour.cyan(LogUtil.inBoxOnNewLine("Using external MySQL")));
@@ -743,6 +756,7 @@ public class DbTestUtil {
 
         executeStatementsWithNoConstraints(connection, deleteStatements);
     }
+
 
     private static void executeStatementsWithNoConstraints(final Connection connection,
                                                            final List<String> statements) {

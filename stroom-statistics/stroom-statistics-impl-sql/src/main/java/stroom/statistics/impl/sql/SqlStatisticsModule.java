@@ -4,12 +4,10 @@ import stroom.job.api.ScheduledJobsBinder;
 import stroom.lifecycle.api.LifecycleBinder;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.HasSystemInfoBinder;
+import stroom.util.shared.scheduler.CronExpressions;
 
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
-
-import static stroom.job.api.Schedule.ScheduleType.CRON;
-import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class SqlStatisticsModule extends AbstractModule {
 
@@ -29,15 +27,15 @@ public class SqlStatisticsModule extends AbstractModule {
                         .name("Evict from object pool")
                         .description("Evict from SQL Statistics event store object pool")
                         .managed(false)
-                        .schedule(PERIODIC, "1m"))
+                        .frequencySchedule("1m"))
                 .bindJobTo(SQLStatsFlush.class, builder -> builder
                         .name("SQL Stats In Memory Flush")
                         .description("SQL Stats In Memory Flush (Cache to DB)")
-                        .schedule(CRON, "0,10,20,30,40,50 * *"))
+                        .cronSchedule(CronExpressions.EVERY_10_MINUTES.getExpression()))
                 .bindJobTo(SQLStatsAggregation.class, builder -> builder
                         .name("SQL Stats Database Aggregation")
                         .description("Run SQL stats database aggregation")
-                        .schedule(CRON, "5,15,25,35,45,55 * *"));
+                        .cronSchedule(CronExpressions.EVERY_10_MINUTES_ALTERNATE.getExpression()));
 
         // We need it to shutdown quite late so anything that is generating stats has had
         // a chance to finish generating

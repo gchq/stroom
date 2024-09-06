@@ -16,10 +16,12 @@
 
 package stroom.explorer.client.presenter;
 
+import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.NodeFlag;
 import stroom.util.shared.GwtNullSafe;
 
+import java.util.List;
 import java.util.Set;
 
 public class ExplorerTreeFilterBuilder {
@@ -31,24 +33,32 @@ public class ExplorerTreeFilterBuilder {
     private Set<String> requiredPermissions;
     private String nameFilter;
     private boolean nameFilterChange;
+    private List<DocRef> recentItems;
 
+    /**
+     * Set the document types to include. If null/empty return all root notes.
+     */
     public void setIncludedTypeSet(final Set<String> types) {
         includedTypes = types;
     }
 
-    public void setIncludedRootTypeSet(final Set<String> types) {
-        includedRootTypes = types;
-    }
-
     /**
-     * Convenience method.
-     *
-     * @param types
+     * Set the document types to include. If null/empty return all root notes.
      */
     public void setIncludedTypes(final String... types) {
         this.includedTypes = SetUtil.toSet(types);
     }
 
+    /**
+     * Set the document types of root nodes to include. If null/empty return all root notes.
+     */
+    public void setIncludedRootTypeSet(final Set<String> types) {
+        includedRootTypes = types;
+    }
+
+    /**
+     * Set the document types of root nodes to include. If null/empty return all root notes.
+     */
     public void setIncludedRootTypes(final String... types) {
         this.includedRootTypes = SetUtil.toSet(types);
     }
@@ -96,6 +106,10 @@ public class ExplorerTreeFilterBuilder {
         }
     }
 
+    public void setRecentItems(final List<DocRef> recentItems) {
+        this.recentItems = recentItems;
+    }
+
     public ExplorerTreeFilter build() {
         final boolean nameFilterChange = this.nameFilterChange;
         this.nameFilterChange = false;
@@ -107,6 +121,7 @@ public class ExplorerTreeFilterBuilder {
                 nodeFlags,
                 SetUtil.copySet(requiredPermissions),
                 nameFilter,
-                nameFilterChange);
+                nameFilterChange,
+                recentItems);
     }
 }

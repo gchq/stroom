@@ -19,6 +19,7 @@ package stroom.folder.client;
 
 import stroom.core.client.ContentManager;
 import stroom.core.client.event.CloseContentEvent.Handler;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
@@ -26,7 +27,7 @@ import stroom.document.client.DocumentTabData;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.task.client.TaskEndEvent;
+import stroom.task.client.TaskListener;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -68,7 +69,8 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
     @Override
     public void load(final DocRef docRef,
                      final Consumer<DocRef> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
+                     final RestErrorHandler errorHandler,
+                     final TaskListener taskListener) {
 
     }
 
@@ -76,7 +78,8 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
     public void save(final DocRef docRef,
                      final DocRef document,
                      final Consumer<DocRef> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
+                     final RestErrorHandler errorHandler,
+                     final TaskListener taskListener) {
 
     }
 
@@ -85,7 +88,8 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
                                 final MyPresenterWidget<?> documentEditPresenter,
                                 final Handler closeHandler,
                                 final DocumentTabData tabData,
-                                final boolean fullScreen) {
+                                final boolean fullScreen,
+                                final TaskListener taskListener) {
         try {
             if (documentEditPresenter instanceof FolderPresenter) {
                 ((FolderPresenter) documentEditPresenter).read(docRef);
@@ -97,7 +101,7 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
             contentManager.open(closeHandler, tabData, documentEditPresenter);
         } finally {
             // Stop spinning.
-            TaskEndEvent.fire(FolderPlugin.this);
+            taskListener.decrementTaskCount();
         }
     }
 

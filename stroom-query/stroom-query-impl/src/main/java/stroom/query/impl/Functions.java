@@ -15,7 +15,8 @@ import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValNumber;
 import stroom.query.language.functions.ValString;
-import stroom.query.shared.CompletionValue;
+import stroom.query.shared.CompletionItem;
+import stroom.query.shared.CompletionSnippet;
 import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.InsertType;
 import stroom.query.shared.QueryHelpDetail;
@@ -170,14 +171,14 @@ public class Functions {
             if (row.isHasChildren()) {
                 if (!hasChildren(row, stringMatcher)) {
                     if (MatchType.ANY.equals(stringMatcher.getMatchType()) ||
-                            stringMatcher.match(row.getTitle()).isPresent()) {
+                            match(row, stringMatcher)) {
                         builder.add(row.copy().hasChildren(false).build());
                     }
                 } else {
                     builder.add(row);
                 }
             } else if (MatchType.ANY.equals(stringMatcher.getMatchType()) ||
-                    stringMatcher.match(row.getTitle()).isPresent()) {
+                    match(row, stringMatcher)) {
                 builder.add(row);
             }
         }
@@ -191,7 +192,7 @@ public class Functions {
     private boolean hasChildren(final QueryHelpRow parent, final StringMatcher stringMatcher) {
         final List<QueryHelpRow> rows = map.getOrDefault(parent.getId() + ".", Collections.emptyList());
         for (final QueryHelpRow row : rows) {
-            if (stringMatcher.match(row.getTitle()).isPresent()) {
+            if (match(row, stringMatcher)) {
                 return true;
             } else if (row.isHasChildren()) {
                 if (hasChildren(row, stringMatcher)) {
@@ -200,6 +201,14 @@ public class Functions {
             }
         }
         return false;
+    }
+
+    private boolean match(final QueryHelpRow row, final StringMatcher stringMatcher) {
+        String name = row.getTitle();
+        if (row.getData() instanceof final QueryHelpFunctionSignature queryHelpFunctionSignature) {
+            name = queryHelpFunctionSignature.getName();
+        }
+        return stringMatcher.match(name).isPresent();
     }
 
     private static QueryHelpFunctionSignature convertSignature(
@@ -360,7 +369,7 @@ public class Functions {
 
     public void addCompletions(final CompletionsRequest request,
                                final PageRequest pageRequest,
-                               final List<CompletionValue> resultList) {
+                               final List<CompletionItem> resultList) {
         int count = 0;
         final StringMatcher stringMatcher = new StringMatcher(request.getStringMatch());
         for (final FunctionDef functionDef : FunctionFactory.getFunctionDefinitions()) {
@@ -385,7 +394,7 @@ public class Functions {
                                 convertSignature(functionDef, functionSignature, countsByCategoryPath);
                         if (stringMatcher.match(row.getName()).isPresent()) {
                             if (count >= pageRequest.getOffset()) {
-                                resultList.add(createCompletionValue(row));
+                                resultList.add(createCompletionSnippet(row));
                             }
                             count++;
                         }
@@ -397,7 +406,7 @@ public class Functions {
         }
     }
 
-    private CompletionValue createCompletionValue(final QueryHelpFunctionSignature signature) {
+    private CompletionSnippet createCompletionSnippet(final QueryHelpFunctionSignature signature) {
         final String name = FunctionSignatureUtil.buildSignatureStr(signature.getName(), signature.getArgs());
         final String snippetText = FunctionSignatureUtil.buildSnippetText(signature.getName(), signature.getArgs());
         final String meta;
@@ -410,7 +419,7 @@ public class Functions {
         }
         final String html = buildInfoHtml(signature);
 
-        return new CompletionValue(
+        return new CompletionSnippet(
                 name,
                 snippetText,
                 300,
@@ -583,9 +592,7 @@ public class Functions {
 
         } else if (row.getId().startsWith(ROOT_ID + ".") && row.getData() instanceof
                 final QueryHelpFunctionSignature signature) {
-            final InsertType insertType = NullSafe.isBlankString(row.getTitle())
-                    ? InsertType.BLANK
-                    : InsertType.PLAIN_TEXT;
+            final InsertType insertType = InsertType.snippet(row.getTitle());
             final String insertText = FunctionSignatureUtil.buildSnippetText(signature.getName(), signature.getArgs());
             final String html = buildInfoHtml(signature);
             return Optional.of(new QueryHelpDetail(insertType, insertText, html));

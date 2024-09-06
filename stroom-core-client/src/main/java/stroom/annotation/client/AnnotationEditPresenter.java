@@ -26,7 +26,6 @@ import stroom.annotation.shared.CreateEntryRequest;
 import stroom.annotation.shared.EntryValue;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.UserNameEntryValue;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
@@ -38,7 +37,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.UserName;
 import stroom.widget.button.client.Button;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -136,7 +135,7 @@ public class AnnotationEditPresenter
         this.assignedToPresenter.setDisplayValueFunction(userName -> {
             if (userName != null) {
                 if (!GwtNullSafe.isBlankString(userName.getFullName())) {
-                    return userName.getUserIdentityForAudit() + " ("  + userName.getFullName() + ")";
+                    return userName.getUserIdentityForAudit() + " (" + userName.getFullName() + ")";
                 } else {
                     return userName.getUserIdentityForAudit();
                 }
@@ -147,28 +146,34 @@ public class AnnotationEditPresenter
 
         this.statusPresenter.setDataSupplier((filter, consumer) -> {
             final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-            final Rest<List<String>> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(annotationResource)
+                    .method(res -> res.getStatus(filter))
                     .onSuccess(consumer)
-                    .call(annotationResource)
-                    .getStatus(filter);
+                    .taskListener(this)
+                    .exec();
         });
 
         this.assignedToPresenter.setDataSupplier((filter, consumer) -> {
             final UserResource userResource = GWT.create(UserResource.class);
-            final Rest<List<UserName>> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(userResource)
+                    .method(res -> res.getAssociates(filter))
                     .onSuccess(userNames -> consumer.accept(userNames.stream()
                             .sorted(Comparator.comparing(UserName::getUserIdentityForAudit))
                             .collect(Collectors.toList())))
-                    .call(userResource)
-                    .getAssociates(filter);
+                    .taskListener(this)
+                    .exec();
         });
 
         this.commentPresenter.setDataSupplier((filter, consumer) -> {
             final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-            final Rest<List<String>> rest = restFactory.create();
-            rest.onSuccess(consumer).call(annotationResource).getComment(filter);
+            restFactory
+                    .create(annotationResource)
+                    .method(res -> res.getComment(filter))
+                    .onSuccess(consumer)
+                    .taskListener(this)
+                    .exec();
         });
     }
 
@@ -190,11 +195,12 @@ public class AnnotationEditPresenter
         }));
 
         final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-        final Rest<List<String>> rest = restFactory.create();
-        rest
+        restFactory
+                .create(annotationResource)
+                .method(res -> res.getComment(null))
                 .onSuccess(values -> getView().setHasCommentValues(values != null && !values.isEmpty()))
-                .call(annotationResource)
-                .getComment(null);
+                .taskListener(this)
+                .exec();
     }
 
     private void changeTitle(final String selected) {
@@ -259,7 +265,7 @@ public class AnnotationEditPresenter
     }
 
     private void changeStatus(final String selected) {
-        HidePopupEvent.builder(statusPresenter).fire();
+        HidePopupRequestEvent.builder(statusPresenter).fire();
 
         if (hasChanged(currentStatus, selected)) {
             setStatus(selected);
@@ -281,7 +287,7 @@ public class AnnotationEditPresenter
     }
 
     private void changeAssignedTo(final UserName selected) {
-        HidePopupEvent.builder(assignedToPresenter).fire();
+        HidePopupRequestEvent.builder(assignedToPresenter).fire();
 
         if (hasChanged(currentAssignedTo, selected)) {
             setAssignedTo(selected);
@@ -310,21 +316,22 @@ public class AnnotationEditPresenter
     private void changeComment(final String selected) {
         if (selected != null && hasChanged(getView().getComment(), selected)) {
             getView().setComment(getView().getComment() + selected);
-            HidePopupEvent.builder(commentPresenter).fire();
+            HidePopupRequestEvent.builder(commentPresenter).fire();
         }
     }
 
     private void addEntry(final CreateEntryRequest request) {
         final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-        final Rest<AnnotationDetail> rest = restFactory.create();
-        rest
+        restFactory
+                .create(annotationResource)
+                .method(res -> res.createEntry(request))
                 .onSuccess(this::read)
                 .onFailure(caught -> AlertEvent.fireError(
                         AnnotationEditPresenter.this,
                         caught.getMessage(),
                         null))
-                .call(annotationResource)
-                .createEntry(request);
+                .taskListener(this)
+                .exec();
     }
 
     public void show(final Annotation annotation, final List<EventId> linkedEvents) {
@@ -353,11 +360,12 @@ public class AnnotationEditPresenter
                 edit(null);
             } else {
                 final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-                final Rest<AnnotationDetail> rest = restFactory.create();
-                rest
+                restFactory
+                        .create(annotationResource)
+                        .method(res -> res.get(annotation.getId()))
                         .onSuccess(this::edit)
-                        .call(annotationResource)
-                        .get(annotation.getId());
+                        .taskListener(this)
+                        .exec();
             }
         }
     }
@@ -411,15 +419,16 @@ public class AnnotationEditPresenter
 
         if (currentStatus == null) {
             final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-            final Rest<List<String>> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(annotationResource)
+                    .method(res -> res.getStatus(null))
                     .onSuccess(values -> {
                         if (currentStatus == null && values != null && values.size() > 0) {
                             setStatus(values.get(0));
                         }
                     })
-                    .call(annotationResource)
-                    .getStatus(null);
+                    .taskListener(this)
+                    .exec();
         }
 
         if (currentTitle == null || currentTitle.trim().length() == 0) {
@@ -463,7 +472,7 @@ public class AnnotationEditPresenter
                         if (link != null) {
                             final Hyperlink hyperlink = Hyperlink.create(link);
                             if (hyperlink != null) {
-                                HyperlinkEvent.fire(this, hyperlink);
+                                HyperlinkEvent.fire(this, hyperlink, this);
                             }
                         }
                     }
@@ -927,11 +936,12 @@ public class AnnotationEditPresenter
             linkedEventPresenter.edit(annotationDetail.getAnnotation(), refresh -> {
                 if (refresh) {
                     final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-                    final Rest<AnnotationDetail> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .create(annotationResource)
+                            .method(res -> res.get(annotationDetail.getAnnotation().getId()))
                             .onSuccess(this::updateHistory)
-                            .call(annotationResource)
-                            .get(annotationDetail.getAnnotation().getId());
+                            .taskListener(this)
+                            .exec();
                 }
             });
         } else {

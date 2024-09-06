@@ -23,6 +23,7 @@ import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ErrorType;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
@@ -70,7 +71,7 @@ public class ReferenceDataResult implements ErrorReceiver {
         return Optional.ofNullable(refDataValueProxy);
     }
 
-    void addRefDataValueProxy(final RefDataValueProxy refDataValueProxy) {
+    public void addRefDataValueProxy(final RefDataValueProxy refDataValueProxy) {
         Objects.requireNonNull(refDataValueProxy);
         if (this.refDataValueProxy == null) {
             LOGGER.trace("Setting refDataValueProxy to {}", refDataValueProxy);
@@ -235,6 +236,7 @@ public class ReferenceDataResult implements ErrorReceiver {
                     final Location location,
                     final String elementId,
                     final String message,
+                    final ErrorType errorType,
                     final Throwable e) {
 
         logTemplate(severity, location, elementId, message, e, (Object[]) null);

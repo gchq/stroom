@@ -21,8 +21,11 @@ import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentTabData;
+import stroom.document.client.event.SetDocumentAsFavouriteEvent;
 import stroom.explorer.client.event.LocateDocEvent;
 import stroom.explorer.client.event.ShowFindEvent;
+import stroom.explorer.client.event.ShowFindInContentEvent;
+import stroom.explorer.client.event.ShowRecentItemsEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -59,18 +62,43 @@ public class NavigationPlugin extends Plugin {
                 new IconMenuItem.Builder()
                         .priority(201)
                         .icon(SvgImage.FIND)
-                        .text("Find Content")
+                        .text("Find")
                         .action(Action.FIND)
                         .command(() -> ShowFindEvent.fire(NavigationPlugin.this))
                         .build());
         event.getMenuItems().addMenuItem(MenuKeys.NAVIGATION_MENU,
                 new IconMenuItem.Builder()
                         .priority(202)
+                        .icon(SvgImage.FIND)
+                        .text("Find in Content")
+                        .action(Action.FIND_IN_CONTENT)
+                        .command(() -> ShowFindInContentEvent.fire(NavigationPlugin.this))
+                        .build());
+        event.getMenuItems().addMenuItem(MenuKeys.NAVIGATION_MENU,
+                new IconMenuItem.Builder()
+                        .priority(203)
+                        .icon(SvgImage.HISTORY)
+                        .text("Recent Items")
+                        .action(Action.RECENT_ITEMS)
+                        .command(() -> ShowRecentItemsEvent.fire(NavigationPlugin.this))
+                        .build());
+        event.getMenuItems().addMenuItem(MenuKeys.NAVIGATION_MENU,
+                new IconMenuItem.Builder()
+                        .priority(204)
                         .icon(SvgImage.LOCATE)
                         .text("Locate Current Item")
                         .action(Action.LOCATE)
                         .enabled(selectedDoc != null)
                         .command(() -> LocateDocEvent.fire(NavigationPlugin.this, selectedDoc))
+                        .build());
+        event.getMenuItems().addMenuItem(MenuKeys.NAVIGATION_MENU,
+                new IconMenuItem.Builder()
+                        .priority(205)
+                        .icon(SvgImage.FAVOURITES)
+                        .text("Add Current Item to Favourites")
+                        .enabled(selectedDoc != null)
+                        .command(() -> SetDocumentAsFavouriteEvent.fire(
+                                NavigationPlugin.this, selectedDoc, true))
                         .build());
     }
 }

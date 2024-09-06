@@ -4,6 +4,8 @@
 package stroom.index.impl.db.jooq;
 
 
+import stroom.index.impl.db.jooq.tables.IndexField;
+import stroom.index.impl.db.jooq.tables.IndexFieldSource;
 import stroom.index.impl.db.jooq.tables.IndexShard;
 import stroom.index.impl.db.jooq.tables.IndexVolume;
 import stroom.index.impl.db.jooq.tables.IndexVolumeGroup;
@@ -12,8 +14,18 @@ import stroom.index.impl.db.jooq.tables.IndexVolumeGroup;
 /**
  * Convenience access to all tables in stroom.
  */
-@SuppressWarnings({ "all", "unchecked", "rawtypes" })
+@SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
 public class Tables {
+
+    /**
+     * The table <code>stroom.index_field</code>.
+     */
+    public static final IndexField INDEX_FIELD = IndexField.INDEX_FIELD;
+
+    /**
+     * The table <code>stroom.index_field_source</code>.
+     */
+    public static final IndexFieldSource INDEX_FIELD_SOURCE = IndexFieldSource.INDEX_FIELD_SOURCE;
 
     /**
      * The table <code>stroom.index_shard</code>.

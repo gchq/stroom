@@ -17,6 +17,7 @@
 package stroom.pipeline.filter;
 
 import stroom.pipeline.factory.ConfigurableElement;
+import stroom.pipeline.filter.SafeXMLFilter.SafeBuffer;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.svg.shared.SvgImage;
@@ -30,6 +31,13 @@ import org.xml.sax.helpers.AttributesImpl;
 @ConfigurableElement(
         type = "SafeXMLFilter",
         category = Category.FILTER,
+        description = """
+                Restricts the characters to a very simple set consisting of `[a-zA-Z0-9]` and `["""
+                + SafeBuffer.OTHER_CHARS
+                + """
+                ]`.
+                All other characters are replaced by `~NNN`, where `NNN` is a three digit codepoint for the \
+                replaced character.""",
         roles = {
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_HAS_TARGETS,
@@ -63,7 +71,11 @@ public class SafeXMLFilter extends AbstractXMLFilter {
         safeBuffer.output(getContentHandler());
     }
 
-    private static class SafeBuffer extends CharBuffer {
+
+    // --------------------------------------------------------------------------------
+
+
+    static class SafeBuffer extends CharBuffer {
 
         private static final char ZERO = '0';
         private static final int MAX_DIGITS = 3;
@@ -71,7 +83,7 @@ public class SafeXMLFilter extends AbstractXMLFilter {
         private static final String DIGIT_CHARS = "0123456789";
         private static final String LOWERCASE_CHARS = "abcdefghijklmnopqrstuvwxyz";
         private static final String UPPERCASE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        private static final String OTHER_CHARS = " .:-_/";
+        static final String OTHER_CHARS = " .:-_/";
         private static final int[] DIGIT_CODEPOINTS;
         private static final int[] LOWERCASE_CODEPOINTS;
         private static final int[] UPPERCASE_CODEPOINTS;
@@ -211,6 +223,10 @@ public class SafeXMLFilter extends AbstractXMLFilter {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class OutputBuffer extends CharBuffer {
 
         OutputBuffer(final int initialSize) {
@@ -221,6 +237,10 @@ public class SafeXMLFilter extends AbstractXMLFilter {
             handler.characters(buffer, start, end - start);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class SafeAttributes extends AttributesImpl {
 

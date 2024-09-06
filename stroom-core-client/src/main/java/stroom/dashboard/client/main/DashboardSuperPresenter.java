@@ -28,19 +28,21 @@ import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.query.api.v2.ResultStoreInfo;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
+import java.util.Objects;
 import javax.inject.Provider;
 
 public class DashboardSuperPresenter
         extends DocumentEditTabPresenter<LinkTabPanelView, DashboardDoc>
         implements HasToolbar {
 
-    private static final TabData DASHBOARD = new TabDataImpl("Dashboard");
+    private static final TabData DASHBOARD = new TabDataImpl("Dashboard", DashboardDoc.DOCUMENT_TYPE);
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
 
     private final DashboardPresenter dashboardPresenter;
@@ -72,6 +74,25 @@ public class DashboardSuperPresenter
             }
         });
         selectTab(DASHBOARD);
+    }
+
+    @Override
+    public boolean handleKeyAction(final Action action) {
+        if (Action.OK == action
+                && Objects.equals(getSelectedTab().getType(), DASHBOARD.getType())) {
+            dashboardPresenter.start();
+            return true;
+        } else if (Action.CLOSE == action
+                && Objects.equals(getSelectedTab().getType(), DASHBOARD.getType())) {
+            dashboardPresenter.stop();
+            return true;
+//        } else if (Action.DOCUMENTATION == action
+//                && Objects.equals(getSelectedTab().getType(), DASHBOARD.getType())) {
+//            selectTab(DOCUMENTATION);
+//            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override

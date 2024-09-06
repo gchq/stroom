@@ -69,11 +69,6 @@ abstract class AbstractStringFunction extends AbstractFunction {
         return super.requiresChildData();
     }
 
-    @Override
-    public Type getCommonReturnType() {
-        return Type.STRING;
-    }
-
     abstract Operation getOperation();
 
     interface Operation {

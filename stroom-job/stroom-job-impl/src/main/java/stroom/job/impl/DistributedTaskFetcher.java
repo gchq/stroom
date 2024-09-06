@@ -31,8 +31,6 @@ import stroom.util.logging.LogUtil;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -45,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 
 /**
  * This class executes all tasks that are currently queued for execution. This
@@ -67,8 +66,6 @@ public class DistributedTaskFetcher {
     private final SecurityContext securityContext;
     private final DistributedTaskFactoryRegistry distributedTaskFactoryRegistry;
     private final TargetNodeSetFactory targetNodeSetFactory;
-
-    private volatile Instant lastFetch = Instant.ofEpochMilli(0);
     private final ReentrantLock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
     private final AtomicBoolean needsTasks = new AtomicBoolean();
@@ -167,50 +164,44 @@ public class DistributedTaskFetcher {
 
     private int doFetch(final TaskContext taskContext) {
         int executingTaskCount = 0;
-        taskContext.info(() -> "Fetching tasks");
-        LOGGER.trace("Trying to fetch tasks");
-
-        // We will force a fetch if it has been more than one minute since
-        // our last fetch. This allows the master node to know that the
-        // worker nodes are still alive and that it is still going to be
-        // required to distribute tasks. If it did not get a call every
-        // minute it might try and release cached tasks back to the database.
-        final Instant now = Instant.now();
-        final boolean forceFetch = now.isAfter(lastFetch.plus(1, ChronoUnit.MINUTES));
+        info(taskContext, () -> "Starting task fetch");
 
         // Get the trackers.
+        info(taskContext, () -> "Getting trackers");
         final JobNodeTrackers trackers = jobNodeTrackerCache.getTrackers();
 
         // Get this node.
         final String nodeName = nodeInfo.getThisNodeName();
 
         // Find out how many tasks we need in total.
-        final int count = getRequiredTaskCount(trackers);
+        info(taskContext, () -> "Get required task count");
+        int totalTaskLimit = getTotalTaskLimit(trackers);
 
         // If there are some tasks we need to get then get them.
-        if (count > 0 || forceFetch) {
+        if (totalTaskLimit > 0) {
             if (targetNodeSetFactory.isClusterStateInitialised()) {
                 for (final Entry<String, DistributedTaskFactory> entry :
                         distributedTaskFactoryRegistry.getFactoryMap().entrySet()) {
+                    if (totalTaskLimit > 0) {
+                        final String jobName = entry.getKey();
+                        final DistributedTaskFactory distributedTaskFactory = entry.getValue();
 
-                    final String jobName = entry.getKey();
-                    final DistributedTaskFactory distributedTaskFactory = entry.getValue();
+                        LOGGER.debug(() -> LogUtil.message("Task request: node=\"{}\"",
+                                nodeName));
+                        LOGGER.trace(() -> LogUtil.message("\nTask request: node=\"{}\"\n{}",
+                                nodeName,
+                                distributedTaskFactory));
 
-                    LOGGER.debug(() -> LogUtil.message("Task request: node=\"{}\"",
-                            nodeName));
-                    LOGGER.trace(() -> LogUtil.message("\nTask request: node=\"{}\"\n{}",
-                            nodeName,
-                            distributedTaskFactory));
-
-                    final List<DistributedTask> tasks = distributedTaskFactory.fetch(
-                            nodeName,
-                            count);
-                    handleResult(nodeName, jobName, tasks);
-                    executingTaskCount += tasks.size();
+                        info(taskContext, () -> "Calling distributed task factory");
+                        final List<DistributedTask> tasks = distributedTaskFactory.fetch(
+                                nodeName,
+                                totalTaskLimit);
+                        info(taskContext, () -> "Executing " + tasks.size() + " new tasks");
+                        handleResult(nodeName, jobName, tasks);
+                        executingTaskCount += tasks.size();
+                        totalTaskLimit -= tasks.size();
+                    }
                 }
-
-                // Remember the last fetch time.
-                lastFetch = now;
             }
         }
         return executingTaskCount;
@@ -275,13 +266,19 @@ public class DistributedTaskFetcher {
         }
     }
 
-    private int getRequiredTaskCount(final JobNodeTrackers trackers) {
-        int totalRequiredTasks = 0;
+    private int getTotalTaskLimit(final JobNodeTrackers trackers) {
+        int totalTaskLimit = 0;
         final Collection<JobNodeTracker> trackerList = trackers.getDistributedJobNodeTrackers();
         for (final JobNodeTracker tracker : trackerList) {
-            final int requiredTaskCount = tracker.getJobNode().getTaskLimit() - tracker.getCurrentTaskCount();
-            totalRequiredTasks += requiredTaskCount;
+            final int taskLimit = tracker.getJobNode().getTaskLimit() - tracker.getCurrentTaskCount();
+            totalTaskLimit += taskLimit;
         }
-        return totalRequiredTasks;
+        return totalTaskLimit;
+    }
+
+    private void info(final TaskContext taskContext,
+                      final Supplier<String> messageSupplier) {
+        LOGGER.debug(messageSupplier);
+        taskContext.info(messageSupplier);
     }
 }

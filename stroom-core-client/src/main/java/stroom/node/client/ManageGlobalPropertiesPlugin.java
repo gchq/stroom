@@ -8,6 +8,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -27,8 +28,18 @@ public class ManageGlobalPropertiesPlugin extends NodeToolsContentPlugin<GlobalP
     }
 
     @Override
+    protected String getRequiredAppPermission() {
+        return PermissionNames.MANAGE_PROPERTIES_PERMISSION;
+    }
+
+    @Override
+    protected Action getOpenAction() {
+        return Action.GOTO_PROPERTIES;
+    }
+
+    @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
-        if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_PROPERTIES_PERMISSION)) {
+        if (getSecurityContext().hasAppPermission(getRequiredAppPermission())) {
             MenuKeys.addAdministrationMenu(event.getMenuItems());
             event.getMenuItems().addMenuItem(
                     MenuKeys.ADMINISTRATION_MENU,
@@ -36,9 +47,9 @@ public class ManageGlobalPropertiesPlugin extends NodeToolsContentPlugin<GlobalP
                             .priority(90)
                             .icon(SvgImage.PROPERTIES)
                             .text("Properties")
+                            .action(getOpenAction())
                             .command(super::open)
                             .build());
         }
-
     }
 }

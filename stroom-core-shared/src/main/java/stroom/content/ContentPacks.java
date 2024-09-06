@@ -11,13 +11,13 @@ public class ContentPacks {
     private static final GitRepo STROOM_CONTENT_GIT_REPO =
             new GitRepo("stroom-content",
                     "https://github.com/gchq/stroom-content.git",
-                    "7.2",
-                    "7ad9927f6b6d57d6620200616d25a003984f5081");
+                    "7.5",
+                    "d5371bd52c8f812fdace2c35d40d84fc79c1f49d");
     private static final GitRepo STROOM_VISUALISATION_DEV_GIT_REPO =
             new GitRepo("stroom-visualisations-dev",
                     "https://github.com/gchq/stroom-visualisations-dev.git",
                     "7.2",
-                    "04425fcc11d334c5861aa84b5fed6c174343808a");
+                    "d95c1588bc13a697a818bffea6ed213239a1f993");
 
     public static final ContentPack CORE_XML_SCHEMAS_PACK = createStandardContentPack("core-xml-schemas");
 
@@ -41,6 +41,8 @@ public class ContentPacks {
 
     public static final ContentPack STROOM_LOGS = createStandardContentPack("stroom-logs");
 
+    public static final ContentPack STATE = createStandardContentPack("state");
+
     //TEMPLATE_PIPELINES_PACK
 
     public static final ContentPack VISUALISATIONS = createVisualisationContentPack(
@@ -56,6 +58,7 @@ public class ContentPacks {
                     STANDARD_PIPELINES_PACK,
                     STROOM_101,
                     STROOM_LOGS,
+                    STATE,
                     TEMPLATE_PIPELINES_PACK,
                     VISUALISATIONS));
 

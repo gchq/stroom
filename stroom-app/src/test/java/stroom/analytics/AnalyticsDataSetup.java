@@ -11,7 +11,7 @@ import stroom.feed.api.FeedStore;
 import stroom.index.impl.IndexShardManager;
 import stroom.index.impl.IndexShardManager.IndexShardAction;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
@@ -126,7 +126,7 @@ public class AnalyticsDataSetup {
         viewDoc.setDataSource(indexDocRef);
         viewDoc.setPipeline(searchResultPipeline);
         viewDoc.setFilter(ExpressionOperator.builder()
-                .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
+                .addTextTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
                 .build());
         viewStore.writeDocument(viewDoc);
 
@@ -153,7 +153,7 @@ public class AnalyticsDataSetup {
         final DocRef indexDocRef = commonTestScenarioCreator.createIndex(
                 "Test index",
                 List.of(),
-                IndexDoc.DEFAULT_MAX_DOCS_PER_SHARD);
+                LuceneIndexDoc.DEFAULT_MAX_DOCS_PER_SHARD);
 
         // Create index pipeline.
         final DocRef indexPipeline = storeCreationTool.getIndexPipeline(
@@ -170,7 +170,7 @@ public class AnalyticsDataSetup {
             final QueryData findStreamQueryData = QueryData.builder()
                     .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                     .expression(ExpressionOperator.builder()
-                            .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
+                            .addTextTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
                             .build())
                     .build();
             processorFilterService.create(
@@ -208,8 +208,6 @@ public class AnalyticsDataSetup {
                     .typeName(StreamTypeNames.RAW_EVENTS)
                     .build();
             try (final Target target = store.openTarget(metaProperties)) {
-                final Meta meta = target.getMeta();
-
                 try (final OutputStreamProvider outputStreamProvider = target.next()) {
                     try (final InputStream inputStream =
                             new ByteArrayInputStream(newData.getBytes(StandardCharsets.UTF_8));

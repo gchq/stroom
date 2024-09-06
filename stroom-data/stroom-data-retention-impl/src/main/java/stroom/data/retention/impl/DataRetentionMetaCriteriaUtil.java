@@ -49,16 +49,16 @@ public final class DataRetentionMetaCriteriaUtil {
             }
         }
 
-        outer.addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
+        outer.addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
 
         if (period.getFromMs() != null) {
-            outer.addTerm(MetaFields.CREATE_TIME,
+            outer.addDateTerm(MetaFields.CREATE_TIME,
                     Condition.GREATER_THAN_OR_EQUAL_TO,
                     DateUtil.createNormalDateTimeString(period.getFromMs()));
         }
 
         if (period.getToMs() != null) {
-            outer.addTerm(MetaFields.CREATE_TIME,
+            outer.addDateTerm(MetaFields.CREATE_TIME,
                     Condition.LESS_THAN,
                     DateUtil.createNormalDateTimeString(period.getToMs()));
         }

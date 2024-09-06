@@ -16,13 +16,12 @@
 
 package stroom.query.client;
 
-import stroom.datasource.api.v2.FieldInfo;
-import stroom.dispatch.client.Rest;
+import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.shared.FetchSuggestionsRequest;
-import stroom.query.shared.Suggestions;
 import stroom.query.shared.SuggestionsResource;
+import stroom.task.client.TaskListener;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
@@ -43,8 +42,13 @@ public class AsyncSuggestOracle extends SuggestOracle {
 
     private RestFactory restFactory;
     private DocRef dataSource;
-    private FieldInfo field;
+    private QueryField field;
     private Timer requestTimer;
+    private final TaskListener taskListener;
+
+    public AsyncSuggestOracle(final TaskListener taskListener) {
+        this.taskListener = taskListener;
+    }
 
     public void setRestFactory(final RestFactory restFactory) {
         this.restFactory = restFactory;
@@ -54,7 +58,7 @@ public class AsyncSuggestOracle extends SuggestOracle {
         this.dataSource = dataSource;
     }
 
-    public void setField(final FieldInfo field) {
+    public void setField(final QueryField field) {
         this.field = field;
     }
 
@@ -87,8 +91,9 @@ public class AsyncSuggestOracle extends SuggestOracle {
                         returnSuggestions(request, callback, cachedSuggestions);
 
                     } else {
-                        final Rest<Suggestions> rest = restFactory.create();
-                        rest
+                        restFactory
+                                .create(SUGGESTIONS_RESOURCE)
+                                .method(res -> res.fetch(fetchSuggestionsRequest))
                                 .onSuccess(result -> {
                                     if (result.isCacheable()) {
                                         CACHE.put(fetchSuggestionsRequest, result.getList());
@@ -96,8 +101,8 @@ public class AsyncSuggestOracle extends SuggestOracle {
 
                                     returnSuggestions(request, callback, result.getList());
                                 })
-                                .call(SUGGESTIONS_RESOURCE)
-                                .fetch(fetchSuggestionsRequest);
+                                .taskListener(taskListener)
+                                .exec();
                     }
                 }
             };

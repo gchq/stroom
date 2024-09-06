@@ -17,10 +17,8 @@
 
 package stroom.feed.impl;
 
-import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docref.StringMatch;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
@@ -46,6 +44,11 @@ import java.util.stream.Collectors;
 @Singleton
 public class FeedStoreImpl implements FeedStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.DATA_PROCESSING,
+            FeedDoc.DOCUMENT_TYPE,
+            FeedDoc.DOCUMENT_TYPE,
+            FeedDoc.ICON);
     private final Store<FeedDoc> store;
     private final FeedNameValidator feedNameValidator;
     private final SecurityContext securityContext;
@@ -131,11 +134,7 @@ public class FeedStoreImpl implements FeedStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.DATA_PROCESSING,
-                FeedDoc.DOCUMENT_TYPE,
-                FeedDoc.DOCUMENT_TYPE,
-                FeedDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -238,8 +237,8 @@ public class FeedStoreImpl implements FeedStore {
     }
 
     @Override
-    public List<DocContentMatch> findByContent(final StringMatch filter) {
-        return store.findByContent(filter);
+    public Map<String, String> getIndexableData(final DocRef docRef) {
+        return store.getIndexableData(docRef);
     }
 
     @Override

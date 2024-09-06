@@ -16,7 +16,7 @@
 
 package stroom.data.client.view;
 
-import stroom.alert.client.event.AlertEvent;
+import stroom.task.client.DefaultTaskListener;
 import stroom.ui.config.client.UiConfigCache;
 
 import com.google.gwt.core.client.GWT;
@@ -41,21 +41,21 @@ public class ClassificationLabel extends Composite {
     public ClassificationLabel(final UiConfigCache clientPropertyCache) {
         initWidget(binder.createAndBindUi(this));
 
-        clientPropertyCache.get()
-                .onSuccess(result -> {
-                    final String csv = result.getTheme().getLabelColours();
-                    if (csv != null) {
-                        final String[] parts = csv.split(",");
-                        for (final String part : parts) {
-                            final String[] kv = part.split("=");
-                            if (kv.length == 2) {
-                                final LabelColour labelColour = new LabelColour(kv[0].toUpperCase(), kv[1]);
-                                labelColours.add(labelColour);
-                            }
+        clientPropertyCache.get(result -> {
+            if (result != null) {
+                final String csv = result.getTheme().getLabelColours();
+                if (csv != null) {
+                    final String[] parts = csv.split(",");
+                    for (final String part : parts) {
+                        final String[] kv = part.split("=");
+                        if (kv.length == 2) {
+                            final LabelColour labelColour = new LabelColour(kv[0].toUpperCase(), kv[1]);
+                            labelColours.add(labelColour);
                         }
                     }
-                })
-                .onFailure(caught -> AlertEvent.fireError(ClassificationLabel.this, caught.getMessage(), null));
+                }
+            }
+        }, new DefaultTaskListener(this));
     }
 
     public void setClassification(final String text) {

@@ -18,10 +18,11 @@
 package stroom.explorer.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.RefreshDocumentEvent;
+import stroom.explorer.client.event.ExplorerTaskListener;
 import stroom.explorer.client.event.ShowRemoveNodeTagsDialogEvent;
 import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter.ExplorerNodeRemoveTagsProxy;
 import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter.ExplorerNodeRemoveTagsView;
@@ -29,7 +30,6 @@ import stroom.explorer.shared.AddRemoveTagsRequest;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.util.shared.GwtNullSafe;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -60,8 +60,7 @@ import java.util.stream.Collectors;
 public class ExplorerNodeRemoveTagsPresenter
         extends MyPresenter<ExplorerNodeRemoveTagsView, ExplorerNodeRemoveTagsProxy>
         implements ShowRemoveNodeTagsDialogEvent.Handler,
-        HidePopupRequestEvent.Handler,
-        HidePopupEvent.Handler {
+        HidePopupRequestEvent.Handler {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
@@ -91,15 +90,21 @@ public class ExplorerNodeRemoveTagsPresenter
                     .map(ExplorerNode::getDocRef)
                     .collect(Collectors.toList());
 
-            final Rest<Set<String>> expNodeRest = restFactory.create();
-            expNodeRest
+            restFactory
+                    .create(EXPLORER_RESOURCE)
+                    .method(res -> res.fetchExplorerNodeTags(docRefs))
                     .onSuccess(nodetags -> {
                         getView().setData(docRefs, nodetags);
                         forceReveal();
                     })
-                    .onFailure(this::handleFailure)
-                    .call(EXPLORER_RESOURCE)
-                    .fetchExplorerNodeTags(docRefs);
+                    .onFailure(t -> {
+                        AlertEvent.fireError(
+                                ExplorerNodeRemoveTagsPresenter.this,
+                                t.getMessage(),
+                                null);
+                    })
+                    .taskListener(new ExplorerTaskListener(this))
+                    .exec();
         }
     }
 
@@ -117,30 +122,30 @@ public class ExplorerNodeRemoveTagsPresenter
                 .caption(caption)
                 .onShow(e -> getView().focus())
                 .onHideRequest(this)
-                .onHide(this)
                 .fire();
     }
 
     @Override
-    public void onHideRequest(final HidePopupRequestEvent event) {
-        if (event.isOk()) {
+    public void onHideRequest(final HidePopupRequestEvent e) {
+        if (e.isOk()) {
             final Set<String> removeTags = getView().getRemoveTags();
 
             if (GwtNullSafe.hasItems(removeTags)) {
-                removeTagsFromNodes(event, removeTags);
+                removeTagsFromNodes(e, removeTags);
             } else {
-                event.hide();
+                e.hide();
             }
         } else {
-            event.hide();
+            e.hide();
         }
     }
 
     private void removeTagsFromNodes(final HidePopupRequestEvent event,
                                      final Set<String> editedTags) {
         final List<DocRef> nodeDocRefs = getNodeDocRefs();
-        final Rest<Void> rest = restFactory.create();
-        rest
+        restFactory
+                .create(EXPLORER_RESOURCE)
+                .call(res -> res.removeTags(new AddRemoveTagsRequest(nodeDocRefs, editedTags)))
                 .onSuccess(voidResult -> {
                     // Update the node in the tree with the new tags
                     nodeDocRefs.forEach(docRef ->
@@ -148,22 +153,11 @@ public class ExplorerNodeRemoveTagsPresenter
                                     ExplorerNodeRemoveTagsPresenter.this, docRef));
                     event.hide();
                 })
-                .onFailure(this::handleFailure)
-                .call(EXPLORER_RESOURCE)
-                .removeTags(new AddRemoveTagsRequest(nodeDocRefs, editedTags));
+                .onFailure(RestErrorHandler.forPopup(this, event))
+                .taskListener(this)
+                .exec();
     }
 
-    @Override
-    public void onHide(final HidePopupEvent e) {
-
-    }
-
-    private void handleFailure(final Throwable t) {
-        AlertEvent.fireError(
-                ExplorerNodeRemoveTagsPresenter.this,
-                t.getMessage(),
-                null);
-    }
 
     private boolean isSingleDocRef() {
         return GwtNullSafe.size(explorerNodes) == 1;
@@ -184,7 +178,6 @@ public class ExplorerNodeRemoveTagsPresenter
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
-
 
     // --------------------------------------------------------------------------------
 

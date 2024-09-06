@@ -19,12 +19,14 @@ package stroom.analytics.shared;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.string.StringWrapper;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -36,7 +38,8 @@ import org.fusesource.restygwt.client.DirectRestService;
 @Path("/analyticRule" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface AnalyticRuleResource extends RestResource, DirectRestService, FetchWithUuid<AnalyticRuleDoc> {
+public interface AnalyticRuleResource
+        extends RestResource, DirectRestService, FetchWithUuid<AnalyticRuleDoc> {
 
     @GET
     @Path("/{uuid}")
@@ -52,4 +55,25 @@ public interface AnalyticRuleResource extends RestResource, DirectRestService, F
             operationId = "updateAnalyticRule")
     AnalyticRuleDoc update(@PathParam("uuid") String uuid,
                            @Parameter(description = "doc", required = true) AnalyticRuleDoc doc);
+
+    @POST
+    @Path("/testTemplate")
+    @Operation(
+            summary = "Tests the email template using an example detection event.",
+            operationId = "testTemplate")
+    StringWrapper testTemplate(@Parameter(description = "template", required = true) final StringWrapper template);
+
+    @POST
+    @Path("/sendTestEmail")
+    @Operation(
+            summary = "Tests the email subject/body templates using an example detection event.",
+            operationId = "testEmailTemplates")
+    void sendTestEmail(
+            @Parameter(description = "emailDestination", required = true) final NotificationEmailDestination
+                    analyticNotificationEmailDestination);
+
+
+    // --------------------------------------------------------------------------------
+
+
 }

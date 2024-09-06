@@ -16,10 +16,10 @@
 
 package stroom.query.common.v2;
 
-import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 
 import org.junit.jupiter.api.Test;
@@ -33,21 +33,21 @@ class TestMapDataStore extends AbstractDataStoreTest {
                      final QueryKey queryKey,
                      final String componentId,
                      final TableSettings tableSettings,
-                     final AbstractResultStoreConfig resultStoreConfig,
-                     final DataStoreSettings dataStoreSettings) {
+                     final SearchResultStoreConfig resultStoreConfig,
+                     final DataStoreSettings dataStoreSettings,
+                     final String subDir) {
         final FieldIndex fieldIndex = new FieldIndex();
         final ErrorConsumerImpl errorConsumer = new ErrorConsumerImpl();
         final ExpressionContext expressionContext = new ExpressionContext();
-        final Serialisers serialisers = new Serialisers(new SearchResultStoreConfig());
         return new MapDataStore(
-                serialisers,
                 componentId,
                 tableSettings,
                 expressionContext,
                 fieldIndex,
                 Collections.emptyMap(),
                 dataStoreSettings,
-                errorConsumer);
+                errorConsumer,
+                resultStoreConfig.getMapConfig());
     }
 
     @Test

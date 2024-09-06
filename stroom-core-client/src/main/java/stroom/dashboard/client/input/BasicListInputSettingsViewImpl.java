@@ -50,6 +50,8 @@ public class BasicListInputSettingsViewImpl extends ViewImpl implements BasicLis
     CustomCheckBox useDictionary;
     @UiField
     SimplePanel dictionary;
+    @UiField
+    CustomCheckBox allowTextEntry;
 
     @Inject
     public BasicListInputSettingsViewImpl(final Binder binder) {
@@ -116,6 +118,16 @@ public class BasicListInputSettingsViewImpl extends ViewImpl implements BasicLis
     @Override
     public void setDictionaryView(final View view) {
         dictionary.setWidget(view.asWidget());
+    }
+
+    @Override
+    public boolean isAllowTextEntry() {
+        return allowTextEntry.getValue();
+    }
+
+    @Override
+    public void setAllowTextEntry(final boolean allowTextEntry) {
+        this.allowTextEntry.setValue(allowTextEntry);
     }
 
     public void onResize() {

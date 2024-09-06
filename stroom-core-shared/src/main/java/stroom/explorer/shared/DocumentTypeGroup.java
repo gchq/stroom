@@ -16,29 +16,54 @@
 
 package stroom.explorer.shared;
 
+@SuppressWarnings("TextBlockMigration") // Because GWT :-(
 public enum DocumentTypeGroup {
 
-    STRUCTURE(1, "Structure"),
-    DATA_PROCESSING(2, "Data Processing"),
-    TRANSFORMATION(3, "Transformation"),
-    SEARCH(4, "Search"),
-    INDEXING(5, "Indexing"),
-    CONFIGURATION(6, "Configuration"),
-    SYSTEM(100, "System");
+    STRUCTURE(1,
+            "Structure",
+            ""),
+    DATA_PROCESSING(2,
+            "Data Processing",
+            "Documents relating to the processing of data."),
+    TRANSFORMATION(3,
+            "Transformation",
+            "Documents relating to the transformation of data."),
+    SEARCH(4,
+            "Search",
+            "Documents relating to searching for data in Stroom."),
+    INDEXING(5,
+            "Indexing",
+            "Documents relating to the process of adding data into an index, " +
+                    "such as Lucene or Elasticsearch."),
+    CONFIGURATION(6,
+            "Configuration",
+            "Documents that are used as configuration for other documents."),
+    SYSTEM(100,
+            "System",
+            ""),
+    INTERNAL(999,
+            "Internal",
+            "");
 
     private final int priority;
-    private final String name;
+    private final String displayName;
+    private final String description;
 
-    DocumentTypeGroup(final int priority, final String name) {
+    DocumentTypeGroup(final int priority, final String displayName, final String description) {
         this.priority = priority;
-        this.name = name;
+        this.displayName = displayName;
+        this.description = description;
     }
 
     public int getPriority() {
         return priority;
     }
 
-    public String getName() {
-        return name;
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public String getDescription() {
+        return description;
     }
 }

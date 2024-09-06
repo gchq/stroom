@@ -61,7 +61,7 @@ public class AnalyticRuleProcessInfoOutputStreamProvider extends AbstractElement
     }
 
     @Override
-    public OutputStream getByteArrayOutputStream() {
+    public OutputStream getOutputStream() {
         return getOutputStream(null, null);
     }
 

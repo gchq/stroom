@@ -1,8 +1,8 @@
 package stroom.query.client.presenter;
 
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
 import stroom.docref.StringMatch.MatchType;
@@ -17,10 +17,17 @@ import stroom.query.client.presenter.DynamicColumnSelectionListModel.ColumnSelec
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.HasTaskListener;
+import stroom.task.client.TaskListener;
+import stroom.task.client.TaskListenerImpl;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
+
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,16 +38,23 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
-public class DynamicColumnSelectionListModel implements SelectionListModel<Column, ColumnSelectionItem> {
+public class DynamicColumnSelectionListModel
+        implements SelectionListModel<Column, ColumnSelectionItem>, HasTaskListener, HasHandlers {
 
+    private static final String NONE_TITLE = "[ none ]";
+
+    private final EventBus eventBus;
     private final DataSourceClient dataSourceClient;
     private final ClientSecurityContext clientSecurityContext;
     private DocRef dataSourceRef;
-    private FindFieldInfoCriteria lastCriteria;
+    private FindFieldCriteria lastCriteria;
+    private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
 
     @Inject
-    public DynamicColumnSelectionListModel(final DataSourceClient dataSourceClient,
+    public DynamicColumnSelectionListModel(final EventBus eventBus,
+                                           final DataSourceClient dataSourceClient,
                                            final ClientSecurityContext clientSecurityContext) {
+        this.eventBus = eventBus;
         this.dataSourceClient = dataSourceClient;
         this.clientSecurityContext = clientSecurityContext;
     }
@@ -48,16 +62,18 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
     @Override
     public void onRangeChange(final ColumnSelectionItem parent,
                               final String filter,
+                              final boolean filterChange,
                               final PageRequest pageRequest,
                               final Consumer<ResultPage<ColumnSelectionItem>> consumer) {
         final String parentPath = getParentPath(parent);
         if (dataSourceRef != null) {
             final StringMatch stringMatch = StringMatch.contains(filter);
-            final FindFieldInfoCriteria findFieldInfoCriteria = new FindFieldInfoCriteria(
+            final FindFieldCriteria findFieldInfoCriteria = new FindFieldCriteria(
                     pageRequest,
                     null,
                     dataSourceRef,
-                    stringMatch);
+                    stringMatch,
+                    null);
 
             // Only fetch if the request has changed.
             lastCriteria = findFieldInfoCriteria;
@@ -65,9 +81,11 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
             dataSourceClient.findFields(findFieldInfoCriteria, response -> {
                 // Only update if the request is still current.
                 if (findFieldInfoCriteria == lastCriteria) {
-                    setResponse(stringMatch, parentPath, pageRequest, response, consumer);
+                    final ResultPage<ColumnSelectionItem> resultPage =
+                            createResults(stringMatch, parentPath, pageRequest, response);
+                    consumer.accept(resultPage);
                 }
-            });
+            }, taskListener);
         }
     }
 
@@ -83,11 +101,10 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
         return parentPath;
     }
 
-    private void setResponse(final StringMatch filter,
-                             final String parentPath,
-                             final PageRequest pageRequest,
-                             final ResultPage<FieldInfo> response,
-                             final Consumer<ResultPage<ColumnSelectionItem>> consumer) {
+    private ResultPage<ColumnSelectionItem> createResults(final StringMatch filter,
+                                                          final String parentPath,
+                                                          final PageRequest pageRequest,
+                                                          final ResultPage<QueryField> response) {
         final ResultPage<ColumnSelectionItem> counts = getCounts(filter, pageRequest);
         final ResultPage<ColumnSelectionItem> annotations = getAnnotations(filter, pageRequest);
 
@@ -123,11 +140,11 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
 
         if (resultPage == null || resultPage.getValues().isEmpty()) {
             resultPage = new ResultPage<>(Collections.singletonList(
-                    new ColumnSelectionItem(null, "[ none ]", false)),
+                    new ColumnSelectionItem(null, NONE_TITLE, false)),
                     new PageResponse(0, 1, 1L, true));
         }
 
-        consumer.accept(resultPage);
+        return resultPage;
     }
 
     private ResultPage<ColumnSelectionItem> getCounts(final StringMatch filter,
@@ -162,8 +179,7 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
                     "SolrIndex".equals(dataSourceRef.getType()) ||
                     "ElasticIndex".equals(dataSourceRef.getType())) {
                 AnnotationFields.FIELDS.forEach(field -> {
-                    final FieldInfo fieldInfo = FieldInfo.create(field);
-                    final ColumnSelectionItem columnSelectionItem = ColumnSelectionItem.create(fieldInfo);
+                    final ColumnSelectionItem columnSelectionItem = ColumnSelectionItem.create(field);
                     add(filter, columnSelectionItem, builder);
                 });
             }
@@ -227,6 +243,21 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
         return selectionItem.getColumn();
     }
 
+    @Override
+    public boolean isEmptyItem(final ColumnSelectionItem selectionItem) {
+        return NONE_TITLE.equals(selectionItem.getLabel());
+    }
+
+    @Override
+    public void setTaskListener(final TaskListener taskListener) {
+        this.taskListener.setTaskListener(taskListener);
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> gwtEvent) {
+        eventBus.fireEvent(gwtEvent);
+    }
+
     public static class ColumnSelectionItem implements SelectionItem {
 
         private final Column column;
@@ -245,7 +276,7 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
             return new ColumnSelectionItem(column, column.getDisplayValue(), false);
         }
 
-        public static ColumnSelectionItem create(final FieldInfo fieldInfo) {
+        public static ColumnSelectionItem create(final QueryField fieldInfo) {
             final Column column = convertFieldInfo(fieldInfo);
             return new ColumnSelectionItem(column, column.getDisplayValue(), false);
         }
@@ -272,12 +303,12 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
             params.add(ParamSubstituteUtil.makeParam(fieldName));
         }
 
-        private static Column convertFieldInfo(final FieldInfo fieldInfo) {
-            final String indexFieldName = fieldInfo.getFieldName();
+        private static Column convertFieldInfo(final QueryField fieldInfo) {
+            final String indexFieldName = fieldInfo.getFldName();
             final Builder columnBuilder = Column.builder();
             columnBuilder.name(indexFieldName);
 
-            final FieldType fieldType = fieldInfo.getFieldType();
+            final FieldType fieldType = fieldInfo.getFldType();
             if (fieldType != null) {
                 switch (fieldType) {
                     case DATE:
@@ -301,7 +332,7 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
                 // Turn 'annotation:.*' fields into annotation links that make use of either the special
                 // eventId/streamId fields (so event results can link back to annotations) OR
                 // the annotation:Id field so Annotations datasource results can link back.
-                expression = buildAnnotationFieldExpression(fieldInfo.getFieldType(), indexFieldName);
+                expression = buildAnnotationFieldExpression(fieldInfo.getFldType(), indexFieldName);
                 columnBuilder.expression(expression);
             } else {
                 expression = ParamSubstituteUtil.makeParam(indexFieldName);

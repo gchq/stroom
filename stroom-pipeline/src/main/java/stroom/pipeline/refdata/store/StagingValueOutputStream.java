@@ -38,7 +38,7 @@ public class StagingValueOutputStream
     private final ValueStoreHashAlgorithm valueStoreHashAlgorithm;
     private final PooledByteBufferOutputStream pooledByteBufferOutputStream;
 
-    private Integer typeId = null;
+    private Byte typeId = null;
     private ByteBuffer fullBuffer = null;
     private ByteBuffer valueBuffer = null;
 
@@ -64,7 +64,7 @@ public class StagingValueOutputStream
         }
     }
 
-    public void setTypeId(final int typeId) {
+    public void setTypeId(final byte typeId) {
         this.typeId = typeId;
     }
 
@@ -91,10 +91,6 @@ public class StagingValueOutputStream
         if (!NullSafe.isBlankString(value)) {
             pooledByteBufferOutputStream.write(value.getBytes(StandardCharsets.UTF_8));
         }
-    }
-
-    public void release() {
-        pooledByteBufferOutputStream.release();
     }
 
     public void clear() {
@@ -130,7 +126,7 @@ public class StagingValueOutputStream
     }
 
     @Override
-    public int getTypeId() {
+    public byte getTypeId() {
         checkTypeIdSet();
         return typeId;
     }
@@ -169,7 +165,7 @@ public class StagingValueOutputStream
     public ByteBuffer getFullByteBuffer() {
         if (fullBuffer == null) {
             checkTypeIdSet();
-            fullBuffer = pooledByteBufferOutputStream.getPooledByteBuffer().getByteBuffer();
+            fullBuffer = pooledByteBufferOutputStream.getByteBuffer();
             // Hash just the value part of the buffer
             final int valueLength = fullBuffer.remaining() - META_LENGTH;
             try {
@@ -193,7 +189,7 @@ public class StagingValueOutputStream
             final long valueHash = valueStoreHashAlgorithm.hash(valueBuffer);
 
             // Now add the type and hash into the buffer without changing its position/limit
-            fullBuffer.putInt(TYPE_ID_OFFSET, typeId);
+            fullBuffer.put(TYPE_ID_OFFSET, typeId);
             fullBuffer.putLong(VALUE_HASH_OFFSET, valueHash);
         }
         return fullBuffer;

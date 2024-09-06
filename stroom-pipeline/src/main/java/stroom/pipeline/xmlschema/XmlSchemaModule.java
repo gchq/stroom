@@ -16,6 +16,7 @@
 
 package stroom.pipeline.xmlschema;
 
+import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
@@ -29,8 +30,6 @@ import stroom.xmlschema.shared.XmlSchemaDoc;
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
 
-import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
-
 public class XmlSchemaModule extends AbstractModule {
 
     @Override
@@ -42,8 +41,9 @@ public class XmlSchemaModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
                 .addBinding(XmlSchemaStoreImpl.class);
-
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(XmlSchemaStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
                 .addBinding(XmlSchemaStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
@@ -57,7 +57,7 @@ public class XmlSchemaModule extends AbstractModule {
                         .name("Clear Old Schemas")
                         .description("Every 10 minutes try to clear old cached schemas.")
                         .managed(false)
-                        .schedule(PERIODIC, "10m"));
+                        .frequencySchedule("10m"));
     }
 
     private static class ClearOldSchemas extends RunnableWrapper {

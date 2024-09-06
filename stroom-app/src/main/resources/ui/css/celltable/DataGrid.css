@@ -55,6 +55,14 @@
     vertical-align: middle;
 }
 
+.dataGridHeader.center-align {
+  text-align: center;
+}
+
+.dataGridHeader.right-align {
+  text-align: right;
+}
+
 .dataGridHeader * {
 	font-weight: 500;
 }
@@ -117,14 +125,6 @@
     user-select: text;
 }
 
-.dataGridCellWrapText {
-    white-space: normal;
-}
-
-.dataGridCellVerticalTop {
-	vertical-align: top;
-}
-
 .dataGridFirstColumnFooter {
 
 }
@@ -185,13 +185,37 @@
 
 }
 
-.dataGridDisabledCell {
-	color: var(--text-color--disabled);
+/*
+Stop disabled commandLinkCells from having their icon disabled
+*/
+.dataGridDisabledCell,
+.dataGridDisabledCell .valueSpinner .gwt-TextBox {
+    color: var(--text-color--disabled);
+}
+
+.dataGridSelectedRow .dataGridDisabledCell,
+.dataGridSelectedRow .dataGridDisabledCell .valueSpinner .gwt-TextBox {
+    color: var(--text-color--disabled--selected);
+}
+
+/*
+Stop disabled commandLinkCells from having their open icon disabled
+by '.dataGridDisabledCell .svgIcon' below. You can use a null command if you
+don't want the open link to appear
+*/
+/* .dataGridDisabledCell :not(.commandLinkContainer) .svgIcon,*/
+
+.dataGridDisabledCell .tickBox,
+.dataGridDisabledCell .svgIcon,
+.dataGridDisabledCell .svgCell-button.svgCell-icon {
+    cursor: default;
+    color: #000;
+    opacity: 0.3;
 }
 
 .dataGridSelectedRow {
-	background-color: var(--row__background-color--selected);
-	color: var(--row__text-color--selected);
+    background-color: var(--row__background-color--selected);
+    color: var(--row__text-color--selected);
 }
 
 .dataGridOddRow:hover,

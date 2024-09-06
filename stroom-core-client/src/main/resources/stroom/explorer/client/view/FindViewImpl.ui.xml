@@ -1,15 +1,11 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:p="urn:import:stroom.widget.button.client">
+             xmlns:v="urn:import:stroom.widget.dropdowntree.client.view">
     <g:FlowPanel styleName="max form">
         <g:FlowPanel styleName="dock-container-horizontal dock-min find-topBar">
-            <g:TextBox ui:field="pattern" addStyleNames="dock-max allow-focus"/>
-            <g:FlowPanel ui:field="buttonContainer" styleName="dock-min find-buttons">
-                <p:InlineSvgToggleButton ui:field="toggleMatchCase" />
-                <p:InlineSvgToggleButton ui:field="toggleRegex" />
-            </g:FlowPanel>
+            <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-max"/>
         </g:FlowPanel>
-        <g:SimplePanel ui:field="resultContainer" styleName="stroom-control__no-padding dock-max overflow-hidden"/>
+        <g:SimplePanel ui:field="resultContainer" styleName="max form-control-border form-control-background"/>
     </g:FlowPanel>
 </ui:UiBinder> 

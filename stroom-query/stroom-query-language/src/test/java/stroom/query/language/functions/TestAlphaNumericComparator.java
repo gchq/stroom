@@ -12,7 +12,10 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 class TestAlphaNumericComparator {
-    private final Comparator<Val> comparator = new AlphaNumericComparator();
+//    private final Comparator<Val> comparator = new AlphaNumericComparator();
+    private final Comparator<Val> comparator = Comparator.comparing(
+            Val::toString,
+        Comparator.nullsLast(String::compareToIgnoreCase));
 
     @Test
     void testCompare() {
@@ -61,6 +64,7 @@ class TestAlphaNumericComparator {
         doTestContract("A", "b", "C");
         doTestContract("10", "10-1", "2");
         doTestContract("3232235777", "3232238337-3232239362", "4");
+        doTestContract("a", "b", null);
     }
 
     private void doTestContract(final List<ValString> vals) {

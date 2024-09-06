@@ -37,6 +37,11 @@ import java.util.List;
 @ConfigurableElement(
         type = "SearchResultOutputFilter",
         category = Category.FILTER,
+        description = """
+                Used in a search extraction pipeline for extracting field values that have \
+                not been stored in the index and where the field definitions are defined in the Index settings.
+                Consumes XML events in the `records:2` namespace to convert them into a form so \
+                that they can be used in a Dashboard/Query/Analytic.""",
         roles = {
                 PipelineElementType.ROLE_TARGET},
         icon = SvgImage.PIPELINE_SEARCH_OUTPUT)
@@ -47,20 +52,23 @@ public class SearchResultOutputFilter extends AbstractXMLFilter {
     private static final String NAME = "name";
     private static final String VALUE = "value";
 
-    private final ValueConsumerHolder valueConsumerHolder;
+    private final QueryInfoHolder queryInfoHolder;
+    private final FieldListConsumerHolder fieldListConsumerHolder;
 
     private QueryKey queryKey;
     private List<StringFieldValue> stringFieldValues;
 
     @Inject
-    public SearchResultOutputFilter(final ValueConsumerHolder valueConsumerHolder) {
-        this.valueConsumerHolder = valueConsumerHolder;
+    public SearchResultOutputFilter(final QueryInfoHolder queryInfoHolder,
+                                    final FieldListConsumerHolder fieldListConsumerHolder) {
+        this.queryInfoHolder = queryInfoHolder;
+        this.fieldListConsumerHolder = fieldListConsumerHolder;
     }
 
     @Override
     public void startProcessing() {
         super.startProcessing();
-        this.queryKey = valueConsumerHolder.getQueryKey();
+        this.queryKey = queryInfoHolder.getQueryKey();
     }
 
     @Override
@@ -92,7 +100,7 @@ public class SearchResultOutputFilter extends AbstractXMLFilter {
             SearchProgressLog.increment(queryKey,
                     SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_END_RECORD);
             SearchDebugUtil.writeExtractionData(stringFieldValues);
-            valueConsumerHolder.acceptStringValues(stringFieldValues);
+            fieldListConsumerHolder.acceptStringValues(stringFieldValues);
             stringFieldValues = null;
         }
     }

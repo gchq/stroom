@@ -16,7 +16,10 @@
 
 package stroom.query.language.functions;
 
+import stroom.query.language.token.TokenException;
+
 import io.vavr.Tuple;
+import org.assertj.core.api.Assertions;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -499,7 +502,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testIndexOf4() {
         compute("substring(${val1}, indexOf(${val1}, 'q'), stringLength(${val1}))",
                 Val.of("aa-bb"),
-                out -> assertThat(out.type().isError()).isTrue());
+                out -> assertThat(out.toString()).isEqualTo(""));
     }
 
     @Test
@@ -527,7 +530,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testLastIndexOf4() {
         compute("substring(${val1}, lastIndexOf(${val1}, 'q'), stringLength(${val1}))",
                 Val.of("aa-bb"),
-                out -> assertThat(out.type().isError()).isTrue());
+                out -> assertThat(out.toString()).isEqualTo(""));
     }
 
     @Test
@@ -884,7 +887,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         testCases.add(vStrA, "=", vStrA, vTrue);
         testCases.add(vStrA, "=", vStrB, vFals);
         testCases.add(vStrA, "=", vTrue, vFals);
-        testCases.add(vStrA, "=", vFals, vFals);
+        testCases.add(vStrA, "=", vFals, vTrue);
         testCases.add(vStrA, "=", vStra, vFals);
 
         // mixed types, equals
@@ -1829,5 +1832,15 @@ class TestExpressionParser extends AbstractExpressionParserTest {
                                 testCase.expression,
                                 testCase.expectedResult,
                                 testCase.inputValues)));
+    }
+
+    @Test
+    void testBadFunction() {
+        Assertions.assertThatThrownBy(() -> {
+                    compute("foo(1)", out -> {
+                    });
+                })
+                .isInstanceOf(TokenException.class)
+                .hasMessageContainingAll("Unknown function", "foo");
     }
 }

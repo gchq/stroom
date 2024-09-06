@@ -19,11 +19,11 @@ package stroom.document.client.event;
 
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import com.gwtplatform.mvp.client.MyPresenter;
 
 import java.util.function.Consumer;
 
@@ -31,20 +31,20 @@ public class CreateDocumentEvent extends GwtEvent<CreateDocumentEvent.Handler> {
 
     private static Type<Handler> TYPE;
 
-    private final MyPresenter<?, ?> presenter;
+    private final HidePopupRequestEvent hidePopupRequestEvent;
     private final String docType;
     private final String docName;
     private final ExplorerNode destinationFolder;
     private final PermissionInheritance permissionInheritance;
     private final Consumer<ExplorerNode> newDocConsumer;
 
-    private CreateDocumentEvent(final MyPresenter<?, ?> presenter,
+    private CreateDocumentEvent(final HidePopupRequestEvent hidePopupRequestEvent,
                                 final String docType,
                                 final String docName,
                                 final ExplorerNode destinationFolder,
                                 final PermissionInheritance permissionInheritance,
                                 final Consumer<ExplorerNode> newDocConsumer) {
-        this.presenter = presenter;
+        this.hidePopupRequestEvent = hidePopupRequestEvent;
         this.docType = docType;
         this.docName = docName;
         this.destinationFolder = destinationFolder;
@@ -53,13 +53,13 @@ public class CreateDocumentEvent extends GwtEvent<CreateDocumentEvent.Handler> {
     }
 
     public static void fire(final HasHandlers handlers,
-                            final MyPresenter<?, ?> presenter,
+                            final HidePopupRequestEvent hidePopupRequestEvent,
                             final String docType,
                             final String docName,
                             final ExplorerNode destinationFolder,
                             final PermissionInheritance permissionInheritance,
                             final Consumer<ExplorerNode> newDocConsumer) {
-        handlers.fireEvent(new CreateDocumentEvent(presenter,
+        handlers.fireEvent(new CreateDocumentEvent(hidePopupRequestEvent,
                 docType,
                 docName,
                 destinationFolder,
@@ -84,8 +84,8 @@ public class CreateDocumentEvent extends GwtEvent<CreateDocumentEvent.Handler> {
         handler.onCreate(this);
     }
 
-    public MyPresenter<?, ?> getPresenter() {
-        return presenter;
+    public HidePopupRequestEvent getHidePopupRequestEvent() {
+        return hidePopupRequestEvent;
     }
 
     public String getDocType() {

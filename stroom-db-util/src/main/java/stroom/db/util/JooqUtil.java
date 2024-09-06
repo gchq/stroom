@@ -1,6 +1,23 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.db.util;
 
 import stroom.util.NullSafe;
+import stroom.util.concurrent.ThreadUtil;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
@@ -40,6 +57,7 @@ import org.jooq.impl.SQLDataType;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.sql.SQLTransactionRollbackException;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
@@ -51,8 +69,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.sql.DataSource;
@@ -64,6 +85,8 @@ public final class JooqUtil {
 
     private static final String DEFAULT_ID_FIELD_NAME = "id";
     private static final Boolean RENDER_SCHEMA = false;
+    static final int MAX_DEADLOCK_RETRY_ATTEMPTS = 20;
+    private static final long SLEEP_INCREMENT_MS = 10;
 
     private JooqUtil() {
         // Utility class.
@@ -315,87 +338,183 @@ public final class JooqUtil {
         return record;
     }
 
+    /**
+     * See {@link JooqUtil#tryCreate(DataSource, UpdatableRecord, TableField, TableField, TableField, Consumer)}
+     */
     public static <R extends UpdatableRecord<R>, T> R tryCreate(final DataSource dataSource,
                                                                 final R record,
                                                                 final TableField<R, T> keyField) {
-        return tryCreate(dataSource, record, keyField, null, null);
+        return tryCreate(dataSource, record, keyField, null, null, null);
     }
 
+    /**
+     * See {@link JooqUtil#tryCreate(DataSource, UpdatableRecord, TableField, TableField, TableField, Consumer)}
+     */
     public static <R extends UpdatableRecord<R>, T> R tryCreate(final DataSource dataSource,
                                                                 final R record,
                                                                 final TableField<R, T> keyField,
                                                                 final Consumer<R> onCreateAction) {
-        return tryCreate(dataSource, record, keyField, null, onCreateAction);
+        return tryCreate(dataSource, record, keyField, null, null, onCreateAction);
     }
 
+    /**
+     * See {@link JooqUtil#tryCreate(DataSource, UpdatableRecord, TableField, TableField, TableField, Consumer)}
+     */
     public static <R extends UpdatableRecord<R>, T1, T2> R tryCreate(final DataSource dataSource,
                                                                      final R record,
                                                                      final TableField<R, T1> keyField1,
                                                                      final TableField<R, T2> keyField2) {
-        return tryCreate(dataSource, record, keyField1, keyField2, null);
+        return tryCreate(dataSource, record, keyField1, keyField2, null, null);
     }
 
-    public static <R extends UpdatableRecord<R>, T1, T2> R tryCreate(final DataSource dataSource,
-                                                                     final R record,
-                                                                     final TableField<R, T1> keyField1,
-                                                                     final TableField<R, T2> keyField2,
-                                                                     final Consumer<R> onCreateAction) {
+    /**
+     * See {@link JooqUtil#tryCreate(DataSource, UpdatableRecord, TableField, TableField, TableField, Consumer)}
+     */
+    public static <R extends UpdatableRecord<R>, T1, T2, T3> R tryCreate(final DataSource dataSource,
+                                                                         final R record,
+                                                                         final TableField<R, T1> keyField1,
+                                                                         final TableField<R, T2> keyField2,
+                                                                         final Consumer<R> onCreateAction) {
+        return tryCreate(dataSource, record, keyField1, keyField2, null, onCreateAction);
+    }
+
+    /**
+     * Tries to insert record into the database. If it doesn't already exist it will insert the
+     * record and return the record updated with any auto-generated columns (e.g. ID).
+     * If it already exists then the unique key violation will be swallowed and the keyField arguments
+     * will be used to retrieve the existing record for return.
+     * <p>
+     * If you don't need the persisted state from the database then use
+     * {@link JooqUtil#tryCreate(DSLContext, UpdatableRecord)} instead.
+     * </p>
+     *
+     * @param onCreateAction Called if the record does not already exist and is actually inserted.
+     * @return The record containing the latest state in the database.
+     */
+    public static <R extends UpdatableRecord<R>, T1, T2, T3> R tryCreate(final DataSource dataSource,
+                                                                         final R record,
+                                                                         final TableField<R, T1> keyField1,
+                                                                         final TableField<R, T2> keyField2,
+                                                                         final TableField<R, T3> keyField3,
+                                                                         final Consumer<R> onCreateAction) {
+        return contextResult(dataSource, context ->
+                tryCreate(context, record, keyField1, keyField2, keyField3, onCreateAction));
+    }
+
+    /**
+     * <p>
+     * Tries to insert record into the database. If it doesn't already exist it will insert the
+     * record and return the record updated with any auto-generated columns (e.g. ID).
+     * If it already exists then the unique key violation will be swallowed and the keyField arguments
+     * will be used to retrieve the existing record for return. The keyField arguments are one to three columns
+     * that make up a unique key.
+     * </p>
+     * <p>
+     * If you don't need the persisted state from the database then use
+     * {@link JooqUtil#tryCreate(DSLContext, UpdatableRecord)} instead.
+     * </p>
+     *
+     * @param onCreateAction Called if the record does not already exist and is actually inserted.
+     * @return The record containing the latest state in the database.
+     */
+    public static <R extends UpdatableRecord<R>, T1, T2, T3> R tryCreate(final DSLContext context,
+                                                                         final R record,
+                                                                         final TableField<R, T1> keyField1,
+                                                                         final TableField<R, T2> keyField2,
+                                                                         final TableField<R, T3> keyField3,
+                                                                         final Consumer<R> onCreateAction) {
         R persistedRecord;
         LOGGER.debug(() -> "Creating a " + record.getTable() + " record if it doesn't already exist:\n" + record);
-        try (final Connection connection = dataSource.getConnection()) {
-            try {
-                checkDataSource(dataSource);
-                final DSLContext context = createContext(connection);
-                record.attach(context.configuration());
-                try {
-                    // Attempt to write the record, which may already be there
-                    record.insert();
-                    persistedRecord = record;
-                    if (onCreateAction != null) {
-                        onCreateAction.accept(persistedRecord);
-                    }
-                } catch (RuntimeException e) {
-                    if (e instanceof DataAccessException
-                            && e.getCause() != null
-                            && e.getCause() instanceof SQLIntegrityConstraintViolationException
-                            && ((SQLIntegrityConstraintViolationException) e.getCause()).getErrorCode() == 1062) {
-                        // 1062 is a duplicate key exception so someone else has already inserted it
-                        LOGGER.debug(e::getMessage, e);
-
-                        // In theory we could get the unique key fields from record.getTable().getKeys()
-                        // but this is a bit fragile if the table has multiple unique keys, so better to let
-                        // the caller make the decision as to which fields to use
-                        final List<Condition> conditionList = new ArrayList<>();
-                        // For now support up to two fields in a compound key
-                        if (keyField1 != null) {
-                            conditionList.add(keyField1.eq(record.get(keyField1)));
-                        }
-                        if (keyField2 != null) {
-                            conditionList.add(keyField2.eq(record.get(keyField2)));
-                        }
-                        if (conditionList.isEmpty()) {
-                            throw new RuntimeException("No key fields supplied");
-                        }
-
-                        final Table<R> table = record.getTable();
-                        LOGGER.debug("Re-fetching existing record from {} with conditions: {}", table, conditionList);
-                        // Now need to re-fetch the record using the key fields so we have the full record with ids
-                        persistedRecord = context.selectFrom(table)
-                                .where(conditionList.toArray(new Condition[0]))
-                                .fetchOne();
-                    } else {
-                        // Some other error so just re-throw
-                        LOGGER.error(e::getMessage, e);
-                        throw e;
-                    }
-                }
-            } finally {
-                releaseDataSource();
+        record.attach(context.configuration());
+        try {
+            // Attempt to write the record, which may already be there
+            record.insert();
+            persistedRecord = record;
+            if (onCreateAction != null) {
+                onCreateAction.accept(persistedRecord);
             }
-        } catch (final Exception e) {
-            throw convertException(e);
+        } catch (RuntimeException e) {
+            if (isDuplicateKeyException(e)) {
+                LOGGER.debug(e::getMessage, e);
+
+                // In theory, we could get the unique key fields from record.getTable().getKeys()
+                // but this is a bit fragile if the table has multiple unique keys, so better to let
+                // the caller make the decision as to which fields to use
+                final List<Condition> conditionList = new ArrayList<>();
+                // For now support up to three fields in a compound key
+                if (keyField1 != null) {
+                    conditionList.add(keyField1.eq(record.get(keyField1)));
+                }
+                if (keyField2 != null) {
+                    conditionList.add(keyField2.eq(record.get(keyField2)));
+                }
+                if (keyField3 != null) {
+                    conditionList.add(keyField3.eq(record.get(keyField3)));
+                }
+                if (conditionList.isEmpty()) {
+                    throw new RuntimeException("You must supplied at least one key field so the persisted record can " +
+                            "be retrieved.");
+                }
+
+                final Table<R> table = record.getTable();
+                LOGGER.debug("Re-fetching existing record from {} with conditions: {}", table, conditionList);
+                // Now need to re-fetch the record using the key fields so we have the full record with ids
+                persistedRecord = context.selectFrom(table)
+                        .where(conditionList.toArray(new Condition[0]))
+                        .fetchOne();
+            } else {
+                // Some other error so just re-throw
+                LOGGER.error(e::getMessage, e);
+                throw e;
+            }
         }
         return persistedRecord;
+    }
+
+    /**
+     * Tries to insert record into the database. If it doesn't already exist it will insert the
+     * record and return 1. If it already exists then the unique key violation will be swallowed
+     * and will return 0;
+     * <p>
+     * If you need the persisted version of the record from the database then use
+     * {@link JooqUtil#tryCreate(DataSource, UpdatableRecord, TableField, TableField, TableField, Consumer)}
+     * instead.
+     * </p>
+     */
+    public static <R extends UpdatableRecord<R>> int tryCreate(final DataSource dataSource,
+                                                               final R record) {
+        return contextResult(dataSource, context ->
+                tryCreate(context, record));
+    }
+
+    /**
+     * Tries to insert record into the database. If it doesn't already exist it will insert the
+     * record and return 1. If it already exists then the unique key violation will be swallowed
+     * and will return 0;
+     * <p>
+     * If you need the persisted version of the record from the database then use
+     * {@link JooqUtil#tryCreate(DataSource, UpdatableRecord, TableField, TableField, TableField, Consumer)}
+     * instead.
+     * </p>
+     */
+    public static <R extends UpdatableRecord<R>> int tryCreate(final DSLContext context,
+                                                               final R record) {
+        LOGGER.debug(() -> "Creating a " + record.getTable() + " record if it doesn't already exist:\n" + record);
+        record.attach(context.configuration());
+        int result = 0;
+        try {
+            // Attempt to write the record, which may already be there
+            result = record.insert();
+        } catch (RuntimeException e) {
+            if (isDuplicateKeyException(e)) {
+                LOGGER.debug(e::getMessage, e);
+            } else {
+                // Some other error so just re-throw
+                LOGGER.error(e::getMessage, e);
+                throw e;
+            }
+        }
+        return result;
     }
 
     public static <R extends UpdatableRecord<R>> R update(final DataSource dataSource, final R record) {
@@ -491,6 +610,76 @@ public final class JooqUtil {
                         .fetchOptional(table, idField.eq(id))
                         .map(record ->
                                 record.into(type)));
+    }
+
+    /**
+     * Runs runnable, but if it causes a SQL deadlock it will keep retrying it until it is successful
+     * or the retry limit is reached. runnable should be a single operation or idempotent such that
+     * there is no issue with part of it being run multiple times, i.e. runnable should be a
+     * single txn.
+     *
+     * @param messageSupplier A message describing what runnable is doing for logging purposes.
+     */
+    public static void withDeadlockRetries(final Runnable runnable,
+                                           final Supplier<String> messageSupplier) {
+        withDeadlockRetries(() -> {
+            runnable.run();
+            return null;
+        }, messageSupplier);
+    }
+
+    /**
+     * Calls {@link Supplier#get()}, but if it causes a SQL deadlock it will keep retrying
+     * {@link Supplier#get()} until it is successful or the retry limit is reached.
+     * supplier should be a single operation or idempotent such that there is no issue with part
+     * of it being run multiple times, i.e. supplier should be a single txn so the whole thing can
+     * roll back on deadlock.
+     *
+     * @param messageSupplier A message describing what runnable is doing for logging purposes.
+     */
+    public static <T> T withDeadlockRetries(final Supplier<T> supplier,
+                                            final Supplier<String> messageSupplier) {
+
+        final AtomicInteger attempt = new AtomicInteger(0);
+        final AtomicLong sleepMs = new AtomicLong();
+        while (true) {
+            try {
+                attempt.incrementAndGet();
+                final T result = supplier.get();
+                if (attempt.get() >= 2) {
+                    LOGGER.info("Ran '{}' successfully after {} deadlocks",
+                            NullSafe.supply(messageSupplier),
+                            attempt.get() - 1);
+                }
+
+                return result;
+            } catch (DataAccessException e) {
+                if (e.getCause() instanceof SQLTransactionRollbackException sqlTxnRollbackEx
+                        && NullSafe.containsIgnoringCase(sqlTxnRollbackEx.getMessage(), "deadlock")) {
+
+                    if (attempt.get() >= MAX_DEADLOCK_RETRY_ATTEMPTS) {
+                        throw new RuntimeException(LogUtil.message("Gave up retrying '{}' after {} deadlocks",
+                                NullSafe.supply(messageSupplier), attempt), e);
+                    }
+
+                    LOGGER.warn(() -> LogUtil.message(
+                            "Deadlock trying to run '{}' on attempt {}. Will retry in {} ms. " +
+                                    "Enable DEBUG for full stacktrace.",
+                            NullSafe.supply(messageSupplier),
+                            attempt.get(),
+                            sleepMs));
+                    LOGGER.debug(e.getMessage(), e);
+                    // Just ignore interrupts as are we are only sleeping for at most 200ms
+                    if (sleepMs.get() > 0) {
+                        ThreadUtil.sleepIgnoringInterrupts(sleepMs.get());
+                    }
+                    // Make the sleep a bit longer next time
+                    sleepMs.addAndGet(SLEEP_INCREMENT_MS);
+                } else {
+                    throw e;
+                }
+            }
+        }
     }
 
     private static Field<Integer> getIdField(Table<?> table) {
@@ -596,6 +785,7 @@ public final class JooqUtil {
 
     /**
      * Combine multiple conditions in a null safe way
+     *
      * @param conditions
      * @return A non-null condition
      */
@@ -962,11 +1152,19 @@ public final class JooqUtil {
         hasAuditInfo.setCreateUser(record.get("update_user", String.class));
     }
 
+    private static boolean isDuplicateKeyException(final Throwable throwable) {
+        // 1062 is a duplicate key exception so someone else has already inserted it
+        return NullSafe.test(throwable, e ->
+                e instanceof DataAccessException
+                        && e.getCause() instanceof SQLIntegrityConstraintViolationException sqlEx
+                        && sqlEx.getErrorCode() == 1062);
+    }
+
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-    public static enum BooleanOperator {
+    public enum BooleanOperator {
         AND,
         OR;
     }

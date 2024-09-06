@@ -1,7 +1,9 @@
 package stroom.pipeline.refdata;
 
 import stroom.meta.api.EffectiveMeta;
+import stroom.meta.api.EffectiveMetaSet;
 import stroom.pipeline.shared.data.PipelineReference;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -12,7 +14,6 @@ import jakarta.inject.Inject;
 
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -27,43 +28,42 @@ public class EffectiveStreamService {
         this.effectiveStreamCache = effectiveStreamCache;
     }
 
-    NavigableSet<EffectiveMeta> get(final EffectiveStreamKey effectiveStreamKey) {
-        return effectiveStreamCache.get(effectiveStreamKey);
-    }
+//    NavigableSet<EffectiveMeta> get(final EffectiveStreamKey effectiveStreamKey) {
+//        return effectiveStreamCache.get(effectiveStreamKey);
+//    }
 
     /**
      * Find the most recent stream that is older than or equal to {@code time} or empty if
      * there isn't one
      */
     Optional<EffectiveMeta> determineEffectiveStream(final PipelineReference pipelineReference,
-                                                       final long time,
-                                                       final ReferenceDataResult result) {
+                                                     final long time,
+                                                     final ReferenceDataResult result) {
 
         LOGGER.trace(() -> LogUtil.message("determineEffectiveStream({}, {})",
                 pipelineReference, Instant.ofEpochMilli(time)));
 
         // Create a key to find a set of effective times in the pool.
-        final EffectiveStreamKey effectiveStreamKey = EffectiveStreamKey.forLookupTime(
-                pipelineReference.getFeed().getName(),
-                pipelineReference.getStreamType(),
-                time);
+        final String feedName = pipelineReference.getFeed().getName();
+        final String streamType = pipelineReference.getStreamType();
+        final EffectiveStreamKey effectiveStreamKey = EffectiveStreamKey.forLookupTime(feedName, streamType, time);
 
         // Try and fetch a tree set of effective streams for this key.
-        final NavigableSet<EffectiveMeta> effectiveStreams = effectiveStreamCache.get(effectiveStreamKey);
+        final EffectiveMetaSet effectiveStreams = effectiveStreamCache.get(effectiveStreamKey);
 
-        final EffectiveMeta effectiveStream;
+        final Optional<EffectiveMeta> optEffectiveStream;
 
-        if (effectiveStreams != null && effectiveStreams.size() > 0) {
+        if (NullSafe.hasItems(effectiveStreams)) {
             result.logLazyTemplate(Severity.INFO,
                     "Found {} potential effective stream{} (spanning {} => {}) " +
                             "for feed: '{}', type: '{}', window: {} => {}",
                     () -> Arrays.asList(
                             effectiveStreams.size(),
                             StringUtil.pluralSuffix(effectiveStreams.size()),
-                            Instant.ofEpochMilli(effectiveStreams.first().getEffectiveMs()),
-                            Instant.ofEpochMilli(effectiveStreams.last().getEffectiveMs()),
-                            effectiveStreamKey.getFeed(),
-                            effectiveStreamKey.getStreamType(),
+                            effectiveStreams.first().map(EffectiveMeta::getEffectiveTime),
+                            effectiveStreams.last().map(EffectiveMeta::getEffectiveTime),
+                            feedName,
+                            streamType,
                             Instant.ofEpochMilli(effectiveStreamKey.getFromMs()),
                             Instant.ofEpochMilli(effectiveStreamKey.getToMs())));
 
@@ -77,22 +77,26 @@ public class EffectiveStreamService {
 
             // Try and find the stream before the requested time that is less
             // than or equal to it.
-            effectiveStream = EffectiveMeta.findLatestBefore(time, effectiveStreams);
+            optEffectiveStream = effectiveStreams.findLatestBefore(time);
         } else {
             // No need to log here as it will get logged by the caller
-            effectiveStream = null;
+            optEffectiveStream = Optional.empty();
         }
 
-        if (effectiveStream == null) {
+        if (optEffectiveStream.isEmpty()) {
             result.logLazyTemplate(
                     Severity.WARNING,
-                    "No effective stream can be found for feed '{}' and lookup time '{}'. " +
+                    "No effective stream can be found for feed '{}', stream type '{}' " +
+                            "and lookup time '{}'. " +
                             "Check a reference data stream exists with an effective time that is before the " +
                             "lookup time.",
-                    () -> Arrays.asList(pipelineReference.getFeed().getName(),
+                    () -> Arrays.asList(
+                            feedName,
+                            streamType,
                             Instant.ofEpochMilli(time).toString()));
         }
-        return Optional.ofNullable(effectiveStream);
+        LOGGER.debug("Determined optEffectiveStream to be {}", optEffectiveStream);
+        return optEffectiveStream;
     }
 
     /**

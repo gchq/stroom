@@ -33,7 +33,7 @@ public class TestIndexShardSearcher extends AbstractCoreIntegrationTest {
 //        // Create an index
 //        final DocRef indexRef = commonTestScenarioCreator.createIndex("TEST_2010a");
 //        final IndexDoc index = indexStore.readDocument(indexRef);
-//        final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
+//        final IndexShardKey indexShardKey = IndexShardKey.createTestKey(index);
 //
 //        // Create and close writer.
 //        final IndexShardWriter writer = indexShardWriterCache.getWriterByShardKey(indexShardKey);
@@ -154,7 +154,7 @@ public class TestIndexShardSearcher extends AbstractCoreIntegrationTest {
 //                    indexFieldsMap,
 //                    1024,
 //                    DateTimeSettings.builder().build());
-//            final TextField textField = new TextField("test");
+//            final QueryField textField = QueryField.createText("test");
 //            final ExpressionOperator expression = ExpressionOperator
 //                    .builder()
 //                    .addTerm(textField, Condition.EQUALS, "test")

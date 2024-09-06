@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class CompletionValue {
+public class CompletionValue implements CompletionItem {
 
     /**
      * The caption of the completion (this is the left-aligned autocompletion name on the left side of items in the
@@ -74,6 +74,7 @@ public class CompletionValue {
         this.tooltip = tooltip;
     }
 
+    @Override
     public String getCaption() {
         return caption;
     }
@@ -82,14 +83,17 @@ public class CompletionValue {
         return value;
     }
 
+    @Override
     public String getMeta() {
         return meta;
     }
 
+    @Override
     public int getScore() {
         return score;
     }
 
+    @Override
     public String getTooltip() {
         return tooltip;
     }

@@ -20,7 +20,7 @@ import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.feed.client.presenter.SupportedRetentionAge;
 import stroom.index.client.presenter.IndexSettingsPresenter.IndexSettingsView;
 import stroom.index.client.presenter.IndexSettingsUiHandlers;
-import stroom.index.shared.IndexDoc.PartitionBy;
+import stroom.index.shared.LuceneIndexDoc.PartitionBy;
 import stroom.item.client.SelectionBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 

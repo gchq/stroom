@@ -4,7 +4,8 @@ import stroom.query.language.functions.ref.CountIterationReference;
 import stroom.query.language.functions.ref.CountReference;
 import stroom.query.language.functions.ref.DoubleListReference;
 import stroom.query.language.functions.ref.FieldValReference;
-import stroom.query.language.functions.ref.MyByteBufferOutput;
+import stroom.query.language.functions.ref.KryoDataReader;
+import stroom.query.language.functions.ref.KryoDataWriter;
 import stroom.query.language.functions.ref.RandomValReference;
 import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.functions.ref.StringListReference;
@@ -12,6 +13,8 @@ import stroom.query.language.functions.ref.ValListReference;
 import stroom.query.language.functions.ref.ValReference;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
 
+import com.esotericsoftware.kryo.io.ByteBufferInput;
+import com.esotericsoftware.kryo.unsafe.UnsafeByteBufferOutput;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
@@ -125,17 +128,19 @@ public class TestValueReferenceIndex {
 
     private void testWriteRead(final ValueReferenceIndex valueReferenceIndex, final StoredValues storedValues) {
         final ByteBuffer byteBuffer1 = write(valueReferenceIndex, storedValues);
-        StoredValues storedValues2 = valueReferenceIndex.read(byteBuffer1);
+        StoredValues storedValues2 = valueReferenceIndex.read(new KryoDataReader(new ByteBufferInput(byteBuffer1)));
         final ByteBuffer byteBuffer2 = write(valueReferenceIndex, storedValues2);
-        StoredValues storedValues3 = valueReferenceIndex.read(byteBuffer2);
+        StoredValues storedValues3 = valueReferenceIndex.read(new KryoDataReader(new ByteBufferInput(byteBuffer2)));
     }
 
     private ByteBuffer write(final ValueReferenceIndex valueReferenceIndex, final StoredValues storedValues) {
-        try (final MyByteBufferOutput output = new MyByteBufferOutput(16, -1)) {
-            valueReferenceIndex.write(storedValues, output);
-            output.flush();
-
-            return output.getByteBuffer().flip();
+        final ByteBuffer byteBuffer;
+        try (final UnsafeByteBufferOutput output = new UnsafeByteBufferOutput(16, -1)) {
+            try (final KryoDataWriter writer = new KryoDataWriter(output)) {
+                valueReferenceIndex.write(storedValues, writer);
+            }
+            byteBuffer = output.getByteBuffer();
         }
+        return byteBuffer.flip();
     }
 }

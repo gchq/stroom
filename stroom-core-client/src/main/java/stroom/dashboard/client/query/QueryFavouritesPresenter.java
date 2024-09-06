@@ -21,7 +21,6 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.dashboard.shared.StoredQueryResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
@@ -30,9 +29,8 @@ import stroom.query.client.ExpressionTreePresenter;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -46,7 +44,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesPresenter.QueryFavouritesView> {
+public class QueryFavouritesPresenter
+        extends MyPresenterWidget<QueryFavouritesPresenter.QueryFavouritesView> {
 
     private static final StoredQueryResource STORED_QUERY_RESOURCE = GWT.create(StoredQueryResource.class);
 
@@ -107,31 +106,25 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
         registerHandler(selectionModel.addDoubleSelectHandler(event -> hide()));
         registerHandler(createButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
-                namePresenter.show("", "Create New Favourite", entityName -> {
-                    final Query query = Query.builder()
-                            .dataSource(currentDataSource)
-                            .expression(currentExpression)
-                            .build();
-                    final StoredQuery queryEntity = new StoredQuery();
-                    queryEntity.setQuery(query);
-                    queryEntity.setDashboardUuid(currentDashboardUuid);
-                    queryEntity.setComponentId(queryPresenter.getId());
-                    queryEntity.setName(entityName);
-                    queryEntity.setFavourite(true);
+                final Query query = Query.builder()
+                        .dataSource(currentDataSource)
+                        .expression(currentExpression)
+                        .build();
+                final StoredQuery queryEntity = new StoredQuery();
+                queryEntity.setQuery(query);
+                queryEntity.setDashboardUuid(currentDashboardUuid);
+                queryEntity.setComponentId(queryPresenter.getId());
+                queryEntity.setName("");
+                queryEntity.setFavourite(true);
 
-                    create(queryEntity);
-                });
+                namePresenter.show(queryEntity, result -> refresh(false));
             }
         }));
         registerHandler(editButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
                 final StoredQuery query = selectionModel.getSelectedObject();
                 if (query != null) {
-                    namePresenter.show(query.getName(), "Rename Favourite", entityName -> {
-                        query.setName(entityName);
-                        query.setFavourite(true);
-                        update(query);
-                    });
+                    namePresenter.show(query, result -> refresh(false));
                 }
             }
         }));
@@ -167,10 +160,11 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
         criteria.setComponentId(queryPresenter.getId());
         criteria.setSort(FindStoredQueryCriteria.FIELD_NAME, false, true);
         criteria.setFavourite(true);
-        criteria.setPageRequest(new PageRequest(0, 100));
+        criteria.setPageRequest(PageRequest.createDefault());
 
-        final Rest<ResultPage<StoredQuery>> rest = restFactory.create();
-        rest
+        restFactory
+                .create(STORED_QUERY_RESOURCE)
+                .method(res -> res.find(criteria))
                 .onSuccess(result -> {
                     selectionModel.clear();
                     getView().getCellList().setRowData(result.getValues());
@@ -196,42 +190,21 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
                                 .fire();
                     }
                 })
-                .call(STORED_QUERY_RESOURCE)
-                .find(criteria);
+                .taskListener(this)
+                .exec();
     }
 
     private void hide() {
-        HidePopupEvent.builder(this).fire();
-    }
-
-    private void create(final StoredQuery query) {
-        final Rest<StoredQuery> rest = restFactory.create();
-        rest
-                .onSuccess(result -> {
-                    refresh(false);
-                    namePresenter.hide();
-                })
-                .call(STORED_QUERY_RESOURCE)
-                .create(query);
-    }
-
-    private void update(final StoredQuery query) {
-        final Rest<StoredQuery> rest = restFactory.create();
-        rest
-                .onSuccess(result -> {
-                    refresh(false);
-                    namePresenter.hide();
-                })
-                .call(STORED_QUERY_RESOURCE)
-                .update(query);
+        HidePopupRequestEvent.builder(this).fire();
     }
 
     private void delete(final StoredQuery query) {
-        final Rest<StoredQuery> rest = restFactory.create();
-        rest
+        restFactory
+                .create(STORED_QUERY_RESOURCE)
+                .method(res -> res.delete(query))
                 .onSuccess(result -> refresh(false))
-                .call(STORED_QUERY_RESOURCE)
-                .delete(query);
+                .taskListener(this)
+                .exec();
     }
 
     public interface QueryFavouritesView extends View {

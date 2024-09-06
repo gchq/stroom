@@ -237,8 +237,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             final QueryData findStreamQueryData = QueryData.builder()
                     .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                     .expression(ExpressionOperator.builder()
-                            .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
-                            .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, streamType)
+                            .addTextTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
+                            .addTextTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, streamType)
                             .build())
                     .build();
 
@@ -312,8 +312,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     final QueryData findStreamQueryData = QueryData.builder()
                             .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                             .expression(ExpressionOperator.builder()
-                                    .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
-                                    .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, streamType)
+                                    .addTextTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
+                                    .addTextTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, streamType)
                                     .build())
                             .build();
 
@@ -570,10 +570,10 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 pipelineRef.getName());
 
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.FEED, Condition.EQUALS, feedName)
+                .addTextTerm(MetaFields.FEED, Condition.EQUALS, feedName)
                 .addOperator(ExpressionOperator.builder().op(Op.OR)
-                        .addTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
-                        .addTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .addTextTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                        .addTextTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
                 .build();
 
@@ -611,12 +611,12 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final SharedStepData stepData = response.getStepData();
         for (final String elementId : stepData.getElementMap().keySet()) {
             final SharedElementData elementData = stepData.getElementData(elementId);
-            assertThat(elementData.getOutputIndicators() != null
-                    && elementData.getOutputIndicators().getMaxSeverity() != null).as(
-                    "Translation stepping has output indicators.").isFalse();
-            assertThat(elementData.getCodeIndicators() != null
-                    && elementData.getCodeIndicators().getMaxSeverity() != null).as(
-                    "Translation stepping has code indicators.").isFalse();
+            assertThat(elementData.getIndicators() != null
+                    && elementData.getIndicators().getMaxSeverity() != null).as(
+                    "Translation stepping has indicators.").isFalse();
+//            assertThat(elementData.getCodeIndicators() != null
+//                    && elementData.getCodeIndicators().getMaxSeverity() != null).as(
+//                    "Translation stepping has code indicators.").isFalse();
 
             final String stem = feedName + "~STEPPING~" + elementId;
             if (elementData.getInput() != null) {
@@ -655,8 +655,9 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 for (final String elementId : stepData.getElementMap().keySet()) {
                     String input = null;
                     String output = null;
-                    Indicators codeIndicators = null;
-                    Indicators outputIndicators = null;
+//                    Indicators codeIndicators = null;
+//                    Indicators outputIndicators = null;
+                    Indicators indicators = null;
 
                     // Get existing data.
                     if (newResponse != null) {
@@ -666,8 +667,9 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                             if (existingElementData != null) {
                                 input = existingElementData.getInput();
                                 output = existingElementData.getOutput();
-                                codeIndicators = existingElementData.getCodeIndicators();
-                                outputIndicators = existingElementData.getOutputIndicators();
+//                                codeIndicators = existingElementData.getCodeIndicators();
+//                                outputIndicators = existingElementData.getOutputIndicators();
+                                indicators = existingElementData.getIndicators();
                             }
                         }
                     }
@@ -687,20 +689,20 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                             output += "\n" + elementData.getOutput();
                         }
 
-                        if (codeIndicators == null) {
-                            codeIndicators = elementData.getCodeIndicators();
+                        if (indicators == null) {
+                            indicators = elementData.getIndicators();
                         } else {
-                            codeIndicators.addAll(elementData.getCodeIndicators());
+                            indicators.addAll(elementData.getIndicators());
                         }
 
-                        if (outputIndicators == null) {
-                            outputIndicators = elementData.getOutputIndicators();
-                        } else {
-                            outputIndicators.addAll(elementData.getOutputIndicators());
-                        }
+//                        if (outputIndicators == null) {
+//                            outputIndicators = elementData.getOutputIndicators();
+//                        } else {
+//                            outputIndicators.addAll(elementData.getOutputIndicators());
+//                        }
 
-                        final SharedElementData newElementData = new SharedElementData(input, output, codeIndicators,
-                                outputIndicators, elementData.isFormatInput(), elementData.isFormatOutput());
+                        final SharedElementData newElementData = new SharedElementData(
+                                input, output, indicators, elementData.isFormatInput(), elementData.isFormatOutput());
                         SharedStepData newStepData = newResponse.getStepData();
                         if (newStepData == null) {
                             newStepData = new SharedStepData(stepResponse.getStepData().getSourceLocation(),

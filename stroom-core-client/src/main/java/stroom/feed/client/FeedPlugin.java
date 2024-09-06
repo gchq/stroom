@@ -18,7 +18,7 @@
 package stroom.feed.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -29,6 +29,7 @@ import stroom.feed.client.presenter.FeedPresenter;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedResource;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.task.client.TaskListener;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -66,26 +67,30 @@ public class FeedPlugin extends DocumentPlugin<FeedDoc> {
     @Override
     public void load(final DocRef docRef,
                      final Consumer<FeedDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<FeedDoc> rest = restFactory.create();
-        rest
+                     final RestErrorHandler errorHandler,
+                     final TaskListener taskListener) {
+        restFactory
+                .create(FEED_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
-                .call(FEED_RESOURCE)
-                .fetch(docRef.getUuid());
+                .onFailure(errorHandler)
+                .taskListener(taskListener)
+                .exec();
     }
 
     @Override
     public void save(final DocRef docRef,
                      final FeedDoc document,
                      final Consumer<FeedDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<FeedDoc> rest = restFactory.create();
-        rest
+                     final RestErrorHandler errorHandler,
+                     final TaskListener taskListener) {
+        restFactory
+                .create(FEED_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
-                .call(FEED_RESOURCE)
-                .update(document.getUuid(), document);
+                .onFailure(errorHandler)
+                .taskListener(taskListener)
+                .exec();
     }
 
     @Override

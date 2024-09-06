@@ -8,16 +8,26 @@ import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.TaskStatus;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
 import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 
+@ExtendWith(MockitoExtension.class)
 class TestProcessorTaskDeleteExecutorImpl extends AbstractProcessorTest {
+
+    @Captor
+    private ArgumentCaptor<Set<String>> filterUuidsCaptor;
 
     Processor processor1;
     Processor processor2;
@@ -130,6 +140,9 @@ class TestProcessorTaskDeleteExecutorImpl extends AbstractProcessorTest {
         final ProcessorTaskDeleteExecutor processorTaskDeleteExecutor = getInjector()
                 .getInstance(ProcessorTaskDeleteExecutor.class);
 
+//        Mockito.verify(mockDocumentPermissionService, Mockito.times(1))
+//                .deleteDocumentPermissions(filterUuidsCaptor.capture());
+
         processorTaskDeleteExecutor.delete(threshold);
 
         dumpProcessorTable();
@@ -154,6 +167,8 @@ class TestProcessorTaskDeleteExecutorImpl extends AbstractProcessorTest {
                 .isEqualTo(1);
         assertThat(getProcessorTaskCount(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue())))
                 .isEqualTo(0);
+
+//        final List<String> filterUuids = filterUuidsCaptor.getValue();
     }
 
     @Test
@@ -191,5 +206,14 @@ class TestProcessorTaskDeleteExecutorImpl extends AbstractProcessorTest {
                 .isEqualTo(0);
         assertThat(getProcessorTaskCount(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue())))
                 .isEqualTo(0);
+
+        Mockito.verify(mockDocumentPermissionService, Mockito.times(1))
+                .deleteDocumentPermissions(filterUuidsCaptor.capture());
+
+        // Make sure we ask to delete the perms for the phys deleted filter
+        final Set<String> filterUuids = filterUuidsCaptor.getValue();
+        assertThat(filterUuids)
+                .hasSize(1)
+                .containsExactly(processorFilter1a.getUuid());
     }
 }

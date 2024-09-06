@@ -218,8 +218,7 @@ public class TestLmdbEnv {
 
             final LmdbEnv lmdbEnv = new LmdbEnvFactory(
                     pathCreator,
-                    tempDirProvider,
-                    LmdbLibraryConfig::new)
+                    new LmdbLibrary(pathCreator, tempDirProvider, LmdbLibraryConfig::new))
                     .builder(dbDir)
                     .withMapSize(ByteSize.ofKibibytes(200))
                     .withMaxDbCount(1)
@@ -286,7 +285,8 @@ public class TestLmdbEnv {
         final Path dbDir = Files.createTempDirectory("stroom");
         final PathCreator pathCreator = new SimplePathCreator(() -> dbDir, () -> dbDir);
         final TempDirProvider tempDirProvider = () -> dbDir;
-        try (LmdbEnv lmdbEnv = new LmdbEnvFactory(pathCreator, tempDirProvider, LmdbLibraryConfig::new)
+        try (LmdbEnv lmdbEnv = new LmdbEnvFactory(pathCreator,
+                new LmdbLibrary(pathCreator, tempDirProvider, LmdbLibraryConfig::new))
                 .builder(dbDir)
                 .withMapSize(ByteSize.ofKibibytes(30))
                 .withMaxDbCount(1)
@@ -338,7 +338,8 @@ public class TestLmdbEnv {
         final PathCreator pathCreator = new SimplePathCreator(() -> dbDir, () -> dbDir);
         final TempDirProvider tempDirProvider = () -> dbDir;
 
-        final LmdbEnv lmdbEnv = new LmdbEnvFactory(pathCreator, tempDirProvider, LmdbLibraryConfig::new)
+        final LmdbEnv lmdbEnv = new LmdbEnvFactory(pathCreator,
+                new LmdbLibrary(pathCreator, tempDirProvider, LmdbLibraryConfig::new))
                 .builder(dbDir)
                 .withMapSize(DB_MAX_SIZE)
                 .withMaxDbCount(1)

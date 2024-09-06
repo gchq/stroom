@@ -1,1 +1,0 @@
-export { MetaDetails } from "./MetaDetails";

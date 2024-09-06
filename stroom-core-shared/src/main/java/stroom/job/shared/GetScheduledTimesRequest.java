@@ -16,51 +16,43 @@
 
 package stroom.job.shared;
 
-import stroom.job.shared.JobNode.JobType;
+import stroom.util.shared.scheduler.Schedule;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.v3.oas.annotations.media.Schema;
 
-@Schema
 @JsonInclude(Include.NON_NULL)
 public class GetScheduledTimesRequest {
 
     @JsonProperty
-    private final JobType jobType;
+    private final Schedule schedule;
     @JsonProperty
     private final Long scheduleReferenceTime;
     @JsonProperty
-    private final Long lastExecutedTime;
-    @JsonProperty
-    private final String schedule;
+    private final ScheduleRestriction scheduleRestriction;
 
+
+    @SuppressWarnings("checkstyle:lineLength")
     @JsonCreator
-    public GetScheduledTimesRequest(@JsonProperty("jobType") final JobType jobType,
+    public GetScheduledTimesRequest(@JsonProperty("schedule") final Schedule schedule,
                                     @JsonProperty("scheduleReferenceTime") final Long scheduleReferenceTime,
-                                    @JsonProperty("lastExecutedTime") final Long lastExecutedTime,
-                                    @JsonProperty("schedule") final String schedule) {
-        this.jobType = jobType;
-        this.scheduleReferenceTime = scheduleReferenceTime;
-        this.lastExecutedTime = lastExecutedTime;
+                                    @JsonProperty("scheduleRestriction") final ScheduleRestriction scheduleRestriction) {
         this.schedule = schedule;
+        this.scheduleReferenceTime = scheduleReferenceTime;
+        this.scheduleRestriction = scheduleRestriction;
     }
 
-    public JobType getJobType() {
-        return jobType;
+    public Schedule getSchedule() {
+        return schedule;
     }
 
     public Long getScheduleReferenceTime() {
         return scheduleReferenceTime;
     }
 
-    public Long getLastExecutedTime() {
-        return lastExecutedTime;
-    }
-
-    public String getSchedule() {
-        return schedule;
+    public ScheduleRestriction getScheduleRestriction() {
+        return scheduleRestriction;
     }
 }

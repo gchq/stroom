@@ -17,51 +17,55 @@
   ~ limitations under the License.
   -->
 
-<!-- <html class="stroom stroom-theme-dark"> -->
-<html class="stroom">
+<html class="@ROOT_CLASS@">
   <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <title>@TITLE@</title>
 
-    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
-    <link rel="stylesheet" href="css/app.css" type="text/css" />
+    <link rel="icon" href="ui/favicon.svg" />
+    <link rel="stylesheet" href="ui/css/app.css" type="text/css" />
 
-    <script type="text/javascript" src="script/moment/moment.min.js" charset="utf-8"></script>
-    <script type="text/javascript" src="script/moment/moment-timezone-with-data.min.js" charset="utf-8"></script>
-    <script type="text/javascript" src="script/showdown/showdown.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/script/moment/moment.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/script/moment/moment-timezone-with-data.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/script/showdown/showdown.min.js" charset="utf-8"></script>
     <!-- data-manual attr set to stop prismjs from trying to highlight all on page load as there will
     never be anything on the page at load time. Instead we call prismjs programmatically -->
-    <script type="text/javascript" src="script/prismjs/prism.js" data-manual charset="utf-8"></script>
-    <script type="text/javascript" src="script/global-resize-observer.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/script/prismjs/prism.js" data-manual charset="utf-8"></script>
+    <script type="text/javascript" src="ui/script/global-resize-observer.js" charset="utf-8"></script>
+
+    <!-- Compute password strength -->
+    <script type="text/javascript" src="ui/script/zxcvbn/zxcvbn.js" charset="utf-8"></script>
 
     <!-- It would seem you need to included any 'ext-' files and any 'mode-' files, not the snippet ones -->
-    <script type="text/javascript" src="stroom/ace/ace.js" charset="utf-8"></script>
-    <script type="text/javascript" src="stroom/ace/ext-beautify.js" charset="utf-8"></script>
-    <script type="text/javascript" src="stroom/ace/ext-language_tools.js" charset="utf-8"></script>
-    <script type="text/javascript" src="stroom/ace/ext-searchbox.js" charset="utf-8"></script>
-    <script type="text/javascript" src="stroom/ace/mode-javascript.js" charset="utf-8"></script>
-    <script type="text/javascript" src="stroom/ace/mode-json.js" charset="utf-8"></script>
-    <script type="text/javascript" src="stroom/ace/mode-markdown.js" charset="utf-8"></script>
-    <script type="text/javascript" src="stroom/ace/mode-properties.js" charset="utf-8"></script>
-    <script type="text/javascript" src="stroom/ace/mode-stroom_expression.js" charset="utf-8"></script>
-    <script type="text/javascript" src="stroom/ace/mode-stroom_query.js" charset="utf-8"></script>
-    <script type="text/javascript" src="stroom/ace/mode-stroom_hex_dump.js" charset="utf-8"></script>
-    <script type="text/javascript" src="stroom/ace/mode-stroom_stepper.js" charset="utf-8"></script>
-    <script type="text/javascript" src="stroom/ace/mode-text.js" charset="utf-8"></script>
-    <script type="text/javascript" src="stroom/ace/mode-xml.js" charset="utf-8"></script>
-    <script type="text/javascript" src="stroom/ace/mode-yaml.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/ace.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/beautify/beautify.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/ext-language_tools.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/ext-searchbox.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/mode-javascript.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/mode-json.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/mode-markdown.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/mode-properties.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/mode-stroom_data_splitter.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/mode-stroom_expression.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/mode-stroom_fragment_parser.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/mode-stroom_query.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/mode-stroom_hex_dump.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/mode-stroom_stepper.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/mode-text.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/mode-xml.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/mode-yaml.js" charset="utf-8"></script>
+
+    <script type="text/javascript" src="ui/stroom/ace/mode-stroom_combined_parser.js" charset="utf-8"></script>
 
     <script type="text/javascript" src='@SCRIPT@'></script>
   </head>
 
   <!-- Set this to true to enable the browser's context menu -->
   <!-- <body class="stroom-body" oncontextmenu="return true;"> -->
-    <body class="stroom-body" oncontextmenu="@ON_CONTEXT_MENU@">
+  <body class="stroom-body" oncontextmenu="@ON_CONTEXT_MENU@">
       <!-- Add history support -->
     <iframe src="javascript:''" id="__gwt_historyFrame" tabIndex='-1' style="position:absolute;width:0;height:0;border:0"></iframe>
 
-    <div class="stroom-background">
-    </div>
     <div id="loading">
 	  <div id="loadingBox">
         <div id="loadingLeft">

@@ -17,7 +17,6 @@
 package stroom.widget.popup.client.view;
 
 import stroom.data.grid.client.Glass;
-import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -30,14 +29,16 @@ import com.google.gwt.user.client.ui.PopupPanel;
 
 public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
 
-    private final PopupType popupType;
+    final DialogActionUiHandlers dialogActionHandler;
     private final Glass dragGlass = new Glass(
             "popupPanel-dragGlass",
             "popupPanel-dragGlassVisible");
 
-    public AbstractPopupPanel(final boolean autoHide, final boolean modal, final PopupType popupType) {
+    public AbstractPopupPanel(final DialogActionUiHandlers dialogActionHandler,
+                              final boolean autoHide,
+                              final boolean modal) {
         super(autoHide, modal);
-        this.popupType = popupType;
+        this.dialogActionHandler = dialogActionHandler;
     }
 
     public Glass getDragGlass() {
@@ -53,8 +54,9 @@ public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
     protected void onPreviewNativeEvent(final NativePreviewEvent event) {
         super.onPreviewNativeEvent(event);
 
+        final NativeEvent nativeEvent = event.getNativeEvent();
+        final Action action = KeyBinding.test(nativeEvent);
         if (event.getTypeInt() == Event.ONKEYDOWN) {
-            final NativeEvent nativeEvent = event.getNativeEvent();
             final EventTarget eventTarget = nativeEvent.getEventTarget();
             final boolean isEditor;
             if (eventTarget != null) {
@@ -69,13 +71,16 @@ public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
             }
 
             if (!isEditor) {
-                final Action action = KeyBinding.getAction(nativeEvent);
                 if (action != null) {
                     switch (action) {
                         case CLOSE:
+                            // Cancel the event so ancestors don't also handle it
+                            event.cancel();
                             onCloseAction();
                             break;
                         case OK:
+                            // Cancel the event so ancestors don't also handle it
+                            event.cancel();
                             onOkAction();
                             break;
                     }
@@ -84,9 +89,15 @@ public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
         }
     }
 
-    protected void onCloseAction() {
+    private void onCloseAction() {
+        if (dialogActionHandler != null) {
+            dialogActionHandler.onDialogAction(DialogAction.CLOSE);
+        }
     }
 
-    protected void onOkAction() {
+    private void onOkAction() {
+        if (dialogActionHandler != null) {
+            dialogActionHandler.onDialogAction(DialogAction.OK);
+        }
     }
 }

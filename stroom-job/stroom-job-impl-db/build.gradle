@@ -6,6 +6,7 @@ dependencies {
     implementation project(':stroom-db-util')
     implementation project(':stroom-job:stroom-job-impl')
     implementation project(':stroom-job:stroom-job-impl-db-jooq')
+    implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
@@ -14,6 +15,7 @@ dependencies {
     implementation libs.jakarta_validation_api
     implementation libs.jakarta_inject
     implementation libs.jooq
+    implementation libs.slf4j_api
 
     runtimeOnly libs.mysql_connector_java
 

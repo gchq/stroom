@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util;
 
 import stroom.util.io.ByteSize;
@@ -43,6 +59,30 @@ public class NullSafe {
         } else {
             final T2 val2 = getter.apply(val1);
             return Objects.equals(val2, other);
+        }
+    }
+
+    /**
+     * Test if the properties (accessed using the same getter for both) of two
+     * objects of the same class are equal in a null safe way.
+     *
+     * @return True if val1 and val2 are both null or if the results of applying {@code getter}
+     * to va1 and val2 are equal.
+     */
+    public static <T, R> boolean equalProperties(final T val1,
+                                                 final T val2,
+                                                 final Function<T, R> getter) {
+        if (val1 == null && val2 == null) {
+            return true;
+        } else if (val1 != null && val2 == null) {
+            return false;
+        } else if (val1 == null) {
+            return false;
+        } else {
+            Objects.requireNonNull(getter);
+            final R result1 = getter.apply(val1);
+            final R result2 = getter.apply(val2);
+            return Objects.equals(result1, result2);
         }
     }
 
@@ -143,6 +183,31 @@ public class NullSafe {
     }
 
     /**
+     * @return True if str is non-null and not blank
+     */
+    public static boolean isNonBlankString(final String str) {
+        return str != null && !str.isBlank();
+    }
+
+    /**
+     * @return str if it is non-null and non-blank, else return other
+     */
+    public static String nonBlankStringElse(final String str, final String other) {
+        return str != null && !str.isBlank()
+                ? str
+                : other;
+    }
+
+    /**
+     * @return str if it is non-null and non-blank, else return the value supplied by otherSupplier
+     */
+    public static String nonBlankStringElseGet(final String str, final Supplier<String> otherSupplier) {
+        return str != null && !str.isBlank()
+                ? str
+                : Objects.requireNonNull(otherSupplier).get();
+    }
+
+    /**
      * @return True if str is null or empty
      */
     public static boolean isEmptyString(final String str) {
@@ -150,10 +215,58 @@ public class NullSafe {
     }
 
     /**
+     * @return True if str is non-null and not empty
+     */
+    public static boolean isNonEmptyString(final String str) {
+        return str != null && !str.isEmpty();
+    }
+
+    /**
+     * @return str trimmed or an empty string if str is null
+     */
+    public static String trim(final String str) {
+        return str != null
+                ? str.trim()
+                : "";
+    }
+
+    /**
      * @return True if val is not null and true
      */
     public static boolean isTrue(final Boolean val) {
         return val != null && val;
+    }
+
+    /**
+     * @return True if val is not null and the result of applying getter to value
+     * is non-null and true
+     */
+    public static <T> boolean isTrue(final T val, final Function<T, Boolean> getter) {
+        if (val == null) {
+            return false;
+        } else {
+            Objects.requireNonNull(getter);
+            final Boolean bool = getter.apply(val);
+            return bool != null && bool;
+        }
+    }
+
+    /**
+     * @return The un-boxed value if non-null, else zero.
+     */
+    public static int getInt(final Integer val) {
+        return val != null
+                ? val
+                : 0;
+    }
+
+    /**
+     * @return The un-boxed value if non-null, else zero.
+     */
+    public static long getLong(final Long val) {
+        return val != null
+                ? val
+                : 0;
     }
 
     public static Optional<String> nonBlank(final String str) {
@@ -347,13 +460,29 @@ public class NullSafe {
     public static <T> Stream<T> stream(final T... items) {
         if (items == null || items.length == 0) {
             return Stream.empty();
+        } else if (items.length == 1) {
+            return Stream.of(items[0]);
         } else {
             return Arrays.stream(items);
         }
     }
 
     /**
-     * Returns the passed list if it is non-null else returns an empty list.
+     * Equivalent to {@link Iterable#forEach(Consumer)}, except consumer is only called for each non-null
+     * item in the iterable. If iterable or consumer are null it is a no-op.
+     */
+    public static <T> void forEach(final Iterable<T> iterable, final Consumer<? super T> consumer) {
+        if (iterable != null && consumer != null) {
+            for (final T item : iterable) {
+                if (item != null) {
+                    consumer.accept(item);
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns the passed list if it is non-null else returns an immutable empty list.
      */
     public static <L extends List<T>, T> List<T> list(final L list) {
         return list != null
@@ -378,7 +507,6 @@ public class NullSafe {
      * @return A non-null list of items. List should be assumed to be immutable.
      */
     @SafeVarargs
-    @SuppressWarnings("varargs")
     public static <T> List<T> asList(final T... items) {
         return items == null || items.length == 0
                 ? Collections.emptyList()
@@ -391,6 +519,7 @@ public class NullSafe {
      *
      * @return A non-null unmodifiable set of items.
      */
+    @SafeVarargs
     public static <T> Set<T> asSet(final T... items) {
         return items == null || items.length == 0
                 ? Collections.emptySet()
@@ -598,6 +727,17 @@ public class NullSafe {
                                    final Consumer<T> consumer) {
         if (value != null && consumer != null) {
             consumer.accept(value);
+        }
+    }
+
+    /**
+     * Return the value supplier or null if supplier is itself null.
+     */
+    public static <T> T supply(final Supplier<T> supplier) {
+        if (supplier != null) {
+            return supplier.get();
+        } else {
+            return null;
         }
     }
 

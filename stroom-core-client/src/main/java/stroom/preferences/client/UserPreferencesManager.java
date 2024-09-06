@@ -1,25 +1,26 @@
 package stroom.preferences.client;
 
 import stroom.config.global.shared.UserPreferencesResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.CurrentPreferences;
-import stroom.expression.api.TimeZone.Use;
+import stroom.expression.api.UserTimeZone;
+import stroom.expression.api.UserTimeZone.Use;
+import stroom.task.client.TaskListener;
+import stroom.ui.config.shared.ThemeCssUtil;
 import stroom.ui.config.shared.Themes;
 import stroom.ui.config.shared.Themes.ThemeType;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.GwtNullSafe;
+import stroom.widget.datepicker.client.ClientTimeZone;
+import stroom.widget.util.client.ClientStringUtil;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.RootPanel;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.StringJoiner;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -32,9 +33,6 @@ public class UserPreferencesManager {
     private final RestFactory restFactory;
     private final CurrentPreferences currentPreferences;
 
-    private static final Map<String, String> densityMap = new HashMap<>();
-    private static final Map<String, String> fontMap = new HashMap<>();
-    private static final Map<String, String> fontSizeMap = new HashMap<>();
     private UserPreferences currentUserPreferences;
 
     @Inject
@@ -42,62 +40,118 @@ public class UserPreferencesManager {
                                   final CurrentPreferences currentPreferences) {
         this.restFactory = restFactory;
         this.currentPreferences = currentPreferences;
-
-        densityMap.put("Comfortable", "stroom-density-comfortable");
-        densityMap.put("Compact", "stroom-density-compact");
-
-        fontMap.put("Arial", "stroom-font-arial");
-        fontMap.put("Open Sans", "stroom-font-open-sans");
-        fontMap.put("Roboto", "stroom-font-roboto");
-        fontMap.put("Tahoma", "stroom-font-tahoma");
-        fontMap.put("Verdana", "stroom-font-verdana");
-
-        fontSizeMap.put("Small", "stroom-font-size-small");
-        fontSizeMap.put("Medium", "stroom-font-size-medium");
-        fontSizeMap.put("Large", "stroom-font-size-large");
     }
 
-    public void fetch(final Consumer<UserPreferences> consumer) {
-        final Rest<UserPreferences> rest = restFactory.create();
-        rest
+    public void fetch(final Consumer<UserPreferences> consumer, final TaskListener taskListener) {
+        restFactory
+                .create(PREFERENCES_RESOURCE)
+                .method(UserPreferencesResource::fetch)
                 .onSuccess(consumer)
-                .call(PREFERENCES_RESOURCE)
-                .fetch();
+                .taskListener(taskListener)
+                .exec();
     }
 
     public void update(final UserPreferences userPreferences,
-                       final Consumer<Boolean> consumer) {
-        final Rest<Boolean> rest = restFactory.create();
-        rest
+                       final Consumer<Boolean> consumer,
+                       final TaskListener taskListener) {
+        restFactory
+                .create(PREFERENCES_RESOURCE)
+                .method(res -> res.update(userPreferences))
                 .onSuccess(consumer)
-                .call(PREFERENCES_RESOURCE)
-                .update(userPreferences);
+                .taskListener(taskListener)
+                .exec();
     }
 
     public void setDefaultUserPreferences(final UserPreferences userPreferences,
-                                          final Consumer<UserPreferences> consumer) {
-        final Rest<UserPreferences> rest = restFactory.create();
-        rest
+                                          final Consumer<UserPreferences> consumer,
+                                          final TaskListener taskListener) {
+        restFactory
+                .create(PREFERENCES_RESOURCE)
+                .method(res -> res.setDefaultUserPreferences(userPreferences))
                 .onSuccess(consumer)
-                .call(PREFERENCES_RESOURCE)
-                .setDefaultUserPreferences(userPreferences);
+                .taskListener(taskListener)
+                .exec();
     }
 
-    public void resetToDefaultUserPreferences(final Consumer<UserPreferences> consumer) {
-        final Rest<UserPreferences> rest = restFactory.create();
-        rest
+    public void resetToDefaultUserPreferences(final Consumer<UserPreferences> consumer,
+                                              final TaskListener taskListener) {
+        restFactory
+                .create(PREFERENCES_RESOURCE)
+                .method(UserPreferencesResource::resetToDefaultUserPreferences)
                 .onSuccess(consumer)
-                .call(PREFERENCES_RESOURCE)
-                .resetToDefaultUserPreferences();
+                .taskListener(taskListener)
+                .exec();
     }
 
     public void setCurrentPreferences(final UserPreferences userPreferences) {
         this.currentUserPreferences = userPreferences;
         applyUserPreferences(this.currentPreferences, userPreferences);
 
-        final com.google.gwt.dom.client.Element element = RootPanel.getBodyElement().getParentElement();
+        final Element element = RootPanel.getBodyElement().getParentElement();
         String className = getCurrentPreferenceClasses();
         element.setClassName(className);
+
+        ClientTimeZone.setTimeZone(getTimeZone(currentUserPreferences));
+    }
+
+    private String getTimeZone(final UserPreferences userPreferences) {
+        final UserTimeZone userTimeZone = userPreferences.getTimeZone();
+        String timeZone = null;
+        switch (userTimeZone.getUse()) {
+            case UTC: {
+                timeZone = "UTC";
+                break;
+            }
+            case ID: {
+                timeZone = userTimeZone.getId();
+                break;
+            }
+            case OFFSET: {
+                timeZone = getPosixOffset(userTimeZone);
+                break;
+            }
+        }
+        return timeZone;
+    }
+
+    /**
+     * An offset specifies the hours, and optionally minutes and seconds, difference from UTC.
+     * It has the format hh[:mm[:ss]] optionally with a leading sign (+ or -).
+     * The positive sign is used for zones west of Greenwich.
+     * (Note that this is the opposite of the ISO-8601 sign convention which is output on format.)
+     * hh can have one or two digits; mm and ss (if used) must have two.
+     *
+     * @param userTimeZone The user time zone to get the POSIX compliant offset string for.
+     * @return The POSIX compliant timezone offset string.
+     */
+    private String getPosixOffset(final UserTimeZone userTimeZone) {
+
+        final int hours = GwtNullSafe.requireNonNullElse(userTimeZone.getOffsetHours(), 0);
+        int minutes = GwtNullSafe.requireNonNullElse(userTimeZone.getOffsetMinutes(), 0);
+
+        // FIXME:  Browsers don't support minute offsets so disable this for now.
+        minutes = 0;
+
+        String offset = "";
+        if (hours != 0 && minutes != 0) {
+            final String hoursString = "" + hours;
+            final String minutesString = ClientStringUtil.zeroPad(2, minutes);
+            offset = hoursString + ":" + minutesString;
+            if (hours >= 0 && minutes >= 0) {
+                offset = "-" + offset;
+            } else {
+                offset = "+" + offset;
+            }
+        } else if (hours != 0) {
+            offset = "" + hours;
+            if (hours >= 0) {
+                offset = "-" + offset;
+            } else {
+                offset = "+" + offset;
+            }
+        }
+
+        return "Etc/GMT" + offset;
     }
 
     public UserPreferences getCurrentUserPreferences() {
@@ -116,30 +170,7 @@ public class UserPreferencesManager {
      * @return A space delimited list of css classes for theme, density, font and font size.
      */
     public String getCurrentPreferenceClasses() {
-        final StringJoiner classJoiner = new StringJoiner(" ")
-                .add("stroom");
-
-        if (currentUserPreferences != null) {
-            GwtNullSafe.consume(currentUserPreferences.getTheme(), theme ->
-                    classJoiner.add(Themes.getClassName(theme)));
-
-            if (GwtNullSafe.requireNonNullElse(currentUserPreferences.getEnableTransparency(), true)) {
-                classJoiner.add("transparency");
-            }
-
-            Optional.ofNullable(currentUserPreferences.getDensity())
-                    .map(densityMap::get)
-                    .ifPresent(classJoiner::add);
-
-            Optional.ofNullable(currentUserPreferences.getFont())
-                    .map(fontMap::get)
-                    .ifPresent(classJoiner::add);
-
-            Optional.ofNullable(currentUserPreferences.getFontSize())
-                    .map(fontSizeMap::get)
-                    .ifPresent(classJoiner::add);
-        }
-        return classJoiner.toString();
+        return ThemeCssUtil.getCurrentPreferenceClasses(currentUserPreferences);
     }
 
     public List<String> getThemes() {
@@ -147,10 +178,7 @@ public class UserPreferencesManager {
     }
 
     public List<String> getFonts() {
-        return fontMap.keySet()
-                .stream()
-                .sorted()
-                .collect(Collectors.toList());
+        return ThemeCssUtil.getFonts();
     }
 
     public List<String> getEditorThemes(final ThemeType themeType) {

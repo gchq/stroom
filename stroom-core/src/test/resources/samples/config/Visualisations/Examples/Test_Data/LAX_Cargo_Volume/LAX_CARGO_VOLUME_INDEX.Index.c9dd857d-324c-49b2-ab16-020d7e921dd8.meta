@@ -8,80 +8,80 @@
   "partitionSize" : 1,
   "shardsPerPartition" : 1,
   "fields" : [ {
-    "fieldType" : "ID",
-    "fieldName" : "StreamId",
+    "fldName" : "StreamId",
+    "fldType" : "ID",
     "analyzerType" : "KEYWORD",
     "indexed" : true,
     "stored" : true,
     "termPositions" : false,
     "caseSensitive" : false
   }, {
-    "fieldType" : "ID",
-    "fieldName" : "EventId",
+    "fldName" : "EventId",
+    "fldType" : "ID",
     "analyzerType" : "KEYWORD",
     "indexed" : true,
     "stored" : true,
     "termPositions" : false,
     "caseSensitive" : false
   }, {
-    "fieldType" : "FIELD",
-    "fieldName" : "Feed",
+    "fldName" : "Feed",
+    "fldType" : "TEXT",
     "analyzerType" : "ALPHA_NUMERIC",
     "indexed" : true,
     "stored" : false,
     "termPositions" : false,
     "caseSensitive" : false
   }, {
-    "fieldType" : "FIELD",
-    "fieldName" : "Feed (Keyword)",
+    "fldName" : "Feed (Keyword)",
+    "fldType" : "TEXT",
     "analyzerType" : "KEYWORD",
     "indexed" : true,
     "stored" : false,
     "termPositions" : false,
     "caseSensitive" : false
   }, {
-    "fieldType" : "DATE_FIELD",
-    "fieldName" : "DataExtractDate",
+    "fldName" : "DataExtractDate",
+    "fldType" : "DATE",
     "analyzerType" : "KEYWORD",
     "indexed" : true,
     "stored" : false,
     "termPositions" : false,
     "caseSensitive" : false
   }, {
-    "fieldType" : "DATE_FIELD",
-    "fieldName" : "ReportPeriod",
+    "fldName" : "ReportPeriod",
+    "fldType" : "DATE",
     "analyzerType" : "KEYWORD",
     "indexed" : true,
     "stored" : false,
     "termPositions" : false,
     "caseSensitive" : false
   }, {
-    "fieldType" : "FIELD",
-    "fieldName" : "Arrival_Departure",
+    "fldName" : "Arrival_Departure",
+    "fldType" : "TEXT",
     "analyzerType" : "ALPHA",
     "indexed" : true,
     "stored" : false,
     "termPositions" : false,
     "caseSensitive" : false
   }, {
-    "fieldType" : "FIELD",
-    "fieldName" : "Domestic_International",
+    "fldName" : "Domestic_International",
+    "fldType" : "TEXT",
     "analyzerType" : "ALPHA",
     "indexed" : true,
     "stored" : false,
     "termPositions" : false,
     "caseSensitive" : false
   }, {
-    "fieldType" : "FIELD",
-    "fieldName" : "CargoType",
+    "fldName" : "CargoType",
+    "fldType" : "TEXT",
     "analyzerType" : "ALPHA_NUMERIC",
     "indexed" : true,
     "stored" : false,
     "termPositions" : false,
     "caseSensitive" : false
   }, {
-    "fieldType" : "NUMERIC_FIELD",
-    "fieldName" : "AirCargoTons",
+    "fldName" : "AirCargoTons",
+    "fldType" : "LONG",
     "analyzerType" : "NUMERIC",
     "indexed" : true,
     "stored" : false,

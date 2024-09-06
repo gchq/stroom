@@ -19,7 +19,7 @@ package stroom.annotation.client;
 import stroom.alert.client.event.AlertEvent;
 import stroom.annotation.client.AddEventLinkPresenter.AddEventLinkView;
 import stroom.annotation.shared.EventId;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -61,8 +61,8 @@ public class AddEventLinkPresenter extends MyPresenterWidget<AddEventLinkView> {
                 .popupSize(popupSize)
                 .caption("Link An Event")
                 .onShow((event) -> getView().focus())
-                .onHideRequest((event) -> {
-                    if (event.isOk()) {
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
                         final String name = getView().getName().getText();
                         if (name != null) {
                             final String[] parts = name.split(":");
@@ -70,30 +70,30 @@ public class AddEventLinkPresenter extends MyPresenterWidget<AddEventLinkView> {
                                 AlertEvent.fireError(
                                         AddEventLinkPresenter.this,
                                         "Invalid event id '" + name + "'",
-                                        null);
+                                        e::reset);
                             } else {
                                 try {
                                     final EventId eventId = new EventId(Long.parseLong(parts[0]),
                                             Long.parseLong(parts[1]));
                                     consumer.accept(eventId);
-                                    event.hide();
-                                } catch (final NumberFormatException e) {
+                                    e.hide();
+                                } catch (final NumberFormatException ex) {
                                     AlertEvent.fireError(
                                             AddEventLinkPresenter.this,
                                             "Invalid event id '" + name + "'",
-                                            null);
+                                            e::reset);
                                 }
                             }
                         }
                     } else {
-                        event.hide();
+                        e.hide();
                     }
                 })
                 .fire();
     }
 
     private void hide() {
-        HidePopupEvent.builder(this).fire();
+        HidePopupRequestEvent.builder(this).fire();
     }
 
     public String getName() {

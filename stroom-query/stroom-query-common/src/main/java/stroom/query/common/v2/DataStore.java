@@ -1,5 +1,6 @@
 package stroom.query.common.v2;
 
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.TimeFilter;
@@ -25,7 +26,8 @@ public interface DataStore extends ValuesConsumer {
      * @param timeFilter The time filter to use to limit the data returned.
      * @return The filtered child items for the parent key.
      */
-    <R> void fetch(OffsetRange range,
+    <R> void fetch(List<Column> columns,
+                   OffsetRange range,
                    OpenGroups openGroups,
                    TimeFilter timeFilter,
                    ItemMapper<R> mapper,
@@ -63,7 +65,7 @@ public interface DataStore extends ValuesConsumer {
 
     long getByteSize();
 
-    Serialisers getSerialisers();
-
     KeyFactory getKeyFactory();
+
+    DateTimeSettings getDateTimeSettings();
 }

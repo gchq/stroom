@@ -38,7 +38,7 @@ public class AnalyticProcessingViewImpl
     private final Widget widget;
 
     @UiField
-    SimplePanel queryEditorContainer;
+    SimplePanel errorFeed;
     @UiField
     SelectionBox<AnalyticProcessType> processingType;
     @UiField
@@ -47,9 +47,9 @@ public class AnalyticProcessingViewImpl
     @Inject
     public AnalyticProcessingViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        processingType.addItem(AnalyticProcessType.SCHEDULED_QUERY);
         processingType.addItem(AnalyticProcessType.STREAMING);
         processingType.addItem(AnalyticProcessType.TABLE_BUILDER);
-        processingType.addItem(AnalyticProcessType.SCHEDULED_QUERY);
     }
 
     @Override
@@ -58,10 +58,9 @@ public class AnalyticProcessingViewImpl
     }
 
     @Override
-    public void setQueryEditorView(final View view) {
-        queryEditorContainer.setWidget(view.asWidget());
+    public void setErrorFeedView(final View view) {
+        this.errorFeed.setWidget(view.asWidget());
     }
-
 
     @Override
     public AnalyticProcessType getProcessingType() {

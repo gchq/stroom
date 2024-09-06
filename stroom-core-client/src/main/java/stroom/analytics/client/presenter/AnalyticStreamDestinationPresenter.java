@@ -18,13 +18,12 @@
 package stroom.analytics.client.presenter;
 
 import stroom.analytics.client.presenter.AnalyticStreamDestinationPresenter.AnalyticStreamDestinationView;
-import stroom.analytics.shared.AnalyticNotificationStreamDestination;
-import stroom.docref.DocRef;
+import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.shared.DocumentPermissionNames;
 
@@ -35,19 +34,16 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.Objects;
-
 public class AnalyticStreamDestinationPresenter
         extends MyPresenterWidget<AnalyticStreamDestinationView>
         implements DirtyUiHandlers, HasDirtyHandlers {
 
-    private final EntityDropDownPresenter feedPresenter;
-    private DocRef currentFeed;
+    private final DocSelectionBoxPresenter feedPresenter;
 
     @Inject
     public AnalyticStreamDestinationPresenter(final EventBus eventBus,
                                               final AnalyticStreamDestinationView view,
-                                              final EntityDropDownPresenter feedPresenter) {
+                                              final DocSelectionBoxPresenter feedPresenter) {
         super(eventBus, view);
         view.setUiHandlers(this);
         this.feedPresenter = feedPresenter;
@@ -59,24 +55,18 @@ public class AnalyticStreamDestinationPresenter
 
     @Override
     protected void onBind() {
-        registerHandler(feedPresenter.addDataSelectionHandler(e -> {
-            if (!Objects.equals(feedPresenter.getSelectedEntityReference(), currentFeed)) {
-                currentFeed = feedPresenter.getSelectedEntityReference();
-                onDirty();
-            }
-        }));
+        registerHandler(feedPresenter.addDataSelectionHandler(e -> onDirty()));
     }
 
-    public void read(final AnalyticNotificationStreamDestination streamDestination) {
+    public void read(final NotificationStreamDestination streamDestination) {
         if (streamDestination != null) {
-            this.currentFeed = streamDestination.getDestinationFeed();
             getView().setUseSourceFeedIfPossible(streamDestination.isUseSourceFeedIfPossible());
-            feedPresenter.setSelectedEntityReference(currentFeed, false);
+            feedPresenter.setSelectedEntityReference(streamDestination.getDestinationFeed());
         }
     }
 
-    public AnalyticNotificationStreamDestination write() {
-        return new AnalyticNotificationStreamDestination(
+    public NotificationStreamDestination write() {
+        return new NotificationStreamDestination(
                 feedPresenter.getSelectedEntityReference(),
                 getView().isUseSourceFeedIfPossible());
     }

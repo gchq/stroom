@@ -1,10 +1,10 @@
 package stroom.query.common.v2;
 
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Row;
 import stroom.query.common.v2.format.ColumnFormatter;
-import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -15,36 +15,39 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class FilteredRowCreator implements ItemMapper<Row> {
+public class FilteredRowCreator extends SimpleRowCreator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FilteredRowCreator.class);
 
-    private final ColumnFormatter columnFormatter;
-    private final KeyFactory keyFactory;
     private final ExpressionOperator rowFilter;
     private final ColumnExpressionMatcher expressionMatcher;
-    private final ErrorConsumer errorConsumer;
 
-    private FilteredRowCreator(final ColumnFormatter columnFormatter,
-                               final KeyFactory keyFactory,
-                               final ExpressionOperator rowFilter,
-                               final ColumnExpressionMatcher expressionMatcher,
-                               final ErrorConsumer errorConsumer) {
-        this.columnFormatter = columnFormatter;
-        this.keyFactory = keyFactory;
+    FilteredRowCreator(final List<Column> originalColumns,
+                       final List<Column> newColumns,
+                       final ColumnFormatter columnFormatter,
+                       final KeyFactory keyFactory,
+                       final ExpressionOperator rowFilter,
+                       final ColumnExpressionMatcher expressionMatcher,
+                       final ErrorConsumer errorConsumer) {
+        super(originalColumns, newColumns, columnFormatter, keyFactory, errorConsumer);
+
         this.rowFilter = rowFilter;
         this.expressionMatcher = expressionMatcher;
-        this.errorConsumer = errorConsumer;
     }
 
-    public static Optional<ItemMapper<Row>> create(final ColumnFormatter columnFormatter,
+    public static Optional<ItemMapper<Row>> create(final List<Column> originalColumns,
+                                                   final List<Column> newColumns,
+                                                   final ColumnFormatter columnFormatter,
                                                    final KeyFactory keyFactory,
                                                    final ExpressionOperator rowFilter,
-                                                   final List<Column> columns,
+                                                   final DateTimeSettings dateTimeSettings,
                                                    final ErrorConsumer errorConsumer) {
         if (rowFilter != null) {
-            final ColumnExpressionMatcher expressionMatcher = new ColumnExpressionMatcher(columns);
+            final ColumnExpressionMatcher expressionMatcher =
+                    new ColumnExpressionMatcher(newColumns, dateTimeSettings);
             return Optional.of(new FilteredRowCreator(
+                    originalColumns,
+                    newColumns,
                     columnFormatter,
                     keyFactory,
                     rowFilter,
@@ -55,22 +58,23 @@ public class FilteredRowCreator implements ItemMapper<Row> {
     }
 
     @Override
-    public Row create(final List<Column> columns,
-                      final Item item) {
-        Row row = null;
-
+    public Row create(final Item item) {
         final Map<String, Object> fieldIdToValueMap = new HashMap<>();
-        final List<String> stringValues = new ArrayList<>(columns.size());
-        int i = 0;
-        for (final Column column : columns) {
-            final Val val = item.getValue(i);
-            final String string = columnFormatter.format(column, val);
+        final List<String> stringValues = new ArrayList<>(functions.size());
+        functions.stream().forEach(f -> {
+            final String string = f.apply(item);
             stringValues.add(string);
-            fieldIdToValueMap.put(column.getId(), string);
-            fieldIdToValueMap.put(column.getName(), string);
-            i++;
-        }
+            fieldIdToValueMap.put(f.column.getId(), string);
+            fieldIdToValueMap.put(f.column.getName(), string);
+        });
 
+        return create(item, stringValues, fieldIdToValueMap);
+    }
+
+    public Row create(final Item item,
+                      final List<String> stringValues,
+                      final Map<String, Object> fieldIdToValueMap) {
+        Row row = null;
         try {
             // See if we can exit early by applying row filter.
             if (!expressionMatcher.match(fieldIdToValueMap, rowFilter)) {

@@ -23,6 +23,7 @@ import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.cluster.task.api.TargetType;
 import stroom.node.api.NodeInfo;
+import stroom.util.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -74,7 +75,7 @@ public class TargetNodeSetFactoryImpl implements TargetNodeSetFactory {
     public Set<String> getEnabledActiveTargetNodeSet() throws NullClusterStateException, NodeNotFoundException {
         final ClusterState clusterState = getClusterState();
         final Set<String> nodes = clusterState.getEnabledActiveNodes();
-        if (nodes != null && !nodes.isEmpty()) {
+        if (!NullSafe.isEmptyCollection(nodes)) {
             return Set.copyOf(nodes);
         } else {
             throw new NodeNotFoundException("No enabled and active nodes can be found");
@@ -85,7 +86,7 @@ public class TargetNodeSetFactoryImpl implements TargetNodeSetFactory {
     public Set<String> getEnabledTargetNodeSet() throws NullClusterStateException, NodeNotFoundException {
         final ClusterState clusterState = getClusterState();
         final Set<String> nodes = clusterState.getEnabledNodes();
-        if (nodes != null && !nodes.isEmpty()) {
+        if (!NullSafe.isEmptyCollection(nodes)) {
             return Set.copyOf(nodes);
         } else {
             throw new NodeNotFoundException("No enabled nodes can be found");
@@ -96,7 +97,7 @@ public class TargetNodeSetFactoryImpl implements TargetNodeSetFactory {
     public Set<String> getAllNodeSet() throws NullClusterStateException, NodeNotFoundException {
         final ClusterState clusterState = getClusterState();
         final Set<String> nodes = clusterState.getAllNodes();
-        if (nodes != null && nodes.size() > 0) {
+        if (!NullSafe.isEmptyCollection(nodes)) {
             return Set.copyOf(nodes);
         } else {
             throw new NodeNotFoundException("No nodes can be found");
@@ -105,16 +106,12 @@ public class TargetNodeSetFactoryImpl implements TargetNodeSetFactory {
 
     public Set<String> getTargetNodesByType(final TargetType targetType)
             throws NullClusterStateException, NodeNotFoundException {
-        switch (targetType) {
-            case MASTER:
-                return getMasterTargetNodeSet();
-            case ACTIVE:
-                return getEnabledActiveTargetNodeSet();
-            case ENABLED:
-                return getEnabledTargetNodeSet();
-        }
+        return switch (targetType) {
+            case MASTER -> getMasterTargetNodeSet();
+            case ACTIVE -> getEnabledActiveTargetNodeSet();
+            case ENABLED -> getEnabledTargetNodeSet();
+        };
 
-        return null;
     }
 
     public ClusterState getClusterState() throws NullClusterStateException {

@@ -299,20 +299,6 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 
     }
 
-    @Test
-    void fetchUiConfig() {
-        initNodes();
-
-        String subPath = GlobalConfigResource.FETCH_UI_CONFIG_SUB_PATH;
-        UiConfig uiConfig = new UiConfig();
-
-        final UiConfig response = doGetTest(
-                subPath,
-                UiConfig.class,
-                uiConfig);
-
-    }
-
     @Override
     public String getResourceBasePath() {
         return GlobalConfigResource.BASE_PATH;
@@ -340,9 +326,9 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 
                         final ListConfigResponse response = new ListConfigResponse(
                                 QuickFilterPredicateFactory.filterStream(
-                                        criteria.getQuickFilterInput(),
-                                        fieldMappers,
-                                        FULL_PROP_LIST.stream())
+                                                criteria.getQuickFilterInput(),
+                                                fieldMappers,
+                                                FULL_PROP_LIST.stream())
                                         .peek(configProperty ->
                                                 configProperty.setYamlOverrideValue(node.getNodeName()))
                                         .collect(Collectors.toList()),

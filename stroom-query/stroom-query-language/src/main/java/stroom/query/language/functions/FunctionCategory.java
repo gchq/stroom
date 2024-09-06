@@ -6,6 +6,7 @@ public enum FunctionCategory {
     DATE("Date"),
     LINK("Link"),
     LOGIC("Logic"),
+    LOOKUP("Lookup"),
     MATHEMATICS("Mathematics"),
     PARAM("Param"),
     SELECTION("Selection"),

@@ -28,6 +28,8 @@ import stroom.processor.shared.AssignTasksRequest;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.ProcessorTaskResource;
+import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 
@@ -52,20 +54,21 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
 
     private final TargetNodeSetFactory targetNodeSetFactory;
     private final ProcessorTaskResource processorTaskResource;
-    private final Provider<DataProcessorTaskHandler> dataProcessorTaskHandlerProvider;
     private final NodeInfo nodeInfo;
+    private final TaskContextFactory taskContextFactory;
     private RunnableFactory runnableFactory;
 
     @Inject
     DataProcessorTaskFactory(final TargetNodeSetFactory targetNodeSetFactory,
                              final ProcessorTaskResource processorTaskResource,
                              final Provider<DataProcessorTaskHandler> dataProcessorTaskHandlerProvider,
-                             final NodeInfo nodeInfo) {
+                             final NodeInfo nodeInfo,
+                             final TaskContextFactory taskContextFactory) {
         this.targetNodeSetFactory = targetNodeSetFactory;
         this.processorTaskResource = processorTaskResource;
-        this.dataProcessorTaskHandlerProvider = dataProcessorTaskHandlerProvider;
         this.nodeInfo = nodeInfo;
         this.runnableFactory = new RunnableFactoryImpl(dataProcessorTaskHandlerProvider);
+        this.taskContextFactory = taskContextFactory;
     }
 
     @Override
@@ -74,9 +77,15 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
             if (targetNodeSetFactory.isClusterStateInitialised()) {
                 final String masterNode = targetNodeSetFactory.getMasterNode();
                 LOGGER.debug("masterNode: {}", masterNode);
+                final TaskContext taskContext = taskContextFactory.current();
+                taskContext.info(() -> "Processor task resource assign tasks");
                 final ProcessorTaskList processorTaskList = processorTaskResource
-                        .assignTasks(masterNode, new AssignTasksRequest(nodeName, count));
+                        .assignTasks(masterNode, new AssignTasksRequest(taskContext.getTaskId(), nodeName, count));
 
+                taskContext.info(() ->
+                        "Received " +
+                                processorTaskList.getList().size() +
+                                " new tasks");
                 return processorTaskList
                         .getList()
                         .stream()

@@ -83,6 +83,10 @@ public class XMLFragmentParser extends AbstractParser {
         xmlReader.parse(inputSource);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private class FragmentEntity implements EntityResolver {
 
         private static final String FRAGMENT = "fragment";

@@ -11,6 +11,7 @@ import stroom.util.NullSafe;
 import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
 import org.jooq.Condition;
@@ -145,12 +146,30 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public Optional<User> getBySubjectId(final String subjectId) {
-        return JooqUtil.contextResult(securityDbConnProvider, context -> context
+        // TODO the plan is to change user table so subject_id is fully unique,
+        //  i.e. a group is uniquely identified by a uuid which goes in the subjectId col
+        //  and the friendly group name goes in the displayName col,
+        //  so once this is done this can be returned to the commented code
+//        return JooqUtil.contextResult(securityDbConnProvider, context -> context
+//                        .select()
+//                        .from(STROOM_USER)
+//                        .where(STROOM_USER.NAME.eq(subjectId))
+//                        .fetchOptional())
+//                .map(RECORD_TO_USER_MAPPER);
+
+        final List<User> users = JooqUtil.contextResult(securityDbConnProvider, context -> context
                         .select()
                         .from(STROOM_USER)
                         .where(STROOM_USER.NAME.eq(subjectId))
-                        .fetchOptional())
-                .map(RECORD_TO_USER_MAPPER);
+                        .fetch())
+                .stream()
+                .map(RECORD_TO_USER_MAPPER)
+                .toList();
+        if (users.size() > 1) {
+            throw new RuntimeException(LogUtil.message(
+                    "Found more than one user/group ({}) with subject ID: '{}'", users.size(), subjectId));
+        }
+        return users.stream().findFirst();
     }
 
     @Override

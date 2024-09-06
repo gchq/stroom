@@ -16,7 +16,9 @@ import stroom.explorer.impl.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.importexport.impl.ExportConfig;
+import stroom.index.impl.ContentIndexConfig;
 import stroom.index.impl.IndexConfig;
+import stroom.index.impl.IndexFieldDbConfig;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.job.impl.JobSystemConfig;
 import stroom.kafka.impl.KafkaConfig;
@@ -26,12 +28,12 @@ import stroom.lmdb.LmdbLibraryConfig;
 import stroom.node.impl.NodeConfig;
 import stroom.pipeline.PipelineConfig;
 import stroom.processor.impl.ProcessorConfig;
-import stroom.query.field.impl.QueryFieldConfig;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
+import stroom.state.impl.StateConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.StroomPathConfig;
@@ -66,6 +68,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_CLUSTER_LOCK = "clusterLock";
     public static final String PROP_NAME_CLUSTER_TASK = "clusterTask";
     public static final String PROP_NAME_COMMON_DB_DETAILS = "commonDbDetails";
+    public static final String PROP_NAME_CONTENT_INDEX = "contentIndex";
     public static final String PROP_NAME_CONTENT_PACK_IMPORT = "contentPackImport";
     public static final String PROP_NAME_CORE = "core";
     public static final String PROP_NAME_DATA = "data";
@@ -96,6 +99,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_SERVICE_DISCOVERY = "serviceDiscovery";
     public static final String PROP_NAME_SESSION_COOKIE = "sessionCookie";
     public static final String PROP_NAME_SOLR = "solr";
+    public static final String PROP_NAME_STATE = "state";
     public static final String PROP_NAME_STATISTICS = "statistics";
     public static final String PROP_NAME_UI = "ui";
     public static final String PROP_NAME_UI_URI = "uiUri";
@@ -103,6 +107,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
 
     private final boolean haltBootOnConfigValidationFailure;
 
+    private final CrossModuleConfig crossModuleConfig;
     private final ActivityConfig activityConfig;
     private final AnalyticsConfig analyticsConfig;
     private final AnnotationConfig annotationConfig;
@@ -110,6 +115,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final ClusterConfig clusterConfig;
     private final ClusterLockConfig clusterLockConfig;
     private final CommonDbConfig commonDbConfig;
+    private final ContentIndexConfig contentIndexConfig;
     private final ContentPackImportConfig contentPackImportConfig;
     private final LegacyConfig legacyConfig;
     private final DataConfig dataConfig;
@@ -130,13 +136,14 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final ProcessorConfig processorConfig;
     private final PropertyServiceConfig propertyServiceConfig;
     private final PublicUriConfig publicUri;
-    private final QueryFieldConfig queryDataSourceConfig;
+    private final IndexFieldDbConfig queryDataSourceConfig;
     private final ReceiveDataConfig receiveDataConfig;
     private final SearchConfig searchConfig;
     private final SecurityConfig securityConfig;
     private final ServiceDiscoveryConfig serviceDiscoveryConfig;
     private final SessionCookieConfig sessionCookieConfig;
     private final SolrConfig solrConfig;
+    private final StateConfig stateConfig;
     private final StatisticsConfig statisticsConfig;
     private final StoredQueryConfig storedQueryConfig;
     private final StroomPathConfig pathConfig;
@@ -149,6 +156,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
      */
     public AppConfig() {
         this(true,
+                new CrossModuleConfig(),
                 new ActivityConfig(),
                 new AnalyticsConfig(),
                 new AnnotationConfig(),
@@ -156,6 +164,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                 new ClusterConfig(),
                 new ClusterLockConfig(),
                 new CommonDbConfig(),
+                new ContentIndexConfig(),
                 new ContentPackImportConfig(),
                 new LegacyConfig(),
                 new DataConfig(),
@@ -176,13 +185,14 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                 new ProcessorConfig(),
                 new PropertyServiceConfig(),
                 new PublicUriConfig(),
-                new QueryFieldConfig(),
+                new IndexFieldDbConfig(),
                 new ReceiveDataConfig(),
                 new SearchConfig(),
                 new SecurityConfig(),
                 new ServiceDiscoveryConfig(),
                 new SessionCookieConfig(),
                 new SolrConfig(),
+                new StateConfig(),
                 new StatisticsConfig(),
                 new StoredQueryConfig(),
                 new StroomPathConfig(),
@@ -194,6 +204,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @SuppressWarnings("checkstyle:linelength")
     @JsonCreator
     public AppConfig(@JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE) final boolean haltBootOnConfigValidationFailure,
+                     @JsonProperty(CrossModuleConfig.NAME) final CrossModuleConfig crossModuleConfig,
                      @JsonProperty(PROP_NAME_ACTIVITY) final ActivityConfig activityConfig,
                      @JsonProperty(PROP_NAME_ANALYTICS) final AnalyticsConfig analyticsConfig,
                      @JsonProperty(PROP_NAME_ANNOTATION) final AnnotationConfig annotationConfig,
@@ -201,6 +212,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_CLUSTER) final ClusterConfig clusterConfig,
                      @JsonProperty(PROP_NAME_CLUSTER_LOCK) final ClusterLockConfig clusterLockConfig,
                      @JsonProperty(PROP_NAME_COMMON_DB_DETAILS) final CommonDbConfig commonDbConfig,
+                     @JsonProperty(PROP_NAME_CONTENT_INDEX) final ContentIndexConfig contentIndexConfig,
                      @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT) final ContentPackImportConfig contentPackImportConfig,
                      @JsonProperty(PROP_NAME_CORE) final LegacyConfig legacyConfig,
                      @JsonProperty(PROP_NAME_DATA) final DataConfig dataConfig,
@@ -221,13 +233,14 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_PROCESSOR) final ProcessorConfig processorConfig,
                      @JsonProperty(PROP_NAME_PROPERTIES) final PropertyServiceConfig propertyServiceConfig,
                      @JsonProperty(PROP_NAME_PUBLIC_URI) final PublicUriConfig publicUri,
-                     @JsonProperty(PROP_NAME_QUERY_DATASOURCE) final QueryFieldConfig queryDataSourceConfig,
+                     @JsonProperty(PROP_NAME_QUERY_DATASOURCE) final IndexFieldDbConfig queryDataSourceConfig,
                      @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
                      @JsonProperty(PROP_NAME_SEARCH) final SearchConfig searchConfig,
                      @JsonProperty(PROP_NAME_SECURITY) final SecurityConfig securityConfig,
                      @JsonProperty(PROP_NAME_SERVICE_DISCOVERY) final ServiceDiscoveryConfig serviceDiscoveryConfig,
                      @JsonProperty(PROP_NAME_SESSION_COOKIE) final SessionCookieConfig sessionCookieConfig,
                      @JsonProperty(PROP_NAME_SOLR) final SolrConfig solrConfig,
+                     @JsonProperty(PROP_NAME_STATE) final StateConfig stateConfig,
                      @JsonProperty(PROP_NAME_STATISTICS) final StatisticsConfig statisticsConfig,
                      @JsonProperty(PROP_NAME_QUERY_HISTORY) final StoredQueryConfig storedQueryConfig,
                      @JsonProperty(PROP_NAME_PATH) final StroomPathConfig pathConfig,
@@ -235,6 +248,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_UI_URI) final UiUriConfig uiUri,
                      @JsonProperty(PROP_NAME_VOLUMES) final VolumeConfig volumeConfig) {
         this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
+        this.crossModuleConfig = crossModuleConfig;
         this.activityConfig = activityConfig;
         this.analyticsConfig = analyticsConfig;
         this.annotationConfig = annotationConfig;
@@ -242,6 +256,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.clusterConfig = clusterConfig;
         this.clusterLockConfig = clusterLockConfig;
         this.commonDbConfig = commonDbConfig;
+        this.contentIndexConfig = contentIndexConfig;
         this.contentPackImportConfig = contentPackImportConfig;
         this.legacyConfig = legacyConfig;
         this.dataConfig = dataConfig;
@@ -269,6 +284,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.serviceDiscoveryConfig = serviceDiscoveryConfig;
         this.sessionCookieConfig = sessionCookieConfig;
         this.solrConfig = solrConfig;
+        this.stateConfig = stateConfig;
         this.statisticsConfig = statisticsConfig;
         this.storedQueryConfig = storedQueryConfig;
         this.pathConfig = pathConfig;
@@ -286,6 +302,11 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
             "configuration file. If false, the errors will simply be logged. Setting this to false is not advised.")
     public boolean isHaltBootOnConfigValidationFailure() {
         return haltBootOnConfigValidationFailure;
+    }
+
+    @JsonProperty(CrossModuleConfig.NAME)
+    public CrossModuleConfig getAppDbConfig() {
+        return crossModuleConfig;
     }
 
     @JsonProperty(PROP_NAME_ACTIVITY)
@@ -324,6 +345,11 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
             "areas running in a single database, have each in their own database or a mixture.")
     public CommonDbConfig getCommonDbConfig() {
         return commonDbConfig;
+    }
+
+    @JsonProperty(PROP_NAME_CONTENT_INDEX)
+    public ContentIndexConfig getContentIndexConfig() {
+        return contentIndexConfig;
     }
 
     @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT)
@@ -438,7 +464,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
 
     @JsonProperty(PROP_NAME_QUERY_DATASOURCE)
     @JsonPropertyDescription("Configuration for the stroom query datasource service")
-    public QueryFieldConfig getQueryDataSourceConfig() {
+    public IndexFieldDbConfig getQueryDataSourceConfig() {
         return queryDataSourceConfig;
     }
 
@@ -480,6 +506,12 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty(PROP_NAME_SESSION_COOKIE)
     public SessionCookieConfig getSessionCookieConfig() {
         return sessionCookieConfig;
+    }
+
+    @JsonProperty(PROP_NAME_STATE)
+    @JsonPropertyDescription("Configuration for the stroom state service")
+    public StateConfig getStateConfig() {
+        return stateConfig;
     }
 
     @JsonProperty(PROP_NAME_STATISTICS)

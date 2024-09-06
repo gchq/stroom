@@ -17,9 +17,10 @@
 package stroom.widget.popup.client.view;
 
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.TaskListener;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
+import stroom.widget.spinner.client.SpinnerLarge;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.SvgImageUtil;
 
@@ -45,19 +46,22 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
-public class ResizableDialog extends AbstractPopupPanel {
+public class ResizableDialog extends AbstractPopupPanel implements TaskListener {
 
     private static final Binder binder = GWT.create(Binder.class);
 
-    private final HideRequestUiHandlers uiHandlers;
     private final PopupSize popupSize;
 
+    @UiField
+    SimplePanel icon;
     @UiField
     Label titleText;
     @UiField
     SimplePanel content;
     @UiField
     SimplePanel resizeHandle;
+    @UiField
+    SpinnerLarge spinner;
 
     private DragType dragType;
     private boolean dragging;
@@ -71,8 +75,11 @@ public class ResizableDialog extends AbstractPopupPanel {
      * Creates an empty dialog box. It should not be shown until its child
      * widget has been added using {@link #add(Widget)}.
      */
-    ResizableDialog(final HideRequestUiHandlers uiHandlers, final PopupSize popupSize, final PopupType popupType) {
-        this(uiHandlers, false, popupSize, popupType);
+    ResizableDialog(final DialogActionUiHandlers dialogEventHandler,
+                    final PopupSize popupSize) {
+        this(dialogEventHandler, false, popupSize);
+        spinner.setSoft(true);
+        spinner.setVisible(false);
     }
 
     /**
@@ -83,9 +90,10 @@ public class ResizableDialog extends AbstractPopupPanel {
      * @param autoHide <code>true</code> if the dialog should be automatically hidden
      *                 when the user clicks outside of it
      */
-    private ResizableDialog(final HideRequestUiHandlers uiHandlers, final boolean autoHide, final PopupSize popupSize,
-                            final PopupType popupType) {
-        this(uiHandlers, autoHide, true, popupSize, popupType);
+    private ResizableDialog(final DialogActionUiHandlers dialogEventHandler,
+                            final boolean autoHide,
+                            final PopupSize popupSize) {
+        this(dialogEventHandler, autoHide, true, popupSize);
     }
 
     /**
@@ -98,10 +106,11 @@ public class ResizableDialog extends AbstractPopupPanel {
      * @param modal    <code>true</code> if keyboard and mouse events for widgets not
      *                 contained by the dialog should be ignored
      */
-    private ResizableDialog(final HideRequestUiHandlers uiHandlers, final boolean autoHide, final boolean modal,
-                            final PopupSize popupSize, final PopupType popupType) {
-        super(autoHide, modal, popupType);
-        this.uiHandlers = uiHandlers;
+    private ResizableDialog(final DialogActionUiHandlers dialogEventHandler,
+                            final boolean autoHide,
+                            final boolean modal,
+                            final PopupSize popupSize) {
+        super(dialogEventHandler, autoHide, modal);
         this.popupSize = popupSize;
 
         setStyleName("resizableDialog-popup");
@@ -119,6 +128,16 @@ public class ResizableDialog extends AbstractPopupPanel {
                 (popupSize != null && popupSize.getHeight() != null && popupSize.getHeight().isResizable()));
 
         SvgImageUtil.setSvgAsInnerHtml(resizeHandle, SvgImage.RESIZE_HANDLE);
+    }
+
+    @Override
+    public void setIcon(final SvgImage icon) {
+        if (icon != null) {
+            this.icon.getElement().setInnerHTML(icon.getSvg());
+            if (icon.getClassName() != null) {
+                this.icon.getElement().addClassName(icon.getClassName());
+            }
+        }
     }
 
     @Override
@@ -159,17 +178,13 @@ public class ResizableDialog extends AbstractPopupPanel {
      */
     @Override
     public void hide(final boolean autoClosed) {
-        uiHandlers.hideRequest(new HideRequest(autoClosed, false));
-    }
-
-    @Override
-    protected void onCloseAction() {
-        hide(false);
-    }
-
-    @Override
-    protected void onOkAction() {
-        uiHandlers.hideRequest(new HideRequest(false, true));
+        if (dialogActionHandler != null) {
+            if (autoClosed) {
+                dialogActionHandler.onDialogAction(DialogAction.AUTO_CLOSE);
+            } else {
+                dialogActionHandler.onDialogAction(DialogAction.CLOSE);
+            }
+        }
     }
 
     @Override
@@ -325,6 +340,16 @@ public class ResizableDialog extends AbstractPopupPanel {
 
     private void setResizeEnabled(final boolean enabled) {
         resizeHandle.setVisible(enabled);
+    }
+
+    @Override
+    public void incrementTaskCount() {
+        spinner.incrementTaskCount();
+    }
+
+    @Override
+    public void decrementTaskCount() {
+        spinner.decrementTaskCount();
     }
 
     private enum DragType {

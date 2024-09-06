@@ -91,7 +91,8 @@ public abstract class AbstractDualEnvLmdbTest extends StroomUnitTest {
         final PathCreator pathCreator = new SimplePathCreator(() -> dbDir, () -> dbDir);
         final TempDirProvider tempDirProvider = () -> dbDir;
 
-        final LmdbEnv lmdbEnv = new LmdbEnvFactory(pathCreator, tempDirProvider, LmdbLibraryConfig::new)
+        final LmdbEnv lmdbEnv = new LmdbEnvFactory(pathCreator,
+                new LmdbLibrary(pathCreator, tempDirProvider, LmdbLibraryConfig::new))
                 .builder(dbDir)
                 .withMapSize(getMaxSizeBytes())
                 .withMaxDbCount(10)

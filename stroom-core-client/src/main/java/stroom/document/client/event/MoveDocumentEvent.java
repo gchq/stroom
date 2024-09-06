@@ -19,38 +19,42 @@ package stroom.document.client.event;
 
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 import java.util.List;
 
 public class MoveDocumentEvent extends GwtEvent<MoveDocumentEvent.Handler> {
 
     private static Type<Handler> TYPE;
-    private final PresenterWidget<?> presenter;
+    private final HidePopupRequestEvent hidePopupRequestEvent;
     private final List<ExplorerNode> explorerNodes;
     private final ExplorerNode destinationFolder;
     private final PermissionInheritance permissionInheritance;
 
-    private MoveDocumentEvent(final PresenterWidget<?> presenter,
+    private MoveDocumentEvent(final HidePopupRequestEvent hidePopupRequestEvent,
                               final List<ExplorerNode> explorerNodes,
                               final ExplorerNode destinationFolder,
                               final PermissionInheritance permissionInheritance) {
-        this.presenter = presenter;
+        this.hidePopupRequestEvent = hidePopupRequestEvent;
         this.explorerNodes = explorerNodes;
         this.destinationFolder = destinationFolder;
         this.permissionInheritance = permissionInheritance;
     }
 
     public static void fire(final HasHandlers handlers,
-                            final PresenterWidget<?> presenter,
+                            final HidePopupRequestEvent hidePopupRequestEvent,
                             final List<ExplorerNode> explorerNodes,
                             final ExplorerNode destinationFolder,
                             final PermissionInheritance permissionInheritance) {
-        handlers.fireEvent(new MoveDocumentEvent(presenter, explorerNodes, destinationFolder, permissionInheritance));
+        handlers.fireEvent(new MoveDocumentEvent(
+                hidePopupRequestEvent,
+                explorerNodes,
+                destinationFolder,
+                permissionInheritance));
     }
 
     public static Type<Handler> getType() {
@@ -70,8 +74,8 @@ public class MoveDocumentEvent extends GwtEvent<MoveDocumentEvent.Handler> {
         handler.onMove(this);
     }
 
-    public PresenterWidget<?> getPresenter() {
-        return presenter;
+    public HidePopupRequestEvent getHidePopupRequestEvent() {
+        return hidePopupRequestEvent;
     }
 
     public List<ExplorerNode> getExplorerNodes() {

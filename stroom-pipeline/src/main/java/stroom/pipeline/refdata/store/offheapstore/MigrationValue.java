@@ -10,18 +10,18 @@ import java.util.function.Supplier;
 
 class MigrationValue implements StagingValue {
 
-    private final int typeId;
+    private final byte typeId;
     private final ByteBuffer valueBuffer;
     private final ValueStoreHashAlgorithm valueStoreHashAlgorithm;
     private volatile Long valueHash = null;
 
-    MigrationValue(final int typeId,
+    MigrationValue(final byte typeId,
                    final ByteBuffer valueBuffer,
                    final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
         this(typeId, valueBuffer, valueStoreHashAlgorithm, null);
     }
 
-    private MigrationValue(final int typeId,
+    private MigrationValue(final byte typeId,
                            final ByteBuffer valueBuffer,
                            final ValueStoreHashAlgorithm valueStoreHashAlgorithm,
                            final Long valueHash) {
@@ -55,7 +55,7 @@ class MigrationValue implements StagingValue {
     }
 
     @Override
-    public int getTypeId() {
+    public byte getTypeId() {
         return typeId;
     }
 

@@ -43,16 +43,12 @@ public class HttpServletRequestFilter implements Filter {
     }
 
     @Override
-    public void destroy() {
-    }
-
-    @Override
     public void doFilter(final ServletRequest request,
                          final ServletResponse response,
                          final FilterChain chain) throws IOException, ServletException {
-        if (request instanceof HttpServletRequest) {
+        if (request instanceof final HttpServletRequest httpServletRequest) {
             try {
-                httpServletRequestHolder.set((HttpServletRequest) request);
+                httpServletRequestHolder.set(httpServletRequest);
                 // Continue the chain
                 chain.doFilter(request, response);
             } finally {

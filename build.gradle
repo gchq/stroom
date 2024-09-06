@@ -51,10 +51,14 @@ plugins {
 apply plugin: 'de.undercouch.download'
 //apply plugin: 'com.vanniktech.dependency.graph.generator'
 
+ext.javaLanguageVersion = 21
+// Adoptium also covers Temurin
+ext.javaVendor = JvmVendorSpec.ADOPTIUM
+
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-        vendor = JvmVendorSpec.ADOPTIUM
+        languageVersion = JavaLanguageVersion.of(javaLanguageVersion)
+        vendor = javaVendor
     }
 }
 
@@ -73,6 +77,16 @@ ext.getPropertyOrDefault = { propName, defaultValue ->
     }
     return val;
 }
+
+// Convert the abs root project dir into a string that can be used as a dir
+// to allow us to have a dir for multiple repo instances that don't conflict
+// e.g. 'home+dev+git_work+gchq+stroom'
+ext.rootProjectAbsPathStr = project.rootProject.rootDir
+        .toPath()
+        .toAbsolutePath()
+        .toString()
+        .replaceAll("^/", "")
+        .replaceAll("/", "+");
 
 ext.gwtCompilerProps = [
         mainClass: 'stroom.gwt.GwtCompilerWrapper',
@@ -114,11 +128,11 @@ ext.versions = [
         bnd               : '7.0.0',
         curator           : '4.2.0', // Curator 4 works with ZK 3.4.x in soft compatibility mode, i.e. you must exlude its dep on ZK and explicitly add one for 3.4.x
         dropwizard        : '4.0.4', // used to set the dropwizard-bom version, that controls lots of dependency versions
-        elasticsearch     : '7.17.14',
+        elasticsearch     : '8.11.2',
         httpcore          : '4.4.16', // Transient dependency of Elasticsearch
         flyway            : '10.0.0',
         guice             : '7.0.0',
-        gwt               : '2.10.0',
+        gwt               : '2.11.0',
         jackson_swagger   : '2.11.1', // Specific version of jackson for use with the swagger plugin
         jmh               : '1.37',
         jooq              : '3.18.7',
@@ -126,6 +140,8 @@ ext.versions = [
         kafka             : '3.6.0',
         okhttp            : '4.12.0',
         poi               : '5.2.4',
+        scylladb         : '4.17.0.1',
+        simple_java_mail  : '8.8.0',
         swagger           : '2.2.18',
         unirest           : '1.4.9',
         zookeeper         : '3.4.8', // Roughly pegged to the server version used by Cloudera, see links above. This version is forced below.
@@ -185,10 +201,7 @@ ext.libs = [
         dropwizard_validation               : "io.dropwizard:dropwizard-validation", // version controlled by dropwizard-dependencies
         //dropwizard_websockets               : "com.liveperson:dropwizard-websockets:1.3.14",
         eclipse_transformer_cli             : "org.eclipse.transformer:org.eclipse.transformer.cli:0.5.0",
-        elasticsearch_rest_high_level_client: "org.elasticsearch.client:elasticsearch-rest-high-level-client:$versions.elasticsearch",
-        elasticsearch_rest_client           : "org.elasticsearch.client:elasticsearch-rest-client:$versions.elasticsearch",
-        elasticsearch                       : "org.elasticsearch:elasticsearch:$versions.elasticsearch",
-        elasticsearch_core                  : "org.elasticsearch:elasticsearch-core:$versions.elasticsearch",
+        elasticsearch_java                  : "co.elastic.clients:elasticsearch-java:$versions.elasticsearch",
         fast_infoset                        : "com.sun.xml.fastinfoset:FastInfoset:2.1.1",
         flyway_core                         : "org.flywaydb:flyway-core:${versions.flyway}",
         flyway_mysql                        : "org.flywaydb:flyway-mysql:${versions.flyway}",
@@ -209,9 +222,7 @@ ext.libs = [
         hibernate_jpa                       : "org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final", // remove when legacy code is removed
         hikari                              : "com.zaxxer:HikariCP:5.1.0",
         http_client                         : "org.apache.httpcomponents.client5:httpclient5", // version controlled by dropwizard-dependencies
-        http_client__elastic                : "org.apache.httpcomponents:httpclient:4.5.10", // version controlled by dropwizard-dependencies
         httpcore                            : "org.apache.httpcomponents.core5:httpcore5:$versions.httpcore",
-        httpcore__elastic                   : "org.apache.httpcomponents:httpcore:4.4.12",
         jBCrypt                             : "de.svenkubiak:jBCrypt:0.4.3",
         jackson_annotations                 : "com.fasterxml.jackson.core:jackson-annotations", // version controlled by dropwizard-dependencies
         //jackson_core                        : "com.fasterxml.jackson.core:jackson-core:2.9.10", // version controlled by dropwizard-dependencies
@@ -222,6 +233,7 @@ ext.libs = [
         jakarta_activation                  : "jakarta.activation:jakarta.activation-api", // version controlled by dropwizard-dependencies
         jakarta_annotation_api              : "jakarta.annotation:jakarta.annotation-api", // version controlled by dropwizard-dependencies
         jakarta_el                          : "org.glassfish:jakarta.el", // version controlled by dropwizard-dependencies
+        jakarta_json_api                    : "jakarta.json:jakarta.json-api:2.0.1",
         jakarta_servlet_api                 : "jakarta.servlet:jakarta.servlet-api", // version controlled by dropwizard-dependencies
         jakarta_validation_api              : "jakarta.validation:jakarta.validation-api", // version controlled by dropwizard-dependencies
         java_diff_utils                     : "io.github.java-diff-utils:java-diff-utils:4.11",
@@ -246,7 +258,7 @@ ext.libs = [
         jetty_servlet                       : "org.eclipse.jetty:jetty-servlet", // version controlled by dropwizard-dependencies
         jetty_servlets                      : "org.eclipse.jetty:jetty-servlets", // version controlled by dropwizard-dependencies
         jgit                                : "org.eclipse.jgit:org.eclipse.jgit:6.5.0.202303070854-r",
-        jinjava                             : "com.hubspot.jinjava:jinjava:2.7.1",
+        jinjava                             : "com.hubspot.jinjava:jinjava:2.7.2",
         jmh_core                            : "org.openjdk.jmh:jmh-core:$versions.jmh",
         jmh_generator_annprocess            : "org.openjdk.jmh:jmh-generator-annprocess:$versions.jmh",
         jooq                                : "org.jooq:jooq:$versions.jooq",
@@ -262,7 +274,11 @@ ext.libs = [
         junit_platform_launcher             : "org.junit.platform:junit-platform-launcher", // version controlled by junit-bom
         kafka_clients                       : "org.apache.kafka:kafka-clients:$versions.kafka", // version controlled by junit-bom
         kryo                                : "com.esotericsoftware:kryo:5.5.0",
-        lmdbjava                            : "org.lmdbjava:lmdbjava:0.8.3",
+        // lmdbjava 0.8.3 causes FFI errors on centos7 due to glibc version
+        // See https://github.com/gchq/stroom/issues/3485 & https://github.com/gchq/stroom/issues/4133
+        // Potentially caused by https://github.com/jnr/jffi/issues/138 and fixable with a jnr-ffi uplift in lmdbjava
+        // lmdbjava 0.9.0 has a cursor bug though, https://github.com/lmdbjava/lmdbjava/issues/228
+        lmdbjava                            : "org.lmdbjava:lmdbjava:0.8.2",
         log4j_over_slf4j                    : "org.slf4j:log4j-over-slf4j", // version controlled by dropwizard-dependencies
         logback_classic                     : "ch.qos.logback:logback-classic", // version controlled by dropwizard-dependencies
         logback_core                        : "ch.qos.logback:logback-core", // version controlled by dropwizard-dependencies
@@ -274,9 +290,16 @@ ext.libs = [
         okhttp_logging_interceptor          : "com.squareup.okhttp3:logging-interceptor:${versions.okhttp}",
         poi                                 : "org.apache.poi:poi:${versions.poi}",
         poi_ooxml                           : "org.apache.poi:poi-ooxml:${versions.poi}",
+        quartz                              : "org.quartz-scheduler:quartz:2.5.0-rc1",
         restygwt                            : "org.fusesource.restygwt:restygwt:2.2.7",
         saxon_he                            : "net.sf.saxon:Saxon-HE:9.9.1-8",
-        simple_java_mail                    : 'org.simplejavamail:simple-java-mail:8.3.1',
+
+        scylladb_driver_core                : "com.scylladb:java-driver-core:${versions.scylladb}",
+        scylladb_query_builder              : "com.scylladb:java-driver-query-builder:${versions.scylladb}",
+        scylladb_driver_mapper              : "com.scylladb:java-driver-mapper-runtime:${versions.scylladb}",
+
+        simple_java_mail                    : "org.simplejavamail:simple-java-mail:${versions.simple_java_mail}",
+        simple_java_mail_batch_module       : "org.simplejavamail:batch-module:${versions.simple_java_mail}",
         slf4j_api                           : "org.slf4j:slf4j-api", // version controlled by dropwizard-dependencies
         snake_yaml                          : "org.yaml:snakeyaml:2.2",
         solrj                               : "org.apache.solr:solr-solrj:8.2.0",

@@ -53,9 +53,25 @@ public interface SecurityContext extends HasAuditableUserIdentity {
         return userIdentity.getUserIdentityForAudit();
     }
 
-    UserIdentity createIdentity(String subjectId);
+    /**
+     * Gets the {@link UserIdentity} of a user identified by the subjectId or creates a
+     * stroom_user record for them if it doesn't already exist.
+     */
+    UserIdentity getOrCreateUserIdentity(String subjectId);
 
-    UserIdentity createIdentityByUserUuid(String userUuid);
+    /**
+     * Gets the {@link UserIdentity} of a user or group identified by the subjectId.
+     *
+     * @throws stroom.security.api.exception.AuthenticationException if the user/group can't be found
+     */
+    UserIdentity getIdentityBySubjectId(String subjectId, boolean isGroup);
+
+    /**
+     * Gets the {@link UserIdentity} of a user or group identified by the userUuid.
+     *
+     * @throws stroom.security.api.exception.AuthenticationException if the user/group can't be found
+     */
+    UserIdentity getIdentityByUserUuid(String userUuid);
 
     /**
      * Gets the identity of the current user.
@@ -132,8 +148,8 @@ public interface SecurityContext extends HasAuditableUserIdentity {
      * Check if the user associated with this security context has the requested
      * permission on the document specified by the document docRef.
      *
-     * @param docRef The docRef of the document.
-     * @param permission   The permission we are checking for.
+     * @param docRef     The docRef of the document.
+     * @param permission The permission we are checking for.
      * @return True if the user associated with the security context has the
      * requested permission.
      */

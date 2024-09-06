@@ -7,10 +7,19 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Hold all the document permissions that a user holds.
+ */
 public class UserDocumentPermissions {
+
     //docUuid => Set<documentPermissionName>
     private final Map<String, Set<String>> permissions = new ConcurrentHashMap<>();
 
+    /**
+     * @return True if the passed permission is directly held or inherited
+     * (e.g. permission == 'Use' and this document holds 'Update' which
+     * inherits Use so return true).
+     */
     public boolean hasDocumentPermission(final String documentUuid, final String permission) {
         final Set<String> perms = permissions.get(documentUuid);
         if (perms != null) {

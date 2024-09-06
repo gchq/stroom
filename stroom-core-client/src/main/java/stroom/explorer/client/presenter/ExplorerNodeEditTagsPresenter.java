@@ -18,10 +18,12 @@
 package stroom.explorer.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestError;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.RefreshDocumentEvent;
+import stroom.explorer.client.event.ExplorerTaskListener;
 import stroom.explorer.client.event.ShowEditNodeTagsDialogEvent;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsProxy;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsView;
@@ -29,7 +31,6 @@ import stroom.explorer.shared.AddRemoveTagsRequest;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.util.shared.GwtNullSafe;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -61,8 +62,7 @@ import java.util.stream.Collectors;
 public class ExplorerNodeEditTagsPresenter
         extends MyPresenter<ExplorerNodeEditTagsView, ExplorerNodeEditTagsProxy>
         implements ShowEditNodeTagsDialogEvent.Handler,
-        HidePopupRequestEvent.Handler,
-        HidePopupEvent.Handler {
+        HidePopupRequestEvent.Handler {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
@@ -92,19 +92,21 @@ public class ExplorerNodeEditTagsPresenter
                     .map(ExplorerNode::getDocRef)
                     .collect(Collectors.toList());
 
-            final Rest<Set<String>> allNodeTagsRest = restFactory.create();
-            allNodeTagsRest
+            restFactory
+                    .create(EXPLORER_RESOURCE)
+                    .method(ExplorerResource::fetchExplorerNodeTags)
                     .onSuccess(allTags -> {
                         if (isSingleDocRef()) {
-                            final Rest<Set<String>> expNodeRest = restFactory.create();
-                            expNodeRest
-                                    .onSuccess(nodetags -> {
-                                        getView().setData(docRefs, nodetags, allTags);
+                            restFactory
+                                    .create(EXPLORER_RESOURCE)
+                                    .method(res -> res.fetchExplorerNodeTags(docRefs))
+                                    .onSuccess(nodeTags -> {
+                                        getView().setData(docRefs, nodeTags, allTags);
                                         forceReveal();
                                     })
                                     .onFailure(this::handleFailure)
-                                    .call(EXPLORER_RESOURCE)
-                                    .fetchExplorerNodeTags(docRefs);
+                                    .taskListener(new ExplorerTaskListener(this))
+                                    .exec();
                         } else {
                             // Adding to multiple so don't need to know what tags the nodes have
                             getView().setData(docRefs, Collections.emptySet(), allTags);
@@ -112,8 +114,8 @@ public class ExplorerNodeEditTagsPresenter
                         }
                     })
                     .onFailure(this::handleFailure)
-                    .call(EXPLORER_RESOURCE)
-                    .fetchExplorerNodeTags();
+                    .taskListener(new ExplorerTaskListener(this))
+                    .exec();
 
         }
 
@@ -143,37 +145,37 @@ public class ExplorerNodeEditTagsPresenter
                 .caption(caption)
                 .onShow(e -> getView().focus())
                 .onHideRequest(this)
-                .onHide(this)
                 .fire();
     }
 
     @Override
-    public void onHideRequest(final HidePopupRequestEvent event) {
-        if (event.isOk()) {
+    public void onHideRequest(final HidePopupRequestEvent e) {
+        if (e.isOk()) {
             final Set<String> editedTags = getView().getNodeTags();
 
             if (isSingleDocRef()) {
                 if (!Objects.equals(getSingleNode().getTags(), editedTags)) {
-                    updateTagsOnNode(event, editedTags);
+                    updateTagsOnNode(e, editedTags);
                 } else {
-                    event.hide();
+                    e.hide();
                 }
             } else {
                 if (GwtNullSafe.hasItems(editedTags)) {
-                    addTagsToNodes(event, editedTags);
+                    addTagsToNodes(e, editedTags);
                 } else {
-                    event.hide();
+                    e.hide();
                 }
             }
         } else {
-            event.hide();
+            e.hide();
         }
     }
 
     private void addTagsToNodes(final HidePopupRequestEvent event, final Set<String> editedTags) {
         final List<DocRef> nodeDocRefs = getNodeDocRefs();
-        final Rest<Void> rest = restFactory.create();
-        rest
+        restFactory
+                .create(EXPLORER_RESOURCE)
+                .call(res -> res.addTags(new AddRemoveTagsRequest(nodeDocRefs, editedTags)))
                 .onSuccess(voidResult -> {
                     // Update the node in the tree with the new tags
                     nodeDocRefs.forEach(docRef ->
@@ -181,18 +183,18 @@ public class ExplorerNodeEditTagsPresenter
                                     ExplorerNodeEditTagsPresenter.this, docRef));
                     event.hide();
                 })
-                .onFailure(this::handleFailure)
-                .call(EXPLORER_RESOURCE)
-                .addTags(new AddRemoveTagsRequest(nodeDocRefs, editedTags));
+                .onFailure(RestErrorHandler.forPopup(this, event))
+                .taskListener(this)
+                .exec();
     }
 
     private void updateTagsOnNode(final HidePopupRequestEvent event, final Set<String> editedTags) {
         final ExplorerNode updatedNode = getSingleNode().copy()
                 .tags(editedTags)
                 .build();
-
-        final Rest<ExplorerNode> rest = restFactory.create();
-        rest
+        restFactory
+                .create(EXPLORER_RESOURCE)
+                .method(res -> res.updateNodeTags(updatedNode))
                 .onSuccess(explorerNode -> {
                     // Update the node in the tree with the new tags
                     RefreshDocumentEvent.fire(
@@ -200,17 +202,12 @@ public class ExplorerNodeEditTagsPresenter
                             explorerNode.getDocRef());
                     event.hide();
                 })
-                .onFailure(this::handleFailure)
-                .call(EXPLORER_RESOURCE)
-                .updateNodeTags(updatedNode);
+                .onFailure(RestErrorHandler.forPopup(this, event))
+                .taskListener(this)
+                .exec();
     }
 
-    @Override
-    public void onHide(final HidePopupEvent e) {
-
-    }
-
-    private void handleFailure(final Throwable t) {
+    private void handleFailure(final RestError t) {
         AlertEvent.fireError(
                 ExplorerNodeEditTagsPresenter.this,
                 t.getMessage(),
@@ -236,7 +233,6 @@ public class ExplorerNodeEditTagsPresenter
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
-
 
     // --------------------------------------------------------------------------------
 

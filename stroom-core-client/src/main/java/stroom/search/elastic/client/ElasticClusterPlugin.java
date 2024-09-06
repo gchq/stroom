@@ -18,7 +18,7 @@
 package stroom.search.elastic.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -29,6 +29,7 @@ import stroom.search.elastic.client.presenter.ElasticClusterPresenter;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticClusterResource;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.task.client.TaskListener;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -68,26 +69,30 @@ public class ElasticClusterPlugin extends DocumentPlugin<ElasticClusterDoc> {
     @Override
     public void load(final DocRef docRef,
                      final Consumer<ElasticClusterDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<ElasticClusterDoc> rest = restFactory.create();
-        rest
+                     final RestErrorHandler errorHandler,
+                     final TaskListener taskListener) {
+        restFactory
+                .create(ELASTIC_CLUSTER_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
-                .call(ELASTIC_CLUSTER_RESOURCE)
-                .fetch(docRef.getUuid());
+                .onFailure(errorHandler)
+                .taskListener(taskListener)
+                .exec();
     }
 
     @Override
     public void save(final DocRef docRef,
                      final ElasticClusterDoc document,
                      final Consumer<ElasticClusterDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<ElasticClusterDoc> rest = restFactory.create();
-        rest
+                     final RestErrorHandler errorHandler,
+                     final TaskListener taskListener) {
+        restFactory
+                .create(ELASTIC_CLUSTER_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
-                .call(ELASTIC_CLUSTER_RESOURCE)
-                .update(document.getUuid(), document);
+                .onFailure(errorHandler)
+                .taskListener(taskListener)
+                .exec();
     }
 
     @Override

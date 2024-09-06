@@ -19,31 +19,31 @@ package stroom.document.client.event;
 
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 import java.util.List;
 
 public class CopyDocumentEvent extends GwtEvent<CopyDocumentEvent.Handler> {
 
     private static Type<CopyDocumentEvent.Handler> TYPE;
-    private final PresenterWidget<?> presenter;
+    private final HidePopupRequestEvent hidePopupRequestEvent;
     private final List<ExplorerNode> explorerNodes;
     private final ExplorerNode destinationFolder;
     private final boolean allowRename;
     private final String docName;
     private final PermissionInheritance permissionInheritance;
 
-    private CopyDocumentEvent(final PresenterWidget<?> presenter,
+    private CopyDocumentEvent(final HidePopupRequestEvent hidePopupRequestEvent,
                               final List<ExplorerNode> explorerNodes,
                               final ExplorerNode destinationFolder,
                               final boolean allowRename,
                               final String docName,
                               final PermissionInheritance permissionInheritance) {
-        this.presenter = presenter;
+        this.hidePopupRequestEvent = hidePopupRequestEvent;
         this.explorerNodes = explorerNodes;
         this.destinationFolder = destinationFolder;
         this.allowRename = allowRename;
@@ -52,7 +52,7 @@ public class CopyDocumentEvent extends GwtEvent<CopyDocumentEvent.Handler> {
     }
 
     public static void fire(final HasHandlers handlers,
-                            final PresenterWidget<?> presenter,
+                            final HidePopupRequestEvent hidePopupRequestEvent,
                             final List<ExplorerNode> explorerNodes,
                             final ExplorerNode destinationFolder,
                             final boolean allowRename,
@@ -60,7 +60,7 @@ public class CopyDocumentEvent extends GwtEvent<CopyDocumentEvent.Handler> {
                             final PermissionInheritance permissionInheritance) {
         handlers.fireEvent(
                 new CopyDocumentEvent(
-                        presenter,
+                        hidePopupRequestEvent,
                         explorerNodes,
                         destinationFolder,
                         allowRename,
@@ -85,8 +85,8 @@ public class CopyDocumentEvent extends GwtEvent<CopyDocumentEvent.Handler> {
         handler.onCopy(this);
     }
 
-    public PresenterWidget<?> getPresenter() {
-        return presenter;
+    public HidePopupRequestEvent getHidePopupRequestEvent() {
+        return hidePopupRequestEvent;
     }
 
     public List<ExplorerNode> getExplorerNodes() {

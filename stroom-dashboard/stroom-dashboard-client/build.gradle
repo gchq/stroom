@@ -7,10 +7,7 @@ dependencies {
     implementation project(':stroom-docref')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
-    implementation project(':stroom-security:stroom-security-client-api')
     implementation project(':stroom-util-shared')
-
-    runtimeOnly project(':stroom-security:stroom-security-client')
 
     implementation libs.gin
     implementation libs.guice__gwt

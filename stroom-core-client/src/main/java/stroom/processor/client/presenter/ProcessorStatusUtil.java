@@ -4,7 +4,8 @@ import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.ProcessorListRow;
-import stroom.widget.customdatebox.client.ClientDurationUtil;
+import stroom.util.shared.GwtNullSafe;
+import stroom.widget.customdatebox.client.MomentJs;
 
 class ProcessorStatusUtil {
 
@@ -16,19 +17,18 @@ class ProcessorStatusUtil {
                     .getProcessorFilter()
                     .getProcessorFilterTracker();
             if (tracker != null) {
-                if (tracker.getMessage() != null && tracker.getMessage().trim().length() > 0) {
-                    if (tracker.getStatus() != null) {
-                        status = tracker.getStatus().getDisplayValue() + ": " + tracker.getMessage();
-                    } else {
-                        status = tracker.getMessage();
-                    }
+                if (!GwtNullSafe.isBlankString(tracker.getMessage())) {
+                    status = GwtNullSafe.getOrElseGet(
+                            tracker.getStatus(),
+                            status2 -> status2.getDisplayValue() + ": " + tracker.getMessage(),
+                            tracker::getMessage);
                 } else if (!ProcessorFilterTrackerStatus.CREATED.equals(tracker.getStatus())) {
                     status = tracker.getStatus().getDisplayValue();
                 } else if (tracker.getLastPollTaskCount() != null && tracker.getLastPollTaskCount() == 0) {
                     status = "Up to date";
                 } else if (tracker.getMetaCreateMs() != null) {
                     final long age = System.currentTimeMillis() - tracker.getMetaCreateMs();
-                    status = ClientDurationUtil.humanise(age) + " behind";
+                    status = MomentJs.humanise(age) + " behind";
                 }
             }
         }

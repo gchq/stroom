@@ -20,12 +20,11 @@ import stroom.data.retention.shared.DataRetentionRules;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.RestResourcesBinder;
+import stroom.util.shared.scheduler.CronExpressions;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import jakarta.inject.Inject;
-
-import static stroom.job.api.Schedule.ScheduleType.CRON;
 
 public class DataRetentionModule extends AbstractModule {
 
@@ -41,7 +40,7 @@ public class DataRetentionModule extends AbstractModule {
                         .name(DataRetentionPolicyExecutor.JOB_NAME)
                         .description("Delete data that exceeds the retention period " +
                                 "specified by data retention policy")
-                        .schedule(CRON, "0 0 *"));
+                        .cronSchedule(CronExpressions.EVERY_DAY_AT_MIDNIGHT.getExpression()));
     }
 
     @SuppressWarnings("unused") // called by guice

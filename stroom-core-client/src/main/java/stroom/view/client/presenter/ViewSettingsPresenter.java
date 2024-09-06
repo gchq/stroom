@@ -18,11 +18,10 @@
 package stroom.view.client.presenter;
 
 import stroom.data.client.presenter.EditExpressionPresenter;
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.NodeFlag;
 import stroom.meta.shared.MetaFields;
@@ -40,24 +39,19 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.Objects;
-import java.util.stream.Collectors;
-
 public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsView, ViewDoc> {
 
     private final RestFactory restFactory;
-    private final EntityDropDownPresenter dataSourceSelectionPresenter;
-    private final EntityDropDownPresenter pipelineSelectionPresenter;
+    private final DocSelectionBoxPresenter dataSourceSelectionPresenter;
+    private final DocSelectionBoxPresenter pipelineSelectionPresenter;
     private final EditExpressionPresenter expressionPresenter;
-    private boolean isDataSourceSelectionInitialised = false;
-    private boolean isPipelineSelectionInitialised = false;
 
     @Inject
     public ViewSettingsPresenter(final EventBus eventBus,
                                  final ViewSettingsView view,
                                  final RestFactory restFactory,
-                                 final EntityDropDownPresenter dataSourceSelectionPresenter,
-                                 final EntityDropDownPresenter pipelineSelectionPresenter,
+                                 final DocSelectionBoxPresenter dataSourceSelectionPresenter,
+                                 final DocSelectionBoxPresenter pipelineSelectionPresenter,
                                  final EditExpressionPresenter expressionPresenter,
                                  final UiConfigCache uiConfigCache) {
         super(eventBus, view);
@@ -77,12 +71,15 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
         pipelineSelectionPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 
         // Filter the pipeline picker by tags, if configured
-        uiConfigCache.get().onSuccess(extendedUiConfig ->
+        uiConfigCache.get(extendedUiConfig -> {
+            if (extendedUiConfig != null) {
                 GwtNullSafe.consume(
                         extendedUiConfig.getQuery(),
                         QueryConfig::getViewPipelineSelectorIncludedTags,
                         ExplorerTreeFilter::createTagQuickFilterInput,
-                        pipelineSelectionPresenter::setQuickFilter));
+                        pipelineSelectionPresenter::setQuickFilter);
+            }
+        }, this);
     }
 
     @Override
@@ -91,28 +88,8 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
     }
 
     private void registerHandlers() {
-        registerHandler(dataSourceSelectionPresenter.addDataSelectionHandler(event -> {
-            final DocRef selectedEntityReference = dataSourceSelectionPresenter.getSelectedEntityReference();
-            // Don't want to fire dirty event when the entity is first set
-            if (isDataSourceSelectionInitialised) {
-                if (!Objects.equals(getEntity().getDataSource(), selectedEntityReference)) {
-                    setDirty(true);
-                }
-            } else {
-                isDataSourceSelectionInitialised = true;
-            }
-        }));
-        registerHandler(pipelineSelectionPresenter.addDataSelectionHandler(event -> {
-            final DocRef selectedEntityReference = pipelineSelectionPresenter.getSelectedEntityReference();
-            // Don't want to fire dirty event when the entity is first set
-            if (isPipelineSelectionInitialised) {
-                if (!Objects.equals(getEntity().getPipeline(), selectedEntityReference)) {
-                    setDirty(true);
-                }
-            } else {
-                isPipelineSelectionInitialised = true;
-            }
-        }));
+        registerHandler(dataSourceSelectionPresenter.addDataSelectionHandler(event -> setDirty(true)));
+        registerHandler(pipelineSelectionPresenter.addDataSelectionHandler(event -> setDirty(true)));
         registerHandler(expressionPresenter.addDirtyHandler(event -> setDirty(true)));
     }
 
@@ -121,11 +98,7 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
         dataSourceSelectionPresenter.setSelectedEntityReference(entity.getDataSource());
         pipelineSelectionPresenter.setSelectedEntityReference(entity.getPipeline());
         final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
-        fieldSelectionBoxModel.addItems(MetaFields
-                .getAllFields()
-                .stream()
-                .map(FieldInfo::create)
-                .collect(Collectors.toList()));
+        fieldSelectionBoxModel.addItems(MetaFields.getAllFields());
         expressionPresenter.init(restFactory, MetaFields.STREAM_STORE_DOC_REF, fieldSelectionBoxModel);
 
         // Read expression.

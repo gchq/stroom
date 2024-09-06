@@ -1,15 +1,15 @@
 package stroom.index.lucene980;
 
+import stroom.datasource.api.v2.FieldType;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.IndexSystemInfoProvider;
 import stroom.index.shared.IndexConstants;
-import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFieldType;
 import stroom.index.shared.IndexShard;
+import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.LuceneIndexField;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
@@ -66,9 +67,10 @@ class Lucene980SystemInfoProvider implements IndexSystemInfoProvider {
     @Override
     public SystemInfoResult getSystemInfo(final IndexShard indexShard, final Integer limit, final Long streamId) {
         // This may be null if we don't happen to have a writer
-        final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardId(indexShard.getId());
-        final IndexWriter indexWriter = NullSafe
-                .get(indexShardWriter, w -> ((Lucene980IndexShardWriter) w).getWriter());
+        final Optional<IndexShardWriter> optional = indexShardWriterCache.getIfPresent(indexShard.getId());
+        final IndexWriter indexWriter = optional
+                .map(indexShardWriter -> ((Lucene980IndexShardWriter) indexShardWriter).getWriter())
+                .orElse(null);
 
         IndexShardSearcher indexShardSearcher = null;
         try {
@@ -149,18 +151,18 @@ class Lucene980SystemInfoProvider implements IndexSystemInfoProvider {
         if (streamId == null) {
             return new MatchAllDocsQuery();
         } else {
-            final IndexDoc indexDoc = indexStore.readDocument(DocRef.builder()
+            final LuceneIndexDoc indexDoc = indexStore.readDocument(DocRef.builder()
                     .uuid(indexShard.getIndexUuid())
-                    .type(IndexDoc.DOCUMENT_TYPE)
+                    .type(LuceneIndexDoc.DOCUMENT_TYPE)
                     .build());
             Objects.requireNonNull(indexDoc);
 
-            IndexField streamIdField = indexDoc.getFields().stream()
-                    .filter(indexField -> indexField.getFieldName().equals(IndexConstants.STREAM_ID))
+            LuceneIndexField streamIdField = indexDoc.getFields().stream()
+                    .filter(indexField -> indexField.getFldName().equals(IndexConstants.STREAM_ID))
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException("Can't find field " + IndexConstants.STREAM_ID));
 
-            if (IndexFieldType.ID.equals(streamIdField.getFieldType())) {
+            if (FieldType.ID.equals(streamIdField.getFldType())) {
                 return LongField.newExactQuery(IndexConstants.STREAM_ID, streamId);
             } else {
                 return new TermQuery(new Term(IndexConstants.STREAM_ID, streamId.toString()));

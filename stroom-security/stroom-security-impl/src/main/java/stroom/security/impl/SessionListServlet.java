@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package stroom.security.impl;
 
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.PermissionNames;
 import stroom.security.shared.SessionDetails;
 import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
@@ -24,6 +25,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsServlet;
+import stroom.util.shared.PermissionException;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.UserName;
 
 import jakarta.inject.Inject;
@@ -45,16 +48,22 @@ class SessionListServlet extends HttpServlet implements IsServlet {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SessionListServlet.class);
 
-    private static final Set<String> PATH_SPECS = Set.of("/sessionList");
+    public static final String PATH_PART = "/sessionList";
+    private static final Set<String> PATH_SPECS = Set.of(
+            PATH_PART,
+            ResourcePaths.addLegacyAuthenticatedServletPrefix(PATH_PART));
 
     private final SecurityContext securityContext;
     private final SessionListService sessionListService;
+    private final UserAppPermissionService userAppPermissionService;
 
     @Inject
     SessionListServlet(final SecurityContext securityContext,
-                       final SessionListService sessionListService) {
+                       final SessionListService sessionListService,
+                       final UserAppPermissionService userAppPermissionService) {
         this.securityContext = securityContext;
         this.sessionListService = sessionListService;
+        this.userAppPermissionService = userAppPermissionService;
     }
 
     /**
@@ -65,24 +74,31 @@ class SessionListServlet extends HttpServlet implements IsServlet {
      */
     @Override
     public void service(final ServletRequest req, final ServletResponse res) {
-        // TODO not sure this should be here as sessionList should be an authenticated servlet
-        securityContext.insecure(() -> {
-            try {
-                super.service(req, res);
-            } catch (ServletException e) {
-                throw new RuntimeException(e.getMessage(), e);
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        });
+        try {
+            super.service(req, res);
+        } catch (ServletException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     @Override
     protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
+        if (!securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
+            throw new PermissionException(
+                    securityContext.getUserIdentityForAudit(),
+                    "You are not authorised to view the session list");
+        }
+        showSessionList(request, response);
+    }
+
+    private void showSessionList(final HttpServletRequest request, final HttpServletResponse response)
+            throws IOException {
         response.setContentType("text/html");
 
         response.getWriter().write("<html>" +
-                "<head><link type=\"text/css\" href=\"css/SessionList.css\" rel=\"stylesheet\" /></head>" +
+                "<head><link type=\"text/css\" href=\"/ui/css/SessionList.css\" rel=\"stylesheet\" /></head>" +
                 "<body>");
         response.getWriter().write("<table>");
         response.getWriter().write("<thead>" +

@@ -145,11 +145,6 @@ class Substring extends AbstractFunction {
         return requiresChildData;
     }
 
-    @Override
-    public Type getCommonReturnType() {
-        return Type.STRING;
-    }
-
     private static final class Gen extends AbstractSingleChildGenerator {
 
         private final Generator startPosGenerator;
@@ -193,11 +188,7 @@ class Substring extends AbstractFunction {
             int start = startPos;
             int end = endPos;
 
-            if (start < 0) {
-                start = 0;
-            }
-
-            if (end < 0 || end < start || start >= value.length()) {
+            if (start < 0 || end < start || start >= value.length()) {
                 return ValString.EMPTY;
             }
 

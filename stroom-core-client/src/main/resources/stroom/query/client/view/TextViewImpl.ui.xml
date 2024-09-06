@@ -2,14 +2,23 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:l="urn:import:stroom.data.client.view"
-             xmlns:button="urn:import:stroom.widget.button.client">
-    <g:FlowPanel styleName="TextView max dock-container-vertical stroom-dashboard-text">
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:spinner="urn:import:stroom.widget.spinner.client">
+    <g:FlowPanel styleName="TextView max dock-container-vertical">
+        <g:FlowPanel styleName="dock-min dock-container-horizontal">
+            <b:ButtonPanel addStyleNames="dock-max icon-button-group">
+            </b:ButtonPanel>
+            <b:ButtonPanel addStyleNames="dock-min icon-button-group">
+                <b:InlineSvgButton ui:field="close" title="Close" enabled="true"/>
+            </b:ButtonPanel>
+        </g:FlowPanel>
         <g:FlowPanel styleName="dock-max stepping-button-container">
             <g:SimplePanel ui:field="content" styleName="max"/>
-            <button:FabButton ui:field="steppingButton"
-                              addStyleNames="stepping-button"
-                              title="Enter Stepping Mode" visible="false"/>
+            <b:FabButton ui:field="steppingButton"
+                         addStyleNames="stepping-button"
+                         title="Enter Stepping Mode" visible="false"/>
         </g:FlowPanel>
         <l:ClassificationLabel ui:field="classification" styleName="dock-min classificationLabel"/>
+        <spinner:SpinnerLarge ui:field="spinner" addStyleNames="spinner-center" />
     </g:FlowPanel>
 </ui:UiBinder>

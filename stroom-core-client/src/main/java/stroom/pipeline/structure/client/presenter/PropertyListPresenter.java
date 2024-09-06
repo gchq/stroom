@@ -20,7 +20,6 @@ package stroom.pipeline.structure.client.presenter;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
@@ -41,6 +40,7 @@ import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.popup.client.presenter.Size;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -355,11 +355,17 @@ public class PropertyListPresenter
                         refresh();
                     }
                 }
-
                 e.hide();
             };
 
-            final PopupSize popupSize = PopupSize.resizableX();
+            final PopupSize popupSize = PopupSize.builder()
+                    .width(Size.builder()
+                            .initial(600)
+                            .min(600)
+                            .resizable(true)
+                            .build())
+                    .build();
+
             ShowPopupEvent.builder(editor)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
                     .popupSize(popupSize)
@@ -407,8 +413,9 @@ public class PropertyListPresenter
 
         if (docRefs.size() > 0) {
             // Load entities.
-            final Rest<Set<DocRef>> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(EXPLORER_RESOURCE)
+                    .method(res -> res.fetchDocRefs(docRefs))
                     .onSuccess(result -> {
                         final Map<DocRef, DocRef> fetchedDocRefs = result
                                 .stream()
@@ -426,8 +433,8 @@ public class PropertyListPresenter
 
                         setData(propertyList);
                     })
-                    .call(EXPLORER_RESOURCE)
-                    .fetchDocRefs(docRefs);
+                    .taskListener(getView())
+                    .exec();
         } else {
             setData(propertyList);
         }
@@ -505,6 +512,10 @@ public class PropertyListPresenter
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public enum Source implements HasDisplayValue {
         LOCAL("Local"),

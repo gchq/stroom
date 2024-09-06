@@ -17,6 +17,7 @@
 package stroom.core.servlet;
 
 import stroom.ui.config.shared.UiConfig;
+import stroom.ui.config.shared.UserPreferencesService;
 import stroom.util.shared.IsServlet;
 
 import jakarta.inject.Inject;
@@ -25,15 +26,22 @@ import java.util.Set;
 
 public class DashboardServlet extends AppServlet implements IsServlet {
 
-    private static final Set<String> PATH_SPECS = Set.of("/dashboard");
+    static final String PATH_PART = "/dashboard";
+
+    /**
+     * Note: {@link RedirectServlet} will re-direct to here to support legacy servlet paths,
+     * i.e. /stroom/dashboard/xxx
+     */
+    private static final Set<String> PATH_SPECS = Set.of(PATH_PART);
 
     @Inject
-    DashboardServlet(final UiConfig uiConfig) {
-        super(uiConfig);
+    DashboardServlet(final UiConfig uiConfig,
+                     final UserPreferencesService userPreferencesService) {
+        super(uiConfig, userPreferencesService);
     }
 
     String getScript() {
-        return "dashboard/dashboard.nocache.js";
+        return "ui/dashboard/dashboard.nocache.js";
     }
 
     @Override

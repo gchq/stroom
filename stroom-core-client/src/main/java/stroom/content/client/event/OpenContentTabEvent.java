@@ -63,6 +63,10 @@ public class OpenContentTabEvent extends GwtEvent<OpenContentTabEvent.OpenConten
         return layer;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface OpenContentTabHandler extends EventHandler {
 
         void onOpen(OpenContentTabEvent event);

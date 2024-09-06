@@ -78,7 +78,7 @@ class TestJobNodeTrackerCache extends StroomUnitTest {
             final JobNode jobNode =
                     new JobNode(1, nodeName, job, 100, JobType.DISTRIBUTED, frequency, true);
             final JobNodeListResponse jobNodeListResponse = JobNodeListResponse
-                    .createUnboundedJobeNodeResponse(List.of(jobNode));
+                    .createUnboundedJobNodeResponse(List.of(jobNode));
 
             Metrics.setEnabled(true);
 

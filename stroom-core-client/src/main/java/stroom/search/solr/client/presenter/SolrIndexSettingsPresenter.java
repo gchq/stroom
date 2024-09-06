@@ -19,22 +19,22 @@ package stroom.search.solr.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.EditExpressionPresenter;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.presenter.DynamicFieldSelectionListModel;
 import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter.SolrIndexSettingsView;
 import stroom.search.solr.shared.SolrConnectionConfig;
 import stroom.search.solr.shared.SolrConnectionConfig.InstanceType;
-import stroom.search.solr.shared.SolrConnectionTestResponse;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexResource;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.task.client.TaskListener;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -43,24 +43,23 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
-import java.util.Objects;
 
-public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexSettingsView, SolrIndexDoc>
+public class SolrIndexSettingsPresenter
+        extends DocumentEditPresenter<SolrIndexSettingsView, SolrIndexDoc>
         implements SolrIndexSettingsUiHandlers {
 
     private static final SolrIndexResource SOLR_INDEX_RESOURCE = GWT.create(SolrIndexResource.class);
 
     private final EditExpressionPresenter editExpressionPresenter;
-    private final EntityDropDownPresenter pipelinePresenter;
+    private final DocSelectionBoxPresenter pipelinePresenter;
     private final RestFactory restFactory;
     private final DynamicFieldSelectionListModel fieldSelectionBoxModel;
-    private DocRef defaultExtractionPipeline;
 
     @Inject
     public SolrIndexSettingsPresenter(final EventBus eventBus,
                                       final SolrIndexSettingsView view,
                                       final EditExpressionPresenter editExpressionPresenter,
-                                      final EntityDropDownPresenter pipelinePresenter,
+                                      final DocSelectionBoxPresenter pipelinePresenter,
                                       final RestFactory restFactory,
                                       final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
         super(eventBus, view);
@@ -80,12 +79,7 @@ public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexS
     @Override
     protected void onBind() {
         registerHandler(editExpressionPresenter.addDirtyHandler(dirty -> setDirty(true)));
-        registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> {
-            if (!Objects.equals(pipelinePresenter.getSelectedEntityReference(), defaultExtractionPipeline)) {
-                setDirty(true);
-                defaultExtractionPipeline = pipelinePresenter.getSelectedEntityReference();
-            }
-        }));
+        registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> setDirty(true)));
     }
 
     @Override
@@ -94,21 +88,24 @@ public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexS
     }
 
     @Override
-    public void onTestConnection() {
-        SolrIndexDoc index = new SolrIndexDoc();
-        index = onWrite(index);
-
-        final Rest<SolrConnectionTestResponse> rest = restFactory.create();
-        rest
+    public void onTestConnection(final TaskListener taskListener) {
+        getView().setTestingConnection(true);
+        final SolrIndexDoc index = onWrite(new SolrIndexDoc());
+        restFactory
+                .create(SOLR_INDEX_RESOURCE)
+                .method(res -> res.solrConnectionTest(index))
                 .onSuccess(result -> {
                     if (result.isOk()) {
-                        AlertEvent.fireInfo(this, "Connection Success", result.getMessage(), null);
+                        AlertEvent.fireInfo(this, "Connection Success", result.getMessage(), () ->
+                                getView().setTestingConnection(false));
                     } else {
-                        AlertEvent.fireError(this, "Connection Failure", result.getMessage(), null);
+                        AlertEvent.fireError(this, "Connection Failure", result.getMessage(), () ->
+                                getView().setTestingConnection(false));
                     }
                 })
-                .call(SOLR_INDEX_RESOURCE)
-                .solrConnectionTest(index);
+                .onFailure(new DefaultErrorHandler(this, () -> getView().setTestingConnection(false)))
+                .taskListener(taskListener)
+                .exec();
     }
 
     @Override
@@ -131,9 +128,7 @@ public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexS
         fieldSelectionBoxModel.setDataSourceRef(docRef);
         editExpressionPresenter.init(restFactory, docRef, fieldSelectionBoxModel);
         editExpressionPresenter.read(index.getRetentionExpression());
-
-        defaultExtractionPipeline = index.getDefaultExtractionPipeline();
-        pipelinePresenter.setSelectedEntityReference(defaultExtractionPipeline);
+        pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline());
     }
 
     @Override
@@ -154,6 +149,12 @@ public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexS
         index.setRetentionExpression(editExpressionPresenter.write());
         index.setDefaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference());
         return index;
+    }
+
+    @Override
+    public synchronized void setTaskListener(final TaskListener taskListener) {
+        super.setTaskListener(taskListener);
+        fieldSelectionBoxModel.setTaskListener(taskListener);
     }
 
     public interface SolrIndexSettingsView
@@ -190,5 +191,7 @@ public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexS
         void setTimeField(String partitionTimeField);
 
         void setDefaultExtractionPipelineView(View view);
+
+        void setTestingConnection(boolean testing);
     }
 }

@@ -17,10 +17,8 @@
 
 package stroom.dashboard.impl.visualisation;
 
-import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docref.StringMatch;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
@@ -44,6 +42,11 @@ import java.util.function.BiConsumer;
 @Singleton
 class VisualisationStoreImpl implements VisualisationStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            VisualisationDoc.DOCUMENT_TYPE,
+            VisualisationDoc.DOCUMENT_TYPE,
+            VisualisationDoc.ICON);
     private final Store<VisualisationDoc> store;
 
     @Inject
@@ -92,11 +95,7 @@ class VisualisationStoreImpl implements VisualisationStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.CONFIGURATION,
-                VisualisationDoc.DOCUMENT_TYPE,
-                VisualisationDoc.DOCUMENT_TYPE,
-                VisualisationDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -202,7 +201,7 @@ class VisualisationStoreImpl implements VisualisationStore {
     }
 
     @Override
-    public List<DocContentMatch> findByContent(final StringMatch filter) {
-        return store.findByContent(filter);
+    public Map<String, String> getIndexableData(final DocRef docRef) {
+        return store.getIndexableData(docRef);
     }
 }

@@ -38,7 +38,7 @@ class TestBasicSearch extends AbstractCoreIntegrationTest {
 //    @Test
 //    void testSimple() throws IOException {
 //        final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
-//        final IndexField idField = IndexField.createField("IdTreeNode",
+//        final IndexField QueryField = IndexField.createField("IdTreeNode",
 //                AnalyzerType.ALPHA_NUMERIC,
 //                false,
 //                true,
@@ -56,7 +56,7 @@ class TestBasicSearch extends AbstractCoreIntegrationTest {
 //        final String indexName = "TEST";
 //        final DocRef indexRef = commonTestScenarioCreator.createIndex(indexName, indexFields);
 //        final IndexDoc index = indexStore.readDocument(indexRef);
-//        final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
+//        final IndexShardKey indexShardKey = IndexShardKey.createTestKey(index);
 //
 //        // Do some work.
 //        for (int i = 1; i <= indexTestSize; i++) {

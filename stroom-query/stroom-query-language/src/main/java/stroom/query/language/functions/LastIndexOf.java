@@ -29,7 +29,7 @@ import java.util.function.Supplier;
         commonReturnType = ValInteger.class,
         commonReturnDescription = "The last position of subString.",
         signatures = @FunctionSignature(
-                description = "Finds the last position (zero based) of subString in inputString or -1 if it " +
+                description = "Finds the last position (zero based) of subString in inputString or `-1` if it " +
                         "cannot be found. Uses a simple literal match.",
                 args = {
                         @FunctionArg(
@@ -74,13 +74,9 @@ class LastIndexOf extends AbstractFunction {
                 if (string != null) {
                     final String value = param.toString();
                     final int index = value.lastIndexOf(string);
-                    if (index < 0) {
-                        gen = Null.GEN;
-                    } else {
-                        gen = new StaticValueGen(ValInteger.create(index));
-                    }
+                    gen = new StaticValueGen(ValInteger.create(index));
                 } else {
-                    gen = Null.GEN;
+                    gen = new StaticValueGen(ValInteger.create(-1));
                 }
             }
         }
@@ -113,11 +109,6 @@ class LastIndexOf extends AbstractFunction {
         return requiresChildData;
     }
 
-    @Override
-    public Type getCommonReturnType() {
-        return Type.INTEGER;
-    }
-
     private static final class Gen extends AbstractSingleChildGenerator {
 
         private final Generator stringGenerator;
@@ -145,13 +136,7 @@ class LastIndexOf extends AbstractFunction {
                 return ValErr.wrap(strVal);
             }
             final String str = strVal.toString();
-
-            final int index = value.lastIndexOf(str);
-            if (index >= 0) {
-                return ValInteger.create(index);
-            }
-
-            return ValNull.INSTANCE;
+            return ValInteger.create(value.lastIndexOf(str));
         }
     }
 }

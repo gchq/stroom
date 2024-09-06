@@ -17,10 +17,12 @@
 package stroom.search.elastic;
 
 import stroom.datasource.api.v2.DataSourceProvider;
+import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.SearchProvider;
 import stroom.search.elastic.indexing.ElasticIndexingElementModule;
 import stroom.search.elastic.search.ElasticIndexQueryResourceImpl;
@@ -35,11 +37,10 @@ import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.scheduler.CronExpressions;
 
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
-
-import static stroom.job.api.Schedule.ScheduleType.CRON;
 
 public class ElasticSearchModule extends AbstractModule {
 
@@ -75,6 +76,8 @@ public class ElasticSearchModule extends AbstractModule {
                 .addBinding(ElasticClusterStoreImpl.class);
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(ElasticClusterStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
+                .addBinding(ElasticClusterStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(ElasticClusterDoc.DOCUMENT_TYPE, ElasticClusterStoreImpl.class);
@@ -90,6 +93,8 @@ public class ElasticSearchModule extends AbstractModule {
                 .addBinding(ElasticIndexStoreImpl.class);
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(ElasticIndexStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
+                .addBinding(ElasticIndexStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(ElasticIndexDoc.DOCUMENT_TYPE, ElasticIndexStoreImpl.class);
@@ -102,6 +107,8 @@ public class ElasticSearchModule extends AbstractModule {
                 .addBinding(ElasticSearchProvider.class);
         GuiceUtil.buildMultiBinder(binder(), SearchProvider.class)
                 .addBinding(ElasticSearchProvider.class);
+        GuiceUtil.buildMultiBinder(binder(), IndexFieldProvider.class)
+                .addBinding(ElasticSearchProvider.class);
 
         // Server tasks
 
@@ -110,7 +117,7 @@ public class ElasticSearchModule extends AbstractModule {
                         .name("Elastic Index Retention")
                         .description("Logically delete indexed documents in Elasticsearch indexes based on the " +
                                 "specified deletion query")
-                        .schedule(CRON, "0 2 *"));
+                        .cronSchedule(CronExpressions.EVERY_DAY_AT_2AM.getExpression()));
     }
 
     private static class DataRetention extends RunnableWrapper {

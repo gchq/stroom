@@ -17,10 +17,8 @@
 
 package stroom.pipeline.textconverter;
 
-import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docref.StringMatch;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
@@ -42,6 +40,11 @@ import java.util.Set;
 @Singleton
 class TextConverterStoreImpl implements TextConverterStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.TRANSFORMATION,
+            TextConverterDoc.DOCUMENT_TYPE,
+            "Text Converter",
+            TextConverterDoc.ICON);
     private final Store<TextConverterDoc> store;
 
     @Inject
@@ -90,11 +93,7 @@ class TextConverterStoreImpl implements TextConverterStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.TRANSFORMATION,
-                TextConverterDoc.DOCUMENT_TYPE,
-                "Text Converter",
-                TextConverterDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -190,8 +189,8 @@ class TextConverterStoreImpl implements TextConverterStore {
     }
 
     @Override
-    public List<DocContentMatch> findByContent(final StringMatch filter) {
-        return store.findByContent(filter);
+    public Map<String, String> getIndexableData(final DocRef docRef) {
+        return store.getIndexableData(docRef);
     }
 
     @Override

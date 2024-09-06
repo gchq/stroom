@@ -33,6 +33,12 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
+    duplicateCheckStore:
+      lmdb:
+        localDir: "lmdb/duplicate_check"
+        maxReaders: 10
+        maxStoreSize: "10G"
+        readAheadEnabled: true
     emailConfig:
       fromAddress: "noreply@stroom"
       fromName: "Stroom Analytics"
@@ -42,9 +48,10 @@ appConfig:
         port: 2525
         transport: "plain"
         username: null
+    executionHistoryRetention: "P10D"
     resultStore:
       lmdb:
-        localDir: "analytic_store"
+        localDir: "lmdb/analytic_store"
         maxReaders: 10
         maxStoreSize: "10G"
         readAheadEnabled: true
@@ -56,10 +63,10 @@ appConfig:
       offHeapResults: true
       valueQueueSize: 10000
     streamingAnalyticCache:
-      expireAfterAccess: "PT10M"
+      expireAfterAccess: null
       expireAfterWrite: null
       maximumSize: 1000
-      refreshAfterWrite: null
+      refreshAfterWrite: "PT10M"
     timezone: "UTC"
   annotation:
     createText: "Create Annotation"
@@ -134,10 +141,31 @@ appConfig:
       minimumIdle: 10
       prepStmtCacheSize: 25
       prepStmtCacheSqlLimit: 256
+  contentIndex:
+    enabled: false
   contentPackImport:
     enabled: false
+    importAsSubjectId: "Administrators"
+    importAsType: "GROUP"
     importDirectory: "content_pack_import"
   core:
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverPassword: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+      connectionPool:
+        cachePrepStmts: false
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        leakDetectionThreshold: "PT0S"
+        maxLifetime: "PT30M"
+        maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
+  crossModule:
     db:
       connection:
         jdbcDriverClassName: null
@@ -302,7 +330,9 @@ appConfig:
     indexing:
       initialRetryBackoffPeriodMs: 1000
       maxNestedElementDepth: 10
-      retryCount: 10
+      retryCount: 5
+    retention:
+      scrollSize: 10000
     search:
       highlight: true
       scrollDuration: "PT1M"
@@ -364,19 +394,34 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
-    indexStructureCache:
+    indexCache:
       expireAfterAccess: null
-      expireAfterWrite: "PT10S"
+      expireAfterWrite: "PT10M"
       maximumSize: 100
+      refreshAfterWrite: null
+    indexFieldCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT10H"
+      maximumSize: 10000
       refreshAfterWrite: null
     ramBufferSizeMB: 1024
     writer:
+      activeShardCache:
+        expireAfterAccess: null
+        expireAfterWrite: "PT1H"
+        maximumSize: 100
+        refreshAfterWrite: null
       cache:
         coreItems: 50
         maxItems: 100
         minItems: 0
         timeToIdle: "PT0S"
         timeToLive: "PT0S"
+      indexShardWriterCache:
+        expireAfterAccess: "PT1H"
+        expireAfterWrite: null
+        maximumSize: 100
+        refreshAfterWrite: null
       slowIndexWriteWarningThreshold: "PT1S"
   job:
     db:
@@ -545,6 +590,7 @@ appConfig:
       maxElements: 1000000
   processor:
     assignTasks: true
+    createTasksBeyondProcessLimit: true
     databaseMultiInsertMaxBatchSize: 500
     db:
       connection:
@@ -679,6 +725,9 @@ appConfig:
         maxReaders: 10
         maxStoreSize: "10G"
         readAheadEnabled: true
+      map:
+        minUntrimmedSize: 100000
+        trimmedSizeLimit: 500000
       maxPayloadSize: "1G"
       maxPutsBeforeCommit: 10000
       maxSortedItems: 500000
@@ -714,6 +763,7 @@ appConfig:
         - "openid"
         clientId: null
         clientSecret: null
+        expectedSignerPrefixes: []
         formTokenRequest: true
         identityProviderType: "INTERNAL_IDP"
         issuer: null
@@ -879,6 +929,22 @@ appConfig:
     search:
       maxBooleanClauseCount: 1024
       maxStoredDataQueueSize: 1000
+  state:
+    scyllaDbDocCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT10M"
+      maximumSize: 100
+      refreshAfterWrite: null
+    sessionCache:
+      expireAfterAccess: "PT1H"
+      expireAfterWrite: null
+      maximumSize: 10
+      refreshAfterWrite: null
+    stateDocCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT10M"
+      maximumSize: 100
+      refreshAfterWrite: null
   statistics:
     hbase:
       docRefType: "StroomStatsStore"
@@ -1050,15 +1116,28 @@ appConfig:
       editorTitle: "Edit Activity"
       enabled: false
       managerTitle: "Choose Activity"
-    analyticUiDefaultConfig: {}
+    analyticUiDefaultConfig:
+      defaultBodyTemplate: "<!DOCTYPE html>\n<html lang=\"en\">\n<meta charset=\"\
+        UTF-8\" />\n<title>Detector '{{ detectorName | escape }}' Alert</title>\n\
+        <body>\n  <p>Detector <em>{{ detectorName | escape }}</em> {{ detectorVersion\
+        \ | escape }} fired at {{ detectTime | escape }}</p>\n\n  {%- if (values |\
+        \ length) > 0 -%}\n  <p>Detail: {{ headline | escape }}</p>\n  <ul>\n    {%\
+        \ for key, val in values | dictsort -%}\n      <li><strong>{{ key | escape\
+        \ }}</strong>: {{ val | escape }}</li>\n    {% endfor %}\n  </ul>\n  {% endif\
+        \ -%}\n\n  {%- if (linkedEvents | length) > 0 -%}\n  <p>Linked Events:</p>\n\
+        \  <ul>\n    {% for linkedEvent in linkedEvents -%}\n      <li>Environment:\
+        \ {{ linkedEvent.stroom | escape }}, Stream ID: {{ linkedEvent.streamId |\
+        \ escape }}, Event ID: {{ linkedEvent.eventId | escape }}</li>\n    {% endfor\
+        \ %}\n  </ul>\n  {% endif %}\n</body>\n{% endif %}\n"
+      defaultSubjectTemplate: "Detector '{{ detectorName | escape }}' Alert"
     defaultMaxResults: "1000000,100,10,1"
     helpSubPathDocumentation: "/user-guide/content/documentation/"
     helpSubPathExpressions: "/user-guide/dashboards/expressions/"
-    helpSubPathJobs: "/user-guide/jobs/"
+    helpSubPathJobs: "/reference-section/jobs/"
     helpSubPathProperties: "/user-guide/properties/"
     helpSubPathQuickFilter: "/user-guide/finding-things/"
     helpSubPathStroomQueryLanguage: "/user-guide/dashboards/stroom-query-language/"
-    helpUrl: "https://gchq.github.io/stroom-docs/7.2/docs"
+    helpUrl: "https://gchq.github.io/stroom-docs/7.5/docs"
     htmlTitle: "Stroom"
     namePattern: "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$"
     nestedIndexFieldsDelimiterPattern: "[.:]"
@@ -1093,7 +1172,6 @@ appConfig:
       title: "Splash Screen"
       version: "v0.1"
     theme:
-      backgroundColour: "#1E88E5"
       labelColours: "TEST1=#FF0000,TEST2=#FF9900"
     welcomeHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from\
       \ multiple systems.</p>"

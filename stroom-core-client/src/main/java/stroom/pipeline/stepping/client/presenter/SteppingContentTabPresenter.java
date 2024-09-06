@@ -37,9 +37,11 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
-public class SteppingContentTabPresenter extends ContentTabPresenter<ClassificationWrapperView>
+public class SteppingContentTabPresenter
+        extends ContentTabPresenter<ClassificationWrapperView>
         implements HasSave, HasDirtyHandlers, CloseContentEvent.Handler {
 
+    public static final String TAB_TYPE = "Stepping";
     private final SteppingPresenter steppingPresenter;
     private final HasSaveRegistry hasSaveRegistry;
     private DocRef pipeline;
@@ -58,6 +60,7 @@ public class SteppingContentTabPresenter extends ContentTabPresenter<Classificat
         hasSaveRegistry.register(this);
 
         view.setContent(steppingPresenter.getView());
+        steppingPresenter.setTaskListener(this);
     }
 
     @Override
@@ -146,5 +149,10 @@ public class SteppingContentTabPresenter extends ContentTabPresenter<Classificat
     @Override
     public boolean isCloseable() {
         return true;
+    }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
     }
 }

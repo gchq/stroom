@@ -1,10 +1,28 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util;
 
 import stroom.test.common.TestUtil;
+import stroom.test.common.TestUtil.TestSetup;
 import stroom.test.common.TestUtil.TimedCase;
 import stroom.util.io.ByteSize;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.util.time.StroomDuration;
@@ -17,7 +35,6 @@ import io.vavr.Tuple4;
 import io.vavr.Tuple5;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.mutable.MutableLong;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -25,19 +42,25 @@ import org.junit.jupiter.api.TestFactory;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class TestNullSafe {
 
@@ -54,54 +77,86 @@ class TestNullSafe {
     @Test
     void testEquals1() {
         // Null parent
-        Assertions.assertThat(NullSafe.equals(nullLevel1, Level1::getNonNullLevel2, nonNullLevel1.getNonNullLevel2()))
+        assertThat(NullSafe.equals(nullLevel1, Level1::getNonNullLevel2, nonNullLevel1.getNonNullLevel2()))
                 .isFalse();
-        Assertions.assertThat(NullSafe.equals(nonNullLevel1, Level1::getNullLevel2, nonNullLevel1.getNonNullLevel2()))
+        assertThat(NullSafe.equals(nonNullLevel1, Level1::getNullLevel2, nonNullLevel1.getNonNullLevel2()))
                 .isFalse();
-        Assertions.assertThat(NullSafe.equals(nonNullLevel1, Level1::getNonNullLevel2, "foobar"))
+        assertThat(NullSafe.equals(nonNullLevel1, Level1::getNonNullLevel2, "foobar"))
                 .isFalse();
-        Assertions.assertThat(NullSafe.equals(nonNullLevel1, Level1::getNonNullLevel2, null))
+        assertThat(NullSafe.equals(nonNullLevel1, Level1::getNonNullLevel2, null))
                 .isFalse();
-        Assertions.assertThat(NullSafe.equals(nonNullLevel1,
-                        Level1::getNonNullLevel2,
-                        nonNullLevel1.getNonNullLevel2()))
+        assertThat(NullSafe.equals(nonNullLevel1,
+                Level1::getNonNullLevel2,
+                nonNullLevel1.getNonNullLevel2()))
                 .isTrue();
     }
 
     @Test
     void testEquals2() {
         // Null parent
-        Assertions.assertThat(NullSafe.equals(
-                        nullLevel1,
-                        Level1::getNonNullLevel2,
-                        Level2::getNonNullLevel3,
-                        nonNullLevel1.getNonNullLevel2().getNonNullLevel3()))
+        assertThat(NullSafe.equals(
+                nullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                nonNullLevel1.getNonNullLevel2().getNonNullLevel3()))
                 .isFalse();
-        Assertions.assertThat(NullSafe.equals(nonNullLevel1,
-                        Level1::getNullLevel2,
-                        Level2::getNonNullLevel3,
-                        nonNullLevel1.getNonNullLevel2().getNonNullLevel3()))
+        assertThat(NullSafe.equals(nonNullLevel1,
+                Level1::getNullLevel2,
+                Level2::getNonNullLevel3,
+                nonNullLevel1.getNonNullLevel2().getNonNullLevel3()))
                 .isFalse();
-        Assertions.assertThat(NullSafe.equals(nonNullLevel1,
-                        Level1::getNonNullLevel2,
-                        Level2::getNullLevel3,
-                        nonNullLevel1.getNonNullLevel2().getNonNullLevel3()))
+        assertThat(NullSafe.equals(nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNullLevel3,
+                nonNullLevel1.getNonNullLevel2().getNonNullLevel3()))
                 .isFalse();
-        Assertions.assertThat(NullSafe.equals(nonNullLevel1,
-                        Level1::getNonNullLevel2,
-                        Level2::getNonNullLevel3,
-                        "foobar"))
+        assertThat(NullSafe.equals(nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                "foobar"))
                 .isFalse();
-        Assertions.assertThat(NullSafe.equals(nonNullLevel1,
-                        Level1::getNonNullLevel2,
-                        Level2::getNonNullLevel3,
-                        null))
+        assertThat(NullSafe.equals(nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                null))
                 .isFalse();
-        Assertions.assertThat(NullSafe.equals(nonNullLevel1,
-                        Level1::getNonNullLevel2,
-                        Level2::getNonNullLevel3,
-                        nonNullLevel1.getNonNullLevel2().getNonNullLevel3()))
+        assertThat(NullSafe.equals(nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                nonNullLevel1.getNonNullLevel2().getNonNullLevel3()))
                 .isTrue();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testEqualProperties() {
+        final AtomicReference<String> val1 = new AtomicReference<>("foo");
+        final AtomicReference<String> val1b = new AtomicReference<>("foo");
+        final AtomicReference<String> val2 = new AtomicReference<>("bar");
+        final AtomicReference<String> valNull = new AtomicReference<>(null);
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(
+                        new TypeLiteral<Tuple2<
+                                AtomicReference<String>,
+                                AtomicReference<String>>>() {
+                        })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    final AtomicReference<String> v1 = testCase.getInput()._1;
+                    final AtomicReference<String> v2 = testCase.getInput()._2;
+                    return NullSafe.equalProperties(v1, v2, AtomicReference::get);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(null, null), true)
+                .addCase(Tuple.of(val1, null), false)
+                .addCase(Tuple.of(null, val1), false)
+                .addCase(Tuple.of(val1, val2), false)
+                .addCase(Tuple.of(val1, valNull), false)
+                .addCase(Tuple.of(valNull, val2), false)
+                .addCase(Tuple.of(valNull, valNull), true)
+                .addCase(Tuple.of(val1, val1), true)
+                .addCase(Tuple.of(val1, val1b), true)
+                .build();
     }
 
     @TestFactory
@@ -219,269 +274,269 @@ class TestNullSafe {
 
     @Test
     void testGet1Null() {
-        Assertions.assertThat(NullSafe.get(
-                        nullLevel1,
-                        Level1::getLevelNo))
+        assertThat(NullSafe.get(
+                nullLevel1,
+                Level1::getLevelNo))
                 .isNull();
 
-        Assertions.assertThat(NullSafe.getOrElse(
-                        nullLevel1,
-                        Level1::getLevelNo,
-                        other))
+        assertThat(NullSafe.getOrElse(
+                nullLevel1,
+                Level1::getLevelNo,
+                other))
                 .isEqualTo(other);
 
-        Assertions.assertThat(NullSafe.getOrElseGet(
-                        nullLevel1,
-                        Level1::getLevelNo,
-                        this::getOther))
+        assertThat(NullSafe.getOrElseGet(
+                nullLevel1,
+                Level1::getLevelNo,
+                this::getOther))
                 .isEqualTo(other);
 
-        Assertions.assertThat(NullSafe.get(
-                        nullLevel1,
-                        Level1::getNonNullLevel2,
-                        Level2::getLevelNo))
+        assertThat(NullSafe.get(
+                nullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getLevelNo))
                 .isNull();
 
-        Assertions.assertThat(NullSafe.get(
-                        nullLevel1,
-                        Level1::getNonNullLevel2,
-                        Level2::getNonNullLevel3,
-                        Level3::getLevelNo))
+        assertThat(NullSafe.get(
+                nullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getLevelNo))
                 .isNull();
 
-        Assertions.assertThat(NullSafe.get(
-                        nullLevel1,
-                        Level1::getNonNullLevel2,
-                        Level2::getNonNullLevel3,
-                        Level3::getNonNullLevel4,
-                        Level4::getLevelNo))
+        assertThat(NullSafe.get(
+                nullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getNonNullLevel4,
+                Level4::getLevelNo))
                 .isNull();
     }
 
     @Test
     void testGet1NonNull() {
-        Assertions.assertThat(NullSafe.get(
-                        nonNullLevel1,
-                        Level1::getLevelNo))
+        assertThat(NullSafe.get(
+                nonNullLevel1,
+                Level1::getLevelNo))
                 .isEqualTo(1L);
 
-        Assertions.assertThat(
-                        NullSafe.requireNonNull(
-                                nonNullLevel1,
-                                Level1::getLevelNo,
-                                () -> "foo"))
+        assertThat(
+                NullSafe.requireNonNull(
+                        nonNullLevel1,
+                        Level1::getLevelNo,
+                        () -> "foo"))
                 .isEqualTo(1L);
     }
 
     @Test
     void testGet2Null() {
-        Assertions.assertThat(NullSafe.get(
-                        nonNullLevel1,
-                        Level1::getNullLevel2,
-                        Level2::getLevelNo))
+        assertThat(NullSafe.get(
+                nonNullLevel1,
+                Level1::getNullLevel2,
+                Level2::getLevelNo))
                 .isNull();
 
-        Assertions.assertThat(NullSafe.getOrElse(
-                        nonNullLevel1,
-                        Level1::getNullLevel2,
-                        Level2::getLevelNo,
-                        other))
+        assertThat(NullSafe.getOrElse(
+                nonNullLevel1,
+                Level1::getNullLevel2,
+                Level2::getLevelNo,
+                other))
                 .isEqualTo(other);
 
-        Assertions.assertThat(NullSafe.getOrElseGet(
-                        nonNullLevel1,
-                        Level1::getNullLevel2,
-                        Level2::getLevelNo,
-                        this::getOther))
+        assertThat(NullSafe.getOrElseGet(
+                nonNullLevel1,
+                Level1::getNullLevel2,
+                Level2::getLevelNo,
+                this::getOther))
                 .isEqualTo(other);
 
-        Assertions.assertThat(NullSafe.get(
-                        nonNullLevel1,
-                        Level1::getNullLevel2,
-                        Level2::getNonNullLevel3,
-                        Level3::getLevelNo))
+        assertThat(NullSafe.get(
+                nonNullLevel1,
+                Level1::getNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getLevelNo))
                 .isNull();
 
-        Assertions.assertThat(NullSafe.get(
-                        nonNullLevel1,
-                        Level1::getNullLevel2,
-                        Level2::getNonNullLevel3,
-                        Level3::getNonNullLevel4,
-                        Level4::getLevelNo))
+        assertThat(NullSafe.get(
+                nonNullLevel1,
+                Level1::getNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getNonNullLevel4,
+                Level4::getLevelNo))
                 .isNull();
     }
 
     @Test
     void testGet2NonNull() {
-        Assertions.assertThat(NullSafe.get(
-                        nonNullLevel1,
-                        Level1::getNonNullLevel2,
-                        Level2::getLevelNo))
+        assertThat(NullSafe.get(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getLevelNo))
                 .isEqualTo(2L);
     }
 
     @Test
     void testGet3Null() {
-        Assertions.assertThat(NullSafe.get(
-                        nonNullLevel1,
-                        Level1::getNonNullLevel2,
-                        Level2::getNullLevel3,
-                        Level3::getLevelNo))
+        assertThat(NullSafe.get(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNullLevel3,
+                Level3::getLevelNo))
                 .isNull();
 
-        Assertions.assertThat(NullSafe.getOrElse(
-                        nonNullLevel1,
-                        Level1::getNullLevel2,
-                        Level2::getNullLevel3,
-                        Level3::getLevelNo,
-                        other))
+        assertThat(NullSafe.getOrElse(
+                nonNullLevel1,
+                Level1::getNullLevel2,
+                Level2::getNullLevel3,
+                Level3::getLevelNo,
+                other))
                 .isEqualTo(other);
 
-        Assertions.assertThat(NullSafe.getOrElseGet(
-                        nonNullLevel1,
-                        Level1::getNullLevel2,
-                        Level2::getLevelNo,
-                        this::getOther))
+        assertThat(NullSafe.getOrElseGet(
+                nonNullLevel1,
+                Level1::getNullLevel2,
+                Level2::getLevelNo,
+                this::getOther))
                 .isEqualTo(other);
 
-        Assertions.assertThat(NullSafe.get(
-                        nonNullLevel1,
-                        Level1::getNonNullLevel2,
-                        Level2::getNullLevel3,
-                        Level3::getNonNullLevel4,
-                        Level4::getLevelNo))
+        assertThat(NullSafe.get(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNullLevel3,
+                Level3::getNonNullLevel4,
+                Level4::getLevelNo))
                 .isNull();
     }
 
     @Test
     void testGet3NonNull() {
-        Assertions.assertThat(NullSafe.get(
-                        nonNullLevel1,
-                        Level1::getNonNullLevel2,
-                        Level2::getNonNullLevel3,
-                        Level3::getLevelNo))
+        assertThat(NullSafe.get(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getLevelNo))
                 .isEqualTo(3L);
     }
 
     @Test
     void testGet4Null() {
-        Assertions.assertThat(NullSafe.get(
-                        nonNullLevel1,
-                        Level1::getNonNullLevel2,
-                        Level2::getNonNullLevel3,
-                        Level3::getNullLevel4,
-                        Level4::getLevelNo))
+        assertThat(NullSafe.get(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getNullLevel4,
+                Level4::getLevelNo))
                 .isNull();
 
-        Assertions.assertThat(NullSafe.getOrElse(
-                        nonNullLevel1,
-                        Level1::getNonNullLevel2,
-                        Level2::getNonNullLevel3,
-                        Level3::getNullLevel4,
-                        Level4::getLevelNo,
-                        other))
+        assertThat(NullSafe.getOrElse(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getNullLevel4,
+                Level4::getLevelNo,
+                other))
                 .isEqualTo(other);
 
-        Assertions.assertThat(NullSafe.getOrElseGet(
-                        nonNullLevel1,
-                        Level1::getNonNullLevel2,
-                        Level2::getNonNullLevel3,
-                        Level3::getNullLevel4,
-                        Level4::getLevelNo,
-                        this::getOther))
+        assertThat(NullSafe.getOrElseGet(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getNullLevel4,
+                Level4::getLevelNo,
+                this::getOther))
                 .isEqualTo(other);
     }
 
     @Test
     void testGet4NonNull() {
-        Assertions.assertThat(NullSafe.get(
-                        nonNullLevel1,
-                        Level1::getNonNullLevel2,
-                        Level2::getNonNullLevel3,
-                        Level3::getNonNullLevel4,
-                        Level4::getLevelNo))
+        assertThat(NullSafe.get(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getNonNullLevel4,
+                Level4::getLevelNo))
                 .isEqualTo(4L);
     }
 
     @Test
     void testTest0NonNullTrue() {
-        Assertions.assertThat(
-                        NullSafe.test(
-                                "foo",
-                                str -> str.equals("foo")))
+        assertThat(
+                NullSafe.test(
+                        "foo",
+                        str -> str.equals("foo")))
                 .isTrue();
     }
 
     @Test
     void testTest0NonNullFalse() {
-        Assertions.assertThat(NullSafe.test(
-                        "foo",
-                        str -> str.equals("bar")))
+        assertThat(NullSafe.test(
+                "foo",
+                str -> str.equals("bar")))
                 .isFalse();
     }
 
     @Test
     void testTest0Null() {
-        Assertions.assertThat(NullSafe.test(
-                        null,
-                        str -> str.equals("foo")))
+        assertThat(NullSafe.test(
+                null,
+                str -> str.equals("foo")))
                 .isFalse();
     }
 
     @Test
     void testTest1NonNullTrue() {
-        Assertions.assertThat(NullSafe.test(
-                        nonNullLevel1,
-                        Level1::getLevelNo,
-                        level -> level == 1L))
+        assertThat(NullSafe.test(
+                nonNullLevel1,
+                Level1::getLevelNo,
+                level -> level == 1L))
                 .isTrue();
     }
 
     @Test
     void testTest1NonNullFalse() {
-        Assertions.assertThat(NullSafe.test(
-                        nonNullLevel1,
-                        Level1::getLevelNo,
-                        level -> level != 1L))
+        assertThat(NullSafe.test(
+                nonNullLevel1,
+                Level1::getLevelNo,
+                level -> level != 1L))
                 .isFalse();
     }
 
     @Test
     void testTest1Null() {
-        Assertions.assertThat(NullSafe.test(
-                        nullLevel1,
-                        Level1::getLevelNo,
-                        level -> level == 1L))
+        assertThat(NullSafe.test(
+                nullLevel1,
+                Level1::getLevelNo,
+                level -> level == 1L))
                 .isFalse();
     }
 
     @Test
     void testTest2NonNullTrue() {
-        Assertions.assertThat(NullSafe.test(
-                        nonNullLevel1,
-                        Level1::getNonNullLevel2,
-                        Level2::getLevelNo,
-                        level -> level == 2L))
+        assertThat(NullSafe.test(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getLevelNo,
+                level -> level == 2L))
                 .isTrue();
     }
 
     @Test
     void testTest2NonNullFalse() {
-        Assertions.assertThat(NullSafe.test(
-                        nonNullLevel1,
-                        Level1::getNonNullLevel2,
-                        Level2::getLevelNo,
-                        level -> level != 2L))
+        assertThat(NullSafe.test(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getLevelNo,
+                level -> level != 2L))
                 .isFalse();
     }
 
     @Test
     void testTest2Null() {
-        Assertions.assertThat(NullSafe.test(
-                        nonNullLevel1,
-                        Level1::getNullLevel2,
-                        Level2::getLevelNo,
-                        level -> level == 2L))
+        assertThat(NullSafe.test(
+                nonNullLevel1,
+                Level1::getNullLevel2,
+                Level2::getLevelNo,
+                level -> level == 2L))
                 .isFalse();
     }
 
@@ -506,7 +561,7 @@ class TestNullSafe {
     @TestFactory
     Stream<DynamicTest> testIsEmptyArray() {
         final String[] emptyArr = new String[0];
-        final String[] nonEmptyArr = new String[]{ "foo", "bar" };
+        final String[] nonEmptyArr = new String[]{"foo", "bar"};
 
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputType(new TypeLiteral<String[]>() {
@@ -542,7 +597,7 @@ class TestNullSafe {
     @TestFactory
     Stream<DynamicTest> testHasItems_array() {
         final String[] emptyArr = new String[0];
-        final String[] nonEmptyArr = new String[]{ "foo", "bar" };
+        final String[] nonEmptyArr = new String[]{"foo", "bar"};
 
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputType(new TypeLiteral<String[]>() {
@@ -637,7 +692,7 @@ class TestNullSafe {
                     final Function<Level1, Level2> getter = testCase.getInput()._2;
                     final boolean isNull = NullSafe.isNull(level1, getter);
                     final boolean isNonNull = NullSafe.nonNull(level1, getter);
-                    Assertions.assertThat(isNull)
+                    assertThat(isNull)
                             .isEqualTo(!isNonNull);
                     return isNull;
                 })
@@ -667,7 +722,7 @@ class TestNullSafe {
                     final Function<Level2, Level3> getter2 = testCase.getInput()._3;
                     final boolean isNull = NullSafe.isNull(level1, getter1, getter2);
                     final boolean nonNull = NullSafe.nonNull(level1, getter1, getter2);
-                    Assertions.assertThat(isNull)
+                    assertThat(isNull)
                             .isEqualTo(!nonNull);
                     return isNull;
                 })
@@ -821,6 +876,23 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testIsNonEmptyString() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase ->
+                        NullSafe.isNonEmptyString(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, false)
+                .addCase("", false)
+                .addCase(" ", true)
+                .addCase("\n", true)
+                .addCase("\t", true)
+                .addCase("foo", true)
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testIsBlankString() {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String.class)
@@ -834,6 +906,78 @@ class TestNullSafe {
                 .addCase("\n", true)
                 .addCase("\t", true)
                 .addCase("foo", false)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testNonBlankString() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase ->
+                        NullSafe.isNonBlankString(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, false)
+                .addCase("", false)
+                .addCase(" ", false)
+                .addCase("\n", false)
+                .addCase("\t", false)
+                .addCase("foo", true)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testNonBlankStringElse() {
+        final String other = "bar";
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(String.class)
+                .withTestFunction(testCase ->
+                        NullSafe.nonBlankStringElse(testCase.getInput(), other))
+                .withSimpleEqualityAssertion()
+                .addCase(null, other)
+                .addCase("", other)
+                .addCase(" ", other)
+                .addCase("\n", other)
+                .addCase("\t", other)
+                .addCase("foo", "foo")
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testNonBlankStringElseGet() {
+        final String string = "bar";
+        final Supplier<String> stringSupplier = () -> string;
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(String.class)
+                .withTestFunction(testCase ->
+                        NullSafe.nonBlankStringElseGet(testCase.getInput(), stringSupplier))
+                .withSimpleEqualityAssertion()
+                .addCase(null, string)
+                .addCase("", string)
+                .addCase(" ", string)
+                .addCase("\n", string)
+                .addCase("\t", string)
+                .addCase("foo", "foo")
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testTrim() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withOutputType(String.class)
+                .withSingleArgTestFunction(NullSafe::trim)
+                .withSimpleEqualityAssertion()
+                .addCase(null, "")
+                .addCase("", "")
+                .addCase(" ", "")
+                .addCase("\n", "")
+                .addCase("\t", "")
+                .addCase("foo", "foo")
+                .addCase(" foo", "foo")
+                .addCase("foo ", "foo")
+                .addCase(" foo ", "foo")
+                .addCase(" \n\tfoo\n\t ", "foo")
                 .build();
     }
 
@@ -955,6 +1099,32 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testForEach() {
+        final AtomicInteger counter = new AtomicInteger(0);
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Iterable<?>>() {
+                })
+                .withOutputType(int.class)
+                .withTestFunction(testCase -> {
+                    NullSafe.forEach(testCase.getInput(), item -> {
+                        counter.incrementAndGet();
+                    });
+                    return counter.get();
+                })
+                .withSimpleEqualityAssertion()
+                .withBeforeTestCaseAction(() -> counter.set(0))
+                .addCase(null, 0)
+                .addCase(Collections.emptyList(), 0)
+                .addCase(Set.of(1, 2, 3), 3)
+                .addCase(List.of("1", "2", "3"), 3)
+                .addCase(Arrays.asList(null, "2", null), 1)
+                .addCase(Arrays.asList(null, null, null), 0)
+                .build();
+    }
+
+
+    @TestFactory
     Stream<DynamicTest> testStream_array() {
         final AtomicInteger counter = new AtomicInteger(0);
         return TestUtil.buildDynamicTestStream()
@@ -968,8 +1138,10 @@ class TestNullSafe {
                     return Tuple.of(counter.get(), newList);
                 })
                 .withSimpleEqualityAssertion()
+                .withBeforeTestCaseAction(() -> counter.set(0))
                 .addCase(null, Tuple.of(0, Collections.emptyList()))
                 .addCase(new String[0], Tuple.of(0, Collections.emptyList()))
+                .addCase(new String[]{"foo"}, Tuple.of(1, List.of("foo")))
                 .addCase(new String[]{"foo", "bar"}, Tuple.of(2, List.of("foo", "bar")))
                 .build();
     }
@@ -1132,11 +1304,64 @@ class TestNullSafe {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(Boolean.class)
                 .withOutputType(boolean.class)
-                .withTestFunction(testCase -> NullSafe.isTrue(testCase.getInput()))
+                .withSingleArgTestFunction(NullSafe::isTrue)
                 .withSimpleEqualityAssertion()
                 .addCase(null, false)
                 .addCase(false, false)
                 .addCase(true, true)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testIsTrue2() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple2<
+                        AtomicReference<Boolean>,
+                        Function<AtomicReference<Boolean>, Boolean>>>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    final AtomicReference<Boolean> ref = testCase.getInput()._1;
+                    final Function<AtomicReference<Boolean>, Boolean> func = testCase.getInput()._2;
+                    return NullSafe.isTrue(ref, func);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(null, null), false)
+                .addThrowsCase(Tuple.of(new AtomicReference<>(), null), NullPointerException.class)
+                .addThrowsCase(Tuple.of(new AtomicReference<>(false), null), NullPointerException.class)
+                .addThrowsCase(Tuple.of(new AtomicReference<>(false), null), NullPointerException.class)
+                .addCase(Tuple.of(new AtomicReference<>(false), AtomicReference::get), false)
+                .addCase(Tuple.of(new AtomicReference<>(true), AtomicReference::get), true)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testGetInt() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(Integer.class)
+                .withOutputType(int.class)
+                .withSingleArgTestFunction(NullSafe::getInt)
+                .withSimpleEqualityAssertion()
+                .addCase(null, 0)
+                .addCase(-1, -1)
+                .addCase(1, 1)
+                .addCase(Integer.MIN_VALUE, Integer.MIN_VALUE)
+                .addCase(Integer.MAX_VALUE, Integer.MAX_VALUE)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testGetLong() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(Long.class)
+                .withOutputType(long.class)
+                .withSingleArgTestFunction(NullSafe::getLong)
+                .withSimpleEqualityAssertion()
+                .addCase(null, 0L)
+                .addCase(-1L, -1L)
+                .addCase(1L, 1L)
+                .addCase(Long.MIN_VALUE, Long.MIN_VALUE)
+                .addCase(Long.MAX_VALUE, Long.MAX_VALUE)
                 .build();
     }
 
@@ -1171,6 +1396,22 @@ class TestNullSafe {
                 .addCase(null, false)
                 .build();
     }
+
+    @TestFactory
+    Stream<DynamicTest> testSupply() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Supplier<String>>() {
+                })
+                .withOutputType(String.class)
+                .withSingleArgTestFunction(NullSafe::supply)
+                .withSimpleEqualityAssertion()
+                .addCase(null, null)
+                .addCase(() -> null, null)
+                .addCase(() -> "foo", "foo")
+                .addCase(() -> "", "")
+                .build();
+    }
+
 
     @Test
     void testConsume1() {
@@ -1520,7 +1761,7 @@ class TestNullSafe {
 
         action.accept(consumer);
 
-        Assertions.assertThat(val)
+        assertThat(val)
                 .hasValue(expectedValue);
     }
 
@@ -1631,7 +1872,73 @@ class TestNullSafe {
                 optCase);
     }
 
+    @Disabled // Long-running manual perf test
+    @Test
+    void testGetPerf() {
+        final int iters = 200_000_000;
+        final Integer[] vals = new Integer[iters];
+        final String[] outputs = new String[iters];
+        final Random random = new Random(123456);
+        final int bound = 1_000;
+        final int threshold = bound / 2;
+        int nullsCount = 0;
+        for (int i = 0; i < iters; i++) {
+            final int val = random.nextInt(bound);
+            if (val > threshold) {
+                vals[i] = val;
+            } else {
+                vals[i] = null;
+                nullsCount++;
+            }
+        }
+        LOGGER.info("null count: {}", LogUtil.withPercentage(nullsCount, iters));
+
+        final TestSetup testSetup = (rounds, iterations) -> {
+            for (int i = 0; i < iterations; i++) {
+                outputs[i] = null;
+            }
+        };
+
+        final TimedCase pureJavaIfCase = TimedCase.of("Pure java if", (round, iterations) -> {
+            for (int i = 0; i < iterations; i++) {
+                Integer val = vals[i];
+                if (val == null) {
+                    outputs[i] = null;
+                } else {
+                    outputs[i] = val.toString();
+                }
+            }
+        });
+
+        final TimedCase pureJavaTernaryCase = TimedCase.of("Pure java ternary", (round, iterations) -> {
+            for (int i = 0; i < iterations; i++) {
+                Integer val = vals[i];
+                outputs[i] = val != null
+                        ? val.toString()
+                        : null;
+            }
+        });
+
+        final TimedCase nullSafeCase = TimedCase.of("NullSafe", (round, iterations) -> {
+            for (int i = 0; i < iterations; i++) {
+                Integer val = vals[i];
+                outputs[i] = NullSafe.get(val, Objects::toString);
+            }
+        });
+
+        TestUtil.comparePerformance(
+                4,
+                iters,
+                testSetup,
+                LOGGER::info,
+                pureJavaIfCase,
+                pureJavaTernaryCase,
+                nullSafeCase);
+    }
+
+
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
     private static class Level1 {
 
@@ -1691,6 +1998,10 @@ class TestNullSafe {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class Level2 {
 
         private final long id;
@@ -1743,6 +2054,10 @@ class TestNullSafe {
             return Objects.hash(id, nullLevel3, nonNullLevel3, level);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class Level3 {
 
@@ -1797,6 +2112,10 @@ class TestNullSafe {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class Level4 {
 
         private final long id;
@@ -1850,6 +2169,10 @@ class TestNullSafe {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class Level5 {
 
         private final long id;
@@ -1890,6 +2213,10 @@ class TestNullSafe {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class ListWrapper {
 
         private final List<Integer> nullList = null;
@@ -1908,6 +2235,10 @@ class TestNullSafe {
             return nonNullNonEmptyList;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class MapWrapper {
 
@@ -1930,6 +2261,10 @@ class TestNullSafe {
             return nonNullNonEmptyMap;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class StringWrapper {
 

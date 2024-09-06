@@ -18,8 +18,8 @@ package stroom.activity.client;
 
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+import stroom.task.client.TaskListener;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -52,32 +52,34 @@ public class CurrentActivity implements HasHandlers {
         this.restFactory = restFactory;
     }
 
-    public void getActivity(final Consumer<Activity> consumer) {
+    public void getActivity(final Consumer<Activity> consumer, final TaskListener taskListener) {
         if (fetched) {
             consumer.accept(currentActivity);
         } else {
-            final Rest<Activity> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(ACTIVITY_RESOURCE)
+                    .method(ActivityResource::getCurrentActivity)
                     .onSuccess(a -> {
                         currentActivity = a;
                         fetched = true;
                         consumer.accept(a);
                     })
-                    .call(ACTIVITY_RESOURCE)
-                    .getCurrentActivity();
+                    .taskListener(taskListener)
+                    .exec();
         }
     }
 
-    public void setActivity(final Activity activity) {
-        final Rest<Activity> rest = restFactory.create();
-        rest
+    public void setActivity(final Activity activity, final TaskListener taskListener) {
+        restFactory
+                .create(ACTIVITY_RESOURCE)
+                .method(res -> res.setCurrentActivity(activity))
                 .onSuccess(a -> {
                     currentActivity = a;
                     fetched = true;
                     ActivityChangedEvent.fire(this, a);
                 })
-                .call(ACTIVITY_RESOURCE)
-                .setCurrentActivity(activity);
+                .taskListener(taskListener)
+                .exec();
     }
 
     public void showInitialActivityChooser(final Consumer<Activity> consumer) {

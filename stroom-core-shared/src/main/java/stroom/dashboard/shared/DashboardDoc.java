@@ -17,6 +17,7 @@
 package stroom.dashboard.shared;
 
 import stroom.docref.DocRef;
+import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.svg.shared.SvgImage;
 
@@ -28,6 +29,20 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
+@Description(
+        "The Dashboard Document defines a data querying and visualisation dashboard.\n" +
+                "The dashboard is highly customisable to allow querying of many different data sources of " +
+                "different types.\n" +
+                "Queried data can be displayed in tabular form, visualised using interactive charts/graphs or " +
+                "render as HTML.\n" +
+                "\n" +
+                "The Dashboard Doc can either be used for ad-hoc querying/visualising of data, to construct " +
+                "a dashboard for others to view or to just view an already constructed dashboard.\n" +
+                "Dashboards can be parameterised so that all queries on the dashboard are displaying data for the " +
+                "same user, for example.\n" +
+                "For ad-hoc querying of data from one data source, you are recommended to use a " +
+                "[Query]({{< relref \"#query\" >}}) instead."
+)
 @JsonPropertyOrder({
         "type",
         "uuid",

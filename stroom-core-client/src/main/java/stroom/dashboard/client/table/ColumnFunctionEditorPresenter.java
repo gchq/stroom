@@ -22,8 +22,7 @@ import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.table.ColumnFunctionEditorPresenter.ColumnFunctionEditorView;
 import stroom.dashboard.shared.DashboardResource;
-import stroom.dashboard.shared.ValidateExpressionResult;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
@@ -110,9 +109,6 @@ public class ColumnFunctionEditorPresenter
                 queryHelpPresenter.setDataSourceRef(indexLoader.getLoadedDataSourceRef());
             }
         }
-        queryHelpPresenter.setShowAll(false);
-        queryHelpPresenter.linkToEditor(this.editorPresenter);
-        queryHelpPresenter.refresh();
 
         final PopupSize popupSize = PopupSize.resizable(800, 700);
         ShowPopupEvent.builder(this)
@@ -127,6 +123,11 @@ public class ColumnFunctionEditorPresenter
 
     @Override
     public void onShow(final ShowPopupEvent e) {
+        queryHelpPresenter.setTaskListener(this);
+        queryHelpPresenter.setShowAll(false);
+        queryHelpPresenter.linkToEditor(this.editorPresenter);
+        queryHelpPresenter.refresh();
+
         editorPresenter.focus();
 
         // If this is done without the scheduler then we get weird behaviour when you click
@@ -147,8 +148,9 @@ public class ColumnFunctionEditorPresenter
                     e.hide();
                 } else {
                     // Check the validity of the expression.
-                    final Rest<ValidateExpressionResult> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .create(DASHBOARD_RESOURCE)
+                            .method(res -> res.validateExpression(expression))
                             .onSuccess(result -> {
                                 if (result.isOk()) {
                                     columnChangeConsumer.accept(column, column
@@ -157,11 +159,12 @@ public class ColumnFunctionEditorPresenter
                                             .build());
                                     e.hide();
                                 } else {
-                                    AlertEvent.fireError(tablePresenter, result.getString(), null);
+                                    AlertEvent.fireError(tablePresenter, result.getString(), e::reset);
                                 }
                             })
-                            .call(DASHBOARD_RESOURCE)
-                            .validateExpression(expression);
+                            .onFailure(RestErrorHandler.forPopup(this, e))
+                            .taskListener(this)
+                            .exec();
                 }
             }
         } else {
@@ -177,6 +180,7 @@ public class ColumnFunctionEditorPresenter
                         e.hide();
                     } else {
                         // Don't hide
+                        e.reset();
                     }
                 });
             }

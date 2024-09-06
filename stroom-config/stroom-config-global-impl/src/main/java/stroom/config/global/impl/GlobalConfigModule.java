@@ -1,6 +1,7 @@
 package stroom.config.global.impl;
 
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.ui.config.shared.UserPreferencesService;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasHealthCheckBinder;
@@ -10,8 +11,6 @@ import stroom.util.guice.RestResourcesBinder;
 import com.google.inject.AbstractModule;
 import io.dropwizard.lifecycle.Managed;
 import jakarta.inject.Inject;
-
-import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class GlobalConfigModule extends AbstractModule {
 
@@ -26,6 +25,7 @@ public class GlobalConfigModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
                 .addBinding(AppConfigMonitor.class);
 
+        bind(UserPreferencesService.class).to(UserPreferencesServiceImpl.class);
         RestResourcesBinder.create(binder())
                 .bind(GlobalConfigResourceImpl.class);
         RestResourcesBinder.create(binder())
@@ -38,7 +38,7 @@ public class GlobalConfigModule extends AbstractModule {
                 .bindJobTo(PropertyCacheReload.class, builder -> builder
                         .name("Property Cache Reload")
                         .description("Reload properties in the cluster")
-                        .schedule(PERIODIC, "1m"));
+                        .frequencySchedule("1m"));
     }
 
     @Override

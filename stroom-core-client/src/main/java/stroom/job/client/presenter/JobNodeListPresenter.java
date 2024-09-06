@@ -16,125 +16,258 @@
 
 package stroom.job.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
-import stroom.cell.info.client.InfoHelpLinkColumn;
-import stroom.cell.tickbox.client.TickBoxCell;
-import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.cell.valuespinner.client.ValueSpinnerCell;
+import stroom.cell.info.client.CommandLink;
 import stroom.cell.valuespinner.shared.EditableInteger;
-import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
+import stroom.data.table.client.Refreshable;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.job.client.JobTypeCell;
+import stroom.job.client.event.JobChangeEvent;
+import stroom.job.client.event.JobNodeChangeEvent;
 import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
-import stroom.job.shared.JobNodeInfo;
+import stroom.job.shared.JobNodeAndInfo;
+import stroom.job.shared.JobNodeAndInfoListResponse;
 import stroom.job.shared.JobNodeResource;
+import stroom.node.client.JobNodeListHelper;
+import stroom.node.client.NodeManager;
+import stroom.node.client.event.NodeChangeEvent;
+import stroom.node.client.event.OpenNodeEvent;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
-import stroom.ui.config.client.UiConfigCache;
+import stroom.schedule.client.SchedulePopup;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.ResultPage;
-import stroom.widget.util.client.ElementUtil;
+import stroom.util.client.DelayedUpdate;
+import stroom.util.shared.GwtNullSafe;
+import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.menu.client.presenter.MenuPresenter;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.cell.client.Cell.Context;
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
+/**
+ * Bottom pane of JobPresenter (Jobs tab). Lists jobNodes for a single parent job.
+ */
+public class JobNodeListPresenter extends MyPresenterWidget<PagerView> implements Refreshable {
 
     private static final JobNodeResource JOB_NODE_RESOURCE = GWT.create(JobNodeResource.class);
+    private static final int REDRAW_TIMER_DELAY_MS = 50;
+    private static final String AUTO_REFRESH_ON_TITLE = "Turn Auto Refresh Off";
+    private static final String AUTO_REFRESH_OFF_TITLE = "Turn Auto Refresh On";
 
+    private final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel;
     private final RestFactory restFactory;
-    private final DateTimeFormatter dateTimeFormatter;
-    private final SchedulePresenter schedulePresenter;
-    private final UiConfigCache clientPropertyCache;
+    private final JobNodeListHelper jobNodeListHelper;
 
-    private final RestDataProvider<JobNode, ResultPage<JobNode>> dataProvider;
-    private final Map<JobNode, JobNodeInfo> latestNodeInfo = new HashMap<>();
+    private final RestDataProvider<JobNodeAndInfo, JobNodeAndInfoListResponse> dataProvider;
 
-    private final MyDataGrid<JobNode> dataGrid;
-
-    private String jobName;
+    private final MyDataGrid<JobNodeAndInfo> dataGrid;
     private final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
+    private final InlineSvgToggleButton showEnabledToggleBtn;
+
+    private final DelayedUpdate redrawDelayedUpdate;
+    private final NodeManager nodeManager;
+    private final InlineSvgToggleButton autoRefreshButton;
+
+    private boolean autoRefresh;
 
     @Inject
     public JobNodeListPresenter(final EventBus eventBus,
                                 final PagerView view,
                                 final RestFactory restFactory,
+                                final SchedulePopup schedulePresenter,
+                                final MenuPresenter menuPresenter,
                                 final DateTimeFormatter dateTimeFormatter,
-                                final SchedulePresenter schedulePresenter,
-                                final UiConfigCache clientPropertyCache) {
+                                final NodeManager nodeManager) {
         super(eventBus, view);
         this.restFactory = restFactory;
-        this.dateTimeFormatter = dateTimeFormatter;
-        this.schedulePresenter = schedulePresenter;
-        this.clientPropertyCache = clientPropertyCache;
+        this.nodeManager = nodeManager;
 
-        dataGrid = new MyDataGrid<>();
-        dataGrid.addDefaultSelectionModel(true);
+        this.dataGrid = new MyDataGrid<>();
+        this.dataGrid.addDefaultSelectionModel(true);
+        this.redrawDelayedUpdate = new DelayedUpdate(REDRAW_TIMER_DELAY_MS, dataGrid::redraw);
+        this.selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 
-        initTable();
+        this.dataProvider = buildDataProvider(eventBus, view, restFactory);
+        this.jobNodeListHelper = new JobNodeListHelper(
+                dateTimeFormatter,
+                restFactory,
+                schedulePresenter,
+                menuPresenter,
+                selectionModel,
+                getView(),
+                JobNodeListPresenter.this,
+                this::internalRefresh);
 
-        dataProvider = new RestDataProvider<JobNode, ResultPage<JobNode>>(eventBus) {
+        this.showEnabledToggleBtn = jobNodeListHelper.buildJobFilterButton();
+        view.addButton(showEnabledToggleBtn);
+
+        autoRefresh = false;
+        autoRefreshButton = new InlineSvgToggleButton();
+        autoRefreshButton.setSvg(SvgImage.AUTO_REFRESH);
+        autoRefreshButton.setTitle(AUTO_REFRESH_OFF_TITLE);
+        autoRefreshButton.setState(autoRefresh);
+        getView().addButton(autoRefreshButton);
+
+
+        // Must call this after initialising JobNodeListHelper
+        initTable();
+        refreshNodeStates();
+    }
+
+    private void refreshNodeStates() {
+        nodeManager.listEnabledNodes(enabledNodeNames -> {
+            jobNodeListHelper.setEnabledNodeNames(enabledNodeNames);
+            // Redraw the grid in case any node states have changed which impacts enabled state of rows.
+            // Don't need to refresh as the grid doesn't use the node table
+            dataGrid.redraw();
+        }, throwable -> {
+        }, getView());
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+
+        registerHandler(autoRefreshButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                autoRefresh = !autoRefresh;
+                if (autoRefresh) {
+                    autoRefreshButton.setTitle(AUTO_REFRESH_ON_TITLE);
+                    internalRefresh();
+                } else {
+                    autoRefreshButton.setTitle(AUTO_REFRESH_OFF_TITLE);
+                }
+            }
+        }));
+
+        // NodeLisPresenter may change a node
+        registerHandler(getEventBus().addHandler(
+                NodeChangeEvent.getType(), event -> {
+                    // We are likely showing all jobs so just refresh
+                    refreshNodeStates();
+                }));
+
+        // JobListPresenter may change a job
+        registerHandler(getEventBus().addHandler(
+                JobChangeEvent.getType(), event -> {
+                    GWT.log("Handling JobChangeEvent " + event);
+                    final String currentJobName = getJobNameCriteria();
+                    final String affectedJobName = GwtNullSafe.get(event, JobChangeEvent::getJob, Job::getName);
+                    if (currentJobName != null && Objects.equals(currentJobName, affectedJobName)) {
+                        internalRefresh();
+                    }
+                }));
+
+        // NodeJobListPresenter may change a jobNode
+        registerHandler(getEventBus().addHandler(
+                JobNodeChangeEvent.getType(), event -> {
+//                    GWT.log(JobNodeListPresenter.this.getClass().getSimpleName()
+//                            + " - jobNodes changed: " + event.getJobNodes().size());
+                    if (!Objects.equals(event.getSource().getClass(), JobNodeListPresenter.this.getClass())) {
+                        final Set<String> affectedJobNames = event.getJobNodes()
+                                .stream()
+                                .map(JobNode::getJobName)
+                                .collect(Collectors.toSet());
+                        final String currentJobName = getJobNameCriteria();
+                        if (currentJobName != null && affectedJobNames.contains(currentJobName)) {
+                            internalRefresh();
+                        }
+                    }
+                }));
+    }
+
+    private RestDataProvider<JobNodeAndInfo, JobNodeAndInfoListResponse> buildDataProvider(
+            final EventBus eventBus,
+            final PagerView view,
+            final RestFactory restFactory) {
+
+        //noinspection Convert2Diamond
+        return new RestDataProvider<JobNodeAndInfo, JobNodeAndInfoListResponse>(eventBus) {
             @Override
             protected void exec(final Range range,
-                                final Consumer<ResultPage<JobNode>> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
-                final Rest<ResultPage<JobNode>> rest = restFactory.create();
-                findJobNodeCriteria.getJobName().setString(jobName);
-                rest
+                                final Consumer<JobNodeAndInfoListResponse> dataConsumer,
+                                final RestErrorHandler errorHandler) {
+
+                // ON is show enabled only, OFF is show all states
+                findJobNodeCriteria.setJobNodeEnabled(showEnabledToggleBtn.isOn()
+                        ? true
+                        : null);
+                restFactory
+                        .create(JOB_NODE_RESOURCE)
+                        .method(res ->
+                                res.find(findJobNodeCriteria))
                         .onSuccess(dataConsumer)
-                        .onFailure(throwableConsumer)
-                        .call(JOB_NODE_RESOURCE)
-                        .find(findJobNodeCriteria);
+                        .onFailure(errorHandler)
+                        .taskListener(view)
+                        .exec();
             }
 
             @Override
-            protected void changeData(final ResultPage<JobNode> data) {
-                // Ping each node.
-                data.getValues().forEach(row -> {
-                    final Rest<JobNodeInfo> rest = restFactory.create();
-                    rest
-                            .onSuccess(info -> {
-                                latestNodeInfo.put(row, info);
-                                super.changeData(data);
-                            })
-                            .onFailure(throwable -> {
-                                latestNodeInfo.remove(row);
-                                super.changeData(data);
-                            })
-                            .call(JOB_NODE_RESOURCE)
-                            .info(row.getJob().getName(), row.getNodeName());
+            protected void changeData(final JobNodeAndInfoListResponse data) {
+                // Ping each node to get its jobNodeInfo, which is held in-memory by the node
+                data.getValues().forEach(jobNodeAndInfo -> {
+                    // The node that gave us the data should have also given us the info for
+                    // its jobNodes, so no need to hit that node again
+                    if (jobNodeAndInfo.getJobNodeInfo() == null) {
+                        restFactory
+                                .create(JOB_NODE_RESOURCE)
+                                .method(res ->
+                                        res.info(jobNodeAndInfo.getJobName(), jobNodeAndInfo.getNodeName()))
+                                .onSuccess(info -> {
+                                    jobNodeAndInfo.setJobNodeInfo(info);
+                                    scheduleDataGridRedraw();
+                                })
+                                .onFailure(throwable -> {
+                                    jobNodeAndInfo.clearJobNodeInfo();
+                                    scheduleDataGridRedraw();
+                                })
+                                .taskListener(getView())
+                                .exec();
+                    }
                 });
                 super.changeData(data);
             }
         };
     }
 
-    private void refresh() {
+    private void scheduleDataGridRedraw() {
+        // Saves the grid being redrawn for every single row in the list
+        redrawDelayedUpdate.update();
+    }
+
+    private Number getTaskLimit(final JobNodeAndInfo jobNodeAndInfo) {
+        return JobType.DISTRIBUTED.equals(jobNodeAndInfo.getJobType())
+                ? new EditableInteger(jobNodeAndInfo.getTaskLimit())
+                : null;
+    }
+
+    @Override
+    public void refresh() {
+        if (autoRefresh) {
+            internalRefresh();
+        }
+    }
+
+    private void internalRefresh() {
+        updateFormGroupHeading();
         dataProvider.refresh();
     }
 
@@ -142,206 +275,127 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
      * Add the columns to the table.
      */
     private void initTable() {
+        DataGridUtil.addColumnSortHandler(dataGrid, findJobNodeCriteria, this::internalRefresh);
 
-        DataGridUtil.addColumnSortHandler(dataGrid, findJobNodeCriteria, this::refresh);
-
-        // Enabled.
-        final Column<JobNode, TickBoxState> enabledColumn = new OrderByColumn<JobNode, TickBoxState>(
-                TickBoxCell.create(false, false),
-                FindJobNodeCriteria.FIELD_ID_ENABLED,
-                true) {
-            @Override
-            public TickBoxState getValue(final JobNode row) {
-                return TickBoxState.fromBoolean(row.isEnabled());
-            }
-        };
-        enabledColumn.setFieldUpdater((index, row, value) -> {
-            row.setEnabled(value.toBoolean());
-            final Rest<JobNode> rest = restFactory.create();
-            rest.call(JOB_NODE_RESOURCE).setEnabled(row.getId(), value.toBoolean());
-        });
-        dataGrid.addColumn(enabledColumn, "Enabled", 80);
-
-        // Job Name
-        final Column<JobNode, String> nameColumn = new Column<JobNode, String>(new TextCell()) {
-            @Override
-            public String getValue(final JobNode row) {
-                return row.getJob().getName();
-            }
-        };
-        dataGrid.addResizableColumn(nameColumn, "Job", 200);
-
-        // Help
-        dataGrid.addColumn(new InfoHelpLinkColumn<JobNode>() {
-            @Override
-            public Preset getValue(final JobNode row) {
-                if (row != null) {
-                    return SvgPresets.HELP;
-                }
-                return null;
-            }
-
-            @Override
-            protected void showHelp(final JobNode row) {
-                clientPropertyCache.get()
-                        .onSuccess(result -> {
-                            final String helpUrl = result.getHelpUrlJobs();
-                            if (helpUrl != null && helpUrl.trim().length() > 0) {
-                                // This is a bit fragile as if the headings change in the docs then the anchors
-                                // won't work
-                                final String url = helpUrl
-                                        + formatAnchor(row.getJob().getName());
-                                Window.open(url, "_blank", "");
-                            } else {
-                                AlertEvent.fireError(JobNodeListPresenter.this, "Help is not configured!", null);
-                            }
-                        })
-                        .onFailure(caught -> AlertEvent.fireError(JobNodeListPresenter.this,
-                                caught.getMessage(),
-                                null));
-            }
-
-        }, "<br/>", 20);
+        // JobNode Enabled tick box
+        jobNodeListHelper.addEnabledTickBoxColumn(dataGrid, true);
 
         // Node Name
-        final Column<JobNode, String> nodeColumn = new OrderByColumn<JobNode, String>(
-                new TextCell(),
-                FindJobNodeCriteria.FIELD_ID_NODE,
-                true) {
-            @Override
-            public String getValue(final JobNode row) {
-                return row.getNodeName();
-            }
-        };
-        dataGrid.addResizableColumn(nodeColumn, "Node", 200);
+        final Column<JobNodeAndInfo, CommandLink> nodeNameColumn = DataGridUtil.commandLinkColumnBuilder(
+                        buildOpenJobNodeCommandLink())
+                .enabledWhen(jobNodeListHelper::isJobNodeEnabled)
+                .withSorting(FindJobNodeCriteria.FIELD_ID_NODE)
+                .build();
+        DataGridUtil.addCommandLinkFieldUpdater(nodeNameColumn);
+        dataGrid.addResizableColumn(
+                nodeNameColumn,
+                DataGridUtil.headingBuilder("Node")
+                        .withToolTip("The Stroom node the job runs on")
+                        .build(),
+                300);
 
+        // Node State
+        jobNodeListHelper.addNodeStateColumn(dataGrid);
+        // Type
+        jobNodeListHelper.addTypeColumn(dataGrid);
         // Schedule.
-        final Column<JobNode, String> typeColumn = new Column<JobNode, String>(new TextCell()) {
-            @Override
-            public String getValue(final JobNode row) {
-                final JobNode jobNode = row;
-                final JobType jobType = jobNode.getJobType();
-                if (JobType.CRON.equals(jobType)) {
-                    return "Cron " + jobNode.getSchedule();
-                } else if (JobType.FREQUENCY.equals(jobType)) {
-                    return "Frequency " + jobNode.getSchedule();
-                } else if (JobType.DISTRIBUTED.equals(jobType)) {
-                    return "Distributed";
-                }
-                return null;
-            }
-        };
-        dataGrid.addResizableColumn(typeColumn, "Type", 250);
-
-        // Job Type.
-        final Column<JobNode, JobType> typeEditColumn = new Column<JobNode, JobType>(new JobTypeCell()) {
-            @Override
-            public JobType getValue(final JobNode row) {
-                if (row.getJobType() == null) {
-                    return JobType.UNKNOWN;
-                }
-                return row.getJobType();
-            }
-
-            @Override
-            public void onBrowserEvent(final Context context, final Element elem, final JobNode row,
-                                       final NativeEvent event) {
-                super.onBrowserEvent(context, elem, row, event);
-
-                // Get the target element.
-                final Element target = event.getEventTarget().cast();
-
-                final String eventType = event.getType();
-                if (row != null && "click".equals(eventType)) {
-                    if (ElementUtil.hasClassName(target, "svgIcon", 0, 10)) {
-                        final Rest<JobNodeInfo> rest = restFactory.create();
-                        rest
-                                .onSuccess(result -> setSchedule(row, result))
-                                .onFailure(throwable -> setSchedule(row, null))
-                                .call(JOB_NODE_RESOURCE)
-                                .info(row.getJob().getName(), row.getNodeName());
-                    }
-                }
-            }
-        };
-        dataGrid.addColumn(typeEditColumn, "", ColumnSizeConstants.ICON_COL);
+        jobNodeListHelper.addScheduleColumn(dataGrid);
 
         // Max.
-        final Column<JobNode, Number> maxColumn = new Column<JobNode, Number>(new ValueSpinnerCell(1, 1000)) {
-            @Override
-            public Number getValue(final JobNode row) {
-                if (JobType.DISTRIBUTED.equals(row.getJobType())) {
-                    return new EditableInteger(row.getTaskLimit());
-                }
-                return null;
-            }
-        };
+        dataGrid.addColumn(
+                DataGridUtil.valueSpinnerColumnBuilder(this::getTaskLimit, 1L, 9999L)
+                        .enabledWhen(jobNodeListHelper::isJobNodeEnabled)
+                        .withFieldUpdater((rowIndex, jobNodeAndInfo, value) -> {
+                            if (jobNodeAndInfo != null) {
+                                jobNodeAndInfo.getJobNode().setTaskLimit(value.intValue());
+                                restFactory
+                                        .create(JOB_NODE_RESOURCE)
+                                        .call(res -> res.setTaskLimit(jobNodeAndInfo.getId(), value.intValue()))
+                                        .taskListener(getView())
+                                        .exec();
+                            }
+                        })
+                        .build(),
+                DataGridUtil.headingBuilder("Max Tasks")
+                        .withToolTip("The task limit for this job on this node")
+                        .build(),
+                80);
 
-        maxColumn.setFieldUpdater((index, row, value) -> {
-            row.setTaskLimit(value.intValue());
-            final Rest<JobNode> rest = restFactory.create();
-            rest.call(JOB_NODE_RESOURCE).setTaskLimit(row.getId(), value.intValue());
-        });
-        dataGrid.addColumn(maxColumn, "Max", 62);
-
-        // Cur.
-        final Column<JobNode, String> curColumn = new Column<JobNode, String>(new TextCell()) {
-            @Override
-            public String getValue(final JobNode row) {
-                final JobNodeInfo jobNodeInfo = latestNodeInfo.get(row);
-                if (jobNodeInfo != null) {
-                    return ModelStringUtil.formatCsv(jobNodeInfo.getCurrentTaskCount());
-                } else {
-                    return "?";
-                }
-            }
-        };
-        dataGrid.addColumn(curColumn, "Cur", 59);
+        // Current Tasks (Cur).
+        dataGrid.addColumn(
+                DataGridUtil.textColumnBuilder(jobNodeListHelper::getCurrentTaskCountAsStr)
+                        .enabledWhen(jobNodeListHelper::isJobNodeEnabled)
+                        .rightAligned()
+                        .build(),
+                DataGridUtil.headingBuilder("Current Tasks")
+                        .rightAligned()
+                        .withToolTip("The number of the currently executing tasks on this node for this job")
+                        .build(),
+                100);
 
         // Last executed.
-        final Column<JobNode, String> lastExecutedColumn = new Column<JobNode, String>(new TextCell()) {
-            @Override
-            public String getValue(final JobNode row) {
-                final JobNodeInfo jobNodeInfo = latestNodeInfo.get(row);
-                if (jobNodeInfo != null) {
-                    return dateTimeFormatter.formatWithDuration(jobNodeInfo.getLastExecutedTime());
-                } else {
-                    return "?";
-                }
-            }
-        };
-        dataGrid.addColumn(lastExecutedColumn, "Last Executed", ColumnSizeConstants.DATE_AND_DURATION_COL);
+        jobNodeListHelper.addLastExecutedColumn(dataGrid);
 
-        dataGrid.addEndColumn(new EndColumn<>());
-    }
+        // Next scheduled
+        jobNodeListHelper.addNextExecutedColumn(dataGrid);
 
-    private void setSchedule(final JobNode jobNode, JobNodeInfo jobNodeInfo) {
-        if (jobNodeInfo == null) {
-            jobNodeInfo = new JobNodeInfo();
-        }
+        // Action column
+        jobNodeListHelper.addActionColumn(dataGrid);
 
-        schedulePresenter.setSchedule(jobNode.getJobType(),
-                jobNodeInfo.getScheduleReferenceTime(),
-                jobNodeInfo.getLastExecutedTime(),
-                jobNode.getSchedule());
-        schedulePresenter.show(schedule -> {
-            jobNode.setSchedule(schedule);
-            final Rest<JobNode> rest = restFactory.create();
-            rest
-                    .onSuccess(result ->
-                            dataProvider.refresh())
-                    .call(JOB_NODE_RESOURCE)
-                    .setSchedule(jobNode.getId(), schedule);
-        });
+        DataGridUtil.addEndColumn(dataGrid);
     }
 
     public void read(final Job job) {
-        if (jobName == null) {
-            jobName = job.getName();
+//        getView().setHeading(GwtNullSafe.get(job, Job::getName));
+        if (dataProvider.getDataDisplays().isEmpty()) {
             dataProvider.addDataDisplay(dataGrid);
-        } else {
-            jobName = job.getName();
-            dataProvider.refresh();
         }
+        setJobNameCriteria(GwtNullSafe.get(job, Job::getName));
+        internalRefresh();
+    }
+
+    private String getJobNameCriteria() {
+        return findJobNodeCriteria.getJobName().getString();
+    }
+
+    private void setJobNameCriteria(final String jobName) {
+        findJobNodeCriteria.getJobName().setString(jobName);
+    }
+
+    public void setSelected(final JobNode jobNode) {
+        if (jobNode != null) {
+            selectionModel.setSelected(JobNodeAndInfo.withoutInfo(jobNode));
+        } else {
+            selectionModel.clear();
+        }
+    }
+
+    private Function<JobNodeAndInfo, CommandLink> buildOpenJobNodeCommandLink() {
+        return (JobNodeAndInfo jobNodeAndInfo) -> {
+            if (jobNodeAndInfo != null) {
+                final String nodeName = jobNodeAndInfo.getNodeName();
+                final String jobName = jobNodeAndInfo.getJobName();
+                return new CommandLink(
+                        nodeName,
+                        "Open node '" + nodeName + "' and job '" + jobName
+                                + "' on the Nodes screen.",
+                        () -> OpenNodeEvent.fire(
+                                JobNodeListPresenter.this, jobNodeAndInfo.getJobNode()));
+            } else {
+                return null;
+            }
+        };
+    }
+
+    private void updateFormGroupHeading() {
+        final String jobName = getJobNameCriteria();
+        final boolean isShowEnabled = showEnabledToggleBtn.getState();
+        final String stateStr = isShowEnabled
+                ? "enabled"
+                : "all";
+        getView().setHeading(GwtNullSafe.getOrElse(
+                jobName,
+                name -> "Scheduling of job '" + jobName + "' on " + stateStr + " nodes",
+                null));
     }
 }

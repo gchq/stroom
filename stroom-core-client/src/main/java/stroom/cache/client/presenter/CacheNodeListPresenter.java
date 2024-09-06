@@ -24,7 +24,7 @@ import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeManager;
 import stroom.svg.client.Preset;
@@ -126,13 +126,14 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
         addIconButtonColumn(
                 SvgPresets.of(SvgPresets.DELETE, "Clear and rebuild cache", true),
                 (row, nativeEvent) -> {
-                    final Rest<Long> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .create(CACHE_RESOURCE)
+                            .method(res -> res.clear(row.getName(), row.getNodeName()))
                             .onSuccess(result -> {
                                 dataProvider.refresh();
                             })
-                            .call(CACHE_RESOURCE)
-                            .clear(row.getName(), row.getNodeName());
+                            .taskListener(getView())
+                            .exec();
                 });
     }
 
@@ -301,12 +302,12 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
                     @Override
                     protected void exec(final Range range,
                                         final Consumer<CacheInfoResponse> dataConsumer,
-                                        final Consumer<Throwable> throwableConsumer) {
+                                        final RestErrorHandler errorHandler) {
                         CacheNodeListPresenter.this.range = range;
                         CacheNodeListPresenter.this.dataConsumer = dataConsumer;
                         delayedUpdate.reset();
                         nodeManager.listAllNodes(nodeNames ->
-                                fetchTasksForNodes(dataConsumer, throwableConsumer, nodeNames), throwableConsumer);
+                                fetchTasksForNodes(dataConsumer, errorHandler, nodeNames), errorHandler, getView());
                     }
                 };
                 dataProvider.addDataDisplay(dataGrid);
@@ -317,12 +318,13 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
     }
 
     private void fetchTasksForNodes(final Consumer<CacheInfoResponse> dataConsumer,
-                                    final Consumer<Throwable> throwableConsumer,
+                                    final RestErrorHandler errorHandler,
                                     final List<String> nodeNames) {
         cacheInfoKeys.clear();
         for (final String nodeName : nodeNames) {
-            final Rest<CacheInfoResponse> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(CACHE_RESOURCE)
+                    .method(res -> res.info(cacheName, nodeName))
                     .onSuccess(response -> {
                         responseMap.put(nodeName, response.getValues());
 
@@ -336,7 +338,8 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
                         responseMap.remove(nodeName);
                         delayedUpdate.update();
                     })
-                    .call(CACHE_RESOURCE).info(cacheName, nodeName);
+                    .taskListener(getView())
+                    .exec();
         }
     }
 

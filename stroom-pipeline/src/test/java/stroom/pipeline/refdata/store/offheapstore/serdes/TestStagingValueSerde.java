@@ -48,7 +48,7 @@ class TestStagingValueSerde extends AbstractSerdeTest<StagingValue, StagingValue
                 .isEqualTo(stagingValueOutputStream.getValueBuffer());
     }
 
-    private StagingValueOutputStream buildStagingValueOutputStream(final int typeId) throws IOException {
+    private StagingValueOutputStream buildStagingValueOutputStream(final byte typeId) throws IOException {
         final byte[] valueBytes = {0, 1, 2, 3, 4};
         final StagingValueOutputStream stagingValueOutputStream = new StagingValueOutputStream(
                 valueStoreHashAlgorithm,

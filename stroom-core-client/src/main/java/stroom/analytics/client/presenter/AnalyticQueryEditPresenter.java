@@ -23,6 +23,7 @@ import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.query.client.presenter.QueryEditPresenter;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
+import stroom.task.client.TaskListener;
 
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
@@ -60,17 +61,28 @@ public class AnalyticQueryEditPresenter
 
     @Override
     public void onRead(final DocRef docRef, final AnalyticRuleDoc entity, final boolean readOnly) {
+        queryEditPresenter.setTimeRange(entity.getTimeRange());
         queryEditPresenter.setQuery(docRef, entity.getQuery(), readOnly);
     }
 
     @Override
     protected AnalyticRuleDoc onWrite(final AnalyticRuleDoc entity) {
-        return entity.copy().query(queryEditPresenter.getQuery()).build();
+        return entity
+                .copy()
+                .timeRange(queryEditPresenter.getTimeRange())
+                .query(queryEditPresenter.getQuery())
+                .build();
     }
 
     @Override
     public void onClose() {
         queryEditPresenter.onClose();
         super.onClose();
+    }
+
+    @Override
+    public void setTaskListener(final TaskListener taskListener) {
+        super.setTaskListener(taskListener);
+        queryEditPresenter.setTaskListener(taskListener);
     }
 }

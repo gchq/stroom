@@ -132,4 +132,16 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
     public String getType() {
         return FeedDoc.DOCUMENT_TYPE;
     }
+
+//    @Override
+//    public boolean handleKeyAction(final Action action) {
+//        if (Action.DOCUMENTATION == action) {
+//            selectTab(DOCUMENTATION);
+//            return true;
+//        } else if (Action.SETTINGS == action) {
+//            selectTab(SETTINGS);
+//            return true;
+//        }
+//        return false;
+//    }
 }

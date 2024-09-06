@@ -16,8 +16,8 @@
 
 package stroom.ui.config.shared;
 
-import stroom.expression.api.TimeZone;
-import stroom.expression.api.TimeZone.Use;
+import stroom.expression.api.UserTimeZone;
+import stroom.expression.api.UserTimeZone.Use;
 import stroom.ui.config.shared.Themes.ThemeType;
 import stroom.util.shared.GwtNullSafe;
 
@@ -77,7 +77,7 @@ public class UserPreferences {
     private final String dateTimePattern;
 
     @JsonProperty
-    private final TimeZone timeZone;
+    private final UserTimeZone timeZone;
 
     @JsonProperty
     private final Boolean enableTransparency;
@@ -91,7 +91,7 @@ public class UserPreferences {
                            @JsonProperty("font") final String font,
                            @JsonProperty("fontSize") final String fontSize,
                            @JsonProperty("dateTimePattern") final String dateTimePattern,
-                           @JsonProperty("timeZone") final TimeZone timeZone,
+                           @JsonProperty("timeZone") final UserTimeZone timeZone,
                            @JsonProperty("enableTransparency") final Boolean enableTransparency) {
         this.theme = theme;
         this.editorTheme = editorTheme;
@@ -139,7 +139,7 @@ public class UserPreferences {
         return dateTimePattern;
     }
 
-    public TimeZone getTimeZone() {
+    public UserTimeZone getTimeZone() {
         return timeZone;
     }
 
@@ -259,7 +259,7 @@ public class UserPreferences {
         private String font;
         private String fontSize;
         private String dateTimePattern;
-        private TimeZone timeZone;
+        private UserTimeZone timeZone;
         private Boolean enableTransparency;
 
         private Builder() {
@@ -271,7 +271,7 @@ public class UserPreferences {
             font = "Roboto";
             fontSize = "Medium";
             dateTimePattern = DEFAULT_DATE_TIME_PATTERN;
-            timeZone = TimeZone.builder().use(Use.UTC).build();
+            timeZone = UserTimeZone.builder().use(Use.UTC).build();
             enableTransparency = true;
         }
 
@@ -328,7 +328,7 @@ public class UserPreferences {
             return this;
         }
 
-        public Builder timeZone(final TimeZone timeZone) {
+        public Builder timeZone(final UserTimeZone timeZone) {
             this.timeZone = timeZone;
             return this;
         }

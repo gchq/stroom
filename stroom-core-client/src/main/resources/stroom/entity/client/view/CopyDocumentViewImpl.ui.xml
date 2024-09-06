@@ -4,17 +4,36 @@
              xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form overflow-hidden">
-        <form:FormGroup identity="copyDocumentSelectParentGroup" label="Select the parent group"
+        <form:FormGroup identity="copyDocumentSelectParentGroup"
+                        label="Select the parent folder"
+                        helpText="The folder that the document(s) will be copied into."
                         addStyleNames="dock-max overflow-hidden">
             <g:SimplePanel ui:field="foldersInner" styleName="dock-max overflow-hidden"/>
         </form:FormGroup>
         <form:FormGroup ui:field="nameFormGroup"
                         identity="copyDocumentName"
                         label="Name"
+                        helpText="The name of the new copy of the document."
                         addStyleNames="dock-min">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="copyDocumentPermissions" label="Permissions" addStyleNames="dock-min">
+            <form:HelpHTML>
+                <p>Determines the permissions and ownership of the new copy of the document.</p>
+                <ul>
+                    <li><Strong>None</Strong> - Ignores original permissions and those of the destination folder.
+                        You will be the owner of the new document if not already.</li>
+                    <li><strong>Source</strong> - Copy the document's current permissions and ownership.
+                        Ignore the permissions of the destination folder.</li>
+                    <li><strong>Destination</strong> - Ignore permissions of the current document.
+                        Add permissions of the destination folder.
+                        You will be the owner of the new document if not already.
+                    </li>
+                    <li><strong>Combined</strong> - Copy the document's current permissions.
+                        Add permissions of the destination folder.
+                        You will be the owner of the new document if not already.</li>
+                </ul>
+            </form:HelpHTML>
             <l:SelectionBox ui:field="permissionInheritance" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>

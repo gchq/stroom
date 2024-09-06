@@ -1,44 +1,53 @@
 package stroom.query.client.presenter;
 
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
 import stroom.docref.StringMatch.MatchType;
 import stroom.entity.client.presenter.MarkdownConverter;
+import stroom.query.shared.CompletionItem;
+import stroom.query.shared.CompletionSnippet;
 import stroom.query.shared.CompletionValue;
 import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.QueryResource;
+import stroom.task.client.HasTaskListener;
+import stroom.task.client.TaskListener;
+import stroom.task.client.TaskListenerImpl;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.ResultPage;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.web.bindery.event.shared.EventBus;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletion;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionCallback;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
+import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionSnippet;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionValue;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditor;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorCursorPosition;
 
-import java.util.List;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 
-public class QueryHelpAceCompletionProvider implements AceCompletionProvider {
+public class QueryHelpAceCompletionProvider
+        implements AceCompletionProvider, HasTaskListener, HasHandlers {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
+    private final EventBus eventBus;
     private final RestFactory restFactory;
     private final MarkdownConverter markdownConverter;
+    private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
 
     private DocRef dataSourceRef;
     private boolean showAll = true;
 
     @Inject
-    public QueryHelpAceCompletionProvider(final RestFactory restFactory,
+    public QueryHelpAceCompletionProvider(final EventBus eventBus,
+                                          final RestFactory restFactory,
                                           final MarkdownConverter markdownConverter) {
+        this.eventBus = eventBus;
         this.restFactory = restFactory;
         this.markdownConverter = markdownConverter;
     }
@@ -50,7 +59,7 @@ public class QueryHelpAceCompletionProvider implements AceCompletionProvider {
                              final AceCompletionCallback callback) {
         final CompletionsRequest completionsRequest =
                 new CompletionsRequest(
-                        new PageRequest(0, 100),
+                        PageRequest.createDefault(),
                         null,
                         dataSourceRef,
                         editor.getText(),
@@ -58,27 +67,59 @@ public class QueryHelpAceCompletionProvider implements AceCompletionProvider {
                         pos.getColumn(),
                         new StringMatch(MatchType.STARTS_WITH, false, prefix),
                         showAll);
-        final Rest<ResultPage<CompletionValue>> rest = restFactory.create();
-        rest
+        restFactory
+                .create(QUERY_RESOURCE)
+                .method(res -> res.fetchCompletions(completionsRequest))
                 .onSuccess(result -> {
-                    final List<AceCompletion> aceCompletions = result
+                    final AceCompletion[] aceCompletions = result
                             .getValues()
                             .stream()
-                            .map(completion -> {
-                                final SafeHtml markDownSafeHtml = markdownConverter.convertMarkdownToHtmlInFrame(
-                                        completion.getTooltip());
-                                return new AceCompletionValue(
-                                        completion.getCaption(),
-                                        completion.getValue(),
-                                        completion.getMeta(),
-                                        markDownSafeHtml.asString(),
-                                        completion.getScore());
-                            })
-                            .collect(Collectors.toList());
-                    callback.invokeWithCompletions(aceCompletions.toArray(new AceCompletion[0]));
+                            .map(this::convertCompletion)
+                            .toArray(AceCompletion[]::new);
+
+                    callback.invokeWithCompletions(aceCompletions);
                 })
-                .call(QUERY_RESOURCE)
-                .fetchCompletions(completionsRequest);
+                .taskListener(taskListener)
+                .exec();
+    }
+
+    @SuppressWarnings("PatternVariableCanBeUsed") // cos GWT
+    private AceCompletion convertCompletion(final CompletionItem completionItem) {
+        if (completionItem == null) {
+            return null;
+        } else {
+            final String tooltipHtml = markdownConverter.convertMarkdownToHtmlInFrame(
+                            completionItem.getTooltip())
+                    .asString();
+
+            final String caption = completionItem.getCaption();
+            final String meta = completionItem.getMeta();
+            final int score = completionItem.getScore();
+
+            final AceCompletion aceCompletion;
+
+            if (completionItem instanceof CompletionValue) {
+                final CompletionValue completionValue = (CompletionValue) completionItem;
+                aceCompletion = new AceCompletionValue(
+                        caption,
+                        completionValue.getValue(),
+                        meta,
+                        tooltipHtml,
+                        score);
+
+            } else if (completionItem instanceof CompletionSnippet) {
+                final CompletionSnippet completionSnippet = (CompletionSnippet) completionItem;
+                aceCompletion = new AceCompletionSnippet(
+                        caption,
+                        completionSnippet.getSnippet(),
+                        score,
+                        meta,
+                        tooltipHtml);
+            } else {
+                throw new RuntimeException("Unknown type " + completionItem.getClass().getName());
+            }
+            return aceCompletion;
+        }
     }
 
     public void setDataSourceRef(final DocRef dataSourceRef) {
@@ -87,5 +128,15 @@ public class QueryHelpAceCompletionProvider implements AceCompletionProvider {
 
     public void setShowAll(final boolean showAll) {
         this.showAll = showAll;
+    }
+
+    @Override
+    public void setTaskListener(final TaskListener taskListener) {
+        this.taskListener.setTaskListener(taskListener);
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> gwtEvent) {
+        eventBus.fireEvent(gwtEvent);
     }
 }

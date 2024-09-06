@@ -3,9 +3,9 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:v="urn:import:stroom.widget.valuespinner.client">
     <g:FlowPanel styleName="itemSelectionViewImpl-flowPanel max">
-        <g:Label ui:field="nameLbl" addStyleNames="itemSelectionViewImpl-panelChild"/>
-        <v:ValueSpinner ui:field="itemNoSpinner" addStyleNames="itemSelectionViewImpl-panelChild"/>
+        <g:Label ui:field="nameLbl" addStyleNames="dock-min itemSelectionViewImpl-panelChild"/>
+        <v:ValueSpinner ui:field="itemNoSpinner" addStyleNames="dock-max itemSelectionViewImpl-panelChild"/>
         <g:Label ui:field="itemCountLbl"
-                 addStyleNames="itemSelectionViewImpl-panelChild itemSelectionViewImpl-countLabel"/>
+                 addStyleNames="dock-min itemSelectionViewImpl-panelChild itemSelectionViewImpl-countLabel"/>
     </g:FlowPanel>
 </ui:UiBinder>

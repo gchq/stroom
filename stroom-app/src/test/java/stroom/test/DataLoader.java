@@ -25,7 +25,6 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.receive.common.ProgressHandler;
 import stroom.receive.common.StreamTargetStreamHandlers;
 import stroom.receive.common.StroomStreamProcessor;
-import stroom.util.date.DateUtil;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
 
@@ -134,7 +133,9 @@ public class DataLoader {
 
             final AttributeMap map = new AttributeMap();
             map.put(StandardHeaderArguments.FEED, feedName);
-            map.put(StandardHeaderArguments.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(effectiveMs));
+            map.putDateTime(StandardHeaderArguments.EFFECTIVE_TIME, effectiveMs);
+            map.putDateTime(StandardHeaderArguments.RECEIVED_TIME, effectiveMs);
+            map.putDateTime(StandardHeaderArguments.RECEIVED_TIME_HISTORY, effectiveMs);
 
             final ProgressHandler progressHandler = new ProgressHandler("Data Loader");
             streamTargetStreamHandlers.handle(feedName, null, map, handler -> {
@@ -179,7 +180,7 @@ public class DataLoader {
             final AttributeMap attributeMap = new AttributeMap();
             attributeMap.put(StandardHeaderArguments.FEED, feedName);
             attributeMap.put("TestData", "Loaded By SetupSampleData");
-            attributeMap.put(StandardHeaderArguments.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(effectiveMs));
+            attributeMap.putDateTime(StandardHeaderArguments.EFFECTIVE_TIME, effectiveMs);
 
             final ProgressHandler progressHandler = new ProgressHandler("Data Loader");
             streamTargetStreamHandlers.handle(feedName, null, attributeMap, handler -> {

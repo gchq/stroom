@@ -25,7 +25,7 @@ public class ExtractionDecoratorFactory {
     private final PipelineStore pipelineStore;
     private final PipelineDataCache pipelineDataCache;
     private final Provider<ExtractionTaskHandler> handlerProvider;
-    private final Provider<ValueConsumerHolder> valueConsumerHolderProvider;
+    private final Provider<QueryInfoHolder> queryInfoHolderProvider;
     private final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider;
 
     @Inject
@@ -40,7 +40,7 @@ public class ExtractionDecoratorFactory {
                                final PipelineStore pipelineStore,
                                final PipelineDataCache pipelineDataCache,
                                final Provider<ExtractionTaskHandler> handlerProvider,
-                               final Provider<ValueConsumerHolder> valueConsumerHolderProvider,
+                               final Provider<QueryInfoHolder> queryInfoHolderProvider,
                                final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider) {
         this.fieldValueExtractorFactory = fieldValueExtractorFactory;
         this.extractionConfig = extractionConfig;
@@ -53,7 +53,7 @@ public class ExtractionDecoratorFactory {
         this.pipelineStore = pipelineStore;
         this.pipelineDataCache = pipelineDataCache;
         this.handlerProvider = handlerProvider;
-        this.valueConsumerHolderProvider = valueConsumerHolderProvider;
+        this.queryInfoHolderProvider = queryInfoHolderProvider;
         this.fieldListConsumerHolderProvider = fieldListConsumerHolderProvider;
     }
 
@@ -70,7 +70,7 @@ public class ExtractionDecoratorFactory {
                 pipelineStore,
                 pipelineDataCache,
                 handlerProvider,
-                valueConsumerHolderProvider,
+                queryInfoHolderProvider,
                 fieldListConsumerHolderProvider,
                 queryKey);
     }

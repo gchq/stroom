@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.meta.api.MetaService;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
+import stroom.pipeline.shared.data.PipelineReference;
 import stroom.processor.api.ProcessorResult;
 import stroom.processor.impl.DataProcessorTaskHandler;
 import stroom.processor.impl.ProcessorTaskQueueManager;
@@ -27,6 +28,7 @@ import stroom.processor.impl.ProcessorTaskTestHelper;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;
+import stroom.task.shared.TaskId;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
@@ -119,12 +121,13 @@ public class CommonTranslationTestHelper {
 
         // We have to process 1 task at a time to ensure the ref data gets processed first.
         final List<ProcessorResult> results = new ArrayList<>();
-        ProcessorTaskList processorTasks = processorTaskQueueManager.assignTasks(nodeInfo.getThisNodeName(), 1);
+        ProcessorTaskList processorTasks = processorTaskQueueManager
+                .assignTasks(new TaskId(), nodeInfo.getThisNodeName(), 1);
         while (processorTasks.getList().size() > 0) {
             for (final ProcessorTask processorTask : processorTasks.getList()) {
                 results.add(process(processorTask));
             }
-            processorTasks = processorTaskQueueManager.assignTasks(nodeInfo.getThisNodeName(), 1);
+            processorTasks = processorTaskQueueManager.assignTasks(new TaskId(), nodeInfo.getThisNodeName(), 1);
         }
 
         return results;
@@ -166,6 +169,51 @@ public class CommonTranslationTestHelper {
     public void setup(final String feedName, final List<Path> dataLocations) {
         // commonTestControl.setup();
 
+        final Set<DocRef> referenceFeeds = createReferenceFeeds();
+        dataLocations.forEach(dataLocation -> {
+            try {
+                LOGGER.info("Adding data from file {}", FileUtil.getCanonicalPath(dataLocation));
+                storeCreationTool.addEventData(feedName, TextConverterType.DATA_SPLITTER, CSV_WITH_HEADING,
+                        XSLT_NETWORK_MONITORING, dataLocation, referenceFeeds);
+            } catch (final IOException e) {
+                throw new UncheckedIOException(String.format("Error adding event data for file %s",
+                        FileUtil.getCanonicalPath(dataLocation)), e);
+            }
+        });
+
+        assertThat(metaService.getLockCount()).isZero();
+    }
+
+    public void setupStateProcess(final String feedName,
+                                  final List<Path> dataLocations,
+                                  final List<PipelineReference> pipelineReferences) {
+        dataLocations.forEach(dataLocation -> {
+            try {
+                LOGGER.info("Adding data from file {}", FileUtil.getCanonicalPath(dataLocation));
+                final DocRef feedDocRef = storeCreationTool.getOrCreateFeedDoc(feedName);
+                // Create the event pipeline.
+                storeCreationTool.createEventPipelineAndProcessors(
+                        feedName,
+                        TextConverterType.DATA_SPLITTER,
+                        CSV_WITH_HEADING,
+                        XSLT_NETWORK_MONITORING,
+                        null,
+                        pipelineReferences);
+
+                storeCreationTool.loadEventData(feedName, dataLocation, null);
+
+            } catch (final IOException e) {
+                throw new UncheckedIOException(String.format("Error adding event data for file %s",
+                        FileUtil.getCanonicalPath(dataLocation)), e);
+            }
+        });
+
+        assertThat(metaService.getLockCount()).isZero();
+    }
+
+    public final Set<DocRef> createReferenceFeeds() {
+        // commonTestControl.setup();
+
         // Setup the feed definitions.
         final DocRef hostNameToIP = storeCreationTool.addReferenceData(REFFEED_HOSTNAME_TO_IP,
                 TextConverterType.DATA_SPLITTER, CSV_WITH_HEADING, XSLT_HOST_NAME_TO_IP, REFDATA_HOST_NAME_TO_IP);
@@ -179,18 +227,6 @@ public class CommonTranslationTestHelper {
         referenceFeeds.add(hostNameToIP);
         referenceFeeds.add(hostNameToLocation);
         referenceFeeds.add(idToUser);
-
-        dataLocations.forEach(dataLocation -> {
-            try {
-                LOGGER.info("Adding data from file {}", FileUtil.getCanonicalPath(dataLocation));
-                storeCreationTool.addEventData(feedName, TextConverterType.DATA_SPLITTER, CSV_WITH_HEADING,
-                        XSLT_NETWORK_MONITORING, dataLocation, referenceFeeds);
-            } catch (final IOException e) {
-                throw new UncheckedIOException(String.format("Error adding event data for file %s",
-                        FileUtil.getCanonicalPath(dataLocation)), e);
-            }
-        });
-
-        assertThat(metaService.getLockCount()).isZero();
+        return referenceFeeds;
     }
 }

@@ -5,9 +5,9 @@ import java.util.Objects;
 
 public class ValueConsumerId implements Serializable {
 
-    private final Integer id;
+    private final byte id;
 
-    public ValueConsumerId(final Integer id) {
+    public ValueConsumerId(final byte id) {
         this.id = id;
     }
 
@@ -30,6 +30,6 @@ public class ValueConsumerId implements Serializable {
 
     @Override
     public String toString() {
-        return Integer.toString(id);
+        return Byte.toString(id);
     }
 }

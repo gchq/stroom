@@ -1,0 +1,30 @@
+.colourSwatchCell {
+
+}
+
+.colourSwatchCell-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.2em;
+}
+
+.colourSwatchCell-swatch {
+    min-width: 14px;
+    min-height: 14px;
+    max-width: 14px;
+    max-height: 14px;
+    width: 14px;
+    height: 14px;
+    margin: 0.1em;
+    border-style: solid;
+    border-width: 1px;
+    border-color: var(--text-color);
+}
+
+.colourSwatchCell-text {
+}
+
+.dataGridDisabledCell .colourSwatchCell-swatch {
+    opacity: 0.3;
+}

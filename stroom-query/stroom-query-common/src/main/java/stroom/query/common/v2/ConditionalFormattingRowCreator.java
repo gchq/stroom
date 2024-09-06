@@ -1,52 +1,50 @@
 package stroom.query.common.v2;
 
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Row;
 import stroom.query.common.v2.format.ColumnFormatter;
-import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
+public class ConditionalFormattingRowCreator extends FilteredRowCreator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ConditionalFormattingRowCreator.class);
 
-    private final ColumnFormatter fieldFormatter;
-    private final KeyFactory keyFactory;
     private final ExpressionOperator rowFilter;
     private final List<ConditionalFormattingRule> rules;
     private final ColumnExpressionMatcher expressionMatcher;
-    private final ErrorConsumer errorConsumer;
 
-    private ConditionalFormattingRowCreator(final ColumnFormatter fieldFormatter,
+    private ConditionalFormattingRowCreator(final List<Column> originalColumns,
+                                            final List<Column> newColumns,
+                                            final ColumnFormatter columnFormatter,
                                             final KeyFactory keyFactory,
                                             final ExpressionOperator rowFilter,
                                             final List<ConditionalFormattingRule> rules,
                                             final ColumnExpressionMatcher expressionMatcher,
                                             final ErrorConsumer errorConsumer) {
-        this.fieldFormatter = fieldFormatter;
-        this.keyFactory = keyFactory;
+        super(originalColumns, newColumns, columnFormatter, keyFactory, rowFilter, expressionMatcher, errorConsumer);
+
         this.rowFilter = rowFilter;
         this.rules = rules;
         this.expressionMatcher = expressionMatcher;
-        this.errorConsumer = errorConsumer;
     }
 
-    public static Optional<ItemMapper<Row>> create(final ColumnFormatter fieldFormatter,
+    public static Optional<ItemMapper<Row>> create(final List<Column> originalColumns,
+                                                   final List<Column> newColumns,
+                                                   final ColumnFormatter columnFormatter,
                                                    final KeyFactory keyFactory,
                                                    final ExpressionOperator rowFilter,
                                                    final List<ConditionalFormattingRule> rules,
-                                                   final List<Column> columns,
+                                                   final DateTimeSettings dateTimeSettings,
                                                    final ErrorConsumer errorConsumer) {
         // Create conditional formatting expression matcher.
         if (rules != null) {
@@ -56,9 +54,11 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
                     .collect(Collectors.toList());
             if (activeRules.size() > 0) {
                 final ColumnExpressionMatcher expressionMatcher =
-                        new ColumnExpressionMatcher(columns);
+                        new ColumnExpressionMatcher(newColumns, dateTimeSettings);
                 return Optional.of(new ConditionalFormattingRowCreator(
-                        fieldFormatter,
+                        originalColumns,
+                        newColumns,
+                        columnFormatter,
                         keyFactory,
                         rowFilter,
                         activeRules,
@@ -71,21 +71,10 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
     }
 
     @Override
-    public Row create(final List<Column> columns,
-                      final Item item) {
+    public Row create(final Item item,
+                      final List<String> stringValues,
+                      final Map<String, Object> fieldIdToValueMap) {
         Row row = null;
-
-        final Map<String, Object> fieldIdToValueMap = new HashMap<>();
-        final List<String> stringValues = new ArrayList<>(columns.size());
-        int i = 0;
-        for (final Column column : columns) {
-            final Val val = item.getValue(i);
-            final String string = fieldFormatter.format(column, val);
-            stringValues.add(string);
-            fieldIdToValueMap.put(column.getId(), string);
-            fieldIdToValueMap.put(column.getName(), string);
-            i++;
-        }
 
         // Find a matching rule.
         ConditionalFormattingRule matchingRule = null;

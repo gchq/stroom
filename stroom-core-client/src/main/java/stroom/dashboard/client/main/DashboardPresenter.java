@@ -56,6 +56,8 @@ import stroom.query.client.presenter.QueryToolbarPresenter;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.HasTaskListener;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.InlineSvgButton;
@@ -191,10 +193,7 @@ public class DashboardPresenter
         editToolbar.addButton(addComponentButton);
         editToolbar.addButton(setConstraintsButton);
 
-        final String title = urlParameters.getTitle();
-        if (title != null && title.trim().length() > 0) {
-            setCustomTitle(title.trim());
-        }
+        GwtNullSafe.consumeNonBlankString(urlParameters.getTitle(), true, this::setCustomTitle);
 //        final String linkParams = ;
         setParamsFromLink(urlParameters.getParams());
         setEmbedded(urlParameters.isEmbedded());
@@ -215,7 +214,7 @@ public class DashboardPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> start()));
+        registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> toggleStart()));
         registerHandler(queryToolbarPresenter.addTimeRangeChangeHandler(e -> {
             setDirty(true);
             start();
@@ -548,7 +547,10 @@ public class DashboardPresenter
                 final Queryable queryable = (Queryable) component;
                 queryable.addSearchStateListener(this);
                 queryable.addSearchErrorListener(this);
+                queryable.setTaskListener(this);
                 queryable.setQueryInfo(queryInfo);
+            } else if (component instanceof HasTaskListener) {
+                ((HasTaskListener) component).setTaskListener(this);
             }
 
             component.read(componentConfig);
@@ -559,19 +561,8 @@ public class DashboardPresenter
         return component;
     }
 
-//    @Override
-//    public void setDirty(final boolean dirty) {
-//        if (dirty) {
-//            if (designMode) {
-//                super.setDirty(dirty);
-//            }
-//        } else {
-//            super.setDirty(dirty);
-//        }
-//    }
-
     private void enableQueryButtons() {
-        queryToolbarPresenter.setEnabled(getQueryableComponents().size() > 0);
+        queryToolbarPresenter.setEnabled(!getQueryableComponents().isEmpty());
         queryToolbarPresenter.onSearching(getCombinedSearchState());
     }
 
@@ -655,7 +646,7 @@ public class DashboardPresenter
                 // Duplicate the referenced component.
                 final Component originalComponent = components.get(tabConfig.getId());
                 originalComponent.write();
-                final ComponentType type = originalComponent.getType();
+                final ComponentType type = originalComponent.getComponentType();
 
                 final ComponentId componentId = componentNameSet.createUnique(type, originalComponent.getLabel());
                 final ComponentConfig componentConfig = originalComponent.getComponentConfig().copy()
@@ -717,7 +708,7 @@ public class DashboardPresenter
             component.link();
         }
 
-        if (duplicatedComponents.size() > 0) {
+        if (!duplicatedComponents.isEmpty()) {
             final TabConfig firstTabConfig = getFirstTabConfig(tabLayoutConfig);
             final Element selectedComponent = getFirstComponentElement(firstTabConfig);
             final Rect rect = ElementUtil.getClientRect(selectedComponent);
@@ -780,25 +771,31 @@ public class DashboardPresenter
         }
     }
 
-    private void start() {
-        // Get a sub list of components that can be queried.
-        final List<Queryable> queryableComponents = getQueryableComponents();
-        final boolean combinedMode = getCombinedSearchState();
-
-        if (combinedMode) {
-            for (final Queryable queryable : getQueryableComponents()) {
-                queryable.stop();
-            }
+    void toggleStart() {
+        final boolean searching = getCombinedSearchState();
+        if (searching) {
+            stop();
         } else {
-            // If we have some queryable components then make sure we get query info for them.
-            if (queryableComponents.size() > 0) {
-                queryInfo.prompt(() -> {
-                    for (final Queryable queryable : queryableComponents) {
-                        queryable.setDashboardContext(this);
-                        queryable.start();
-                    }
-                });
-            }
+            start();
+        }
+    }
+
+    void start() {
+        // If we have some queryable components then make sure we get query info for them.
+        final List<Queryable> queryableComponents = getQueryableComponents();
+        if (!queryableComponents.isEmpty()) {
+            queryInfo.prompt(() -> {
+                for (final Queryable queryable : queryableComponents) {
+                    queryable.setDashboardContext(this);
+                    queryable.start();
+                }
+            }, this);
+        }
+    }
+
+    void stop() {
+        for (final Queryable queryable : getQueryableComponents()) {
+            queryable.stop();
         }
     }
 
@@ -827,7 +824,7 @@ public class DashboardPresenter
         if (docRef != null) {
             title = docRef.getName();
         }
-        if (customTitle != null && customTitle.length() > 0) {
+        if (GwtNullSafe.isNonEmptyString(customTitle)) {
             title = customTitle.replaceAll("\\$\\{name\\}", title);
         }
         return title;
@@ -856,15 +853,6 @@ public class DashboardPresenter
 
     public void setCustomTitle(final String customTitle) {
         this.customTitle = customTitle;
-    }
-
-    public interface DashboardView extends View {
-
-        void setContent(Widget view);
-
-        void setEmbedded(boolean embedded);
-
-        void setDesignMode(boolean designMode);
     }
 
     private void addNewComponent(final ComponentType type) {
@@ -1125,6 +1113,9 @@ public class DashboardPresenter
         return docRef;
     }
 
+    // --------------------------------------------------------------------------------
+
+
     private static class ComponentNameSet {
 
         private final Set<String> currentIdSet = new HashSet<>();
@@ -1146,6 +1137,10 @@ public class DashboardPresenter
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class ComponentId {
 
         private final String id;
@@ -1155,6 +1150,19 @@ public class DashboardPresenter
             this.id = id;
             this.name = name;
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public interface DashboardView extends View {
+
+        void setContent(Widget view);
+
+        void setEmbedded(boolean embedded);
+
+        void setDesignMode(boolean designMode);
     }
 }
 

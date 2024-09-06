@@ -47,6 +47,8 @@ import java.util.stream.Stream;
 @Schema(description = "A page of results.")
 public class ResultPage<T> implements Serializable {
 
+    private static final ResultPage<?> EMPTY = new ResultPage<>(Collections.emptyList(), PageResponse.empty());
+
     @JsonProperty
     @JsonPropertyDescription("The values in this page of data.")
     private final List<T> values;
@@ -76,6 +78,10 @@ public class ResultPage<T> implements Serializable {
      */
     public static <T> ResultPage<T> createPageLimitedList(final List<T> fullList,
                                                           final PageRequest pageRequest) {
+        if (fullList == null || fullList.isEmpty()) {
+            return empty();
+        }
+
         if (pageRequest != null) {
             int offset = 0;
             if (pageRequest.getOffset() != null) {
@@ -118,18 +124,23 @@ public class ResultPage<T> implements Serializable {
      * Used for full queries (not bounded).
      */
     public static <T> ResultPage<T> createUnboundedList(final List<T> realList) {
-        if (realList != null) {
+        if (realList != null && !realList.isEmpty()) {
             return new ResultPage<>(realList, createPageResponse(realList));
         } else {
-            return new ResultPage<>(Collections.emptyList());
+            return empty();
         }
     }
 
+    @SuppressWarnings("unchecked")
+    public static <T> ResultPage<T> empty() {
+        return (ResultPage<T>) EMPTY;
+    }
+
     public static PageResponse createPageResponse(final List<?> values) {
-        if (values != null) {
+        if (values != null && !values.isEmpty()) {
             return new PageResponse(0L, values.size(), (long) values.size(), true);
         }
-        return new PageResponse(0L, 0, 0L, true);
+        return PageResponse.empty();
     }
 
     public static PageResponse createPageResponse(final List<?> values, final PageResponse pageResponse) {
@@ -147,7 +158,7 @@ public class ResultPage<T> implements Serializable {
      */
     public static <T> ResultPage<T> createCriterialBasedList(final List<T> realList,
                                                              final BaseCriteria baseCriteria) {
-        return new ResultPage<>(realList, createPageResponse(realList, baseCriteria.getPageRequest(), null));
+        return new ResultPage<>(realList, createPageResponse(realList, baseCriteria.getPageRequest()));
     }
 
     /**
@@ -155,22 +166,19 @@ public class ResultPage<T> implements Serializable {
      */
     public static <T> ResultPage<T> createCriterialBasedList(final List<T> realList,
                                                              final BaseCriteria baseCriteria,
-                                                             final Long totalSize) {
+                                                             final long totalSize) {
         return new ResultPage<>(realList, createPageResponse(realList, baseCriteria.getPageRequest(), totalSize));
     }
 
     protected static <T> PageResponse createPageResponse(final List<T> realList,
-                                                         final PageRequest pageRequest,
-                                                         final Long totalSize) {
-        final boolean limited = pageRequest != null && pageRequest.getLength() != null;
+                                                         final PageRequest pageRequest) {
         boolean moreToFollow = false;
-        Long calulatedTotalSize = totalSize;
-        long offset = 0;
-        if (pageRequest != null && pageRequest.getOffset() != null) {
-            offset = pageRequest.getOffset();
-        }
+        Long totalSize = null;
+        final long offset = pageRequest != null && pageRequest.getOffset() != null
+                ? pageRequest.getOffset()
+                : 0;
 
-        if (limited) {
+        if (pageRequest != null && pageRequest.getLength() != null) {
             // All our queries are + 1 on the limit so that we know there is
             // more to come
             final int overflow = realList.size() - pageRequest.getLength();
@@ -191,18 +199,31 @@ public class ResultPage<T> implements Serializable {
                 // All our queries are + 1 to we need to remove the last element
                 realList.remove(realList.size() - 1);
 
-            } else if (totalSize == null) {
+            } else {
                 // If we have not been given the total size see if we can work it out
                 // based on hitting the end
-                calulatedTotalSize = (long) pageRequest.getOffset() + realList.size();
+                totalSize = offset + realList.size();
             }
         }
 
         return new PageResponse(
                 offset,
                 realList.size(),
-                calulatedTotalSize,
+                totalSize,
                 !moreToFollow);
+    }
+
+    protected static <T> PageResponse createPageResponse(final List<T> realList,
+                                                         final PageRequest pageRequest,
+                                                         final long totalSize) {
+        final long offset = pageRequest != null && pageRequest.getOffset() != null
+                ? pageRequest.getOffset()
+                : 0;
+        return new PageResponse(
+                offset,
+                realList.size(),
+                totalSize,
+                true);
     }
 
     private static <T, R extends ResultPage<T>> Collector<T, List<T>, R> createCollector(

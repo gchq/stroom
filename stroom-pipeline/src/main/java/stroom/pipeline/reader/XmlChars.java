@@ -18,4 +18,6 @@ interface XmlChars {
      * @param c The character to check.
      */
     boolean isValidLiteral(int c);
+
+    String getXmlVersion();
 }

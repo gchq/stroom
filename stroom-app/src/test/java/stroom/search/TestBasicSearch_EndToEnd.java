@@ -18,15 +18,15 @@
 package stroom.search;
 
 
+import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.QueryField;
-import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
-import stroom.index.impl.IndexShardService;
+import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexShardUtil;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -50,7 +50,7 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     @Inject
     private IndexStore indexStore;
     @Inject
-    private IndexShardService indexShardService;
+    private IndexShardDao indexShardDao;
     @Inject
     private CommonIndexingTestHelper commonIndexingTestHelper;
     @Inject
@@ -69,14 +69,20 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     @Test
     void testFindIndexedFields() {
         final DocRef indexRef = indexStore.list().get(0);
-        final IndexDoc index = indexStore.readDocument(indexRef);
+        final LuceneIndexDoc index = indexStore.readDocument(indexRef);
 
         // Create a map of index fields keyed by name.
         final Map<String, QueryField> dataSourceFieldsMap = IndexDataSourceFieldUtil.getDataSourceFields(index)
                 .stream()
-                .collect(Collectors.toMap(QueryField::getName, Function.identity()));
+                .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
         final QueryField actual = dataSourceFieldsMap.get("Action");
-        final QueryField expected = new TextField("Action", actual.getConditionSet(), null, true);
+        final QueryField expected = QueryField
+                .builder()
+                .fldName("Action")
+                .fldType(FieldType.TEXT)
+                .conditionSet(actual.getConditionSet())
+                .queryable(true)
+                .build();
         assertThat(actual).as("Expected to index action").isEqualTo(expected);
     }
 
@@ -152,7 +158,7 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     private void test(final ExpressionOperator.Builder expression,
                       final long expectedStreams,
                       final long expectedEvents) {
-        final ResultPage<IndexShard> resultPage = indexShardService.find(FindIndexShardCriteria.matchAll());
+        final ResultPage<IndexShard> resultPage = indexShardDao.find(FindIndexShardCriteria.matchAll());
         for (final IndexShard indexShard : resultPage.getValues()) {
             System.out.println("Using index " + IndexShardUtil.getIndexPath(indexShard, pathCreator));
         }

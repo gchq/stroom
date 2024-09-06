@@ -5,10 +5,13 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Disabled("Used to check comparison works as expected but long running hence ignored by default")
 class TestComparator {
+
+    private static final Comparator<Val> COMPARATOR = ValComparators.GENERIC_CASE_INSENSITIVE_COMPARATOR;
 
     @Test
     void test() {
@@ -49,7 +52,7 @@ class TestComparator {
             }
 
             final long now = System.currentTimeMillis();
-            list.sort(new ValComparator());
+            list.sort(COMPARATOR);
             final long duration = System.currentTimeMillis() - now;
             totalDuration += duration;
             final long average = (long) (((double) totalDuration) / run);
@@ -104,7 +107,7 @@ class TestComparator {
                 }
 
                 try {
-                    list.sort(new ValComparator());
+                    list.sort(COMPARATOR);
                 } catch (final IllegalArgumentException e) {
 //                    System.out.println("Found bad list: size=" + list.size());
                     // Expected this.
@@ -120,9 +123,9 @@ class TestComparator {
 
                 // Sort each
                 try {
-                    new ArrayList<>(lower).sort(new ValComparator());
+                    new ArrayList<>(lower).sort(COMPARATOR);
                     try {
-                        new ArrayList<>(upper).sort(new ValComparator());
+                        new ArrayList<>(upper).sort(COMPARATOR);
                     } catch (IllegalArgumentException e) {
 //                        System.out.println("Error in upper: size=" + upper.size());
                         list = upper;
@@ -159,10 +162,10 @@ class TestComparator {
             }
         }
 
-        CheckComparator.checkConsitency(candidateList, new ValComparator());
-        new ComparatorConsistencyChecker<Val>().check(candidateList, new ValComparator());
+        CheckComparator.checkConsitency(candidateList, COMPARATOR);
+        new ComparatorConsistencyChecker<Val>().check(candidateList, COMPARATOR);
 
-        candidateList.sort(new ValComparator());
+        candidateList.sort(COMPARATOR);
     }
 
     private void printList(List<Val> list) {
@@ -221,7 +224,7 @@ class TestComparator {
                 }
 
                 try {
-                    list.sort(new ValComparator());
+                    list.sort(COMPARATOR);
                 } catch (final IllegalArgumentException e) {
                     System.out.println("Found bad list: size=" + list.size());
                     // Expected this.
@@ -239,7 +242,7 @@ class TestComparator {
 
                 // Sort each
                 try {
-                    lower.sort(new ValComparator());
+                    lower.sort(COMPARATOR);
                 } catch (IllegalArgumentException e) {
                     System.out.println("Error in lower: size=" + lower.size());
                     list = lower;

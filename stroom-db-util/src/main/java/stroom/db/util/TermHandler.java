@@ -1,7 +1,7 @@
 package stroom.db.util;
 
 import stroom.collection.api.CollectionService;
-import stroom.datasource.api.v2.DocRefField;
+import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
@@ -237,7 +237,7 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
     private Condition isInFolder(final ExpressionTerm term, final DocRef docRef) {
         Condition condition = field.in(Collections.emptyList());
 
-        if (dataSourceField instanceof DocRefField) {
+        if (FieldType.DOC_REF.equals(dataSourceField.getFldType())) {
             final String type = dataSourceField.getDocRefType();
             if (type != null && collectionService != null) {
                 final Set<DocRef> descendants = collectionService.getDescendants(docRef, type);

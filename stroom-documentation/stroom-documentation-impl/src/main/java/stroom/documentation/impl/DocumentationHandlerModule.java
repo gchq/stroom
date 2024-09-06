@@ -16,6 +16,7 @@
 
 package stroom.documentation.impl;
 
+import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.explorer.api.ExplorerActionHandler;
@@ -31,8 +32,9 @@ public class DocumentationHandlerModule extends AbstractModule {
     protected void configure() {
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
                 .addBinding(DocumentationStoreImpl.class);
-
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(DocumentationStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
                 .addBinding(DocumentationStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())

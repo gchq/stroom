@@ -23,7 +23,7 @@
 # jstat/jmap/jcmd/etc.
 # Using 'openjdk' on Alpine is not fully supported so using Eclipse Temurin JDK to ensure we have a known jdk version
 # See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
-FROM eclipse-temurin:21_35-jdk-alpine as stroom-base-stage
+FROM eclipse-temurin:21.0.4_7-jdk-alpine as stroom-base-stage
 
 # bash and jq are required for Kubernetes lifecycle scripts, which interact with the API
 # curl is required for the docker healthcheck
@@ -65,7 +65,10 @@ VOLUME /stroom/config/
 # Create Docker volume for the content_pack_import dir as this will be mutated on 
 VOLUME /stroom/content_pack_import/
 
-# lmdb_library mouted as tmpfs not a managed volume
+# Create Docker volume for use by any lmdb data stores.
+VOLUME /stroom/lmdb/
+
+# lmdb_library muted as tmpfs not a managed volume
 
 # Create Docker volume for SLF4J output
 VOLUME /stroom/logs/
@@ -110,6 +113,7 @@ RUN \
     mkdir -p /stroom/config && \
     mkdir -p /stroom/config_fallback && \
     mkdir -p /stroom/content_pack_import && \
+    mkdir -p /stroom/lmdb && \
     mkdir -p /stroom/lmdb_library && \
     mkdir -p /stroom/logs/access && \
     mkdir -p /stroom/logs/app && \

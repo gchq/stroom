@@ -31,16 +31,11 @@ import com.google.gwt.user.client.ui.ButtonBase;
 
 abstract class BaseSvgButton extends ButtonBase implements ButtonView {
 
-    private final Element background;
     private final Element face;
     /**
      * If <code>true</code>, this widget is capturing with the mouse held down.
      */
     private boolean isCapturing;
-    /**
-     * If <code>true</code>, this widget has focus with the space bar down.
-     */
-    private boolean isFocusing;
     /**
      * Used to decide whether to allow clicks to propagate up to the superclass
      * or container elements.
@@ -50,10 +45,10 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
     BaseSvgButton(final Preset preset) {
         super(Document.get().createPushButtonElement());
 
-        sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.FOCUSEVENTS | Event.KEYEVENTS);
+        sinkEvents(Event.ONCLICK | Event.ONMOUSEDOWN | Event.ONMOUSEUP | Event.ONMOUSEMOVE | Event.KEYEVENTS);
         getElement().setClassName("icon-button");
 
-        background = Document.get().createDivElement();
+        final Element background = Document.get().createDivElement();
         background.setClassName("background");
 
         face = Document.get().createDivElement();
@@ -73,13 +68,6 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
 
     void setSvgPreset(final Preset svgPreset) {
         SvgImageUtil.setSvgAsInnerHtml(face, svgPreset);
-
-        // Add the button tool-tip
-//        if (svgPreset.hasTitle()) {
-//            setTitle(svgPreset.getTitle());
-//        } else {
-//            setTitle("");
-//        }
     }
 
     @Override
@@ -95,9 +83,10 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
     @Override
     public void onBrowserEvent(final Event event) {
         // Should not act on button if disabled.
-        if (isEnabled() == false) {
+        if (!isEnabled()) {
             // This can happen when events are bubbled up from non-disabled
             // children
+            isCapturing = false;
             return;
         }
 
@@ -114,8 +103,6 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
             case Event.ONMOUSEDOWN:
                 if (MouseUtil.isPrimary(event)) {
                     setFocus(true);
-                    onClickStart();
-                    DOM.setCapture(getElement());
                     isCapturing = true;
                     // Prevent dragging (on some browsers);
                     event.preventDefault();
@@ -124,7 +111,6 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
             case Event.ONMOUSEUP:
                 if (isCapturing) {
                     isCapturing = false;
-                    DOM.releaseCapture(getElement());
                     if (MouseUtil.isPrimary(event)) {
                         onClick();
                     }
@@ -136,36 +122,6 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
                     event.preventDefault();
                 }
                 break;
-            case Event.ONMOUSEOUT:
-                final Element to = DOM.eventGetToElement(event);
-                if (getElement().isOrHasChild(DOM.eventGetTarget(event))
-                        && (to == null || !getElement().isOrHasChild(to))) {
-                    if (isCapturing) {
-                        onClickCancel();
-                    }
-                    setHovering(false);
-                }
-                break;
-            case Event.ONMOUSEOVER:
-                if (getElement().isOrHasChild(DOM.eventGetTarget(event))) {
-                    setHovering(true);
-                    if (isCapturing) {
-                        onClickStart();
-                    }
-                }
-                break;
-            case Event.ONBLUR:
-                if (isFocusing) {
-                    isFocusing = false;
-                    onClickCancel();
-                }
-                break;
-            case Event.ONLOSECAPTURE:
-                if (isCapturing) {
-                    isCapturing = false;
-                    onClickCancel();
-                }
-                break;
             default:
                 // Ignore events we don't care about
         }
@@ -174,45 +130,10 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
 
         // Synthesize clicks based on keyboard events AFTER the normal key
         // handling.
-        if ((event.getTypeInt() & Event.KEYEVENTS) != 0) {
-            switch (type) {
-                case Event.ONKEYDOWN:
-                    final Action action = KeyBinding.getAction(event);
-                    if (action == Action.SELECT || action == Action.EXECUTE) {
-                        onClick();
-                    }
-                    break;
-
-//                case Event.ONKEYDOWN:
-//                    if (keyCode == ' ') {
-//                        isFocusing = true;
-//                        onClickStart();
-//                    }
-//                    break;
-//                case Event.ONKEYUP:
-//                    if (isFocusing && keyCode == ' ') {
-//                        isFocusing = false;
-//                        onClick();
-//                    }
-//                    break;
-//                case Event.ONKEYPRESS:
-//                    if (keyCode == '\n' || keyCode == '\r') {
-//                        onClickStart();
-//                        onClick();
-//                    }
-//                    break;
-//                default:
-//                    // Ignore events we don't care about
-            }
+        final Action action = KeyBinding.test(event);
+        if (action == Action.SELECT || action == Action.EXECUTE) {
+            onClick();
         }
-    }
-
-    private void onClickStart() {
-        getElement().addClassName("down");
-    }
-
-    private void onClickCancel() {
-        getElement().removeClassName("down");
     }
 
     private void onClick() {
@@ -236,16 +157,6 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
         getElement().dispatchEvent(evt);
 
         allowClickPropagation = false;
-    }
-
-    private void setHovering(final boolean hovering) {
-        if (isEnabled()) {
-            if (hovering) {
-                getElement().addClassName("hovering");
-            } else {
-                getElement().removeClassName("hovering");
-            }
-        }
     }
 
     @Override

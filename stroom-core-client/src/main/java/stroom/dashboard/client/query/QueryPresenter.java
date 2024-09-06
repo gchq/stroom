@@ -38,16 +38,14 @@ import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dispatch.client.ExportFileCompleteUtil;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.explorer.client.presenter.EntityChooser;
+import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.Limits;
-import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.DestroyReason;
@@ -72,10 +70,10 @@ import stroom.security.shared.PermissionNames;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.TaskListener;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.ResourceGeneration;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -101,12 +99,9 @@ import java.util.stream.Collectors;
 
 public class QueryPresenter
         extends AbstractComponentPresenter<QueryPresenter.QueryView>
-        implements
-        HasDirtyHandlers,
-        Queryable,
-        SearchStateListener,
-        SearchErrorListener {
+        implements HasDirtyHandlers, Queryable, SearchStateListener, SearchErrorListener {
 
+    public static final String TAB_TYPE = "query-component";
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     private static final ResultStoreResource RESULT_STORE_RESOURCE = GWT.create(ResultStoreResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
@@ -117,9 +112,10 @@ public class QueryPresenter
     private final ExpressionTreePresenter expressionPresenter;
     private final QueryHistoryPresenter historyPresenter;
     private final QueryFavouritesPresenter favouritesPresenter;
-    private final Provider<EntityChooser> pipelineSelection;
+    private final Provider<DocSelectionPopup> pipelineSelection;
     private final ProcessorLimitsPresenter processorLimitsPresenter;
     private final RestFactory restFactory;
+    private final UiConfigCache clientPropertyCache;
     private final LocationManager locationManager;
     private final IndexLoader indexLoader;
     private final DynamicFieldSelectionListModel fieldSelectionBoxModel;
@@ -135,8 +131,6 @@ public class QueryPresenter
     private final ButtonView warningsButton;
     private List<String> currentErrors;
     private ButtonView processButton;
-    private long defaultProcessorTimeLimit;
-    private long defaultProcessorRecordLimit;
     private boolean initialised;
     private Timer autoRefreshTimer;
     private boolean queryOnOpen;
@@ -149,7 +143,7 @@ public class QueryPresenter
                           final ExpressionTreePresenter expressionPresenter,
                           final QueryHistoryPresenter historyPresenter,
                           final QueryFavouritesPresenter favouritesPresenter,
-                          final Provider<EntityChooser> pipelineSelection,
+                          final Provider<DocSelectionPopup> pipelineSelection,
                           final ProcessorLimitsPresenter processorLimitsPresenter,
                           final IndexLoader indexLoader,
                           final RestFactory restFactory,
@@ -167,6 +161,7 @@ public class QueryPresenter
         this.processorLimitsPresenter = processorLimitsPresenter;
         this.indexLoader = indexLoader;
         this.restFactory = restFactory;
+        this.clientPropertyCache = clientPropertyCache;
         this.locationManager = locationManager;
         this.fieldSelectionBoxModel = fieldSelectionBoxModel;
 
@@ -213,19 +208,13 @@ public class QueryPresenter
         setWarningsVisible(false);
 
         searchModel = new SearchModel(
+                eventBus,
                 restFactory,
                 indexLoader,
                 dateTimeSettingsFactory,
                 resultStoreModel);
         searchModel.addSearchErrorListener(this);
         searchModel.addSearchStateListener(this);
-
-        clientPropertyCache.get()
-                .onSuccess(result -> {
-                    defaultProcessorTimeLimit = result.getProcess().getDefaultTimeLimit();
-                    defaultProcessorRecordLimit = result.getProcess().getDefaultRecordLimit();
-                })
-                .onFailure(caught -> AlertEvent.fireError(QueryPresenter.this, caught.getMessage(), null));
     }
 
     @Override
@@ -465,6 +454,8 @@ public class QueryPresenter
 
     private void loadedDataSource(final DocRef dataSourceRef) {
         fieldSelectionBoxModel.setDataSourceRef(dataSourceRef);
+        // We only want queryable fields.
+        fieldSelectionBoxModel.setQueryable(true);
         expressionPresenter.init(restFactory, dataSourceRef, fieldSelectionBoxModel);
 
         final EqualsBuilder builder = new EqualsBuilder();
@@ -530,42 +521,46 @@ public class QueryPresenter
         queryData.setParams(dashboardContext.getParams());
         queryData.setTimeRange(dashboardContext.getTimeRange());
 
-        final EntityChooser chooser = pipelineSelection.get();
+        final DocSelectionPopup chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Process Results With");
         chooser.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
         chooser.setRequiredPermissions(DocumentPermissionNames.USE);
-        chooser.addDataSelectionHandler(event -> {
-            final DocRef pipeline = chooser.getSelectedEntityReference();
+        chooser.show(pipeline -> {
             if (pipeline != null) {
                 setProcessorLimits(queryData, pipeline);
             }
         });
-
-        chooser.show();
     }
 
     private void setProcessorLimits(final QueryData queryData, final DocRef pipeline) {
-        processorLimitsPresenter.setTimeLimitMins(defaultProcessorTimeLimit);
-        processorLimitsPresenter.setRecordLimit(defaultProcessorRecordLimit);
-        ShowPopupEvent.builder(processorLimitsPresenter)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .caption("Process Search Results")
-                .onShow(e -> processorLimitsPresenter.getView().focus())
-                .onHideRequest(e -> {
-                    if (e.isOk()) {
-                        final Limits limits = new Limits();
-                        if (processorLimitsPresenter.getRecordLimit() != null) {
-                            limits.setEventCount(processorLimitsPresenter.getRecordLimit());
-                        }
-                        if (processorLimitsPresenter.getTimeLimitMins() != null) {
-                            limits.setDurationMs(processorLimitsPresenter.getTimeLimitMins() * 60 * 1000);
-                        }
-                        queryData.setLimits(limits);
-                        openEditor(queryData, pipeline);
-                    }
-                    e.hide();
-                })
-                .fire();
+        clientPropertyCache.get(result -> {
+            if (result != null) {
+                final long defaultProcessorTimeLimit = result.getProcess().getDefaultTimeLimit();
+                final long defaultProcessorRecordLimit = result.getProcess().getDefaultRecordLimit();
+
+                processorLimitsPresenter.setTimeLimitMins(defaultProcessorTimeLimit);
+                processorLimitsPresenter.setRecordLimit(defaultProcessorRecordLimit);
+                ShowPopupEvent.builder(processorLimitsPresenter)
+                        .popupType(PopupType.OK_CANCEL_DIALOG)
+                        .caption("Process Search Results")
+                        .onShow(e -> processorLimitsPresenter.getView().focus())
+                        .onHideRequest(e -> {
+                            if (e.isOk()) {
+                                final Limits limits = new Limits();
+                                if (processorLimitsPresenter.getRecordLimit() != null) {
+                                    limits.setEventCount(processorLimitsPresenter.getRecordLimit());
+                                }
+                                if (processorLimitsPresenter.getTimeLimitMins() != null) {
+                                    limits.setDurationMs(processorLimitsPresenter.getTimeLimitMins() * 60 * 1000);
+                                }
+                                queryData.setLimits(limits);
+                                openEditor(queryData, pipeline);
+                            }
+                            e.hide();
+                        })
+                        .fire();
+            }
+        }, this);
     }
 
     private void openEditor(final QueryData queryData, final DocRef pipeline) {
@@ -576,8 +571,9 @@ public class QueryPresenter
                 .queryData(queryData)
                 .priority(1)
                 .build();
-        final Rest<ProcessorFilter> rest = restFactory.create();
-        rest
+        restFactory
+                .create(PROCESSOR_FILTER_RESOURCE)
+                .method(res -> res.create(request))
                 .onSuccess(streamProcessorFilter -> {
                     if (streamProcessorFilter != null) {
                         CreateProcessorEvent.fire(QueryPresenter.this, streamProcessorFilter);
@@ -585,8 +581,8 @@ public class QueryPresenter
                         AlertEvent.fireInfo(this, "Created batch processor", null);
                     }
                 })
-                .call(PROCESSOR_FILTER_RESOURCE)
-                .create(request);
+                .taskListener(this)
+                .exec();
     }
 
     private void showWarnings() {
@@ -611,7 +607,7 @@ public class QueryPresenter
     }
 
     private void promptAndStart() {
-        queryInfo.prompt(this::start);
+        queryInfo.prompt(this::start, this);
     }
 
     @Override
@@ -776,16 +772,18 @@ public class QueryPresenter
 
             } else if (getQuerySettings().getLastQueryKey() != null) {
                 // See if the result store exists before we try and resume a query.
-                final Rest<Boolean> rest = restFactory.create();
-                rest
+                restFactory
+                        .create(RESULT_STORE_RESOURCE)
+                        .method(res -> res.exists(getQuerySettings().getLastQueryNode(),
+                                getQuerySettings().getLastQueryKey()))
                         .onSuccess(result -> {
                             if (result != null && result) {
                                 // Resume search if we have a stored query key.
                                 resume(getQuerySettings().getLastQueryNode(), getQuerySettings().getLastQueryKey());
                             }
                         })
-                        .call(RESULT_STORE_RESOURCE)
-                        .exists(getQuerySettings().getLastQueryNode(), getQuerySettings().getLastQueryKey());
+                        .taskListener(this)
+                        .exec();
             }
         }
     }
@@ -797,7 +795,7 @@ public class QueryPresenter
     }
 
     @Override
-    public ComponentType getType() {
+    public ComponentType getComponentType() {
         return TYPE;
     }
 
@@ -930,12 +928,13 @@ public class QueryPresenter
                     dashboardContext.getParams(),
                     dashboardContext.getTimeRange());
 
-            final Rest<ResourceGeneration> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(DASHBOARD_RESOURCE)
+                    .method(res -> res.downloadQuery(searchRequest))
                     .onSuccess(result ->
-                            ExportFileCompleteUtil.onSuccess(locationManager, null, result))
-                    .call(DASHBOARD_RESOURCE)
-                    .downloadQuery(searchRequest);
+                            ExportFileCompleteUtil.onSuccess(locationManager, this, result))
+                    .taskListener(this)
+                    .exec();
         }
     }
 
@@ -945,6 +944,16 @@ public class QueryPresenter
                 : 0);
     }
 
+    @Override
+    public void setTaskListener(final TaskListener taskListener) {
+        searchModel.setTaskListener(taskListener);
+        fieldSelectionBoxModel.setTaskListener(taskListener);
+    }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
+    }
 
     // --------------------------------------------------------------------------------
 

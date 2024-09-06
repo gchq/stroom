@@ -22,7 +22,10 @@ import stroom.core.client.MenuKeys;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
+import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.KeyBinding.Action;
 
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -39,6 +42,22 @@ public abstract class MonitoringPlugin<P extends MyPresenterWidget<?>> extends C
                             final ClientSecurityContext securityContext) {
         super(eventBus, eventManager, presenterProvider);
         this.securityContext = securityContext;
+
+        final Action openAction = getOpenAction();
+        if (openAction != null) {
+            final String requiredAppPermission = getRequiredAppPermission();
+            final Command command;
+            if (requiredAppPermission != null) {
+                command = () -> {
+                    if (getSecurityContext().hasAppPermission(requiredAppPermission)) {
+                        open();
+                    }
+                };
+            } else {
+                command = this::open;
+            }
+            KeyBinding.addCommand(openAction, command);
+        }
     }
 
     @Override
@@ -55,6 +74,10 @@ public abstract class MonitoringPlugin<P extends MyPresenterWidget<?>> extends C
     }
 
     protected abstract void addChildItems(BeforeRevealMenubarEvent event);
+
+    protected abstract String getRequiredAppPermission();
+
+    protected abstract Action getOpenAction();
 
     protected ClientSecurityContext getSecurityContext() {
         return securityContext;

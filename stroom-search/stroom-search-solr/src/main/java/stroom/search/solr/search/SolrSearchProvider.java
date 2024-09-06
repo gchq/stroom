@@ -17,9 +17,8 @@
 
 package stroom.search.solr.search;
 
-import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.FieldInfo;
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
+import stroom.datasource.api.v2.IndexField;
 import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
@@ -33,82 +32,68 @@ import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.query.common.v2.IndexFieldCache;
+import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProvider;
-import stroom.search.solr.CachedSolrIndex;
-import stroom.search.solr.SolrIndexCache;
 import stroom.search.solr.SolrIndexStore;
 import stroom.search.solr.search.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.search.solr.shared.SolrIndexDataSourceFieldUtil;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.TaskContextFactory;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.Executor;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 // used by DI
 @SuppressWarnings("unused")
-public class SolrSearchProvider implements SearchProvider {
+public class SolrSearchProvider implements SearchProvider, IndexFieldProvider {
 
     public static final String ENTITY_TYPE = SolrIndexDoc.DOCUMENT_TYPE;
     private static final Logger LOGGER = LoggerFactory.getLogger(SolrSearchProvider.class);
     private static final int SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY = 500;
     private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
 
-    private final SolrIndexCache solrIndexCache;
     private final WordListProvider wordListProvider;
-    private final Executor executor;
-    private final TaskContextFactory taskContextFactory;
-    private final Provider<SolrAsyncSearchTaskHandler> solrAsyncSearchTaskHandlerProvider;
     private final SolrSearchConfig searchConfig;
     private final SecurityContext securityContext;
     private final CoprocessorsFactory coprocessorsFactory;
     private final ResultStoreFactory resultStoreFactory;
     private final SolrIndexStore solrIndexStore;
     private final SolrSearchExecutor solrSearchExecutor;
+    private final IndexFieldCache indexFieldCache;
 
     @Inject
-    public SolrSearchProvider(final SolrIndexCache solrIndexCache,
-                              final WordListProvider wordListProvider,
-                              final Executor executor,
-                              final TaskContextFactory taskContextFactory,
-                              final Provider<SolrAsyncSearchTaskHandler> solrAsyncSearchTaskHandlerProvider,
+    public SolrSearchProvider(final WordListProvider wordListProvider,
                               final SolrSearchConfig searchConfig,
                               final CoprocessorsFactory coprocessorsFactory,
                               final ResultStoreFactory resultStoreFactory,
                               final SolrIndexStore solrIndexStore,
                               final SecurityContext securityContext,
-                              final SolrSearchExecutor solrSearchExecutor) {
-        this.solrIndexCache = solrIndexCache;
+                              final SolrSearchExecutor solrSearchExecutor,
+                              final IndexFieldCache indexFieldCache) {
         this.wordListProvider = wordListProvider;
-        this.executor = executor;
-        this.taskContextFactory = taskContextFactory;
-        this.solrAsyncSearchTaskHandlerProvider = solrAsyncSearchTaskHandlerProvider;
         this.searchConfig = searchConfig;
         this.coprocessorsFactory = coprocessorsFactory;
         this.resultStoreFactory = resultStoreFactory;
         this.solrIndexStore = solrIndexStore;
         this.securityContext = securityContext;
         this.solrSearchExecutor = solrSearchExecutor;
+        this.indexFieldCache = indexFieldCache;
     }
 
     @Override
-    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+    public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
         return securityContext.useAsReadResult(() -> {
             final FieldInfoResultPageBuilder builder = FieldInfoResultPageBuilder.builder(criteria);
             final SolrIndexDoc index = solrIndexStore.readDocument(criteria.getDataSourceRef());
@@ -118,6 +103,20 @@ public class SolrSearchProvider implements SearchProvider {
             }
             return builder.build();
         });
+    }
+
+    @Override
+    public IndexField getIndexField(final DocRef docRef, final String fieldName) {
+        final SolrIndexDoc index = solrIndexStore.readDocument(docRef);
+        if (index != null && index.getFields() != null) {
+            final Optional<SolrIndexField> optionalSolrIndexField = index
+                    .getFields()
+                    .stream()
+                    .filter(field -> Objects.equals(fieldName, field.getFldName()))
+                    .findFirst();
+            return optionalSolrIndexField.orElse(null);
+        }
+        return null;
     }
 
     @Override
@@ -137,12 +136,12 @@ public class SolrSearchProvider implements SearchProvider {
     }
 
     @Override
-    public DateField getTimeField(final DocRef docRef) {
+    public QueryField getTimeField(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
             final SolrIndexDoc index = solrIndexStore.readDocument(docRef);
-            DateField timeField = null;
+            QueryField timeField = null;
             if (index.getTimeField() != null && !index.getTimeField().isBlank()) {
-                return new DateField(index.getTimeField());
+                return QueryField.createDate(index.getTimeField());
             }
 
             return null;
@@ -157,12 +156,10 @@ public class SolrSearchProvider implements SearchProvider {
         // Get the search.
         final Query query = modifiedSearchRequest.getQuery();
 
-        // Load the index.
-        final CachedSolrIndex index = securityContext.useAsReadResult(() -> solrIndexCache.get(query.getDataSource()));
-
         // Extract highlights.
         final Set<String> highlights = getHighlights(
-                index,
+                query.getDataSource(),
+                indexFieldCache,
                 query.getExpression(),
                 modifiedSearchRequest.getDateTimeSettings());
 
@@ -204,21 +201,18 @@ public class SolrSearchProvider implements SearchProvider {
      * Compiles the query, extracts terms and then returns them for use in hit
      * highlighting.
      */
-    private Set<String> getHighlights(final CachedSolrIndex index,
+    private Set<String> getHighlights(final DocRef indexDocRef,
+                                      final IndexFieldCache indexFieldCache,
                                       final ExpressionOperator expression,
                                       final DateTimeSettings dateTimeSettings) {
         Set<String> highlights = Collections.emptySet();
 
         try {
-            // Create a map of index fields keyed by name.
-            final Map<String, SolrIndexField> indexFieldsMap = index
-                    .getFields()
-                    .stream()
-                    .collect(Collectors.toMap(SolrIndexField::getFieldName, Function.identity()));
             // Parse the query.
             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
+                    indexDocRef,
+                    indexFieldCache,
                     wordListProvider,
-                    indexFieldsMap,
                     searchConfig.getMaxBooleanClauseCount(),
                     dateTimeSettings);
             final SearchExpressionQuery query = searchExpressionQueryBuilder

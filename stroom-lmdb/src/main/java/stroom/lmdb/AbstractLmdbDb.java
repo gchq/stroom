@@ -57,18 +57,32 @@ import java.util.stream.StreamSupport;
  * keys/values into/out of the database. Provides various helper methods for interacting with the
  * database at a higher abstraction that the raw bytes.
  * <p>
- * See https://github.com/lmdbjava/lmdbjava/issues/81 for more information on the use/re-use
+ * See <a href="https://github.com/lmdbjava/lmdbjava/issues/81">here</a> for more information on the use/re-use
  * of the ByteBuffers passed to or returned from LMDBJava.
- * See https://github.com/lmdbjava/lmdbjava/issues/119 for tips on improving performance.
+ * <p>
+ * See <a href="https://github.com/lmdbjava/lmdbjava/issues/119">here</a> for tips on improving performance.
+ * <p>
+ * See<a href=" https://www.youtube.com/watch?v=tEa5sAh-kVk&t=10">YouTube</a> for a talk by
+ * Howard Chu on the design of LMDB to better understand how it works
+ * <p>
+ * See <a href="http://www.lmdb.tech/media/20141120-BuildStuff-Lightning.pdf">here</a> for the slides from
+ * the YouTube vid.
+ * <p>
+ * See <a href="https://github.com/lmdbjava/lmdbjava/wiki">LMDBJava Wiki</a> for useful usage recommendations
  * <p>
  * Dos/Don'ts
- * ~~~~~~~~~~
+ * <p>
  * DO NOT use/mutate a key/value buffer from a cursor outside of the cursor's scope.
+ * <p>
  * DO NOT mutate a key/value buffer inside a txn unless the DB is in MDB_WRITEMAP mode.
+ * <p>
  * DO NOT use/mutate a value buffer outside of a txn as its content is indeterminate outside the txn
  * and belongs to LMDB.
+ * <p>
  * DO NOT open a new txn while inside a txn, e.g. calling get("key") while inside a txn.
+ * <p>
  * DO ensure any {@link PooledByteBuffer}s are released/closed after use.
+ * <p>
  * DO be aware that a get() call is using a cursor underneath, so each call to get() will move the txn's
  * cursor to the position of the new key. Therefore:
  * v1 = get(k1), v1 == X, v2 = get(k2), v2 == y, v1 == y
@@ -476,6 +490,7 @@ public abstract class AbstractLmdbDb<K, V>
      * De-serialises each key as it goes.
      * Intended for use when it is not possible to test a key without di-serialisation, e.g. when
      * variable width serialisation is used.
+     *
      * @return True if any entry exists that matches keyPredicate.
      */
     public boolean exists(final Txn<ByteBuffer> txn, final Predicate<K> keyPredicate) {

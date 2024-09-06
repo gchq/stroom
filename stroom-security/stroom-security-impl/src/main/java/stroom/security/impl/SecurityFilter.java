@@ -22,12 +22,13 @@ import stroom.security.api.UserIdentity;
 import stroom.security.api.exception.AuthenticationException;
 import stroom.security.common.impl.UserIdentitySessionUtil;
 import stroom.security.openid.api.OpenId;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.net.UrlUtils;
+import stroom.util.shared.AuthenticationBypassChecker;
 import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.ServletAuthenticationChecker;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -38,12 +39,12 @@ import jakarta.servlet.FilterConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletMapping;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -58,13 +59,16 @@ class SecurityFilter implements Filter {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SecurityFilter.class);
 
     private static final Set<String> STATIC_RESOURCE_EXTENSIONS = Set.of(
-            ".js", ".css", ".htm", ".html", ".json", ".png", ".jpg", ".gif", ".ico", ".svg", ".ttf", ".woff", ".woff2");
+            ".js", ".js.map", ".css", ".css.map", ".htm", ".html", ".json", ".png",
+            ".jpg", ".gif", ".ico", ".svg", ".ttf", ".woff", ".woff2");
+
+    private static final String SIGN_IN_URL_PATH = ResourcePaths.buildServletPath(ResourcePaths.SIGN_IN_PATH);
 
     private final Provider<AuthenticationConfig> authenticationConfigProvider;
     private final UriFactory uriFactory;
     private final SecurityContext securityContext;
     private final OpenIdManager openIdManager;
-    private final ServletAuthenticationChecker servletAuthenticationChecker;
+    private final AuthenticationBypassChecker authenticationBypassChecker;
 
     @Inject
     SecurityFilter(
@@ -72,12 +76,12 @@ class SecurityFilter implements Filter {
             final UriFactory uriFactory,
             final SecurityContext securityContext,
             final OpenIdManager openIdManager,
-            final ServletAuthenticationChecker servletAuthenticationChecker) {
+            final AuthenticationBypassChecker authenticationBypassChecker) {
         this.authenticationConfigProvider = authenticationConfigProvider;
         this.uriFactory = uriFactory;
         this.securityContext = securityContext;
         this.openIdManager = openIdManager;
-        this.servletAuthenticationChecker = servletAuthenticationChecker;
+        this.authenticationBypassChecker = authenticationBypassChecker;
     }
 
     @Override
@@ -88,20 +92,18 @@ class SecurityFilter implements Filter {
     @Override
     public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain)
             throws IOException, ServletException {
-        if (!(response instanceof HttpServletResponse)) {
+        if (!(response instanceof final HttpServletResponse httpServletResponse)) {
             final String message = "Unexpected response type: " + response.getClass().getName();
             LOGGER.error(message);
             return;
         }
-        final HttpServletResponse httpServletResponse = (HttpServletResponse) response;
 
-        if (!(request instanceof HttpServletRequest)) {
+        if (!(request instanceof final HttpServletRequest httpServletRequest)) {
             final String message = "Unexpected request type: " + request.getClass().getName();
             LOGGER.error(message);
             httpServletResponse.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, message);
             return;
         }
-        final HttpServletRequest httpServletRequest = (HttpServletRequest) request;
 
         try {
             filter(httpServletRequest, httpServletResponse, chain);
@@ -115,22 +117,29 @@ class SecurityFilter implements Filter {
                         final HttpServletResponse response,
                         final FilterChain chain)
             throws IOException, ServletException {
+
         LOGGER.debug(() ->
-                LogUtil.message("Filtering request uri: {},  servletPath: {}",
-                        request.getRequestURI(), request.getServletPath()));
+                LogUtil.message("Filtering request uri: {}, servletPath: {}, servletName: {}",
+                        request.getRequestURI(),
+                        request.getServletPath(),
+                        NullSafe.get(request.getHttpServletMapping(), HttpServletMapping::getServletName)));
 
         // Log the request for debug purposes.
         RequestLog.log(request);
 
-        final String servletPath = request.getServletPath().toLowerCase();
-        final String fullPath = request.getRequestURI().toLowerCase();
+        final String servletPath = request.getServletPath();
+        final String fullPath = request.getRequestURI();
+        final String servletName = NullSafe.get(request.getHttpServletMapping(), HttpServletMapping::getServletName);
 
-        if (request.getMethod().equalsIgnoreCase(HttpMethod.OPTIONS) ||
-                (!isApiRequest(servletPath) && isStaticResource(request))) {
+        if (request.getMethod().equalsIgnoreCase(HttpMethod.OPTIONS)) {
             // We need to allow CORS preflight requests
-            LOGGER.debug("Passing on to next filter");
+            LOGGER.debug("Passing on OPTIONS request to next filter, servletName: {}, fullPath: {}, servletPath: {}",
+                    servletName, fullPath, servletPath);
             chain.doFilter(request, response);
-
+        } else if (isStaticResource(servletName, fullPath, servletPath)) {
+            LOGGER.debug("Static content, servletName: {}, fullPath: {}, servletPath: {}",
+                    servletName, fullPath, servletPath);
+            chain.doFilter(request, response);
         } else {
             LOGGER.debug(() -> LogUtil.message("Session ID {}, request URI {}",
                     Optional.ofNullable(request.getSession(false))
@@ -150,7 +159,6 @@ class SecurityFilter implements Filter {
                     openIdManager.getOrSetSessionUser(request, Optional.of(securityContext.getUserIdentity()));
                     process(request, response, chain);
                 });
-
             } else {
                 Optional<UserIdentity> optUserIdentity;
 
@@ -183,20 +191,23 @@ class SecurityFilter implements Filter {
                     securityContext.asUser(userIdentity, () ->
                             process(request, response, chain));
 
-                } else if (shouldBypassAuthentication(fullPath, servletPath)) {
-                    LOGGER.debug("Running as proc user for unauthenticated path: {}", fullPath);
+                } else if (shouldBypassAuthentication(request, fullPath, servletPath, servletName)) {
+                    LOGGER.debug("Running as proc user for unauthenticated servletName: {}, " +
+                            "fullPath: {}, servletPath: {}", servletName, fullPath, servletPath);
                     // Some paths don't need authentication. If that is the case then proceed as proc user.
                     securityContext.asProcessingUser(() ->
                             process(request, response, chain));
 
-                } else if (isApiRequest(servletPath)) {
-                    // If we couldn't login with a token or couldn't get a token then error as this is an API call
+                } else if (isApiRequest(servletName)) {
+                    // If we couldn't log in with a token or couldn't get a token then error as this is an API call
                     // or no login flow is possible/expected.
-                    LOGGER.debug("No user identity so responding with UNAUTHORIZED for API path: {}", fullPath);
+                    LOGGER.debug("No user identity so responding with UNAUTHORIZED for servletName: {}, " +
+                            "fullPath: {}, servletPath: {}", servletName, fullPath, servletPath);
                     response.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
 
-                } else if (request.getRequestURI().equals("/")) {
-                    // UI request, so instigate an OpenID authentication flow
+                } else {
+                    // No identity found and not an unauthenticated servlet/api so assume it is
+                    // a UI request. Thus instigate an OpenID authentication flow
                     try {
                         final String postAuthRedirectUri = getPostAuthRedirectUri(request);
 
@@ -222,10 +233,11 @@ class SecurityFilter implements Filter {
                         LOGGER.error(e.getMessage(), e);
                         throw e;
                     }
-                } else {
-                    final int statusCode = Status.NOT_FOUND.getStatusCode();
-                    LOGGER.debug("Unexpected URI {}, returning {}", fullPath, statusCode);
-                    response.setStatus(statusCode);
+//                } else {
+//                    final int statusCode = Status.NOT_FOUND.getStatusCode();
+//                    LOGGER.debug("Unexpected servletName: {}, fullPath: {}, servletPath: {}, returning {}",
+//                            servletName, fullPath, servletPath, statusCode);
+//                    response.setStatus(statusCode);
                 }
             }
         }
@@ -263,18 +275,15 @@ class SecurityFilter implements Filter {
         return uriFactory.publicUri(originalPath).toString();
     }
 
-    private boolean isStaticResource(final HttpServletRequest request) {
-        final String url = request.getRequestURL().toString();
-
-        if (url.contains("/s/") ||
-                url.contains("/static/") ||
-                url.endsWith("manifest.json")) { // New UI - For some reason this is requested without a session cookie
+    private boolean isStaticResource(final String servletName, final String fullPath, final String servletPath) {
+        // Test for internal IdP sign in request.
+        if (servletPath.startsWith(SIGN_IN_URL_PATH)) {
             return true;
         }
 
-        int index = url.lastIndexOf(".");
+        int index = fullPath.lastIndexOf(".");
         if (index > 0) {
-            final String extension = url.substring(index);
+            final String extension = fullPath.substring(index).toLowerCase();
             return STATIC_RESOURCE_EXTENSIONS.contains(extension);
         }
 
@@ -285,14 +294,28 @@ class SecurityFilter implements Filter {
         return servletPath.startsWith(ResourcePaths.API_ROOT_PATH);
     }
 
-    private boolean shouldBypassAuthentication(final String fullPath, final String servletPath) {
+    private boolean shouldBypassAuthentication(final HttpServletRequest servletRequest,
+                                               final String fullPath,
+                                               final String servletPath,
+                                               final String servletName) {
+        final boolean shouldBypass;
         if (servletPath == null) {
-            return false;
-        } else if (fullPath.contains(ResourcePaths.NO_AUTH + "/")) {
-            return true;
+            shouldBypass = false;
         } else {
-            return servletAuthenticationChecker.isUnauthenticatedPath(servletPath);
+            shouldBypass = authenticationBypassChecker.isUnauthenticated(servletName, servletPath, fullPath);
         }
+
+        if (LOGGER.isDebugEnabled()) {
+            if (shouldBypass) {
+                LOGGER.debug("Bypassing authentication for servletName: {}, fullPath: {}, servletPath: {}",
+                        NullSafe.get(
+                                servletRequest.getHttpServletMapping(),
+                                HttpServletMapping::getServletName),
+                        fullPath,
+                        servletPath);
+            }
+        }
+        return shouldBypass;
     }
 
 //    private void authenticateAsAdmin(final HttpServletRequest request,

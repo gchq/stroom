@@ -18,7 +18,7 @@
 package stroom.receive.rules.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
@@ -28,6 +28,7 @@ import stroom.receive.rules.client.presenter.RuleSetPresenter;
 import stroom.receive.rules.shared.ReceiveDataRuleSetResource;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.task.client.TaskListener;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -68,26 +69,30 @@ public class RuleSetPlugin extends DocumentPlugin<ReceiveDataRules> {
     @Override
     public void load(final DocRef docRef,
                      final Consumer<ReceiveDataRules> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<ReceiveDataRules> rest = restFactory.create();
-        rest
+                     final RestErrorHandler errorHandler,
+                     final TaskListener taskListener) {
+        restFactory
+                .create(RULES_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
-                .call(RULES_RESOURCE)
-                .fetch(docRef.getUuid());
+                .onFailure(errorHandler)
+                .taskListener(taskListener)
+                .exec();
     }
 
     @Override
     public void save(final DocRef docRef,
                      final ReceiveDataRules document,
                      final Consumer<ReceiveDataRules> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<ReceiveDataRules> rest = restFactory.create();
-        rest
+                     final RestErrorHandler errorHandler,
+                     final TaskListener taskListener) {
+        restFactory
+                .create(RULES_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
-                .call(RULES_RESOURCE)
-                .update(document.getUuid(), document);
+                .onFailure(errorHandler)
+                .taskListener(taskListener)
+                .exec();
     }
 
     @Override

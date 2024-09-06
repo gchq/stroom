@@ -4,6 +4,7 @@ import stroom.docref.DocRef;
 import stroom.docref.StringMatch.MatchType;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.query.common.v2.DataSourceProviderRegistry;
+import stroom.query.shared.CompletionItem;
 import stroom.query.shared.CompletionValue;
 import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.InsertType;
@@ -12,7 +13,6 @@ import stroom.query.shared.QueryHelpDetail;
 import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpType;
 import stroom.svg.shared.SvgImage;
-import stroom.util.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage.ResultConsumer;
 import stroom.util.string.StringMatcher;
@@ -94,7 +94,7 @@ public class DataSources {
 
     public void addCompletions(final CompletionsRequest request,
                                final PageRequest pageRequest,
-                               final List<CompletionValue> resultList) {
+                               final List<CompletionItem> resultList) {
         final DataSourceProviderRegistry dataSourceProviderRegistry =
                 dataSourceProviderRegistryProvider.get();
         final StringMatcher stringMatcher = new StringMatcher(request.getStringMatch());
@@ -124,9 +124,7 @@ public class DataSources {
                 row.getId().startsWith(DATA_SOURCE_ID + ".")) {
             final QueryHelpDataSource dataSource = (QueryHelpDataSource) row.getData();
             final DocRef docRef = dataSource.getDocRef();
-            final InsertType insertType = NullSafe.isBlankString(docRef.getName())
-                    ? InsertType.BLANK
-                    : InsertType.PLAIN_TEXT;
+            final InsertType insertType = InsertType.plainText(docRef.getName());
             final String insertText = getInsertText(docRef);
             final String documentation = getDetail(docRef);
             return Optional.of(new QueryHelpDetail(insertType, insertText, documentation));

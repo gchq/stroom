@@ -17,6 +17,7 @@
 
 package stroom.query.common.v2;
 
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
@@ -32,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,14 +49,17 @@ public class ColumnExpressionMatcher {
 
     private final Map<String, Pattern> patternCache = new ConcurrentHashMap<>();
 
-    private final Map<String, Column> fieldNameToFieldMap;
+    private final Map<String, Column> columnNameToColumnMap;
+    private final DateTimeSettings dateTimeSettings;
 
-    public ColumnExpressionMatcher(final List<Column> columns) {
-        this.fieldNameToFieldMap = new HashMap<>();
+    public ColumnExpressionMatcher(final List<Column> columns,
+                                   final DateTimeSettings dateTimeSettings) {
+        this.dateTimeSettings = dateTimeSettings;
+        this.columnNameToColumnMap = new HashMap<>();
         for (final Column column : NullSafe.list(columns)) {
             // Allow match by id and name.
-            fieldNameToFieldMap.putIfAbsent(column.getId(), column);
-            fieldNameToFieldMap.putIfAbsent(column.getName(), column);
+            columnNameToColumnMap.putIfAbsent(column.getId(), column);
+            columnNameToColumnMap.putIfAbsent(column.getName(), column);
         }
     }
 
@@ -120,7 +125,7 @@ public class ColumnExpressionMatcher {
             throw new MatchException("Field not set");
         }
         termField = termField.trim();
-        final Column column = fieldNameToFieldMap.get(termField);
+        final Column column = columnNameToColumnMap.get(termField);
         if (column == null) {
             throw new MatchException("Column not found: " + termField);
         }
@@ -154,15 +159,30 @@ public class ColumnExpressionMatcher {
         } else if (matchesFormatType(column, Format.Type.DATE_TIME)) {
             return matchDateField(condition, termValue, column, columnName, attribute);
         } else {
-            return switch (condition) {
-                case EQUALS -> isStringMatch(termValue, attribute);
-                case NOT_EQUALS -> !isStringMatch(termValue, attribute);
-                // CONTAINS only supported for legacy content, not for use in UI
-                case CONTAINS -> isStringContainsMatch(termValue, attribute);
-                case IN -> isIn(termValue, attribute);
-                // Try to treat as a numeric field.
-                default -> matchNumericColumn(condition, termValue, column, columnName, attribute);
-            };
+            return matchGeneralField(condition, termValue, column, columnName, attribute);
+        }
+    }
+
+    private boolean matchGeneralField(final Condition condition,
+                                      final String termValue,
+                                      final Column column,
+                                      final String columnName,
+                                      final Object attribute) {
+        try {
+            return matchDateField(condition, termValue, column, columnName, attribute);
+        } catch (final RuntimeException e) {
+            try {
+                return matchNumericColumn(condition, termValue, column, columnName, attribute);
+            } catch (final RuntimeException e2) {
+                return switch (condition) {
+                    case EQUALS -> isStringMatch(termValue, attribute);
+                    case NOT_EQUALS -> !isStringMatch(termValue, attribute);
+                    // CONTAINS only supported for legacy content, not for use in UI
+                    case CONTAINS -> isStringContainsMatch(termValue, attribute);
+                    case IN -> isIn(termValue, attribute);
+                    default -> throw e2;
+                };
+            }
         }
     }
 
@@ -177,36 +197,36 @@ public class ColumnExpressionMatcher {
     private boolean matchDateField(final Condition condition,
                                    final String termValue,
                                    final Column column,
-                                   final String fieldName,
+                                   final String columnName,
                                    final Object attribute) {
         switch (condition) {
             case EQUALS: {
-                final Long num1 = getDate(fieldName, attribute);
+                final Long num1 = getDate(columnName, attribute);
                 final Long num2 = getDate(termValue);
                 return Objects.equals(num1, num2);
             }
             case NOT_EQUALS: {
-                final Long num1 = getDate(fieldName, attribute);
+                final Long num1 = getDate(columnName, attribute);
                 final Long num2 = getDate(termValue);
                 return !Objects.equals(num1, num2);
             }
             case GREATER_THAN: {
-                final Long num1 = getDate(fieldName, attribute);
+                final Long num1 = getDate(columnName, attribute);
                 final Long num2 = getDate(termValue);
                 return CompareUtil.compareLong(num1, num2) > 0;
             }
             case GREATER_THAN_OR_EQUAL_TO: {
-                final Long num1 = getDate(fieldName, attribute);
+                final Long num1 = getDate(columnName, attribute);
                 final Long num2 = getDate(termValue);
                 return CompareUtil.compareLong(num1, num2) >= 0;
             }
             case LESS_THAN: {
-                final Long num1 = getDate(fieldName, attribute);
+                final Long num1 = getDate(columnName, attribute);
                 final Long num2 = getDate(termValue);
                 return CompareUtil.compareLong(num1, num2) < 0;
             }
             case LESS_THAN_OR_EQUAL_TO: {
-                final Long num1 = getDate(fieldName, attribute);
+                final Long num1 = getDate(columnName, attribute);
                 final Long num2 = getDate(termValue);
                 return CompareUtil.compareLong(num1, num2) <= 0;
             }
@@ -218,7 +238,7 @@ public class ColumnExpressionMatcher {
                 if (CompareUtil.compareLong(between[0], between[1]) >= 0) {
                     throw new MatchException("From number must be lower than to number");
                 }
-                final Long num = getDate(fieldName, attribute);
+                final Long num = getDate(columnName, attribute);
                 return CompareUtil.compareLong(num, between[0]) >= 0
                         && CompareUtil.compareLong(num, between[1]) <= 0;
             }
@@ -288,9 +308,9 @@ public class ColumnExpressionMatcher {
         }
     }
 
-    private boolean isNumericIn(final String fieldName, final Object termValue, final Object attribute) {
-        final BigDecimal num = getNumber(fieldName, attribute);
-        final BigDecimal[] in = getNumbers(fieldName, termValue);
+    private boolean isNumericIn(final String columnName, final Object termValue, final Object attribute) {
+        final BigDecimal num = getNumber(columnName, attribute);
+        final BigDecimal[] in = getNumbers(columnName, termValue);
         for (final BigDecimal n : in) {
             if (Objects.equals(n, num)) {
                 return true;
@@ -333,7 +353,7 @@ public class ColumnExpressionMatcher {
         }
     }
 
-    private BigDecimal getNumber(final String fieldName, final Object value) {
+    private BigDecimal getNumber(final String columnName, final Object value) {
         if (value == null) {
             return null;
         } else {
@@ -346,13 +366,13 @@ public class ColumnExpressionMatcher {
                 return new BigDecimal(value.toString());
             } catch (final NumberFormatException e) {
                 throw new MatchException(
-                        "Expected a numeric value for field \"" + fieldName +
+                        "Expected a numeric value for field \"" + columnName +
                                 "\" but was given string \"" + value + "\"");
             }
         }
     }
 
-    private Long getDate(final String fieldName, final Object value) {
+    private Long getDate(final String columnName, final Object value) {
         if (value == null) {
             return null;
         } else {
@@ -365,7 +385,7 @@ public class ColumnExpressionMatcher {
                 }
             } else {
                 throw new MatchException(
-                        "Expected a string value for field \"" + fieldName + "\" but was given \"" + value
+                        "Expected a string value for field \"" + columnName + "\" but was given \"" + value
                                 + "\" of type " + value.getClass().getName());
             }
         }
@@ -377,8 +397,11 @@ public class ColumnExpressionMatcher {
         } else {
             if (value instanceof final String valueStr) {
                 try {
-                    // This is a term value so will be IDO format
-                    return DateUtil.parseNormalDateTimeString(valueStr);
+                    final Optional<ZonedDateTime> optionalZonedDateTime =
+                            DateExpressionParser.parse(valueStr, dateTimeSettings);
+                    final ZonedDateTime zonedDateTime = optionalZonedDateTime.orElseThrow(() ->
+                            new NumberFormatException("Unexpected: " + valueStr));
+                    return zonedDateTime.toInstant().toEpochMilli();
                 } catch (final NumberFormatException e) {
                     throw new MatchException(
                             "Unable to parse a date/time from value \"" + valueStr + "\"");
@@ -391,14 +414,14 @@ public class ColumnExpressionMatcher {
         }
     }
 
-    private BigDecimal[] getNumbers(final String fieldName, final Object value) {
+    private BigDecimal[] getNumbers(final String columnName, final Object value) {
         if (value == null) {
             return new BigDecimal[0];
         } else {
             final String[] values = value.toString().split(DELIMITER);
             final BigDecimal[] numbers = new BigDecimal[values.length];
             for (int i = 0; i < values.length; i++) {
-                numbers[i] = getNumber(fieldName, values[i].trim());
+                numbers[i] = getNumber(columnName, values[i].trim());
             }
 
             return numbers;

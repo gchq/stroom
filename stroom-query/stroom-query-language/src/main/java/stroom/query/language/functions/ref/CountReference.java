@@ -1,9 +1,7 @@
 package stroom.query.language.functions.ref;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
 public class CountReference implements ValueReference<Long> {
+
     private final int index;
     private final String name;
 
@@ -35,13 +33,13 @@ public class CountReference implements ValueReference<Long> {
     }
 
     @Override
-    public void read(final StoredValues storedValues, final Input input) {
-        set(storedValues, input.readLong());
+    public void read(final StoredValues storedValues, final DataReader reader) {
+        set(storedValues, reader.readLong());
     }
 
     @Override
-    public void write(final StoredValues storedValues, final Output output) {
-        output.writeLong(get(storedValues));
+    public void write(final StoredValues storedValues, final DataWriter writer) {
+        writer.writeLong(get(storedValues));
     }
 
     @Override

@@ -18,7 +18,7 @@
 package stroom.pipeline.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -29,6 +29,7 @@ import stroom.pipeline.client.presenter.XsltPresenter;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.XsltResource;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.task.client.TaskListener;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -66,26 +67,30 @@ public class XsltPlugin extends DocumentPlugin<XsltDoc> {
     @Override
     public void load(final DocRef docRef,
                      final Consumer<XsltDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<XsltDoc> rest = restFactory.create();
-        rest
+                     final RestErrorHandler errorHandler,
+                     final TaskListener taskListener) {
+        restFactory
+                .create(XSLT_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
-                .call(XSLT_RESOURCE)
-                .fetch(docRef.getUuid());
+                .onFailure(errorHandler)
+                .taskListener(taskListener)
+                .exec();
     }
 
     @Override
     public void save(final DocRef docRef,
                      final XsltDoc document,
                      final Consumer<XsltDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<XsltDoc> rest = restFactory.create();
-        rest
+                     final RestErrorHandler errorHandler,
+                     final TaskListener taskListener) {
+        restFactory
+                .create(XSLT_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
-                .call(XSLT_RESOURCE)
-                .update(document.getUuid(), document);
+                .onFailure(errorHandler)
+                .taskListener(taskListener)
+                .exec();
     }
 
     @Override

@@ -20,6 +20,7 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaDataCriteria;
+import stroom.meta.api.EffectiveMetaSet;
 import stroom.meta.api.MetaService;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.security.api.SecurityContext;
@@ -38,14 +39,12 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.jetbrains.annotations.NotNull;
 
-import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
@@ -66,7 +65,7 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
     private static final String PARAM_NAME_ENTRY_LIMIT = "entryLimit";
     private static final String PARAM_NAME_FEED = "feed";
 
-    private final LoadingStroomCache<EffectiveStreamKey, NavigableSet<EffectiveMeta>> cache;
+    private final LoadingStroomCache<EffectiveStreamKey, EffectiveMetaSet> cache;
     private final MetaService metaService;
     private final EffectiveStreamInternPool internPool;
     private final SecurityContext securityContext;
@@ -87,7 +86,7 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
                 this::create);
     }
 
-    public NavigableSet<EffectiveMeta> get(final EffectiveStreamKey effectiveStreamKey) {
+    EffectiveMetaSet get(final EffectiveStreamKey effectiveStreamKey) {
         if (effectiveStreamKey.getFeed() == null) {
             throw ProcessException.create("No feed has been specified for reference data lookup");
         }
@@ -95,7 +94,7 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
             throw ProcessException.create("No stream type has been specified for reference data lookup");
         }
 
-        final NavigableSet<EffectiveMeta> effectiveStreams = cache.get(effectiveStreamKey);
+        final EffectiveMetaSet effectiveStreams = cache.get(effectiveStreamKey);
         // Do this as trace as get() calls will be far more frequent than the create().
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(() -> LogUtil.message("get({}) - returned {} streams",
@@ -105,9 +104,9 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
         return effectiveStreams;
     }
 
-    protected NavigableSet<EffectiveMeta> create(final EffectiveStreamKey key) {
+    EffectiveMetaSet create(final EffectiveStreamKey key) {
         return securityContext.asProcessingUserResult(() -> {
-            NavigableSet<EffectiveMeta> effectiveStreamSet = Collections.emptyNavigableSet();
+            EffectiveMetaSet effectiveStreamSet = EffectiveMetaSet.empty();
 
             try {
                 LOGGER.debug(() -> "Creating effective stream set, key: " + LogUtil.toStringWithoutClassName(key));
@@ -124,17 +123,14 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
                 LOGGER.debug(() -> "Using criteria: " + LogUtil.toStringWithoutClassName(criteria));
 
                 // Hit the DB to find all the streams matching our criteria
-                final List<EffectiveMeta> effectiveMetasFromDb = metaService.findEffectiveData(criteria);
+                final EffectiveMetaSet effectiveMetasFromDb = metaService.findEffectiveData(criteria);
 
                 if (LOGGER.isDebugEnabled()) {
                     logStreamSetToDebug(key, effectiveMetasFromDb, "after DB fetch");
                 }
 
-                // Build them into a de-duped set with one stream per eff time
-                effectiveStreamSet = buildEffectiveStreamSet(key, effectiveMetasFromDb);
-
                 // Intern it so we don't have any duplicate sets in the cache
-                effectiveStreamSet = internEffectiveStreamSet(key, effectiveStreamSet);
+                effectiveStreamSet = internEffectiveStreamSet(key, effectiveMetasFromDb);
             } catch (final RuntimeException e) {
                 LOGGER.error("Error creating effective stream set for " + key + " - " + e.getMessage(), e);
             }
@@ -142,15 +138,15 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
         });
     }
 
-    private NavigableSet<EffectiveMeta> internEffectiveStreamSet(
+    private EffectiveMetaSet internEffectiveStreamSet(
             final EffectiveStreamKey key,
-            final NavigableSet<EffectiveMeta> effectiveStreamSet) {
+            final EffectiveMetaSet effectiveStreamSet) {
 
         // Intern the effective stream set, so we only have one identical
         // copy in memory.
         if (internPool != null) {
             // Could consider replacing with Guava's Interners.newWeakInterner()
-            final NavigableSet<EffectiveMeta> internedSet = internPool.intern(effectiveStreamSet);
+            final EffectiveMetaSet internedSet = internPool.intern(effectiveStreamSet);
 
             if (LOGGER.isDebugEnabled()) {
                 logStreamSetToDebug(key, internedSet, "after intern");
@@ -163,13 +159,12 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
     }
 
     private static void logStreamSetToDebug(final EffectiveStreamKey key,
-                                            final Collection<EffectiveMeta> effectiveStreams,
+                                            final EffectiveMetaSet effectiveStreams,
                                             final String msg) {
         if (effectiveStreams == null) {
             LOGGER.debug("Effective stream set is null, key: {}", key);
         } else {
-
-            final String streamsStr = effectiveStreamsToString(effectiveStreams);
+            final String streamsStr = effectiveStreamsToString(effectiveStreams.asList());
 
             LOGGER.debug("Effective streams ({}) of size {}, key: {}, streams:\n{}",
                     msg, effectiveStreams.size(), key, streamsStr);
@@ -185,7 +180,7 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
             final List<String> sortedStringMetas = effectiveStreams.stream()
                     .sorted(Comparator.comparing(EffectiveMeta::getEffectiveMs))
                     .map(LogUtil::toStringWithoutClassName)
-                    .collect(Collectors.toList());
+                    .toList();
 
             Stream<String> stream = sortedStringMetas.stream();
 
@@ -207,48 +202,52 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
     }
 
     private static void validateStreamSet(final EffectiveStreamKey key,
-                                          final Collection<EffectiveMeta> effectiveStreamSet,
+                                          final EffectiveMetaSet effectiveStreamSet,
                                           final String msg) {
 
-        LOGGER.debug("Validating effectiveStreamSet ({}) for key: {}", msg, key);
+        try {
+            LOGGER.debug("Validating effectiveStreamSet ({}) for key: {}", msg, key);
 
-        // None of this should ever happen unless we have a problem somewhere
+            // None of this should ever happen unless we have a problem somewhere
 
-        final Set<String> invalidFeedNames = effectiveStreamSet.stream()
-                .map(EffectiveMeta::getFeedName)
-                .filter(feedName -> !Objects.equals(feedName, key.getFeed()))
-                .collect(Collectors.toCollection(TreeSet::new));
+            final Set<String> invalidFeedNames = effectiveStreamSet.stream()
+                    .map(EffectiveMeta::getFeedName)
+                    .filter(feedName -> !Objects.equals(feedName, key.getFeed()))
+                    .collect(Collectors.toCollection(TreeSet::new));
 
-        if (!invalidFeedNames.isEmpty()) {
-            LOGGER.error("Found {} incorrect feed names {} " +
-                            "in effectiveStreamSet for key {}",
-                    invalidFeedNames.size(), invalidFeedNames, key);
-        }
+            if (!invalidFeedNames.isEmpty()) {
+                LOGGER.error("Found {} incorrect feed names {} " +
+                                "in effectiveStreamSet for key {}",
+                        invalidFeedNames.size(), invalidFeedNames, key);
+            }
 
-        final Set<String> invalidTypes = effectiveStreamSet.stream()
-                .map(EffectiveMeta::getTypeName)
-                .filter(typeName -> !Objects.equals(typeName, key.getStreamType()))
-                .collect(Collectors.toCollection(TreeSet::new));
+            final Set<String> invalidTypes = effectiveStreamSet.stream()
+                    .map(EffectiveMeta::getTypeName)
+                    .filter(typeName -> !Objects.equals(typeName, key.getStreamType()))
+                    .collect(Collectors.toCollection(TreeSet::new));
 
-        if (!invalidTypes.isEmpty()) {
-            LOGGER.error("Found {} incorrect stream type names {} " +
-                            "in effectiveStreamSet for key {}",
-                    invalidTypes.size(), invalidTypes, key);
-        }
+            if (!invalidTypes.isEmpty()) {
+                LOGGER.error("Found {} incorrect stream type names {} " +
+                                "in effectiveStreamSet for key {}",
+                        invalidTypes.size(), invalidTypes, key);
+            }
 
-        final Set<EffectiveMeta> metasOutsideKeyWindow = effectiveStreamSet.stream()
-                .filter(effectiveMeta -> !key.isTimeInKeyWindow(effectiveMeta.getEffectiveMs()))
-                .collect(Collectors.toCollection(TreeSet::new));
+            final Set<EffectiveMeta> metasOutsideKeyWindow = effectiveStreamSet.stream()
+                    .filter(effectiveMeta -> !key.isTimeInKeyWindow(effectiveMeta.getEffectiveMs()))
+                    .collect(Collectors.toCollection(TreeSet::new));
 
-        if (!metasOutsideKeyWindow.isEmpty()) {
-            LOGGER.error("Found {} effective streams with an effective time " +
-                            "outside the key window. key: {}, invalid effective streams:\n{}",
-                    metasOutsideKeyWindow.size(), key, effectiveStreamsToString(metasOutsideKeyWindow));
+            if (!metasOutsideKeyWindow.isEmpty()) {
+                LOGGER.error("Found {} effective streams with an effective time " +
+                                "outside the key window. key: {}, invalid effective streams:\n{}",
+                        metasOutsideKeyWindow.size(), key, effectiveStreamsToString(metasOutsideKeyWindow));
+            }
+        } catch (RuntimeException e) {
+            LOGGER.error("Error in validateStreamSet", e);
         }
     }
 
-    private static void validateInternResult(final NavigableSet<EffectiveMeta> effectiveStreamSet,
-                                             final NavigableSet<EffectiveMeta> internedSet) {
+    private static void validateInternResult(final EffectiveMetaSet effectiveStreamSet,
+                                             final EffectiveMetaSet internedSet) {
         // May not be the same instance, but should be equal
         if (!Objects.equals(internedSet, effectiveStreamSet)) {
             LOGGER.error("""
@@ -264,51 +263,6 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
         }
     }
 
-    private NavigableSet<EffectiveMeta> buildEffectiveStreamSet(final EffectiveStreamKey key,
-                                                                final List<EffectiveMeta> effectiveMetasFromDb) {
-        final NavigableSet<EffectiveMeta> effectiveStreamSet;
-        if (NullSafe.isEmptyCollection(effectiveMetasFromDb)) {
-            LOGGER.debug("No effective streams for key {}", key);
-            effectiveStreamSet = Collections.emptyNavigableSet();
-        } else {
-            final Map<Long, List<EffectiveMeta>> map = effectiveMetasFromDb.stream()
-                    .collect(Collectors.groupingBy(
-                            EffectiveMeta::getEffectiveMs));
-
-            effectiveStreamSet = new TreeSet<>();
-            map.forEach((effectiveMs, effectiveMetaList) -> {
-                final int countPerEffectiveMs = effectiveMetaList.size();
-                if (countPerEffectiveMs > 0) {
-                    // Get the latest stream from the list of dups
-                    final EffectiveMeta effectiveMeta = effectiveMetaList.stream()
-                            .max(Comparator.comparing(EffectiveMeta::getId))
-                            .get();
-
-                    if (countPerEffectiveMs > 1) {
-                        LOGGER.warn("Multiple reference streams [{}] from feed '{}' found with the same " +
-                                        "effective time {}. Stroom cannot know which is the preferred stream so the " +
-                                        "one with the highest stream ID ({}) will be used and the rest ignored.",
-                                effectiveMetaList.stream()
-                                        .map(EffectiveMeta::getId)
-                                        .map(val -> Long.toString(val))
-                                        .sorted()
-                                        .collect(Collectors.joining(", ")),
-                                key.getFeed(),
-                                Instant.ofEpochMilli(effectiveMs),
-                                effectiveMeta.getId());
-                    }
-
-                    LOGGER.trace("Adding effective stream {} against key {}", effectiveMeta, key);
-                    effectiveStreamSet.add(effectiveMeta);
-                }
-            });
-        }
-        if (LOGGER.isDebugEnabled()) {
-            logStreamSetToDebug(key, effectiveStreamSet, "after de-dup");
-        }
-        return effectiveStreamSet;
-    }
-
     long size() {
         return cache.size();
     }
@@ -320,9 +274,9 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
 
     @Override
     public SystemInfoResult getSystemInfo(final Map<String, String> params) {
-        final Comparator<Entry<EffectiveStreamKey, NavigableSet<EffectiveMeta>>> entryComparator =
+        final Comparator<Entry<EffectiveStreamKey, EffectiveMetaSet>> entryComparator =
                 Comparator
-                        .comparing((Entry<EffectiveStreamKey, NavigableSet<EffectiveMeta>> entry) ->
+                        .comparing((Entry<EffectiveStreamKey, EffectiveMetaSet> entry) ->
                                 entry.getKey().getFeed())
                         .thenComparing(entry -> entry.getKey().getStreamType())
                         .thenComparing(entry -> entry.getKey().getFromMs());
@@ -331,7 +285,8 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
                 .orElse(Long.MAX_VALUE);
         final long streamLimit = HasSystemInfo.getLongParam(params, PARAM_NAME_STREAM_LIMIT)
                 .orElse(Long.MAX_VALUE);
-        final Predicate<Entry<EffectiveStreamKey, NavigableSet<EffectiveMeta>>> feedPredicate = HasSystemInfo.getParam(
+
+        final Predicate<Entry<EffectiveStreamKey, EffectiveMetaSet>> feedPredicate = HasSystemInfo.getParam(
                         params, PARAM_NAME_FEED)
                 .map(this::buildContainsFeedPredicate)
                 .orElse(entry -> true);
@@ -354,12 +309,12 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
                 .build();
     }
 
-    private Predicate<Entry<EffectiveStreamKey, NavigableSet<EffectiveMeta>>> buildContainsFeedPredicate(
+    private Predicate<Entry<EffectiveStreamKey, EffectiveMetaSet>> buildContainsFeedPredicate(
             final String feed) {
+
         return entry ->
-                entry.getValue()
-                        .stream()
-                        .anyMatch(effectiveMeta -> feed.equals(effectiveMeta.getFeedName()));
+                feed.equals(entry.getValue()
+                        .getFeedName());
     }
 
     private Map<String, Object> mapEffectiveStream(final EffectiveMeta effectiveMeta) {
@@ -376,9 +331,9 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
 
     @NotNull
     private Map<String, Object> mapCacheEntry(final long streamLimit,
-                                              final Entry<EffectiveStreamKey, NavigableSet<EffectiveMeta>> entry) {
+                                              final Entry<EffectiveStreamKey, EffectiveMetaSet> entry) {
         final EffectiveStreamKey key = entry.getKey();
-        final NavigableSet<EffectiveMeta> effectiveStreams = entry.getValue();
+        final EffectiveMetaSet effectiveStreams = entry.getValue();
         return Map.of(
                 "effectiveStreamKey", Map.of(
                         "feed", key.getFeed(),

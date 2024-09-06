@@ -18,21 +18,31 @@ package stroom.config.global.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.config.global.shared.ConfigProperty;
+import stroom.config.global.shared.GlobalConfigResource;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
+import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
-public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalPropertyTabPresenter.GlobalPropertyTabView>
+import java.util.function.Supplier;
+
+public class GlobalPropertyTabPresenter
+        extends ContentTabPresenter<GlobalPropertyTabPresenter.GlobalPropertyTabView>
         implements ManageGlobalPropertyUiHandlers {
 
+    public static final String TAB_TYPE = "Caches";
     public static final String LIST = "LIST";
 
     private final ManageGlobalPropertyListPresenter listPresenter;
@@ -41,13 +51,12 @@ public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalProper
     private final ButtonView warningsButton;
     private String currentWarnings;
 
-    private String lastFilterValue = null;
-
     @Inject
     public GlobalPropertyTabPresenter(final EventBus eventBus,
                                       final GlobalPropertyTabView view,
                                       final ManageGlobalPropertyListPresenter listPresenter,
-                                      final Provider<ManageGlobalPropertyEditPresenter> editProvider) {
+                                      final Provider<ManageGlobalPropertyEditPresenter> editProvider,
+                                      final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         this.listPresenter = listPresenter;
         this.editProvider = editProvider;
@@ -57,6 +66,16 @@ public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalProper
 
         warningsButton = listPresenter.addButton(SvgPresets.ALERT.title("Show Warnings"));
         warningsButton.setVisible(false);
+
+        uiConfigCache.get(uiConfig -> {
+            if (uiConfig != null) {
+                view.registerPopupTextProvider(() ->
+                        QuickFilterTooltipUtil.createTooltip(
+                                "Properties Quick Filter",
+                                GlobalConfigResource.FIELD_DEFINITIONS,
+                                uiConfig.getHelpUrlQuickFilter()));
+            }
+        }, this);
     }
 
     @Override
@@ -92,6 +111,7 @@ public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalProper
         registerHandler(listPresenter.addErrorHandler(event -> setErrors(event.getError())));
         super.onBind();
         listPresenter.refresh();
+        getView().focusFilter();
     }
 
     public void setErrors(final String errors) {
@@ -120,6 +140,7 @@ public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalProper
         if (e != null) {
             if (editProvider != null) {
                 final ManageGlobalPropertyEditPresenter editor = editProvider.get();
+                editor.setTaskListener(this);
                 editor.showEntity(e, listPresenter::refresh);
             }
         }
@@ -127,20 +148,35 @@ public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalProper
 
     @Override
     public void changeNameFilter(final String name) {
-        if (name.length() > 0) {
+        if (GwtNullSafe.isNonEmptyString(name)) {
             // This will initiate a timer to refresh the data
             listPresenter.setPartialName(name);
         } else {
             listPresenter.clearFilter();
         }
-
-//        if (!Objects.equals(name, lastFilterValue)) {
-//            listPresenter.refresh();
-//            lastFilterValue = name;
-//        }
     }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
+    }
+
+    @Override
+    public boolean handleKeyAction(final Action action) {
+        if (Action.FOCUS_FILTER == action) {
+            getView().focusFilter();
+            return true;
+        }
+        return false;
+    }
+
+    // --------------------------------------------------------------------------------
+
 
     public interface GlobalPropertyTabView extends View, HasUiHandlers<ManageGlobalPropertyUiHandlers> {
 
+        void registerPopupTextProvider(Supplier<SafeHtml> popupTextSupplier);
+
+        void focusFilter();
     }
 }

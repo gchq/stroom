@@ -16,10 +16,10 @@
 
 package stroom.explorer.client.presenter;
 
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerResource;
+import stroom.task.client.TaskListener;
 
 import com.google.gwt.core.client.GWT;
 
@@ -42,17 +42,19 @@ public class DocumentTypeCache {
         documentTypes = null;
     }
 
-    public void fetch(final Consumer<DocumentTypes> consumer) {
+    public void fetch(final Consumer<DocumentTypes> consumer,
+                      final TaskListener taskListener) {
         // Get the document types if they are null.
         if (documentTypes == null) {
-            final Rest<DocumentTypes> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(EXPLORER_RESOURCE)
+                    .method(ExplorerResource::fetchDocumentTypes)
                     .onSuccess(result -> {
                         documentTypes = result;
                         consumer.accept(result);
                     })
-                    .call(EXPLORER_RESOURCE)
-                    .fetchDocumentTypes();
+                    .taskListener(taskListener)
+                    .exec();
         } else {
             consumer.accept(documentTypes);
         }

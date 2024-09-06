@@ -81,6 +81,7 @@ import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.api.TaskContext;
+import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.io.PreviewInputStream;
 import stroom.util.io.WrappedOutputStream;
@@ -139,7 +140,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
     private final InternalStatisticsReceiver internalStatisticsReceiver;
     private final VolumeGroupNameProvider volumeGroupNameProvider;
 
-    private Processor streamProcessor;
+    private Processor processor;
     private ProcessorFilter processorFilter;
     private ProcessorTask processorTask;
     private Source streamSource;
@@ -198,7 +199,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                                 final ProcessorFilter processorFilter,
                                 final ProcessorTask processorTask,
                                 final Source streamSource) {
-        this.streamProcessor = processor;
+        this.processor = processor;
         this.processorFilter = processorFilter;
         this.processorTask = processorTask;
         this.streamSource = streamSource;
@@ -238,12 +239,12 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                 process(taskContext);
 
             } catch (final Exception e) {
-                outputError(e);
+                outputFatalError(e);
             } finally {
                 try {
                     processDecorator.afterProcessing();
                 } catch (final Exception e) {
-                    outputError(e);
+                    outputFatalError(e);
                 }
 
                 // Ensure we are no longer interrupting if necessary.
@@ -302,8 +303,8 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
             // Set the pipeline so it can be used by a filter if needed.
             pipelineDoc = pipelineStore.readDocument(getProcessDecorator().getPipeline());
             if (pipelineDoc == null) {
-                final String msg = "Pipeline " + streamProcessor.getPipelineUuid()
-                        + " cannot be found for processor with id " + streamProcessor.getId();
+                final String msg = "Pipeline " + processor.getPipelineUuid()
+                        + " cannot be found for processor with id " + processor.getId();
                 LOGGER.error(msg);
                 throw new RuntimeException(msg);
             }
@@ -331,7 +332,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
             LOGGER.info(() -> processingInfo);
 
             // Hold the source and feed so the pipeline filters can get them.
-            streamProcessorHolder.setStreamProcessor(streamProcessor, processorTask);
+            streamProcessorHolder.setStreamProcessor(processor, processorTask);
 
             // Process the streams.
             final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
@@ -348,7 +349,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
             LOGGER.info(() -> finishedInfo);
 
         } catch (final RuntimeException e) {
-            outputError(e);
+            outputFatalError(e);
 
         } finally {
             // Record some statistics about processing.
@@ -456,53 +457,62 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                             // Process the boundary.
                             try {
                                 pipeline.process(previewInputStream, encoding);
-                            } catch (final LoggedException e) {
-                                // The exception has already been logged so
-                                // ignore it.
-                                LOGGER.trace(() -> "Error while processing data task: id = " + meta.getId(), e);
-                            } catch (final RuntimeException e) {
-                                outputError(e);
+                            } catch (final Throwable e) {
+                                handleProcessingException(e, meta);
                             }
 
                             // Reset the error statistics for the next stream.
-                            if (errorReceiverProxy.getErrorReceiver() instanceof ErrorStatistics) {
-                                ((ErrorStatistics) errorReceiverProxy.getErrorReceiver()).reset();
+                            if (errorReceiverProxy.getErrorReceiver() instanceof ErrorStatistics errorStatistics) {
+                                errorStatistics.reset();
                             }
                         }
                     }
                 }
             }
-        } catch (final LoggedException e) {
-            // The exception has already been logged so ignore it.
-            if (meta != null) {
-                LOGGER.trace(() -> "Error while processing data task: id = " + meta.getId(), e);
-            }
-        } catch (final IOException | RuntimeException e) {
-            // An exception that's gets here is definitely a failure.
-            outputError(e);
-
+        } catch (final Throwable e) {
+            handleProcessingException(e, meta);
         } finally {
             try {
                 if (startedProcessing) {
                     pipeline.endProcessing();
                 }
-            } catch (final LoggedException e) {
-                // The exception has already been logged so ignore it.
-                LOGGER.trace(() -> "Error while processing data task: id = " + meta.getId(), e);
-            } catch (final RuntimeException e) {
-                outputError(e);
+            } catch (final Throwable e) {
+                handleProcessingException(e, meta);
             }
         }
     }
 
-    private void outputError(final Exception e) {
+    private void handleProcessingException(final Throwable e,
+                                           final Meta meta) {
+        if (e instanceof LoggedException) {
+            // The exception has already been logged so ignore it.
+            LOGGER.trace(() -> "Error while processing data task: id = " + NullSafe.get(meta, Meta::getId), e);
+        } else if (e instanceof IOException
+                || e instanceof RuntimeException) {
+            // An exception that's gets here is definitely a failure.
+            outputFatalError(e);
+        } else if (e instanceof Error err) {
+            // If we get here we are into OOM, stackOverflow type critical JVM errors so try to log
+            // the failure (if the JVM allows) but re-throw as we should not really be swallowing JVM Errors.
+            try {
+                LOGGER.error("Error while processing data task: id = {}", NullSafe.get(meta, Meta::getId), e);
+                outputFatalError(e);
+            } catch (Exception e2) {
+                // Error while logging
+                LOGGER.error("Error while trying to log error '{}'", e.getMessage(), e2);
+            }
+            throw err;
+        }
+    }
+
+    private void outputFatalError(final Throwable e) {
         outputError(e, Severity.FATAL_ERROR);
     }
 
     /**
      * Used to handle any errors that may occur during translation.
      */
-    private void outputError(final Exception e, final Severity severity) {
+    private void outputError(final Throwable e, final Severity severity) {
         if (errorReceiverProxy != null && !(e instanceof LoggedException)) {
             try {
                 if (e.getMessage() != null) {
@@ -512,14 +522,16 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                 }
             } catch (final RuntimeException e2) {
                 // Ignore exception as we generated it.
+                LOGGER.error("Error while trying to log {} to errorReceiverProxy with message '{}'",
+                        severity, e.getMessage(), e2);
             }
 
-            if (errorReceiverProxy.getErrorReceiver() instanceof ErrorStatistics) {
-                ((ErrorStatistics) errorReceiverProxy.getErrorReceiver()).checkRecord(-1);
+            if (errorReceiverProxy.getErrorReceiver() instanceof ErrorStatistics errorStatistics) {
+                errorStatistics.checkRecord(-1);
             }
 
             if (streamSource.getMeta() != null) {
-                LOGGER.trace(() -> "Error while processing stream task: id = " + streamSource.getMeta().getId(), e);
+                LOGGER.trace(() -> "Error while processing data task: id = " + streamSource.getMeta().getId(), e);
             }
         } else {
             LOGGER.error(MarkerFactory.getMarker("FATAL"), e.getMessage(), e);
@@ -536,14 +548,14 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
         final AtomicInteger count = new AtomicInteger();
         try {
             final ExpressionOperator findMetaExpression = ExpressionOperator.builder()
-                    .addTerm(MetaFields.PARENT_ID, Condition.EQUALS, meta.getId())
-                    .addTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, processor.getPipeline())
+                    .addIdTerm(MetaFields.PARENT_ID, Condition.EQUALS, meta.getId())
+                    .addDocRefTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, processor.getPipeline())
                     .addOperator(
                             ExpressionOperator
                                     .builder()
                                     .op(Op.OR)
-                                    .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.toString())
-                                    .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.toString())
+                                    .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.toString())
+                                    .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.toString())
                                     .build())
                     .build();
             final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(findMetaExpression);
@@ -559,8 +571,9 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                         } else if (oldMeta.getProcessorTaskId() != processorTask.getId()) {
                             if (taskMap == null) {
                                 final ExpressionOperator findTaskExpression = ExpressionOperator.builder()
-                                        .addTerm(ProcessorTaskFields.META_ID, Condition.EQUALS, meta.getId())
-                                        .addTerm(ProcessorTaskFields.PROCESSOR_ID, Condition.EQUALS, processor.getId())
+                                        .addIdTerm(ProcessorTaskFields.META_ID, Condition.EQUALS, meta.getId())
+                                        .addIdTerm(
+                                                ProcessorTaskFields.PROCESSOR_ID, Condition.EQUALS, processor.getId())
                                         .build();
                                 final ResultPage<ProcessorTask> tasks = processorTaskService.find(
                                         new ExpressionCriteria(findTaskExpression));
@@ -642,7 +655,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
         }
 
         @Override
-        public OutputStream getByteArrayOutputStream() {
+        public OutputStream getOutputStream() {
             return getOutputStream(null, null);
         }
 

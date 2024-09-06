@@ -6,5 +6,5 @@ import java.util.Map;
 
 public interface AttributeMapFactory {
 
-    Map<String, String> getAttributes(Meta meta);
+    Map<String, String> getAttributes(long metaId);
 }

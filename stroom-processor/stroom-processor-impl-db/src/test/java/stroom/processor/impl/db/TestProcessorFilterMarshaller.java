@@ -1,6 +1,6 @@
 package stroom.processor.impl.db;
 
-import stroom.index.shared.IndexDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
@@ -24,7 +24,7 @@ class TestProcessorFilterMarshaller {
     @Test
     void testMarshall() throws JAXBException {
         final QueryData queryData = new QueryData();
-        queryData.setDataSource(IndexDoc.buildDocRef()
+        queryData.setDataSource(LuceneIndexDoc.buildDocRef()
                 .randomUuid()
                 .name("Some idx")
                 .build());

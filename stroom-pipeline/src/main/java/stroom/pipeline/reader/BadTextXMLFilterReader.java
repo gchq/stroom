@@ -114,7 +114,9 @@ public class BadTextXMLFilterReader extends TransformReader {
             len -= cpysize;
         }
         final int charsRead = off - initialOff;
-        return charsRead > 0 ? charsRead : -1;
+        return charsRead > 0
+                ? charsRead
+                : -1;
     }
 
     private void patchUpLeafNonXML() {
@@ -313,6 +315,10 @@ public class BadTextXMLFilterReader extends TransformReader {
         assert (cp >= 0 && cp <= 0x10ffff);
         m_cbuf.put(Character.toChars(cp));
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private enum XMLstate {
         Initial,

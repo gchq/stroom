@@ -19,12 +19,12 @@ package stroom.annotation.client;
 import stroom.annotation.client.ChangeAssignedToPresenter.ChangeAssignedToView;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.SetAssignedToRequest;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.UserResource;
 import stroom.util.shared.UserName;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -42,7 +42,8 @@ import com.gwtplatform.mvp.client.View;
 import java.util.List;
 import java.util.Objects;
 
-public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedToView>
+public class ChangeAssignedToPresenter
+        extends MyPresenterWidget<ChangeAssignedToView>
         implements ChangeAssignedToUiHandlers {
 
     private final RestFactory restFactory;
@@ -82,15 +83,21 @@ public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedT
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-                        final Rest<Integer> rest = restFactory.create();
-
                         final SetAssignedToRequest request = new SetAssignedToRequest(annotationIdList,
                                 currentAssignedTo);
-                        rest.onSuccess(values -> GWT.log("Updated " + values + " annotations"))
-                                .call(annotationResource)
-                                .setAssignedTo(request);
+                        restFactory
+                                .create(annotationResource)
+                                .method(res -> res.setAssignedTo(request))
+                                .onSuccess(values -> {
+                                    GWT.log("Updated " + values + " annotations");
+                                    e.hide();
+                                })
+                                .onFailure(RestErrorHandler.forPopup(this, e))
+                                .taskListener(this)
+                                .exec();
+                    } else {
+                        e.hide();
                     }
-                    e.hide();
                 })
                 .fire();
     }
@@ -99,7 +106,7 @@ public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedT
         if (!Objects.equals(currentAssignedTo, selected)) {
             currentAssignedTo = selected;
             getView().setAssignedTo(selected.getUserIdentityForAudit());
-            HidePopupEvent.builder(assignedToPresenter)
+            HidePopupRequestEvent.builder(assignedToPresenter)
                     .fire();
         }
     }
@@ -113,11 +120,12 @@ public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedT
         }
         assignedToPresenter.setDataSupplier((filter, consumer) -> {
             final UserResource userResource = GWT.create(UserResource.class);
-            final Rest<List<UserName>> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(userResource)
+                    .method(res -> res.getAssociates(filter))
                     .onSuccess(consumer)
-                    .call(userResource)
-                    .getAssociates(filter);
+                    .taskListener(this)
+                    .exec();
         });
         assignedToPresenter.clearFilter();
         assignedToPresenter.setSelected(currentAssignedTo);

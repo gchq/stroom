@@ -69,7 +69,8 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
 
     private static final String DEFAULT_MULTIPLE_STRING_DELIMITER = ",";
     private final ErrorReceiverProxy errorReceiverProxy;
-    private final ValueConsumerHolder valueConsumerHolder;
+    private final QueryInfoHolder queryInfoHolder;
+    private final FieldListConsumerHolder fieldListConsumerHolder;
     private final LocationFactoryProxy locationFactory;
     private final Configuration config = new Configuration();
     private final PipelineConfiguration pipeConfig = config.makePipelineConfiguration();
@@ -91,14 +92,15 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
     private String topLevelQName = null;
     private Attributes topLevelAtts = null;
 
-
     @Inject
     public XPathExtractionOutputFilter(final LocationFactoryProxy locationFactory,
                                        final ErrorReceiverProxy errorReceiverProxy,
-                                       final ValueConsumerHolder valueConsumerHolder) {
+                                       final QueryInfoHolder queryInfoHolder,
+                                       final FieldListConsumerHolder fieldListConsumerHolder) {
         this.locationFactory = locationFactory;
         this.errorReceiverProxy = errorReceiverProxy;
-        this.valueConsumerHolder = valueConsumerHolder;
+        this.queryInfoHolder = queryInfoHolder;
+        this.fieldListConsumerHolder = fieldListConsumerHolder;
     }
 
     /**
@@ -168,7 +170,7 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
 
 
     private void createXPathExecutables() {
-        final FieldIndex fieldIndex = valueConsumerHolder.getFieldIndex();
+        final FieldIndex fieldIndex = queryInfoHolder.getFieldIndex();
         xPathExecutables = new XPathExecutable[fieldIndex.size()];
 
         for (int pos = 0; pos < fieldIndex.size(); pos++) {
@@ -298,7 +300,7 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
 
                     final List<StringFieldValue> stringFieldValues = new ArrayList<>(xPathExecutables.length);
                     for (int pos = 0; pos < xPathExecutables.length; pos++) {
-                        final String fieldName = valueConsumerHolder.getFieldIndex().getField(pos);
+                        final String fieldName = queryInfoHolder.getFieldIndex().getField(pos);
                         final XPathSelector selector = xPathExecutables[pos].load();
 
                         selector.setContextItem(new XdmNode(tree.getRootNode()));
@@ -312,7 +314,7 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
                         }
                         stringFieldValues.add(new StringFieldValue(fieldName, thisVal.toString()));
                     }
-                    valueConsumerHolder.acceptStringValues(stringFieldValues);
+                    fieldListConsumerHolder.acceptStringValues(stringFieldValues);
 
                 } catch (SaxonApiException ex) {
                     log(Severity.ERROR, "Unable to evaluate XPaths", ex);

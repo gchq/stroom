@@ -16,6 +16,7 @@
 
 package stroom.pipeline.errorhandler;
 
+import stroom.util.shared.ErrorType;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
@@ -30,9 +31,9 @@ public class ErrorReceiverIdDecorator implements ErrorReceiver {
 
     @Override
     public void log(final Severity severity, final Location location, final String elementId, final String message,
-                    final Throwable e) {
+                    final ErrorType errorType, final Throwable e) {
         final String msg = MessageUtil.getMessage(message, e);
-        errorReceiver.log(severity, location, id, elementId + " - " + msg, e);
+        errorReceiver.log(severity, location, id, elementId + " - " + msg, errorType, e);
     }
 
     @Override

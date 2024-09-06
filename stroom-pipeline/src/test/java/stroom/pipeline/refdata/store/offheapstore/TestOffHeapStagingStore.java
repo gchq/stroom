@@ -125,7 +125,7 @@ class TestOffHeapStagingStore extends StroomUnitTest {
 
     @Test
     void put_keyValues() {
-        final int typeId = StringValue.TYPE_ID;
+        final byte typeId = StringValue.TYPE_ID;
         putKeyValueData(5, typeId);
         offHeapStagingStore.completeLoad();
         offHeapStagingStore.logAllContents(LOGGER::debug);
@@ -165,7 +165,7 @@ class TestOffHeapStagingStore extends StroomUnitTest {
 //        refDataStore.logAllContents(LOGGER::debug);
     }
 
-    private void putKeyValueData(final int count, final int typeId) {
+    private void putKeyValueData(final int count, final byte typeId) {
         doWithMapDef((stagingValueOutputStream, mapDefinition) -> {
             for (int i = 0; i < count; i++) {
                 try {

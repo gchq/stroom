@@ -17,6 +17,7 @@
 package stroom.analytics.rule.impl;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.explorer.api.ExplorerActionHandler;
@@ -34,8 +35,9 @@ public class AnalyticRuleModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
                 .addBinding(AnalyticRuleStoreImpl.class);
-
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(AnalyticRuleStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
                 .addBinding(AnalyticRuleStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())

@@ -21,10 +21,9 @@ import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.script.shared.ScriptDoc;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.shared.EqualsUtil;
 import stroom.visualisation.client.presenter.VisualisationSettingsPresenter.VisualisationSettingsView;
 import stroom.visualisation.shared.VisualisationDoc;
 
@@ -38,18 +37,29 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 public class VisualisationSettingsPresenter extends DocumentEditPresenter<VisualisationSettingsView, VisualisationDoc> {
 
-    private final EntityDropDownPresenter scriptPresenter;
+    private final DocSelectionBoxPresenter scriptPresenter;
     private final EditorPresenter editorPresenter;
 
     @Inject
     public VisualisationSettingsPresenter(final EventBus eventBus,
                                           final VisualisationSettingsView view,
-                                          final EntityDropDownPresenter scriptPresenter,
+                                          final DocSelectionBoxPresenter scriptPresenter,
                                           final EditorPresenter editorPresenter) {
         super(eventBus, view);
         this.scriptPresenter = scriptPresenter;
         this.editorPresenter = editorPresenter;
 
+        scriptPresenter.setIncludedTypes(ScriptDoc.DOCUMENT_TYPE);
+        scriptPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+
+        view.setScriptView(scriptPresenter.getView());
+        view.setSettingsView(editorPresenter.getView());
+
+        editorPresenter.setMode(AceEditorMode.JSON);
+    }
+
+    @Override
+    protected void onBind() {
         // Add listeners for dirty events.
         final KeyDownHandler keyDownHander = new DirtyKeyDownHander() {
             @Override
@@ -57,27 +67,10 @@ public class VisualisationSettingsPresenter extends DocumentEditPresenter<Visual
                 setDirty(true);
             }
         };
-
-        scriptPresenter.setIncludedTypes(ScriptDoc.DOCUMENT_TYPE);
-        scriptPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
-
-        registerHandler(view.getFunctionName().addKeyDownHandler(keyDownHander));
+        registerHandler(getView().getFunctionName().addKeyDownHandler(keyDownHander));
         registerHandler(editorPresenter.addValueChangeHandler(event -> setDirty(true)));
-        view.setScriptView(scriptPresenter.getView());
-        view.setSettingsView(editorPresenter.getView());
-
-        editorPresenter.setMode(AceEditorMode.JSON);
+        registerHandler(scriptPresenter.addDataSelectionHandler(event -> setDirty(true)));
         registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));
-    }
-
-    @Override
-    protected void onBind() {
-        registerHandler(scriptPresenter.addDataSelectionHandler(event -> {
-            if (!EqualsUtil.isEquals(scriptPresenter.getSelectedEntityReference(),
-                    getEntity().getScriptRef())) {
-                setDirty(true);
-            }
-        }));
     }
 
     @Override

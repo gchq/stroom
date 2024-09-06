@@ -17,6 +17,7 @@
 package stroom.pipeline;
 
 import stroom.docref.DocRef;
+import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.docstore.shared.Doc;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
@@ -36,8 +37,6 @@ import stroom.util.guice.RestResourcesBinder;
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
 
-import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
-
 public class PipelineModule extends AbstractModule {
 
     @Override
@@ -52,8 +51,9 @@ public class PipelineModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
                 .addBinding(PipelineStoreImpl.class);
-
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(PipelineStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
                 .addBinding(PipelineStoreImpl.class);
 
         RestResourcesBinder.create(binder())
@@ -72,7 +72,7 @@ public class PipelineModule extends AbstractModule {
                 .bindJobTo(PipelineDestinationRoll.class, builder -> builder
                         .name("Pipeline Destination Roll")
                         .description("Roll any destinations based on their roll settings")
-                        .schedule(PERIODIC, "1m"));
+                        .frequencySchedule("1m"));
 
         LifecycleBinder.create(binder())
                 .bindShutdownTaskTo(RollingDestinationsForceRoll.class);

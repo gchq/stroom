@@ -7,40 +7,111 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
-@JsonPropertyOrder({"docRef", "matchOffset", "matchLength", "sample"})
+@JsonPropertyOrder({"docRef", "extension", "location", "sample"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DocContentMatch {
+
+    private static final int SAMPLE_LENGTH_BEFORE = 40;
+    private static final int SAMPLE_LENGTH_AFTER = 200;
 
     @JsonProperty
     private final DocRef docRef;
     @JsonProperty
-    private final long matchOffset;
+    private final String extension;
     @JsonProperty
-    private final long matchLength;
+    private final StringMatchLocation location;
     @JsonProperty
     private final String sample;
 
     @JsonCreator
     public DocContentMatch(@JsonProperty("docRef") final DocRef docRef,
-                           @JsonProperty("matchOffset") final long matchOffset,
-                           @JsonProperty("matchLength") final long matchLength,
+                           @JsonProperty("extension") final String extension,
+                           @JsonProperty("location") final StringMatchLocation location,
                            @JsonProperty("sample") final String sample) {
         this.docRef = docRef;
-        this.matchOffset = matchOffset;
-        this.matchLength = matchLength;
+        this.extension = extension;
+        this.location = location;
         this.sample = sample;
+    }
+
+    @SuppressWarnings("checkstyle:VariableDeclarationUsageDistance")
+    public static DocContentMatch create(final DocRef docRef,
+                                         final String extension,
+                                         final String text,
+                                         final StringMatchLocation location) {
+        int offset = location.getOffset();
+        int length = location.getLength();
+        final char[] chars = text.toCharArray();
+        final int min = Math.max(0, offset - SAMPLE_LENGTH_BEFORE);
+        int sampleStart = offset;
+        // Go back to get a sample from the same line.
+        for (; sampleStart >= min; sampleStart--) {
+            char c = chars[sampleStart];
+            if (c == '\n') {
+                break;
+            }
+        }
+        sampleStart = Math.max(0, sampleStart);
+
+        // Trim leading whitespace.
+        for (; sampleStart < offset; sampleStart++) {
+            char c = chars[sampleStart];
+            if (!Character.isWhitespace(c)) {
+                break;
+            }
+        }
+
+        // Adjust offset for start of sample.
+        offset -= sampleStart;
+
+        // Now remove newlines and adjust offset and length to accordingly.
+        final StringBuilder sample = new StringBuilder();
+        for (int i = sampleStart; i < chars.length; i++) {
+            final char c = chars[i];
+            if (c == '\r' || c == '\n') {
+                break;
+
+//            if (c == '\r') {
+//                // Omit carriage returns.
+//                if (i < location.getOffset()) {
+//                    offset--;
+//                } else if (i >= location.getOffset() && i <= location.getOffset() + location.getLength()) {
+//                    length--;
+//                }
+//            } else if (c == '\n') {
+//                sample.append(' ');
+            } else {
+                sample.append(c);
+                if (sample.length() >= SAMPLE_LENGTH_BEFORE + SAMPLE_LENGTH_AFTER) {
+                    break;
+                }
+            }
+        }
+
+        // Ensure offset and length are positive.
+        offset = Math.max(offset, 0);
+        length = Math.max(length, 0);
+
+        final StringMatchLocation match = new StringMatchLocation(offset, length);
+        return DocContentMatch
+                .builder()
+                .docRef(docRef)
+                .extension(extension)
+                .location(match)
+                .sample(sample.toString())
+                .build();
     }
 
     public DocRef getDocRef() {
         return docRef;
     }
 
-    public long getMatchOffset() {
-        return matchOffset;
+    public String getExtension() {
+        return extension;
     }
 
-    public long getMatchLength() {
-        return matchLength;
+    public StringMatchLocation getLocation() {
+        return location;
     }
 
     public String getSample() {
@@ -61,13 +132,15 @@ public class DocContentMatch {
             return false;
         }
         final DocContentMatch that = (DocContentMatch) o;
-        return matchOffset == that.matchOffset && matchLength == that.matchLength && Objects.equals(docRef,
-                that.docRef) && Objects.equals(sample, that.sample);
+        return Objects.equals(docRef, that.docRef)
+                && Objects.equals(extension, that.extension) &&
+                Objects.equals(location, that.location) &&
+                Objects.equals(sample, that.sample);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(docRef, matchOffset, matchLength, sample);
+        return Objects.hash(docRef, extension, location, sample);
     }
 
     public Builder copy() {
@@ -81,8 +154,8 @@ public class DocContentMatch {
     public static class Builder {
 
         private DocRef docRef;
-        private long matchOffset;
-        private long matchLength;
+        private String extension;
+        private StringMatchLocation location;
         private String sample;
 
         private Builder() {
@@ -90,8 +163,8 @@ public class DocContentMatch {
 
         private Builder(final DocContentMatch docContentMatch) {
             this.docRef = docContentMatch.docRef;
-            this.matchOffset = docContentMatch.matchOffset;
-            this.matchLength = docContentMatch.matchLength;
+            this.extension = docContentMatch.extension;
+            this.location = docContentMatch.location;
             this.sample = docContentMatch.sample;
         }
 
@@ -100,13 +173,13 @@ public class DocContentMatch {
             return this;
         }
 
-        public Builder matchOffset(final long matchOffset) {
-            this.matchOffset = matchOffset;
+        public Builder extension(final String extension) {
+            this.extension = extension;
             return this;
         }
 
-        public Builder matchLength(final long matchLength) {
-            this.matchLength = matchLength;
+        public Builder location(final StringMatchLocation location) {
+            this.location = location;
             return this;
         }
 
@@ -116,7 +189,7 @@ public class DocContentMatch {
         }
 
         public DocContentMatch build() {
-            return new DocContentMatch(docRef, matchOffset, matchLength, sample);
+            return new DocContentMatch(docRef, extension, location, sample);
         }
     }
 }

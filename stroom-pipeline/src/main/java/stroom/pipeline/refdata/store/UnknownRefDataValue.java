@@ -23,7 +23,7 @@ import java.nio.ByteBuffer;
 
 public class UnknownRefDataValue implements RefDataValue {
 
-    public static final int TYPE_ID = -1;
+    public static final byte TYPE_ID = -1;
 
     private final ByteBuffer value;
 
@@ -49,7 +49,7 @@ public class UnknownRefDataValue implements RefDataValue {
      * unique within all sub-classes of {@link RefDataValue}
      */
     @Override
-    public int getTypeId() {
+    public byte getTypeId() {
         return TYPE_ID;
     }
 

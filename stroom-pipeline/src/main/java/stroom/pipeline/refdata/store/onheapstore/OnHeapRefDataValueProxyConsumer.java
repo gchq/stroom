@@ -69,7 +69,7 @@ public class OnHeapRefDataValueProxyConsumer
                     // abuse of filter() method, we just want to optionally consume the value
 
                     // find out what type of value we are dealing with
-                    final int typeId = refDataValue.getTypeId();
+                    final byte typeId = refDataValue.getTypeId();
 
                     // work out which byteBufferConsumer to use based on the typeId in the value byteBuffer
                     final RefDataValueConsumer.Factory consumerFactory = typeToRefDataValueConsumerFactoryMap

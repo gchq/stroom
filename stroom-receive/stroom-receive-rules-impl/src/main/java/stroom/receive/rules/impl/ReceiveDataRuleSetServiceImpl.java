@@ -17,10 +17,8 @@
 
 package stroom.receive.rules.impl;
 
-import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docref.StringMatch;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.DocumentSerialiser2;
@@ -47,6 +45,11 @@ import java.util.function.BiConsumer;
 @Singleton
 public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            ReceiveDataRules.DOCUMENT_TYPE,
+            "Rule Set",
+            ReceiveDataRules.ICON);
     private final Store<ReceiveDataRules> store;
 
     @Inject
@@ -97,11 +100,7 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.CONFIGURATION,
-                ReceiveDataRules.DOCUMENT_TYPE,
-                "Rule Set",
-                ReceiveDataRules.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -215,7 +214,7 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
     }
 
     @Override
-    public List<DocContentMatch> findByContent(final StringMatch filter) {
-        return store.findByContent(filter);
+    public Map<String, String> getIndexableData(final DocRef docRef) {
+        return store.getIndexableData(docRef);
     }
 }

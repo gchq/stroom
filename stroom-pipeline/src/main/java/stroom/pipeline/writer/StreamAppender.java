@@ -29,7 +29,6 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
@@ -45,27 +44,24 @@ import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.Severity;
 
 import com.google.common.base.Strings;
 import jakarta.inject.Inject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 @ConfigurableElement(
         type = "StreamAppender",
         category = Category.DESTINATION,
+        description = """
+                A destination used to write the output stream to a new stream in the stream store.
+                The configuration allows for starting a new stream once a size threshold is reached.""",
         roles = {
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_DESTINATION,
                 PipelineElementType.VISABILITY_STEPPING},
         icon = SvgImage.PIPELINE_STREAM)
 public class StreamAppender extends AbstractAppender {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(StreamAppender.class);
 
     private final ErrorReceiverProxy errorReceiverProxy;
     private final Store streamStore;
@@ -80,7 +76,6 @@ public class StreamAppender extends AbstractAppender {
     private String streamType;
     private boolean segmentOutput = true;
     private Target streamTarget;
-    private WrappedSegmentOutputStream wrappedSegmentOutputStream;
     private long count;
     private String volumeGroup;
 
@@ -107,7 +102,7 @@ public class StreamAppender extends AbstractAppender {
     }
 
     @Override
-    protected OutputStream createOutputStream() {
+    protected Output createOutput() {
         final Meta parentMeta = metaHolder.getMeta();
 
         String feed = null;
@@ -166,35 +161,23 @@ public class StreamAppender extends AbstractAppender {
                 .getVolumeGroupName(feed, streamType, volumeGroup);
         streamTarget = streamStore.openTarget(metaProperties, volumeGroupName);
 
-        wrappedSegmentOutputStream = new WrappedSegmentOutputStream(streamTarget.next().get()) {
-            @Override
-            public void close() throws IOException {
-                super.flush();
-                super.close();
-                StreamAppender.this.close();
-            }
-        };
+        final WrappedSegmentOutputStream wrappedSegmentOutputStream =
+                new WrappedSegmentOutputStream(streamTarget.next().get()) {
+                    @Override
+                    public void close() throws IOException {
+                        super.flush();
+                        super.close();
+                        StreamAppender.this.close();
+                    }
+                };
 
-        return wrappedSegmentOutputStream;
+        return new StreamOutput(wrappedSegmentOutputStream, segmentOutput);
     }
 
     @Override
     public Destination borrowDestination() throws IOException {
         count++;
         return super.borrowDestination();
-    }
-
-    /**
-     * Insert segment markers after the header and after every record.
-     */
-    void insertSegmentMarker() throws IOException {
-        // Add a segment marker to the output stream if we are segmenting.
-        if (segmentOutput) {
-            if (wrappedSegmentOutputStream != null) {
-                //This can happen if stream type isn't set due to incorrect / incomplete configuration
-                wrappedSegmentOutputStream.addSegment();
-            }
-        }
     }
 
     private void close() {
@@ -219,14 +202,13 @@ public class StreamAppender extends AbstractAppender {
                 currentStatistics.write(streamTarget.getAttributes());
 
                 // Overwrite the actual output record count.
-                streamTarget.getAttributes().put(MetaFields.REC_WRITE.getName(), String.valueOf(count));
+                streamTarget.getAttributes().put(MetaFields.REC_WRITE.getFldName(), String.valueOf(count));
 
                 // Close the stream target.
                 try {
                     streamTarget.close();
                 } catch (final IOException | RuntimeException e) {
                     try {
-                        LOGGER.error(e.getMessage(), e);
                         // Log the error.
                         fatal(e.getMessage());
                     } finally {
@@ -246,14 +228,6 @@ public class StreamAppender extends AbstractAppender {
                 throw e;
             }
         }
-    }
-
-    @Override
-    long getCurrentOutputSize() {
-        if (wrappedSegmentOutputStream != null) {
-            return wrappedSegmentOutputStream.getPosition();
-        }
-        return 0;
     }
 
     @PipelinePropertyDocRef(types = FeedDoc.DOCUMENT_TYPE)
@@ -308,10 +282,5 @@ public class StreamAppender extends AbstractAppender {
             displayPriority = 7)
     public void setVolumeGroup(final String volumeGroup) {
         this.volumeGroup = volumeGroup;
-    }
-
-    private void fatal(final String message) {
-        errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), message, null);
-        throw ProcessException.create(message);
     }
 }

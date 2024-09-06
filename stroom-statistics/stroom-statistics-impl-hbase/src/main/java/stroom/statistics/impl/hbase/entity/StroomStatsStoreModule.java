@@ -16,6 +16,7 @@
 
 package stroom.statistics.impl.hbase.entity;
 
+import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
@@ -33,8 +34,9 @@ public class StroomStatsStoreModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
                 .addBinding(StroomStatsStoreStoreImpl.class);
-
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(StroomStatsStoreStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
                 .addBinding(StroomStatsStoreStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())

@@ -1,7 +1,6 @@
 package stroom.config.global.shared;
 
 import stroom.ui.config.shared.ExtendedUiConfig;
-import stroom.ui.config.shared.UiConfig;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.filter.FilterFieldDefinition;
@@ -100,13 +99,6 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
     ConfigProperty update(@PathParam("propertyName") final String propertyName,
                           @Parameter(description = "configProperty", required = true) final
                           ConfigProperty configProperty);
-
-    @GET
-    @Path(FETCH_UI_CONFIG_SUB_PATH)
-    @Operation(
-            summary = "Fetch the UI configuration",
-            operationId = "fetchUiConfig")
-    UiConfig fetchUiConfig();
 
     @GET
     @Path(FETCH_EXTENDED_UI_CONFIG_SUB_PATH)

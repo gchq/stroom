@@ -20,11 +20,9 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.LocationManager;
 import stroom.util.shared.Message;
 import stroom.util.shared.ResourceGeneration;
-import stroom.widget.popup.client.event.EnablePopupEvent;
-import stroom.widget.popup.client.event.HidePopupEvent;
 
 import com.google.gwt.core.client.GWT;
-import com.gwtplatform.mvp.client.PresenterWidget;
+import com.google.gwt.event.shared.HasHandlers;
 
 public final class ExportFileCompleteUtil {
 
@@ -33,16 +31,12 @@ public final class ExportFileCompleteUtil {
     }
 
     public static void onSuccess(final LocationManager locationManager,
-                                 final PresenterWidget<?> parent,
+                                 final HasHandlers hasHandlers,
                                  final ResourceGeneration result) {
-        if (parent != null) {
-            HidePopupEvent.builder(parent).fire();
-        }
-
         if (result != null) {
             final String message = getMessage(result);
             if (message != null) {
-                AlertEvent.fireWarn(parent, message, () -> {
+                AlertEvent.fireWarn(hasHandlers, message, () -> {
                     // Change the browser location to download the zip file.
                     download(locationManager, result);
                 });
@@ -54,15 +48,15 @@ public final class ExportFileCompleteUtil {
         }
     }
 
-    public static void onFailure(final PresenterWidget<?> parent, final Throwable t) {
-        if (parent != null) {
-            if (t != null) {
-                AlertEvent.fireError(parent, t.getMessage(), () -> EnablePopupEvent.builder(parent).fire());
-            } else {
-                EnablePopupEvent.builder(parent).fire();
-            }
-        }
-    }
+//    public static void onFailure(final PresenterWidget<?> parent, final RestError restError) {
+//        if (parent != null) {
+//            if (restError != null) {
+//                AlertEvent.fireError(parent, restError.getMessage(), () -> EnablePopupEvent.builder(parent).fire());
+//            } else {
+//                EnablePopupEvent.builder(parent).fire();
+//            }
+//        }
+//    }
 
     private static String getMessage(final ResourceGeneration result) {
         if (result.getMessageList() == null || result.getMessageList().size() == 0) {

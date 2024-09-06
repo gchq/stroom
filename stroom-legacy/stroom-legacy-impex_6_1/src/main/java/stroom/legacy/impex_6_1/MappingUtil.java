@@ -1,8 +1,9 @@
 package stroom.legacy.impex_6_1;
 
-import stroom.index.shared.AnalyzerType;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFieldType;
+import stroom.datasource.api.v2.AnalyzerType;
+import stroom.expression.api.UserTimeZone;
+import stroom.index.shared.LuceneIndexField;
+import stroom.index.shared.OldIndexFieldType;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.util.shared.time.TimeUnit;
@@ -393,23 +394,23 @@ public final class MappingUtil {
         return stroom.query.api.v2.Format.Type.valueOf(value.name());
     }
 
-    public static stroom.expression.api.TimeZone map(stroom.legacy.model_6_1.TimeZone value) {
+    public static UserTimeZone map(stroom.legacy.model_6_1.TimeZone value) {
         if (value == null) {
             return null;
         }
 
-        return new stroom.expression.api.TimeZone(map(value.getUse()),
+        return new UserTimeZone(map(value.getUse()),
                 value.getId(),
                 value.getOffsetHours(),
                 value.getOffsetMinutes());
     }
 
-    public static stroom.expression.api.TimeZone.Use map(stroom.legacy.model_6_1.TimeZone.Use value) {
+    public static UserTimeZone.Use map(stroom.legacy.model_6_1.TimeZone.Use value) {
         if (value == null) {
             return null;
         }
 
-        return stroom.expression.api.TimeZone.Use.valueOf(value.name());
+        return UserTimeZone.Use.valueOf(value.name());
     }
 
     public static stroom.dashboard.shared.LayoutConfig map(stroom.legacy.model_6_1.LayoutConfig value) {
@@ -636,7 +637,7 @@ public final class MappingUtil {
                 value.getTo());
     }
 
-    public static List<stroom.index.shared.IndexField> map(stroom.legacy.model_6_1.IndexFields value) {
+    public static List<LuceneIndexField> map(stroom.legacy.model_6_1.IndexFields value) {
         if (value == null) {
             return null;
         }
@@ -644,14 +645,14 @@ public final class MappingUtil {
         return mapList(value.getIndexFields(), MappingUtil::map);
     }
 
-    public static stroom.index.shared.IndexField map(stroom.legacy.model_6_1.IndexField value) {
+    public static LuceneIndexField map(stroom.legacy.model_6_1.IndexField value) {
         if (value == null) {
             return null;
         }
 
-        IndexFieldType indexFieldType = null;
+        OldIndexFieldType indexFieldType = null;
         if (value.getFieldType() != null) {
-            indexFieldType = IndexFieldType.valueOf(value.getFieldType().name());
+            indexFieldType = OldIndexFieldType.valueOf(value.getFieldType().name());
         }
         final String fieldName = value.getFieldName();
         AnalyzerType analyzerType = null;
@@ -663,9 +664,11 @@ public final class MappingUtil {
         final boolean termPositions = value.isTermPositions();
         final boolean caseSensitive = value.isCaseSensitive();
 
-        return new IndexField(
-                indexFieldType,
+        return new LuceneIndexField(
                 fieldName,
+                indexFieldType,
+                null,
+                null,
                 analyzerType,
                 indexed,
                 stored,

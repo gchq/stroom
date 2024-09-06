@@ -1,6 +1,6 @@
 package stroom.dropwizard.common;
 
-import stroom.util.shared.ServletAuthenticationChecker;
+import stroom.util.shared.AuthenticationBypassChecker;
 
 import com.google.inject.AbstractModule;
 
@@ -8,6 +8,6 @@ public class DropwizardModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(ServletAuthenticationChecker.class).to(Servlets.class);
+        bind(AuthenticationBypassChecker.class).to(AuthenticationBypassCheckerImpl.class);
     }
 }

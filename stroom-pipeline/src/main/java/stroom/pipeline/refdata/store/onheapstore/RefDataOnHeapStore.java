@@ -11,6 +11,7 @@ import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefStoreEntry;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -107,9 +108,15 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
                 // just do the range lookup
                 final long keyLong = Long.parseLong(key);
 
-                // look up our long key in the range store to see if it is part of a range
-                NavigableMap<Range<Long>, RefDataValue> rangeSubMap = rangeValueNestedMap.get(mapDefinition);
-                result = getValueByRange(rangeSubMap, keyLong);
+                // Look up our long key in the range store to see if it is part of a range.
+                // It is possible for an event stream to have no associated context stream, or
+                // the context stream may not contain the map and/or key requested in the lookup
+                final NavigableMap<Range<Long>, RefDataValue> rangeSubMap = rangeValueNestedMap.get(mapDefinition);
+                if (NullSafe.hasEntries(rangeSubMap)) {
+                    result = getValueByRange(rangeSubMap, keyLong);
+                } else {
+                    result = Optional.empty();
+                }
 
             } catch (NumberFormatException e) {
                 // key could not be converted to a long, either this mapdef has no ranges or
@@ -117,7 +124,7 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
                 // to determine whether to error or not.
                 boolean doesStoreContainRanges = rangeValueNestedMap.containsKey(mapDefinition);
                 if (doesStoreContainRanges) {
-                    // we have ranges for this map def so we would expect to be able to convert the key
+                    // we have ranges for this map def, so we would expect to be able to convert the key
                     throw new RuntimeException(LogUtil.message(
                             "Key {} cannot be used with the range store as it cannot be converted to a long",
                             key),
@@ -169,9 +176,7 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
 
         // create a sub-set of the map starting at the key of interest or the next smallest
         // range from value. Note the map is reverse sorted to increase confusion.
-
         final SortedMap<Range<Long>, RefDataValue> tailMap = rangeSubMap.tailMap(startKey);
-
         for (Map.Entry<Range<Long>, RefDataValue> entry : tailMap.entrySet()) {
             // see if our key is in the found range
             if (entry.getKey().contains(key)) {
@@ -209,7 +214,7 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
-//    @Override
+    //    @Override
 //    public <T> T consumeEntryStream(final Function<Stream<RefStoreEntry>, T> streamFunction) {
 //        throw new UnsupportedOperationException("Not yet implemented");
 //    }

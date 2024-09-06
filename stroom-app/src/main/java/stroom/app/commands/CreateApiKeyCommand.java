@@ -27,10 +27,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.Date;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -46,11 +45,13 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
     private static final String EXPIRY_DAYS_ARG_NAME = "expiresDays";
     private static final String API_KEY_NAME_ARG_NAME = "keyName";
     private static final String OUTPUT_FILE_PATH_ARG_NAME = "outFile";
+    private static final String COMMENTS_ARG_NAME = "comments";
     private static final Set<String> ARGUMENT_NAMES = Set.of(
             USER_ID_ARG_NAME,
             EXPIRY_DAYS_ARG_NAME,
             API_KEY_NAME_ARG_NAME,
-            OUTPUT_FILE_PATH_ARG_NAME);
+            OUTPUT_FILE_PATH_ARG_NAME,
+            COMMENTS_ARG_NAME);
 
     private final Path configFile;
 
@@ -95,6 +96,12 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
                 .type(String.class)
                 .required(false)
                 .help("Path to the file where the API key will be written");
+
+        subparser.addArgument(asArg('c', COMMENTS_ARG_NAME))
+                .dest(COMMENTS_ARG_NAME)
+                .type(String.class)
+                .required(false)
+                .help("Comments relating to this key");
     }
 
     @Override
@@ -145,22 +152,26 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
             throw new RuntimeException("A name must be provided for the API key");
         }
         final Integer lifetimeDays = namespace.getInt(EXPIRY_DAYS_ARG_NAME);
-        final LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
-
+        if (lifetimeDays != null && lifetimeDays <= 0) {
+            throw new RuntimeException(EXPIRY_DAYS_ARG_NAME + " must be greater than zero.");
+        }
         LOGGER.info("Creating API key for user '{}'", userName.getUserIdentityForAudit());
 
-        Instant expirationTime;
-        if (lifetimeDays != null) {
-            expirationTime = now.plusDays(lifetimeDays).toInstant(ZoneOffset.UTC);
-        } else {
-            expirationTime = new Date(Long.MAX_VALUE).toInstant();
-        }
+        // Service will give us a default expire time if null
+        final Long expireTimeEpochMs = NullSafe.get(
+                lifetimeDays,
+                days -> Duration.ofDays(days),
+                duration -> Instant.now().plus(duration).toEpochMilli());
+
+        final String comments = Objects.requireNonNullElse(
+                namespace.getString(COMMENTS_ARG_NAME),
+                "Created by 'create_api_key' command.");
 
         final CreateHashedApiKeyResponse response = apiKeyService.create(new CreateHashedApiKeyRequest(
                 userName,
-                expirationTime.toEpochMilli(),
+                expireTimeEpochMs,
                 apiKeyName,
-                "Created by 'create_api_key' command.",
+                comments,
                 true));
 
         return response;

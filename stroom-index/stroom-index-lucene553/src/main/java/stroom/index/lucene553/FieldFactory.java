@@ -16,8 +16,16 @@
 
 package stroom.index.lucene553;
 
-import stroom.index.shared.IndexField;
+import stroom.datasource.api.v2.IndexField;
+import stroom.index.shared.LuceneIndexField;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValBoolean;
+import stroom.query.language.functions.ValDate;
+import stroom.query.language.functions.ValDouble;
+import stroom.query.language.functions.ValFloat;
+import stroom.query.language.functions.ValInteger;
+import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ValString;
 import stroom.search.extraction.FieldValue;
 
 import org.apache.lucene553.document.DoubleField;
@@ -25,6 +33,7 @@ import org.apache.lucene553.document.Field;
 import org.apache.lucene553.document.FloatField;
 import org.apache.lucene553.document.IntField;
 import org.apache.lucene553.document.LongField;
+import org.apache.lucene553.index.IndexableField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,76 +41,113 @@ class FieldFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FieldFactory.class);
 
-    public static LongField create(final IndexField indexField, final long initialValue) {
-        return new LongField(indexField.getFieldName(), initialValue, FieldTypeFactory.create(indexField));
+    public static LongField createLong(final LuceneIndexField indexField, final long initialValue) {
+        return new LongField(indexField.getFldName(), initialValue, FieldTypeFactory.create(indexField));
     }
 
-    public static DoubleField createDouble(final IndexField indexField, final double initialValue) {
-        return new DoubleField(indexField.getFieldName(), initialValue, FieldTypeFactory.create(indexField));
+    public static DoubleField createDouble(final LuceneIndexField indexField, final double initialValue) {
+        return new DoubleField(indexField.getFldName(), initialValue, FieldTypeFactory.create(indexField));
     }
 
-    public static IntField createInt(final IndexField indexField, final int initialValue) {
-        return new IntField(indexField.getFieldName(), initialValue, FieldTypeFactory.create(indexField));
+    public static IntField createInt(final LuceneIndexField indexField, final int initialValue) {
+        return new IntField(indexField.getFldName(), initialValue, FieldTypeFactory.create(indexField));
     }
 
-    public static FloatField createFloat(final IndexField indexField, final float initialValue) {
-        return new FloatField(indexField.getFieldName(), initialValue, FieldTypeFactory.create(indexField));
+    public static FloatField createFloat(final LuceneIndexField indexField, final float initialValue) {
+        return new FloatField(indexField.getFldName(), initialValue, FieldTypeFactory.create(indexField));
     }
 
-    public static Field create(final IndexField indexField, final String initialValue) {
-        return new Field(indexField.getFieldName(), initialValue, FieldTypeFactory.create(indexField));
+    public static Field create(final LuceneIndexField indexField, final String initialValue) {
+        return new Field(indexField.getFldName(), initialValue, FieldTypeFactory.create(indexField));
     }
 
     public static Field create(final FieldValue fieldValue) {
         final IndexField indexField = fieldValue.field();
+        final LuceneIndexField luceneIndexField = LuceneIndexField
+                .fromIndexField(indexField);
+
         final Val value = fieldValue.value();
 
         org.apache.lucene553.document.Field field = null;
-        switch (indexField.getFieldType()) {
-            case LONG_FIELD, NUMERIC_FIELD, ID -> {
+        switch (indexField.getFldType()) {
+            case LONG, ID -> {
                 try {
-                    field = FieldFactory.create(indexField, value.toLong());
+                    field = FieldFactory.createLong(luceneIndexField, value.toLong());
                 } catch (final Exception e) {
                     LOGGER.trace(e.getMessage(), e);
                 }
             }
-            case BOOLEAN_FIELD -> {
+            case BOOLEAN -> {
                 // TODo : We are indexing boolean as String, not sure this is right.
-                field = FieldFactory.create(indexField, value.toString());
+                field = FieldFactory.create(luceneIndexField, value.toString());
             }
-            case INTEGER_FIELD -> {
+            case INTEGER -> {
                 try {
-                    field = FieldFactory.createInt(indexField, value.toInteger());
+                    field = FieldFactory.createInt(luceneIndexField, value.toInteger());
                 } catch (final Exception e) {
                     LOGGER.trace(e.getMessage(), e);
                 }
             }
-            case FLOAT_FIELD -> {
+            case FLOAT -> {
                 try {
-                    field = FieldFactory.createFloat(indexField, value.toDouble().floatValue());
+                    field = FieldFactory.createFloat(luceneIndexField, value.toDouble().floatValue());
                 } catch (final Exception e) {
                     LOGGER.trace(e.getMessage(), e);
                 }
             }
-            case DOUBLE_FIELD -> {
+            case DOUBLE -> {
                 try {
-                    field = FieldFactory.createDouble(indexField, value.toDouble());
+                    field = FieldFactory.createDouble(luceneIndexField, value.toDouble());
                 } catch (final Exception e) {
                     LOGGER.trace(e.getMessage(), e);
                 }
             }
-            case DATE_FIELD -> {
+            case DATE -> {
                 try {
-                    field = FieldFactory.create(indexField, value.toLong());
+                    field = FieldFactory.createLong(luceneIndexField, value.toLong());
                 } catch (final RuntimeException e) {
                     LOGGER.trace(e.getMessage(), e);
                 }
             }
-            case FIELD -> {
-                field = FieldFactory.create(indexField, value.toString());
+            case TEXT -> {
+                field = FieldFactory.create(luceneIndexField, value.toString());
             }
         }
 
         return field;
+    }
+
+    public static Val convertValue(final IndexField indexField, final IndexableField indexableField) {
+        switch (indexField.getFldType()) {
+            case LONG, ID -> {
+                final long val = indexableField.numericValue().longValue();
+                return ValLong.create(val);
+            }
+            case BOOLEAN -> {
+                // TODO : We are indexing boolean as String, not sure this is right.
+                final boolean val = Boolean.parseBoolean(indexableField.stringValue());
+                return ValBoolean.create(val);
+            }
+            case INTEGER -> {
+                final int val = indexableField.numericValue().intValue();
+                return ValInteger.create(val);
+            }
+            case FLOAT -> {
+                final float val = indexableField.numericValue().floatValue();
+                return ValFloat.create(val);
+            }
+            case DOUBLE -> {
+                final double val = indexableField.numericValue().doubleValue();
+                return ValDouble.create(val);
+            }
+            case DATE -> {
+                final long val = indexableField.numericValue().longValue();
+                return ValDate.create(val);
+            }
+            case TEXT -> {
+                return ValString.create(indexableField.stringValue());
+            }
+        }
+        return ValString.create(indexableField.stringValue());
     }
 }

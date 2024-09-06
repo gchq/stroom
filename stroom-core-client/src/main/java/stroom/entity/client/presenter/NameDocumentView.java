@@ -17,13 +17,14 @@
 
 package stroom.entity.client.presenter;
 
+import stroom.widget.popup.client.view.DialogActionUiHandlers;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
-public interface NameDocumentView extends View, Focus, HasUiHandlers<HideRequestUiHandlers> {
+public interface NameDocumentView extends View, Focus, HasUiHandlers<DialogActionUiHandlers> {
 
     String getName();
 

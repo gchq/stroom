@@ -34,6 +34,8 @@ import java.util.Objects;
 })
 public interface Location extends Comparable<Location> {
 
+    int UNKNOWN_VALUE = -1;
+
     Comparator<Location> LINE_COL_COMPARATOR = Comparator
             .comparingInt(Location::getLineNo)
             .thenComparingInt(Location::getColNo);
@@ -47,6 +49,21 @@ public interface Location extends Comparable<Location> {
      * @return The column number of the location, one based.
      */
     int getColNo();
+
+    /**
+     * @return True if no location information is known.
+     * False if full/partial location information is known.
+     */
+    boolean isUnknown();
+
+    default boolean hasLineAndCol() {
+        return hasLineNo()
+                && getColNo() > 0;
+    }
+
+    default boolean hasLineNo() {
+        return getLineNo() > 0;
+    }
 
     @JsonIgnore
     default boolean isBefore(final Location other) {

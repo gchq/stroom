@@ -1,8 +1,7 @@
 package stroom.query.common.v2;
 
 import stroom.query.language.functions.Val;
-
-import com.esotericsoftware.kryo.io.Output;
+import stroom.query.language.functions.ref.DataWriter;
 
 interface KeyPart {
 
@@ -10,7 +9,7 @@ interface KeyPart {
 
     Val[] getGroupValues();
 
-    void write(Output output);
+    void write(DataWriter writer);
 
     void append(StringBuilder sb);
 }

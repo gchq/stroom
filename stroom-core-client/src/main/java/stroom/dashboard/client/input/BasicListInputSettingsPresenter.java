@@ -22,7 +22,7 @@ import stroom.dashboard.client.main.BasicSettingsView;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ListInputComponentSettings;
 import stroom.dictionary.shared.DictionaryDoc;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.security.shared.DocumentPermissionNames;
 
 import com.google.gwt.user.client.ui.Focus;
@@ -37,12 +37,12 @@ public class BasicListInputSettingsPresenter
         extends BasicSettingsTabPresenter<BasicListInputSettingsView>
         implements Focus {
 
-    private final EntityDropDownPresenter dictionaryPresenter;
+    private final DocSelectionBoxPresenter dictionaryPresenter;
 
     @Inject
     public BasicListInputSettingsPresenter(final EventBus eventBus,
                                            final BasicListInputSettingsView view,
-                                           final EntityDropDownPresenter dictionaryPresenter) {
+                                           final DocSelectionBoxPresenter dictionaryPresenter) {
         super(eventBus, view);
         this.dictionaryPresenter = dictionaryPresenter;
 
@@ -67,6 +67,7 @@ public class BasicListInputSettingsPresenter
             getView().setValues(settings.getValues());
             getView().setUseDictionary(settings.isUseDictionary());
             dictionaryPresenter.setSelectedEntityReference(settings.getDictionary());
+            getView().setAllowTextEntry(settings.isAllowTextEntry());
         }
     }
 
@@ -85,6 +86,7 @@ public class BasicListInputSettingsPresenter
                 .values(getView().getValues())
                 .useDictionary(getView().isUseDictionary())
                 .dictionary(dictionaryPresenter.getSelectedEntityReference())
+                .allowTextEntry(getView().isAllowTextEntry())
                 .build();
     }
 
@@ -100,7 +102,8 @@ public class BasicListInputSettingsPresenter
         final boolean equal = Objects.equals(oldSettings.getKey(), newSettings.getKey()) &&
                 Objects.equals(oldSettings.getValues(), newSettings.getValues()) &&
                 Objects.equals(oldSettings.isUseDictionary(), newSettings.isUseDictionary()) &&
-                Objects.equals(oldSettings.getDictionary(), newSettings.getDictionary());
+                Objects.equals(oldSettings.getDictionary(), newSettings.getDictionary()) &&
+                Objects.equals(oldSettings.isAllowTextEntry(), newSettings.isAllowTextEntry());
 
         return !equal;
     }
@@ -120,5 +123,9 @@ public class BasicListInputSettingsPresenter
         void setUseDictionary(boolean useDictionary);
 
         void setDictionaryView(View view);
+
+        boolean isAllowTextEntry();
+
+        void setAllowTextEntry(boolean allowTextEntry);
     }
 }

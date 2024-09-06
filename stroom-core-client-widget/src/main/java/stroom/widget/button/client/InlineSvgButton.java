@@ -23,7 +23,6 @@ import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -43,10 +42,6 @@ public class InlineSvgButton extends ButtonBase implements ButtonView {
      */
     private boolean isCapturing;
     /**
-     * If <code>true</code>, this widget has focus with the space bar down.
-     */
-    private boolean isFocusing;
-    /**
      * Used to decide whether to allow clicks to propagate up to the superclass
      * or container elements.
      */
@@ -55,7 +50,7 @@ public class InlineSvgButton extends ButtonBase implements ButtonView {
     public InlineSvgButton() {
         super(Document.get().createPushButtonElement());
 
-        sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.FOCUSEVENTS | Event.KEYEVENTS);
+        sinkEvents(Event.ONCLICK | Event.ONMOUSEDOWN | Event.ONMOUSEUP | Event.ONMOUSEMOVE | Event.KEYEVENTS);
         getElement().setClassName("inline-svg-button icon-button");
         getElement().setInnerSafeHtml(BACKGROUND_DIV);
         setEnabled(true);
@@ -81,9 +76,10 @@ public class InlineSvgButton extends ButtonBase implements ButtonView {
     @Override
     public void onBrowserEvent(final Event event) {
         // Should not act on button if disabled.
-        if (isEnabled() == false) {
+        if (!isEnabled()) {
             // This can happen when events are bubbled up from non-disabled
             // children
+            isCapturing = false;
             return;
         }
 
@@ -100,8 +96,6 @@ public class InlineSvgButton extends ButtonBase implements ButtonView {
             case Event.ONMOUSEDOWN:
                 if (MouseUtil.isPrimary(event)) {
                     setFocus(true);
-                    onClickStart();
-                    DOM.setCapture(getElement());
                     isCapturing = true;
                     // Prevent dragging (on some browsers);
                     event.preventDefault();
@@ -110,7 +104,6 @@ public class InlineSvgButton extends ButtonBase implements ButtonView {
             case Event.ONMOUSEUP:
                 if (isCapturing) {
                     isCapturing = false;
-                    DOM.releaseCapture(getElement());
                     if (MouseUtil.isPrimary(event)) {
                         onClick();
                     }
@@ -122,36 +115,6 @@ public class InlineSvgButton extends ButtonBase implements ButtonView {
                     event.preventDefault();
                 }
                 break;
-            case Event.ONMOUSEOUT:
-                final Element to = DOM.eventGetToElement(event);
-                if (getElement().isOrHasChild(DOM.eventGetTarget(event))
-                        && (to == null || !getElement().isOrHasChild(to))) {
-                    if (isCapturing) {
-                        onClickCancel();
-                    }
-                    setHovering(false);
-                }
-                break;
-            case Event.ONMOUSEOVER:
-                if (getElement().isOrHasChild(DOM.eventGetTarget(event))) {
-                    setHovering(true);
-                    if (isCapturing) {
-                        onClickStart();
-                    }
-                }
-                break;
-            case Event.ONBLUR:
-                if (isFocusing) {
-                    isFocusing = false;
-                    onClickCancel();
-                }
-                break;
-            case Event.ONLOSECAPTURE:
-                if (isCapturing) {
-                    isCapturing = false;
-                    onClickCancel();
-                }
-                break;
             default:
                 // Ignore events we don't care about
         }
@@ -160,45 +123,10 @@ public class InlineSvgButton extends ButtonBase implements ButtonView {
 
         // Synthesize clicks based on keyboard events AFTER the normal key
         // handling.
-        if ((event.getTypeInt() & Event.KEYEVENTS) != 0) {
-            switch (type) {
-                case Event.ONKEYDOWN:
-                    final Action action = KeyBinding.getAction(event);
-                    if (action == Action.SELECT || action == Action.EXECUTE) {
-                        onClick();
-                    }
-                    break;
-
-//                case Event.ONKEYDOWN:
-//                    if (keyCode == ' ') {
-//                        isFocusing = true;
-//                        onClickStart();
-//                    }
-//                    break;
-//                case Event.ONKEYUP:
-//                    if (isFocusing && keyCode == ' ') {
-//                        isFocusing = false;
-//                        onClick();
-//                    }
-//                    break;
-//                case Event.ONKEYPRESS:
-//                    if (keyCode == '\n' || keyCode == '\r') {
-//                        onClickStart();
-//                        onClick();
-//                    }
-//                    break;
-//                default:
-//                    // Ignore events we don't care about
-            }
+        final Action action = KeyBinding.test(event);
+        if (action == Action.SELECT || action == Action.EXECUTE) {
+            onClick();
         }
-    }
-
-    private void onClickStart() {
-        getElement().addClassName("down");
-    }
-
-    private void onClickCancel() {
-        getElement().removeClassName("down");
     }
 
     void onClick() {
@@ -222,16 +150,6 @@ public class InlineSvgButton extends ButtonBase implements ButtonView {
         getElement().dispatchEvent(evt);
 
         allowClickPropagation = false;
-    }
-
-    private void setHovering(final boolean hovering) {
-        if (isEnabled()) {
-            if (hovering) {
-                getElement().addClassName("hovering");
-            } else {
-                getElement().removeClassName("hovering");
-            }
-        }
     }
 
     @Override

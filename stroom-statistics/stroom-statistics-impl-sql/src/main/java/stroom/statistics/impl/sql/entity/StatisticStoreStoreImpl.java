@@ -17,10 +17,8 @@
 
 package stroom.statistics.impl.sql.entity;
 
-import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docref.StringMatch;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
@@ -42,6 +40,11 @@ import java.util.Set;
 @Singleton
 public class StatisticStoreStoreImpl implements StatisticStoreStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            StatisticStoreDoc.DOCUMENT_TYPE,
+            "Statistic Store",
+            StatisticStoreDoc.ICON);
     private final Store<StatisticStoreDoc> store;
 
     @Inject
@@ -93,11 +96,7 @@ public class StatisticStoreStoreImpl implements StatisticStoreStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.INDEXING,
-                StatisticStoreDoc.DOCUMENT_TYPE,
-                "Statistic Store",
-                StatisticStoreDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -202,7 +201,7 @@ public class StatisticStoreStoreImpl implements StatisticStoreStore {
     }
 
     @Override
-    public List<DocContentMatch> findByContent(final StringMatch filter) {
-        return store.findByContent(filter);
+    public Map<String, String> getIndexableData(final DocRef docRef) {
+        return store.getIndexableData(docRef);
     }
 }

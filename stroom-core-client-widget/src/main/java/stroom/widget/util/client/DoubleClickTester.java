@@ -18,9 +18,11 @@ package stroom.widget.util.client;
 
 import com.google.gwt.user.client.Timer;
 
+import java.util.Objects;
+
 public class DoubleClickTester {
 
-    private static final int DOUBLE_CLICK_PERIOD = 500;
+    public static final int DOUBLE_CLICK_PERIOD = 500;
     private final Timer doubleClickTimer;
     private Object object;
 
@@ -35,7 +37,7 @@ public class DoubleClickTester {
 
     public boolean isDoubleClick(final Object object) {
         doubleClickTimer.cancel();
-        if (object != null && this.object == object) {
+        if (object != null && Objects.equals(this.object, object)) {
             this.object = null;
             return true;
         }

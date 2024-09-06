@@ -1,7 +1,7 @@
 package stroom.search.elastic.suggest;
 
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FieldType;
+import stroom.datasource.api.v2.QueryField;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.Suggestions;
 import stroom.search.elastic.ElasticClientCache;
@@ -13,23 +13,20 @@ import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.SuggestMode;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.FieldSuggester;
+import co.elastic.clients.elasticsearch.core.search.Suggestion;
+import co.elastic.clients.elasticsearch.core.search.TermSuggestOption;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.suggest.Suggest;
-import org.elasticsearch.search.suggest.SuggestBuilder;
-import org.elasticsearch.search.suggest.SuggestBuilders;
-import org.elasticsearch.search.suggest.SuggestionBuilder;
-import org.elasticsearch.search.suggest.term.TermSuggestion;
-import org.elasticsearch.search.suggest.term.TermSuggestionBuilder;
-import org.elasticsearch.search.suggest.term.TermSuggestionBuilder.SuggestMode;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -85,43 +82,41 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
 
     private Suggestions querySuggestions(final FetchSuggestionsRequest request,
                                           final ElasticIndexDoc elasticIndex,
-                                          final RestHighLevelClient elasticClient) {
-        final FieldInfo field = request.getField();
+                                          final ElasticsearchClient elasticClient) {
+        final QueryField field = request.getField();
         final String query = request.getText();
 
         try {
-            if (!elasticSuggestConfigProvider.get().getEnabled() || query == null || query.length() == 0) {
+            if (!elasticSuggestConfigProvider.get().getEnabled() || query == null || query.isEmpty()) {
                 return Suggestions.EMPTY;
             }
-            if (!(FieldType.TEXT.equals(field.getFieldType()) || FieldType.KEYWORD.equals(field.getFieldType()))) {
+            if (!(FieldType.TEXT.equals(field.getFldType()) || FieldType.KEYWORD.equals(field.getFldType()))) {
                 // Only generate suggestions for text and keyword fields
                 return Suggestions.EMPTY;
             }
+            final var searchRequest = SearchRequest.of(s -> s
+                    .index(elasticIndex.getIndexName())
+                    .suggest(suggest -> suggest
+                            .suggesters("suggest", FieldSuggester.of(suggester -> suggester
+                                    .text(query)
+                                    .term(t -> t
+                                            .field(field.getFldName())
+                                            .suggestMode(SuggestMode.Always)
+                                            .minWordLength(3)
+                                    )
+                            ))
+                    )
+            );
 
-            final SuggestionBuilder<TermSuggestionBuilder> termSuggestionBuilder = SuggestBuilders
-                    .termSuggestion(field.getFieldName())
-                    .suggestMode(SuggestMode.ALWAYS)
-                    .minWordLength(3)
-                    .text(query);
-            final SuggestBuilder suggestBuilder = new SuggestBuilder()
-                    .addSuggestion("suggest", termSuggestionBuilder);
-            final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder()
-                    .fetchField(field.getFieldName())
-                    .suggest(suggestBuilder);
-            final SearchRequest searchRequest = new SearchRequest(elasticIndex.getIndexName())
-                    .source(searchSourceBuilder);
+            final SearchResponse<Void> searchResponse = elasticClient.search(searchRequest, Void.class);
+            final Map<String, List<Suggestion<Void>>> suggestResponse = searchResponse.suggest();
+            final List<Suggestion<Void>> termSuggestion = suggestResponse.get("suggest");
 
-            SearchResponse searchResponse = elasticClient.search(searchRequest,
-                    RequestOptions.DEFAULT);
-            Suggest suggestResponse = searchResponse.getSuggest();
-            TermSuggestion termSuggestion = suggestResponse.getSuggestion("suggest");
-
-            return new Suggestions(termSuggestion.getEntries().stream()
-                    .flatMap(entry -> entry.getOptions().stream())
-                    .map(option -> option.getText().string())
+            return new Suggestions(termSuggestion.getFirst().term().options().stream()
+                    .map(TermSuggestOption::text)
                     .collect(Collectors.toList()));
         } catch (IOException | RuntimeException e) {
-            LOGGER.error(() -> "Failed to retrieve search suggestions for field: " + field.getFieldName() +
+            LOGGER.error(() -> "Failed to retrieve search suggestions for field: " + field.getFldName() +
                     ". " + e.getMessage(), e);
             return Suggestions.EMPTY;
         }

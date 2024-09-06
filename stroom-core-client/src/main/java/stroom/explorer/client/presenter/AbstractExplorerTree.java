@@ -23,9 +23,9 @@ import stroom.explorer.client.view.ExplorerCell;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.NodeFlag;
+import stroom.task.client.TaskListener;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.util.client.AbstractSelectionEventManager;
 import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.ElementUtil;
@@ -73,15 +73,11 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
     private Consumer<FetchExplorerNodeResult> changeHandler = null;
 
     AbstractExplorerTree(final RestFactory restFactory,
+                         final TaskListener taskListener,
                          final boolean allowMultiSelect,
                          final boolean showAlerts) {
         this.allowMultiSelect = allowMultiSelect;
         this.showAlerts = showAlerts;
-
-        final SpinnerSmall spinnerSmall = new SpinnerSmall();
-        spinnerSmall.getElement().getStyle().setPosition(Style.Position.ABSOLUTE);
-        spinnerSmall.getElement().getStyle().setRight(5, Style.Unit.PX);
-        spinnerSmall.getElement().getStyle().setTop(5, Style.Unit.PX);
 
         explorerCell = new ExplorerCell(getTickBoxSelectionModel(), showAlerts);
         expanderClassName = explorerCell.getExpanderClassName();
@@ -99,7 +95,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
                 new ExplorerTreeSelectionEventManager(cellTable);
         cellTable.setSelectionModel(selectionModel, selectionEventManager);
 
-        treeModel = new ExplorerTreeModel(this, spinnerSmall, restFactory) {
+        treeModel = new ExplorerTreeModel(this, restFactory, taskListener) {
             @Override
             protected void onDataChanged(final FetchExplorerNodeResult result) {
                 onData(result);
@@ -120,7 +116,6 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
         flowPanel.setWidth("100%");
         flowPanel.setHeight("100%");
         flowPanel.add(scrollPanel);
-        flowPanel.add(spinnerSmall);
 
         initWidget(flowPanel);
     }
@@ -205,8 +200,9 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
                 final int index = getItemIndex(selected);
                 if (index > 0) {
                     final TableRowElement tableRowElement = cellTable.getRowElement(index);
-                    tableRowElement.scrollIntoView();
-                    scrollPanel.scrollToLeft();
+                    ElementUtil.scrollIntoViewNearest(tableRowElement);
+//                    tableRowElement.scrollIntoView();
+//                    scrollPanel.scrollToLeft();
                 }
             }
         }
@@ -217,7 +213,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
             selection = ExplorerTreeModel.NULL_SELECTION;
         }
 
-        doSelect(selection, new SelectionType(false, false));
+        doSelect(selection, new SelectionType());
     }
 
     void doSelect(final ExplorerNode row, final SelectionType selectionType) {

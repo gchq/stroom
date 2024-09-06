@@ -57,7 +57,7 @@ public class ExportConfigViewImpl
 
     @Override
     public void focus() {
-        nameFilter.focus();
+        nameFilter.forceFocus();
     }
 
     @Override

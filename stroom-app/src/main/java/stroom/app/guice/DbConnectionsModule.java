@@ -1,6 +1,15 @@
 package stroom.app.guice;
 
+import stroom.app.db.migration.CrossModuleDbConnProvider;
+import stroom.app.db.migration.CrossModuleDbMigrationsModule;
+import stroom.util.NullSafe;
+
 import com.google.inject.AbstractModule;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
+import java.util.Set;
+import javax.sql.DataSource;
 
 public class DbConnectionsModule extends AbstractModule {
 
@@ -19,14 +28,43 @@ public class DbConnectionsModule extends AbstractModule {
         install(new stroom.explorer.impl.db.ExplorerDbModule());
         install(new stroom.index.impl.db.IndexDbModule());
         install(new stroom.job.impl.db.JobDbModule());
+        //noinspection deprecation
         install(new stroom.legacy.db.LegacyDbModule());
         install(new stroom.meta.impl.db.MetaDbModule());
         install(new stroom.node.impl.db.NodeDbModule());
         install(new stroom.processor.impl.db.ProcessorDbModule());
-        install(new stroom.query.field.impl.db.QueryFieldDbModule());
         install(new stroom.security.identity.db.IdentityDbModule());
         install(new stroom.security.impl.db.SecurityDbModule());
         install(new stroom.storedquery.impl.db.StoredQueryDbModule());
         install(new stroom.statistics.impl.sql.SQLStatisticsDbModule());
+
+        // Special DB module for running cross-module java migrations
+        NullSafe.consume(getCrossModuleDbMigrationsModule(), this::install);
+
+        // This ensures all DB migrations get run as part of the guice bindings set up
+        bind(DbMigrations.class).asEagerSingleton();
+    }
+
+    /**
+     * Subclasses can override this to provide a modified cross-module module for testing
+     */
+    protected CrossModuleDbMigrationsModule getCrossModuleDbMigrationsModule() {
+        return new CrossModuleDbMigrationsModule();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    @SuppressWarnings("unused") // Eager singleton to ensure migrations get run
+    @Singleton
+    static class DbMigrations {
+
+        @Inject
+        public DbMigrations(final Set<DataSource> dbConnProviders,
+                            final CrossModuleDbConnProvider crossModuleDbConnProvider) {
+
+            // Nothing to do here, we now know all dbConnProviders are migrated and ready
+        }
     }
 }

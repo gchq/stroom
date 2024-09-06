@@ -116,6 +116,17 @@ public class XPathFilter {
         }
     }
 
+    @Override
+    public String toString() {
+        return "XPathFilter{" +
+                "path='" + path + '\'' +
+                ", matchType=" + matchType +
+                ", value='" + value + '\'' +
+                ", ignoreCase=" + ignoreCase +
+                ", uniqueValues=" + uniqueValues +
+                '}';
+    }
+
 
     // --------------------------------------------------------------------------------
 

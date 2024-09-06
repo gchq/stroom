@@ -18,7 +18,7 @@
 package stroom.xmlschema.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -26,6 +26,7 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.task.client.TaskListener;
 import stroom.xmlschema.client.presenter.XMLSchemaPresenter;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 import stroom.xmlschema.shared.XmlSchemaResource;
@@ -66,26 +67,30 @@ public class XMLSchemaPlugin extends DocumentPlugin<XmlSchemaDoc> {
     @Override
     public void load(final DocRef docRef,
                      final Consumer<XmlSchemaDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<XmlSchemaDoc> rest = restFactory.create();
-        rest
+                     final RestErrorHandler errorHandler,
+                     final TaskListener taskListener) {
+        restFactory
+                .create(XML_SCHEMA_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
-                .call(XML_SCHEMA_RESOURCE)
-                .fetch(docRef.getUuid());
+                .onFailure(errorHandler)
+                .taskListener(taskListener)
+                .exec();
     }
 
     @Override
     public void save(final DocRef docRef,
                      final XmlSchemaDoc document,
                      final Consumer<XmlSchemaDoc> resultConsumer,
-                     final Consumer<Throwable> errorConsumer) {
-        final Rest<XmlSchemaDoc> rest = restFactory.create();
-        rest
+                     final RestErrorHandler errorHandler,
+                     final TaskListener taskListener) {
+        restFactory
+                .create(XML_SCHEMA_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
-                .onFailure(errorConsumer)
-                .call(XML_SCHEMA_RESOURCE)
-                .update(document.getUuid(), document);
+                .onFailure(errorHandler)
+                .taskListener(taskListener)
+                .exec();
     }
 
     @Override

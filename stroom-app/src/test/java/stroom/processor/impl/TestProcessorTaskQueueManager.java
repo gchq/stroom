@@ -32,6 +32,7 @@ import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.task.shared.TaskId;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
@@ -180,10 +181,10 @@ class TestProcessorTaskQueueManager extends AbstractCoreIntegrationTest {
                 .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                 .expression(ExpressionOperator.builder()
                         .addOperator(ExpressionOperator.builder().op(Op.OR)
-                                .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName1)
-                                .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName2)
+                                .addTextTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName1)
+                                .addTextTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName2)
                                 .build())
-                        .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .addTextTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
                 .build();
 
@@ -209,7 +210,7 @@ class TestProcessorTaskQueueManager extends AbstractCoreIntegrationTest {
                              final int count,
                              final int expected) {
         final ProcessorTaskList tasks = LOGGER.logDurationIfInfoEnabled(() ->
-                        processorTaskQueueManager.assignTasks(nodeName, count),
+                        processorTaskQueueManager.assignTasks(new TaskId(), nodeName, count),
                 "assignTasks - " + callCount);
         assertThat(tasks.getList().size()).isEqualTo(expected);
     }

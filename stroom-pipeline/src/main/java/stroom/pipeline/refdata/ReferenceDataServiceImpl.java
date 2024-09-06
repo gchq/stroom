@@ -2,9 +2,7 @@ package stroom.pipeline.refdata;
 
 import stroom.bytebuffer.ByteBufferPool;
 import stroom.data.shared.StreamTypeNames;
-import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.FieldInfo;
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
@@ -32,6 +30,7 @@ import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.FieldInfoResultPageBuilder;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValInteger;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
@@ -85,34 +84,34 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReferenceDataServiceImpl.class);
     private static final Map<String, QueryField> FIELD_NAME_TO_FIELD_MAP = ReferenceDataFields.FIELDS.stream()
-            .collect(Collectors.toMap(QueryField::getName, Function.identity()));
+            .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
 
     private static final Map<String, Function<RefStoreEntry, Object>> FIELD_TO_EXTRACTOR_MAP = Map.ofEntries(
-            Map.entry(ReferenceDataFields.FEED_NAME_FIELD.getName(),
+            Map.entry(ReferenceDataFields.FEED_NAME_FIELD.getFldName(),
                     RefStoreEntry::getFeedName),
-            Map.entry(ReferenceDataFields.KEY_FIELD.getName(),
+            Map.entry(ReferenceDataFields.KEY_FIELD.getFldName(),
                     RefStoreEntry::getKey),
-            Map.entry(ReferenceDataFields.VALUE_FIELD.getName(),
+            Map.entry(ReferenceDataFields.VALUE_FIELD.getFldName(),
                     RefStoreEntry::getValue),
-            Map.entry(ReferenceDataFields.VALUE_REF_COUNT_FIELD.getName(),
+            Map.entry(ReferenceDataFields.VALUE_REF_COUNT_FIELD.getFldName(),
                     RefStoreEntry::getValueReferenceCount),
-            Map.entry(ReferenceDataFields.MAP_NAME_FIELD.getName(), refStoreEntry ->
+            Map.entry(ReferenceDataFields.MAP_NAME_FIELD.getFldName(), refStoreEntry ->
                     refStoreEntry.getMapDefinition().getMapName()),
-            Map.entry(ReferenceDataFields.CREATE_TIME_FIELD.getName(), refStoreEntry ->
+            Map.entry(ReferenceDataFields.CREATE_TIME_FIELD.getFldName(), refStoreEntry ->
                     refStoreEntry.getRefDataProcessingInfo().getCreateTimeEpochMs()),
-            Map.entry(ReferenceDataFields.EFFECTIVE_TIME_FIELD.getName(), refStoreEntry ->
+            Map.entry(ReferenceDataFields.EFFECTIVE_TIME_FIELD.getFldName(), refStoreEntry ->
                     refStoreEntry.getRefDataProcessingInfo().getEffectiveTimeEpochMs()),
-            Map.entry(ReferenceDataFields.LAST_ACCESSED_TIME_FIELD.getName(), refStoreEntry ->
+            Map.entry(ReferenceDataFields.LAST_ACCESSED_TIME_FIELD.getFldName(), refStoreEntry ->
                     refStoreEntry.getRefDataProcessingInfo().getLastAccessedTimeEpochMs()),
-            Map.entry(ReferenceDataFields.PIPELINE_FIELD.getName(), refStoreEntry ->
+            Map.entry(ReferenceDataFields.PIPELINE_FIELD.getFldName(), refStoreEntry ->
                     refStoreEntry.getMapDefinition().getRefStreamDefinition().getPipelineDocRef()),
-            Map.entry(ReferenceDataFields.PROCESSING_STATE_FIELD.getName(), refStoreEntry ->
+            Map.entry(ReferenceDataFields.PROCESSING_STATE_FIELD.getFldName(), refStoreEntry ->
                     refStoreEntry.getRefDataProcessingInfo().getProcessingState().getDisplayName()),
-            Map.entry(ReferenceDataFields.STREAM_ID_FIELD.getName(), refStoreEntry ->
+            Map.entry(ReferenceDataFields.STREAM_ID_FIELD.getFldName(), refStoreEntry ->
                     refStoreEntry.getMapDefinition().getRefStreamDefinition().getStreamId()),
-            Map.entry(ReferenceDataFields.PART_NO_FIELD.getName(), refStoreEntry ->
+            Map.entry(ReferenceDataFields.PART_NO_FIELD.getFldName(), refStoreEntry ->
                     refStoreEntry.getMapDefinition().getRefStreamDefinition().getPartIndex() + 1),
-            Map.entry(ReferenceDataFields.PIPELINE_VERSION_FIELD.getName(), refStoreEntry ->
+            Map.entry(ReferenceDataFields.PIPELINE_VERSION_FIELD.getFldName(), refStoreEntry ->
                     refStoreEntry.getMapDefinition().getRefStreamDefinition().getPipelineVersion()));
 
     private final RefDataStore refDataStore;
@@ -680,7 +679,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     }
 
     @Override
-    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+    public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
         return FieldInfoResultPageBuilder.builder(criteria).addAll(ReferenceDataFields.FIELDS).build();
     }
 
@@ -690,7 +689,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     }
 
     @Override
-    public DateField getTimeField() {
+    public QueryField getTimeField() {
         return null;
     }
 
@@ -762,7 +761,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                     final QueryField field = FIELD_NAME_TO_FIELD_MAP.get(fieldName);
                     // May be a custom field that we obvs can't extract
                     if (field != null) {
-                        final Object value = FIELD_TO_EXTRACTOR_MAP.get(field.getName())
+                        final Object value = FIELD_TO_EXTRACTOR_MAP.get(field.getFldName())
                                 .apply(refStoreEntry);
                         valArr[i] = convertToVal(value, field);
                     }
@@ -937,7 +936,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         // field => fieldType
         QueryField abstractField = FIELD_NAME_TO_FIELD_MAP.get(expressionTerm.getField());
 
-        return switch (abstractField.getFieldType()) {
+        return switch (abstractField.getFldType()) {
             case TEXT -> buildTextFieldPredicate(expressionTerm, refStoreEntry ->
                     (String) FIELD_TO_EXTRACTOR_MAP.get(expressionTerm.getField()).apply(refStoreEntry));
             case LONG -> buildLongFieldPredicate(expressionTerm, refStoreEntry ->
@@ -1068,12 +1067,13 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     }
 
     private Val convertToVal(final Object object, final QueryField field) {
-        return switch (field.getFieldType()) {
+        return switch (field.getFldType()) {
             case TEXT -> ValString.create((String) object);
             case INTEGER -> ValInteger.create((Integer) object);
-            case LONG, ID, DATE -> ValLong.create((long) object);
+            case LONG, ID -> ValLong.create((long) object);
+            case DATE -> ValDate.create((long) object);
             case DOC_REF -> getPipelineNameAsVal((DocRef) object);
-            default -> throw new RuntimeException("Unexpected field type " + field.getFieldType());
+            default -> throw new RuntimeException("Unexpected field type " + field.getFldType());
         };
     }
 

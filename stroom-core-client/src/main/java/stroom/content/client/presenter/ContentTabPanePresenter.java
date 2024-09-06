@@ -27,11 +27,16 @@ import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.content.client.event.SelectContentTabEvent;
 import stroom.content.client.event.SelectContentTabEvent.SelectContentTabHandler;
 import stroom.data.table.client.Refreshable;
+import stroom.explorer.client.presenter.RecentItems;
 import stroom.main.client.presenter.MainPresenter;
+import stroom.task.client.DefaultTaskListener;
+import stroom.task.client.HasTaskListener;
+import stroom.task.client.TaskListener;
 import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.tab.client.presenter.CurveTabLayoutPresenter;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
 import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.tab.client.view.AbstractTab;
 import stroom.widget.tab.client.view.CurveTabLayoutUiHandlers;
 
 import com.google.gwt.user.client.History;
@@ -55,14 +60,18 @@ public class ContentTabPanePresenter
         CurveTabLayoutUiHandlers {
 
     private final List<TabData> historyList = new ArrayList<>();
+    private final RecentItems recentItems;
     private int currentHistoryId;
     private int currentIndex;
     private boolean ignoreHistory;
 
     @Inject
-    public ContentTabPanePresenter(final EventBus eventBus, final CurveTabLayoutView view,
-                                   final ContentTabPaneProxy proxy) {
+    public ContentTabPanePresenter(final EventBus eventBus,
+                                   final CurveTabLayoutView view,
+                                   final ContentTabPaneProxy proxy,
+                                   final RecentItems recentItems) {
         super(eventBus, view, proxy);
+        this.recentItems = recentItems;
         view.setUiHandlers(this);
 
         registerHandler(eventBus.addHandler(RefreshCurrentContentTabEvent.getType(),
@@ -143,6 +152,12 @@ public class ContentTabPanePresenter
         // tabs.
         forceReveal();
         add(event.getTabData(), event.getLayer());
+
+        if (event.getLayer() instanceof HasTaskListener) {
+            final AbstractTab tab = getView().getTabBar().getTab(event.getTabData());
+            ((HasTaskListener) event.getLayer())
+                    .setTaskListener(new TabTaskListener(tab));
+        }
     }
 
     @ProxyEvent
@@ -158,6 +173,11 @@ public class ContentTabPanePresenter
                     currentIndex--;
                 }
             }
+        }
+
+        if (event.getTabData() instanceof HasTaskListener) {
+            ((HasTaskListener) event.getTabData())
+                    .setTaskListener(new DefaultTaskListener(this));
         }
     }
 
@@ -184,6 +204,7 @@ public class ContentTabPanePresenter
 
                 historyList.add(tabData);
                 currentIndex = historyList.size() - 1;
+                recentItems.add(tabData);
 
                 currentHistoryId++;
                 final String key = String.valueOf(currentHistoryId);
@@ -206,5 +227,24 @@ public class ContentTabPanePresenter
     @ProxyCodeSplit
     public interface ContentTabPaneProxy extends Proxy<ContentTabPanePresenter> {
 
+    }
+
+    private static class TabTaskListener implements TaskListener {
+
+        private final AbstractTab tab;
+
+        public TabTaskListener(final AbstractTab tab) {
+            this.tab = tab;
+        }
+
+        @Override
+        public void incrementTaskCount() {
+            tab.incrementTaskCount();
+        }
+
+        @Override
+        public void decrementTaskCount() {
+            tab.decrementTaskCount();
+        }
     }
 }

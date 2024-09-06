@@ -74,7 +74,6 @@ public class HDFSFileAppender extends AbstractAppender {
 
     private Configuration conf;
     private UserGroupInformation userGroupInformation;
-    private ByteCountOutputStream byteCountOutputStream;
 
     @Inject
     HDFSFileAppender(final ErrorReceiverProxy errorReceiverProxy,
@@ -157,9 +156,8 @@ public class HDFSFileAppender extends AbstractAppender {
     }
 
     @Override
-    protected OutputStream createOutputStream() throws IOException {
-        byteCountOutputStream = new ByteCountOutputStream(createHDFSLockedOutputStream());
-        return byteCountOutputStream;
+    protected Output createOutput() throws IOException {
+        return new BasicOutput(createHDFSLockedOutputStream());
     }
 
     HDFSLockedOutputStream createHDFSLockedOutputStream() throws IOException {
@@ -190,14 +188,6 @@ public class HDFSFileAppender extends AbstractAppender {
         } catch (final RuntimeException e) {
             throw new IOException(e.getMessage(), e);
         }
-    }
-
-    @Override
-    long getCurrentOutputSize() {
-        if (byteCountOutputStream != null) {
-            return byteCountOutputStream.getCount();
-        }
-        return 0;
     }
 
     /**

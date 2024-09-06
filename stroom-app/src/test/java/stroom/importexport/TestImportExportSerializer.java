@@ -194,7 +194,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
 
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, "TEST-FEED-EVENTS")
+                .addTextTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, "TEST-FEED-EVENTS")
                 .addTerm(MetaFields.FIELD_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                 .build();
         QueryData filterConstraints = new QueryData();

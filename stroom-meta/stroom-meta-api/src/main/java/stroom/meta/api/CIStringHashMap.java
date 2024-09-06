@@ -75,6 +75,10 @@ class CIStringHashMap implements Map<String, String> {
         return map.size();
     }
 
+    /**
+     * DOESN'T adhere to the contract of {@link Map#entrySet()}, so any changes
+     * to the returned {@link Set} will NOT affect this map.
+     */
     @Override
     public Set<Entry<String, String>> entrySet() {
         final Set<Entry<String, String>> rtnSet = new HashSet<>();
@@ -84,6 +88,10 @@ class CIStringHashMap implements Map<String, String> {
         return rtnSet;
     }
 
+    /**
+     * DOESN'T adhere to the contract of {@link Map#keySet()}, so any changes
+     * to the returned {@link Set} will NOT affect this map.
+     */
     @Override
     public Set<String> keySet() {
         final Set<String> rtnSet = new HashSet<>();
@@ -145,10 +153,6 @@ class CIStringHashMap implements Map<String, String> {
             return key;
         }
 
-        public String getLowerKey() {
-            return lowerKey;
-        }
-
         @Override
         public boolean equals(final Object o) {
             if (this == o) {
@@ -158,12 +162,12 @@ class CIStringHashMap implements Map<String, String> {
                 return false;
             }
             final CIString ciString = (CIString) o;
-            return Objects.equals(lowerKey, ciString.lowerKey);
+            return lowerKey.equals(ciString.lowerKey);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(lowerKey);
+            return lowerKey.hashCode();
         }
 
         @Override

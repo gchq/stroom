@@ -17,10 +17,9 @@
 
 package stroom.search.solr;
 
-import stroom.docref.DocContentMatch;
+import stroom.datasource.api.v2.FieldType;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docref.StringMatch;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
@@ -31,7 +30,6 @@ import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexField;
-import stroom.search.solr.shared.SolrIndexFieldType;
 import stroom.search.solr.shared.SolrSynchState;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
@@ -68,6 +66,11 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrIndexStoreImpl.class);
 
     private static final Pattern VALID_FIELD_NAME_PATTERN = Pattern.compile(SolrIndexField.VALID_FIELD_NAME_PATTERN);
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            SolrIndexDoc.DOCUMENT_TYPE,
+            "Solr Index",
+            SolrIndexDoc.ICON);
 
     private final Store<SolrIndexDoc> store;
     private final SecurityContext securityContext;
@@ -123,11 +126,7 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.INDEXING,
-                SolrIndexDoc.DOCUMENT_TYPE,
-                "Solr Index",
-                SolrIndexDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -177,10 +176,10 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
         // Test for invalid field names.
         if (document.getFields() != null) {
             document.getFields().forEach(solrIndexField -> {
-                if (solrIndexField.getFieldName() == null) {
+                if (solrIndexField.getFldName() == null) {
                     throw new RuntimeException("Null field name");
-                } else if (!VALID_FIELD_NAME_PATTERN.matcher(solrIndexField.getFieldName()).matches()) {
-                    throw new RuntimeException("Invalid field name " + solrIndexField.getFieldName());
+                } else if (!VALID_FIELD_NAME_PATTERN.matcher(solrIndexField.getFldName()).matches()) {
+                    throw new RuntimeException("Invalid field name " + solrIndexField.getFldName());
                 }
             });
         }
@@ -193,7 +192,7 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
                         existingFieldMap = document
                                 .getFields()
                                 .stream()
-                                .collect(Collectors.toMap(SolrIndexField::getFieldName, Function.identity()));
+                                .collect(Collectors.toMap(SolrIndexField::getFldName, Function.identity()));
                     }
 
                     List<SolrIndexField> solrFields = fetchSolrFields(solrClient,
@@ -202,7 +201,7 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
 
                     // Which fields are missing from Solr?
                     final Map<String, SolrIndexField> solrFieldMap = solrFields.stream().collect(Collectors.toMap(
-                            SolrIndexField::getFieldName,
+                            SolrIndexField::getFldName,
                             Function.identity()));
                     existingFieldMap.forEach((k, v) -> {
                         if (solrFieldMap.containsKey(k)) {
@@ -237,12 +236,12 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
                     // Delete fields.
                     if (document.getDeletedFields() != null) {
                         document.getDeletedFields().forEach(field -> {
-                            if (solrFieldMap.containsKey(field.getFieldName())) {
+                            if (solrFieldMap.containsKey(field.getFldName())) {
                                 try {
-                                    new DeleteField(field.getFieldName()).process(solrClient, document.getCollection());
+                                    new DeleteField(field.getFldName()).process(solrClient, document.getCollection());
                                     deleteCount.incrementAndGet();
                                 } catch (final RuntimeException | SolrServerException | IOException e) {
-                                    final String message = "Failed to delete field '" + field.getFieldName() +
+                                    final String message = "Failed to delete field '" + field.getFldName() +
                                             "' - " + e.getMessage();
                                     messages.add(message);
                                     LOGGER.error(() -> message, e);
@@ -254,7 +253,7 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
 
                     // Now pull all fields back from Solr and refresh our doc.
                     solrFields = fetchSolrFields(solrClient, document.getCollection(), existingFieldMap);
-                    solrFields.sort(Comparator.comparing(SolrIndexField::getFieldName, String.CASE_INSENSITIVE_ORDER));
+                    solrFields.sort(Comparator.comparing(SolrIndexField::getFldName, String.CASE_INSENSITIVE_ORDER));
                     document.setFields(solrFields);
 
                     messages.add("Replaced " + replaceCount.get() + " fields");
@@ -287,11 +286,11 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
                 .stream()
                 .map(v -> {
                     final SolrIndexField field = fromAttributes(v);
-                    field.setFieldUse(SolrIndexFieldType.FIELD);
+                    field.setFldType(FieldType.TEXT);
 
-                    final SolrIndexField existingField = existingFieldMap.get(field.getFieldName());
+                    final SolrIndexField existingField = existingFieldMap.get(field.getFldName());
                     if (existingField != null) {
-                        field.setFieldUse(existingField.getFieldUse());
+                        field.setFldType(existingField.getFldType());
                     }
 
                     return field;
@@ -301,8 +300,8 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
 
     private SolrIndexField fromAttributes(final Map<String, Object> attributes) {
         final SolrIndexField field = new SolrIndexField();
-        setString(attributes, "name", field::setFieldName);
-        setString(attributes, "type", field::setFieldType);
+        setString(attributes, "name", field::setFldName);
+        setString(attributes, "type", field::setNativeType);
         setString(attributes, "default", field::setDefaultValue);
         setBoolean(attributes, "stored", field::setStored);
         setBoolean(attributes, "indexed", field::setIndexed);
@@ -324,8 +323,8 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
 
     private Map<String, Object> toAttributes(final SolrIndexField field) {
         final Map<String, Object> attributes = new HashMap<>();
-        putString(attributes, "name", field.getFieldName());
-        putString(attributes, "type", field.getFieldType());
+        putString(attributes, "name", field.getFldName());
+        putString(attributes, "type", field.getNativeType());
         putString(attributes, "default", field.getDefaultValue());
         putBoolean(attributes, "stored", field.isStored());
         putBoolean(attributes, "indexed", field.isIndexed());
@@ -441,7 +440,7 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
     }
 
     @Override
-    public List<DocContentMatch> findByContent(final StringMatch filter) {
-        return store.findByContent(filter);
+    public Map<String, String> getIndexableData(final DocRef docRef) {
+        return store.getIndexableData(docRef);
     }
 }

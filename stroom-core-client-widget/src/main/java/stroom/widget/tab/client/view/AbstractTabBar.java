@@ -176,7 +176,9 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
     public void refresh() {
         for (final TabData tabData : tabs) {
             final AbstractTab tab = getTab(tabData);
-            tab.setText(tabData.getLabel());
+            if (tab != null) {
+                tab.setText(tabData.getLabel());
+            }
         }
         onResize();
     }
@@ -207,7 +209,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
                 final AbstractTab tab = getTab(tabData);
 
                 // Ignore tabs that have been deliberately hidden.
-                if (!tab.isHidden()) {
+                if (tab != null && !tab.isHidden()) {
                     if (!overflow) {
                         remaining -= tab.getOffsetWidth();
                         if (i > 0) {
@@ -249,7 +251,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
 
                 // Deal with tabs that have been deliberately hidden.
                 boolean visible = false;
-                if (!tab.isHidden() && displayable.contains(tabData)) {
+                if (tab != null && !tab.isHidden() && displayable.contains(tabData)) {
                     if (x > 0) {
                         final Element separator = addSeparator();
                         if (separator != null) {
@@ -389,8 +391,8 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
     @Override
     public void onBrowserEvent(final Event event) {
 //        GWT.log("onBrowserEvent " + event.getType());
+        final Action action = KeyBinding.test(event);
         if (Event.ONKEYDOWN == event.getTypeInt()) {
-            final Action action = KeyBinding.getAction(event);
             TabData tabData = null;
             if (action != null) {
                 switch (action) {
@@ -508,18 +510,20 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
         final TabData targetTabData = getTargetTabData(target);
         if (targetTabData != null) {
             final AbstractTab tab = getTab(targetTabData);
-            // See if close has been clicked on this tab.
-            if (tab.getCloseElement() != null && tab.getCloseElement().isOrHasChild(target)) {
-                fireTabCloseRequest(targetTabData);
+            if (tab != null) {
+                // See if close has been clicked on this tab.
+                if (tab.getCloseElement() != null && tab.getCloseElement().isOrHasChild(target)) {
+                    fireTabCloseRequest(targetTabData);
 
-            } else if (targetTabData != selectedTab) {
-                switchTabIndexElement(tab.getElement());
-                focusTabIndexElement();
+                } else if (targetTabData != selectedTab) {
+                    switchTabIndexElement(tab.getElement());
+                    focusTabIndexElement();
 
-                // If this tab isn't currently selected then
-                // request it is selected.
-                keyboardSelectTab(targetTabData);
-                fireTabSelection(targetTabData);
+                    // If this tab isn't currently selected then
+                    // request it is selected.
+                    keyboardSelectTab(targetTabData);
+                    fireTabSelection(targetTabData);
+                }
             }
         }
     }
@@ -572,7 +576,8 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
 
         final List<TabData> tabList = new ArrayList<>();
         for (final TabData tabData : tabPriority) {
-            if (!getTab(tabData).isHidden()) {
+            final AbstractTab tab = getTab(tabData);
+            if (tab != null && !tab.isHidden()) {
                 tabList.add(tabData);
             }
         }
@@ -661,13 +666,9 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
         return false;
     }
 
+    @Override
     public AbstractTab getTab(final TabData tabData) {
-        AbstractTab tab = tabWidgetMap.get(tabData);
-        if (tab == null) {
-            tab = createTab(tabData);
-            tabWidgetMap.put(tabData, tab);
-        }
-        return tab;
+        return tabWidgetMap.get(tabData);
     }
 
     @Override

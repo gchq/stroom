@@ -169,10 +169,10 @@ public class CompletableQueue<T> {
         final ReentrantLock lock = this.lock;
         lock.lock();
         try {
-            int k;
-            if ((k = count) > 0) {
+            if (count > 0) {
                 circularClear(items, takeIndex, putIndex);
-                takeIndex = putIndex;
+                takeIndex = 0;
+                putIndex = 0;
                 count = 0;
             }
             notFull.signalAll();
@@ -202,17 +202,22 @@ public class CompletableQueue<T> {
         }
     }
 
-    private static void circularClear(final Object[] items, int i, int end) {
+    private void circularClear(final Object[] items, int i, int end) {
         for (int to = (i < end)
                 ? end
                 : items.length; ; i = 0, to = end) {
             for (; i < to; i++) {
+                destroy(items[i]);
                 items[i] = null;
             }
             if (to == end) {
                 break;
             }
         }
+    }
+
+    protected void destroy(Object item) {
+
     }
 
     public int size() {

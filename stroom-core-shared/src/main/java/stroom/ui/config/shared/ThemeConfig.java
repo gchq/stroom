@@ -17,12 +17,6 @@ import java.util.Objects;
 public class ThemeConfig extends AbstractConfig implements IsStroomConfig {
 
     @JsonProperty
-    @JsonPropertyDescription("A valid HTML colour value, e.g. 'olive' or '#BA2727' to use for the background " +
-            "colour on the login page. If Stroom is configured to use an external IDP or authenticates using " +
-            "certificates then users will not see the login page.")
-    private final String backgroundColour;
-
-    @JsonProperty
     @JsonPropertyDescription("Provide a valid HTML style value to style the main page, i.e. to add an environment " +
             "specific coloured border to the page to distinguish between environments (dev, test, production, etc.)." +
             "The value will be set on the elements style property. For example to add a coloured border left and " +
@@ -39,23 +33,17 @@ public class ThemeConfig extends AbstractConfig implements IsStroomConfig {
     private final String labelColours;
 
     public ThemeConfig() {
-        backgroundColour = "#1E88E5";
         pageBorder = null;
         labelColours = "TEST1=#FF0000,TEST2=#FF9900";
     }
 
     @JsonCreator
-    public ThemeConfig(@JsonProperty("backgroundColour") final String backgroundColour,
-                       @JsonProperty("pageBorder") final String pageBorder,
+    public ThemeConfig(@JsonProperty("pageBorder") final String pageBorder,
                        @JsonProperty("labelColours") final String labelColours) {
-        this.backgroundColour = backgroundColour;
         this.pageBorder = pageBorder;
         this.labelColours = labelColours;
     }
 
-    public String getBackgroundColour() {
-        return backgroundColour;
-    }
 
     public String getPageBorder() {
         return pageBorder;
@@ -68,8 +56,7 @@ public class ThemeConfig extends AbstractConfig implements IsStroomConfig {
     @Override
     public String toString() {
         return "ThemeConfig{" +
-                "backgroundColour='" + backgroundColour + '\'' +
-                ", pageBorder='" + pageBorder + '\'' +
+                "pageBorder='" + pageBorder + '\'' +
                 ", labelColours='" + labelColours + '\'' +
                 '}';
     }
@@ -83,13 +70,12 @@ public class ThemeConfig extends AbstractConfig implements IsStroomConfig {
             return false;
         }
         final ThemeConfig that = (ThemeConfig) o;
-        return Objects.equals(backgroundColour, that.backgroundColour) &&
-                Objects.equals(pageBorder, that.pageBorder) &&
+        return Objects.equals(pageBorder, that.pageBorder) &&
                 Objects.equals(labelColours, that.labelColours);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(backgroundColour, pageBorder, labelColours);
+        return Objects.hash(pageBorder, labelColours);
     }
 }

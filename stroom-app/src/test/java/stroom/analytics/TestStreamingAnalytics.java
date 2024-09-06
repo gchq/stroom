@@ -20,13 +20,11 @@ import stroom.analytics.rule.impl.AnalyticRuleProcessors;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.QueryLanguageVersion;
-import stroom.analytics.shared.StreamingAnalyticProcessConfig;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
 import stroom.docref.DocRef;
 import stroom.index.VolumeTestConfigModule;
-import stroom.index.mock.MockIndexShardWriterExecutorModule;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.node.api.NodeInfo;
@@ -57,7 +55,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
-@IncludeModule(MockIndexShardWriterExecutorModule.class)
 class TestStreamingAnalytics extends AbstractAnalyticsTest {
 
     @Inject
@@ -114,8 +111,8 @@ class TestStreamingAnalytics extends AbstractAnalyticsTest {
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
                 .analyticProcessType(AnalyticProcessType.STREAMING)
-                .analyticProcessConfig(new StreamingAnalyticProcessConfig(analyticsDataSetup.getDetections()))
-                .analyticNotificationConfig(createNotificationConfig())
+                .notifications(createNotificationConfig())
+                .errorFeed(analyticsDataSetup.getDetections())
                 .build();
         final DocRef analyticRuleDocRef = writeRule(analyticRuleDoc);
         final ExpressionOperator expressionOperator = analyticRuleProcessors

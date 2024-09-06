@@ -7,7 +7,8 @@ import stroom.task.api.TerminateHandlerFactory;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
-import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class AnalyticErrorWritingExecutor {
 
@@ -21,21 +22,22 @@ public class AnalyticErrorWritingExecutor {
         this.analyticErrorWriterProvider = analyticErrorWriterProvider;
     }
 
-    Runnable wrap(final String taskName,
-                  final String errorFeedName,
-                  final String pipelineUuid,
-                  final TaskContext parentTaskContext,
-                  final Consumer<TaskContext> taskContextConsumer) {
-        return taskContextFactory.childContext(
+    <R> Supplier<R> wrap(final String taskName,
+                         final String errorFeedName,
+                         final String pipelineUuid,
+                         final TaskContext parentTaskContext,
+                         final Function<TaskContext, R> function) {
+        return taskContextFactory.childContextResult(
                 parentTaskContext,
                 taskName,
                 TerminateHandlerFactory.NOOP_FACTORY,
                 taskContext -> {
                     final AnalyticErrorWriter analyticErrorWriter = analyticErrorWriterProvider.get();
-                    analyticErrorWriter.exec(
+                    return analyticErrorWriter.exec(
                             errorFeedName,
                             pipelineUuid,
-                            () -> taskContextConsumer.accept(taskContext));
+                            taskContext,
+                            function);
                 });
     }
 }

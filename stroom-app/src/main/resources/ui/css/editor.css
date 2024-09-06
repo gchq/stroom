@@ -29,12 +29,25 @@
 .editor .hl {
     position: absolute;
 	background-color: var(--code-editor__background-color--highlight);
+	z-index: 2;
 }
 
 .editor .err {
     position: absolute;
     border-bottom: 1px solid red;
     border-radius: 0;
+}
+
+.stroom-font-size-small .editor.single-line-editor {
+    height: 16px;
+}
+
+.stroom-font-size-medium .editor.single-line-editor {
+    height: 18px;
+}
+
+.stroom-font-size-large .editor.single-line-editor {
+    height: 20px;
 }
 
 .editor .ace_tooltip {

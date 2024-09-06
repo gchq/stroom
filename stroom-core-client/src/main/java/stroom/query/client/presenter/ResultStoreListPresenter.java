@@ -23,6 +23,7 @@ import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ResultStoreInfo;
@@ -136,8 +137,8 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
                     @Override
                     protected void exec(final Range range,
                                         final Consumer<ResultPage<ResultStoreInfo>> dataConsumer,
-                                        final Consumer<Throwable> throwableConsumer) {
-                        resultStoreModel.fetch(range, dataConsumer, throwableConsumer);
+                                        final RestErrorHandler errorHandler) {
+                        resultStoreModel.fetch(range, dataConsumer, errorHandler, getView());
                     }
                 };
         dataProvider.addDataDisplay(dataGrid);
@@ -159,7 +160,7 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
                                 AlertEvent.fireWarn(this, "Failed to terminate", null);
                             }
                             refresh();
-                        });
+                        }, getView());
                     }
                 });
             }
@@ -181,7 +182,7 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
                                         AlertEvent.fireWarn(this, "Failed to destroy store", null);
                                     }
                                     refresh();
-                                });
+                                }, getView());
                     }
                 });
             }
@@ -212,10 +213,7 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
     private void edit() {
         final ResultStoreInfo selected = getSelectionModel().getSelected();
         if (selected != null) {
-            resultStoreSettingsPresenter.show(selected, "Change Result Store Settings", ok -> {
-                resultStoreSettingsPresenter.hide();
-                refresh();
-            });
+            resultStoreSettingsPresenter.show(selected, "Change Result Store Settings", ok -> refresh());
         }
     }
 

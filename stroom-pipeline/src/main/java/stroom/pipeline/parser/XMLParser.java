@@ -36,6 +36,9 @@ import javax.xml.parsers.SAXParserFactory;
 @ConfigurableElement(
         type = "XMLParser",
         category = Category.PARSER,
+        description = """
+                A parser to parse data that is expected to be XML into a series of XML events that can be \
+                consumed by a Filter element.""",
         roles = {
                 PipelineElementType.ROLE_PARSER,
                 PipelineElementType.ROLE_HAS_TARGETS,

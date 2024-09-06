@@ -198,8 +198,13 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
     @UiHandler("testConnection")
     public void onTestConnectionClick(final ClickEvent event) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onTestConnection();
+            getUiHandlers().onTestConnection(testConnection);
         }
+    }
+
+    @Override
+    public void setTestingConnection(final boolean testing) {
+        testConnection.setLoading(testing);
     }
 
     @UiHandler("collection")

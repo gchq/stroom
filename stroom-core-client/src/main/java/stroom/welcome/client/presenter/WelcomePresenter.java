@@ -19,13 +19,11 @@ package stroom.welcome.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.config.global.shared.SessionInfoResource;
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.BuildInfo;
-import stroom.util.shared.SessionInfo;
 import stroom.util.shared.UserName;
 
 import com.google.gwt.core.client.GWT;
@@ -36,9 +34,10 @@ import com.gwtplatform.mvp.client.View;
 
 public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.WelcomeView> {
 
-    private static final SessionInfoResource SESSION_INFO_RESOURCE = GWT.create(SessionInfoResource.class);
-
     public static final String WELCOME = "Welcome";
+    public static final String TAB_TYPE = WELCOME;
+
+    private static final SessionInfoResource SESSION_INFO_RESOURCE = GWT.create(SessionInfoResource.class);
 
     @Inject
     public WelcomePresenter(final EventBus eventBus,
@@ -48,8 +47,9 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
                             final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
 
-        final Rest<SessionInfo> rest = restFactory.create();
-        rest
+        restFactory
+                .create(SESSION_INFO_RESOURCE)
+                .method(SessionInfoResource::get)
                 .onSuccess(sessionInfo -> {
                     final UserName userName = sessionInfo.getUserName();
                     view.getUserIdentity().setText(userName.getSubjectId());
@@ -64,14 +64,14 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
                 })
                 .onFailure(caught ->
                         AlertEvent.fireError(WelcomePresenter.this, caught.getMessage(), null))
-                .call(SESSION_INFO_RESOURCE)
-                .get();
+                .taskListener(this)
+                .exec();
 
-        uiConfigCache.get()
-                .onSuccess(result ->
-                        view.setHTML(result.getWelcomeHtml()))
-                .onFailure(caught ->
-                        AlertEvent.fireError(WelcomePresenter.this, caught.getMessage(), null));
+        uiConfigCache.get(result -> {
+            if (result != null) {
+                view.setHTML(result.getWelcomeHtml());
+            }
+        }, this);
     }
 
     @Override
@@ -82,6 +82,11 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
     @Override
     public String getLabel() {
         return WELCOME;
+    }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
     }
 
 

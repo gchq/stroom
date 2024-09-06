@@ -36,10 +36,6 @@ public class ScheduledTimeResourceImpl implements ScheduledTimeResource {
 
     @Override
     public ScheduledTimes get(final GetScheduledTimesRequest request) {
-        return scheduleServiceProvider.get().getScheduledTimes(
-                request.getJobType(),
-                request.getScheduleReferenceTime(),
-                request.getLastExecutedTime(),
-                request.getSchedule());
+        return scheduleServiceProvider.get().getScheduledTimes(request);
     }
 }

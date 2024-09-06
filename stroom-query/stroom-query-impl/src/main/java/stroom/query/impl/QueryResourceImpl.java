@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Crown Copyright
+ * Copyright 2022-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
-import stroom.query.shared.CompletionValue;
+import stroom.query.shared.CompletionItem;
 import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryDoc;
@@ -103,13 +103,7 @@ class QueryResourceImpl implements QueryResource {
         return queryServiceProvider.get().validateQuery(query);
     }
 
-    @AutoLogged(OperationType.UNLOGGED)
-    @Override
-    public ResourceGeneration downloadSearchResults(final DownloadQueryResultsRequest request) {
-        return queryServiceProvider.get().downloadSearchResults(request);
-    }
-
-    @AutoLogged(OperationType.UNLOGGED)
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
     public ResourceGeneration downloadSearchResults(final String nodeName, final DownloadQueryResultsRequest request) {
         try {
@@ -134,13 +128,7 @@ class QueryResourceImpl implements QueryResource {
         }
     }
 
-    @AutoLogged(OperationType.UNLOGGED)
-    @Override
-    public DashboardSearchResponse search(final QuerySearchRequest request) {
-        return queryServiceProvider.get().search(request);
-    }
-
-    @AutoLogged(OperationType.UNLOGGED)
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
     public DashboardSearchResponse search(final String nodeName, final QuerySearchRequest request) {
         try {
@@ -194,11 +182,11 @@ class QueryResourceImpl implements QueryResource {
 
     @Override
     @AutoLogged(OperationType.UNLOGGED)
-    public ResultPage<CompletionValue> fetchCompletions(final CompletionsRequest request) {
-        final List<CompletionValue> list = new ArrayList<>();
+    public ResultPage<CompletionItem> fetchCompletions(final CompletionsRequest request) {
+        final List<CompletionItem> list = new ArrayList<>();
         final PageRequest pageRequest = request.getPageRequest();
         if (request.isShowAll()) {
-            dataSourcesProvider.get().addCompletions(request, reducePageRequest(pageRequest, list.size()), list);
+            dataSourcesProvider.get().addCompletions(request, reducePageRequest(pageRequest, 0), list);
             structuresProvider.get().addCompletions(request, reducePageRequest(pageRequest, list.size()), list);
         }
         fieldsProvider.get().addCompletions(request, reducePageRequest(pageRequest, list.size()), list);

@@ -127,8 +127,8 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
 
             if (node.getDisplayValue() != null) {
                 // Add text
-                content.append(template.div(getCellClassName() + "-text",
-                        SafeHtmlUtils.fromString(node.getDisplayValue())));
+                final SafeHtml text = SafeHtmlUtils.fromString(node.getDisplayValue());
+                content.append(template.text(getCellClassName() + "-text", text.asString(), text));
             }
 
             // If the item is a favourite and not part of the Favourites node, display a star next to it
@@ -200,6 +200,9 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
 
         @Template("<div class=\"{0}\">{1}</div>")
         SafeHtml div(String className, SafeHtml content);
+
+        @Template("<div class=\"{0}\" title=\"{1}\">{2}</div>")
+        SafeHtml text(String className, String title, SafeHtml content);
 
         @Template("<div class=\"explorerCell {0}\">{1}</div>")
         SafeHtml outer(String extraClassName, SafeHtml content);

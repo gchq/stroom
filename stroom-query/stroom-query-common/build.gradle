@@ -17,6 +17,7 @@
 ext.moduleName = 'stroom.query.common'
 
 dependencies {
+    implementation project(':stroom-bytebuffer')
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-docref')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
@@ -54,6 +55,7 @@ dependencies {
     testImplementation libs.jaxb_api
     testImplementation libs.mockito_core
     testImplementation project(':stroom-query:stroom-query-language').sourceSets.test.output
+    testImplementation project(':stroom-test-common')
 
     testRuntimeOnly libs.junit_jupiter_engine
     testRuntimeOnly libs.logback_classic

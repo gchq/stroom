@@ -130,7 +130,10 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
                                 nodeName),
                         () ->
                                 processorTaskManagerProvider.get()
-                                        .assignTasks(request.getNodeName(), request.getCount()),
+                                        .assignTasks(
+                                                request.getSourceTaskId(),
+                                                request.getNodeName(),
+                                                request.getCount()),
                         builder ->
                                 builder.post(Entity.json(request)));
     }

@@ -1,8 +1,8 @@
 package stroom.meta.impl;
 
 import stroom.datasource.api.v2.DataSourceProvider;
-import stroom.datasource.api.v2.FieldInfo;
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.meta.shared.MetaFields;
 import stroom.query.common.v2.FieldInfoResultPageBuilder;
@@ -27,7 +27,7 @@ public class MetaDataSourceProvider implements DataSourceProvider {
     }
 
     @Override
-    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+    public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
         return FieldInfoResultPageBuilder.builder(criteria).addAll(MetaFields.getFields()).build();
     }
 
@@ -37,7 +37,7 @@ public class MetaDataSourceProvider implements DataSourceProvider {
     }
 
     @Override
-    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
+    public DocRef fetchDefaultExtractionPipeline(final DocRef docRef) {
         return null;
     }
 }

@@ -1,8 +1,7 @@
 package stroom.searchable.impl;
 
-import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.FieldInfo;
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
@@ -80,8 +79,8 @@ class SearchableSearchProvider implements SearchProvider {
     }
 
     @Override
-    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
-        final Optional<ResultPage<FieldInfo>> optional = securityContext.useAsReadResult(() -> {
+    public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
+        final Optional<ResultPage<QueryField>> optional = securityContext.useAsReadResult(() -> {
             final Searchable searchable = searchableProvider.get(criteria.getDataSourceRef());
             if (searchable != null) {
                 return Optional.ofNullable(searchable.getFieldInfo(criteria));
@@ -89,7 +88,7 @@ class SearchableSearchProvider implements SearchProvider {
             return Optional.empty();
         });
         return optional.orElseGet(() -> {
-            final List<FieldInfo> list = Collections.emptyList();
+            final List<QueryField> list = Collections.emptyList();
             return ResultPage.createCriterialBasedList(list, criteria);
         });
     }
@@ -171,12 +170,11 @@ class SearchableSearchProvider implements SearchProvider {
 
         final ExpressionCriteria criteria = new ExpressionCriteria(expression);
 
-        final FindFieldInfoCriteria findFieldInfoCriteria = new FindFieldInfoCriteria(
+        final FindFieldCriteria findFieldInfoCriteria = new FindFieldCriteria(
                 new PageRequest(0, 1000),
                 null,
-                docRef,
-                null);
-        final ResultPage<FieldInfo> resultPage = searchable.getFieldInfo(findFieldInfoCriteria);
+                docRef);
+        final ResultPage<QueryField> resultPage = searchable.getFieldInfo(findFieldInfoCriteria);
         final Runnable runnable = taskContextFactory.context(taskName, taskContext -> {
             final AtomicBoolean destroyed = new AtomicBoolean();
 
@@ -272,7 +270,7 @@ class SearchableSearchProvider implements SearchProvider {
     }
 
     @Override
-    public DateField getTimeField(final DocRef docRef) {
+    public QueryField getTimeField(final DocRef docRef) {
         return searchableProvider.get(docRef).getTimeField();
     }
 

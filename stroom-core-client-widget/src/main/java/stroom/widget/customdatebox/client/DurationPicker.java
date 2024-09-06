@@ -59,7 +59,7 @@ public class DurationPicker extends Composite implements HasValue<SimpleDuration
 
     @Override
     public SimpleDuration getValue() {
-        return new SimpleDuration(time.getValue(), timeUnit.getValue());
+        return SimpleDuration.builder().time(time.getValue()).timeUnit(timeUnit.getValue()).build();
     }
 
     @Override

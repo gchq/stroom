@@ -1,19 +1,20 @@
 package stroom.search.solr.search;
 
 import stroom.dictionary.api.WordListProvider;
+import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
+import stroom.query.common.v2.IndexFieldCache;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.search.extraction.StoredDataQueue;
-import stroom.search.solr.CachedSolrIndex;
-import stroom.search.solr.SolrIndexCache;
+import stroom.search.solr.SolrIndexDocCache;
 import stroom.search.solr.search.SearchExpressionQueryBuilder.SearchExpressionQuery;
-import stroom.search.solr.shared.SolrIndexField;
+import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -25,7 +26,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import jakarta.inject.Inject;
 import org.apache.solr.client.solrj.SolrQuery;
 
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.LongAdder;
@@ -40,7 +40,8 @@ public class SolrSearchFactory {
     private final WordListProvider wordListProvider;
     private final SolrSearchConfig config;
     private final SolrSearchTaskHandler solrSearchTaskHandler;
-    private final SolrIndexCache solrIndexCache;
+    private final SolrIndexDocCache solrIndexDocCache;
+    private final IndexFieldCache indexFieldCache;
     private final TaskContextFactory taskContextFactory;
     private final Executor executor;
 
@@ -48,13 +49,15 @@ public class SolrSearchFactory {
     public SolrSearchFactory(final WordListProvider wordListProvider,
                              final SolrSearchConfig config,
                              final SolrSearchTaskHandler solrSearchTaskHandler,
-                             final SolrIndexCache solrIndexCache,
+                             final SolrIndexDocCache solrIndexDocCache,
+                             final IndexFieldCache indexFieldCache,
                              final TaskContextFactory taskContextFactory,
                              final ExecutorProvider executorProvider) {
         this.wordListProvider = wordListProvider;
         this.config = config;
         this.solrSearchTaskHandler = solrSearchTaskHandler;
-        this.solrIndexCache = solrIndexCache;
+        this.solrIndexDocCache = solrIndexDocCache;
+        this.indexFieldCache = indexFieldCache;
         this.taskContextFactory = taskContextFactory;
         this.executor = executorProvider.get(THREAD_POOL);
     }
@@ -71,7 +74,7 @@ public class SolrSearchFactory {
         SearchProgressLog.increment(queryKey, SearchPhase.INDEX_SHARD_SEARCH_FACTORY_SEARCH);
 
         // Reload the index.
-        final CachedSolrIndex index = solrIndexCache.get(query.getDataSource());
+        final SolrIndexDoc index = solrIndexDocCache.get(query.getDataSource());
 
         // Make sure we have a search index.
         if (index == null) {
@@ -79,26 +82,8 @@ public class SolrSearchFactory {
         }
 
         // Create a map of index fields keyed by name.
-        final Map<String, SolrIndexField> indexFieldsMap = index.getFieldsMap();
-
-        final String[] storedFieldNames = new String[fieldIndex.size()];
-        for (int i = 0; i < storedFieldNames.length; i++) {
-            final String fieldName = fieldIndex.getField(i);
-            if (fieldName != null) {
-                final SolrIndexField indexField = indexFieldsMap.get(fieldName);
-                if (indexField != null && indexField.isStored()) {
-                    storedFieldNames[i] = fieldName;
-                }
-            }
-        }
-
-        // Get the stored fields that search is hoping to use.
-        if (storedFieldNames.length == 0) {
-            throw new SearchException("No stored fields have been requested");
-        }
-
-        // Create a map of index fields keyed by name.
-        final SearchExpressionQuery searchExpressionQuery = getQuery(expression, indexFieldsMap, dateTimeSettings);
+        final SearchExpressionQuery searchExpressionQuery =
+                getQuery(query.getDataSource(), expression, dateTimeSettings);
         final String queryString = searchExpressionQuery.getQuery().toString();
         final SolrQuery solrQuery = new SolrQuery(queryString);
         solrQuery.setRows(Integer.MAX_VALUE);
@@ -109,6 +94,7 @@ public class SolrSearchFactory {
                         .childContext(parentContext, "Search Index", taskContext -> {
                             solrSearchTaskHandler.search(
                                     parentContext,
+                                    query.getDataSource(),
                                     index,
                                     solrQuery,
                                     fieldIndex,
@@ -124,12 +110,13 @@ public class SolrSearchFactory {
                         }).run(), executor);
     }
 
-    private SearchExpressionQuery getQuery(final ExpressionOperator expression,
-                                           final Map<String, SolrIndexField> indexFieldsMap,
+    private SearchExpressionQuery getQuery(final DocRef indexDocRef,
+                                           final ExpressionOperator expression,
                                            final DateTimeSettings dateTimeSettings) {
         final SearchExpressionQueryBuilder builder = new SearchExpressionQueryBuilder(
+                indexDocRef,
+                indexFieldCache,
                 wordListProvider,
-                indexFieldsMap,
                 config.getMaxBooleanClauseCount(),
                 dateTimeSettings);
         final SearchExpressionQuery query = builder.buildQuery(expression);

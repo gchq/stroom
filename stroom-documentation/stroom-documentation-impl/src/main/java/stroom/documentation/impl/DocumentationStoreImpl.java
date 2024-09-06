@@ -1,9 +1,7 @@
 package stroom.documentation.impl;
 
-import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docref.StringMatch;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
@@ -26,6 +24,11 @@ import java.util.Set;
 @Singleton
 public class DocumentationStoreImpl implements DocumentationStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            DocumentationDoc.DOCUMENT_TYPE,
+            DocumentationDoc.DOCUMENT_TYPE,
+            DocumentationDoc.ICON);
     private final Store<DocumentationDoc> store;
 
     @Inject
@@ -77,11 +80,7 @@ public class DocumentationStoreImpl implements DocumentationStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.CONFIGURATION,
-                DocumentationDoc.DOCUMENT_TYPE,
-                DocumentationDoc.DOCUMENT_TYPE,
-                DocumentationDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -179,7 +178,7 @@ public class DocumentationStoreImpl implements DocumentationStore {
     }
 
     @Override
-    public List<DocContentMatch> findByContent(final StringMatch filter) {
-        return store.findByContent(filter);
+    public Map<String, String> getIndexableData(final DocRef docRef) {
+        return store.getIndexableData(docRef);
     }
 }

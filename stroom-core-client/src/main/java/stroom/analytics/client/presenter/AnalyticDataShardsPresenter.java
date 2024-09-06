@@ -22,12 +22,10 @@ import stroom.analytics.shared.AnalyticDataShard;
 import stroom.analytics.shared.AnalyticDataShardResource;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.GetAnalyticShardDataRequest;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.HasToolbar;
-import stroom.query.api.v2.Result;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.QueryResultTablePresenter;
 import stroom.query.client.presenter.QueryToolbarPresenter;
@@ -84,7 +82,7 @@ public class AnalyticDataShardsPresenter
         registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> update()));
         registerHandler(queryToolbarPresenter.addTimeRangeChangeHandler(e -> update()));
         registerHandler(analyticDataShardListPresenter.getSelectionModel().addSelectionHandler(e -> update()));
-        registerHandler(tablePresenter.addRangeChangeHandler(e -> update()));
+        registerHandler(tablePresenter.addRefreshRequestHandler(e -> update()));
     }
 
     private void update() {
@@ -103,8 +101,9 @@ public class AnalyticDataShardsPresenter
                             dateTimeSettingsFactory.getDateTimeSettings());
 
             queryToolbarPresenter.onSearching(true);
-            final Rest<Result> rest = restFactory.create();
-            rest
+            restFactory
+                    .create(ANALYTIC_DATA_SHARD_RESOURCE)
+                    .method(res -> res.getData(selected.getNode(), request))
                     .onSuccess(result -> {
                         tablePresenter.setData(result);
                         queryToolbarPresenter.onSearching(false);
@@ -113,8 +112,8 @@ public class AnalyticDataShardsPresenter
                         queryToolbarPresenter.onError(Collections.singletonList(t.getMessage()));
                         queryToolbarPresenter.onSearching(false);
                     })
-                    .call(ANALYTIC_DATA_SHARD_RESOURCE)
-                    .getData(selected.getNode(), request);
+                    .taskListener(this)
+                    .exec();
         }
     }
 

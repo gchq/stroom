@@ -19,10 +19,8 @@ package stroom.dictionary.impl;
 
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
-import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docref.StringMatch;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
@@ -32,7 +30,6 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
-import stroom.util.NullSafe;
 import stroom.util.shared.Message;
 import stroom.util.string.StringUtil;
 
@@ -50,6 +47,11 @@ import java.util.stream.Collectors;
 @Singleton
 class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            DictionaryDoc.DOCUMENT_TYPE,
+            DictionaryDoc.DOCUMENT_TYPE,
+            DictionaryDoc.ICON);
     private final Store<DictionaryDoc> store;
     // Split on unix or windows line ends
     private static final Pattern WORD_SPLIT_PATTERN = Pattern.compile("(\r?\n)+");
@@ -103,11 +105,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.CONFIGURATION,
-                DictionaryDoc.DOCUMENT_TYPE,
-                DictionaryDoc.DOCUMENT_TYPE,
-                DictionaryDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -216,8 +214,8 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     }
 
     @Override
-    public List<DocContentMatch> findByContent(final StringMatch filter) {
-        return store.findByContent(filter);
+    public Map<String, String> getIndexableData(final DocRef docRef) {
+        return store.getIndexableData(docRef);
     }
 
     @Override
@@ -232,15 +230,17 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
     @Override
     public String[] getWords(final DocRef dictionaryRef) {
+        // returns null is doc not found
         final String words = getCombinedData(dictionaryRef);
-
-        if (!NullSafe.isBlankString(words)) {
+        if (words == null) {
+            return null;
+        } else if (words.isBlank()) {
+            return new String[0];
+        } else {
             // Split by line break (`LF` or `CRLF`) and trim whitespace from each resulting line
             return StringUtil.splitToLines(words, true)
                     .toArray(String[]::new);
         }
-
-        return null;
     }
 
     private String doGetCombinedData(final DocRef docRef, final Set<DocRef> visited) {
@@ -254,7 +254,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
                 for (final DocRef ref : doc.getImports()) {
                     final String data = doGetCombinedData(ref, visited);
                     if (data != null && !data.isEmpty()) {
-                        if (sb.length() > 0) {
+                        if (!sb.isEmpty()) {
                             sb.append("\n");
                         }
                         sb.append(data);
@@ -262,7 +262,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
                 }
             }
             if (doc.getData() != null) {
-                if (sb.length() > 0) {
+                if (!sb.isEmpty()) {
                     sb.append("\n");
                 }
                 sb.append(doc.getData());

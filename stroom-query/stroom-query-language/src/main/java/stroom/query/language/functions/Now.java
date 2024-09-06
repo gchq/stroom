@@ -16,8 +16,6 @@
 
 package stroom.query.language.functions;
 
-import stroom.expression.api.ExpressionContext;
-
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = Now.NAME,

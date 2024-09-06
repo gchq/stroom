@@ -27,7 +27,7 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskProgressHandler;
 import stroom.util.EntityServiceExceptionUtil;
-import stroom.util.date.DateUtil;
+import stroom.util.NullSafe;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.EntityServiceException;
 
@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.function.Consumer;
 
 public class DataUploadTaskHandler {
@@ -91,10 +92,11 @@ public class DataUploadTaskHandler {
             }
 
             final String name = fileName.toUpperCase();
+            final Instant receivedTime = Instant.now();
 
             // Create an attribute map that will override all other attributes.
             final AttributeMap attributeMap = new AttributeMap(true);
-            if (metaData != null && metaData.trim().length() > 0) {
+            if (NullSafe.isNonBlankString(metaData)) {
                 try {
                     AttributeMapUtil.read(metaData.getBytes(StreamUtil.DEFAULT_CHARSET), attributeMap);
                 } catch (final IOException e) {
@@ -103,14 +105,13 @@ public class DataUploadTaskHandler {
             }
 
             if (effectiveMs != null) {
-                attributeMap.put(StandardHeaderArguments.EFFECTIVE_TIME,
-                        DateUtil.createNormalDateTimeString(effectiveMs));
+                attributeMap.putDateTime(StandardHeaderArguments.EFFECTIVE_TIME, effectiveMs);
             }
             attributeMap.put(StandardHeaderArguments.REMOTE_FILE, fileName);
             attributeMap.put(StandardHeaderArguments.FEED, feedName);
             attributeMap.put(StandardHeaderArguments.TYPE, typeName);
-            attributeMap.put(StandardHeaderArguments.RECEIVED_TIME,
-                    DateUtil.createNormalDateTimeString(System.currentTimeMillis()));
+            attributeMap.putDateTime(StandardHeaderArguments.RECEIVED_TIME, receivedTime);
+            attributeMap.putDateTime(StandardHeaderArguments.RECEIVED_TIME_HISTORY, receivedTime);
             attributeMap.put(StandardHeaderArguments.USER_AGENT, "STROOM-UI");
             attributeMap.put("UploadedBy", securityContext.getUserIdentityForAudit());
 

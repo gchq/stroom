@@ -11,14 +11,14 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class AnalyticResultStoreConfig extends AbstractResultStoreConfig implements IsStroomConfig {
 
     public AnalyticResultStoreConfig() {
-        super(10_000,
+        this(10_000,
                 true,
                 ByteSize.ofMebibytes(1),
                 ByteSize.ofGibibytes(1),
                 1000,
                 10_000,
                 500_000,
-                ResultStoreLmdbConfig.builder().localDir("analytic_store").build());
+                ResultStoreLmdbConfig.builder().localDir("lmdb/analytic_store").build());
     }
 
     @JsonCreator

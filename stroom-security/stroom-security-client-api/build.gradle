@@ -1,7 +1,0 @@
-ext.moduleName = 'stroom.security.client.api'
-
-dependencies {
-    implementation project(':stroom-util-shared')
-
-    implementation libs.gwt_user
-}

@@ -16,12 +16,13 @@
 
 package stroom.query.common.v2;
 
-import stroom.expression.api.ExpressionContext;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.language.functions.ChildData;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Generator;
 import stroom.query.language.functions.Val;
@@ -57,14 +58,13 @@ public class MapDataStore implements DataStore {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MapDataStore.class);
 
     private final String componentId;
-    private final Serialisers serialisers;
     private final Map<Key, ItemsImpl> childMap = new ConcurrentHashMap<>();
 
     private final ValueReferenceIndex valueReferenceIndex;
     private final List<Column> columns;
     private final CompiledColumns compiledColumns;
     private final CompiledColumn[] compiledColumnsArray;
-    private final CompiledSorter<ItemImpl>[] compiledSorters;
+    private final CompiledSorters compiledSorters;
     private final CompiledDepths compiledDepths;
     private final Sizes maxResults;
     private final AtomicLong totalResultCount = new AtomicLong();
@@ -75,30 +75,35 @@ public class MapDataStore implements DataStore {
     private final CompletionState completionState = new CompletionStateImpl();
     private final KeyFactory keyFactory;
     private final ErrorConsumer errorConsumer;
+    private final ResultStoreMapConfig resultStoreMapConfig;
+    private final DateTimeSettings dateTimeSettings;
 
     private volatile boolean hasEnoughData;
 
-    public MapDataStore(final Serialisers serialisers,
-                        final String componentId,
+    public MapDataStore(final String componentId,
                         final TableSettings tableSettings,
                         final ExpressionContext expressionContext,
                         final FieldIndex fieldIndex,
                         final Map<String, String> paramMap,
                         final DataStoreSettings dataStoreSettings,
-                        final ErrorConsumer errorConsumer) {
+                        final ErrorConsumer errorConsumer,
+                        final ResultStoreMapConfig resultStoreMapConfig) {
         this.componentId = componentId;
-        this.serialisers = serialisers;
         columns = tableSettings.getColumns();
+        this.dateTimeSettings = expressionContext == null
+                ? null
+                : expressionContext.getDateTimeSettings();
         this.compiledColumns = CompiledColumns.create(expressionContext, columns, fieldIndex, paramMap);
         valueReferenceIndex = compiledColumns.getValueReferenceIndex();
         this.compiledColumnsArray = compiledColumns.getCompiledColumns();
         final CompiledDepths compiledDepths = new CompiledDepths(this.compiledColumnsArray, tableSettings.showDetail());
-        this.compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), this.compiledColumnsArray);
+        this.compiledSorters = new CompiledSorters(compiledDepths, this.compiledColumnsArray);
         this.compiledDepths = compiledDepths;
         final KeyFactoryConfig keyFactoryConfig = new BasicKeyFactoryConfig();
         keyFactory = KeyFactoryFactory.create(keyFactoryConfig, compiledDepths);
         this.maxResults = dataStoreSettings.getMaxResults();
         this.errorConsumer = errorConsumer;
+        this.resultStoreMapConfig = resultStoreMapConfig;
 
         groupingFunctions = new GroupingFunction[compiledDepths.getMaxDepth() + 1];
         for (int depth = 0; depth <= compiledDepths.getMaxGroupDepth(); depth++) {
@@ -106,14 +111,7 @@ public class MapDataStore implements DataStore {
         }
 
         // Find out if we have any sorting.
-        boolean hasSort = false;
-        for (final CompiledSorter<ItemImpl> sorter : compiledSorters) {
-            if (sorter != null) {
-                hasSort = true;
-                break;
-            }
-        }
-        this.hasSort = hasSort;
+        this.hasSort = compiledSorters.hasSort();
     }
 
     /**
@@ -211,7 +209,7 @@ public class MapDataStore implements DataStore {
         totalResultCount.getAndIncrement();
 
         final GroupingFunction groupingFunction = groupingFunctions[depth];
-        final Function<Stream<ItemImpl>, Stream<ItemImpl>> sortingFunction = compiledSorters[depth];
+        final Function<Stream<ItemImpl>, Stream<ItemImpl>> sortingFunction = compiledSorters.get(depth);
 
         childMap.compute(parentKey, (k, v) -> {
             ItemsImpl result = v;
@@ -223,7 +221,8 @@ public class MapDataStore implements DataStore {
                         this,
                         groupingFunction,
                         sortingFunction,
-                        this::remove);
+                        this::remove,
+                        resultStoreMapConfig);
                 result.add(groupKey, storedValues);
                 resultCount.incrementAndGet();
 
@@ -265,12 +264,16 @@ public class MapDataStore implements DataStore {
     }
 
     @Override
-    public <R> void fetch(final OffsetRange range,
+    public <R> void fetch(final List<Column> columns,
+                          final OffsetRange range,
                           final OpenGroups openGroups,
                           final TimeFilter timeFilter,
                           final ItemMapper<R> mapper,
                           final Consumer<R> resultConsumer,
                           final Consumer<Long> totalRowCountConsumer) {
+        // Update our sort columns if needed.
+        compiledSorters.update(columns);
+
         final OffsetRange enforcedRange = Optional
                 .ofNullable(range)
                 .orElse(OffsetRange.UNBOUNDED);
@@ -310,7 +313,7 @@ public class MapDataStore implements DataStore {
             fetchState.totalRowCount++;
             if (!fetchState.reachedRowLimit) {
                 if (range.getOffset() <= fetchState.offset) {
-                    final R row = mapper.create(columns, item);
+                    final R row = mapper.create(item);
                     resultConsumer.accept(row);
                     fetchState.length++;
                     fetchState.reachedRowLimit = fetchState.length >= range.getLength();
@@ -446,13 +449,13 @@ public class MapDataStore implements DataStore {
     }
 
     @Override
-    public Serialisers getSerialisers() {
-        return serialisers;
+    public KeyFactory getKeyFactory() {
+        return keyFactory;
     }
 
     @Override
-    public KeyFactory getKeyFactory() {
-        return keyFactory;
+    public DateTimeSettings getDateTimeSettings() {
+        return dateTimeSettings;
     }
 
     private static class ValCache {
@@ -527,17 +530,11 @@ public class MapDataStore implements DataStore {
                   final MapDataStore dataStore,
                   final Function<Stream<ItemImpl>, Stream<ItemImpl>> groupingFunction,
                   final Function<Stream<ItemImpl>, Stream<ItemImpl>> sortingFunction,
-                  final Consumer<Key> removeHandler) {
+                  final Consumer<Key> removeHandler,
+                  final ResultStoreMapConfig resultStoreMapConfig) {
             this.depth = depth;
-
-            // FIXME : THIS IS HARD CODED AND WILL LIMIT RESULTS
-            trimmedSize = (int) Math.max(Math.min(limit, 500_000), 0);
-
-            // FIXME : HARD CODED.
-            int maxSize = this.trimmedSize * 2;
-            maxSize = Math.min(maxSize, 200_000);
-            this.maxSize = Math.max(maxSize, 1_000);
-
+            this.trimmedSize = (int) Math.max(Math.min(limit, resultStoreMapConfig.getTrimmedSizeLimit()), 0);
+            this.maxSize = Math.max(this.trimmedSize * 2, resultStoreMapConfig.getMinUntrimmedSize());
             this.dataStore = dataStore;
             this.groupingFunction = groupingFunction;
             this.sortingFunction = sortingFunction;
@@ -585,7 +582,7 @@ public class MapDataStore implements DataStore {
                     if (list.size() > trimmedSize) {
                         logTruncation();
                         while (list.size() > trimmedSize) {
-                            final ItemImpl lastItem = list.remove(list.size() - 1);
+                            final ItemImpl lastItem = list.removeLast();
 
                             // Tell the remove handler that we have removed an item.
                             removeHandler.accept(lastItem.getKey());

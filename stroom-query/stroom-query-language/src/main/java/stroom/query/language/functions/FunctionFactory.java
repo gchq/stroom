@@ -16,8 +16,6 @@
 
 package stroom.query.language.functions;
 
-import stroom.expression.api.ExpressionContext;
-
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ScanResult;
 import org.slf4j.Logger;

@@ -71,17 +71,9 @@ main() {
     --scan \
     --stacktrace \
     "${GWT_ARGS[@]}" \
-    stroom-ui:copyYarnBuild \
     stroom-app-gwt:gwtCompile \
     stroom-dashboard-gwt:gwtCompile
 
-  #echo -e "${GREEN}Do the yarn build${NC}"
-  #./gradlew \
-  #  "${GRADLE_ARGS[@]}" \
-  #  --scan \
-  #  --stacktrace \
-  #  stroom-ui:copyYarnBuild
-  #
   ## Compile the application GWT UI
   #echo -e "${GREEN}Do the GWT app compile${NC}"
   #./gradlew \
@@ -113,7 +105,6 @@ main() {
     copyFilesForStroomDockerBuild \
     copyFilesForProxyDockerBuild \
     -x test \
-    -x stroom-ui:copyYarnBuild \
     -x stroom-app-gwt:gwtCompile \
     -x stroom-dashboard-gwt:gwtCompile
 

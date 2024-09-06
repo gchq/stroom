@@ -24,10 +24,12 @@ public abstract class AbstractSelectionEventManager<T>
     public void onCellPreview(final CellPreviewEvent<T> event) {
         final NativeEvent nativeEvent = event.getNativeEvent();
         final String type = nativeEvent.getType();
-        if (BrowserEvents.KEYDOWN.equals(type)) {
-            final Action action = KeyBinding.getAction(nativeEvent);
+
+//        GWT.log("AbstractSelectionEventManager calling cellPreview test");
+        final Action action = KeyBinding.test(nativeEvent);
+        if (action != null) {
             final List<T> items = cellTable.getVisibleItems();
-            if (action != null && items.size() > 0) {
+            if (!items.isEmpty()) {
                 switch (action) {
                     case MOVE_UP:
                         onMoveUp(event);
@@ -82,7 +84,6 @@ public abstract class AbstractSelectionEventManager<T>
                         break;
                 }
             }
-
         } else if (BrowserEvents.MOUSEDOWN.equals(type)) {
             onMouseDown(event);
 
@@ -97,6 +98,8 @@ public abstract class AbstractSelectionEventManager<T>
     void handledEvent(CellPreviewEvent<
             ?> event) {
 //        event.setCanceled(true);
+//        GWT.log("Stopping propagation");
+        event.getNativeEvent().stopPropagation();
         event.getNativeEvent().preventDefault();
     }
 

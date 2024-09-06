@@ -16,17 +16,24 @@
 
 package stroom.query.language.functions;
 
+import stroom.util.concurrent.LazyValue;
+
+import java.time.Instant;
+import java.util.Comparator;
 import java.util.Objects;
-import java.util.Optional;
 
 public final class ValDate implements ValNumber {
 
-    public static final Type TYPE = Type.DATE;
-    private final long value;
-    private transient Optional<String> optionalString;
+    private static final Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
+            ValDate.class, ValComparators.AS_LONG_COMPARATOR);
 
-    private ValDate(final long value) {
-        this.value = value;
+    public static final Type TYPE = Type.DATE;
+    private final long epochMs;
+    private final transient LazyValue<String> lazyStringValue;
+
+    private ValDate(final long epochMs) {
+        this.epochMs = epochMs;
+        this.lazyStringValue = LazyValue.initialisedBy(this::deriveStringValue);
     }
 
     public static ValDate create(final long value) {
@@ -37,42 +44,51 @@ public final class ValDate implements ValNumber {
         return new ValDate(DateUtil.parseNormalDateTimeString(date));
     }
 
+    public static ValDate create(final Instant instant) {
+        return new ValDate(Objects.requireNonNull(instant).toEpochMilli());
+    }
+
     @Override
     public Integer toInteger() {
-        return (int) value;
+        return (int) epochMs;
     }
 
     @Override
     public Long toLong() {
-        return value;
+        return epochMs;
     }
 
     @Override
     public Float toFloat() {
-        return (float) value;
+        return (float) epochMs;
     }
 
     @Override
     public Double toDouble() {
-        return (double) value;
+        return (double) epochMs;
     }
 
     @Override
     public Boolean toBoolean() {
-        return value != 0;
+        return epochMs != 0;
     }
 
     @Override
     public String toString() {
-        if (optionalString == null) {
-            try {
-                optionalString = Optional.of(DateUtil.createNormalDateTimeString(value));
-            } catch (final RuntimeException e) {
-                optionalString = Optional.empty();
-            }
+        return lazyStringValue.getValueWithoutLocks();
+    }
 
+    @Override
+    public Number toNumber() {
+        return epochMs;
+    }
+
+    private String deriveStringValue() {
+        try {
+            return DateUtil.createNormalDateTimeString(epochMs);
+        } catch (final RuntimeException e) {
+            return null;
         }
-        return optionalString.orElse(null);
     }
 
     @Override
@@ -94,11 +110,21 @@ public final class ValDate implements ValNumber {
             return false;
         }
         final ValDate valDate = (ValDate) o;
-        return value == valDate.value;
+        return epochMs == valDate.epochMs;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(value);
+        return Objects.hash(epochMs);
+    }
+
+    @Override
+    public Comparator<Val> getDefaultComparator(final boolean isCaseSensitive) {
+        return COMPARATOR;
+    }
+
+    @Override
+    public Object unwrap() {
+        return epochMs;
     }
 }

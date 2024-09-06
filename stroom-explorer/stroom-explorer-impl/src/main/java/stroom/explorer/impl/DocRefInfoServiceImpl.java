@@ -4,7 +4,8 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.explorer.api.ExplorerActionHandler;
-import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.ExplorerConstants;
+import stroom.feed.shared.FeedDoc;
 import stroom.security.api.SecurityContext;
 import stroom.util.NullSafe;
 
@@ -75,14 +76,11 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
         } else {
             return securityContext.asProcessingUserResult(() -> {
                 if (type == null) {
+                    // No type so have to search all handlers
                     final List<DocRef> result = new ArrayList<>();
-                    for (final DocumentType documentType : explorerActionHandlers.getTypes()) {
-                        final ExplorerActionHandler handler =
-                                explorerActionHandlers.getHandler(documentType.toString());
-                        if (handler != null) {
-                            result.addAll(handler.findByName(nameFilter, allowWildCards));
-                        }
-                    }
+                    explorerActionHandlers.forEach((handlerType, handler) -> {
+                        result.addAll(handler.findByName(nameFilter, allowWildCards));
+                    });
                     return result;
                 } else {
                     final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);
@@ -124,6 +122,22 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
     @Override
     public DocRef decorate(final DocRef docRef, final boolean force) {
         Objects.requireNonNull(docRef);
+
+        // Special case for System that isn't in the db.
+        if (ExplorerConstants.SYSTEM_DOC_REF.getUuid().equals(docRef.getUuid())) {
+            return ExplorerConstants.SYSTEM_DOC_REF;
+        }
+
+        // Allow decorate by name alone if feed (special case).
+        if (FeedDoc.DOCUMENT_TYPE.equals(docRef.getType()) && docRef.getUuid() == null) {
+            final List<DocRef> list = findByName(docRef.getType(), docRef.getName(), false);
+            if (!NullSafe.isEmptyCollection(list)) {
+                return list.getFirst();
+            } else {
+                return null;
+            }
+        }
+
         Objects.requireNonNull(docRef.getUuid(), "DocRef UUID is not set.");
 
         // The passed docRef may have all the parts, but it may be from before a rename, so if force

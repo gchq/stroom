@@ -16,10 +16,8 @@
 
 package stroom.kafka.impl;
 
-import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docref.StringMatch;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
@@ -42,6 +40,11 @@ import java.util.Set;
 @Singleton
 class KafkaConfigStoreImpl implements KafkaConfigStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            KafkaConfigDoc.DOCUMENT_TYPE,
+            "Kafka Configuration",
+            KafkaConfigDoc.ICON);
     private final Store<KafkaConfigDoc> store;
     private final Provider<KafkaConfig> kafkaConfigProvider;
 
@@ -111,11 +114,7 @@ class KafkaConfigStoreImpl implements KafkaConfigStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.CONFIGURATION,
-                KafkaConfigDoc.DOCUMENT_TYPE,
-                "Kafka Configuration",
-                KafkaConfigDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -215,7 +214,7 @@ class KafkaConfigStoreImpl implements KafkaConfigStore {
     }
 
     @Override
-    public List<DocContentMatch> findByContent(final StringMatch filter) {
-        return store.findByContent(filter);
+    public Map<String, String> getIndexableData(final DocRef docRef) {
+        return store.getIndexableData(docRef);
     }
 }

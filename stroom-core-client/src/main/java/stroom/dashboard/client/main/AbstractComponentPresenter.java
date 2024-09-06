@@ -35,7 +35,8 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-public abstract class AbstractComponentPresenter<V extends View> extends MyPresenterWidget<V>
+public abstract class AbstractComponentPresenter<V extends View>
+        extends MyPresenterWidget<V>
         implements Component, HasDirtyHandlers {
 
     private final Provider<?> settingsPresenterProvider;
@@ -114,10 +115,11 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
             settingsPresenter.setComponents(components);
             settingsPresenter.read(componentConfig);
 
-            final PopupSize popupSize = PopupSize.resizable(550, 650);
+            final PopupSize popupSize = PopupSize.resizable(800, 650);
             ShowPopupEvent.builder(settingsPresenter)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
                     .popupSize(popupSize)
+                    .modal(true)
                     .caption("Settings")
                     .onShow(e -> settingsPresenter.focus())
                     .onHideRequest(e -> {
@@ -131,6 +133,8 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
                                 }
 
                                 e.hide();
+                            } else {
+                                e.reset();
                             }
                         } else {
                             e.hide();

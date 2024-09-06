@@ -27,7 +27,7 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
@@ -127,7 +127,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
     }
 
     private void hideSelf() {
-        HidePopupEvent.builder(this)
+        HidePopupRequestEvent.builder(this)
                 .fire();
     }
 

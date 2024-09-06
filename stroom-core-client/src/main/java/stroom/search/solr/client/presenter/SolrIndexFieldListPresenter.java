@@ -22,7 +22,6 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
@@ -57,6 +56,7 @@ public class SolrIndexFieldListPresenter extends DocumentEditPresenter<SolrIndex
 
     private static final SolrIndexResource SOLR_INDEX_RESOURCE = GWT.create(SolrIndexResource.class);
 
+    private final PagerView pagerView;
     private final MyDataGrid<SolrIndexField> dataGrid;
     private final MultiSelectionModelImpl<SolrIndexField> selectionModel;
     private final SolrIndexFieldEditPresenter indexFieldEditPresenter;
@@ -77,6 +77,7 @@ public class SolrIndexFieldListPresenter extends DocumentEditPresenter<SolrIndex
                                        final RestFactory restFactory,
                                        final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
+        this.pagerView = pagerView;
         this.indexFieldEditPresenter = indexFieldEditPresenter;
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
@@ -153,9 +154,9 @@ public class SolrIndexFieldListPresenter extends DocumentEditPresenter<SolrIndex
     }
 
     private void addColumns() {
-        addStringColumn("Name", 150, SolrIndexField::getFieldName);
-        addStringColumn("Use", row -> row.getFieldUse().getDisplayValue());
-        addStringColumn("Type", SolrIndexField::getFieldType);
+        addStringColumn("Name", 150, SolrIndexField::getFldName);
+        addStringColumn("Type", row -> row.getFldType().getDisplayValue());
+        addStringColumn("Field Type", SolrIndexField::getNativeType);
         addStringColumn("Default Value", SolrIndexField::getDefaultValue);
         addBooleanColumn("Stored", SolrIndexField::isStored);
         addBooleanColumn("Indexed", SolrIndexField::isIndexed);
@@ -205,22 +206,24 @@ public class SolrIndexFieldListPresenter extends DocumentEditPresenter<SolrIndex
     }
 
     private void onAdd() {
-        final Set<String> otherNames = fields.stream().map(SolrIndexField::getFieldName).collect(Collectors.toSet());
+        final Set<String> otherNames = fields.stream().map(SolrIndexField::getFldName).collect(Collectors.toSet());
 
         fetchFieldTypes(fieldTypes -> {
-            indexFieldEditPresenter.read(new SolrIndexField(), otherNames, fieldTypes);
+            indexFieldEditPresenter.read(SolrIndexField.builder().build(), otherNames, fieldTypes);
             indexFieldEditPresenter.show("New Field", e -> {
                 if (e.isOk()) {
-                    final SolrIndexField indexField = new SolrIndexField();
-                    if (indexFieldEditPresenter.write(indexField)) {
+                    final SolrIndexField indexField = indexFieldEditPresenter.write();
+                    if (indexField != null) {
                         fields.add(indexField);
-                        fields.sort(Comparator.comparing(SolrIndexField::getFieldName,
+                        fields.sort(Comparator.comparing(SolrIndexField::getFldName,
                                 String.CASE_INSENSITIVE_ORDER));
                         selectionModel.setSelected(indexField);
                         refresh();
 
                         e.hide();
                         DirtyEvent.fire(SolrIndexFieldListPresenter.this, true);
+                    } else {
+                        e.reset();
                     }
                 } else {
                     e.hide();
@@ -233,20 +236,20 @@ public class SolrIndexFieldListPresenter extends DocumentEditPresenter<SolrIndex
         final SolrIndexField existingField = selectionModel.getSelected();
         if (existingField != null) {
             final Set<String> otherNames = fields.stream()
-                    .map(SolrIndexField::getFieldName)
+                    .map(SolrIndexField::getFldName)
                     .collect(Collectors.toSet());
-            otherNames.remove(existingField.getFieldName());
+            otherNames.remove(existingField.getFldName());
 
             fetchFieldTypes(fieldTypes -> {
                 indexFieldEditPresenter.read(existingField, otherNames, fieldTypes);
                 indexFieldEditPresenter.show("Edit Field", e -> {
                     if (e.isOk()) {
-                        final SolrIndexField indexField = new SolrIndexField();
-                        if (indexFieldEditPresenter.write(indexField)) {
+                        final SolrIndexField indexField = indexFieldEditPresenter.write();
+                        if (indexField != null) {
                             if (!indexField.equals(existingField)) {
                                 fields.remove(existingField);
                                 fields.add(indexField);
-                                fields.sort(Comparator.comparing(SolrIndexField::getFieldName,
+                                fields.sort(Comparator.comparing(SolrIndexField::getFldName,
                                         String.CASE_INSENSITIVE_ORDER));
                                 selectionModel.setSelected(indexField);
                                 refresh();
@@ -256,6 +259,8 @@ public class SolrIndexFieldListPresenter extends DocumentEditPresenter<SolrIndex
                             } else {
                                 e.hide();
                             }
+                        } else {
+                            e.reset();
                         }
                     } else {
                         e.hide();
@@ -266,15 +271,16 @@ public class SolrIndexFieldListPresenter extends DocumentEditPresenter<SolrIndex
     }
 
     private void fetchFieldTypes(final Consumer<List<String>> consumer) {
-        final Rest<List<String>> rest = restFactory.create();
-        rest
+        restFactory
+                .create(SOLR_INDEX_RESOURCE)
+                .method(res -> res.fetchSolrTypes(index))
                 .onSuccess(consumer)
                 .onFailure(throwable -> AlertEvent.fireError(SolrIndexFieldListPresenter.this,
                         "Unable to connect to Solr please check connection",
                         throwable.getMessage(),
                         null))
-                .call(SOLR_INDEX_RESOURCE)
-                .fetchSolrTypes(index);
+                .taskListener(pagerView)
+                .exec();
     }
 
     private void onRemove() {
@@ -319,7 +325,7 @@ public class SolrIndexFieldListPresenter extends DocumentEditPresenter<SolrIndex
         this.index = document;
         if (document != null) {
             fields = document.getFields().stream()
-                    .sorted(Comparator.comparing(SolrIndexField::getFieldName, String.CASE_INSENSITIVE_ORDER))
+                    .sorted(Comparator.comparing(SolrIndexField::getFldName, String.CASE_INSENSITIVE_ORDER))
                     .collect(Collectors.toList());
 
             final SolrSynchState state = document.getSolrSynchState();

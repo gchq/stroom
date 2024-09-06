@@ -79,7 +79,7 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
             throw new RuntimeException("Trying to use editor before startEditor has been called.");
         }
         return getIdNative();
-	}
+    }
 
     /**
      * Get the editor's ID
@@ -356,7 +356,9 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
     public native void startEditor(final String theme) /*-{
 
         var element = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::divElement;
-        var editor = $wnd.ace.edit(element, {
+        var ace = $wnd.ace;
+        ace.config.$defaultOptions.renderer.theme.initialValue = "ace/theme/" + theme;
+        var editor = ace.edit(element, {
             theme: "ace/theme/" + theme,
         });
 
@@ -713,7 +715,12 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
      */
     public void addAnnotation(final int row, final int column, final String text, final AceAnnotationType type) {
         final AceAnnotation aceAnnotation = AceAnnotation.create(row, column, text, type.getName());
-//        GWT.log("Adding annotation of type " + type + " to row " + row);
+
+        // If you find the gutter markers not showing after uplifting the Ace version then grep
+        // for 'this.setAnnotations = function(annotations) {' in ace.js as we have customised it
+        // for stroom. You will need to compare it to an older version to get our custom code back
+
+//        GWT.log("Adding annotation of type " + type.getName() + " to row " + row + " with text: " + text);
         annotations.push(aceAnnotation);
     }
 
@@ -870,6 +877,8 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 	}-*/;
 
     public native void beautify() /*-{
+        // Relies on ace/beautify/beautify.js from https://cdnjs.com/libraries/js-beautify
+
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 
 		var source = editor.getSession().getValue();
@@ -966,6 +975,16 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
     public native void setFirstLineNumber(int lineNumber) /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 		editor.setOption("firstLineNumber", lineNumber);
+	}-*/;
+
+    /**
+     * Set the maximum number of lines
+     *
+     * @param maxLines the maximum number of lines in the editor
+     */
+    public native void setMaxLines(int maxLines) /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		editor.setOption("maxLines", maxLines);
 	}-*/;
 
     /**

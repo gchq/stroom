@@ -19,9 +19,8 @@ package stroom.search;
 
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
-import stroom.expression.api.ExpressionContext;
 import stroom.index.impl.IndexStore;
-import stroom.index.shared.IndexDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest;
@@ -33,6 +32,7 @@ import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.language.SearchRequestFactory;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.json.JsonUtil;
 
@@ -85,7 +85,7 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
             final ResultStoreManager searchResponseCreatorManager) {
 
         final DocRef indexRef = indexStore.list().get(0);
-        final IndexDoc index = indexStore.readDocument(indexRef);
+        final LuceneIndexDoc index = indexStore.readDocument(indexRef);
         assertThat(index).as("Index is null").isNotNull();
 
 //        final List<ResultRequest> resultRequests = new ArrayList<>(componentIds.size());

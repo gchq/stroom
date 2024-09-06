@@ -22,6 +22,7 @@ import stroom.widget.util.client.HtmlBuilder;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -31,6 +32,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.FocusUtil;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -82,8 +84,8 @@ public class QuickFilter extends FlowPanel
         add(clearButton);
         add(helpButton);
 
-        textBox.addKeyUpHandler(event -> onChange());
-        textBox.addKeyDownHandler(event -> onKeyDown(event));
+        textBox.addValueChangeHandler(event -> onChange());
+        textBox.addKeyDownHandler(this::onKeyDown);
         helpButton.addClickHandler(event -> showHelpPopup());
         clearButton.addClickHandler(event -> clear());
 
@@ -166,7 +168,16 @@ public class QuickFilter extends FlowPanel
         return handlerManager.addHandler(ValueChangeEvent.getType(), handler);
     }
 
+    public HandlerRegistration addKeyDownHandler(final KeyDownHandler handler) {
+        return textBox.addDomHandler(handler, KeyDownEvent.getType());
+    }
+
+    public void forceFocus() {
+        FocusUtil.forceFocus(this::focus);
+    }
+
     public void focus() {
+        textBox.selectAll();
         textBox.setFocus(true);
     }
 

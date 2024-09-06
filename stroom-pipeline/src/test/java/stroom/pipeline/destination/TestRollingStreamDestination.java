@@ -23,11 +23,14 @@ import stroom.data.store.mock.MockStore;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.mock.MockMetaService;
 import stroom.util.date.DateUtil;
-import stroom.util.scheduler.SimpleCron;
+import stroom.util.scheduler.CronTrigger;
+import stroom.util.scheduler.FrequencyTrigger;
+import stroom.util.shared.scheduler.CronExpressions;
 
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -37,12 +40,12 @@ class TestRollingStreamDestination {
 
     @Test
     void testFrequency() throws IOException {
-        final long time = DateUtil.parseNormalDateTimeString("2010-01-01T00:00:00.000Z");
+        final Instant time = DateUtil.parseNormalDateTimeStringToInstant("2010-01-01T00:00:00.000Z");
         final MetaProperties dataProperties = MetaProperties.builder().typeName(StreamTypeNames.EVENTS).build();
         final Target streamTarget = streamStore.openTarget(dataProperties);
         final StreamKey streamKey = new StreamKey("test", StreamTypeNames.EVENTS, false);
         final RollingStreamDestination rollingStreamDestination = new RollingStreamDestination(streamKey,
-                60000L,
+                new FrequencyTrigger(60000L),
                 null,
                 100,
                 time,
@@ -51,19 +54,19 @@ class TestRollingStreamDestination {
                 "test");
 
         assertThat(rollingStreamDestination.tryFlushAndRoll(false, time)).isFalse();
-        assertThat(rollingStreamDestination.tryFlushAndRoll(false, time + 60000)).isFalse();
-        assertThat(rollingStreamDestination.tryFlushAndRoll(false, time + 60001)).isTrue();
+        assertThat(rollingStreamDestination.tryFlushAndRoll(false, time.plusMillis(60000))).isFalse();
+        assertThat(rollingStreamDestination.tryFlushAndRoll(false, time.plusMillis(60001))).isTrue();
     }
 
     @Test
     void testSchedule() throws IOException {
-        final long time = DateUtil.parseNormalDateTimeString("2010-01-01T00:00:00.000Z");
+        final Instant time = DateUtil.parseNormalDateTimeStringToInstant("2010-01-01T00:00:00.000Z");
         final MetaProperties dataProperties = MetaProperties.builder().typeName(StreamTypeNames.EVENTS).build();
         final Target streamTarget = streamStore.openTarget(dataProperties);
         final StreamKey streamKey = new StreamKey("test", StreamTypeNames.EVENTS, false);
         final RollingStreamDestination rollingStreamDestination = new RollingStreamDestination(streamKey,
                 null,
-                SimpleCron.compile("* * *"),
+                new CronTrigger(CronExpressions.EVERY_MINUTE.getExpression()),
                 100,
                 time,
                 streamStore,
@@ -71,7 +74,7 @@ class TestRollingStreamDestination {
                 "test");
 
         assertThat(rollingStreamDestination.tryFlushAndRoll(false, time)).isFalse();
-        assertThat(rollingStreamDestination.tryFlushAndRoll(false, time + 60000)).isFalse();
-        assertThat(rollingStreamDestination.tryFlushAndRoll(false, time + 60001)).isTrue();
+        assertThat(rollingStreamDestination.tryFlushAndRoll(false, time.plusMillis(60000))).isFalse();
+        assertThat(rollingStreamDestination.tryFlushAndRoll(false, time.plusMillis(60001))).isTrue();
     }
 }

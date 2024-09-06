@@ -16,10 +16,17 @@
 
 package stroom.query.language.functions;
 
+import java.util.Comparator;
+
 public final class ValNull implements Val {
 
     public static final ValNull INSTANCE = new ValNull();
     public static final Type TYPE = Type.NULL;
+
+    // Only one instance of ValNull possible so all values are equal
+    private static final Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
+            ValNull.class,
+            (val1, val2) -> 0);
 
     private ValNull() {
         // Use instance only
@@ -76,5 +83,15 @@ public final class ValNull implements Val {
     @Override
     public int hashCode() {
         return 0;
+    }
+
+    @Override
+    public Comparator<Val> getDefaultComparator(final boolean isCaseSensitive) {
+        return COMPARATOR;
+    }
+
+    @Override
+    public Object unwrap() {
+        return null;
     }
 }

@@ -40,6 +40,8 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
     private boolean textDirty;
     private int firstLineNumber = 1;
     private boolean firstLineNumberDirty;
+    private int maxLines = 1;
+    private boolean maxLinesDirty;
     private List<Annotation> annotations;
     private boolean annotationsDirty;
     private List<Marker> markers;
@@ -48,7 +50,7 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
     private boolean readOnlyDirty;
     private AceEditorMode mode = AceEditorMode.XML;
     private boolean modeDirty = true;
-    private AceEditorTheme theme = AceEditorTheme.CHROME;
+    private AceEditorTheme theme = AceEditorTheme.TOMORROW_NIGHT;
     private boolean themeDirty = true;
     private boolean showGutter = true;
     private boolean showGutterDirty;
@@ -194,6 +196,19 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
         if (started && firstLineNumberDirty) {
             editor.setFirstLineNumber(firstLineNumber);
             firstLineNumberDirty = false;
+        }
+    }
+
+    public void setMaxLines(final int maxLines) {
+        maxLinesDirty = true;
+        this.maxLines = maxLines;
+        updateMaxLines();
+    }
+
+    private void updateMaxLines() {
+        if (started && maxLinesDirty) {
+            editor.setMaxLines(maxLines);
+            maxLinesDirty = false;
         }
     }
 

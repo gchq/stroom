@@ -3,9 +3,7 @@ package stroom.query.language.functions.ref;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class ValueReferenceIndex {
@@ -65,57 +63,44 @@ public class ValueReferenceIndex {
         return new StoredValues(new Object[list.size()]);
     }
 
-    public StoredValues read(final MyByteBufferInput input) {
-        final StoredValues storedValues = createStoredValues();
-        for (ValueReference<?> valueReference : list) {
-            valueReference.read(storedValues, input);
-        }
-        return storedValues;
-    }
-
-    public StoredValues read(final ByteBuffer byteBuffer) {
-        final ByteBuffer copy = byteBuffer.duplicate();
+    public StoredValues read(final DataReader reader) {
         try {
-            try (final MyByteBufferInput input = new MyByteBufferInput(byteBuffer)) {
-                return read(input);
+            final StoredValues storedValues = createStoredValues();
+            for (ValueReference<?> valueReference : list) {
+                valueReference.read(storedValues, reader);
             }
+            return storedValues;
         } catch (final RuntimeException e) {
-            final StringBuilder sb = new StringBuilder();
-            sb.append("Error reading value:\n");
-            sb.append(e.getClass().getSimpleName());
-            sb.append("\n");
-            sb.append(e.getMessage());
-            sb.append("\n");
-            sb.append("Byte Buffer:\n");
-
-            final byte[] bytes = new byte[copy.remaining()];
-            copy.get(bytes);
-
-            sb.append(Arrays.toString(bytes));
-            sb.append("\n");
-            sb.append("Value Reference Index:\n");
-            sb.append(this);
-            LOGGER.error(sb.toString(), e);
+            final String sb = "Error reading value:\n" +
+                    e.getClass().getSimpleName() +
+                    "\n" +
+                    e.getMessage() +
+                    "\n" +
+                    "Byte Buffer:\n" +
+                    reader.toString() +
+                    "\n" +
+                    "Value Reference Index:\n" +
+                    this;
+            LOGGER.error(sb, e);
 
             throw e;
         }
     }
 
-    public void write(final StoredValues storedValues, final MyByteBufferOutput output) {
+    public void write(final StoredValues storedValues, final DataWriter writer) {
         try {
             for (ValueReference<?> valueReference : list) {
-                valueReference.write(storedValues, output);
+                valueReference.write(storedValues, writer);
             }
         } catch (final RuntimeException e) {
-            final StringBuilder sb = new StringBuilder();
-            sb.append("Error writing value:\n");
-            sb.append(e.getClass().getSimpleName());
-            sb.append("\n");
-            sb.append(e.getMessage());
-            sb.append("\n");
-            sb.append("Value Reference Index:\n");
-            sb.append(this);
-            LOGGER.error(sb.toString(), e);
+            final String sb = "Error writing value:\n" +
+                    e.getClass().getSimpleName() +
+                    "\n" +
+                    e.getMessage() +
+                    "\n" +
+                    "Value Reference Index:\n" +
+                    this;
+            LOGGER.error(sb, e);
 
             throw e;
         }

@@ -12,6 +12,7 @@ import com.gwtplatform.mvp.client.View;
 
 public class DataPreviewTabPresenter extends ContentTabPresenter<DataPreviewTabView> {
 
+    public static final String TAB_TYPE = "DataPreview";
     private final DataPresenter dataPresenter;
     private DataPreviewKey dataPreviewKey;
 
@@ -45,6 +46,15 @@ public class DataPreviewTabPresenter extends ContentTabPresenter<DataPreviewTabV
         dataPreviewKey = new DataPreviewKey(sourceLocation);
         dataPresenter.fetchData(sourceLocation);
     }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface DataPreviewTabView extends View {
 

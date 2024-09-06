@@ -143,6 +143,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
             // to complete so all task creation is encapsulated by this lock
             LOGGER.debug("Locking cluster to create tasks");
             clusterLockService.tryLock(LOCK_NAME, () -> {
+
                 final LongAdder totalTasksCreated = new LongAdder();
                 final TaskContext taskContext = taskContextFactory.current();
                 createNewTasks(taskContext, totalTasksCreated);
@@ -167,10 +168,6 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                 " filters");
 
         try {
-            // We need to create enough tasks to keep the queue full, so we need to either over create or create as
-            // many as the queue has capacity.
-            final int tasksToCreatePerFilter =
-                    Math.max(processorConfig.getTasksToCreate(), processorConfig.getQueueSize());
             final LinkedBlockingQueue<ProcessorFilter> filterQueue = new LinkedBlockingQueue<>(filters);
             final AtomicInteger filterCount = new AtomicInteger();
 
@@ -182,17 +179,18 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                 futures[i] = CompletableFuture.runAsync(() -> {
                     boolean run = true;
                     while (run) {
-                        final int remaining = tasksToCreatePerFilter - totalTasksCreated.intValue();
+                        final int remaining = processorConfig.getTasksToCreate() - totalTasksCreated.intValue();
                         final ProcessorFilter filter = filterQueue.poll();
                         if (remaining > 0 && filter != null && !Thread.currentThread().isInterrupted()) {
                             try {
-                                createTasksForFilter(parentTaskContext,
-                                        totalTasksCreated,
+                                createTasksForFilter(
+                                        parentTaskContext,
                                         filters,
                                         progressMonitor,
                                         filterCount,
+                                        filter,
                                         remaining,
-                                        filter);
+                                        totalTasksCreated);
                             } catch (final RuntimeException e) {
                                 LOGGER.error(e::getMessage, e);
                             }
@@ -216,12 +214,12 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
     }
 
     private void createTasksForFilter(final TaskContext parentTaskContext,
-                                      final LongAdder totalTasksCreated,
                                       final List<ProcessorFilter> filters,
                                       final ProgressMonitor progressMonitor,
                                       final AtomicInteger filterCount,
+                                      final ProcessorFilter filter,
                                       final int remaining,
-                                      final ProcessorFilter filter) {
+                                      final LongAdder totalTasksCreated) {
         // Set the current user to be the one who created the filter so that only streams that
         // the user has access to are processed.
         final UserIdentity ownerIdentity = getFilterOwnerIdentity(filter);
@@ -249,7 +247,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
 
     private UserIdentity getFilterOwnerIdentity(final ProcessorFilter filter) {
         try {
-            return securityContext.createIdentityByUserUuid(securityContext.getDocumentOwnerUuid(
+            return securityContext.getIdentityByUserUuid(securityContext.getDocumentOwnerUuid(
                     filter.asDocRef()));
         } catch (final RuntimeException e) {
             throw new RuntimeException(
@@ -260,7 +258,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
     public void createTasksForFilter(final TaskContext taskContext,
                                      final ProcessorFilter filter,
                                      final ProgressMonitor progressMonitor,
-                                     final int tasksToCreatePerFilter,
+                                     final int remaining,
                                      final LongAdder totalTasksCreated) {
         try {
             // The filter might have been deleted since we found it.
@@ -286,7 +284,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                 taskContext,
                                 loadedFilter,
                                 progressMonitor,
-                                tasksToCreatePerFilter,
+                                remaining,
                                 totalTasksCreated);
                     }
                 }
@@ -303,7 +301,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
     private void doCreateTasksForFilter(final TaskContext taskContext,
                                         final ProcessorFilter filter,
                                         final ProgressMonitor progressMonitor,
-                                        final int tasksToCreatePerFilter,
+                                        final int remaining,
                                         final LongAdder totalTasksCreated) {
         // Don't try and create tasks for this filter if we didn't manage to create any last time and not much time has
         // passed since the last attempt.
@@ -315,12 +313,13 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                         .plus(processorConfigProvider.get().getSkipNonProducingFiltersDuration())
                         .isBefore(Instant.now())) {
             final int currentCreatedTasks = processorTaskDao.countTasksForFilter(filter.getId(), TaskStatus.CREATED);
-            int maxTasks;
-            if (filter.isProcessingTaskCountBounded()) {
+            totalTasksCreated.add(currentCreatedTasks);
+
+            int maxTasks = remaining - currentCreatedTasks;
+            if (filter.isProcessingTaskCountBounded() &&
+                    !processorConfigProvider.get().isCreateTasksBeyondProcessLimit()) {
                 // The max concurrent tasks for this filter is bounded, so only create tasks up to that limit
-                maxTasks = Math.min(tasksToCreatePerFilter, filter.getMaxProcessingTasks()) - currentCreatedTasks;
-            } else {
-                maxTasks = tasksToCreatePerFilter - currentCreatedTasks;
+                maxTasks = Math.min(remaining, filter.getMaxProcessingTasks()) - currentCreatedTasks;
             }
 
             // Skip filters that already have enough tasks.
@@ -677,32 +676,32 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         if (reprocess) {
             // Don't select deleted streams.
             final ExpressionOperator statusExpression = ExpressionOperator.builder().op(Op.OR)
-                    .addTerm(MetaFields.PARENT_STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
-                    .addTerm(MetaFields.PARENT_STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
+                    .addTextTerm(MetaFields.PARENT_STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                    .addTextTerm(MetaFields.PARENT_STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
                     .build();
 
             ExpressionOperator.Builder builder = ExpressionOperator.builder()
                     .addOperator(expression)
-                    .addTerm(MetaFields.PARENT_ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
+                    .addIdTerm(MetaFields.PARENT_ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
 
             if (pipelineDocRef != null) {
-                builder.addTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef);
+                builder.addDocRefTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef);
             }
 
             if (minMetaCreateTimeMs != null) {
-                builder = builder.addTerm(MetaFields.PARENT_CREATE_TIME,
+                builder = builder.addDateTerm(MetaFields.PARENT_CREATE_TIME,
                         Condition.GREATER_THAN_OR_EQUAL_TO,
                         DateUtil.createNormalDateTimeString(minMetaCreateTimeMs));
             }
             if (maxMetaCreateTimeMs != null) {
-                builder = builder.addTerm(MetaFields.PARENT_CREATE_TIME,
+                builder = builder.addDateTerm(MetaFields.PARENT_CREATE_TIME,
                         Condition.LESS_THAN_OR_EQUAL_TO,
                         DateUtil.createNormalDateTimeString(maxMetaCreateTimeMs));
             }
             builder = builder.addOperator(statusExpression);
 
             final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(builder.build());
-            findMetaCriteria.setSort(MetaFields.PARENT_ID.getName(), false, false);
+            findMetaCriteria.setSort(MetaFields.PARENT_ID.getFldName(), false, false);
             findMetaCriteria.obtainPageRequest().setLength(length);
 
             return metaService.findReprocess(findMetaCriteria).getValues();
@@ -710,28 +709,28 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         } else {
             // Don't select deleted streams.
             final ExpressionOperator statusExpression = ExpressionOperator.builder().op(Op.OR)
-                    .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
-                    .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
+                    .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                    .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
                     .build();
 
             ExpressionOperator.Builder builder = ExpressionOperator.builder()
                     .addOperator(expression)
-                    .addTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
+                    .addIdTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
 
             if (minMetaCreateTimeMs != null) {
-                builder = builder.addTerm(MetaFields.CREATE_TIME,
+                builder = builder.addDateTerm(MetaFields.CREATE_TIME,
                         Condition.GREATER_THAN_OR_EQUAL_TO,
                         DateUtil.createNormalDateTimeString(minMetaCreateTimeMs));
             }
             if (maxMetaCreateTimeMs != null) {
-                builder = builder.addTerm(MetaFields.CREATE_TIME,
+                builder = builder.addDateTerm(MetaFields.CREATE_TIME,
                         Condition.LESS_THAN_OR_EQUAL_TO,
                         DateUtil.createNormalDateTimeString(maxMetaCreateTimeMs));
             }
             builder = builder.addOperator(statusExpression);
 
             final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(builder.build());
-            findMetaCriteria.setSort(MetaFields.ID.getName(), false, false);
+            findMetaCriteria.setSort(MetaFields.ID.getFldName(), false, false);
             findMetaCriteria.obtainPageRequest().setLength(length);
 
             return metaService.find(findMetaCriteria).getValues();

@@ -16,12 +16,16 @@
 
 package stroom.analytics.rule.impl;
 
+import stroom.analytics.api.AnalyticsService;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleResource;
+import stroom.analytics.shared.NotificationEmailDestination;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.string.StringWrapper;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -31,12 +35,15 @@ class AnalyticRuleResourceImpl implements AnalyticRuleResource {
 
     private final Provider<AnalyticRuleStore> analyticRuleStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
+    private final Provider<AnalyticsService> analyticsServiceProvider;
 
     @Inject
     AnalyticRuleResourceImpl(final Provider<AnalyticRuleStore> analyticRuleStoreProvider,
-                             final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
+                             final Provider<DocumentResourceHelper> documentResourceHelperProvider,
+                             final Provider<AnalyticsService> analyticsServiceProvider) {
         this.analyticRuleStoreProvider = analyticRuleStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
+        this.analyticsServiceProvider = analyticsServiceProvider;
     }
 
     @Override
@@ -50,6 +57,18 @@ class AnalyticRuleResourceImpl implements AnalyticRuleResource {
             throw new EntityServiceException("The document UUID must match the update UUID");
         }
         return documentResourceHelperProvider.get().update(analyticRuleStoreProvider.get(), doc);
+    }
+
+    @AutoLogged(OperationType.UNLOGGED) // Just a dry run
+    @Override
+    public StringWrapper testTemplate(final StringWrapper template) {
+        return StringWrapper.wrap(analyticsServiceProvider.get().testTemplate(template.getString()));
+    }
+
+    @AutoLogged(OperationType.UNLOGGED) // Just a dry run
+    @Override
+    public void sendTestEmail(final NotificationEmailDestination emailDestination) {
+        analyticsServiceProvider.get().sendTestEmail(emailDestination);
     }
 
     private DocRef getDocRef(final String uuid) {

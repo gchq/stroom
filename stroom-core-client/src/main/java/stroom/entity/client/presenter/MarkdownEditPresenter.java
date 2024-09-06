@@ -30,11 +30,13 @@ import stroom.preferences.client.UserPreferencesManager;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.util.client.MouseUtil;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
@@ -65,7 +67,7 @@ public class MarkdownEditPresenter
     private final MarkdownConverter markdownConverter;
     private boolean reading;
     private boolean readOnly = true;
-    private boolean editMode;
+    private boolean editMode = false;
 
     @Inject
     public MarkdownEditPresenter(final EventBus eventBus,
@@ -84,7 +86,7 @@ public class MarkdownEditPresenter
 
         iFramePresenter.setId(MARKDOWN_FRAME_ID);
         iFramePresenter.setSandboxEnabled(true, SandboxOption.ALLOW_POPUPS);
-        view.setView(iFramePresenter.getView());
+//        view.setView(iFramePresenter.getView());
 
         editModeButton = new InlineSvgToggleButton();
         editModeButton.setSvg(SvgImage.EDIT);
@@ -114,22 +116,30 @@ public class MarkdownEditPresenter
         registerHandler(markdownPreviewPresenter.addFormatHandler(event -> setDirty(true)));
 
         registerHandler(editModeButton.addClickHandler(e -> {
-            if (!readOnly) {
-                this.editMode = !this.editMode;
-                if (editMode) {
-                    getView().setView(markdownPreviewPresenter.getView());
-                } else {
-                    // Raw markdown likely been changed to update the iframe content
-                    updateMarkdownOnIFramePresenter();
-                    getView().setView(iFramePresenter.getView());
-                }
-            }
+            toggleEditMode();
         }));
         registerHandler(helpButton.addClickHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
                 showHelp();
             }
         }));
+        setEditMode(false);
+    }
+
+    private void toggleEditMode() {
+        setEditMode(!this.editMode);
+    }
+
+    private void setEditMode(final boolean isInEditMode) {
+        if (!readOnly && isInEditMode) {
+            getView().setView(markdownPreviewPresenter.getView());
+            this.editMode = true;
+        } else {
+            updateMarkdownOnIFramePresenter();
+            getView().setView(iFramePresenter.getView());
+            this.editMode = false;
+        }
+        editModeButton.setState(this.editMode);
     }
 
     private void setDirty(final boolean dirty) {
@@ -153,30 +163,55 @@ public class MarkdownEditPresenter
         }
 
         reading = true;
+
         if (!Objects.equals(markdownPreviewPresenter.getText(), rawMarkdown)) {
             markdownPreviewPresenter.setText(rawMarkdown);
         }
+
+        updateEditState();
+
+//        // No content do default to edit mode
+//        if (GwtNullSafe.isBlankString(rawMarkdown)) {
+//            GWT.log("setText, editMode: true");
+//            setEditMode(true);
+////            editModeButton.setState(true);
+//        } else {
+//            GWT.log("setText, editMode: false");
+//            setEditMode(false);
+////            editModeButton.setState(false);
+//        }
         reading = false;
         updateMarkdownOnIFramePresenter();
     }
 
+    private void updateEditState() {
+        final String rawMarkdown = markdownPreviewPresenter.getText();
+        // No content do default to edit mode
+        if (GwtNullSafe.isBlankString(rawMarkdown) && !readOnly) {
+            GWT.log("setText, editMode: true");
+            setEditMode(true);
+//            editModeButton.setState(true);
+        } else {
+            GWT.log("setText, editMode: false");
+            setEditMode(false);
+//            editModeButton.setState(false);
+        }
+    }
+
     private void showHelp() {
-        uiConfigCache.get()
-                .onSuccess(result -> {
-                    final String helpUrl = result.getHelpUrlDocumentation();
-                    if (helpUrl != null && helpUrl.trim().length() > 0) {
-                        Window.open(helpUrl, "_blank", "");
-                    } else {
-                        AlertEvent.fireError(
-                                MarkdownEditPresenter.this,
-                                "Help is not configured!",
-                                null);
-                    }
-                })
-                .onFailure(caught -> AlertEvent.fireError(
-                        MarkdownEditPresenter.this,
-                        caught.getMessage(),
-                        null));
+        uiConfigCache.get(result -> {
+            if (result != null) {
+                final String helpUrl = result.getHelpUrlDocumentation();
+                if (!GwtNullSafe.isBlankString(helpUrl)) {
+                    Window.open(helpUrl, "_blank", "");
+                } else {
+                    AlertEvent.fireError(
+                            MarkdownEditPresenter.this,
+                            "Help is not configured!",
+                            null);
+                }
+            }
+        }, this);
     }
 
     private void updateMarkdownOnIFramePresenter() {
@@ -187,8 +222,10 @@ public class MarkdownEditPresenter
 
     public void setReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
+        // Ensure we are not in edit mode in case this is called after setText
+//        setEditMode(this.editMode);
+        updateEditState();
     }
-
 
     // --------------------------------------------------------------------------------
 

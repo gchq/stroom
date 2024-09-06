@@ -17,9 +17,8 @@
 
 package stroom.analytics.impl;
 
-import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.FieldInfo;
-import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindFieldCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.explorer.api.HasDataSourceDocRefs;
 import stroom.expression.api.DateTimeSettings;
@@ -65,7 +64,7 @@ public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDoc
     }
 
     @Override
-    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+    public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
         return FieldInfoResultPageBuilder.builder(criteria).addAll(AnalyticFields.getFields()).build();
     }
 
@@ -80,7 +79,7 @@ public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDoc
     }
 
     @Override
-    public DateField getTimeField(final DocRef docRef) {
+    public QueryField getTimeField(final DocRef docRef) {
         return AnalyticFields.TIME_FIELD;
     }
 

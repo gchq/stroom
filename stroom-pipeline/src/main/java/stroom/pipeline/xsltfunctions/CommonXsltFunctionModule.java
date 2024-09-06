@@ -35,6 +35,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(HashFunction.class);
         bindFunction(HexToDecFunction.class);
         bindFunction(HexToOctFunction.class);
+        bindFunction(HexToStringFunction.class);
         bindFunction(HostAddressFunction.class);
         bindFunction(HostNameFunction.class);
         bindFunction(HttpCallFunction.class);
@@ -45,6 +46,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(LogFunction.class);
         bindFunction(MetaFunction.class);
         bindFunction(MetaKeysFunction.class);
+        bindFunction(MetaAttributesFunction.class);
         bindFunction(NumericIPFunction.class);
         bindFunction(IPInCidrFunction.class);
         bindFunction(ParseUriFunction.class);
@@ -304,6 +306,23 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         }
     }
 
+    private static class HexToStringFunction extends StroomExtensionFunctionDefinition<HexToString> {
+
+        @Inject
+        HexToStringFunction(final Provider<HexToString> functionCallProvider) {
+            super(
+                    HexToString.FUNCTION_NAME,
+                    2,
+                    2,
+                    new SequenceType[]{
+                            SequenceType.SINGLE_STRING,
+                            SequenceType.SINGLE_STRING
+                    },
+                    SequenceType.OPTIONAL_STRING,
+                    functionCallProvider);
+        }
+    }
+
     private static class HostAddressFunction extends StroomExtensionFunctionDefinition<HostAddress> {
 
         @Inject
@@ -450,6 +469,20 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
                     0,
                     new SequenceType[]{},
                     ArrayItemType.SINGLE_ARRAY,
+                    functionCallProvider);
+        }
+    }
+
+    private static class MetaAttributesFunction extends StroomExtensionFunctionDefinition<MetaAttribute> {
+
+        @Inject
+        MetaAttributesFunction(final Provider<MetaAttribute> functionCallProvider) {
+            super(
+                    "meta-attribute",
+                    1,
+                    1,
+                    new SequenceType[]{SequenceType.SINGLE_STRING},
+                    SequenceType.OPTIONAL_STRING,
                     functionCallProvider);
         }
     }

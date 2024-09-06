@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+
 public class Regex extends Expression implements ExecutionProfiler, Match {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Regex.class);
@@ -57,7 +58,7 @@ public class Regex extends Expression implements ExecutionProfiler, Match {
         if (LOGGER.isDebugEnabled()) {
             totalExecutionCount++;
             execStartTime = System.currentTimeMillis();
-            if (matcher.find(0)) {
+            if (findNextMatch()) {
                 totalExecutionTime += System.currentTimeMillis() - execStartTime;
                 execStartTime = -1;
                 return this;
@@ -66,7 +67,7 @@ public class Regex extends Expression implements ExecutionProfiler, Match {
                 execStartTime = -1;
             }
         } else {
-            if (matcher.find(0)) {
+            if (findNextMatch()) {
                 return this;
             }
         }
@@ -139,6 +140,14 @@ public class Regex extends Expression implements ExecutionProfiler, Match {
             return buffer.unsafeCopy();
         } else {
             return buffer.subSequence(start, len);
+        }
+    }
+
+    private boolean findNextMatch() {
+        try {
+            return matcher.find(0);
+        } catch (StackOverflowError soe) {
+            throw new ComplexRegexException(matcher);
         }
     }
 }

@@ -4,8 +4,11 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.importexport.client.presenter.DependenciesTabPresenter.DependenciesTabView;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.TaskListener;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.inject.Inject;
@@ -17,6 +20,7 @@ public class DependenciesTabPresenter
         extends ContentTabPresenter<DependenciesTabView>
         implements DependenciesUiHandlers {
 
+    public static final String TAB_TYPE = "Dependencies";
     public static final String LIST = "LIST";
 
     private final DependenciesPresenter dependenciesPresenter;
@@ -31,12 +35,19 @@ public class DependenciesTabPresenter
         view.setUiHandlers(this);
         setInSlot(LIST, dependenciesPresenter);
 
-        uiConfigCache.get()
-                .onSuccess(uiConfig ->
-                        view.setHelpTooltipText(QuickFilterTooltipUtil.createTooltip(
-                                "Dependencies Quick Filter Syntax",
-                                DependencyCriteria.FIELD_DEFINITIONS,
-                                uiConfig.getHelpUrlQuickFilter())));
+        uiConfigCache.get(uiConfig -> {
+            if (uiConfig != null) {
+                view.setHelpTooltipText(QuickFilterTooltipUtil.createTooltip(
+                        "Dependencies Quick Filter Syntax",
+                        DependencyCriteria.FIELD_DEFINITIONS,
+                        uiConfig.getHelpUrlQuickFilter()));
+            }
+        }, this);
+    }
+
+    @Override
+    protected void onBind() {
+        getView().focusFilter();
     }
 
     @Override
@@ -51,7 +62,7 @@ public class DependenciesTabPresenter
 
     @Override
     public void changeQuickFilter(final String name) {
-        if (name.length() > 0) {
+        if (GwtNullSafe.isNonEmptyString(name)) {
             dependenciesPresenter.setFilterInput(name);
         } else {
             dependenciesPresenter.clearFilterInput();
@@ -63,10 +74,35 @@ public class DependenciesTabPresenter
         getView().setQuickFilterText(text);
     }
 
+    @Override
+    public String getType() {
+        return TAB_TYPE;
+    }
+
+    @Override
+    public boolean handleKeyAction(final Action action) {
+        if (Action.FOCUS_FILTER == action) {
+            getView().focusFilter();
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public void setTaskListener(final TaskListener taskListener) {
+        super.setTaskListener(taskListener);
+        dependenciesPresenter.setTaskListener(taskListener);
+    }
+
+    // --------------------------------------------------------------------------------
+
+
     public interface DependenciesTabView extends View, HasUiHandlers<DependenciesUiHandlers> {
 
         void setHelpTooltipText(final SafeHtml helpTooltipText);
 
         void setQuickFilterText(final String text);
+
+        void focusFilter();
     }
 }

@@ -52,7 +52,7 @@ public class DocResolver {
 
         // Try by name.
         final List<DocRef> docRefs = docRefInfoService.findByName(type, name, false);
-        if (docRefs.size() == 0) {
+        if (docRefs.isEmpty()) {
             throw new RuntimeException(type + " \"" + name + "\" not found");
         } else if (docRefs.size() > 1) {
             throw new RuntimeException("Multiple " +
@@ -61,7 +61,7 @@ public class DocResolver {
                     name +
                     "\"");
         }
-        return docRefs.get(0);
+        return docRefs.getFirst();
     }
 
     private DocRef getDataSourceRefFromUuid(final String uuid) {
@@ -75,7 +75,7 @@ public class DocResolver {
                         new RuntimeException("Data source not found with uuid \"" + uuid + "\""));
 
         dataSourceProviderRegistry.getDataSourceProvider(
-                docRef.getType())
+                        docRef.getType())
                 .orElseThrow(() -> new RuntimeException(
                         "No datasource provider found for type '" + docRef.getType() + "'"));
 
@@ -88,13 +88,15 @@ public class DocResolver {
         final List<DocRef> docRefs = dataSourceProviderRegistry
                 .list()
                 .stream()
-                .filter(docRef -> docRef.getName().equals(name))
+                .filter(docRef -> docRef != null && docRef.getName() != null && docRef.getName().equals(name))
                 .toList();
         if (docRefs.isEmpty()) {
-            throw new RuntimeException("Data source \"" + name + "\" not found");
+            throw new RuntimeException("Data source \"" +
+                    name +
+                    "\" not found. You may not have permission to use it.");
         } else if (docRefs.size() > 1) {
             throw new RuntimeException("Multiple data sources found for \"" + name + "\"");
         }
-        return docRefs.get(0);
+        return docRefs.getFirst();
     }
 }

@@ -31,6 +31,7 @@ import stroom.explorer.shared.PermissionInheritance;
 import stroom.feed.api.FeedStore;
 import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaDataCriteria;
+import stroom.meta.api.EffectiveMetaSet;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.impl.MetaValueConfig;
@@ -126,7 +127,6 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
     @AfterEach
     void unsetProperties() {
         clearConfigValueMapper();
-//        metaValueConfig.setAddAsync(true);
     }
 
     /**
@@ -143,13 +143,13 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
     @Test
     void testBasic() throws IOException {
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.CREATE_TIME, Condition.BETWEEN, createYearPeriod(2014))
-                .addTerm(MetaFields.EFFECTIVE_TIME, Condition.BETWEEN, createYearPeriod(2014))
-                .addTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
-                .addTerm(MetaFields.PARENT_ID, Condition.EQUALS, 1)
-                .addTerm(MetaFields.ID, Condition.EQUALS, 1)
-                .addTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addDateTerm(MetaFields.CREATE_TIME, Condition.BETWEEN, createYearPeriod(2014))
+                .addDateTerm(MetaFields.EFFECTIVE_TIME, Condition.BETWEEN, createYearPeriod(2014))
+                .addTextTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
+                .addIdTerm(MetaFields.PARENT_ID, Condition.EQUALS, 1)
+                .addIdTerm(MetaFields.ID, Condition.EQUALS, 1)
+                .addTextTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         testCriteria(new FindMetaCriteria(expression), 0);
     }
@@ -168,10 +168,10 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
     void testFeedFindAll() throws IOException {
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addOperator(ExpressionOperator.builder().op(Op.OR)
-                        .addTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
-                        .addTerm(MetaFields.FEED, Condition.EQUALS, FEED2)
+                        .addTextTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
+                        .addTextTerm(MetaFields.FEED, Condition.EQUALS, FEED2)
                         .build())
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         testCriteria(new FindMetaCriteria(expression), 2);
     }
@@ -180,24 +180,24 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
     void testFeedFindSome() throws IOException {
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addOperator(ExpressionOperator.builder().op(Op.OR)
-                        .addTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
-                        .addTerm(MetaFields.FEED, Condition.EQUALS, FEED2)
+                        .addTextTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
+                        .addTextTerm(MetaFields.FEED, Condition.EQUALS, FEED2)
                         .build())
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(expression);
-        findMetaCriteria.setPageRequest(new PageRequest(0, 1));
+        findMetaCriteria.setPageRequest(PageRequest.oneRow());
         testCriteria(findMetaCriteria, 1);
     }
 
     @Test
     void testFeedFindNone() throws IOException {
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
+                .addTextTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
                 .addOperator(ExpressionOperator.builder().op(Op.NOT)
-                        .addTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
+                        .addTextTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
                         .build())
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         testCriteria(new FindMetaCriteria(expression), 0);
     }
@@ -205,8 +205,8 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
     @Test
     void testFeedFindOne() throws IOException {
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.FEED, Condition.EQUALS, FEED2)
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTextTerm(MetaFields.FEED, Condition.EQUALS, FEED2)
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         testCriteria(new FindMetaCriteria(expression), 1);
     }
@@ -214,7 +214,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
     @Test
     void testFolder() throws Exception {
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.FEED, Condition.IN_FOLDER, folder2)
+                .addDocRefTerm(MetaFields.FEED, Condition.IN_FOLDER, folder2)
                 .build();
         testCriteria(new FindMetaCriteria(expression), 2);
     }
@@ -331,26 +331,26 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
     @Test
     void testFindWithAllCriteria() {
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.CREATE_TIME,
+                .addDateTerm(MetaFields.CREATE_TIME,
                         Condition.BETWEEN,
                         createToDateWithOffset(System.currentTimeMillis(), 1))
-                .addTerm(MetaFields.EFFECTIVE_TIME,
+                .addDateTerm(MetaFields.EFFECTIVE_TIME,
                         Condition.BETWEEN,
                         createToDateWithOffset(System.currentTimeMillis(), 1))
-                .addTerm(MetaFields.STATUS_TIME,
+                .addDateTerm(MetaFields.STATUS_TIME,
                         Condition.BETWEEN,
                         createToDateWithOffset(System.currentTimeMillis(), 1))
-                .addTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
-                .addTerm(MetaFields.PARENT_ID, Condition.EQUALS, 1)
-                .addTerm(MetaFields.ID, Condition.EQUALS, 1)
+                .addTextTerm(MetaFields.FEED, Condition.EQUALS, FEED1)
+                .addIdTerm(MetaFields.PARENT_ID, Condition.EQUALS, 1)
+                .addIdTerm(MetaFields.ID, Condition.EQUALS, 1)
 //                .addTerm(StreamDataSource.PIPELINE, Condition.EQUALS, "1")
 //                .addTerm(StreamDataSource.STREAM_PROCESSOR_ID, Condition.EQUALS, "1")
-                .addTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTextTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(expression);
-        findMetaCriteria.setPageRequest(new PageRequest(0, 100));
-        findMetaCriteria.setSort(MetaFields.CREATE_TIME.getName());
+        findMetaCriteria.setPageRequest(PageRequest.createDefault());
+        findMetaCriteria.setSort(MetaFields.CREATE_TIME.getFldName());
 //        findStreamCriteria.setStreamIdRange(new IdRange(0L, 1L));
 
         assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(0L);
@@ -406,7 +406,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
                 "Expecting to find at least 1 with no criteria").isTrue();
 
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
         assertThat(metaService.find(new FindMetaCriteria(expression)).size() >= 1).as(
                 "Expecting to find at least 1 with UNLOCKED criteria").isTrue();
@@ -545,8 +545,8 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
         try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
             exactMetaData = streamTarget.getMeta();
             TargetUtil.write(streamTarget, testString);
-            streamTarget.getAttributes().put(MetaFields.REC_READ.getName(), "10");
-            streamTarget.getAttributes().put(MetaFields.REC_WRITE.getName(), "20");
+            streamTarget.getAttributes().put(MetaFields.REC_READ.getFldName(), "10");
+            streamTarget.getAttributes().put(MetaFields.REC_WRITE.getFldName(), "20");
         }
 
         final Meta reloadMetaData = metaService.find(FindMetaCriteria.createFromMeta(exactMetaData)).getFirst();
@@ -564,8 +564,8 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
 //        streamAttributeValueFlush.flush();
         final MetaRow metaRow = metaService.findRows(criteria).getFirst();
 
-        assertThat(metaRow.getAttributeValue(MetaFields.REC_READ.getName())).isEqualTo("10");
-        assertThat(metaRow.getAttributeValue(MetaFields.REC_WRITE.getName())).isEqualTo("20");
+        assertThat(metaRow.getAttributeValue(MetaFields.REC_READ.getFldName())).isEqualTo("10");
+        assertThat(metaRow.getAttributeValue(MetaFields.REC_WRITE.getFldName())).isEqualTo("20");
     }
 
     @Test
@@ -621,7 +621,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
                 feed2,
                 StreamTypeNames.REFERENCE);
 
-        List<EffectiveMeta> list = metaService.findEffectiveData(criteria);
+        EffectiveMetaSet list = metaService.findEffectiveData(criteria);
 
         // Make sure the list contains what it should.
         verifySet(list, refData1, refData2);
@@ -630,7 +630,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
         // the last one as it would be the most effective.
         criteria = new EffectiveMetaDataCriteria(
                 new Period(DateUtil.parseNormalDateTimeString("2013-01-01T00:00:00.000Z"),
-                DateUtil.parseNormalDateTimeString("2014-01-01T00:00:00.000Z")),
+                        DateUtil.parseNormalDateTimeString("2014-01-01T00:00:00.000Z")),
                 feed2,
                 StreamTypeNames.REFERENCE);
 
@@ -648,14 +648,17 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
      * @param list
      * @param expected
      */
-    private void verifySet(final List<EffectiveMeta> list, final Meta... expected) {
-        assertThat(list).isNotNull();
-        assertThat(list.size()).isEqualTo(expected.length);
+    private void verifySet(final EffectiveMetaSet list, final Meta... expected) {
+        assertThat(list)
+                .isNotNull();
+        assertThat(list.size())
+                .isEqualTo(expected.length);
         final Set<EffectiveMeta> expectedSet = Arrays.stream(expected)
                 .map(EffectiveMeta::new)
                 .collect(Collectors.toSet());
 
-        assertThat(list).containsAll(expectedSet);
+        assertThat(list)
+                .containsAll(expectedSet);
     }
 
     private Meta buildRefData(final String feed,
@@ -736,7 +739,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
             meta = streamTarget.getMeta();
             TargetUtil.write(streamTarget, "xyz");
             streamTarget.getAttributes().put(testString1, testString2);
-            streamTarget.getAttributes().put(MetaFields.REC_READ.getName(), "100");
+            streamTarget.getAttributes().put(MetaFields.REC_READ.getFldName(), "100");
         }
 
         final DataVolume dataVolume = dataVolumeService.findDataVolume(meta.getId());

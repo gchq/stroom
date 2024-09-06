@@ -22,7 +22,6 @@ import stroom.document.client.DocumentPluginEventManager;
 import stroom.explorer.client.NavigationPlugin;
 import stroom.help.client.HelpPlugin;
 import stroom.trackers.client.TrackersPlugin;
-import stroom.users.client.UsersPlugin;
 
 public class PluginsModule extends PluginModule {
 
@@ -31,7 +30,6 @@ public class PluginsModule extends PluginModule {
         bindPlugin(DocumentPluginEventManager.class);
 
         bindPlugin(HelpPlugin.class);
-        bindPlugin(UsersPlugin.class);
         bindPlugin(TrackersPlugin.class);
         bindPlugin(NavigationPlugin.class);
     }

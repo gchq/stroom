@@ -37,11 +37,13 @@ import java.io.IOException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
 
 /**
  * Converter for a flat file to a SAX stream.
  */
 public class DS3Parser extends AbstractParser {
+
     private static final String XSI_SCHEMA_LOCATION = "xsi:schemaLocation";
     private static final String SCHEMA_LOCATION = "schemaLocation";
     private static final String XMLNS_XSI = "xmlns:xsi";
@@ -275,19 +277,10 @@ public class DS3Parser extends AbstractParser {
             Match match = null;
             try {
                 match = expression.match();
+            } catch (final ComplexRegexException e) {
+                handleComplexRegexException(e, expression);
             } catch (final RuntimeException e) {
-                messageBuffer.clear();
-                messageBuffer.append("Expression '");
-                messageBuffer.append(expression.getDebugId());
-                messageBuffer.append("' threw a '");
-                messageBuffer.append(e.getClass().getSimpleName());
-                messageBuffer.append("' while matching");
-                final String message = messageBuffer.toString();
-
-                log(Severity.FATAL_ERROR, message, e);
-
-                // We should never get exceptions here so log stack trace.
-                LOGGER.error(message, e);
+                handleRuntimeException(e, expression);
             }
 
             if (match != null) {
@@ -391,19 +384,10 @@ public class DS3Parser extends AbstractParser {
             Match recoveryMatch = null;
             try {
                 recoveryMatch = expression.match();
+            } catch (ComplexRegexException e) {
+                handleComplexRegexException(e, expression);
             } catch (final RuntimeException e) {
-                messageBuffer.clear();
-                messageBuffer.append("Expression '");
-                messageBuffer.append(expression.getDebugId());
-                messageBuffer.append("' threw a '");
-                messageBuffer.append(e.getClass().getSimpleName());
-                messageBuffer.append("' while matching");
-                final String message = messageBuffer.toString();
-
-                log(Severity.FATAL_ERROR, message, e);
-
-                // We should never get exceptions here so log stack trace.
-                LOGGER.error(message, e);
+                handleRuntimeException(e, expression);
             }
 
             if (recoveryMatch != null) {
@@ -731,5 +715,41 @@ public class DS3Parser extends AbstractParser {
 
     private void log(final Severity severity, final String message, final Throwable t) {
         errorHandlerAdaptor.log(severity, reader, message, t);
+    }
+
+    private void handleRuntimeException(final RuntimeException e, Expression expression) {
+        messageBuffer.clear();
+        messageBuffer.append("Expression '")
+                .append(expression.getDebugId())
+                .append("' threw a '")
+                .append(e.getClass().getSimpleName())
+                .append("' while matching");
+        final String message = messageBuffer.toString();
+        log(Severity.FATAL_ERROR, message, e);
+        // We should never get exceptions here so log stack trace.
+        LOGGER.error(message, e);
+    }
+
+    private void handleComplexRegexException(final ComplexRegexException e, Expression expression) {
+        messageBuffer.clear();
+        messageBuffer.append("Regex Expression '")
+                .append(expression.getDebugId())
+                .append("' is too complex to process with the input data. ")
+                .append("This may be due to repetitive alternative paths, e.g. '(A|B)*', ")
+                .append("in which case consider changing the pattern to use possessive quantifiers.");
+        final Matcher matcher = e.getMatcher();
+        if (matcher != null) {
+            final int len = matcher.regionEnd() - matcher.regionStart();
+            messageBuffer.append(" Pattern '")
+                    .append(matcher.pattern())
+                    .append("'.")
+                    .append(" Input data region [")
+                    .append(matcher.regionStart())
+                    .append(",")
+                    .append(matcher.regionEnd())
+                    .append("] (length " + len + ").");
+        }
+        final String message = messageBuffer.toString();
+        log(Severity.ERROR, message, e);
     }
 }

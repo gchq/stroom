@@ -1,12 +1,15 @@
 package com.google.gwt.event.dom.client;
 
-public class InputEvent extends DomEvent<InputHandler> {
+import com.google.gwt.event.dom.client.InputEvent.Handler;
+import com.google.gwt.event.shared.EventHandler;
+
+public class InputEvent extends DomEvent<Handler> {
 
     /**
      * Event type for input events. Represents the meta-data associated with this
      * event.
      */
-    private static final Type<InputHandler> TYPE = new Type<InputHandler>("input",
+    private static final Type<Handler> TYPE = new Type<Handler>("input",
             new InputEvent());
 
     /**
@@ -14,7 +17,7 @@ public class InputEvent extends DomEvent<InputHandler> {
      *
      * @return the handler type
      */
-    public static Type<InputHandler> getType() {
+    public static Type<Handler> getType() {
         return TYPE;
     }
 
@@ -27,13 +30,22 @@ public class InputEvent extends DomEvent<InputHandler> {
     }
 
     @Override
-    public final Type<InputHandler> getAssociatedType() {
+    public final Type<Handler> getAssociatedType() {
         return TYPE;
     }
 
     @Override
-    protected void dispatch(InputHandler handler) {
+    protected void dispatch(Handler handler) {
         handler.onInput(this);
     }
 
+    public interface Handler extends EventHandler {
+
+        /**
+         * Called when InputEvent is fired.
+         *
+         * @param event the {@link InputEvent} that was fired
+         */
+        void onInput(InputEvent event);
+    }
 }
