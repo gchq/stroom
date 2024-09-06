@@ -17,6 +17,11 @@
 package stroom.core.tools;
 
 import stroom.util.io.StreamUtil;
+import stroom.util.zip.ZipUtil;
+
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,9 +34,6 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.zip.GZIPOutputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 import javax.net.ssl.HttpsURLConnection;
 
 /**
@@ -107,28 +109,31 @@ public final class DataFeedClient {
             connection.connect();
 
             try (final InputStream inputStream = Files.newInputStream(inputFile)) {
-                OutputStream out = connection.getOutputStream();
                 // Using Zip Compression we just have 1 file (called 1)
                 if (ZIP.equalsIgnoreCase(argsMap.get(ARG_COMPRESSION))) {
-                    final ZipOutputStream zout = new ZipOutputStream(out);
-                    zout.putNextEntry(new ZipEntry("1"));
-                    out = zout;
                     System.out.println("Using ZIP");
-                }
-                if (GZIP.equalsIgnoreCase(argsMap.get(ARG_COMPRESSION))) {
-                    out = new GZIPOutputStream(out);
+                    try (final ZipArchiveOutputStream out = ZipUtil.createOutputStream(connection.getOutputStream())) {
+                        out.putArchiveEntry(new ZipArchiveEntry("1"));
+                        try {
+                            // Write the output
+                            StreamUtil.streamToStream(inputStream, out);
+                        } finally {
+                            out.closeArchiveEntry();
+                        }
+                    }
+                } else if (GZIP.equalsIgnoreCase(argsMap.get(ARG_COMPRESSION))) {
                     System.out.println("Using GZIP");
+                    try (final GzipCompressorOutputStream out =
+                            new GzipCompressorOutputStream(connection.getOutputStream())) {
+                        // Write the output
+                        StreamUtil.streamToStream(inputStream, out);
+                    }
+                } else {
+                    try (final OutputStream out = connection.getOutputStream()) {
+                        // Write the output
+                        StreamUtil.streamToStream(inputStream, out);
+                    }
                 }
-
-                // Write the output
-                final byte[] buffer = new byte[BUFFER_SIZE];
-                int readSize;
-                while ((readSize = inputStream.read(buffer)) != -1) {
-                    out.write(buffer, 0, readSize);
-                }
-
-                out.flush();
-                out.close();
             }
 
             final int response = connection.getResponseCode();

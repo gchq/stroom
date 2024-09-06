@@ -1,7 +1,10 @@
 package stroom.proxy.app;
 
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.zip.ZipUtil;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation.Builder;
@@ -15,8 +18,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 public class PostDataHelper {
 
@@ -100,10 +101,10 @@ public class PostDataHelper {
     }
 
     public int sendZipData(final String feed,
-                        final String system,
-                        final String environment,
-                        final Map<String, String> extraHeaders,
-                        final String data) {
+                           final String system,
+                           final String environment,
+                           final Map<String, String> extraHeaders,
+                           final String data) {
         int status;
         try {
             final Builder builder = client.target(url)
@@ -119,12 +120,12 @@ public class PostDataHelper {
             LOGGER.info("Sending POST request to {}", url);
 
             final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            try (final ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+            try (final ZipArchiveOutputStream zipOutputStream = ZipUtil.createOutputStream(outputStream)) {
                 for (int i = 1; i <= 4; i++) {
                     final String name = ModelStringUtil.zeroPad(3, String.valueOf(i)) + ".dat";
-                    zipOutputStream.putNextEntry(new ZipEntry(name));
+                    zipOutputStream.putArchiveEntry(new ZipArchiveEntry(name));
                     zipOutputStream.write(data.getBytes(StandardCharsets.UTF_8));
-                    zipOutputStream.closeEntry();
+                    zipOutputStream.closeArchiveEntry();
                 }
             }
 

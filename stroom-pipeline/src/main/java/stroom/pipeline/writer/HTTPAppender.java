@@ -18,7 +18,10 @@ import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.zip.ZipUtil;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,8 +37,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 
@@ -73,7 +74,7 @@ public class HTTPAppender extends AbstractAppender {
     private Set<String> metaKeySet = getMetaKeySet("guid,feed,system,environment,remotehost,remoteaddress");
 
     private HttpURLConnection connection;
-    private ZipOutputStream zipOutputStream;
+    private ZipArchiveOutputStream zipOutputStream;
     private ByteCountOutputStream byteCountOutputStream;
     private long startTimeMs;
     private long count;
@@ -196,7 +197,7 @@ public class HTTPAppender extends AbstractAppender {
             connection.connect();
 
             if (useCompression) {
-                zipOutputStream = new ZipOutputStream(connection.getOutputStream());
+                zipOutputStream = ZipUtil.createOutputStream(connection.getOutputStream());
                 outputStream = zipOutputStream;
                 nextEntry();
             } else {
@@ -237,13 +238,13 @@ public class HTTPAppender extends AbstractAppender {
                 fileName = ModelStringUtil.zeroPad(3, String.valueOf(count)) + ".dat";
             }
 
-            zipOutputStream.putNextEntry(new ZipEntry(fileName));
+            zipOutputStream.putArchiveEntry(new ZipArchiveEntry(fileName));
         }
     }
 
     private void closeEntry() throws IOException {
         if (zipOutputStream != null) {
-            zipOutputStream.closeEntry();
+            zipOutputStream.closeArchiveEntry();
         }
     }
 

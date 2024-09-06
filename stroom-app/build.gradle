@@ -187,6 +187,7 @@ dependencies {
     implementation project(':stroom-view:stroom-view-impl')
     implementation project(':stroom-view:stroom-view-api')
 
+    implementation libs.commons_compress
     implementation libs.dropwizard_assets
     implementation libs.dropwizard_client
     implementation libs.dropwizard_configuration
