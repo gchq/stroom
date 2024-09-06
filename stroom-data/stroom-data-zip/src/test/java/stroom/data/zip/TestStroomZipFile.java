@@ -27,7 +27,8 @@ class TestStroomZipFile {
         try {
             System.out.println(file.toAbsolutePath());
 
-            try (final ZipArchiveOutputStream zipOutputStream = ZipUtil.createOutputStream(Files.newOutputStream(file))) {
+            try (final ZipArchiveOutputStream zipOutputStream =
+                    ZipUtil.createOutputStream(Files.newOutputStream(file))) {
                 zipOutputStream.putArchiveEntry(new ZipArchiveEntry("test/test.dat"));
                 zipOutputStream.write("data".getBytes(CharsetConstants.DEFAULT_CHARSET));
                 zipOutputStream.closeArchiveEntry();
@@ -53,7 +54,8 @@ class TestStroomZipFile {
         final Path file = Files
                 .createTempFile(Files.createTempDirectory("stroom"), "TestStroomZipFile", ".zip");
         try {
-            try (final ZipArchiveOutputStream zipOutputStream = ZipUtil.createOutputStream(Files.newOutputStream(file))) {
+            try (final ZipArchiveOutputStream zipOutputStream =
+                    ZipUtil.createOutputStream(Files.newOutputStream(file))) {
                 zipOutputStream.putArchiveEntry(new ZipArchiveEntry("request.hdr"));
                 zipOutputStream.write("header".getBytes(CharsetConstants.DEFAULT_CHARSET));
                 zipOutputStream.closeArchiveEntry();

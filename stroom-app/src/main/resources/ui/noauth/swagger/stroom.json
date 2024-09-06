@@ -2158,9 +2158,39 @@
         "tags" : [ "Dashboards" ]
       }
     },
+    "/dashboard/v1/downloadSearchResults" : {
+      "post" : {
+        "operationId" : "downloadDashboardSearchResultsLocal",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DownloadSearchResultsRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResourceGeneration"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Download search results",
+        "tags" : [ "Dashboards" ]
+      }
+    },
     "/dashboard/v1/downloadSearchResults/{nodeName}" : {
       "post" : {
-        "operationId" : "downloadDashboardSearchResults",
+        "operationId" : "downloadDashboardSearchResultsNode",
         "parameters" : [ {
           "in" : "path",
           "name" : "nodeName",
@@ -2196,9 +2226,39 @@
         "tags" : [ "Dashboards" ]
       }
     },
-    "/dashboard/v1/search/{nodeName}" : {
+    "/dashboard/v1/search" : {
       "post" : {
         "operationId" : "dashboardSearch",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DashboardSearchRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DashboardSearchResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Perform a new search or get new results",
+        "tags" : [ "Dashboards" ]
+      }
+    },
+    "/dashboard/v1/search/{nodeName}" : {
+      "post" : {
+        "operationId" : "dashboardSearch_1",
         "parameters" : [ {
           "in" : "path",
           "name" : "nodeName",
@@ -6670,9 +6730,39 @@
         "tags" : [ "Processor Tasks" ]
       }
     },
+    "/query/v1/downloadSearchResults" : {
+      "post" : {
+        "operationId" : "downloadQuerySearchResultsLocal",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DownloadQueryResultsRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResourceGeneration"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Download search results",
+        "tags" : [ "Queries" ]
+      }
+    },
     "/query/v1/downloadSearchResults/{nodeName}" : {
       "post" : {
-        "operationId" : "downloadQuerySearchResults",
+        "operationId" : "downloadQuerySearchResultsNode",
         "parameters" : [ {
           "in" : "path",
           "name" : "nodeName",
@@ -6782,9 +6872,39 @@
         "tags" : [ "Queries" ]
       }
     },
+    "/query/v1/search" : {
+      "post" : {
+        "operationId" : "querySearchLocal",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/QuerySearchRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DashboardSearchResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Perform a new search or get new results",
+        "tags" : [ "Queries" ]
+      }
+    },
     "/query/v1/search/{nodeName}" : {
       "post" : {
-        "operationId" : "querySearch",
+        "operationId" : "querySearchNode",
         "parameters" : [ {
           "in" : "path",
           "name" : "nodeName",
@@ -14750,6 +14870,9 @@
           },
           "type" : {
             "type" : "string"
+          },
+          "unknown" : {
+            "type" : "boolean"
           }
         },
         "required" : [ "type" ]
@@ -17489,23 +17612,20 @@
       "SharedElementData" : {
         "type" : "object",
         "properties" : {
-          "codeIndicators" : {
-            "$ref" : "#/components/schemas/Indicators"
-          },
           "formatInput" : {
             "type" : "boolean"
           },
           "formatOutput" : {
             "type" : "boolean"
           },
+          "indicators" : {
+            "$ref" : "#/components/schemas/Indicators"
+          },
           "input" : {
             "type" : "string"
           },
           "output" : {
             "type" : "string"
-          },
-          "outputIndicators" : {
-            "$ref" : "#/components/schemas/Indicators"
           }
         }
       },
@@ -18022,6 +18142,10 @@
         "properties" : {
           "elementId" : {
             "type" : "string"
+          },
+          "errorType" : {
+            "type" : "string",
+            "enum" : [ "CODE", "GENERIC", "INPUT", "OUTPUT", "UNKNOWN" ]
           },
           "location" : {
             "$ref" : "#/components/schemas/Location"

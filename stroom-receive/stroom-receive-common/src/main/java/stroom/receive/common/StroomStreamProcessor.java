@@ -225,9 +225,9 @@ public class StroomStreamProcessor {
     private void processZipStream(final InputStream inputStream, final String prefix) {
         final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(inputStream);
 
-            final Map<String, AttributeMap> bufferedAttributeMap = new HashMap<>();
-            final Map<String, Long> dataStreamSizeMap = new HashMap<>();
-            final StroomZipEntries stroomZipEntries = new StroomZipEntries();
+        final Map<String, AttributeMap> bufferedAttributeMap = new HashMap<>();
+        final Map<String, Long> dataStreamSizeMap = new HashMap<>();
+        final StroomZipEntries stroomZipEntries = new StroomZipEntries();
 
         try (final ZipArchiveInputStream zipArchiveInputStream = new ZipArchiveInputStream(byteCountInputStream)) {
             ZipArchiveEntry zipEntry;
