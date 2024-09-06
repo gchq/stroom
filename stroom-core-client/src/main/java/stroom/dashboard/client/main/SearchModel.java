@@ -201,6 +201,7 @@ public class SearchModel implements HasTaskListener, HasHandlers {
      * Refresh the search data for the specified component.
      */
     public void refresh(final String componentId, final Consumer<Result> resultConsumer) {
+        boolean exec = false;
         final QueryKey queryKey = currentQueryKey;
         final ResultComponent resultComponent = resultComponents.get(componentId);
         if (resultComponent != null && queryKey != null) {
@@ -208,9 +209,6 @@ public class SearchModel implements HasTaskListener, HasHandlers {
             if (resultComponentMap != null) {
                 final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
                 if (dataSourceRef != null) {
-                    // Tell the refreshing component that it should want data.
-                    resultComponent.startSearch();
-
                     final Search search = Search
                             .builder()
                             .dataSourceRef(currentSearch.getDataSourceRef())
@@ -235,6 +233,7 @@ public class SearchModel implements HasTaskListener, HasHandlers {
                             .dateTimeSettings(dateTimeSettingsFactory.getDateTimeSettings())
                             .build();
 
+                    exec = true;
                     restFactory
                             .create(DASHBOARD_RESOURCE)
                             .method(res -> res.search(currentNode, request))
@@ -267,6 +266,11 @@ public class SearchModel implements HasTaskListener, HasHandlers {
                             .exec();
                 }
             }
+        }
+
+        // If no exec happened then let the caller know.
+        if (!exec) {
+            resultConsumer.accept(null);
         }
     }
 

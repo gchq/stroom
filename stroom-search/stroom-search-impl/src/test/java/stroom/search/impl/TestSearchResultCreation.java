@@ -491,6 +491,7 @@ class TestSearchResultCreation {
 
         final DataStore dataStore = resultStore.getData("table-78LF4");
         dataStore.fetch(
+                dataStore.getColumns(),
                 OffsetRange.ZERO_1000,
                 OpenGroupsImpl.root(),
                 null,

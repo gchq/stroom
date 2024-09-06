@@ -299,11 +299,6 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
         refreshCharacterControls();
     }
 
-
-    public void setRefreshing(final boolean refreshing) {
-        refresh.setRefreshing(refreshing);
-    }
-
     public void setLabelClickHandler(final ClickHandler labelClickHandler) {
         this.labelClickHandler = labelClickHandler;
     }

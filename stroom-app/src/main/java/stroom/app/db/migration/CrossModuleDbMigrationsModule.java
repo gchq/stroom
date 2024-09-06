@@ -43,7 +43,7 @@ public class CrossModuleDbMigrationsModule
         // module that they want to deal with, accepting that
         // Order doesn't matter here, but you are going to sort them aren't you.
         GuiceUtil.buildMultiBinder(binder(), AbstractCrossModuleJavaDbMigration.class)
-                .addBinding(V07_04_00_005__Orphaned_Doc_Perms.class);
+                .addBinding(V07_05_00_005__Orphaned_Doc_Perms.class);
     }
 
     @Override

@@ -130,13 +130,13 @@ public class RefreshButton
             } else {
                 button.removeStyleName("refreshing");
             }
-            update();
         }
+        update();
     }
 
     private void update() {
-        if (allowPause && !paused) {
-            setEnabled(refreshState);
+        if (allowPause) {
+            setEnabled(paused || refreshing || taskCount > 0);
         }
     }
 }

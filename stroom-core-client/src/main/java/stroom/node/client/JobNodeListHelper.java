@@ -362,19 +362,22 @@ public class JobNodeListHelper {
 
         final JobNode jobNode = GwtNullSafe.get(jobNodeAndInfo, JobNodeAndInfo::getJobNode);
         final String nodeName = GwtNullSafe.get(jobNodeAndInfo, JobNodeAndInfo::getNodeName);
-        final boolean canRunNow = GwtNullSafe.test(
+        final boolean isSchedulable = GwtNullSafe.test(
                 jobNodeAndInfo,
                 JobNodeAndInfo::getJobType,
                 type -> type == JobType.CRON || type == JobType.FREQUENCY);
 
-        final MenuBuilder builder = MenuBuilder.builder()
-                .withIconMenuItem(itemBuilder -> itemBuilder
-                        .icon(SvgImage.HISTORY)
-                        .text("Edit Schedule")
-                        .command(() ->
-                                showSchedule(jobNodeAndInfo)));
+        final MenuBuilder builder = MenuBuilder.builder();
 
-        if (canRunNow && isNodeEnabled(nodeName)) {
+        if (isSchedulable) {
+            builder.withIconMenuItem(itemBuilder -> itemBuilder
+                    .icon(SvgImage.HISTORY)
+                    .text("Edit Schedule")
+                    .command(() ->
+                            showSchedule(jobNodeAndInfo)));
+        }
+
+        if (isSchedulable && isNodeEnabled(nodeName)) {
             builder.withIconMenuItem(itemBuilder -> itemBuilder
                     .icon(SvgImage.PLAY)
                     .text("Run Job on '" + jobNode.getNodeName() + "' Now")

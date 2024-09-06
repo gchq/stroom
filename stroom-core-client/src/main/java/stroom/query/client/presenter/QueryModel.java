@@ -208,6 +208,7 @@ public class QueryModel implements HasTaskListener, HasHandlers {
      */
     public void refresh(final String componentId,
                         final Consumer<Result> resultConsumer) {
+        boolean exec = false;
         final QueryKey queryKey = currentQueryKey;
         final ResultComponent resultComponent = resultComponents.get(componentId);
         if (resultComponent != null && queryKey != null) {
@@ -221,6 +222,7 @@ public class QueryModel implements HasTaskListener, HasHandlers {
                     .requestedRange(resultComponent.getRequestedRange())
                     .build();
 
+            exec = true;
             restFactory
                     .create(QUERY_RESOURCE)
                     .method(res -> res.search(currentNode, request))
@@ -251,6 +253,11 @@ public class QueryModel implements HasTaskListener, HasHandlers {
                     })
                     .taskListener(taskListener)
                     .exec();
+        }
+
+        // If no exec happened then let the caller know.
+        if (!exec) {
+            resultConsumer.accept(null);
         }
     }
 
