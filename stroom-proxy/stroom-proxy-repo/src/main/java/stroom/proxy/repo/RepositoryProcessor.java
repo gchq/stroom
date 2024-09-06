@@ -64,6 +64,7 @@ public final class RepositoryProcessor {
     private final Provider<FileSetProcessor> fileSetProcessorProvider;
 
     private final int threadCount;
+    private final int workQueueCapacity;
     private final int maxFileScan;
     private final int maxConcurrentMappedFiles;
     private final int maxFilesPerAggregate;
@@ -76,6 +77,7 @@ public final class RepositoryProcessor {
                                final Provider<FileSetProcessor> fileSetProcessorProvider,
                                final String proxyDir,
                                final int threadCount,
+                               final int workQueueCapacity,
                                final int maxFileScan,
                                final int maxConcurrentMappedFiles,
                                final int maxFilesPerAggregate,
@@ -84,6 +86,7 @@ public final class RepositoryProcessor {
         this.taskContextFactory = taskContextFactory;
         this.fileSetProcessorProvider = fileSetProcessorProvider;
         this.threadCount = threadCount;
+        this.workQueueCapacity = workQueueCapacity;
         this.maxFileScan = maxFileScan;
         this.maxConcurrentMappedFiles = maxConcurrentMappedFiles;
         this.maxFilesPerAggregate = maxFilesPerAggregate;
@@ -128,6 +131,7 @@ public final class RepositoryProcessor {
                                 taskContext,
                                 taskContextFactory,
                                 threadCount,
+                                workQueueCapacity,
                                 errorReceiver);
 
                         // Aggregate the zip files.
@@ -135,6 +139,7 @@ public final class RepositoryProcessor {
                                 taskContext,
                                 taskContextFactory,
                                 threadCount,
+                                workQueueCapacity,
                                 errorReceiver);
 
                     } while (reachedFileScanLimit);
@@ -161,10 +166,11 @@ public final class RepositoryProcessor {
                                      final TaskContext parentContext,
                                      final TaskContextFactory taskContextFactory,
                                      final int threadCount,
+                                     final int workQueueCapacity,
                                      final ErrorReceiver errorReceiver) {
         final Function<TaskContext, Boolean> function = taskContext -> {
             final ZipFragmenterFileProcessor zipFragmenter = new ZipFragmenterFileProcessor(
-                    executorProvider, taskContext, taskContextFactory, threadCount, errorReceiver);
+                    executorProvider, taskContext, taskContextFactory, threadCount, workQueueCapacity, errorReceiver);
 
             final AtomicInteger fileCount = new AtomicInteger();
             try {
@@ -220,6 +226,7 @@ public final class RepositoryProcessor {
                                    final TaskContext parentContext,
                                    final TaskContextFactory taskContextFactory,
                                    final int threadCount,
+                                   final int workQueueCapacity,
                                    final ErrorReceiver errorReceiver) {
         final Consumer<TaskContext> consumer = taskContext -> {
             final ZipInfoConsumer zipInfoConsumer = new ZipInfoConsumer(
@@ -231,7 +238,8 @@ public final class RepositoryProcessor {
                     executorProvider,
                     parentContext,
                     taskContextFactory,
-                    threadCount);
+                    threadCount,
+                    workQueueCapacity);
             final ZipInfoExtractor zipInfoExtractor = new ZipInfoExtractor(errorReceiver);
             final ZipInfoExtractorFileProcessor fileProcessor = new ZipInfoExtractorFileProcessor(
                     zipInfoExtractor,
@@ -239,7 +247,8 @@ public final class RepositoryProcessor {
                     executorProvider,
                     parentContext,
                     taskContextFactory,
-                    threadCount);
+                    threadCount,
+                    workQueueCapacity);
 
             try {
                 Files.walkFileTree(repoPath,
@@ -320,7 +329,8 @@ public final class RepositoryProcessor {
                         final ExecutorProvider executorProvider,
                         final TaskContext parentContext,
                         final TaskContextFactory taskContextFactory,
-                        final int threadCount) {
+                        final int threadCount,
+                        final int workQueueCapacity) {
             this.maxFilesPerAggregate = maxFilesPerAggregate;
             this.maxConcurrentMappedFiles = maxConcurrentMappedFiles;
             this.maxUncompressedFileSize = maxUncompressedFileSize;
@@ -331,7 +341,7 @@ public final class RepositoryProcessor {
 
             final ThreadPool threadPool = new ThreadPoolImpl("File Set Processor");
             final Executor executor = executorProvider.get(threadPool);
-            workQueue = new WorkQueue(executor, threadCount, 1000);
+            workQueue = new WorkQueue(executor, threadCount, workQueueCapacity);
         }
 
         @Override
@@ -435,13 +445,14 @@ public final class RepositoryProcessor {
                                    final TaskContext parentContext,
                                    final TaskContextFactory taskContextFactory,
                                    final int threadCount,
+                                   final int workQueueCapacity,
                                    final ErrorReceiver errorReceiver) {
             final ThreadPool fileInspectorThreadPool = new ThreadPoolImpl("Proxy File Fragmenter");
             final Executor executor = executorProvider.get(fileInspectorThreadPool);
             this.parentContext = parentContext;
             this.taskContextFactory = taskContextFactory;
             zipFragmenter = new ZipFragmenter(errorReceiver);
-            queue = new WorkQueue(executor, threadCount, 1000);
+            queue = new WorkQueue(executor, threadCount, workQueueCapacity);
         }
 
         public void process(final Path file) {
@@ -486,7 +497,8 @@ public final class RepositoryProcessor {
                                       final ExecutorProvider executorProvider,
                                       final TaskContext parentContext,
                                       final TaskContextFactory taskContextFactory,
-                                      final int threadCount) {
+                                      final int threadCount,
+                                      final int workQueueCapacity) {
             this.zipInfoExtractor = zipInfoExtractor;
             this.zipInfoConsumer = zipInfoConsumer;
             this.parentContext = parentContext;
@@ -494,7 +506,7 @@ public final class RepositoryProcessor {
 
             final ThreadPool fileInspectorThreadPool = new ThreadPoolImpl("Proxy File Inspection");
             final Executor executor = executorProvider.get(fileInspectorThreadPool);
-            workQueue = new WorkQueue(executor, threadCount, 1000);
+            workQueue = new WorkQueue(executor, threadCount, workQueueCapacity);
         }
 
         public void process(final Path file, final BasicFileAttributes attrs) {

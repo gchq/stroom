@@ -125,7 +125,7 @@ class TestXMLWriter extends StroomUnitTest {
                 bw.close();
 
             } catch (final IOException | SAXException | ParserConfigurationException | RuntimeException e) {
-                fail(e.getMessage());
+                fail(e.getMessage() + " " + FileUtil.getCanonicalPath(inputFile));
             }
         } catch (final IOException | RuntimeException e) {
             // Ignore...

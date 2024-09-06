@@ -37,7 +37,6 @@ import stroom.task.api.TaskContextFactory;
 import stroom.util.EntityServiceExceptionUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.BufferFactory;
-import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.EntityServiceException;
 
@@ -153,11 +152,8 @@ public class DataUploadTaskHandler {
                                final String streamTypeName,
                                final Long effectiveMs,
                                final AttributeMap attributeMap) {
-        StroomZipFile stroomZipFile = null;
-        try {
+        try (final StroomZipFile stroomZipFile = new StroomZipFile(file)) {
             taskContext.info(() -> "Zip");
-
-            stroomZipFile = new StroomZipFile(file);
 
             final List<List<String>> groupedFileLists = stroomZipFile.getStroomZipNameSet()
                     .getBaseNameGroupedList(AGGREGATION_DELIMITER);
@@ -173,12 +169,10 @@ public class DataUploadTaskHandler {
                         effectiveMs,
                         attributeMap,
                         groupedFileLists.get(i));
-
             }
         } catch (final RuntimeException | IOException e) {
             throw EntityServiceExceptionUtil.create(e);
         } finally {
-            CloseableUtil.closeLogAndIgnoreException(stroomZipFile);
             taskContext.info(() -> "done");
         }
     }

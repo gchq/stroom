@@ -4,7 +4,10 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.task.api.TaskContext;
 import stroom.util.io.WrappedOutputStream;
+import stroom.util.zip.ZipUtil;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,8 +16,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
 
@@ -22,7 +23,7 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomZipOutputStreamImpl.class);
     private final Path file;
     private final Path lockFile;
-    private final ZipOutputStream zipOutputStream;
+    private final ZipArchiveOutputStream zipOutputStream;
     private final StreamProgressMonitor streamProgressMonitor;
     private StroomZipNameSet stroomZipNameSet;
     private boolean inEntry = false;
@@ -58,7 +59,7 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
         final OutputStream bufferedOutputStream = new BufferedOutputStream(rawOutputStream, BufferSizeUtil.get());
         final OutputStream progressOutputStream = new FilterOutputStreamProgressMonitor(bufferedOutputStream,
                 streamProgressMonitor);
-        zipOutputStream = new ZipOutputStream(progressOutputStream);
+        zipOutputStream = ZipUtil.createOutputStream(progressOutputStream);
         if (monitorEntries) {
             stroomZipNameSet = new StroomZipNameSet(false);
         }
@@ -103,11 +104,11 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
         if (stroomZipNameSet != null) {
             stroomZipNameSet.add(name);
         }
-        zipOutputStream.putNextEntry(new ZipEntry(name));
+        zipOutputStream.putArchiveEntry(new ZipArchiveEntry(name));
         return new WrappedOutputStream(zipOutputStream) {
             @Override
             public void close() throws IOException {
-                zipOutputStream.closeEntry();
+                zipOutputStream.closeArchiveEntry();
                 inEntry = false;
                 if (LOGGER.isTraceEnabled()) {
                     LOGGER.trace("addEntry() - " + file + " - " + name + " - closed");
@@ -128,9 +129,9 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
         }
         for (final String baseName : stroomZipNameSet.getBaseNameList()) {
             if (stroomZipNameSet.getName(baseName, StroomZipFileType.Meta) == null) {
-                zipOutputStream.putNextEntry(new ZipEntry(baseName + StroomZipFileType.Meta.getExtension()));
+                zipOutputStream.putArchiveEntry(new ZipArchiveEntry(baseName + StroomZipFileType.Meta.getExtension()));
                 AttributeMapUtil.write(attributeMap, zipOutputStream);
-                zipOutputStream.closeEntry();
+                zipOutputStream.closeArchiveEntry();
             }
         }
     }

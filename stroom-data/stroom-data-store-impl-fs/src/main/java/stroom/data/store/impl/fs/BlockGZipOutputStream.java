@@ -20,15 +20,16 @@ import stroom.util.io.BasicStreamCloser;
 import stroom.util.io.SeekableOutputStream;
 import stroom.util.io.StreamCloser;
 
+import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.zip.GZIPOutputStream;
 
 class BlockGZipOutputStream extends OutputStream implements SeekableOutputStream {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(BlockGZipOutputStream.class);
 
     // The main buffer used (typically holds 2 longs and the the GZIP output).
@@ -42,7 +43,7 @@ class BlockGZipOutputStream extends OutputStream implements SeekableOutputStream
     private final SeekableOutputStream mainStream;
     // The stream - we hold a buffer onto it as well
     private BufferedOutputStream currentStreamBuffer;
-    private GZIPOutputStream currentStreamGzip;
+    private GzipCompressorOutputStream currentStreamGzip;
     // The block size we are using
     private int blockSize;
     // The current 'logical' uncompressed data item we have written
@@ -139,7 +140,7 @@ class BlockGZipOutputStream extends OutputStream implements SeekableOutputStream
         mainBuffer.writeLong(0);
 
         // Connect a new GZIP stream
-        currentStreamGzip = new GZIPOutputStream(mainBuffer);
+        currentStreamGzip = new GzipCompressorOutputStream(mainBuffer);
         currentStreamBuffer = new BufferedOutputStream(currentStreamGzip, FileSystemUtil.STREAM_BUFFER_SIZE);
     }
 

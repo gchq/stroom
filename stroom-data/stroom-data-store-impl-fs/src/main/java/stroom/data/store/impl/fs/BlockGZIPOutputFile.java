@@ -21,6 +21,8 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.SeekableOutputStream;
 import stroom.util.io.StreamCloser;
 
+import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
+
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -29,7 +31,6 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.zip.GZIPOutputStream;
 import javax.annotation.Nonnull;
 
 /**
@@ -54,7 +55,7 @@ class BlockGZIPOutputFile extends OutputStream implements SeekableOutputStream {
     private final StreamCloser streamCloser = new BasicStreamCloser();
     // The stream - we hold a buffer onto it as well
     private BufferedOutputStream currentStreamBuffer;
-    private GZIPOutputStream currentStreamGzip;
+    private GzipCompressorOutputStream currentStreamGzip;
     // The block size we are using
     private final int blockSize;
     // The current 'logical' uncompressed data item we have written
@@ -178,7 +179,7 @@ class BlockGZIPOutputFile extends OutputStream implements SeekableOutputStream {
         mainBuffer.writeLong(0);
 
         // Connect a new GZIP stream
-        currentStreamGzip = new GZIPOutputStream(mainBuffer);
+        currentStreamGzip = new GzipCompressorOutputStream(mainBuffer);
         currentStreamBuffer = new BufferedOutputStream(currentStreamGzip, FileSystemUtil.STREAM_BUFFER_SIZE);
     }
 

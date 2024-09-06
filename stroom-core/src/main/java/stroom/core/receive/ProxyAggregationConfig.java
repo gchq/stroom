@@ -16,6 +16,7 @@ public class ProxyAggregationConfig extends AbstractConfig {
 
     private final String proxyDir;
     private final int proxyThreads;
+    private final int workQueueCapacity;
 
     private final int maxFileScan;
     private final int maxConcurrentMappedFiles;
@@ -25,6 +26,7 @@ public class ProxyAggregationConfig extends AbstractConfig {
     public ProxyAggregationConfig() {
         proxyDir = "proxy_repo";
         proxyThreads = 10;
+        workQueueCapacity = 100;
         maxFileScan = 100000;
         maxConcurrentMappedFiles = 100000;
         maxFilesPerAggregate = 10000;
@@ -36,6 +38,7 @@ public class ProxyAggregationConfig extends AbstractConfig {
     public ProxyAggregationConfig(@JsonProperty("proxyDir") final String proxyDir,
                                   @JsonProperty("bufferSize") final int bufferSize,
                                   @JsonProperty("proxyThreads") final int proxyThreads,
+                                  @JsonProperty("workQueueCapacity") final int workQueueCapacity,
                                   @JsonProperty("maxFileScan") final int maxFileScan,
                                   @JsonProperty("maxConcurrentMappedFiles") final int maxConcurrentMappedFiles,
                                   @JsonProperty("maxFilesPerAggregate") final int maxFilesPerAggregate,
@@ -43,6 +46,7 @@ public class ProxyAggregationConfig extends AbstractConfig {
         this.proxyDir = proxyDir;
         BufferSizeUtil.setValue(bufferSize);
         this.proxyThreads = proxyThreads;
+        this.workQueueCapacity = workQueueCapacity;
         this.maxFileScan = maxFileScan;
         this.maxConcurrentMappedFiles = maxConcurrentMappedFiles;
         this.maxFilesPerAggregate = maxFilesPerAggregate;
@@ -64,6 +68,12 @@ public class ProxyAggregationConfig extends AbstractConfig {
     @JsonPropertyDescription("Number of threads used in aggregation")
     public int getProxyThreads() {
         return proxyThreads;
+    }
+
+    @JsonPropertyDescription("Number of items we queue for the aggregation threads to operate on")
+    @JsonProperty
+    public int getWorkQueueCapacity() {
+        return workQueueCapacity;
     }
 
     @JsonPropertyDescription("The limit of files to inspect before aggregation begins (should be bigger than " +

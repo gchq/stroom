@@ -153,8 +153,7 @@ public class DataLoader {
         if (feedProperties.isReference(feedName) == mandateEffectiveDate) {
             LOGGER.info("Loading data: " + FileUtil.getCanonicalPath(file));
 
-            try {
-                final StroomZipFile stroomZipFile = new StroomZipFile(file);
+            try (final StroomZipFile stroomZipFile = new StroomZipFile(file)) {
                 final byte[] buffer = new byte[1024];
                 final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler =
                         new StreamTargetStroomStreamHandler(
@@ -190,9 +189,6 @@ public class DataLoader {
 
                 }
                 streamTargetStroomStreamHandler.close();
-
-                stroomZipFile.close();
-
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }

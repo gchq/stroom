@@ -26,7 +26,10 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.zip.ZipUtil;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -42,8 +45,6 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -194,40 +195,40 @@ public class ManualProxyAggregationTest {
     private void writeTestFileWithManyEntries(final Path testFile, final List<String> eventFeeds, final int count)
             throws IOException {
         Files.createDirectories(testFile.getParent());
-        final ZipOutputStream zipOutputStream = new ZipOutputStream(
-                new BufferedOutputStream(Files.newOutputStream(testFile)));
-
-        LAMBDA_LOGGER.debug(() ->
-                LogUtil.message("Creating file {}", testFile.toAbsolutePath().toString()));
-
-        int feedIdx = 0;
-
-        for (int i = 1; i <= count; i++) {
-            feedIdx = ++feedIdx >= eventFeeds.size()
-                    ? 0
-                    : feedIdx;
-            final String eventFeed = eventFeeds.get(feedIdx);
+        try (final ZipArchiveOutputStream zipOutputStream = ZipUtil.createOutputStream(
+                new BufferedOutputStream(Files.newOutputStream(testFile)))) {
 
             LAMBDA_LOGGER.debug(() ->
-                    LogUtil.message("Using feed {}", eventFeed));
+                    LogUtil.message("Creating file {}", testFile.toAbsolutePath().toString()));
 
-            final String name = String.valueOf(i);
-            zipOutputStream.putNextEntry(new ZipEntry(name + ".hdr"));
-            PrintWriter printWriter = new PrintWriter(zipOutputStream);
-            printWriter.println("Feed:" + eventFeed);
-            printWriter.println("Proxy:ProxyTest");
-            printWriter.println("StreamSize:" + name.getBytes().length);
-            printWriter.println("ReceivedTime:2010-01-01T00:00:00.000Z");
-            printWriter.flush();
-            zipOutputStream.closeEntry();
+            int feedIdx = 0;
 
-            zipOutputStream.putNextEntry(new ZipEntry(name + ".dat"));
-            printWriter = new PrintWriter(zipOutputStream);
-            printWriter.print(name);
-            printWriter.flush();
-            zipOutputStream.closeEntry();
+            for (int i = 1; i <= count; i++) {
+                feedIdx = ++feedIdx >= eventFeeds.size()
+                        ? 0
+                        : feedIdx;
+                final String eventFeed = eventFeeds.get(feedIdx);
+
+                LAMBDA_LOGGER.debug(() ->
+                        LogUtil.message("Using feed {}", eventFeed));
+
+                final String name = String.valueOf(i);
+                zipOutputStream.putArchiveEntry(new ZipArchiveEntry(name + ".hdr"));
+                PrintWriter printWriter = new PrintWriter(zipOutputStream);
+                printWriter.println("Feed:" + eventFeed);
+                printWriter.println("Proxy:ProxyTest");
+                printWriter.println("StreamSize:" + name.getBytes().length);
+                printWriter.println("ReceivedTime:2010-01-01T00:00:00.000Z");
+                printWriter.flush();
+                zipOutputStream.closeArchiveEntry();
+
+                zipOutputStream.putArchiveEntry(new ZipArchiveEntry(name + ".dat"));
+                printWriter = new PrintWriter(zipOutputStream);
+                printWriter.print(name);
+                printWriter.flush();
+                zipOutputStream.closeArchiveEntry();
+            }
         }
-        zipOutputStream.close();
     }
 
     private void aggregateAndAssert(final int feedCount,
@@ -286,6 +287,7 @@ public class ManualProxyAggregationTest {
                 pathCreator,
                 proxyDir,
                 10,
+                100,
                 10000,
                 10000,
                 maxAggregation,

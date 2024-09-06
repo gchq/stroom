@@ -51,12 +51,14 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
+import stroom.util.zip.ZipUtil;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -68,8 +70,6 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -117,6 +117,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
                 pathCreator,
                 proxyDir,
                 10,
+                100,
                 10000,
                 10000,
                 maxAggregation,
@@ -620,95 +621,93 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     private OutputStream writeLockedTestFile(final Path testFile, final String eventFeed)
             throws IOException {
         Files.createDirectories(testFile.getParent());
-        final ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(testFile));
-
-        zipOutputStream.putNextEntry(new ZipEntry(StroomZipFile.SINGLE_META_ENTRY.getFullName()));
-        PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(zipOutputStream, StreamUtil.DEFAULT_CHARSET));
+        final ZipArchiveOutputStream zipOutputStream =
+                ZipUtil.createOutputStream(Files.newOutputStream(testFile));
+        zipOutputStream.putArchiveEntry(new ZipArchiveEntry(StroomZipFile.SINGLE_META_ENTRY.getFullName()));
+        PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(zipOutputStream,
+                StreamUtil.DEFAULT_CHARSET));
         printWriter.println("Feed:" + eventFeed);
         printWriter.println("Proxy:ProxyTest");
         printWriter.flush();
-        zipOutputStream.closeEntry();
-        zipOutputStream.putNextEntry(new ZipEntry(StroomZipFile.SINGLE_DATA_ENTRY.getFullName()));
+        zipOutputStream.closeArchiveEntry();
+        zipOutputStream.putArchiveEntry(new ZipArchiveEntry(StroomZipFile.SINGLE_DATA_ENTRY.getFullName()));
         printWriter = new PrintWriter(new OutputStreamWriter(zipOutputStream, StreamUtil.DEFAULT_CHARSET));
         printWriter.println("Time,Action,User,File");
         printWriter.println("01/01/2009:00:00:01,OPEN,userone,proxyload.txt");
-        printWriter.flush();
-
+        zipOutputStream.closeArchiveEntry();
         return zipOutputStream;
     }
 
     private void writeTestFileWithContext(final Path testFile, final String eventFeed, final String content,
                                           final String context) throws IOException {
         Files.createDirectories(testFile.getParent());
-        final OutputStream fileOutputStream = Files.newOutputStream(testFile);
-        final ZipOutputStream zipOutputStream = new ZipOutputStream(fileOutputStream);
-        zipOutputStream.putNextEntry(new ZipEntry("file1.meta"));
-        final PrintWriter printWriter = new PrintWriter(zipOutputStream);
-        printWriter.println("Feed:" + eventFeed);
-        printWriter.println("Proxy:ProxyTest");
-        printWriter.println("Compression:Zip");
-        printWriter.println("ReceivedTime:2010-01-01T00:00:00.000Z");
-        printWriter.flush();
-        zipOutputStream.closeEntry();
-        zipOutputStream.putNextEntry(new ZipEntry("file1.dat"));
-        zipOutputStream.write(content.getBytes(StreamUtil.DEFAULT_CHARSET));
-        zipOutputStream.closeEntry();
-        zipOutputStream.putNextEntry(new ZipEntry("file1.ctx"));
-        zipOutputStream.write(context.getBytes(StreamUtil.DEFAULT_CHARSET));
-        zipOutputStream.closeEntry();
-        zipOutputStream.close();
-        zipOutputStream.close();
-        fileOutputStream.close();
-
+        try (final ZipArchiveOutputStream zipOutputStream =
+                ZipUtil.createOutputStream(Files.newOutputStream(testFile))) {
+            zipOutputStream.putArchiveEntry(new ZipArchiveEntry("file1.meta"));
+            final PrintWriter printWriter = new PrintWriter(zipOutputStream);
+            printWriter.println("Feed:" + eventFeed);
+            printWriter.println("Proxy:ProxyTest");
+            printWriter.println("Compression:Zip");
+            printWriter.println("ReceivedTime:2010-01-01T00:00:00.000Z");
+            printWriter.flush();
+            zipOutputStream.closeArchiveEntry();
+            zipOutputStream.putArchiveEntry(new ZipArchiveEntry("file1.dat"));
+            zipOutputStream.write(content.getBytes(StreamUtil.DEFAULT_CHARSET));
+            zipOutputStream.closeArchiveEntry();
+            zipOutputStream.putArchiveEntry(new ZipArchiveEntry("file1.ctx"));
+            zipOutputStream.write(context.getBytes(StreamUtil.DEFAULT_CHARSET));
+            zipOutputStream.closeArchiveEntry();
+        }
     }
 
     private void writeTestFile(final Path testFile, final String eventFeed, final String data)
             throws IOException {
         Files.createDirectories(testFile.getParent());
-        final ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(testFile));
-        zipOutputStream.putNextEntry(new ZipEntry(StroomZipFile.SINGLE_META_ENTRY.getFullName()));
-        PrintWriter printWriter = new PrintWriter(zipOutputStream);
-        printWriter.println("Feed:" + eventFeed);
-        printWriter.println("Proxy:ProxyTest");
-        printWriter.println("ReceivedTime:2010-01-01T00:00:00.000Z");
-        printWriter.flush();
-        zipOutputStream.closeEntry();
-        zipOutputStream.putNextEntry(new ZipEntry(StroomZipFile.SINGLE_DATA_ENTRY.getFullName()));
-        printWriter = new PrintWriter(zipOutputStream);
-        printWriter.print(data);
-        printWriter.flush();
-        zipOutputStream.closeEntry();
-        zipOutputStream.close();
+        try (final ZipArchiveOutputStream zipOutputStream =
+                ZipUtil.createOutputStream(Files.newOutputStream(testFile))) {
+            zipOutputStream.putArchiveEntry(new ZipArchiveEntry(StroomZipFile.SINGLE_META_ENTRY.getFullName()));
+            PrintWriter printWriter = new PrintWriter(zipOutputStream);
+            printWriter.println("Feed:" + eventFeed);
+            printWriter.println("Proxy:ProxyTest");
+            printWriter.println("ReceivedTime:2010-01-01T00:00:00.000Z");
+            printWriter.flush();
+            zipOutputStream.closeArchiveEntry();
+            zipOutputStream.putArchiveEntry(new ZipArchiveEntry(StroomZipFile.SINGLE_DATA_ENTRY.getFullName()));
+            printWriter = new PrintWriter(zipOutputStream);
+            printWriter.print(data);
+            printWriter.flush();
+            zipOutputStream.closeArchiveEntry();
+        }
     }
 
     private void writeTestFileWithManyEntries(final Path testFile, final String eventFeed, final int count)
             throws IOException {
         Files.createDirectories(testFile.getParent());
-        final ZipOutputStream zipOutputStream = new ZipOutputStream(
-                new BufferedOutputStream(Files.newOutputStream(testFile)));
+        try (final ZipArchiveOutputStream zipOutputStream =
+                ZipUtil.createOutputStream(Files.newOutputStream(testFile))) {
 
-        LOGGER.debug(() -> LogUtil.message("Creating file {}", testFile.toAbsolutePath().toString()));
+            LOGGER.debug(() -> LogUtil.message("Creating file {}", testFile.toAbsolutePath().toString()));
 
-        for (int i = 1; i <= count; i++) {
-            LOGGER.debug(() -> LogUtil.message("Using feed {}", eventFeed));
+            for (int i = 1; i <= count; i++) {
+                LOGGER.debug(() -> LogUtil.message("Using feed {}", eventFeed));
 
-            final String name = String.valueOf(i);
-            zipOutputStream.putNextEntry(new ZipEntry(name + ".hdr"));
-            PrintWriter printWriter = new PrintWriter(zipOutputStream);
-            printWriter.println("Feed:" + eventFeed);
-            printWriter.println("Proxy:ProxyTest");
-            printWriter.println("StreamSize:" + name.getBytes().length);
-            printWriter.println("ReceivedTime:2010-01-01T00:00:00.000Z");
-            printWriter.flush();
-            zipOutputStream.closeEntry();
+                final String name = String.valueOf(i);
+                zipOutputStream.putArchiveEntry(new ZipArchiveEntry(name + ".hdr"));
+                PrintWriter printWriter = new PrintWriter(zipOutputStream);
+                printWriter.println("Feed:" + eventFeed);
+                printWriter.println("Proxy:ProxyTest");
+                printWriter.println("StreamSize:" + name.getBytes().length);
+                printWriter.println("ReceivedTime:2010-01-01T00:00:00.000Z");
+                printWriter.flush();
+                zipOutputStream.closeArchiveEntry();
 
-            zipOutputStream.putNextEntry(new ZipEntry(name + ".dat"));
-            printWriter = new PrintWriter(zipOutputStream);
-            printWriter.print(name);
-            printWriter.flush();
-            zipOutputStream.closeEntry();
+                zipOutputStream.putArchiveEntry(new ZipArchiveEntry(name + ".dat"));
+                printWriter = new PrintWriter(zipOutputStream);
+                printWriter.print(name);
+                printWriter.flush();
+                zipOutputStream.closeArchiveEntry();
+            }
         }
-        zipOutputStream.close();
     }
 
     @Test

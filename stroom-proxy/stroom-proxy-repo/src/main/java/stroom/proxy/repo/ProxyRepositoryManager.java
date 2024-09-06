@@ -219,9 +219,9 @@ public class ProxyRepositoryManager implements HasHealthCheck {
 
     public StroomZipOutputStream getStroomZipOutputStream(final AttributeMap attributeMap)
             throws IOException {
-        StroomZipOutputStream outputStream = getActiveRepository().getStroomZipOutputStream(attributeMap);
+        StroomZipOutputStream outputStream = getActiveRepository().getStrsoomZipOutputStream(attributeMap);
         while (outputStream == null) {
-            outputStream = getActiveRepository().getStroomZipOutputStream(attributeMap);
+            outputStream = getActiveRepository().getStrsoomZipOutputStream(attributeMap);
         }
         return outputStream;
     }
