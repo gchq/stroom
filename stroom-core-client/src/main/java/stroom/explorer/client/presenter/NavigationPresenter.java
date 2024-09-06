@@ -308,9 +308,11 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         registerHandler(getEventBus().addHandler(FocusExplorerTreeEvent.getType(), this));
 
         // Deal with task listeners.
-        final TaskHandler taskHandler = getView().getTaskListener().createTaskHandler("Explorer update");
-        registerHandler(getEventBus().addHandler(ExplorerStartTaskEvent.getType(), e -> taskHandler.onStart()));
-        registerHandler(getEventBus().addHandler(ExplorerEndTaskEvent.getType(), e -> taskHandler.onEnd()));
+        final TaskHandler taskHandler = getView().getTaskListener().createTaskHandler();
+        registerHandler(getEventBus().addHandler(ExplorerStartTaskEvent.getType(), e ->
+                taskHandler.onStart(e.getTask())));
+        registerHandler(getEventBus().addHandler(ExplorerEndTaskEvent.getType(), e ->
+                taskHandler.onEnd(e.getTask())));
 
         registerHandler(typeFilterPresenter.addDataSelectionHandler(event -> explorerTree.setIncludedTypeSet(
                 typeFilterPresenter.getIncludedTypes().orElse(null))));

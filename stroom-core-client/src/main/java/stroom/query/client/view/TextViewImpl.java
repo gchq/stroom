@@ -86,8 +86,8 @@ public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements 
     }
 
     @Override
-    public TaskHandler createTaskHandler(final String message) {
-        return spinner.createTaskHandler(message);
+    public TaskHandler createTaskHandler() {
+        return spinner.createTaskHandler();
     }
 
     @UiHandler("close")

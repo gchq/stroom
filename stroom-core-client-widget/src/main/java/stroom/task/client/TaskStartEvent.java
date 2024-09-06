@@ -23,14 +23,15 @@ import com.google.gwt.event.shared.HasHandlers;
 public class TaskStartEvent extends GwtEvent<TaskStartEvent.TaskStartHandler> {
 
     private static Type<TaskStartHandler> TYPE;
-    private final String message;
 
-    private TaskStartEvent(final String message) {
-        this.message = message;
+    private final Task task;
+
+    private TaskStartEvent(final Task task) {
+        this.task = task;
     }
 
-    static void fire(final HasHandlers handlers, final String message) {
-        handlers.fireEvent(new TaskStartEvent(message));
+    static void fire(final HasHandlers handlers, final Task task) {
+        handlers.fireEvent(new TaskStartEvent(task));
     }
 
     public static Type<TaskStartHandler> getType() {
@@ -50,8 +51,8 @@ public class TaskStartEvent extends GwtEvent<TaskStartEvent.TaskStartHandler> {
         handler.onTaskStart(this);
     }
 
-    public String getMessage() {
-        return message;
+    public Task getTask() {
+        return task;
     }
 
     public interface TaskStartHandler extends EventHandler {

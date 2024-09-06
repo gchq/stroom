@@ -142,7 +142,7 @@ public class CurveTab extends AbstractTab {
     }
 
     @Override
-    public TaskHandler createTaskHandler(final String message) {
-        return spinnerSmall.createTaskHandler(message);
+    public TaskHandler createTaskHandler() {
+        return spinnerSmall.createTaskHandler();
     }
 }

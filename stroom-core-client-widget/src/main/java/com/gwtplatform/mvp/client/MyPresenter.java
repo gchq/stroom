@@ -95,7 +95,7 @@ public abstract class MyPresenter<T_VIEW extends View, T_PROXY extends Proxy<?>>
     }
 
     @Override
-    public TaskHandler createTaskHandler(final String message) {
-        return taskHandlerFactory.createTaskHandler(message);
+    public TaskHandler createTaskHandler() {
+        return taskHandlerFactory.createTaskHandler();
     }
 }

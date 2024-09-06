@@ -74,7 +74,7 @@ public class CorePresenter extends MyPresenter<CoreView, CoreProxy>
 
         if (taskCount > 0) {
             if (!securityContext.isLoggedIn()) {
-                getView().showWorking(event.getMessage());
+                getView().showWorking(event.getTask().toString());
             }
         }
     }

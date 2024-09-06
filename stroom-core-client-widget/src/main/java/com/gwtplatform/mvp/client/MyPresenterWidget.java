@@ -69,7 +69,7 @@ public class MyPresenterWidget<V extends View>
     }
 
     @Override
-    public TaskHandler createTaskHandler(final String message) {
-        return taskHandlerFactory.createTaskHandler(message);
+    public TaskHandler createTaskHandler() {
+        return taskHandlerFactory.createTaskHandler();
     }
 }

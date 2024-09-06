@@ -1,6 +1,7 @@
 package stroom.data.pager.client;
 
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.Task;
 import stroom.task.client.TaskHandler;
 import stroom.task.client.TaskHandlerFactory;
 import stroom.widget.button.client.SvgButton;
@@ -106,16 +107,16 @@ public class RefreshButton
     }
 
     @Override
-    public TaskHandler createTaskHandler(final String message) {
+    public TaskHandler createTaskHandler() {
         return new TaskHandler() {
             @Override
-            public void onStart() {
+            public void onStart(final Task task) {
                 taskCount++;
                 updateRefreshState();
             }
 
             @Override
-            public void onEnd() {
+            public void onEnd(final Task task) {
                 taskCount--;
                 updateRefreshState();
             }

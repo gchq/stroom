@@ -24,11 +24,14 @@ public class TaskEndEvent extends GwtEvent<TaskEndEvent.TaskEndHandler> {
 
     private static Type<TaskEndHandler> TYPE;
 
-    private TaskEndEvent() {
+    private final Task task;
+
+    private TaskEndEvent(final Task task) {
+        this.task = task;
     }
 
-    static void fire(final HasHandlers handlers) {
-        handlers.fireEvent(new TaskEndEvent());
+    static void fire(final HasHandlers handlers, final Task task) {
+        handlers.fireEvent(new TaskEndEvent(task));
     }
 
     public static Type<TaskEndHandler> getType() {
@@ -46,6 +49,10 @@ public class TaskEndEvent extends GwtEvent<TaskEndEvent.TaskEndHandler> {
     @Override
     protected void dispatch(final TaskEndHandler handler) {
         handler.onTaskEnd(this);
+    }
+
+    public Task getTask() {
+        return task;
     }
 
     public interface TaskEndHandler extends EventHandler {

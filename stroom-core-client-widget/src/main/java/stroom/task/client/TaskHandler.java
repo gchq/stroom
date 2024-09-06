@@ -2,7 +2,7 @@ package stroom.task.client;
 
 public interface TaskHandler {
 
-    void onStart();
+    void onStart(Task task);
 
-    void onEnd();
+    void onEnd(Task task);
 }

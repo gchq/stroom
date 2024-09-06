@@ -112,8 +112,8 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
     }
 
     @Override
-    public TaskHandler createTaskHandler(final String message) {
-        return spinner.createTaskHandler(message);
+    public TaskHandler createTaskHandler() {
+        return spinner.createTaskHandler();
     }
 
     public interface Binder extends UiBinder<Widget, SourceViewImpl> {

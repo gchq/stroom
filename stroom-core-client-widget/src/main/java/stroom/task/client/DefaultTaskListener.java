@@ -11,18 +11,18 @@ public class DefaultTaskListener implements TaskHandlerFactory {
     }
 
     @Override
-    public TaskHandler createTaskHandler(final String message) {
+    public TaskHandler createTaskHandler() {
         return new TaskHandler() {
             @Override
-            public void onStart() {
+            public void onStart(final Task task) {
                 // Add the task to the map.
-                TaskStartEvent.fire(hasHandlers, message);
+                TaskStartEvent.fire(hasHandlers, task);
             }
 
             @Override
-            public void onEnd() {
+            public void onEnd(final Task task) {
                 // Remove the task from the task count.
-                TaskEndEvent.fire(hasHandlers);
+                TaskEndEvent.fire(hasHandlers, task);
             }
         };
     }

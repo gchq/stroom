@@ -35,6 +35,8 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.task.client.HasTaskHandlerFactory;
+import stroom.task.client.SimpleTask;
+import stroom.task.client.Task;
 import stroom.task.client.TaskHandler;
 import stroom.task.client.TaskHandlerFactory;
 
@@ -99,10 +101,11 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                                      final boolean fullScreen,
                                      final TaskHandlerFactory taskHandlerFactory) {
         MyPresenterWidget<?> presenter = null;
-        final TaskHandler taskHandler = taskHandlerFactory.createTaskHandler("Opening: " + docRef);
+        final TaskHandler taskHandler = taskHandlerFactory.createTaskHandler();
+        final Task task = new SimpleTask("Opening: " + docRef);
         try {
             // Start spinning.
-            taskHandler.onStart();
+            taskHandler.onStart(task);
 
             final DocumentTabData existing = documentToTabDataMap.get(docRef);
             // If we already have a tab item for this document then make sure it is
@@ -140,7 +143,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 
         } finally {
             // Stop spinning.
-            taskHandler.onEnd();
+            taskHandler.onEnd(task);
         }
 
         return presenter;

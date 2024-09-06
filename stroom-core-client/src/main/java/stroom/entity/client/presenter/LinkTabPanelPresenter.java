@@ -17,6 +17,8 @@
 package stroom.entity.client.presenter;
 
 import stroom.data.table.client.Refreshable;
+import stroom.task.client.SimpleTask;
+import stroom.task.client.Task;
 import stroom.task.client.TaskHandler;
 import stroom.widget.tab.client.presenter.TabData;
 
@@ -44,8 +46,9 @@ public abstract class LinkTabPanelPresenter extends MyPresenterWidget<LinkTabPan
     protected abstract void getContent(TabData tab, ContentCallback callback);
 
     public void selectTab(final TabData tab) {
-        final TaskHandler taskHandler = createTaskHandler("Select tab");
-        taskHandler.onStart();
+        final TaskHandler taskHandler = createTaskHandler();
+        final Task task = new SimpleTask("Select tab");
+        taskHandler.onStart(task);
         Scheduler.get().scheduleDeferred(() -> {
             if (tab != null) {
                 getContent(tab, content -> {
@@ -63,7 +66,7 @@ public abstract class LinkTabPanelPresenter extends MyPresenterWidget<LinkTabPan
                     }
                 });
             }
-            taskHandler.onEnd();
+            taskHandler.onEnd(task);
         });
     }
 

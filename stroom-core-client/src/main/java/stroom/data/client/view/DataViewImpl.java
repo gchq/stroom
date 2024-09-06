@@ -130,8 +130,8 @@ public class DataViewImpl extends ViewImpl implements DataView {
     }
 
     @Override
-    public TaskHandler createTaskHandler(final String message) {
-        return spinner.createTaskHandler(message);
+    public TaskHandler createTaskHandler() {
+        return spinner.createTaskHandler();
     }
 
     public interface Binder extends UiBinder<Widget, DataViewImpl> {

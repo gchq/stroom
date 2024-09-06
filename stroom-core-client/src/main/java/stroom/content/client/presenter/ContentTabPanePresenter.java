@@ -239,8 +239,8 @@ public class ContentTabPanePresenter
         }
 
         @Override
-        public TaskHandler createTaskHandler(final String message) {
-            return tab.createTaskHandler(message);
+        public TaskHandler createTaskHandler() {
+            return tab.createTaskHandler();
         }
     }
 }

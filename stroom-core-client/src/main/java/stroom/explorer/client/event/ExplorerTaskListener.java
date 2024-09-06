@@ -1,5 +1,6 @@
 package stroom.explorer.client.event;
 
+import stroom.task.client.Task;
 import stroom.task.client.TaskHandler;
 import stroom.task.client.TaskHandlerFactory;
 
@@ -15,16 +16,16 @@ public class ExplorerTaskListener implements TaskHandlerFactory, HasHandlers {
     }
 
     @Override
-    public TaskHandler createTaskHandler(final String message) {
+    public TaskHandler createTaskHandler() {
         return new TaskHandler() {
             @Override
-            public void onStart() {
-                ExplorerStartTaskEvent.fire(ExplorerTaskListener.this);
+            public void onStart(final Task task) {
+                ExplorerStartTaskEvent.fire(ExplorerTaskListener.this, task);
             }
 
             @Override
-            public void onEnd() {
-                ExplorerEndTaskEvent.fire(ExplorerTaskListener.this);
+            public void onEnd(final Task task) {
+                ExplorerEndTaskEvent.fire(ExplorerTaskListener.this, task);
             }
         };
     }

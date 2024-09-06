@@ -17,6 +17,7 @@
 package stroom.widget.spinner.client;
 
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.Task;
 import stroom.task.client.TaskHandler;
 import stroom.task.client.TaskHandlerFactory;
 
@@ -52,16 +53,16 @@ public class SpinnerSmall extends Widget implements TaskHandlerFactory {
     }
 
     @Override
-    public TaskHandler createTaskHandler(final String message) {
+    public TaskHandler createTaskHandler() {
         return new TaskHandler() {
             @Override
-            public void onStart() {
+            public void onStart(final Task task) {
                 taskCount++;
                 setRefreshing(taskCount > 0);
             }
 
             @Override
-            public void onEnd() {
+            public void onEnd(final Task task) {
                 taskCount--;
 
                 if (taskCount < 0) {
