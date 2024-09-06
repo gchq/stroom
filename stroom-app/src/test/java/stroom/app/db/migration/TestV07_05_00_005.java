@@ -22,13 +22,13 @@ import javax.sql.DataSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestV07_04_00_005 extends AbstractCrossModuleMigrationTest {
+public class TestV07_05_00_005 extends AbstractCrossModuleMigrationTest {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestV07_04_00_005.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestV07_05_00_005.class);
 
     static {
         // Use a small batch size to test batching properly
-        V07_04_00_005__Orphaned_Doc_Perms.BATCH_SIZE = 2;
+        V07_05_00_005__Orphaned_Doc_Perms.BATCH_SIZE = 2;
     }
 
     @Override
@@ -38,7 +38,7 @@ public class TestV07_04_00_005 extends AbstractCrossModuleMigrationTest {
 
     @Override
     Class<? extends AbstractCrossModuleJavaDbMigration> getTargetClass() {
-        return V07_04_00_005__Orphaned_Doc_Perms.class;
+        return V07_05_00_005__Orphaned_Doc_Perms.class;
     }
 
     @Test
@@ -79,7 +79,7 @@ public class TestV07_04_00_005 extends AbstractCrossModuleMigrationTest {
 
         // Make sure the right amount of recs have gone in the backup table
         assertTableCountAfterMigration(
-                securityDbConnProvider, V07_04_00_005__Orphaned_Doc_Perms.BACKUP_TBL_NAME, purgedDocCnt);
+                securityDbConnProvider, V07_05_00_005__Orphaned_Doc_Perms.BACKUP_TBL_NAME, purgedDocCnt);
 
         // Make sure the orphaned docs are not their anymore
         assertThat(getCount(securityDbConnProvider, """
@@ -92,7 +92,7 @@ public class TestV07_04_00_005 extends AbstractCrossModuleMigrationTest {
         assertThat(getCount(securityDbConnProvider, LogUtil.message("""
                 select count(*)
                 from {}
-                where doc_uuid like 'unknown_uuid_%'""", V07_04_00_005__Orphaned_Doc_Perms.BACKUP_TBL_NAME)))
+                where doc_uuid like 'unknown_uuid_%'""", V07_05_00_005__Orphaned_Doc_Perms.BACKUP_TBL_NAME)))
                 .isEqualTo(12);
     }
 
@@ -127,7 +127,7 @@ public class TestV07_04_00_005 extends AbstractCrossModuleMigrationTest {
 
     static class TestData extends AbstractCrossModuleMigrationTestData {
 
-        private static final String SYSTEM_DOC_UUID = V07_04_00_005__Orphaned_Doc_Perms.SYSTEM_DOC_UUID;
+        private static final String SYSTEM_DOC_UUID = V07_05_00_005__Orphaned_Doc_Perms.SYSTEM_DOC_UUID;
 
         public static final String PROC_SQL = """
                 INSERT INTO processor (

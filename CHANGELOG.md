@@ -13,6 +13,21 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#4426** : Add INFO message when an index shard is created.
+
+* Issue **#4425** : Fix _Usage Date_ heading alignment on Edit Volume Group screen for both data/index volumes.
+
+* Uplift docker image JDK to `eclipse-temurin:21.0.4_7-jdk-alpine`.
+
+* Issue **#4416** : Allow dashboard table sorting to be changed post query.
+
+* Issue **#4421** : Change session state XML structure.
+
+* Issue **#4419** : Automatically unpause dashboard result components when a new search begins.
+
+* Rename migration from `V07_04_00_005__Orphaned_Doc_Perms` to `V07_05_00_005__Orphaned_Doc_Perms`.
+
+
 ## [v7.6-beta.1] - 2024-08-30
 
 * Issue **#4345** : Write analytic email notification failures to the analytic error feed.

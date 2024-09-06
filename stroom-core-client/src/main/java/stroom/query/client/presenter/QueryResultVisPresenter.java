@@ -99,7 +99,6 @@ public class QueryResultVisPresenter
     private JavaScriptObject lastData;
 
     private boolean pause;
-    private int currentRequestCount;
 
     private final JavaScriptObject context;
 
@@ -193,14 +192,18 @@ public class QueryResultVisPresenter
                 visFrame.setClassName(getClassName(event.getTheme()))));
 
         registerHandler(getView().getRefreshButton().addClickHandler(e -> {
-            if (pause) {
-                this.pause = false;
-                refresh();
-            } else {
-                this.pause = true;
-            }
-            getView().getRefreshButton().setPaused(this.pause);
+            setPause(!pause, true);
         }));
+    }
+
+    private void setPause(final boolean pause,
+                          final boolean refresh) {
+        // If curently paused then refresh if we are allowed.
+        if (refresh && this.pause) {
+            refresh();
+        }
+        this.pause = pause;
+        getView().getRefreshButton().setPaused(this.pause);
     }
 
     private String getClassName(final String theme) {
@@ -288,6 +291,7 @@ public class QueryResultVisPresenter
             updateStatusMessage();
         }
 
+        setPause(false, false);
         getView().getRefreshButton().setRefreshing(true);
     }
 
@@ -311,25 +315,6 @@ public class QueryResultVisPresenter
     }
 
     private void refresh() {
-
-//        currentRequestCount++;
-//        getView().getRefreshButton().setPaused(pause && currentRequestCount == 0);
-//        getView().getRefreshButton().setRefreshing(true);
-//        currentSearchModel.refresh(getComponentConfig().getId(), result -> {
-//            try {
-//                if (result != null) {
-//                    setDataInternal(result);
-//                }
-//            } catch (final Exception e) {
-//                GWT.log(e.getMessage());
-//            }
-//            currentRequestCount--;
-//            getView().setPaused(pause && currentRequestCount == 0);
-//            getView().setRefreshing(currentSearchModel.isSearching());
-//        });
-
-        currentRequestCount++;
-        getView().getRefreshButton().setPaused(pause && currentRequestCount == 0);
         getView().getRefreshButton().setRefreshing(true);
         currentSearchModel.refresh(QueryModel.VIS_COMPONENT_ID, result -> {
             try {
@@ -339,8 +324,6 @@ public class QueryResultVisPresenter
             } catch (final Exception e) {
                 GWT.log(e.getMessage());
             }
-            currentRequestCount--;
-            getView().getRefreshButton().setPaused(pause && currentRequestCount == 0);
             getView().getRefreshButton().setRefreshing(currentSearchModel.isSearching());
         });
     }

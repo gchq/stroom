@@ -152,7 +152,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private boolean ignoreRangeChange;
     private long[] maxResults = TableComponentSettings.DEFAULT_MAX_RESULTS;
     private boolean pause;
-    private int currentRequestCount;
     private SelectionPopup<Column, ColumnSelectionItem> addColumnPopup;
 
     @Inject
@@ -301,14 +300,18 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }));
 
         registerHandler(pagerView.getRefreshButton().addClickHandler(event -> {
-            if (pause) {
-                this.pause = false;
-                refresh();
-            } else {
-                this.pause = true;
-            }
-            pagerView.getRefreshButton().setPaused(this.pause);
+            setPause(!pause, true);
         }));
+    }
+
+    private void setPause(final boolean pause,
+                          final boolean refresh) {
+        // If curently paused then refresh if we are allowed.
+        if (refresh && this.pause) {
+            refresh();
+        }
+        this.pause = pause;
+        pagerView.getRefreshButton().setPaused(this.pause);
     }
 
     @Override
@@ -464,6 +467,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .tableSettings(tableSettings)
                 .build();
 
+        setPause(false, false);
         pagerView.getRefreshButton().setRefreshing(true);
     }
 
@@ -939,7 +943,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     @Override
     public ComponentResultRequest getResultRequest(final Fetch fetch) {
-        return tableResultRequest.copy().fetch(fetch).build();
+        final TableSettings tableSettings = getTableSettings()
+                .copy()
+                .buildTableSettings();
+        return tableResultRequest.copy().tableSettings(tableSettings).fetch(fetch).build();
     }
 
     @Override
@@ -998,11 +1005,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         return list;
     }
 
-    private void refresh() {
+    void refresh() {
         if (currentSearchModel != null) {
-            currentRequestCount++;
             pagerView.getRefreshButton().setRefreshing(true);
-            pagerView.getRefreshButton().setPaused(pause && currentRequestCount == 0);
             currentSearchModel.refresh(getComponentConfig().getId(), result -> {
                 try {
                     if (result != null) {
@@ -1011,8 +1016,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 } catch (final Exception e) {
                     GWT.log(e.getMessage());
                 }
-                currentRequestCount--;
-                pagerView.getRefreshButton().setPaused(pause && currentRequestCount == 0);
                 pagerView.getRefreshButton().setRefreshing(currentSearchModel.isSearching());
             });
         }

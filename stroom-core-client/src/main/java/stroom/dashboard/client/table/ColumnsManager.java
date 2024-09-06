@@ -195,8 +195,7 @@ public class ColumnsManager implements HeadingListener {
         if (change) {
             tablePresenter.setDirty(true);
             tablePresenter.updateColumns();
-            tablePresenter.reset();
-            tablePresenter.clear();
+            tablePresenter.refresh();
         }
     }
 
@@ -235,7 +234,7 @@ public class ColumnsManager implements HeadingListener {
         expressionPresenterProvider.get().show(tablePresenter, column, (oldField, newField) -> {
             replaceColumn(oldField, newField);
             tablePresenter.setDirty(true);
-            tablePresenter.clear();
+            tablePresenter.refresh();
         });
     }
 
@@ -243,7 +242,7 @@ public class ColumnsManager implements HeadingListener {
         formatPresenter.show(column, (oldField, newField) -> {
             replaceColumn(oldField, newField);
             tablePresenter.setDirty(true);
-            tablePresenter.clear();
+            tablePresenter.refresh();
         });
     }
 
@@ -252,7 +251,7 @@ public class ColumnsManager implements HeadingListener {
             replaceColumn(oldField, newField);
             tablePresenter.setDirty(true);
             tablePresenter.updateColumns();
-            tablePresenter.clear();
+            tablePresenter.refresh();
         });
     }
 
@@ -273,6 +272,7 @@ public class ColumnsManager implements HeadingListener {
 
         tablePresenter.setDirty(true);
         tablePresenter.updateColumns();
+        tablePresenter.refresh();
     }
 
     private void duplicateColumn(final Column column) {
@@ -323,6 +323,7 @@ public class ColumnsManager implements HeadingListener {
 
             tablePresenter.setDirty(true);
             tablePresenter.updateColumns();
+            tablePresenter.refresh();
         }
     }
 
@@ -550,7 +551,7 @@ public class ColumnsManager implements HeadingListener {
             fixGroups(getColumns());
             tablePresenter.setDirty(true);
             tablePresenter.updateColumns();
-            tablePresenter.clear();
+            tablePresenter.refresh();
         }
     }
 

@@ -28,6 +28,7 @@ import stroom.expression.api.DateTimeSettings;
 import stroom.index.shared.IndexConstants;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ParamUtil;
@@ -49,6 +50,7 @@ import stroom.query.common.v2.OpenGroups;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
 import stroom.query.common.v2.SimpleRowCreator;
+import stroom.query.common.v2.WindowSupport;
 import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.SearchRequestFactory;
@@ -358,11 +360,12 @@ public class ScheduledQueryAnalyticExecutor {
 
                     // Now consume all results as detections.
                     final TableSettings tableSettings = resultRequest.getMappings().getFirst();
+                    final List<Column> columns = WindowSupport.modifyColumns(tableSettings);
                     final Map<String, String> paramMap = ParamUtil
                             .createParamMap(mappedRequest.getQuery().getParams());
                     final CompiledColumns compiledColumns = CompiledColumns.create(
                             expressionContext,
-                            tableSettings.getColumns(),
+                            columns,
                             paramMap);
 
                     final Provider<DetectionConsumer> detectionConsumerProvider =
@@ -432,20 +435,27 @@ public class ScheduledQueryAnalyticExecutor {
 
                         // Create the row creator.
                         Optional<ItemMapper<Row>> optionalRowCreator = FilteredRowCreator.create(
+                                dataStore.getColumns(),
+                                columns,
                                 fieldFormatter,
                                 keyFactory,
                                 tableSettings.getAggregateFilter(),
-                                dataStore.getColumns(),
                                 expressionContext.getDateTimeSettings(),
                                 errorConsumer);
 
                         if (optionalRowCreator.isEmpty()) {
-                            optionalRowCreator = SimpleRowCreator.create(fieldFormatter, keyFactory, errorConsumer);
+                            optionalRowCreator = SimpleRowCreator.create(
+                                    dataStore.getColumns(),
+                                    columns,
+                                    fieldFormatter,
+                                    keyFactory,
+                                    errorConsumer);
                         }
 
                         final ItemMapper<Row> rowCreator = optionalRowCreator.orElse(null);
 
                         dataStore.fetch(
+                                columns,
                                 OffsetRange.UNBOUNDED,
                                 OpenGroups.NONE,
                                 resultRequest.getTimeFilter(),

@@ -50,6 +50,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
+import stroom.util.time.StroomDuration;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.sun.xml.fastinfoset.sax.SAXDocumentSerializer;
@@ -208,7 +209,9 @@ public class StateFilter extends AbstractXMLFilter {
     private int uncommited = 0;
     private Locator locator;
 
-    private Session.Builder sessionBuilder;
+    private boolean start;
+    private Instant time;
+    private StroomDuration timeout;
 
     @Inject
     public StateFilter(final ErrorReceiverProxy errorReceiverProxy,
@@ -436,12 +439,16 @@ public class StateFilter extends AbstractXMLFilter {
 
             fastInfosetStartElement(localName, uri, qName, atts);
 
-        } else if ("session-start".equals(localName)) {
-            sessionBuilder = new Session.Builder();
-            sessionBuilder.terminal(false);
-        } else if ("session-end".equals(localName)) {
-            sessionBuilder = new Session.Builder();
-            sessionBuilder.terminal(true);
+        } else if ("session".equals(localName) ||
+                "session-start".equals(localName) ||
+                "session-end".equals(localName)) {
+            start = true;
+            time = null;
+            timeout = null;
+
+            if ("session-end".equals(localName)) {
+                start = false;
+            }
         }
 
         super.startElement(uri, localName, qName, atts);
@@ -535,9 +542,6 @@ public class StateFilter extends AbstractXMLFilter {
                 // the key for the KV pair
                 key = contentBuffer.toString();
 
-                if (sessionBuilder != null) {
-                    sessionBuilder.key(key);
-                }
             } else if (FROM_ELEMENT.equalsIgnoreCase(localName)) {
                 // the start key for the key range
                 final String string = contentBuffer.toString();
@@ -557,11 +561,15 @@ public class StateFilter extends AbstractXMLFilter {
             } else if (REFERENCE_ELEMENT.equalsIgnoreCase(localName)) {
                 addData();
 
-            } else if ("start".equals(localName)) {
-                sessionBuilder.start(DateUtil.parseNormalDateTimeStringToInstant(contentBuffer.toString()));
-            } else if ("end".equals(localName)) {
-                sessionBuilder.end(DateUtil.parseNormalDateTimeStringToInstant(contentBuffer.toString()));
-            } else if (("session-start").equals(localName) || "session-end".equals(localName)) {
+            } else if ("time".equals(localName)) {
+                time = DateUtil.parseNormalDateTimeStringToInstant(contentBuffer.toString());
+
+            } else if ("timeout".equals(localName)) {
+                timeout = StroomDuration.parse(contentBuffer.toString());
+
+            } else if ("session".equals(localName) ||
+                    "session-start".equals(localName) ||
+                    "session-end".equals(localName)) {
                 addData();
             }
         }
@@ -702,17 +710,25 @@ public class StateFilter extends AbstractXMLFilter {
                         }
                     }
                     case SESSION -> {
-                        final Session session = sessionBuilder.build();
-                        if (session.key() == null) {
+                        if (key == null) {
                             error(LogUtil.message("Session key is null for {}", tableName));
-                        } else if (session.start() == null) {
-                            error(LogUtil.message("Session start is null for {}", tableName));
-                        } else if (session.end() == null) {
-                            error(LogUtil.message("Session end is null for {}", tableName));
+                        } else if (time == null) {
+                            error(LogUtil.message("Session time is null for {}", tableName));
                         } else {
+                            final Session.Builder sessionBuilder = new Session.Builder();
+                            sessionBuilder.key(key);
+                            sessionBuilder.start(time);
+                            sessionBuilder.end(time);
+                            if (start) {
+                                if (timeout != null) {
+                                    sessionBuilder.end(time.plus(timeout));
+                                }
+                            } else {
+                                sessionBuilder.terminal(true);
+                            }
+
                             LOGGER.trace("Putting session {} into table {}", key, tableName);
-                            sessionMap.computeIfAbsent(stateDoc, k -> new ArrayList<>()).add(session);
-                            sessionBuilder = null;
+                            sessionMap.computeIfAbsent(stateDoc, k -> new ArrayList<>()).add(sessionBuilder.build());
                             tryFlush();
                         }
                     }
@@ -740,6 +756,9 @@ public class StateFilter extends AbstractXMLFilter {
         rangeTo = null;
         haveSeenXmlInValueElement = false;
         valueXmlDefaultNamespaceUri = null;
+        start = true;
+        time = null;
+        timeout = null;
     }
 
     /**
