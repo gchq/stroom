@@ -216,7 +216,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> implement
                                 res.find(findJobNodeCriteria))
                         .onSuccess(dataConsumer)
                         .onFailure(errorHandler)
-                        .taskListener(view)
+                        .taskHandlerFactory(view)
                         .exec();
             }
 
@@ -239,7 +239,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> implement
                                     jobNodeAndInfo.clearJobNodeInfo();
                                     scheduleDataGridRedraw();
                                 })
-                                .taskListener(getView())
+                                .taskHandlerFactory(getView())
                                 .exec();
                     }
                 });
@@ -311,7 +311,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> implement
                                 restFactory
                                         .create(JOB_NODE_RESOURCE)
                                         .call(res -> res.setTaskLimit(jobNodeAndInfo.getId(), value.intValue()))
-                                        .taskListener(getView())
+                                        .taskHandlerFactory(getView())
                                         .exec();
                             }
                         })

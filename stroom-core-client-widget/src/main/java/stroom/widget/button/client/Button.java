@@ -2,7 +2,7 @@ package stroom.widget.button.client;
 
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskHandler;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
@@ -13,7 +13,7 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.ButtonBase;
 
-public class Button extends ButtonBase implements ButtonView, TaskListener {
+public class Button extends ButtonBase implements ButtonView, TaskHandlerFactory {
 
     private final Element rippleContainer;
     private final Element buttonContent;

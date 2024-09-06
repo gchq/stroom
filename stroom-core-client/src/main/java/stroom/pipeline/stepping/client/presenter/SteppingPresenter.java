@@ -357,7 +357,7 @@ public class SteppingPresenter
                 final List<PipelineProperty> properties = pipelineModel.getProperties(element);
 
                 final ElementPresenter presenter = elementPresenterProvider.get();
-                presenter.setTaskListener(this);
+                presenter.setTaskHandlerFactory(this);
                 presenter.setElement(element);
                 presenter.setProperties(properties);
                 presenter.setFeedName(meta.getFeedName());
@@ -559,7 +559,7 @@ public class SteppingPresenter
                                 stepLocation.getRecordIndex()));
                     }
                 })
-                .taskListener(this)
+                .taskHandlerFactory(this)
                 .exec();
     }
 
@@ -608,7 +608,7 @@ public class SteppingPresenter
                         AlertEvent.fireErrorFromException(SteppingPresenter.this, restError.getException(), null);
                         busyTranslating = false;
                     })
-                    .taskListener(this)
+                    .taskHandlerFactory(this)
                     .exec();
         }
     }

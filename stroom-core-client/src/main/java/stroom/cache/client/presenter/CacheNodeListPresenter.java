@@ -132,7 +132,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
                             .onSuccess(result -> {
                                 dataProvider.refresh();
                             })
-                            .taskListener(getView())
+                            .taskHandlerFactory(getView())
                             .exec();
                 });
     }
@@ -338,7 +338,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
                         responseMap.remove(nodeName);
                         delayedUpdate.update();
                     })
-                    .taskListener(getView())
+                    .taskHandlerFactory(getView())
                     .exec();
         }
     }

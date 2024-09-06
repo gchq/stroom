@@ -16,7 +16,7 @@
 
 package stroom.hyperlink.client;
 
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -26,16 +26,18 @@ public class HyperlinkEvent extends GwtEvent<HyperlinkEvent.Handler> {
 
     private static Type<Handler> TYPE;
     private final Hyperlink hyperlink;
-    private final TaskListener taskListener;
+    private final TaskHandlerFactory taskHandlerFactory;
 
     private HyperlinkEvent(final Hyperlink hyperlink,
-                           final TaskListener taskListener) {
+                           final TaskHandlerFactory taskHandlerFactory) {
         this.hyperlink = hyperlink;
-        this.taskListener = taskListener;
+        this.taskHandlerFactory = taskHandlerFactory;
     }
 
-    public static void fire(final HasHandlers handlers, final Hyperlink hyperlink, final TaskListener taskListener) {
-        handlers.fireEvent(new HyperlinkEvent(hyperlink, taskListener));
+    public static void fire(final HasHandlers handlers,
+                            final Hyperlink hyperlink,
+                            final TaskHandlerFactory taskHandlerFactory) {
+        handlers.fireEvent(new HyperlinkEvent(hyperlink, taskHandlerFactory));
     }
 
     public static Type<Handler> getType() {
@@ -59,8 +61,8 @@ public class HyperlinkEvent extends GwtEvent<HyperlinkEvent.Handler> {
         return hyperlink;
     }
 
-    public TaskListener getTaskListener() {
-        return taskListener;
+    public TaskHandlerFactory getTaskHandlerFactory() {
+        return taskHandlerFactory;
     }
 
     public interface Handler extends EventHandler {

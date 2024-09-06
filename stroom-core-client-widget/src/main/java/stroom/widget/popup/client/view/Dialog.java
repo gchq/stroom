@@ -18,7 +18,7 @@ package stroom.widget.popup.client.view;
 
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskHandler;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 import stroom.widget.spinner.client.SpinnerLarge;
 import stroom.widget.util.client.MouseUtil;
 
@@ -44,7 +44,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
-public class Dialog extends AbstractPopupPanel implements TaskListener {
+public class Dialog extends AbstractPopupPanel implements TaskHandlerFactory {
 
     private static final Binder binder = GWT.create(Binder.class);
     private final int clientLeft;

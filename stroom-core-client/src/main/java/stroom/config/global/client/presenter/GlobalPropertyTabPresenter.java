@@ -140,7 +140,7 @@ public class GlobalPropertyTabPresenter
         if (e != null) {
             if (editProvider != null) {
                 final ManageGlobalPropertyEditPresenter editor = editProvider.get();
-                editor.setTaskListener(this);
+                editor.setTaskHandlerFactory(this);
                 editor.showEntity(e, listPresenter::refresh);
             }
         }

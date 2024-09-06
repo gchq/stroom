@@ -17,12 +17,12 @@
 package stroom.widget.tab.client.view;
 
 import stroom.task.client.TaskHandler;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
 
-public abstract class AbstractTab extends Widget implements TaskListener {
+public abstract class AbstractTab extends Widget implements TaskHandlerFactory {
 
     private boolean hidden;
 

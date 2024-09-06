@@ -102,7 +102,7 @@ public class ProcessorTaskListPresenter
                             .method(res -> res.find(criteria))
                             .onSuccess(dataConsumer)
                             .onFailure(errorHandler)
-                            .taskListener(view)
+                            .taskHandlerFactory(view)
                             .exec();
                 }
             }
@@ -126,7 +126,7 @@ public class ProcessorTaskListPresenter
                                     .orElse(null);
                             showTooltip(popupPosition, row, meta);
                         })
-                        .taskListener(getView())
+                        .taskHandlerFactory(getView())
                         .exec();
             }
         }, "<br/>", ColumnSizeConstants.ICON_COL);

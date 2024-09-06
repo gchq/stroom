@@ -40,8 +40,8 @@ import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
 import stroom.task.client.DefaultTaskListener;
-import stroom.task.client.HasTaskListener;
-import stroom.task.client.TaskListener;
+import stroom.task.client.HasTaskHandlerFactory;
+import stroom.task.client.TaskHandlerFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -57,7 +57,7 @@ import java.util.Map.Entry;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class SearchModel implements HasTaskListener, HasHandlers {
+public class SearchModel implements HasTaskHandlerFactory, HasHandlers {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
 
@@ -68,7 +68,7 @@ public class SearchModel implements HasTaskListener, HasHandlers {
     private String componentId;
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
     private final ResultStoreModel resultStoreModel;
-    private TaskListener taskListener = new DefaultTaskListener(this);
+    private TaskHandlerFactory taskHandlerFactory = new DefaultTaskListener(this);
     private Map<String, ResultComponent> resultComponents = new HashMap<>();
     private DashboardSearchResponse currentResponse;
     private String currentNode;
@@ -262,7 +262,7 @@ public class SearchModel implements HasTaskListener, HasHandlers {
                                 }
                                 resultConsumer.accept(null);
                             })
-                            .taskListener(taskListener)
+                            .taskHandlerFactory(taskHandlerFactory)
                             .exec();
                 }
             }
@@ -277,14 +277,14 @@ public class SearchModel implements HasTaskListener, HasHandlers {
     private void deleteStore(final String node, final QueryKey queryKey, final DestroyReason destroyReason) {
         if (queryKey != null) {
             resultStoreModel.destroy(node, queryKey, destroyReason, (ok) ->
-                    GWT.log("Destroyed store " + queryKey), taskListener);
+                    GWT.log("Destroyed store " + queryKey), taskHandlerFactory);
         }
     }
 
     private void terminate(final String node, final QueryKey queryKey) {
         if (queryKey != null) {
             resultStoreModel.terminate(node, queryKey, (ok) ->
-                    GWT.log("Terminate search " + queryKey), taskListener);
+                    GWT.log("Terminate search " + queryKey), taskHandlerFactory);
         }
     }
 
@@ -355,7 +355,7 @@ public class SearchModel implements HasTaskListener, HasHandlers {
                             poll(Fetch.CHANGES, false);
                         }
                     })
-                    .taskListener(taskListener)
+                    .taskHandlerFactory(taskHandlerFactory)
                     .exec();
         }
     }
@@ -540,8 +540,8 @@ public class SearchModel implements HasTaskListener, HasHandlers {
     }
 
     @Override
-    public void setTaskListener(final TaskListener taskListener) {
-        this.taskListener = taskListener;
+    public void setTaskHandlerFactory(final TaskHandlerFactory taskHandlerFactory) {
+        this.taskHandlerFactory = taskHandlerFactory;
     }
 
     @Override

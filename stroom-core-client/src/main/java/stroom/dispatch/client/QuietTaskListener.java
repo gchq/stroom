@@ -1,9 +1,9 @@
 package stroom.dispatch.client;
 
 import stroom.task.client.TaskHandler;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 
-public class QuietTaskListener implements TaskListener {
+public class QuietTaskListener implements TaskHandlerFactory {
 
     @Override
     public TaskHandler createTaskHandler(final String message) {

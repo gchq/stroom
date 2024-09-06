@@ -28,7 +28,7 @@ public class ExplorerStartTaskEvent extends GwtEvent<ExplorerStartTaskEvent.Hand
     private ExplorerStartTaskEvent() {
     }
 
-    public static void fire(final HasHandlers handlers) {
+    static void fire(final HasHandlers handlers) {
         handlers.fireEvent(new ExplorerStartTaskEvent());
     }
 

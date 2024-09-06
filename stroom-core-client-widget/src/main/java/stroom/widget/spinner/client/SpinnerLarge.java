@@ -17,7 +17,7 @@
 package stroom.widget.spinner.client;
 
 import stroom.task.client.TaskHandler;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -26,7 +26,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
-public class SpinnerLarge extends Composite implements TaskListener {
+public class SpinnerLarge extends Composite implements TaskHandlerFactory {
 
     private static final Binder uiBinder = GWT.create(Binder.class);
 

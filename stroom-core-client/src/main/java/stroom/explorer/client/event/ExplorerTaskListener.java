@@ -1,12 +1,12 @@
 package stroom.explorer.client.event;
 
 import stroom.task.client.TaskHandler;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
-public class ExplorerTaskListener implements TaskListener, HasHandlers {
+public class ExplorerTaskListener implements TaskHandlerFactory, HasHandlers {
 
     private final HasHandlers hasHandlers;
 

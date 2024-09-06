@@ -1,6 +1,6 @@
 package stroom.task.client;
 
-public interface TaskListener {
+public interface TaskHandlerFactory {
 
     TaskHandler createTaskHandler(String message);
 }

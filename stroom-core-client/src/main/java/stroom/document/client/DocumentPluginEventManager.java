@@ -89,7 +89,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.DefaultTaskListener;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 import stroom.util.client.ClipboardUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -132,7 +132,7 @@ public class DocumentPluginEventManager extends Plugin {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
     private static final ExplorerFavouriteResource EXPLORER_FAV_RESOURCE = GWT.create(ExplorerFavouriteResource.class);
-    private final TaskListener explorerListener = new ExplorerTaskListener(this);
+    private final TaskHandlerFactory explorerListener = new ExplorerTaskListener(this);
 
     private final HasSaveRegistry hasSaveRegistry;
     private final RestFactory restFactory;
@@ -291,9 +291,9 @@ public class DocumentPluginEventManager extends Plugin {
             final DocumentPlugin<?> plugin = documentPluginRegistry.get(tabData.getType());
             if (plugin != null) {
                 // Get the explorer node for the docref.
-                TaskListener taskListener = null;
-                if (tabData instanceof TaskListener) {
-                    taskListener = (TaskListener) tabData;
+                TaskHandlerFactory taskHandlerFactory = null;
+                if (tabData instanceof TaskHandlerFactory) {
+                    taskHandlerFactory = (TaskHandlerFactory) tabData;
                 }
 
                 restFactory
@@ -303,7 +303,7 @@ public class DocumentPluginEventManager extends Plugin {
                             // Now we have the explorer node proceed with the save as.
                             plugin.saveAs(tabData, explorerNode);
                         })
-                        .taskListener(taskListener)
+                        .taskHandlerFactory(taskHandlerFactory)
                         .exec();
             }
         }));
@@ -556,7 +556,7 @@ public class DocumentPluginEventManager extends Plugin {
         }
     }
 
-    private void deleteItems(final List<ExplorerNode> explorerNodeList, final TaskListener taskListener) {
+    private void deleteItems(final List<ExplorerNode> explorerNodeList, final TaskHandlerFactory taskHandlerFactory) {
         if (explorerNodeList != null && explorerNodeList.size() > 0) {
             final List<DocRef> docRefs = explorerNodeList
                     .stream()
@@ -566,7 +566,7 @@ public class DocumentPluginEventManager extends Plugin {
                     DocumentPluginEventManager.this,
                     docRefs,
                     true,
-                    taskListener);
+                    taskHandlerFactory);
         }
     }
 
@@ -624,7 +624,7 @@ public class DocumentPluginEventManager extends Plugin {
                        final ExplorerNode destinationFolder,
                        final PermissionInheritance permissionInheritance,
                        final Consumer<ExplorerNode> consumer,
-                       final TaskListener taskListener,
+                       final TaskHandlerFactory taskHandlerFactory,
                        final HidePopupRequestEvent hidePopupRequestEvent) {
         restFactory
                 .create(EXPLORER_RESOURCE)
@@ -635,7 +635,7 @@ public class DocumentPluginEventManager extends Plugin {
                         permissionInheritance)))
                 .onSuccess(consumer)
                 .onFailure(new DefaultErrorHandler(this, hidePopupRequestEvent::reset))
-                .taskListener(taskListener)
+                .taskHandlerFactory(taskHandlerFactory)
                 .exec();
     }
 
@@ -645,7 +645,7 @@ public class DocumentPluginEventManager extends Plugin {
                       final String newName,
                       final PermissionInheritance permissionInheritance,
                       final Consumer<BulkActionResult> consumer,
-                      final TaskListener taskListener,
+                      final TaskHandlerFactory taskHandlerFactory,
                       final HidePopupRequestEvent hidePopupRequestEvent) {
         restFactory
                 .create(EXPLORER_RESOURCE)
@@ -657,7 +657,7 @@ public class DocumentPluginEventManager extends Plugin {
                         permissionInheritance)))
                 .onSuccess(consumer)
                 .onFailure(new DefaultErrorHandler(this, hidePopupRequestEvent::reset))
-                .taskListener(taskListener)
+                .taskHandlerFactory(taskHandlerFactory)
                 .exec();
     }
 
@@ -665,7 +665,7 @@ public class DocumentPluginEventManager extends Plugin {
                       final ExplorerNode destinationFolder,
                       final PermissionInheritance permissionInheritance,
                       final Consumer<BulkActionResult> consumer,
-                      final TaskListener taskListener,
+                      final TaskHandlerFactory taskHandlerFactory,
                       final HidePopupRequestEvent hidePopupRequestEvent) {
         restFactory
                 .create(EXPLORER_RESOURCE)
@@ -675,51 +675,51 @@ public class DocumentPluginEventManager extends Plugin {
                         permissionInheritance)))
                 .onSuccess(consumer)
                 .onFailure(new DefaultErrorHandler(this, hidePopupRequestEvent::reset))
-                .taskListener(taskListener)
+                .taskHandlerFactory(taskHandlerFactory)
                 .exec();
     }
 
     private void rename(final ExplorerNode explorerNode,
                         final String docName,
                         final Consumer<ExplorerNode> consumer,
-                        final TaskListener taskListener,
+                        final TaskHandlerFactory taskHandlerFactory,
                         final HidePopupRequestEvent hidePopupRequestEvent) {
         restFactory
                 .create(EXPLORER_RESOURCE)
                 .method(res -> res.rename(new ExplorerServiceRenameRequest(explorerNode, docName)))
                 .onSuccess(consumer)
                 .onFailure(new DefaultErrorHandler(this, hidePopupRequestEvent::reset))
-                .taskListener(taskListener)
+                .taskHandlerFactory(taskHandlerFactory)
                 .exec();
     }
 
     public void delete(final List<DocRef> docRefs,
                        final Consumer<BulkActionResult> consumer,
-                       final TaskListener taskListener) {
+                       final TaskHandlerFactory taskHandlerFactory) {
         restFactory
                 .create(EXPLORER_RESOURCE)
                 .method(res -> res.delete(new ExplorerServiceDeleteRequest(docRefs)))
                 .onSuccess(consumer)
-                .taskListener(taskListener)
+                .taskHandlerFactory(taskHandlerFactory)
                 .exec();
     }
 
     private void setAsFavourite(final DocRef docRef,
                                 final boolean setFavourite,
-                                final TaskListener taskListener) {
+                                final TaskHandlerFactory taskHandlerFactory) {
         if (setFavourite) {
             restFactory
                     .create(EXPLORER_FAV_RESOURCE)
                     .call(res -> res.createUserFavourite(docRef))
                     .onSuccess(result -> RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this))
-                    .taskListener(taskListener)
+                    .taskHandlerFactory(taskHandlerFactory)
                     .exec();
         } else {
             restFactory
                     .create(EXPLORER_FAV_RESOURCE)
                     .call(res -> res.deleteUserFavourite(docRef))
                     .onSuccess(result -> RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this))
-                    .taskListener(taskListener)
+                    .taskHandlerFactory(taskHandlerFactory)
                     .exec();
         }
     }
@@ -727,7 +727,7 @@ public class DocumentPluginEventManager extends Plugin {
     public void open(final DocRef docRef,
                      final boolean forceOpen,
                      final boolean fullScreen,
-                     final TaskListener taskListener) {
+                     final TaskHandlerFactory taskHandlerFactory) {
         final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(docRef.getType());
         if (documentPlugin != null) {
             // Decorate the DocRef with its name from the info service (required by the doc presenter)
@@ -741,7 +741,7 @@ public class DocumentPluginEventManager extends Plugin {
                             highlight(decoratedDocRef, explorerListener);
                         }
                     })
-                    .taskListener(taskListener)
+                    .taskHandlerFactory(taskHandlerFactory)
                     .exec();
         } else {
             throw new IllegalArgumentException("Document type '" + docRef.getType() + "' not registered");
@@ -756,13 +756,13 @@ public class DocumentPluginEventManager extends Plugin {
     }
 
     public void highlight(final DocRef docRef,
-                          final TaskListener taskListener) {
+                          final TaskHandlerFactory taskHandlerFactory) {
         // Obtain the Explorer node for the provided DocRef
         restFactory
                 .create(EXPLORER_RESOURCE)
                 .method(res -> res.getFromDocRef(docRef))
                 .onSuccess(this::highlight)
-                .taskListener(taskListener)
+                .taskHandlerFactory(taskHandlerFactory)
                 .exec();
     }
 
@@ -844,7 +844,7 @@ public class DocumentPluginEventManager extends Plugin {
 
     private void fetchPermissions(final List<ExplorerNode> explorerNodes,
                                   final Consumer<Map<ExplorerNode, ExplorerNodePermissions>> consumer,
-                                  final TaskListener taskListener) {
+                                  final TaskHandlerFactory taskHandlerFactory) {
         restFactory
                 .create(EXPLORER_RESOURCE)
                 .method(res -> res.fetchExplorerPermissions(explorerNodes))
@@ -854,7 +854,7 @@ public class DocumentPluginEventManager extends Plugin {
                             Function.identity()));
                     consumer.accept(map);
                 })
-                .taskListener(taskListener)
+                .taskHandlerFactory(taskHandlerFactory)
                 .exec();
     }
 
@@ -1185,7 +1185,7 @@ public class DocumentPluginEventManager extends Plugin {
     private MenuItem createInfoMenuItem(final ExplorerNode explorerNode,
                                         final int priority,
                                         final boolean enabled,
-                                        final TaskListener taskListener) {
+                                        final TaskHandlerFactory taskHandlerFactory) {
         final Command command;
         if (enabled && explorerNode != null) {
             command = () -> {
@@ -1200,7 +1200,7 @@ public class DocumentPluginEventManager extends Plugin {
                                     explorerNodeInfo);
                         })
                         .onFailure(this::handleFailure)
-                        .taskListener(taskListener)
+                        .taskHandlerFactory(taskHandlerFactory)
                         .exec();
             };
         } else {

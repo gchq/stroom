@@ -123,7 +123,7 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
                     .create(INDEX_VOLUME_GROUP_RESOURCE)
                     .method(res -> res.fetch(volume.getId()))
                     .onSuccess(this::edit)
-                    .taskListener(this)
+                    .taskHandlerFactory(this)
                     .exec();
         }
     }
@@ -149,7 +149,7 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
                                         .create(INDEX_VOLUME_GROUP_RESOURCE)
                                         .method(res -> res.delete(volume.getId()))
                                         .onSuccess(response -> refresh())
-                                        .taskListener(this)
+                                        .taskHandlerFactory(this)
                                         .exec();
                             }
                         }

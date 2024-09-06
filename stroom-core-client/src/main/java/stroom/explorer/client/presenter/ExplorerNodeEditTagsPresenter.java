@@ -105,7 +105,7 @@ public class ExplorerNodeEditTagsPresenter
                                         forceReveal();
                                     })
                                     .onFailure(this::handleFailure)
-                                    .taskListener(new ExplorerTaskListener(this))
+                                    .taskHandlerFactory(new ExplorerTaskListener(this))
                                     .exec();
                         } else {
                             // Adding to multiple so don't need to know what tags the nodes have
@@ -114,7 +114,7 @@ public class ExplorerNodeEditTagsPresenter
                         }
                     })
                     .onFailure(this::handleFailure)
-                    .taskListener(new ExplorerTaskListener(this))
+                    .taskHandlerFactory(new ExplorerTaskListener(this))
                     .exec();
 
         }
@@ -184,7 +184,7 @@ public class ExplorerNodeEditTagsPresenter
                     event.hide();
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskListener(this)
+                .taskHandlerFactory(this)
                 .exec();
     }
 
@@ -203,7 +203,7 @@ public class ExplorerNodeEditTagsPresenter
                     event.hide();
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskListener(this)
+                .taskHandlerFactory(this)
                 .exec();
     }
 

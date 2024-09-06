@@ -74,7 +74,7 @@ public class LoginPresenter extends MyPresenter<LoginView, LoginProxy> implement
                 .method(AuthenticationResource::fetchPasswordPolicy)
                 .onSuccess(result -> getView().setAllowPasswordResets(result.isAllowPasswordResets()))
                 .onFailure(new DefaultErrorHandler(this, null))
-                .taskListener(new DefaultTaskListener(this))
+                .taskHandlerFactory(new DefaultTaskListener(this))
                 .exec();
     }
 
@@ -95,7 +95,7 @@ public class LoginPresenter extends MyPresenter<LoginView, LoginProxy> implement
                         }
                     })
                     .onFailure(new DefaultErrorHandler(this, getView()::reset))
-                    .taskListener(new DefaultTaskListener(this))
+                    .taskHandlerFactory(new DefaultTaskListener(this))
                     .exec();
         } else {
             getView().reset();
@@ -130,7 +130,7 @@ public class LoginPresenter extends MyPresenter<LoginView, LoginProxy> implement
                                 }
                             })
                             .onFailure(RestErrorHandler.forPopup(this, e))
-                            .taskListener(new DefaultTaskListener(this))
+                            .taskHandlerFactory(new DefaultTaskListener(this))
                             .exec();
 
                 } else {

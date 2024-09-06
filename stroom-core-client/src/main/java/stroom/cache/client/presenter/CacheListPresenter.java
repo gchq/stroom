@@ -94,7 +94,7 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
                                     cacheUpdateHandler.accept(row);
                                 }
                             })
-                            .taskListener(view)
+                            .taskHandlerFactory(view)
                             .exec();
                 });
 
@@ -165,7 +165,7 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
                         delayedUpdate.update();
                     })
                     .onFailure(throwable -> delayedUpdate.update())
-                    .taskListener(getView())
+                    .taskHandlerFactory(getView())
                     .exec();
         }
     }

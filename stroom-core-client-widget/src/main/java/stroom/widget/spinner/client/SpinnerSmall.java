@@ -18,14 +18,14 @@ package stroom.widget.spinner.client;
 
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskHandler;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Widget;
 
-public class SpinnerSmall extends Widget implements TaskListener {
+public class SpinnerSmall extends Widget implements TaskHandlerFactory {
 
     private int taskCount;
 

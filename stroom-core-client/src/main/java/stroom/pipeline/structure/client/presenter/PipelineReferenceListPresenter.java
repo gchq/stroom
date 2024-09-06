@@ -426,7 +426,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
 
                         setData(references);
                     })
-                    .taskListener(getView())
+                    .taskHandlerFactory(getView())
                     .exec();
         } else {
             setData(references);

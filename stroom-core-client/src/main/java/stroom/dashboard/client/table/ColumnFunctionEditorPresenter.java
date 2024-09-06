@@ -123,7 +123,7 @@ public class ColumnFunctionEditorPresenter
 
     @Override
     public void onShow(final ShowPopupEvent e) {
-        queryHelpPresenter.setTaskListener(this);
+        queryHelpPresenter.setTaskHandlerFactory(this);
         queryHelpPresenter.setShowAll(false);
         queryHelpPresenter.linkToEditor(this.editorPresenter);
         queryHelpPresenter.refresh();
@@ -163,7 +163,7 @@ public class ColumnFunctionEditorPresenter
                                 }
                             })
                             .onFailure(RestErrorHandler.forPopup(this, e))
-                            .taskListener(this)
+                            .taskHandlerFactory(this)
                             .exec();
                 }
             }

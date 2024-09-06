@@ -11,8 +11,8 @@ import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpType;
 import stroom.query.shared.QueryResource;
 import stroom.task.client.DefaultTaskListener;
-import stroom.task.client.HasTaskListener;
-import stroom.task.client.TaskListener;
+import stroom.task.client.HasTaskHandlerFactory;
+import stroom.task.client.TaskHandlerFactory;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 public class DynamicQueryHelpSelectionListModel
-        implements SelectionListModel<QueryHelpRow, QueryHelpSelectionItem>, HasTaskListener, HasHandlers {
+        implements SelectionListModel<QueryHelpRow, QueryHelpSelectionItem>, HasTaskHandlerFactory, HasHandlers {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
@@ -38,7 +38,7 @@ public class DynamicQueryHelpSelectionListModel
 
     private final EventBus eventBus;
     private final RestFactory restFactory;
-    private TaskListener taskListener = new DefaultTaskListener(this);
+    private TaskHandlerFactory taskHandlerFactory = new DefaultTaskListener(this);
 
     private DocRef dataSourceRef;
     private String query;
@@ -117,7 +117,7 @@ public class DynamicQueryHelpSelectionListModel
                             consumer.accept(resultPage);
                         }
                     })
-                    .taskListener(taskListener)
+                    .taskHandlerFactory(taskHandlerFactory)
                     .exec();
         }
     }
@@ -173,8 +173,8 @@ public class DynamicQueryHelpSelectionListModel
     }
 
     @Override
-    public void setTaskListener(final TaskListener taskListener) {
-        this.taskListener = taskListener;
+    public void setTaskHandlerFactory(final TaskHandlerFactory taskHandlerFactory) {
+        this.taskHandlerFactory = taskHandlerFactory;
     }
 
     @Override

@@ -108,7 +108,7 @@ public class DocumentPermissionsPresenter
                         ALL_PERMISSIONS_CACHE.put(docType, permissions);
                         consumer.accept(permissions);
                     })
-                    .taskListener(this)
+                    .taskHandlerFactory(this)
                     .exec();
         }
     }
@@ -168,7 +168,7 @@ public class DocumentPermissionsPresenter
                                 true,
                                 changes);
                     })
-                    .taskListener(this)
+                    .taskHandlerFactory(this)
                     .exec();
         });
     }
@@ -218,7 +218,7 @@ public class DocumentPermissionsPresenter
 //                                + "\nREMOVEs:\n"
 //                                + DocumentPermissions.permsMapToStr(permissionsToRemove));
                     })
-                    .taskListener(this)
+                    .taskHandlerFactory(this)
                     .exec();
         };
     }
@@ -292,7 +292,7 @@ public class DocumentPermissionsPresenter
                             }
                         })
                         .onFailure(RestErrorHandler.forPopup(this, e))
-                        .taskListener(this)
+                        .taskHandlerFactory(this)
                         .exec();
             } else {
                 doPermissionChange(e, docRef);
@@ -311,7 +311,7 @@ public class DocumentPermissionsPresenter
                         getView().getCascade().getValue())))
                 .onSuccess(result -> e.hide())
                 .onFailure(RestErrorHandler.forPopup(this, e))
-                .taskListener(this)
+                .taskHandlerFactory(this)
                 .exec();
     }
 
@@ -323,7 +323,7 @@ public class DocumentPermissionsPresenter
         } else {
             permissionsTabPresenter = documentPermissionsListPresenterProvider.get();
         }
-        permissionsTabPresenter.setTaskListener(this);
+        permissionsTabPresenter.setTaskHandlerFactory(this);
         return permissionsTabPresenter;
     }
 

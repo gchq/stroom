@@ -27,7 +27,7 @@ public class TaskEndEvent extends GwtEvent<TaskEndEvent.TaskEndHandler> {
     private TaskEndEvent() {
     }
 
-    public static void fire(final HasHandlers handlers) {
+    static void fire(final HasHandlers handlers) {
         handlers.fireEvent(new TaskEndEvent());
     }
 

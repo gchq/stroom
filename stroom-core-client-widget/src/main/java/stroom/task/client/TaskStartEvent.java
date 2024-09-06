@@ -29,7 +29,7 @@ public class TaskStartEvent extends GwtEvent<TaskStartEvent.TaskStartHandler> {
         this.message = message;
     }
 
-    public static void fire(final HasHandlers handlers, final String message) {
+    static void fire(final HasHandlers handlers, final String message) {
         handlers.fireEvent(new TaskStartEvent(message));
     }
 

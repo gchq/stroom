@@ -28,7 +28,7 @@ public class ExplorerEndTaskEvent extends GwtEvent<ExplorerEndTaskEvent.Handler>
     private ExplorerEndTaskEvent() {
     }
 
-    public static void fire(final HasHandlers handlers) {
+    static void fire(final HasHandlers handlers) {
         handlers.fireEvent(new ExplorerEndTaskEvent());
     }
 

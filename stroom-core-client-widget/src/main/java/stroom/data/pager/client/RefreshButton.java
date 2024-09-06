@@ -2,7 +2,7 @@ package stroom.data.pager.client;
 
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskHandler;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 import stroom.widget.button.client.SvgButton;
 
 import com.google.gwt.core.client.GWT;
@@ -15,7 +15,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 
 public class RefreshButton
         extends Composite
-        implements TaskListener {
+        implements TaskHandlerFactory {
 
     private final SvgButton button;
     private int taskCount;

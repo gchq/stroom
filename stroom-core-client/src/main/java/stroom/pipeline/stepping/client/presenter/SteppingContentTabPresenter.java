@@ -60,7 +60,7 @@ public class SteppingContentTabPresenter
         hasSaveRegistry.register(this);
 
         view.setContent(steppingPresenter.getView());
-        steppingPresenter.setTaskListener(this);
+        steppingPresenter.setTaskHandlerFactory(this);
     }
 
     @Override
