@@ -114,7 +114,7 @@ public class CurrentPasswordPresenter extends MyPresenterWidget<CurrentPasswordV
                     }
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskListener(this)
+                .taskHandlerFactory(this)
                 .exec();
     }
 
@@ -136,7 +136,7 @@ public class CurrentPasswordPresenter extends MyPresenterWidget<CurrentPasswordV
                     }
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskListener(this)
+                .taskHandlerFactory(this)
                 .exec();
     }
 

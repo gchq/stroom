@@ -62,7 +62,7 @@ public class StreamingProcessingPresenter
                     processorPresenter.read(analyticRuleDoc.asDocRef(), analyticRuleDoc, readOnly);
                     processorPresenter.setAllowUpdate(true);
                 })
-                .taskListener(this)
+                .taskHandlerFactory(this)
                 .exec();
     }
 

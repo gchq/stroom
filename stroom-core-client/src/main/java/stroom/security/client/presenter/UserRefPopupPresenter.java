@@ -286,7 +286,7 @@ public class UserRefPopupPresenter
                             .method(res -> res.find(builder.build()))
                             .onSuccess(dataConsumer)
                             .onFailure(errorHandler)
-                            .taskListener(pagerView)
+                            .taskHandlerFactory(pagerView)
                             .exec();
                 }
             };

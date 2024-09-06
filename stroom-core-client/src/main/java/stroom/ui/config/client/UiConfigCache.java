@@ -22,7 +22,7 @@ import stroom.dispatch.client.QuietTaskListener;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.DefaultTaskListener;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 import stroom.ui.config.shared.ExtendedUiConfig;
 
 import com.google.gwt.core.client.GWT;
@@ -74,7 +74,7 @@ public class UiConfigCache implements HasHandlers {
     }
 
     public void refresh(final Consumer<ExtendedUiConfig> consumer,
-                        final TaskListener taskListener) {
+                        final TaskHandlerFactory taskHandlerFactory) {
         restFactory
                 .create(CONFIG_RESOURCE)
                 .method(GlobalConfigResource::fetchExtendedUiConfig)
@@ -84,7 +84,7 @@ public class UiConfigCache implements HasHandlers {
                     PropertyChangeEvent.fire(UiConfigCache.this, result);
                 })
                 .onFailure(error -> new DefaultErrorHandler(this, () -> consumer.accept(null)))
-                .taskListener(taskListener)
+                .taskHandlerFactory(taskHandlerFactory)
                 .exec();
     }
 
@@ -92,10 +92,10 @@ public class UiConfigCache implements HasHandlers {
         get(consumer, new DefaultTaskListener(this));
     }
 
-    public void get(final Consumer<ExtendedUiConfig> consumer, final TaskListener taskListener) {
+    public void get(final Consumer<ExtendedUiConfig> consumer, final TaskHandlerFactory taskHandlerFactory) {
         final ExtendedUiConfig props = clientProperties;
         if (props == null) {
-            refresh(consumer, taskListener);
+            refresh(consumer, taskHandlerFactory);
         }
         consumer.accept(props);
     }

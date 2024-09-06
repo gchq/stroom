@@ -130,7 +130,7 @@ public class FindDocResultListPresenter extends MyPresenterWidget<PagerView> {
                                 resetFocus();
                             })
                             .onFailure(errorHandler)
-                            .taskListener(view)
+                            .taskHandlerFactory(view)
                             .exec();
                 }
             }

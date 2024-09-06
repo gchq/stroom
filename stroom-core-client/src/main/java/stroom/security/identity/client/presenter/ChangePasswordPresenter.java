@@ -78,7 +78,7 @@ public class ChangePasswordPresenter extends MyPresenterWidget<ChangePasswordVie
                             .onHideRequest(consumer::accept)
                             .fire();
                 })
-                .taskListener(this)
+                .taskHandlerFactory(this)
                 .exec();
     }
 

@@ -128,7 +128,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                             AlertEvent.fireError(this, res.getMessage(), null);
                             consumer.accept(key);
                         })
-                        .taskListener(getView())
+                        .taskHandlerFactory(getView())
                         .exec();
             }
         };
@@ -143,7 +143,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                             AlertEvent.fireError(this, res.getMessage(), null);
                             consumer.accept(key);
                         })
-                        .taskListener(getView())
+                        .taskHandlerFactory(getView())
                         .exec();
             }
         };
@@ -158,7 +158,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                             AlertEvent.fireError(this, res.getMessage(), null);
                             consumer.accept(key);
                         })
-                        .taskListener(getView())
+                        .taskHandlerFactory(getView())
                         .exec();
             }
         };
@@ -173,7 +173,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                             AlertEvent.fireError(this, res.getMessage(), null);
                             consumer.accept(key);
                         })
-                        .taskListener(getView())
+                        .taskHandlerFactory(getView())
                         .exec();
             }
         };
@@ -189,7 +189,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                         .method(res -> res.find(request))
                         .onSuccess(dataConsumer)
                         .onFailure(errorHandler)
-                        .taskListener(getView())
+                        .taskHandlerFactory(getView())
                         .exec();
             }
 

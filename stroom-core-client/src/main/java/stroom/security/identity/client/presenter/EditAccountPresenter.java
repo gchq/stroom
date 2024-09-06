@@ -153,7 +153,7 @@ public class EditAccountPresenter
                             .onFailure(throwable ->
                                     AlertEvent.fireError(this, "Error creating account: "
                                             + throwable.getMessage(), e::reset))
-                            .taskListener(this)
+                            .taskHandlerFactory(this)
                             .exec();
 
                 } else {
@@ -178,7 +178,7 @@ public class EditAccountPresenter
                             .onFailure(throwable ->
                                     AlertEvent.fireError(this, "Error updating account: "
                                             + throwable.getMessage(), e::reset))
-                            .taskListener(this)
+                            .taskHandlerFactory(this)
                             .exec();
                 }
             }

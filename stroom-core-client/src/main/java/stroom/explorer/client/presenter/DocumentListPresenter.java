@@ -7,16 +7,12 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.shared.AdvancedDocumentFindRequest;
-import stroom.explorer.shared.AdvancedDocumentFindRequest.Builder;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.FindResult;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.shared.DocumentPermission;
-import stroom.svg.client.Preset;
-import stroom.svg.shared.SvgImage;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
-import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -121,7 +117,7 @@ public class DocumentListPresenter extends MyPresenterWidget<PagerView> {
                             resetFocus();
                         })
                         .onFailure(errorHandler)
-                        .taskListener(view)
+                        .taskHandlerFactory(view)
                         .exec();
             }
         };

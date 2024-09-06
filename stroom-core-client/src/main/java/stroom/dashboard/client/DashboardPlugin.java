@@ -37,7 +37,7 @@ import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.DefaultTaskListener;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.URL;
@@ -81,11 +81,11 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
     public MyPresenterWidget<?> open(final DocRef docRef,
                                      final boolean forceOpen,
                                      final boolean fullScreen,
-                                     final TaskListener taskListener) {
+                                     final TaskHandlerFactory taskHandlerFactory) {
         if (docRef.getType().equals(getType())) {
             currentUuid = docRef.getUuid();
         }
-        return super.open(docRef, forceOpen, fullScreen, taskListener);
+        return super.open(docRef, forceOpen, fullScreen, taskHandlerFactory);
     }
 
     private void openParameterisedDashboard(final String href) {
@@ -187,13 +187,13 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
     public void load(final DocRef docRef,
                      final Consumer<DashboardDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskListener taskListener) {
+                     final TaskHandlerFactory taskHandlerFactory) {
         restFactory
                 .create(DASHBOARD_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskListener(taskListener)
+                .taskHandlerFactory(taskHandlerFactory)
                 .exec();
     }
 
@@ -202,13 +202,13 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                      final DashboardDoc document,
                      final Consumer<DashboardDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskListener taskListener) {
+                     final TaskHandlerFactory taskHandlerFactory) {
         restFactory
                 .create(DASHBOARD_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskListener(taskListener)
+                .taskHandlerFactory(taskHandlerFactory)
                 .exec();
     }
 

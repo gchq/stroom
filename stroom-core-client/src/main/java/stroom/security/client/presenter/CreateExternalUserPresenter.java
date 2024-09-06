@@ -23,7 +23,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.security.client.presenter.CreateExternalUserPresenter.CreateExternalUserView;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 import stroom.util.shared.UserDesc;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.view.DialogActionUiHandlers;
@@ -57,7 +57,7 @@ public class CreateExternalUserPresenter extends MyPresenterWidget<CreateExterna
 
     public void create(final Consumer<User> consumer,
                        final HidePopupRequestEvent event,
-                       final TaskListener taskListener) {
+                       final TaskHandlerFactory taskHandlerFactory) {
         final UserDesc userDesc = new UserDesc(
                 getView().getSubjectId(),
                 getView().getDisplayName(),
@@ -67,28 +67,28 @@ public class CreateExternalUserPresenter extends MyPresenterWidget<CreateExterna
                 .method(res -> res.createUser(userDesc))
                 .onSuccess(result -> {
                     if (!result.isEnabled()) {
-                        enable(result, consumer, event, taskListener);
+                        enable(result, consumer, event, taskHandlerFactory);
                     } else {
                         consumer.accept(result);
                         event.hide();
                     }
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskListener(taskListener)
+                .taskHandlerFactory(taskHandlerFactory)
                 .exec();
     }
 
     private void enable(final User user,
                         final Consumer<User> consumer,
                         final HidePopupRequestEvent event,
-                        final TaskListener taskListener) {
+                        final TaskHandlerFactory taskHandlerFactory) {
         ConfirmEvent.fire(this,
                 "A deleted user already exists with the same name, " +
                         "would you like to restore the existing user?",
                 ok -> {
                     if (ok) {
                         user.setEnabled(true);
-                        update(user, consumer, event, taskListener);
+                        update(user, consumer, event, taskHandlerFactory);
                     } else {
                         consumer.accept(user);
                         event.hide();
@@ -99,7 +99,7 @@ public class CreateExternalUserPresenter extends MyPresenterWidget<CreateExterna
     private void update(final User user,
                         final Consumer<User> consumer,
                         final HidePopupRequestEvent event,
-                        final TaskListener taskListener) {
+                        final TaskHandlerFactory taskHandlerFactory) {
         restFactory
                 .create(USER_RESOURCE)
                 .method(res -> res.update(user))
@@ -108,7 +108,7 @@ public class CreateExternalUserPresenter extends MyPresenterWidget<CreateExterna
                     event.hide();
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskListener(taskListener)
+                .taskHandlerFactory(taskHandlerFactory)
                 .exec();
     }
 

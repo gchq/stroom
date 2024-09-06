@@ -160,7 +160,7 @@ public class DocumentUserPermissionsListPresenter
                                     .method(res -> res.fetchDocumentUserPermissions(request))
                                     .onSuccess(dataConsumer)
                                     .onFailure(errorHandler)
-                                    .taskListener(pagerView)
+                                    .taskHandlerFactory(pagerView)
                                     .exec();
                         }
                     };

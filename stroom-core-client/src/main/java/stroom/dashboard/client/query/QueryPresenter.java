@@ -70,7 +70,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.ModelStringUtil;
@@ -581,7 +581,7 @@ public class QueryPresenter
                         AlertEvent.fireInfo(this, "Created batch processor", null);
                     }
                 })
-                .taskListener(this)
+                .taskHandlerFactory(this)
                 .exec();
     }
 
@@ -782,7 +782,7 @@ public class QueryPresenter
                                 resume(getQuerySettings().getLastQueryNode(), getQuerySettings().getLastQueryKey());
                             }
                         })
-                        .taskListener(this)
+                        .taskHandlerFactory(this)
                         .exec();
             }
         }
@@ -933,7 +933,7 @@ public class QueryPresenter
                     .method(res -> res.downloadQuery(searchRequest))
                     .onSuccess(result ->
                             ExportFileCompleteUtil.onSuccess(locationManager, this, result))
-                    .taskListener(this)
+                    .taskHandlerFactory(this)
                     .exec();
         }
     }
@@ -945,9 +945,9 @@ public class QueryPresenter
     }
 
     @Override
-    public void setTaskListener(final TaskListener taskListener) {
-        searchModel.setTaskListener(taskListener);
-        fieldSelectionBoxModel.setTaskListener(taskListener);
+    public void setTaskHandlerFactory(final TaskHandlerFactory taskHandlerFactory) {
+        searchModel.setTaskHandlerFactory(taskHandlerFactory);
+        fieldSelectionBoxModel.setTaskHandlerFactory(taskHandlerFactory);
     }
 
     @Override

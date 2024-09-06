@@ -19,7 +19,7 @@ package stroom.security.client.api;
 import stroom.docref.DocRef;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 import stroom.util.shared.UserRef;
 
 import java.util.function.Consumer;
@@ -63,5 +63,5 @@ public interface ClientSecurityContext {
                                DocumentPermission permission,
                                Consumer<Boolean> consumer,
                                Consumer<Throwable> errorHandler,
-                               TaskListener taskListener);
+                               TaskHandlerFactory taskHandlerFactory);
 }

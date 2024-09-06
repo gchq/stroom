@@ -27,7 +27,7 @@ import stroom.document.client.DocumentTabData;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -70,7 +70,7 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
     public void load(final DocRef docRef,
                      final Consumer<DocRef> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskListener taskListener) {
+                     final TaskHandlerFactory taskHandlerFactory) {
 
     }
 
@@ -79,7 +79,7 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
                      final DocRef document,
                      final Consumer<DocRef> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskListener taskListener) {
+                     final TaskHandlerFactory taskHandlerFactory) {
 
     }
 
@@ -89,20 +89,15 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
                                 final Handler closeHandler,
                                 final DocumentTabData tabData,
                                 final boolean fullScreen,
-                                final TaskListener taskListener) {
-        try {
-            if (documentEditPresenter instanceof FolderPresenter) {
-                ((FolderPresenter) documentEditPresenter).read(docRef);
-            } else if (documentEditPresenter instanceof FolderRootPresenter) {
-                ((FolderRootPresenter) documentEditPresenter).read();
-            }
-
-            // Open the tab.
-            contentManager.open(closeHandler, tabData, documentEditPresenter);
-        } finally {
-            // Stop spinning.
-            taskListener.decrementTaskCount();
+                                final TaskHandlerFactory taskHandlerFactory) {
+        if (documentEditPresenter instanceof FolderPresenter) {
+            ((FolderPresenter) documentEditPresenter).read(docRef);
+        } else if (documentEditPresenter instanceof FolderRootPresenter) {
+            ((FolderRootPresenter) documentEditPresenter).read();
         }
+
+        // Open the tab.
+        contentManager.open(closeHandler, tabData, documentEditPresenter);
     }
 
     @Override

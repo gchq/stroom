@@ -23,7 +23,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.NameDocumentView;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.view.DialogActionUiHandlers;
 
@@ -54,34 +54,34 @@ public class CreateNewGroupPresenter extends MyPresenterWidget<NameDocumentView>
 
     public void create(final Consumer<User> consumer,
                        final HidePopupRequestEvent event,
-                       final TaskListener taskListener) {
+                       final TaskHandlerFactory taskHandlerFactory) {
         restFactory
                 .create(USER_RESOURCE)
                 .method(res -> res.createGroup(getView().getName()))
                 .onSuccess(result -> {
                     if (!result.isEnabled()) {
-                        enable(result, consumer, event, taskListener);
+                        enable(result, consumer, event, taskHandlerFactory);
                     } else {
                         consumer.accept(result);
                         event.hide();
                     }
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskListener(taskListener)
+                .taskHandlerFactory(taskHandlerFactory)
                 .exec();
     }
 
     private void enable(final User user,
                         final Consumer<User> consumer,
                         final HidePopupRequestEvent event,
-                        final TaskListener taskListener) {
+                        final TaskHandlerFactory taskHandlerFactory) {
         ConfirmEvent.fire(this,
                 "A deleted group already exists with the same name, " +
                         "would you like to restore the existing group?",
                 ok -> {
                     if (ok) {
                         user.setEnabled(true);
-                        update(user, consumer, event, taskListener);
+                        update(user, consumer, event, taskHandlerFactory);
                     } else {
                         consumer.accept(user);
                         event.hide();
@@ -92,7 +92,7 @@ public class CreateNewGroupPresenter extends MyPresenterWidget<NameDocumentView>
     private void update(final User user,
                         final Consumer<User> consumer,
                         final HidePopupRequestEvent event,
-                        final TaskListener taskListener) {
+                        final TaskHandlerFactory taskHandlerFactory) {
         restFactory
                 .create(USER_RESOURCE)
                 .method(res -> res.update(user))
@@ -101,7 +101,7 @@ public class CreateNewGroupPresenter extends MyPresenterWidget<NameDocumentView>
                     event.hide();
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskListener(taskListener)
+                .taskHandlerFactory(taskHandlerFactory)
                 .exec();
     }
 }

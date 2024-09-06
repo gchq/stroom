@@ -103,7 +103,7 @@ public class ExplorerNodeRemoveTagsPresenter
                                 t.getMessage(),
                                 null);
                     })
-                    .taskListener(new ExplorerTaskListener(this))
+                    .taskHandlerFactory(new ExplorerTaskListener(this))
                     .exec();
         }
     }
@@ -154,7 +154,7 @@ public class ExplorerNodeRemoveTagsPresenter
                     event.hide();
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskListener(this)
+                .taskHandlerFactory(this)
                 .exec();
     }
 

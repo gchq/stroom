@@ -258,7 +258,7 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
                                 resetFocus();
                             })
                             .onFailure(errorHandler)
-                            .taskListener(getView())
+                            .taskHandlerFactory(getView())
                             .exec();
                 }
             };

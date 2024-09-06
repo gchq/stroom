@@ -31,7 +31,7 @@ import stroom.security.shared.AbstractDocumentPermissionsChange;
 import stroom.security.shared.BulkDocumentPermissionChangeRequest;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionChange;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 import stroom.util.shared.PageResponse;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -207,7 +207,7 @@ public class BatchDocumentPermissionsEditPresenter
     }
 
     @Override
-    public void apply(final TaskListener taskListener) {
+    public void apply(final TaskHandlerFactory taskHandlerFactory) {
         int docCount = 0;
         if (currentResultPageResponse != null) {
             docCount = currentResultPageResponse.getLength();
@@ -227,14 +227,14 @@ public class BatchDocumentPermissionsEditPresenter
                     message,
                     ok -> {
                         if (ok) {
-                            doApply(taskListener);
+                            doApply(taskHandlerFactory);
                         }
                     }
             );
         }
     }
 
-    private void doApply(final TaskListener taskListener) {
+    private void doApply(final TaskHandlerFactory taskHandlerFactory) {
         final BulkDocumentPermissionChangeRequest request = createRequest();
         restFactory
                 .create(EXPLORER_RESOURCE)
@@ -252,7 +252,7 @@ public class BatchDocumentPermissionsEditPresenter
                                 null);
                     }
                 })
-                .taskListener(taskListener)
+                .taskHandlerFactory(taskHandlerFactory)
                 .exec();
     }
 

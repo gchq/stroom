@@ -72,8 +72,8 @@ public class DocumentUserPermissionsEditPresenter
         this.docPermissionClient = docPermissionClient;
         this.explorerClient = explorerClient;
         view.setUiHandlers(this);
-        docPermissionClient.setTaskListener(this);
-        explorerClient.setTaskListener(this);
+        docPermissionClient.setTaskHandlerFactory(this);
+        explorerClient.setTaskHandlerFactory(this);
     }
 
     public void show(final DocRef docRef,

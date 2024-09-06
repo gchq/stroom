@@ -19,7 +19,7 @@ package stroom.explorer.client.view;
 import stroom.explorer.client.presenter.FindInContentPresenter.FindInContentView;
 import stroom.explorer.client.presenter.FindInContentUiHandlers;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.spinner.client.SpinnerLarge;
 
@@ -119,7 +119,7 @@ public class FindInContentViewImpl
     }
 
     @Override
-    public TaskListener getTaskListener() {
+    public TaskHandlerFactory getTaskListener() {
         return spinner;
     }
 

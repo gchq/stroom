@@ -184,7 +184,7 @@ public class ImportConfigConfirmPresenter extends
                     updateList();
                 })
                 .onFailure(caught -> error(caught.getMessage()))
-                .taskListener(this)
+                .taskHandlerFactory(this)
                 .exec();
     }
 
@@ -454,7 +454,7 @@ public class ImportConfigConfirmPresenter extends
                 .onFailure(caught -> AlertEvent.fireError(ImportConfigConfirmPresenter.this,
                         caught.getMessage(),
                         e::hide))
-                .taskListener(this)
+                .taskHandlerFactory(this)
                 .exec();
     }
 
@@ -486,7 +486,7 @@ public class ImportConfigConfirmPresenter extends
                     // existing one.
                     clearCaches();
                 })
-                .taskListener(this)
+                .taskHandlerFactory(this)
                 .exec();
     }
 

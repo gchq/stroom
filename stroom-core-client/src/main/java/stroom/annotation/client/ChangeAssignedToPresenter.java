@@ -78,7 +78,7 @@ public class ChangeAssignedToPresenter
                                     e.hide();
                                 })
                                 .onFailure(RestErrorHandler.forPopup(this, e))
-                                .taskListener(this)
+                                .taskHandlerFactory(this)
                                 .exec();
                     } else {
                         e.hide();

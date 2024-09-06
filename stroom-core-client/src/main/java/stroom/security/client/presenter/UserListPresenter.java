@@ -38,7 +38,6 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.dropdowntree.client.view.QuickFilterDialogView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
@@ -225,7 +224,7 @@ public class UserListPresenter
                             .method(res -> res.find(builder.build()))
                             .onSuccess(dataConsumer)
                             .onFailure(errorHandler)
-                            .taskListener(pagerView)
+                            .taskHandlerFactory(pagerView)
                             .exec();
                 }
 

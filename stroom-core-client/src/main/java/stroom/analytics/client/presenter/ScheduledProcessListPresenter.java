@@ -109,7 +109,7 @@ public class ScheduledProcessListPresenter
                             .method(res -> res.fetchExecutionSchedule(request))
                             .onSuccess(dataConsumer)
                             .onFailure(errorHandler)
-                            .taskListener(view)
+                            .taskHandlerFactory(view)
                             .exec();
                 }
             }
@@ -148,7 +148,7 @@ public class ScheduledProcessListPresenter
                     .create(EXECUTION_SCHEDULE_RESOURCE)
                     .method(res -> res.updateExecutionSchedule(row.copy().enabled(value.toBoolean()).build()))
                     .onSuccess(updated -> refresh())
-                    .taskListener(getView())
+                    .taskHandlerFactory(getView())
                     .exec();
         });
         dataGrid.addColumn(enabledColumn, "Enabled", 80);

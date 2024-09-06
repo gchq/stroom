@@ -61,7 +61,7 @@ public class TimeZones {
                         ids = result;
                         consumer.accept(ids);
                     })
-                    .taskListener(new QuietTaskListener())
+                    .taskHandlerFactory(new QuietTaskListener())
                     .exec();
         }
     }

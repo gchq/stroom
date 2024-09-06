@@ -106,7 +106,7 @@ public class EmailResetPasswordPresenter extends MyPresenterWidget<EmailResetPas
                     }
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskListener(this)
+                .taskHandlerFactory(this)
                 .exec();
     }
 

@@ -32,7 +32,7 @@ public class DocPermissionRestClient extends AbstractRestClient {
                 .create(DOC_PERMISSION_RESOURCE)
                 .method(res -> res.getDocUserPermissionsReport(request))
                 .onSuccess(consumer)
-                .taskListener(taskListener)
+                .taskHandlerFactory(taskHandlerFactory)
                 .exec();
     }
 }

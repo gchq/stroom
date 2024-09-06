@@ -22,6 +22,8 @@ import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogUtil;
 
 import com.google.common.base.Strings;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -34,8 +36,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 abstract class ManualCheckStreamPerformance {
     private static int testThreadCount = 10;
@@ -278,13 +278,13 @@ abstract class ManualCheckStreamPerformance {
 
         @Override
         public InputStream getInputStream() throws IOException {
-            return new BufferedInputStream(new GZIPInputStream(Files.newInputStream(tempFile)));
+            return new GzipCompressorInputStream(new BufferedInputStream(Files.newInputStream(tempFile)));
         }
 
         @Override
         public OutputStream getOutputStream() throws IOException {
             tempFile = getTempFile();
-            return new BufferedOutputStream(new GZIPOutputStream(Files.newOutputStream(tempFile)));
+            return new GzipCompressorOutputStream(new BufferedOutputStream(Files.newOutputStream(tempFile)));
         }
 
         @Override

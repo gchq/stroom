@@ -26,6 +26,8 @@ import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogExecutionTime;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,8 +40,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 /**
  * Class that reads a nested directory tree of stroom zip files.
@@ -149,7 +149,6 @@ public final class FileScanner {
         // Meta is moved last so use that to determine if we can consume this stream.
         if (fileName.endsWith(FileSet.META_EXTENSION)) {
             final Path parent = file.getParent();
-            final Path metaFile = file;
 
             // Get zip file.
             String stem = fileName;
@@ -161,12 +160,13 @@ public final class FileScanner {
 
             if (Files.isRegularFile(zipFile)) {
                 final AttributeMap attributeMap = new AttributeMap();
-                try (final InputStream inputStream = Files.newInputStream(metaFile)) {
+                try (final InputStream inputStream = Files.newInputStream(file)) {
                     AttributeMapUtil.read(inputStream, attributeMap);
 
-                    try (final ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(zipFile))) {
+                    try (final ZipArchiveInputStream zipInputStream =
+                            new ZipArchiveInputStream(Files.newInputStream(zipFile))) {
                         try (final Entries entries = targetStore.getEntries(attributeMap)) {
-                            ZipEntry zipEntry = zipInputStream.getNextEntry();
+                            ZipArchiveEntry zipEntry = zipInputStream.getNextEntry();
                             while (zipEntry != null) {
                                 try (final OutputStream outputStream = entries.addEntry(zipEntry.getName())) {
                                     StreamUtil.streamToStream(zipInputStream, outputStream);
@@ -179,7 +179,7 @@ public final class FileScanner {
 
                 // Delete files.
                 Files.deleteIfExists(zipFile);
-                Files.deleteIfExists(metaFile);
+                Files.deleteIfExists(file);
             }
         }
     }

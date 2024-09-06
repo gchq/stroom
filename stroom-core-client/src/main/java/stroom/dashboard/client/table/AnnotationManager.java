@@ -18,6 +18,8 @@ package stroom.dashboard.client.table;
 
 import stroom.annotation.client.ChangeAssignedToPresenter;
 import stroom.annotation.client.ChangeStatusPresenter;
+import stroom.annotation.client.ShowAnnotationEvent;
+import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.EventId;
 import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.TableComponentSettings;
@@ -232,29 +234,20 @@ public class AnnotationManager {
     }
 
     private void createAnnotation(final List<EventId> eventIdList) {
-//        final String title = getValue(tableComponentSettings, selectedItems, "title");
-//        final String subject = getValue(tableComponentSettings, selectedItems, "subject");
-//        final String status = getValue(tableComponentSettings, selectedItems, "status");
-////        final String assignedTo = getValue(tableComponentSettings, selectedItems, "assignedTo");
-//        final String comment = getValue(tableComponentSettings, selectedItems, "comment");
-//
-////        // assignedTo is a display name so have to convert it back to a unique username
-////        final UserNameResource userNameResource = GWT.create(UserNameResource.class);
-////        restFactory
-////                .create(userNameResource)
-////                .method(res -> res.getByDisplayName(assignedTo))
-////                .onSuccess(optUserName -> {
-//                    final Annotation annotation = new Annotation();
-//                    annotation.setTitle(title);
-//                    annotation.setSubject(subject);
-//                    annotation.setStatus(status);
-////                    annotation.setAssignedTo(optUserName);
-//                    annotation.setComment(comment);
-//
-//                    ShowAnnotationEvent.fire(changeStatusPresenter, annotation, eventIdList);
-////                })
-////                .taskListener(new QuietTaskListener())
-////                .exec();
+        final String title = getValue(tableComponentSettings, selectedItems, "title");
+        final String subject = getValue(tableComponentSettings, selectedItems, "subject");
+        final String status = getValue(tableComponentSettings, selectedItems, "status");
+//        final String assignedTo = getValue(tableComponentSettings, selectedItems, "assignedTo");
+        final String comment = getValue(tableComponentSettings, selectedItems, "comment");
+
+        final Annotation annotation = new Annotation();
+        annotation.setTitle(title);
+        annotation.setSubject(subject);
+        annotation.setStatus(status);
+//        annotation.setAssignedTo(optUserName);
+        annotation.setComment(comment);
+
+        ShowAnnotationEvent.fire(changeStatusPresenter, annotation, eventIdList);
     }
 
     private void changeStatus(final List<Long> annotationIdList) {

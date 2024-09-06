@@ -16,12 +16,12 @@
 
 package stroom.search.elastic.client.presenter;
 
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface ElasticClusterSettingsUiHandlers extends UiHandlers {
     void onChange();
 
-    void onTestConnection(TaskListener taskListener);
+    void onTestConnection(TaskHandlerFactory taskHandlerFactory);
 }

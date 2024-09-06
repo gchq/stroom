@@ -79,7 +79,7 @@ import stroom.query.client.presenter.TimeZones;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.SvgPresets;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.Expander;
@@ -184,7 +184,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         this.columnSelectionListModel = columnSelectionListModel;
         this.dataSourceClient = dataSourceClient;
 
-        columnSelectionListModel.setTaskListener(this);
+        columnSelectionListModel.setTaskHandlerFactory(this);
 
         dataGrid = new MyDataGrid<>();
         selectionModel = dataGrid.addDefaultSelectionModel(true);
@@ -422,7 +422,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                         .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager,
                                                 this,
                                                 result))
-                                        .taskListener(this)
+                                        .taskHandlerFactory(this)
                                         .exec();
                             }
                             e.hide();
@@ -1067,9 +1067,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     @Override
-    public synchronized void setTaskListener(final TaskListener taskListener) {
-        super.setTaskListener(taskListener);
-        columnSelectionListModel.setTaskListener(taskListener);
+    public synchronized void setTaskHandlerFactory(final TaskHandlerFactory taskHandlerFactory) {
+        super.setTaskHandlerFactory(taskHandlerFactory);
+        columnSelectionListModel.setTaskHandlerFactory(taskHandlerFactory);
     }
 
     // --------------------------------------------------------------------------------

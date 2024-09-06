@@ -187,7 +187,7 @@ public class DataRetentionImpactPresenter
                     updateButtonStates();
                     AlertEvent.fireErrorFromException(this, error.getException(), null);
                 })
-                .taskListener(this)
+                .taskHandlerFactory(this)
                 .exec();
     }
 
@@ -209,7 +209,7 @@ public class DataRetentionImpactPresenter
                         updateButtonStates();
                         AlertEvent.fireErrorFromException(this, error.getException(), null);
                     })
-                    .taskListener(this)
+                    .taskHandlerFactory(this)
                     .exec();
         }
     }

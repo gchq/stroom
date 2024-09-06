@@ -20,6 +20,7 @@ import stroom.data.client.view.ClassificationLabel;
 import stroom.query.client.presenter.TextPresenter.TextView;
 import stroom.query.client.presenter.TextUiHandlers;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.TaskHandler;
 import stroom.widget.button.client.FabButton;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.spinner.client.SpinnerLarge;
@@ -85,13 +86,8 @@ public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements 
     }
 
     @Override
-    public void incrementTaskCount() {
-        spinner.incrementTaskCount();
-    }
-
-    @Override
-    public void decrementTaskCount() {
-        spinner.decrementTaskCount();
+    public TaskHandler createTaskHandler() {
+        return spinner.createTaskHandler();
     }
 
     @UiHandler("close")

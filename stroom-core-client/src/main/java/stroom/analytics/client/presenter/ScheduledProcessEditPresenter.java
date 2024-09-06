@@ -84,7 +84,7 @@ public class ScheduledProcessEditPresenter
                     scheduleReferenceTimeConsumer.accept(new ScheduleReferenceTime(referenceTime,
                             lastExecuted));
                 })
-                .taskListener(this)
+                .taskHandlerFactory(this)
                 .exec());
 
         nodeManager.listAllNodes(

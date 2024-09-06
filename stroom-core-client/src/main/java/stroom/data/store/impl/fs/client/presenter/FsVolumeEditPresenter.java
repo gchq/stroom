@@ -124,7 +124,7 @@ public class FsVolumeEditPresenter
                     }
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskListener(this)
+                .taskHandlerFactory(this)
                 .exec();
     }
 
@@ -139,7 +139,7 @@ public class FsVolumeEditPresenter
                     event.hide();
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskListener(this)
+                .taskHandlerFactory(this)
                 .exec();
     }
 
@@ -154,7 +154,7 @@ public class FsVolumeEditPresenter
                     event.hide();
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskListener(this)
+                .taskHandlerFactory(this)
                 .exec();
     }
 

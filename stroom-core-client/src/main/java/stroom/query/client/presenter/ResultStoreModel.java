@@ -11,7 +11,7 @@ import stroom.query.api.v2.ResultStoreInfo;
 import stroom.query.shared.DestroyStoreRequest;
 import stroom.query.shared.ResultStoreResource;
 import stroom.query.shared.UpdateStoreRequest;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.ResultPage;
 
@@ -49,26 +49,26 @@ public class ResultStoreModel {
     public void fetch(final Range range,
                       final Consumer<ResultPage<ResultStoreInfo>> dataConsumer,
                       final RestErrorHandler errorHandler,
-                      final TaskListener taskListener) {
+                      final TaskHandlerFactory taskHandlerFactory) {
         this.range = range;
         this.dataConsumer = dataConsumer;
         delayedUpdate.reset();
-        fetchNodes(range, dataConsumer, errorHandler, taskListener);
+        fetchNodes(range, dataConsumer, errorHandler, taskHandlerFactory);
     }
 
     private void fetchNodes(final Range range,
                             final Consumer<ResultPage<ResultStoreInfo>> dataConsumer,
                             final RestErrorHandler errorHandler,
-                            final TaskListener taskListener) {
+                            final TaskHandlerFactory taskHandlerFactory) {
         nodeManager.listAllNodes(
-                nodeNames -> fetchTasksForNodes(range, dataConsumer, nodeNames, taskListener),
-                errorHandler, taskListener);
+                nodeNames -> fetchTasksForNodes(range, dataConsumer, nodeNames, taskHandlerFactory),
+                errorHandler, taskHandlerFactory);
     }
 
     private void fetchTasksForNodes(final Range range,
                                     final Consumer<ResultPage<ResultStoreInfo>> dataConsumer,
                                     final List<String> nodeNames,
-                                    final TaskListener taskListener) {
+                                    final TaskHandlerFactory taskHandlerFactory) {
         responseMap.clear();
         CriteriaUtil.setRange(criteria, range);
         for (final String nodeName : nodeNames) {
@@ -83,7 +83,7 @@ public class ResultStoreModel {
                         responseMap.remove(nodeName);
                         delayedUpdate.update();
                     })
-                    .taskListener(taskListener)
+                    .taskHandlerFactory(taskHandlerFactory)
                     .exec();
         }
     }
@@ -99,13 +99,13 @@ public class ResultStoreModel {
     public void terminate(final String nodeName,
                           final QueryKey queryKey,
                           final Consumer<Boolean> consumer,
-                          final TaskListener taskListener) {
+                          final TaskHandlerFactory taskHandlerFactory) {
         restFactory
                 .create(RESULT_STORE_RESOURCE)
                 .method(res -> res.terminate(nodeName, queryKey))
                 .onSuccess(consumer)
                 .onFailure(t -> consumer.accept(false))
-                .taskListener(taskListener)
+                .taskHandlerFactory(taskHandlerFactory)
                 .exec();
     }
 
@@ -113,26 +113,26 @@ public class ResultStoreModel {
                         final QueryKey queryKey,
                         final DestroyReason destroyReason,
                         final Consumer<Boolean> consumer,
-                        final TaskListener taskListener) {
+                        final TaskHandlerFactory taskHandlerFactory) {
         restFactory
                 .create(RESULT_STORE_RESOURCE)
                 .method(res -> res.destroy(nodeName, new DestroyStoreRequest(queryKey, destroyReason)))
                 .onSuccess(consumer)
                 .onFailure(t -> consumer.accept(false))
-                .taskListener(taskListener)
+                .taskHandlerFactory(taskHandlerFactory)
                 .exec();
     }
 
     public void updateSettings(final String nodeName,
                                final UpdateStoreRequest updateStoreRequest,
                                final Consumer<Boolean> consumer,
-                               final TaskListener taskListener) {
+                               final TaskHandlerFactory taskHandlerFactory) {
         restFactory
                 .create(RESULT_STORE_RESOURCE)
                 .method(res -> res.update(nodeName, updateStoreRequest))
                 .onSuccess(consumer)
                 .onFailure(t -> consumer.accept(false))
-                .taskListener(taskListener)
+                .taskHandlerFactory(taskHandlerFactory)
                 .exec();
     }
 }

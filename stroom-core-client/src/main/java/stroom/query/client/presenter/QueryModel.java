@@ -29,9 +29,9 @@ import stroom.query.api.v2.TimeRange;
 import stroom.query.shared.QueryContext;
 import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;
-import stroom.task.client.HasTaskListener;
-import stroom.task.client.TaskListener;
-import stroom.task.client.TaskListenerImpl;
+import stroom.task.client.DefaultTaskListener;
+import stroom.task.client.HasTaskHandlerFactory;
+import stroom.task.client.TaskHandlerFactory;
 import stroom.util.shared.TokenError;
 
 import com.google.gwt.core.client.GWT;
@@ -46,7 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public class QueryModel implements HasTaskListener, HasHandlers {
+public class QueryModel implements HasTaskHandlerFactory, HasHandlers {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
@@ -59,7 +59,7 @@ public class QueryModel implements HasTaskListener, HasHandlers {
     private DocRef queryDocRef;
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
     private final ResultStoreModel resultStoreModel;
-    private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
+    private TaskHandlerFactory taskHandlerFactory = new DefaultTaskListener(this);
 
     private String currentNode;
     private QueryKey currentQueryKey;
@@ -251,7 +251,7 @@ public class QueryModel implements HasTaskListener, HasHandlers {
                         }
                         resultConsumer.accept(null);
                     })
-                    .taskListener(taskListener)
+                    .taskHandlerFactory(taskHandlerFactory)
                     .exec();
         }
 
@@ -264,14 +264,14 @@ public class QueryModel implements HasTaskListener, HasHandlers {
     private void deleteStore(final String node, final QueryKey queryKey, final DestroyReason destroyReason) {
         if (queryKey != null) {
             resultStoreModel.destroy(node, queryKey, destroyReason, (ok) ->
-                    GWT.log("Destroyed store " + queryKey), taskListener);
+                    GWT.log("Destroyed store " + queryKey), taskHandlerFactory);
         }
     }
 
     private void terminate(final String node, final QueryKey queryKey) {
         if (queryKey != null) {
             resultStoreModel.terminate(node, queryKey, (ok) ->
-                    GWT.log("Terminate search " + queryKey), taskListener);
+                    GWT.log("Terminate search " + queryKey), taskHandlerFactory);
         }
     }
 
@@ -326,7 +326,7 @@ public class QueryModel implements HasTaskListener, HasHandlers {
                             poll(false);
                         }
                     })
-                    .taskListener(taskListener)
+                    .taskHandlerFactory(taskHandlerFactory)
                     .exec();
         }
     }
@@ -452,8 +452,8 @@ public class QueryModel implements HasTaskListener, HasHandlers {
     }
 
     @Override
-    public void setTaskListener(final TaskListener taskListener) {
-        this.taskListener.setTaskListener(taskListener);
+    public void setTaskHandlerFactory(final TaskHandlerFactory taskHandlerFactory) {
+        this.taskHandlerFactory = taskHandlerFactory;
     }
 
     @Override

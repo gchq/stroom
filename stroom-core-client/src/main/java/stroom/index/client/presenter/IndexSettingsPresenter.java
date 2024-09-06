@@ -132,7 +132,7 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
                         listBox.setValue(selected);
                     }
                 })
-                .taskListener(this)
+                .taskHandlerFactory(this)
                 .exec();
     }
 

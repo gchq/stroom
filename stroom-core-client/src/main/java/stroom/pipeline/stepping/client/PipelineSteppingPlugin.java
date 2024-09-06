@@ -88,7 +88,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
                             event.getStepLocation().getMetaId(),
                             event.getChildStreamId())))
                     .onSuccess(chooser::setSelectedEntityReference)
-                    .taskListener(chooser)
+                    .taskHandlerFactory(chooser)
                     .exec();
         }
 
@@ -121,7 +121,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
                                         childStreamType);
                             }
                         })
-                        .taskListener(new DefaultTaskListener(this))
+                        .taskHandlerFactory(new DefaultTaskListener(this))
                         .exec();
             }
         }, onShow);

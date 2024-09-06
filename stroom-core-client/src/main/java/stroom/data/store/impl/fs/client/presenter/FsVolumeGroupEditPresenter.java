@@ -107,7 +107,7 @@ public class FsVolumeGroupEditPresenter
                     .onSuccess(response -> delayedUpdate.update())
                     .onFailure(throwable -> {
                     })
-                    .taskListener(this)
+                    .taskHandlerFactory(this)
                     .exec();
         }));
     }
@@ -125,7 +125,7 @@ public class FsVolumeGroupEditPresenter
                     .create(FS_VOLUME_RESOURCE)
                     .method(res -> res.fetch(volume.getId()))
                     .onSuccess(result -> editVolume(result, "Edit Volume"))
-                    .taskListener(this)
+                    .taskHandlerFactory(this)
                     .exec();
         }
     }
@@ -155,7 +155,7 @@ public class FsVolumeGroupEditPresenter
                                         .create(FS_VOLUME_RESOURCE)
                                         .method(res -> res.delete(volume.getId()))
                                         .onSuccess(response -> volumeStatusListPresenter.refresh())
-                                        .taskListener(this)
+                                        .taskHandlerFactory(this)
                                         .exec();
                             }
                         }
@@ -252,7 +252,7 @@ public class FsVolumeGroupEditPresenter
                         }
                     })
                     .onFailure(RestErrorHandler.forPopup(this, event))
-                    .taskListener(this)
+                    .taskHandlerFactory(this)
                     .exec();
         }
     }
@@ -268,7 +268,7 @@ public class FsVolumeGroupEditPresenter
                     event.hide();
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskListener(this)
+                .taskHandlerFactory(this)
                 .exec();
     }
 

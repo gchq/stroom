@@ -19,13 +19,11 @@ package stroom.test.common.util;
 import stroom.util.io.StreamUtil;
 import stroom.util.zip.ZipUtil;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.zip.ZipInputStream;
 
 /**
  * A TestRule to compile folders into zips of the same name.
@@ -64,10 +62,6 @@ public class ZipResource {
 
     public byte[] getBytes() throws IOException {
         return StreamUtil.streamToBuffer(getStream()).toByteArray();
-    }
-
-    public ZipInputStream getZipInputStream() throws IOException {
-        return new ZipInputStream(new ByteArrayInputStream(getBytes()));
     }
 
     public void before() throws IOException {
