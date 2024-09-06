@@ -6,8 +6,8 @@ import stroom.security.api.SecurityContext;
 import stroom.security.impl.HashedApiKeyParts;
 import stroom.security.impl.UserCache;
 import stroom.security.impl.apikey.ApiKeyDao;
-import stroom.security.impl.apikey.ApiKeyService.DuplicateHashException;
-import stroom.security.impl.apikey.ApiKeyService.DuplicatePrefixException;
+import stroom.security.impl.apikey.ApiKeyService.DuplicateApiKeyException;
+import stroom.security.impl.db.jooq.Keys;
 import stroom.security.impl.db.jooq.tables.records.ApiKeyRecord;
 import stroom.security.shared.ApiKeyResultPage;
 import stroom.security.shared.CreateHashedApiKeyRequest;
@@ -20,6 +20,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.UserName;
 
+import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -34,6 +35,7 @@ import org.jooq.impl.DSL;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -119,42 +121,65 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
         return resultPage;
     }
 
-    @Override
-    public Optional<String> fetchVerifiedUserUuid(final String apiKeyHash) {
-        if (NullSafe.isBlankString(apiKeyHash)) {
-            return Optional.empty();
-        } else {
-            final long nowMs = Instant.now().toEpochMilli();
-            return JooqUtil.contextResult(securityDbConnProvider, context -> context
-                    .select(API_KEY.FK_OWNER_UUID)
-                    .from(API_KEY)
-                    .where(API_KEY.API_KEY_HASH.eq(apiKeyHash.trim()))
-                    .and(API_KEY.ENABLED.isTrue())
-                    .and(API_KEY.EXPIRES_ON_MS.greaterThan(nowMs))
-                    .fetchOptional(API_KEY.FK_OWNER_UUID));
-        }
-    }
+//    @Override
+//    public Optional<String> fetchVerifiedUserUuid(final String apiKeyHash) {
+//        if (NullSafe.isBlankString(apiKeyHash)) {
+//            return Optional.empty();
+//        } else {
+//            final long nowMs = Instant.now().toEpochMilli();
+//            return JooqUtil.contextResult(securityDbConnProvider, context -> context
+//                    .select(API_KEY.FK_OWNER_UUID)
+//                    .from(API_KEY)
+//                    .where(API_KEY.API_KEY_HASH.eq(apiKeyHash.trim()))
+//                    .and(API_KEY.ENABLED.isTrue())
+//                    .and(API_KEY.EXPIRES_ON_MS.greaterThan(nowMs))
+//                    .fetchOptional(API_KEY.FK_OWNER_UUID));
+//        }
+//    }
+
+//    @Override
+//    public Optional<HashedApiKey> fetchValidApiKeyByHash(final String prefix, final String hash) {
+//        Objects.requireNonNull(hash);
+//
+//        final long nowMs = Instant.now().toEpochMilli();
+//        // Match on the hash and the prefix. You can't then supply another key that happens to have
+//        // the same hash as one of ours, it must also have the same prefix part.
+//        // Key must be enabled and not be expired.
+//        final Optional<ApiKeyRecord> result = JooqUtil.contextResult(securityDbConnProvider, context ->
+//                context.selectFrom(API_KEY)
+//                        .where(API_KEY.API_KEY_HASH.eq(hash))
+//                        .and(API_KEY.API_KEY_PREFIX.eq(prefix))
+//                        .and(API_KEY.ENABLED.isTrue())
+//                        .and(DSL.or(
+//                                API_KEY.EXPIRES_ON_MS.isNull(),
+//                                API_KEY.EXPIRES_ON_MS.greaterThan(nowMs)))
+//                        .fetchOptional());
+//        return result.map(this::mapRecordToApiKey);
+//    }
 
     @Override
-    public Optional<HashedApiKey> fetchValidApiKeyByHash(final String hash) {
-        Objects.requireNonNull(hash);
+    public List<HashedApiKey> fetchValidApiKeysByPrefix(final String prefix) {
+        Objects.requireNonNull(prefix);
 
         final long nowMs = Instant.now().toEpochMilli();
-        final Optional<ApiKeyRecord> result = JooqUtil.contextResult(securityDbConnProvider, context ->
+        // Prefix is not unique, so we may get a few keys back, however in most cases it will be one.
+        // In tests creating 10mil keys, there were only 50 odd prefixes clashes.
+        final List<HashedApiKey> result = JooqUtil.contextResult(securityDbConnProvider, context ->
                 context.selectFrom(API_KEY)
-                        .where(API_KEY.API_KEY_HASH.eq(hash))
+                        .where(API_KEY.API_KEY_PREFIX.eq(prefix))
                         .and(API_KEY.ENABLED.isTrue())
                         .and(DSL.or(
                                 API_KEY.EXPIRES_ON_MS.isNull(),
                                 API_KEY.EXPIRES_ON_MS.greaterThan(nowMs)))
-                        .fetchOptional());
-        return result.map(this::mapRecordToApiKey);
+                        .fetch()
+                        .map(this::mapRecordToApiKey));
+        return result;
     }
 
     @Override
     public HashedApiKey create(final CreateHashedApiKeyRequest createHashedApiKeyRequest,
-                               final HashedApiKeyParts hashedApiKeyParts)
-            throws DuplicateHashException, DuplicatePrefixException {
+                               final HashedApiKeyParts hashedApiKeyParts) throws DuplicateApiKeyException {
+
         Objects.requireNonNull(createHashedApiKeyRequest);
         Objects.requireNonNull(hashedApiKeyParts);
         final String userIdentityForAudit = securityContext.getUserIdentityForAudit();
@@ -194,19 +219,20 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
             );
         } catch (DataAccessException e) {
             final Throwable rootCause = ExceptionUtils.getRootCause(e);
-            if (rootCause instanceof SQLIntegrityConstraintViolationException) {
-                if (rootCause.getMessage().contains(API_KEY.API_KEY_HASH.getName())) {
-                    throw new DuplicateHashException("Duplicate API key hash value.", e);
-                } else if (rootCause.getMessage().contains(API_KEY.API_KEY_PREFIX.getName())) {
-                    throw new DuplicatePrefixException("Duplicate API prefix.", e);
-                } else if (rootCause.getMessage().contains(API_KEY.NAME.getName())) {
-                    throw new RuntimeException("Duplicate API key name.", e);
-                } else {
-                    throw e;
+            if (rootCause instanceof final SQLIntegrityConstraintViolationException constraintException) {
+                LOGGER.debug(constraintException.getMessage());
+                if (constraintException.getErrorCode() == MysqlErrorNumbers.ER_DUP_ENTRY) {
+                    final String msg = constraintException.getMessage();
+                    if (msg.contains(Keys.KEY_API_KEY_API_KEY_PREFIX_HASH_IDX.getName())) {
+                        throw new DuplicateApiKeyException(
+                                "Duplicate API key hash and prefix value to an existing key.", e);
+                    } else if (msg.contains(Keys.KEY_API_KEY_API_KEY_OWNER_NAME_IDX.getName())) {
+                        throw new RuntimeException("Duplicate API key name for owner "
+                                + createHashedApiKeyRequest.getOwner(), e);
+                    }
                 }
-            } else {
-                throw e;
             }
+            throw e;
         }
         final Integer id = apiKeyRecord.get(API_KEY.ID);
         // Re-fetch so we know we have what is in the DB.
@@ -218,6 +244,7 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
     public Optional<HashedApiKey> fetch(final int id) {
         return genericDao.fetch(id);
     }
+
 
     @Override
     public HashedApiKey update(final HashedApiKey apiKey) {

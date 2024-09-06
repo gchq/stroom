@@ -20,6 +20,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.UserName;
+import stroom.util.string.Base58;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -27,24 +28,51 @@ import jakarta.inject.Singleton;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.HttpHeaders;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.bouncycastle.crypto.generators.Argon2BytesGenerator;
+import org.bouncycastle.crypto.params.Argon2Parameters;
+import org.bouncycastle.crypto.params.Argon2Parameters.Builder;
+import org.mindrot.jbcrypt.BCrypt;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Singleton // Has a cache
 public class ApiKeyService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ApiKeyService.class);
-
     private static final String CACHE_NAME = "API Key cache";
     private static final int MAX_CREATION_ATTEMPTS = 100;
+    private static final Map<HashAlgorithm, ApiKeyHasher> API_KEY_HASHER_MAP = Stream.of(
+                    new Sha3256ApiKeyHasher(),
+                    new BCryptApiKeyHasher(),
+                    new Argon2ApiKeyHasher())
+            .collect(Collectors.toMap(ApiKeyHasher::getType, Function.identity()));
+
+    static {
+        // Make sure all enum values have an associated impl
+        final Set<HashAlgorithm> keySet = API_KEY_HASHER_MAP.keySet();
+        for (final HashAlgorithm hashAlgorithm : HashAlgorithm.values()) {
+            if (!keySet.contains(hashAlgorithm)) {
+                throw new RuntimeException("No ApiKeyHasher implementation defined for algorithm " + hashAlgorithm);
+            }
+        }
+    }
 
     private final ApiKeyDao apiKeyDao;
     private final SecurityContext securityContext;
     private final ApiKeyGenerator apiKeyGenerator;
+    // The full apiKeyStr to an Authenticated UserIdentity
+    // Short life cache to reduce hashing time/cost
     private final StroomCache<String, Optional<UserIdentity>> apiKeyToAuthenticatedUserCache;
     private final Provider<AuthenticationConfig> authenticationConfigProvider;
 
@@ -113,19 +141,33 @@ public class ApiKeyService {
             LOGGER.debug("apiKey '{}' is not an API key", apiKeyStr);
             return Optional.empty();
         } else {
-            final String hash = computeApiKeyHash(apiKeyStr);
-            final Optional<HashedApiKey> optApiKey = apiKeyDao.fetchValidApiKeyByHash(hash);
+            final String prefix = ApiKeyGenerator.extractPrefixPart(apiKeyStr);
 
-            LOGGER.debug("Found API key {} matching hash '{}'", optApiKey, hash);
+            final List<HashedApiKey> apiKeys = apiKeyDao.fetchValidApiKeysByPrefix(prefix);
 
-            if (optApiKey.isEmpty()) {
-                LOGGER.debug("No valid API keys found matching hash {}", hash);
+            LOGGER.debug("Found {} API key(s) matching prefix: '{}'",
+                    NullSafe.size(apiKeys), prefix);
+
+            if (apiKeys.isEmpty()) {
+                LOGGER.debug("No valid API keys found matching prefix '{}'", prefix);
                 return Optional.empty();
             } else {
-                final HashedApiKey apiKey = optApiKey.get();
-                final Optional<UserIdentity> optUserIdentity = Optional.of(apiKey.getOwner())
-                        .map(BasicUserIdentity::new);
-                LOGGER.debug("optUserIdentity: {}", optUserIdentity);
+                Optional<UserIdentity> optUserIdentity = Optional.empty();
+
+                // In 99.99% of the time there will be only one apiKey fetched
+                for (final HashedApiKey apiKey : apiKeys) {
+                    // TODO change to get the hash algo from the HashedApiKey
+                    final boolean isHashMatch = verifyApiKeyHash(
+                            apiKeyStr,
+                            apiKey.getApiKeyHash(),
+                            HashAlgorithm.SHA3_256);
+                    if (isHashMatch) {
+                        optUserIdentity = Optional.of(apiKey.getOwner())
+                                .map(BasicUserIdentity::new);
+                        LOGGER.debug("optUserIdentity: {}", optUserIdentity);
+                        break;
+                    }
+                }
                 return optUserIdentity;
             }
         }
@@ -153,10 +195,8 @@ public class ApiKeyService {
                 attempts++;
                 try {
                     return createNewApiKey(createHashedApiKeyRequest);
-                } catch (DuplicateHashException e) {
-                    LOGGER.debug("Duplicate hash on attempt {}, going round again", attempts);
-                } catch (DuplicatePrefixException e) {
-                    LOGGER.debug("Duplicate prefix on attempt {}, going round again", attempts);
+                } catch (DuplicateApiKeyException e) {
+                    LOGGER.debug("Duplicate hash/prefix on attempt {}, going round again", attempts);
                 }
             } while (attempts < MAX_CREATION_ATTEMPTS);
 
@@ -166,7 +206,7 @@ public class ApiKeyService {
     }
 
     private CreateHashedApiKeyResponse createNewApiKey(final CreateHashedApiKeyRequest createHashedApiKeyRequest)
-            throws DuplicateHashException, DuplicatePrefixException {
+            throws DuplicateApiKeyException {
         LOGGER.debug(() -> LogUtil.message("Attempting to create new API key for {}",
                 createHashedApiKeyRequest.getOwner()));
         Objects.requireNonNull(createHashedApiKeyRequest.getName(), "name cannot be null");
@@ -281,11 +321,28 @@ public class ApiKeyService {
     }
 
     String computeApiKeyHash(final String apiKeyStr) {
-        Objects.requireNonNull(apiKeyStr);
+        return computeApiKeyHash(apiKeyStr, HashAlgorithm.SHA3_256);
+    }
 
-        final String sha256 = DigestUtils.sha3_256Hex(apiKeyStr.trim())
-                .trim();
-        return sha256;
+    String computeApiKeyHash(final String apiKeyStr, final HashAlgorithm hashAlgorithm) {
+        Objects.requireNonNull(apiKeyStr);
+        Objects.requireNonNull(hashAlgorithm);
+        final ApiKeyHasher apiKeyHasher = getApiKeyHasher(hashAlgorithm);
+        return apiKeyHasher.hash(apiKeyStr.trim());
+    }
+
+    private static ApiKeyHasher getApiKeyHasher(final HashAlgorithm hashAlgorithm) {
+        final ApiKeyHasher apiKeyHasher = API_KEY_HASHER_MAP.get(hashAlgorithm);
+        Objects.requireNonNull(apiKeyHasher, () -> "No ApiKeyHasher implementation for algorithm " + hashAlgorithm);
+        return apiKeyHasher;
+    }
+
+    boolean verifyApiKeyHash(final String apiKeyStr, final String hash, final HashAlgorithm hashAlgorithm) {
+        Objects.requireNonNull(apiKeyStr);
+        Objects.requireNonNull(hash);
+        Objects.requireNonNull(hashAlgorithm);
+        final ApiKeyHasher apiKeyHasher = getApiKeyHasher(hashAlgorithm);
+        return apiKeyHasher.verify(apiKeyStr, hash);
     }
 
     private void checkAdditionalPerms(final UserName owner) {
@@ -309,9 +366,12 @@ public class ApiKeyService {
     // --------------------------------------------------------------------------------
 
 
-    public static class DuplicateHashException extends Exception {
+    /**
+     * Thrown when an API key is created that has the same prefix + hash as another key.
+     */
+    public static class DuplicateApiKeyException extends Exception {
 
-        public DuplicateHashException(final String message, final Throwable cause) {
+        public DuplicateApiKeyException(final String message, final Throwable cause) {
             super(message, cause);
         }
     }
@@ -320,10 +380,111 @@ public class ApiKeyService {
     // --------------------------------------------------------------------------------
 
 
-    public static class DuplicatePrefixException extends Exception {
+    public enum HashAlgorithm {
+        SHA3_256("SHA3-256"),
+        BCRYPT("BCrypt"),
+        ARGON_2("Argon2");
 
-        public DuplicatePrefixException(final String message, final Throwable cause) {
-            super(message, cause);
+        private final String displayName;
+
+        HashAlgorithm(final String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+    }
+
+    private interface ApiKeyHasher {
+
+        String hash(String apiKeyStr);
+
+        default boolean verify(String apiKeyStr, String hash) {
+            final String computedHash = hash(Objects.requireNonNull(apiKeyStr));
+            return Objects.equals(Objects.requireNonNull(hash), computedHash);
+        }
+
+        HashAlgorithm getType();
+    }
+
+    private static class Sha3256ApiKeyHasher implements ApiKeyHasher {
+
+        @Override
+        public String hash(final String apiKeyStr) {
+            final String sha256 = DigestUtils.sha3_256Hex(apiKeyStr.trim())
+                    .trim();
+            return sha256;
+        }
+
+        @Override
+        public HashAlgorithm getType() {
+            return HashAlgorithm.SHA3_256;
+        }
+    }
+
+    private static class BCryptApiKeyHasher implements ApiKeyHasher {
+
+        @Override
+        public String hash(final String apiKeyStr) {
+            return BCrypt.hashpw(Objects.requireNonNull(apiKeyStr), BCrypt.gensalt());
+        }
+
+        @Override
+        public boolean verify(final String apiKeyStr, final String hash) {
+            if (apiKeyStr == null) {
+                return false;
+            } else {
+                return BCrypt.checkpw(apiKeyStr, hash);
+            }
+        }
+
+        @Override
+        public HashAlgorithm getType() {
+            return HashAlgorithm.BCRYPT;
+        }
+    }
+
+    private static class Argon2ApiKeyHasher implements ApiKeyHasher {
+
+        // 48, 2, 65_536, 1 => ~90ms per hash
+        private static final int HASH_LENGTH = 48;
+        private static final int ITERATIONS = 2;
+        private static final int MEMORY_KB = 65_536;
+        private static final int PARALLELISM = 1;
+
+        private final Argon2Parameters argon2Parameters;
+
+        public Argon2ApiKeyHasher() {
+            // No salt given the length of api keys being hashed
+            this.argon2Parameters = new Builder(Argon2Parameters.ARGON2_id)
+                    .withVersion(Argon2Parameters.ARGON2_VERSION_13)
+                    .withIterations(ITERATIONS)
+                    .withMemoryAsKB(MEMORY_KB)
+                    .withParallelism(PARALLELISM)
+                    .build();
+        }
+
+        @Override
+        public String hash(final String apiKeyStr) {
+            Objects.requireNonNull(apiKeyStr);
+            Argon2BytesGenerator generate = new Argon2BytesGenerator();
+            generate.init(argon2Parameters);
+            byte[] result = new byte[HASH_LENGTH];
+            generate.generateBytes(
+                    apiKeyStr.trim().getBytes(StandardCharsets.UTF_8),
+                    result,
+                    0,
+                    result.length);
+
+            // Base58 is a bit less nasty than base64 and widely supported in other languages
+            // due to use in bitcoin.
+            return Base58.encode(result);
+        }
+
+        @Override
+        public HashAlgorithm getType() {
+            return HashAlgorithm.ARGON_2;
         }
     }
 }
