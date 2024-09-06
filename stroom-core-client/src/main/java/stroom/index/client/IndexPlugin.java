@@ -12,7 +12,7 @@ import stroom.index.client.presenter.IndexPresenter;
 import stroom.index.shared.IndexResource;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -51,13 +51,13 @@ public class IndexPlugin extends DocumentPlugin<LuceneIndexDoc> {
     public void load(final DocRef docRef,
                      final Consumer<LuceneIndexDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskListener taskListener) {
+                     final TaskHandlerFactory taskHandlerFactory) {
         restFactory
                 .create(INDEX_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskListener(taskListener)
+                .taskHandlerFactory(taskHandlerFactory)
                 .exec();
     }
 
@@ -66,13 +66,13 @@ public class IndexPlugin extends DocumentPlugin<LuceneIndexDoc> {
                      final LuceneIndexDoc document,
                      final Consumer<LuceneIndexDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskListener taskListener) {
+                     final TaskHandlerFactory taskHandlerFactory) {
         restFactory
                 .create(INDEX_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskListener(taskListener)
+                .taskHandlerFactory(taskHandlerFactory)
                 .exec();
     }
 

@@ -17,9 +17,9 @@
 package stroom.dashboard.client.main;
 
 import stroom.dashboard.shared.ComponentConfig;
-import stroom.task.client.HasTaskListener;
+import stroom.task.client.HasTaskHandlerFactory;
 
-public interface ComponentDataModifier extends HasTaskListener {
+public interface ComponentDataModifier extends HasTaskHandlerFactory {
 
     boolean validate();
 

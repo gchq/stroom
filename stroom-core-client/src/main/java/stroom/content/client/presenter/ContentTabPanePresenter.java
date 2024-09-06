@@ -30,8 +30,9 @@ import stroom.data.table.client.Refreshable;
 import stroom.explorer.client.presenter.RecentItems;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.task.client.DefaultTaskListener;
-import stroom.task.client.HasTaskListener;
-import stroom.task.client.TaskListener;
+import stroom.task.client.HasTaskHandlerFactory;
+import stroom.task.client.TaskHandler;
+import stroom.task.client.TaskHandlerFactory;
 import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.tab.client.presenter.CurveTabLayoutPresenter;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
@@ -153,10 +154,10 @@ public class ContentTabPanePresenter
         forceReveal();
         add(event.getTabData(), event.getLayer());
 
-        if (event.getLayer() instanceof HasTaskListener) {
+        if (event.getLayer() instanceof HasTaskHandlerFactory) {
             final AbstractTab tab = getView().getTabBar().getTab(event.getTabData());
-            ((HasTaskListener) event.getLayer())
-                    .setTaskListener(new TabTaskListener(tab));
+            ((HasTaskHandlerFactory) event.getLayer())
+                    .setTaskHandlerFactory(new TabTaskListener(tab));
         }
     }
 
@@ -175,9 +176,9 @@ public class ContentTabPanePresenter
             }
         }
 
-        if (event.getTabData() instanceof HasTaskListener) {
-            ((HasTaskListener) event.getTabData())
-                    .setTaskListener(new DefaultTaskListener(this));
+        if (event.getTabData() instanceof HasTaskHandlerFactory) {
+            ((HasTaskHandlerFactory) event.getTabData())
+                    .setTaskHandlerFactory(new DefaultTaskListener(this));
         }
     }
 
@@ -229,7 +230,7 @@ public class ContentTabPanePresenter
 
     }
 
-    private static class TabTaskListener implements TaskListener {
+    private static class TabTaskListener implements TaskHandlerFactory {
 
         private final AbstractTab tab;
 
@@ -238,13 +239,8 @@ public class ContentTabPanePresenter
         }
 
         @Override
-        public void incrementTaskCount() {
-            tab.incrementTaskCount();
-        }
-
-        @Override
-        public void decrementTaskCount() {
-            tab.decrementTaskCount();
+        public TaskHandler createTaskHandler() {
+            return tab.createTaskHandler();
         }
     }
 }

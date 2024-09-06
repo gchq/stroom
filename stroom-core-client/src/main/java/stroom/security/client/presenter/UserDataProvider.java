@@ -25,7 +25,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 import stroom.util.shared.ResultPage;
 
 import com.google.gwt.core.client.GWT;
@@ -69,7 +69,7 @@ public class UserDataProvider implements Refreshable {
 //    }
 
     public void setCriteria(final FindUserCriteria criteria,
-                            final TaskListener taskListener) {
+                            final TaskHandlerFactory taskHandlerFactory) {
         this.criteria = criteria;
         if (dataProvider == null) {
             this.dataProvider = new RestDataProvider<User, ResultPage<User>>(eventBus) {
@@ -83,7 +83,7 @@ public class UserDataProvider implements Refreshable {
                             .method(res -> res.find(criteria))
                             .onSuccess(dataConsumer)
                             .onFailure(errorHandler)
-                            .taskListener(taskListener)
+                            .taskHandlerFactory(taskHandlerFactory)
                             .exec();
                 }
 

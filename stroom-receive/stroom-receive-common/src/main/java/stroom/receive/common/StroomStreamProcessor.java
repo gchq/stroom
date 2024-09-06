@@ -248,15 +248,13 @@ public class StroomStreamProcessor {
     private void processZipStream(final InputStream inputStream,
                                   final String prefix,
                                   final Instant receivedTime) {
-        try {
-            final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(inputStream);
+        final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(inputStream);
 
-            final Map<String, AttributeMap> bufferedAttributeMap = new HashMap<>();
-            final Map<String, Long> dataStreamSizeMap = new HashMap<>();
-            final StroomZipEntries stroomZipEntries = new StroomZipEntries();
+        final Map<String, AttributeMap> bufferedAttributeMap = new HashMap<>();
+        final Map<String, Long> dataStreamSizeMap = new HashMap<>();
+        final StroomZipEntries stroomZipEntries = new StroomZipEntries();
 
-            final ZipArchiveInputStream zipArchiveInputStream = new ZipArchiveInputStream(byteCountInputStream);
-
+        try (final ZipArchiveInputStream zipArchiveInputStream = new ZipArchiveInputStream(byteCountInputStream)) {
             ZipArchiveEntry zipEntry;
             while (true) {
                 // We have to wrap our stream reading code in a individual try/catch

@@ -5,7 +5,6 @@ import stroom.util.io.StreamUtil;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
@@ -38,13 +37,14 @@ public class SendReferenceProxyData {
                 connection.addRequestProperty("Feed", "VERY_SIMPLE_DATA_SPLITTER-EVENTS-V1");
                 connection.setRequestProperty("Connection", "Keep-Alive");
 
-                OutputStream out = connection.getOutputStream();
-                out = new GzipCompressorOutputStream(out);
-                PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(out, StreamUtil.DEFAULT_CHARSET));
-                printWriter.println("Time,Action,User,File");
-                printWriter.println("01/01/2009:00:00:01,OPEN,userone,proxyload.txt");
-
-                printWriter.close();
+                try (final PrintWriter printWriter =
+                        new PrintWriter(
+                                new OutputStreamWriter(
+                                        new GzipCompressorOutputStream(connection.getOutputStream()),
+                                        StreamUtil.DEFAULT_CHARSET))) {
+                    printWriter.println("Time,Action,User,File");
+                    printWriter.println("01/01/2009:00:00:01,OPEN,userone,proxyload.txt");
+                }
 
                 int response = connection.getResponseCode();
                 String msg = connection.getResponseMessage();

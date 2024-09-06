@@ -29,8 +29,9 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskEndEvent;
-import stroom.task.client.TaskStartEvent;
+import stroom.task.client.SimpleTask;
+import stroom.task.client.Task;
+import stroom.task.client.TaskHandler;
 import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -126,7 +127,9 @@ public class DataRetentionPresenter
     }
 
     public void selectTab(final TabData tab) {
-        TaskStartEvent.fire(DataRetentionPresenter.this);
+        final TaskHandler taskHandler = createTaskHandler();
+        final Task task = new SimpleTask("Selecting tab");
+        taskHandler.onStart(task);
         Scheduler.get().scheduleDeferred(() -> {
             if (tab != null) {
                 getContent(tab, content -> {
@@ -144,8 +147,7 @@ public class DataRetentionPresenter
                     }
                 });
             }
-
-            TaskEndEvent.fire(DataRetentionPresenter.this);
+            taskHandler.onEnd(task);
         });
     }
 

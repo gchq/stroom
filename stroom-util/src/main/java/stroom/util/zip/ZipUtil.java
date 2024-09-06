@@ -17,14 +17,12 @@
 package stroom.util.zip;
 
 import stroom.util.io.AbstractFileVisitor;
-import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
 
 import org.apache.commons.compress.archivers.zip.Zip64Mode;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
-import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +39,6 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -112,13 +109,13 @@ public final class ZipUtil {
             throws IOException {
         LOGGER.debug("zip() - Putting entry {}", name);
         final ZipArchiveEntry zipEntry = new ZipArchiveEntry(name);
-        zipOutputStream.putArchiveEntry(zipEntry);
-        InputStream is = null;
         try {
-            is = new BufferedInputStream(Files.newInputStream(file));
-            StreamUtil.streamToStream(is, zipOutputStream);
+            zipOutputStream.putArchiveEntry(zipEntry);
+            try (final InputStream is = new BufferedInputStream(Files.newInputStream(file))) {
+                StreamUtil.streamToStream(is, zipOutputStream);
+            }
         } finally {
-            CloseableUtil.close(is);
+            zipOutputStream.closeArchiveEntry();
         }
         zipOutputStream.closeArchiveEntry();
     }
@@ -149,14 +146,13 @@ public final class ZipUtil {
 
     public static List<String> pathList(final Path zipFilePath) throws IOException {
         final List<String> pathList = new ArrayList<>();
-        try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(zipFilePath))) {
-            final Enumeration<? extends ZipArchiveEntry> zipEnumeration = zipFile.getEntries();
-            while (zipEnumeration.hasMoreElements()) {
-                final ZipArchiveEntry zipEntry = zipEnumeration.nextElement();
+        try (final ZipArchiveInputStream zip =
+                new ZipArchiveInputStream(new BufferedInputStream(Files.newInputStream(zipFilePath)))) {
+            ZipArchiveEntry zipEntry;
+            while ((zipEntry = zip.getNextEntry()) != null) {
                 pathList.add(zipEntry.getName());
             }
         }
-
         return pathList;
     }
 }

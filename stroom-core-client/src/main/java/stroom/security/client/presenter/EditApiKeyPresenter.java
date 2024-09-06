@@ -64,7 +64,7 @@ public class EditApiKeyPresenter
                 .method(res -> res.getAssociates(null))
                 .onSuccess(userNames ->
                         getView().setUserNames(userNames))
-                .taskListener(this)
+                .taskHandlerFactory(this)
                 .exec();
 
         reset();
@@ -178,7 +178,7 @@ public class EditApiKeyPresenter
                         .onFailure(throwable ->
                                 AlertEvent.fireError(this, "Error updating API key: "
                                         + throwable.getMessage(), e::reset))
-                        .taskListener(this)
+                        .taskHandlerFactory(this)
                         .exec();
             }
         } else {
@@ -216,7 +216,7 @@ public class EditApiKeyPresenter
                                     .onFailure(throwable ->
                                             AlertEvent.fireError(this, "Error deleting API key: "
                                                     + throwable.getMessage(), e::reset))
-                                    .taskListener(this)
+                                    .taskHandlerFactory(this)
                                     .exec();
                         } else {
                             e.reset();
@@ -272,7 +272,7 @@ public class EditApiKeyPresenter
                     .onFailure(throwable ->
                             AlertEvent.fireError(this, "Error creating API key: "
                                     + throwable.getMessage(), event::reset))
-                    .taskListener(this)
+                    .taskHandlerFactory(this)
                     .exec();
         }
     }

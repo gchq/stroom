@@ -29,7 +29,7 @@ import stroom.script.client.presenter.ScriptPresenter;
 import stroom.script.shared.ScriptDoc;
 import stroom.script.shared.ScriptResource;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -68,13 +68,13 @@ public class ScriptPlugin extends DocumentPlugin<ScriptDoc> {
     public void load(final DocRef docRef,
                      final Consumer<ScriptDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskListener taskListener) {
+                     final TaskHandlerFactory taskHandlerFactory) {
         restFactory
                 .create(SCRIPT_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskListener(taskListener)
+                .taskHandlerFactory(taskHandlerFactory)
                 .exec();
     }
 
@@ -83,13 +83,13 @@ public class ScriptPlugin extends DocumentPlugin<ScriptDoc> {
                      final ScriptDoc document,
                      final Consumer<ScriptDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskListener taskListener) {
+                     final TaskHandlerFactory taskHandlerFactory) {
         restFactory
                 .create(SCRIPT_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskListener(taskListener)
+                .taskHandlerFactory(taskHandlerFactory)
                 .exec();
     }
 
