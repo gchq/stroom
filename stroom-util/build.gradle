@@ -9,6 +9,7 @@ dependencies {
 
     implementation libs.assertj_core // needed for DiffUtil
     implementation libs.commons_codec
+    implementation libs.commons_compress
     implementation libs.dropwizard_core
     implementation libs.dropwizard_metrics_healthchecks
     implementation libs.dropwizard_validation

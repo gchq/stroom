@@ -222,15 +222,13 @@ public class StroomStreamProcessor {
     }
 
     private void processZipStream(final InputStream inputStream, final String prefix) {
-        try {
-            final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(inputStream);
+        final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(inputStream);
 
-            final Map<String, AttributeMap> bufferedAttributeMap = new HashMap<>();
-            final Map<String, Long> dataStreamSizeMap = new HashMap<>();
-            final StroomZipNameSet stroomZipNameSet = new StroomZipNameSet(false);
+        final Map<String, AttributeMap> bufferedAttributeMap = new HashMap<>();
+        final Map<String, Long> dataStreamSizeMap = new HashMap<>();
+        final StroomZipNameSet stroomZipNameSet = new StroomZipNameSet(false);
 
-            final ZipArchiveInputStream zipArchiveInputStream = new ZipArchiveInputStream(byteCountInputStream);
-
+        try (final ZipArchiveInputStream zipArchiveInputStream = new ZipArchiveInputStream(byteCountInputStream)) {
             ZipArchiveEntry zipEntry;
             while (true) {
                 // We have to wrap our stream reading code in a individual try/catch
@@ -243,7 +241,7 @@ public class StroomStreamProcessor {
                     // works because we would not expect the zips to have been mutated which
                     // may cause these cases, however we are on slightly shaky ground grabbing
                     // entries without consulting the zip's dictionary.
-                    zipEntry = zipArchiveInputStream.getNextZipEntry();
+                    zipEntry = zipArchiveInputStream.getNextEntry();
                 } catch (final IOException ioEx) {
                     throw new StroomStreamException(
                             StroomStatusCode.COMPRESSED_STREAM_INVALID, globalAttributeMap, ioEx.getMessage());

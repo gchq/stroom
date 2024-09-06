@@ -6,14 +6,16 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.WrappedOutputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.zip.ZipUtil;
+
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
 
@@ -21,7 +23,7 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomZipOutputStreamImpl.class);
     private final Path file;
     private final Path lockFile;
-    private final ZipOutputStream zipOutputStream;
+    private final ZipArchiveOutputStream zipOutputStream;
     private final TaskProgressHandler progressHandler;
     private StroomZipNameSet stroomZipNameSet;
     private boolean inEntry = false;
@@ -76,7 +78,7 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
         final OutputStream bufferedOutputStream = new BufferedOutputStream(rawOutputStream);
         final OutputStream progressOutputStream = new FilterOutputStreamProgressMonitor(bufferedOutputStream,
                 progressHandler);
-        zipOutputStream = new ZipOutputStream(progressOutputStream);
+        zipOutputStream = ZipUtil.createOutputStream(progressOutputStream);
         if (monitorEntries) {
             stroomZipNameSet = new StroomZipNameSet(false);
         }
@@ -106,11 +108,11 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
         if (stroomZipNameSet != null) {
             stroomZipNameSet.add(name);
         }
-        zipOutputStream.putNextEntry(new ZipEntry(name));
+        zipOutputStream.putArchiveEntry(new ZipArchiveEntry(name));
         return new WrappedOutputStream(zipOutputStream) {
             @Override
             public void close() throws IOException {
-                zipOutputStream.closeEntry();
+                zipOutputStream.closeArchiveEntry();
                 inEntry = false;
                 if (LOGGER.isTraceEnabled()) {
                     LOGGER.trace("addEntry() - " + file + " - " + name + " - closed");

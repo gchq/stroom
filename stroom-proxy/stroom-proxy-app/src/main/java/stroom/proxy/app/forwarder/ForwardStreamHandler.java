@@ -14,6 +14,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.time.StroomDuration;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,8 +27,6 @@ import java.time.Duration;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.function.Consumer;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 import javax.net.ssl.SSLSocketFactory;
 
 /**
@@ -43,7 +43,7 @@ public class ForwardStreamHandler implements StreamHandler {
     private final StroomDuration forwardDelay;
     private final byte[] buffer = new byte[StreamUtil.BUFFER_SIZE];
     private HttpURLConnection connection;
-    private final ZipOutputStream zipOutputStream;
+    private final ZipArchiveOutputStream zipOutputStream;
     private final long startTimeMs;
     private long totalBytesSent = 0;
 
@@ -101,7 +101,7 @@ public class ForwardStreamHandler implements StreamHandler {
             connection.setChunkedStreamingMode(forwardChunkSize);
         }
         connection.connect();
-        zipOutputStream = new ZipOutputStream(connection.getOutputStream());
+        zipOutputStream = new ZipArchiveOutputStream(connection.getOutputStream());
     }
 
     @Override
@@ -109,7 +109,7 @@ public class ForwardStreamHandler implements StreamHandler {
                          final InputStream inputStream,
                          final Consumer<Long> progressHandler) throws IOException {
         // First call we set up if we are going to do chunked streaming
-        zipOutputStream.putNextEntry(new ZipEntry(entry));
+        zipOutputStream.putArchiveEntry(new ZipArchiveEntry(entry));
 
         final long bytesSent = StreamUtil.streamToStream(inputStream, zipOutputStream, buffer, progressHandler);
         totalBytesSent += bytesSent;
@@ -119,7 +119,7 @@ public class ForwardStreamHandler implements StreamHandler {
             ThreadUtil.sleep(forwardDelay);
         }
 
-        zipOutputStream.closeEntry();
+        zipOutputStream.closeArchiveEntry();
 
         return bytesSent;
     }

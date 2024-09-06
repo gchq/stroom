@@ -9,6 +9,10 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.WrappedOutputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.zip.ZipUtil;
+
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -27,8 +31,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -253,7 +255,7 @@ public class SequentialFileStore {
 
         private final FileSet tempFileSet;
         private final AttributeMap attributeMap;
-        private final ZipOutputStream zipOutputStream;
+        private final ZipArchiveOutputStream zipOutputStream;
         private boolean inEntry;
         private long entryCount;
         private boolean closed;
@@ -278,7 +280,7 @@ public class SequentialFileStore {
             }
 
             final OutputStream bufferedOutputStream = new BufferedOutputStream(rawOutputStream);
-            zipOutputStream = new ZipOutputStream(bufferedOutputStream);
+            zipOutputStream = ZipUtil.createOutputStream(bufferedOutputStream);
         }
 
         @Override
@@ -292,11 +294,11 @@ public class SequentialFileStore {
                 throw new IOException("Progress Stopped");
             }
             LOGGER.trace(() -> "addEntry() - " + tempFileSet.getZip() + " - " + name + " - adding");
-            zipOutputStream.putNextEntry(new ZipEntry(name));
+            zipOutputStream.putArchiveEntry(new ZipArchiveEntry(name));
             return new WrappedOutputStream(zipOutputStream) {
                 @Override
                 public void close() throws IOException {
-                    zipOutputStream.closeEntry();
+                    zipOutputStream.closeArchiveEntry();
                     inEntry = false;
                     LOGGER.trace(() -> "addEntry() - " + tempFileSet.getZip() + " - " + name + " - closed");
                 }

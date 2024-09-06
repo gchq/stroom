@@ -196,6 +196,7 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
+    implementation libs.commons_compress
     implementation libs.dropwizard_assets
     implementation libs.dropwizard_client
     implementation libs.dropwizard_configuration

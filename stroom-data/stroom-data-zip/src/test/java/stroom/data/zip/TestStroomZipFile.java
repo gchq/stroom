@@ -1,8 +1,10 @@
 package stroom.data.zip;
 
 
-import stroom.util.io.CloseableUtil;
+import stroom.util.zip.ZipUtil;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -10,8 +12,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,22 +23,14 @@ class TestStroomZipFile {
         assertThat(Files.isDirectory(uniqueTestDir))
                 .isTrue();
         final Path file = Files.createTempFile(uniqueTestDir, "TestStroomZipFile", ".zip");
-        System.out.println(file.toAbsolutePath().toString());
-        ZipOutputStream zipOutputStream = null;
-        try {
-            zipOutputStream = new ZipOutputStream(Files.newOutputStream(file));
-
-            zipOutputStream.putNextEntry(new ZipEntry("test/test.dat"));
+        System.out.println(file.toAbsolutePath());
+        try (final ZipArchiveOutputStream zipOutputStream = ZipUtil.createOutputStream(Files.newOutputStream(file))) {
+            zipOutputStream.putArchiveEntry(new ZipArchiveEntry("test/test.dat"));
             zipOutputStream.write("data".getBytes(CharsetConstants.DEFAULT_CHARSET));
-            zipOutputStream.closeEntry();
-        } finally {
-            CloseableUtil.close(zipOutputStream);
+            zipOutputStream.closeArchiveEntry();
         }
 
-        StroomZipFile stroomZipFile = null;
-        try {
-            stroomZipFile = new StroomZipFile(file);
-
+        try (final StroomZipFile stroomZipFile = new StroomZipFile(file)) {
             assertThat(new HashSet<>(Collections.singleton("test/test.dat")))
                     .isEqualTo(stroomZipFile.getStroomZipNameSet().getBaseNameSet());
 
@@ -46,7 +38,6 @@ class TestStroomZipFile {
             assertThat(stroomZipFile.getInputStream("test/test.dat", StroomZipFileType.CONTEXT)).isNull();
 
         } finally {
-            CloseableUtil.close(stroomZipFile);
             Files.delete(file);
         }
     }
@@ -54,27 +45,19 @@ class TestStroomZipFile {
     @Test
     void testRealZip2() throws IOException {
         final Path file = Files.createTempFile(Files.createTempDirectory("stroom"), "TestStroomZipFile", ".zip");
-        ZipOutputStream zipOutputStream = null;
-        try {
-            zipOutputStream = new ZipOutputStream(Files.newOutputStream(file));
-
-            zipOutputStream.putNextEntry(new ZipEntry("request.hdr"));
+        try (final ZipArchiveOutputStream zipOutputStream = ZipUtil.createOutputStream(Files.newOutputStream(file))) {
+            zipOutputStream.putArchiveEntry(new ZipArchiveEntry("request.hdr"));
             zipOutputStream.write("header".getBytes(CharsetConstants.DEFAULT_CHARSET));
-            zipOutputStream.closeEntry();
-            zipOutputStream.putNextEntry(new ZipEntry("request.dat"));
+            zipOutputStream.closeArchiveEntry();
+            zipOutputStream.putArchiveEntry(new ZipArchiveEntry("request.dat"));
             zipOutputStream.write("data".getBytes(CharsetConstants.DEFAULT_CHARSET));
-            zipOutputStream.closeEntry();
-            zipOutputStream.putNextEntry(new ZipEntry("request.ctx"));
+            zipOutputStream.closeArchiveEntry();
+            zipOutputStream.putArchiveEntry(new ZipArchiveEntry("request.ctx"));
             zipOutputStream.write("context".getBytes(CharsetConstants.DEFAULT_CHARSET));
-            zipOutputStream.closeEntry();
-        } finally {
-            CloseableUtil.close(zipOutputStream);
+            zipOutputStream.closeArchiveEntry();
         }
 
-        StroomZipFile stroomZipFile = null;
-        try {
-            stroomZipFile = new StroomZipFile(file);
-
+        try (final StroomZipFile stroomZipFile = new StroomZipFile(file)) {
             assertThat(new HashSet<>(Collections.singleton("request")))
                     .isEqualTo(stroomZipFile.getStroomZipNameSet().getBaseNameSet());
 
@@ -83,7 +66,6 @@ class TestStroomZipFile {
             assertThat(stroomZipFile.getInputStream("request", StroomZipFileType.CONTEXT)).isNotNull();
 
         } finally {
-            CloseableUtil.close(stroomZipFile);
             Files.delete(file);
         }
     }

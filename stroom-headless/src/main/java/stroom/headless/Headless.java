@@ -274,26 +274,23 @@ public class Headless extends AbstractCommandLineTool {
     private void process(final HeadlessFilter headlessFilter, final Path path) {
         try {
             LOGGER.info("Processing: " + FileUtil.getCanonicalPath(path));
+            try (final StroomZipFile stroomZipFile = new StroomZipFile(path)) {
+                final StroomZipNameSet nameSet = stroomZipFile.getStroomZipNameSet();
 
-            final StroomZipFile stroomZipFile = new StroomZipFile(path);
-            final StroomZipNameSet nameSet = stroomZipFile.getStroomZipNameSet();
-
-            // Process each base file in a consistent order
-            for (final String baseName : nameSet.getBaseNameList()) {
-                final InputStream dataStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.DATA);
-                final InputStream metaStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.META);
-                final InputStream contextStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.CONTEXT);
-                final HeadlessTranslationTaskHandler handler = translationTaskHandlerProvider.get();
-                handler.exec(
-                        IgnoreCloseInputStream.wrap(dataStream),
-                        IgnoreCloseInputStream.wrap(metaStream),
-                        IgnoreCloseInputStream.wrap(contextStream),
-                        headlessFilter,
-                        new SimpleTaskContext());
+                // Process each base file in a consistent order
+                for (final String baseName : nameSet.getBaseNameList()) {
+                    final InputStream dataStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.DATA);
+                    final InputStream metaStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.META);
+                    final InputStream contextStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.CONTEXT);
+                    final HeadlessTranslationTaskHandler handler = translationTaskHandlerProvider.get();
+                    handler.exec(
+                            IgnoreCloseInputStream.wrap(dataStream),
+                            IgnoreCloseInputStream.wrap(metaStream),
+                            IgnoreCloseInputStream.wrap(contextStream),
+                            headlessFilter,
+                            new SimpleTaskContext());
+                }
             }
-
-            // Close the zip file.
-            stroomZipFile.close();
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);
         }
