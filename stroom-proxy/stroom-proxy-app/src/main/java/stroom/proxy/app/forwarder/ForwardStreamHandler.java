@@ -16,6 +16,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.time.StroomDuration;
+import stroom.util.zip.ZipUtil;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
@@ -140,7 +141,7 @@ public class ForwardStreamHandler implements StreamHandler {
             connection.setChunkedStreamingMode((int) forwardChunkSize.getBytes());
         }
         connection.connect();
-        zipOutputStream = new ZipArchiveOutputStream(connection.getOutputStream());
+        zipOutputStream = ZipUtil.createOutputStream(connection.getOutputStream());
     }
 
     @Override

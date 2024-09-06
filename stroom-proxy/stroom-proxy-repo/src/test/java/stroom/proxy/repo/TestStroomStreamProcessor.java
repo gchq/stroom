@@ -265,7 +265,7 @@ class TestStroomStreamProcessor {
     @Test
     void testOrder3() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        try (final ZipArchiveOutputStream zipOutputStream = new ZipArchiveOutputStream(byteArrayOutputStream)) {
+        try (final ZipArchiveOutputStream zipOutputStream = ZipUtil.createOutputStream(byteArrayOutputStream)) {
             for (int i = 1; i <= 10; i++) {
                 zipOutputStream.putArchiveEntry(new ZipArchiveEntry(i + ".txt"));
                 zipOutputStream.write("data".getBytes(StreamUtil.DEFAULT_CHARSET));
