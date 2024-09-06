@@ -18,12 +18,13 @@ package stroom.data.store.impl.fs;
 
 import stroom.util.io.SeekableInputStream;
 
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
-import java.util.zip.GZIPInputStream;
 import javax.validation.constraints.NotNull;
 
 /**
@@ -34,7 +35,7 @@ abstract class BlockGZIPInput extends InputStream implements SeekableInputStream
     /**
      * Pointer to the current GZIPstream
      */
-    GZIPInputStream currentStream;
+    GzipCompressorInputStream currentStream;
     /**
      * We read data into a buffer (rather than hit the RA file)
      */
@@ -238,7 +239,7 @@ abstract class BlockGZIPInput extends InputStream implements SeekableInputStream
         blockCount++;
         readMagicMarker();
         currentBlockRawGzipSize = readLong();
-        currentStream = new GZIPInputStream(new GzipInputStreamAdaptor());
+        currentStream = new GzipCompressorInputStream(new GzipInputStreamAdaptor());
     }
 
     /**

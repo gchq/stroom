@@ -21,6 +21,9 @@ import stroom.data.store.api.TargetUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
@@ -32,8 +35,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 class BenchmarkIO {
 
@@ -135,11 +136,9 @@ class BenchmarkIO {
                 os = new BufferedOutputStream(Files.newOutputStream(file1), FileSystemUtil.STREAM_BUFFER_SIZE);
                 break;
             case GZIP:
-                os = new BufferedOutputStream(
-                        new GZIPOutputStream(
+                os = new GzipCompressorOutputStream(
                                 new BufferedOutputStream(Files.newOutputStream(file1),
-                                        FileSystemUtil.STREAM_BUFFER_SIZE)),
-                        FileSystemUtil.STREAM_BUFFER_SIZE);
+                                        FileSystemUtil.STREAM_BUFFER_SIZE));
                 break;
             case BGZIP:
                 os = new BlockGZIPOutputFile(file1);
@@ -211,7 +210,7 @@ class BenchmarkIO {
                 is = Files.newInputStream(file1);
                 break;
             case GZIP:
-                is = new GZIPInputStream(
+                is = new GzipCompressorInputStream(
                         new BufferedInputStream(Files.newInputStream(file1), FileSystemUtil.STREAM_BUFFER_SIZE));
                 break;
             case BGZIP:

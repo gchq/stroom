@@ -64,7 +64,8 @@ import stroom.receive.rules.impl.ReceiveDataRuleSetServiceImpl;
 import stroom.security.api.SecurityContext;
 import stroom.security.common.impl.RefreshManager;
 import stroom.security.mock.MockSecurityContext;
-import stroom.task.impl.TaskContextModule;
+import stroom.task.api.SimpleTaskContextFactory;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.BuildInfoProvider;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.guice.AdminServletBinder;
@@ -126,9 +127,10 @@ public class ProxyModule extends AbstractModule {
         // Allow discovery of feed status from other proxies.
         install(new RemoteFeedModule());
 
-        install(new TaskContextModule());
         install(new ProxyJerseyModule());
         install(new ProxySecurityModule());
+//        install(new TaskContextModule());
+        bind(TaskContextFactory.class).to(SimpleTaskContextFactory.class);
 
         bind(BuildInfo.class).toProvider(BuildInfoProvider.class);
 //        bind(BufferFactory.class).to(BufferFactoryImpl.class);
