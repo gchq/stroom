@@ -12,10 +12,10 @@ import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.zip.ZipUtil;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
-import jakarta.servlet.http.HttpServletRequest;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -268,7 +268,7 @@ class TestStroomStreamProcessor {
     @Test
     void testOrder3() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        try (final ZipArchiveOutputStream zipOutputStream = new ZipArchiveOutputStream(byteArrayOutputStream)) {
+        try (final ZipArchiveOutputStream zipOutputStream = ZipUtil.createOutputStream(byteArrayOutputStream)) {
             for (int i = 1; i <= 10; i++) {
                 zipOutputStream.putArchiveEntry(new ZipArchiveEntry(i + ".txt"));
                 zipOutputStream.write("data".getBytes(StreamUtil.DEFAULT_CHARSET));
