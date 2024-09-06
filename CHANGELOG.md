@@ -13,6 +13,16 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.5-beta.12] - 2024-09-06
+
+* Issue **#4424** : Fix alignment of _Current Tasks_ heading on the Jobs screen.
+
+* Issue **#4422** : Don't show _Edit Schedule_ in actions menu on Jobs screen for Distributed jobs.
+
+* Issue **#4418** : Fix missing css for `/stroom/sessionList`.
+
+* Issue **#4435** : Fix for progress spinner getting stuck on.
+
 * Issue **#4437** : Fix proxy not handling input files larger than 4 GiB.
 
 * Issue **#4069** : Reduce proxy memory usage.
@@ -22,6 +32,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3838** : Change ref data meta store to log a warning rather than error when meta entries are not present. This is consistent with behaviour in v7.2.
 
 * Fix verification of the `signer` key in the JWS headers when authentication is handled by an AWS load balancer. If you use AWS load balancers for authentication you must add the partial ARN(s) of your load balancer(s) to the property `stroom.security.authentication.openId.expectedSignerPrefixes`.
+
 
 ## [v7.5-beta.11] - 2024-09-04
 
@@ -783,7 +794,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-beta.11...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-beta.12...HEAD
+[v7.5-beta.12]: https://github.com/gchq/stroom/compare/v7.5-beta.11...v7.5-beta.12
 [v7.5-beta.11]: https://github.com/gchq/stroom/compare/v7.5-beta.10...v7.5-beta.11
 [v7.5-beta.10]: https://github.com/gchq/stroom/compare/v7.5-beta.9...v7.5-beta.10
 [v7.5-beta.9]: https://github.com/gchq/stroom/compare/v7.5-beta.8...v7.5-beta.9
