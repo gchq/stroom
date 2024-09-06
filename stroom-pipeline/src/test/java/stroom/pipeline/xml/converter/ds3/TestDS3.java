@@ -41,6 +41,8 @@ import stroom.util.shared.Location;
 import stroom.util.shared.TextRange;
 import stroom.util.xml.XMLUtil;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -69,8 +71,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
@@ -549,8 +549,9 @@ class TestDS3 extends StroomUnitTest {
                     reader.setErrorHandler(
                             new ErrorHandlerAdaptor("DS3Parser", locationFactory, errorReceiver));
 
-                    try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(input))) {
-                        ZipEntry entry = zipInputStream.getNextEntry();
+                    try (final ZipArchiveInputStream zipInputStream =
+                            new ZipArchiveInputStream(Files.newInputStream(input))) {
+                        ZipArchiveEntry entry = zipInputStream.getNextEntry();
                         long partIndex = -1;
                         while (entry != null) {
                             partIndex++;
@@ -563,7 +564,6 @@ class TestDS3 extends StroomUnitTest {
                                             StreamUtil.DEFAULT_CHARSET))));
                                 }
                             } finally {
-                                zipInputStream.closeEntry();
                                 entry = zipInputStream.getNextEntry();
                             }
                         }

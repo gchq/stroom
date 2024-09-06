@@ -38,6 +38,8 @@ import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Indicators;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,8 +56,6 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map.Entry;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -154,9 +154,9 @@ class TestJSONParser extends StroomUnitTest {
                 final StreamLocationFactory locationFactory = new StreamLocationFactory();
                 reader.setErrorHandler(new ErrorHandlerAdaptor("JSONParser", locationFactory, errorReceiver));
 
-                final ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(input));
-                try {
-                    ZipEntry entry = zipInputStream.getNextEntry();
+                try (final ZipArchiveInputStream zipInputStream =
+                        new ZipArchiveInputStream(Files.newInputStream(input))) {
+                    ZipArchiveEntry entry = zipInputStream.getNextEntry();
                     long partIndex = -1;
                     while (entry != null) {
                         partIndex++;
@@ -168,12 +168,9 @@ class TestJSONParser extends StroomUnitTest {
                                         new IgnoreCloseInputStream(zipInputStream), StreamUtil.DEFAULT_CHARSET))));
                             }
                         } finally {
-                            zipInputStream.closeEntry();
                             entry = zipInputStream.getNextEntry();
                         }
                     }
-                } finally {
-                    zipInputStream.close();
                 }
 
             } else {

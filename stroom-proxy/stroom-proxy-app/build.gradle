@@ -43,6 +43,7 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.aws_sqs
+    implementation libs.commons_compress
     implementation libs.dropwizard_assets
     implementation libs.dropwizard_core
     implementation libs.dropwizard_client
@@ -72,7 +73,6 @@ dependencies {
 
     testImplementation libs.assertj_core
     testImplementation libs.classgraph
-    testImplementation libs.commons_compress
     testImplementation libs.dropwizard_testing
     testImplementation libs.dropwizard_validation
     testImplementation libs.guice_extension

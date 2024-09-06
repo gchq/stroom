@@ -22,6 +22,7 @@ dependencies {
 
     implementation libs.aws_crt
     implementation libs.aws_s3_transfer_manager
+    implementation libs.commons_compress
     implementation libs.eventLogging
     implementation libs.guava
     implementation libs.guice
