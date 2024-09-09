@@ -42,10 +42,10 @@ END $$
 
 -- --------------------------------------------------
 
-DROP PROCEDURE IF EXISTS security_create_unique_index$$
+DROP PROCEDURE IF EXISTS security_create_non_unique_index$$
 
 -- DO NOT change this without reading the header!
-CREATE PROCEDURE security_create_unique_index (
+CREATE PROCEDURE security_create_non_unique_index (
     p_table_name varchar(64),
     p_index_name varchar(64),
     p_index_columns varchar(64)
@@ -62,7 +62,7 @@ BEGIN
 
     IF object_count = 0 THEN
         CALL security_run_sql(CONCAT(
-            'create unique index ', p_index_name,
+            'create index ', p_index_name,
             ' on ', database(), '.', p_table_name,
             ' (', p_index_columns, ')'));
     ELSE
@@ -125,30 +125,21 @@ ALTER TABLE api_key MODIFY
       COLLATE utf8mb4_0900_as_cs
       NOT NULL;
 
+-- Drop the old unique index so we can re-create it as non-unique
 CALL security_drop_index(
     "api_key",
     "api_key_prefix_idx");
 
-CALL security_drop_index(
+-- We have to look up records by prefix. This will usually return 1 row
+-- but may return >1. We test the hash of all returned rows.
+CALL security_create_non_unique_index(
     "api_key",
-    "api_key_api_key_hash_idx");
-
--- Drop the index we are about to create to make the script idempotent
-CALL security_drop_index(
-    "api_key",
-    "api_key_prefix_hash_idx");
-
--- All we have to lookup by are the prefix and the hash of the key
--- so they must be unique between them.
--- A hash and prefix clash is pretty unlikely but possible
-CALL security_create_unique_index(
-    "api_key",
-    "api_key_prefix_hash_idx",
-    "api_key_prefix, api_key_hash");
+    "api_key_prefix_idx",
+    "api_key_prefix");
 
 -- --------------------------------------------------
 
-DROP PROCEDURE IF EXISTS security_create_unique_index;
+DROP PROCEDURE IF EXISTS security_create_non_unique_index;
 
 DROP PROCEDURE IF EXISTS security_drop_index;
 

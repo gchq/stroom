@@ -12,6 +12,7 @@ import stroom.security.shared.ApiKeyResultPage;
 import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.CreateHashedApiKeyResponse;
 import stroom.security.shared.FindApiKeyCriteria;
+import stroom.security.shared.HashAlgorithm;
 import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.PermissionNames;
 import stroom.util.NullSafe;
@@ -53,7 +54,8 @@ public class ApiKeyService {
     private static final String CACHE_NAME = "API Key cache";
     private static final int MAX_CREATION_ATTEMPTS = 100;
     private static final Map<HashAlgorithm, ApiKeyHasher> API_KEY_HASHER_MAP = Stream.of(
-                    new Sha3256ApiKeyHasher(),
+                    new ShaThree256ApiKeyHasher(),
+                    new ShaTwo256ApiKeyHasher(),
                     new BCryptApiKeyHasher(),
                     new Argon2ApiKeyHasher())
             .collect(Collectors.toMap(ApiKeyHasher::getType, Function.identity()));
@@ -138,29 +140,27 @@ public class ApiKeyService {
     private Optional<UserIdentity> doFetchVerifiedIdentity(final String apiKeyStr) {
         // This has to be unsecured as we are trying to authenticate
         if (!apiKeyGenerator.isApiKey(apiKeyStr)) {
-            LOGGER.debug("apiKey '{}' is not an API key", apiKeyStr);
+            LOGGER.debug("apiKey is not an API key");
             return Optional.empty();
         } else {
             final String prefix = ApiKeyGenerator.extractPrefixPart(apiKeyStr);
 
             final List<HashedApiKey> apiKeys = apiKeyDao.fetchValidApiKeysByPrefix(prefix);
 
-            LOGGER.debug("Found {} API key(s) matching prefix: '{}'",
-                    NullSafe.size(apiKeys), prefix);
-
             if (apiKeys.isEmpty()) {
                 LOGGER.debug("No valid API keys found matching prefix '{}'", prefix);
                 return Optional.empty();
             } else {
                 Optional<UserIdentity> optUserIdentity = Optional.empty();
-
-                // In 99.99% of the time there will be only one apiKey fetched
+                // In most cases, there will be only one apiKey fetched for a given prefix
+                // as the chance of a prefix clash is ~1:1,000,000. If there are multiple,
+                // then we just test each one using its algorithm to see if the stored hash
+                // matches the hash of the passed api key.
                 for (final HashedApiKey apiKey : apiKeys) {
-                    // TODO change to get the hash algo from the HashedApiKey
                     final boolean isHashMatch = verifyApiKeyHash(
                             apiKeyStr,
                             apiKey.getApiKeyHash(),
-                            HashAlgorithm.SHA3_256);
+                            apiKey.getHashAlgorithm());
                     if (isHashMatch) {
                         optUserIdentity = Optional.of(apiKey.getOwner())
                                 .map(BasicUserIdentity::new);
@@ -168,6 +168,8 @@ public class ApiKeyService {
                         break;
                     }
                 }
+                LOGGER.debug("Found {} valid API key(s) matching prefix: '{}', matched identity: {}",
+                        apiKeys.size(), prefix, optUserIdentity);
                 return optUserIdentity;
             }
         }
@@ -196,7 +198,7 @@ public class ApiKeyService {
                 try {
                     return createNewApiKey(createHashedApiKeyRequest);
                 } catch (DuplicateApiKeyException e) {
-                    LOGGER.debug("Duplicate hash/prefix on attempt {}, going round again", attempts);
+                    LOGGER.debug("Duplicate hash on attempt {}, going round again", attempts);
                 }
             } while (attempts < MAX_CREATION_ATTEMPTS);
 
@@ -215,7 +217,8 @@ public class ApiKeyService {
         final CreateHashedApiKeyRequest request = ensureExpireTimeEpochMs(createHashedApiKeyRequest);
 
         final String apiKeyStr = apiKeyGenerator.generateRandomApiKey();
-        final String apiKeyHash = computeApiKeyHash(apiKeyStr);
+        final HashAlgorithm hashAlgorithm = Objects.requireNonNull(createHashedApiKeyRequest.getHashAlgorithm());
+        final String apiKeyHash = computeApiKeyHash(apiKeyStr, hashAlgorithm);
         final HashedApiKeyParts hashedApiKeyParts = new HashedApiKeyParts(
                 apiKeyHash,
                 ApiKeyGenerator.extractPrefixPart(apiKeyStr));
@@ -321,7 +324,7 @@ public class ApiKeyService {
     }
 
     String computeApiKeyHash(final String apiKeyStr) {
-        return computeApiKeyHash(apiKeyStr, HashAlgorithm.SHA3_256);
+        return computeApiKeyHash(apiKeyStr, HashAlgorithm.DEFAULT);
     }
 
     String computeApiKeyHash(final String apiKeyStr, final HashAlgorithm hashAlgorithm) {
@@ -342,7 +345,16 @@ public class ApiKeyService {
         Objects.requireNonNull(hash);
         Objects.requireNonNull(hashAlgorithm);
         final ApiKeyHasher apiKeyHasher = getApiKeyHasher(hashAlgorithm);
-        return apiKeyHasher.verify(apiKeyStr, hash);
+        try {
+            return apiKeyHasher.verify(apiKeyStr, hash);
+        } catch (Exception e) {
+            LOGGER.debug("Error verifying hash '{}' with algorithm: {}", hash, hashAlgorithm, e);
+            // Swallow it.
+            // Bcrypt for example, includes details of the salt in the key, so if the key is rubbish
+            // then it won't be able to extract the salt to gen the hash and will throw. If it throws
+            // then it can't be a valid key.
+            return false;
+        }
     }
 
     private void checkAdditionalPerms(final UserName owner) {
@@ -380,22 +392,6 @@ public class ApiKeyService {
     // --------------------------------------------------------------------------------
 
 
-    public enum HashAlgorithm {
-        SHA3_256("SHA3-256"),
-        BCRYPT("BCrypt"),
-        ARGON_2("Argon2");
-
-        private final String displayName;
-
-        HashAlgorithm(final String displayName) {
-            this.displayName = displayName;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
-    }
-
     private interface ApiKeyHasher {
 
         String hash(String apiKeyStr);
@@ -408,13 +404,16 @@ public class ApiKeyService {
         HashAlgorithm getType();
     }
 
-    private static class Sha3256ApiKeyHasher implements ApiKeyHasher {
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class ShaThree256ApiKeyHasher implements ApiKeyHasher {
 
         @Override
         public String hash(final String apiKeyStr) {
-            final String sha256 = DigestUtils.sha3_256Hex(apiKeyStr.trim())
+            return DigestUtils.sha3_256Hex(apiKeyStr.trim())
                     .trim();
-            return sha256;
         }
 
         @Override
@@ -422,6 +421,28 @@ public class ApiKeyService {
             return HashAlgorithm.SHA3_256;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class ShaTwo256ApiKeyHasher implements ApiKeyHasher {
+
+        @Override
+        public String hash(final String apiKeyStr) {
+            return DigestUtils.sha256Hex(apiKeyStr.trim())
+                    .trim();
+        }
+
+        @Override
+        public HashAlgorithm getType() {
+            return HashAlgorithm.SHA2_256;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class BCryptApiKeyHasher implements ApiKeyHasher {
 
@@ -445,8 +466,15 @@ public class ApiKeyService {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class Argon2ApiKeyHasher implements ApiKeyHasher {
 
+        // WARNING!!!
+        // Do not change any of these otherwise it will break hash verification of existing
+        // keys. If you want to tune it, make a new ApiKeyHasher impl with a new getType()
         // 48, 2, 65_536, 1 => ~90ms per hash
         private static final int HASH_LENGTH = 48;
         private static final int ITERATIONS = 2;

@@ -5,12 +5,11 @@ import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.HashedApiKeyParts;
-import stroom.security.impl.apikey.ApiKeyGenerator.ApiKeyParts;
 import stroom.security.impl.apikey.ApiKeyService.DuplicateApiKeyException;
-import stroom.security.impl.apikey.ApiKeyService.HashAlgorithm;
 import stroom.security.mock.MockSecurityContext;
 import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.CreateHashedApiKeyResponse;
+import stroom.security.shared.HashAlgorithm;
 import stroom.security.shared.HashedApiKey;
 import stroom.test.common.TestUtil;
 import stroom.util.logging.DurationTimer;
@@ -37,6 +36,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -84,7 +85,8 @@ class TestApiKeyService {
                 Instant.now().plus(10, ChronoUnit.DAYS).toEpochMilli(),
                 "key1",
                 "some comments",
-                true);
+                true,
+                HashAlgorithm.SHA3_256);
 
         final HashedApiKey hashedApiKey = HashedApiKey.builder()
                 .build();
@@ -126,7 +128,8 @@ class TestApiKeyService {
                 null,
                 "key1",
                 "some comments",
-                true);
+                true,
+                HashAlgorithm.SHA3_256);
 
         final HashedApiKey hashedApiKey = HashedApiKey.builder()
                 .build();
@@ -179,7 +182,8 @@ class TestApiKeyService {
                 expireTime.toEpochMilli(),
                 "key1",
                 "some comments",
-                true);
+                true,
+                HashAlgorithm.SHA3_256);
 
         Assertions.assertThatThrownBy(() ->
                         apiKeyService.create(request))
@@ -200,7 +204,8 @@ class TestApiKeyService {
                 Instant.now().plus(10, ChronoUnit.DAYS).toEpochMilli(),
                 "key1",
                 "some comments",
-                true);
+                true,
+                HashAlgorithm.SHA3_256);
 
         final HashedApiKey hashedApiKey = HashedApiKey.builder()
                 .build();
@@ -248,7 +253,8 @@ class TestApiKeyService {
                 Instant.now().plus(10, ChronoUnit.DAYS).toEpochMilli(),
                 name,
                 "some comments",
-                true);
+                true,
+                HashAlgorithm.SHA3_256);
 
         final HashedApiKey hashedApiKey = HashedApiKey.builder()
                 .build();
@@ -294,14 +300,14 @@ class TestApiKeyService {
                 .displayName("myDisplayName")
                 .build();
 
-        Optional<HashedApiKey> optValidApiKey = Optional.of(
+        List<HashedApiKey> apiKeys = List.of(
                 HashedApiKey.builder()
                         .withOwner(owner)
                         .withApiKeyHash(hash)
                         .build());
 
-        Mockito.when(mockApiKeyDao.fetchValidApiKeyByHash(Mockito.anyString(), Mockito.anyString()))
-                .thenReturn(optValidApiKey);
+        Mockito.when(mockApiKeyDao.fetchValidApiKeysByPrefix(Mockito.anyString()))
+                .thenReturn(apiKeys);
         Mockito.when(mockRequest.getHeader(HttpHeaders.AUTHORIZATION))
                 .thenReturn(apiKeyStr);
 
@@ -332,7 +338,7 @@ class TestApiKeyService {
     }
 
     @Test
-    void fetchVerifiedIdentity_success() {
+    void fetchVerifiedIdentity_success_oneKey() {
         final String apiKeyStr = apiKeyGenerator.generateRandomApiKey();
         final String hash = apiKeyService.computeApiKeyHash(apiKeyStr);
 
@@ -342,14 +348,14 @@ class TestApiKeyService {
                 .displayName("myDisplayName")
                 .build();
 
-        Optional<HashedApiKey> optValidApiKey = Optional.of(
+        List<HashedApiKey> apiKeys = List.of(
                 HashedApiKey.builder()
                         .withOwner(owner)
                         .withApiKeyHash(hash)
                         .build());
 
-        Mockito.when(mockApiKeyDao.fetchValidApiKeyByHash(Mockito.anyString(), Mockito.anyString()))
-                .thenReturn(optValidApiKey);
+        Mockito.when(mockApiKeyDao.fetchValidApiKeysByPrefix(Mockito.anyString()))
+                .thenReturn(apiKeys);
 
         final Optional<UserIdentity> opUserIdentity = apiKeyService.fetchVerifiedIdentity(apiKeyStr);
 
@@ -363,12 +369,111 @@ class TestApiKeyService {
     }
 
     @Test
-    void fetchVerifiedIdentity_noValid() {
+    void fetchVerifiedIdentity_success_multipleKeys() {
         final String apiKeyStr = apiKeyGenerator.generateRandomApiKey();
-        final Optional<HashedApiKey> optApiKey = Optional.empty();
+        final String hash = apiKeyService.computeApiKeyHash(apiKeyStr);
 
-        Mockito.when(mockApiKeyDao.fetchValidApiKeyByHash(Mockito.anyString(), Mockito.anyString()))
-                .thenReturn(optApiKey);
+        final UserName owner1 = SimpleUserName.builder()
+                .uuid("myUuid1")
+                .subjectId("mySubjectId1")
+                .displayName("myDisplayName1")
+                .build();
+        final UserName owner2 = SimpleUserName.builder()
+                .uuid("myUuid2")
+                .subjectId("mySubjectId2")
+                .displayName("myDisplayName2")
+                .build();
+        final UserName owner3 = SimpleUserName.builder()
+                .uuid("myUuid3")
+                .subjectId("mySubjectId3")
+                .displayName("myDisplayName3")
+                .build();
+
+        List<HashedApiKey> apiKeys = List.of(
+                HashedApiKey.builder()
+                        .withOwner(owner1)
+                        .withApiKeyHash("another hash")
+                        .withHashAlgorithm(HashAlgorithm.BCRYPT)
+                        .build(),
+                HashedApiKey.builder()
+                        .withOwner(owner2)
+                        .withApiKeyHash("and another hash")
+                        .withHashAlgorithm(HashAlgorithm.ARGON_2)
+                        .build(),
+                HashedApiKey.builder()
+                        .withOwner(owner3)
+                        .withApiKeyHash(hash)
+                        .withHashAlgorithm(HashAlgorithm.SHA3_256)
+                        .build());
+
+        Mockito.when(mockApiKeyDao.fetchValidApiKeysByPrefix(Mockito.anyString()))
+                .thenReturn(apiKeys);
+
+        final Optional<UserIdentity> opUserIdentity = apiKeyService.fetchVerifiedIdentity(apiKeyStr);
+
+        assertThat(opUserIdentity)
+                .isNotEmpty();
+        final UserIdentity userIdentity = opUserIdentity.get();
+        assertThat(userIdentity.getSubjectId())
+                .isEqualTo(owner3.getSubjectId());
+        assertThat(userIdentity.getDisplayName())
+                .isEqualTo(owner3.getDisplayName());
+    }
+
+    @Test
+    void fetchVerifiedIdentity_noValid_empty() {
+        final String apiKeyStr = apiKeyGenerator.generateRandomApiKey();
+        final List<HashedApiKey> apiKeys = Collections.emptyList();
+
+        Mockito.when(mockApiKeyDao.fetchValidApiKeysByPrefix(Mockito.anyString()))
+                .thenReturn(apiKeys);
+
+        final Optional<UserIdentity> opUserIdentity = apiKeyService.fetchVerifiedIdentity(apiKeyStr);
+
+        assertThat(opUserIdentity)
+                .isEmpty();
+    }
+
+    @Test
+    void fetchVerifiedIdentity_noValid_multipleKeys() {
+        final String apiKeyStr = apiKeyGenerator.generateRandomApiKey();
+        final String hash = apiKeyService.computeApiKeyHash(apiKeyStr);
+
+        final UserName owner1 = SimpleUserName.builder()
+                .uuid("myUuid1")
+                .subjectId("mySubjectId1")
+                .displayName("myDisplayName1")
+                .build();
+        final UserName owner2 = SimpleUserName.builder()
+                .uuid("myUuid2")
+                .subjectId("mySubjectId2")
+                .displayName("myDisplayName2")
+                .build();
+        final UserName owner3 = SimpleUserName.builder()
+                .uuid("myUuid3")
+                .subjectId("mySubjectId3")
+                .displayName("myDisplayName3")
+                .build();
+
+        List<HashedApiKey> apiKeys = List.of(
+                HashedApiKey.builder()
+                        .withOwner(owner1)
+                        .withApiKeyHash("another hash")
+                        .withHashAlgorithm(HashAlgorithm.BCRYPT)
+                        .build(),
+                HashedApiKey.builder()
+                        .withOwner(owner2)
+                        .withApiKeyHash("and another hash")
+                        .withHashAlgorithm(HashAlgorithm.ARGON_2)
+                        .build(),
+                HashedApiKey.builder()
+                        .withOwner(owner3)
+                        .withApiKeyHash("and yet another hash")
+                        .withHashAlgorithm(HashAlgorithm.SHA3_256)
+                        .build());
+
+        Mockito.when(mockApiKeyDao.fetchValidApiKeysByPrefix(Mockito.anyString()))
+                .thenReturn(apiKeys);
 
         final Optional<UserIdentity> opUserIdentity = apiKeyService.fetchVerifiedIdentity(apiKeyStr);
 
@@ -377,7 +482,7 @@ class TestApiKeyService {
     }
 
     @TestFactory
-    Stream<DynamicTest> testHashAlgoritms() {
+    Stream<DynamicTest> testHashAlgorithms() {
         final var builder = TestUtil.buildDynamicTestStream()
                 .withInputType(HashAlgorithm.class)
                 .withOutputType(boolean.class)
@@ -394,7 +499,7 @@ class TestApiKeyService {
                         final Duration duration = timer.get();
                         millis += duration.toMillis();
                         nanos += duration.toNanos();
-                        LOGGER.info("Generated {} hash {}", hashAlgorithm, hash);
+                        LOGGER.info("Generated {} hash {} (len: {})", hashAlgorithm, hash, hash.length());
                         final boolean isValid = apiKeyService.verifyApiKeyHash(apiKeyStr, hash, hashAlgorithm);
 
                         assertThat(isValid)
@@ -416,11 +521,10 @@ class TestApiKeyService {
         return builder.build();
     }
 
-    @Disabled // manual only, to see how many prefix/hash clashes we get for 1mil api keys (answer: <10 ish)
+    @Disabled // manual only, to see how many hash clashes we get for 10mil api keys (answer: 0 ish)
     @Test
-    void testHashAndPrefixClash() {
-        final int iterations = 1_000_000;
-        final Set<String> prefixes = new ConcurrentSkipListSet<>();
+    void testHashClash() {
+        final int iterations = 10_000_000;
         final Set<String> hashes = new ConcurrentSkipListSet<>();
 
         final ThreadLocal<ApiKeyGenerator> apiKeyGeneratorThreadLocal = ThreadLocal.withInitial(ApiKeyGenerator::new);
@@ -428,20 +532,19 @@ class TestApiKeyService {
 
         IntStream.range(0, iterations)
                 .parallel()
-                .forEach(i -> {
+                .mapToObj(i -> {
                     final ApiKeyGenerator apiKeyGenerator = apiKeyGeneratorThreadLocal.get();
-                    final String apiKey = apiKeyGenerator.generateRandomApiKey();
-                    final String hash = apiKeyService.computeApiKeyHash(apiKey);
-                    final ApiKeyParts apiKeyParts = ApiKeyParts.fromApiKey(apiKey);
-                    final String prefix = apiKeyParts.asPrefix();
-                    if (prefixes.contains(prefix) || hashes.contains(hash)) {
+                    return apiKeyGenerator.generateRandomApiKey();
+                })
+                .forEach(apiKey -> {
+                    final String hash = apiKeyService.computeApiKeyHash(apiKey, HashAlgorithm.SHA3_256);
+                    if (hashes.contains(hash)) {
                         clashCount.increment();
                     }
-                    prefixes.add(prefix);
                     hashes.add(hash);
                 });
 
-        LOGGER.info("clashCount: {}, prefixes: {}, hashes: {}", clashCount, prefixes.size(), hashes.size());
+        LOGGER.info("clashCount: {}, hashes: {}", clashCount, hashes.size());
     }
 
     @Disabled // manual only, to see how many prefix clashes we get for 10mil api keys (answer: 46 ish)

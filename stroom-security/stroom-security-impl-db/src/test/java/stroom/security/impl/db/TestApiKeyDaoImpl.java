@@ -293,8 +293,14 @@ class TestApiKeyDaoImpl {
                         })
                 .isInstanceOf(DuplicateApiKeyException.class);
 
+        // Diff prefix, but same hash
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            createApiKey(user1, "key2", prefix2, hash1);
+                        })
+                .isInstanceOf(DuplicateApiKeyException.class);
 
-        final HashedApiKey key2 = createApiKey(user1, "key2", prefix2, hash1);
+        // Diff hash, same prefix
         final HashedApiKey key3 = createApiKey(user1, "key3", prefix1, hash2);
     }
 

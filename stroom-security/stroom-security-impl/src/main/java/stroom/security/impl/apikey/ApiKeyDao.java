@@ -31,21 +31,9 @@ public interface ApiKeyDao {
     ApiKeyResultPage find(final FindApiKeyCriteria criteria);
 
     /**
-     * Verify an API key, ensuring it exists and is enabled, returning the stroom user
-     * UUID of the verified user.
-     *
-     * @param apiKeyHash The API key hash to verify.
-     * @return The stroom user UUID of the verified user.
-     * If the API key doesn't exist or is disabled/expired, an empty {@link Optional}
-     * will be returned.
+     * Fetch valid API Keys by their prefix. Keys will all be enabled and not expired.
+     * Chance of multiple keys for a given prefix is low, ~1:1,000,000 odds, but possible.
      */
-//    Optional<String> fetchVerifiedUserUuid(final String apiKeyHash);
-
-    /**
-     * Fetch an API key by its hash if it is enabled and not expired.
-     */
-//    Optional<HashedApiKey> fetchValidApiKeyByHash(String prefix, String hash);
-
     List<HashedApiKey> fetchValidApiKeysByPrefix(final String prefix);
 
     HashedApiKey create(final CreateHashedApiKeyRequest createHashedApiKeyRequest,

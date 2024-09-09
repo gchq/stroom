@@ -7,11 +7,11 @@ import stroom.security.impl.HashedApiKeyParts;
 import stroom.security.impl.UserCache;
 import stroom.security.impl.apikey.ApiKeyDao;
 import stroom.security.impl.apikey.ApiKeyService.DuplicateApiKeyException;
-import stroom.security.impl.db.jooq.Keys;
 import stroom.security.impl.db.jooq.tables.records.ApiKeyRecord;
 import stroom.security.shared.ApiKeyResultPage;
 import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.FindApiKeyCriteria;
+import stroom.security.shared.HashAlgorithm;
 import stroom.security.shared.HashedApiKey;
 import stroom.util.NullSafe;
 import stroom.util.filter.QuickFilterPredicateFactory;
@@ -59,7 +59,9 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
             FindApiKeyCriteria.FIELD_OWNER, OWNER_UI_VALUE_JOOQ_FIELD,
             FindApiKeyCriteria.FIELD_COMMENTS, API_KEY.COMMENTS,
             FindApiKeyCriteria.FIELD_EXPIRE_TIME, API_KEY.EXPIRES_ON_MS,
-            FindApiKeyCriteria.FIELD_STATE, API_KEY.ENABLED);
+            FindApiKeyCriteria.FIELD_STATE, API_KEY.ENABLED,
+            FindApiKeyCriteria.FIELD_HASH_ALGORITHM, API_KEY.HASH_ALGORITHM);
+
     public static final int INITIAL_VERSION = 1;
 
     private final SecurityDbConnProvider securityDbConnProvider;
@@ -121,42 +123,6 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
         return resultPage;
     }
 
-//    @Override
-//    public Optional<String> fetchVerifiedUserUuid(final String apiKeyHash) {
-//        if (NullSafe.isBlankString(apiKeyHash)) {
-//            return Optional.empty();
-//        } else {
-//            final long nowMs = Instant.now().toEpochMilli();
-//            return JooqUtil.contextResult(securityDbConnProvider, context -> context
-//                    .select(API_KEY.FK_OWNER_UUID)
-//                    .from(API_KEY)
-//                    .where(API_KEY.API_KEY_HASH.eq(apiKeyHash.trim()))
-//                    .and(API_KEY.ENABLED.isTrue())
-//                    .and(API_KEY.EXPIRES_ON_MS.greaterThan(nowMs))
-//                    .fetchOptional(API_KEY.FK_OWNER_UUID));
-//        }
-//    }
-
-//    @Override
-//    public Optional<HashedApiKey> fetchValidApiKeyByHash(final String prefix, final String hash) {
-//        Objects.requireNonNull(hash);
-//
-//        final long nowMs = Instant.now().toEpochMilli();
-//        // Match on the hash and the prefix. You can't then supply another key that happens to have
-//        // the same hash as one of ours, it must also have the same prefix part.
-//        // Key must be enabled and not be expired.
-//        final Optional<ApiKeyRecord> result = JooqUtil.contextResult(securityDbConnProvider, context ->
-//                context.selectFrom(API_KEY)
-//                        .where(API_KEY.API_KEY_HASH.eq(hash))
-//                        .and(API_KEY.API_KEY_PREFIX.eq(prefix))
-//                        .and(API_KEY.ENABLED.isTrue())
-//                        .and(DSL.or(
-//                                API_KEY.EXPIRES_ON_MS.isNull(),
-//                                API_KEY.EXPIRES_ON_MS.greaterThan(nowMs)))
-//                        .fetchOptional());
-//        return result.map(this::mapRecordToApiKey);
-//    }
-
     @Override
     public List<HashedApiKey> fetchValidApiKeysByPrefix(final String prefix) {
         Objects.requireNonNull(prefix);
@@ -197,6 +163,7 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
                                     API_KEY.UPDATE_USER,
                                     API_KEY.FK_OWNER_UUID,
                                     API_KEY.API_KEY_HASH,
+                                    API_KEY.HASH_ALGORITHM,
                                     API_KEY.API_KEY_PREFIX,
                                     API_KEY.EXPIRES_ON_MS,
                                     API_KEY.NAME,
@@ -209,6 +176,7 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
                                     userIdentityForAudit,
                                     Objects.requireNonNull(createHashedApiKeyRequest.getOwner().getUuid()),
                                     hashedApiKeyParts.apiKeyHash(),
+                                    createHashedApiKeyRequest.getHashAlgorithm().getPrimitiveValue(),
                                     hashedApiKeyParts.apiKeyPrefix(),
                                     createHashedApiKeyRequest.getExpireTimeMs(),
                                     createHashedApiKeyRequest.getName(),
@@ -223,11 +191,12 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
                 LOGGER.debug(constraintException.getMessage());
                 if (constraintException.getErrorCode() == MysqlErrorNumbers.ER_DUP_ENTRY) {
                     final String msg = constraintException.getMessage();
-                    if (msg.contains(Keys.KEY_API_KEY_API_KEY_PREFIX_HASH_IDX.getName())) {
+                    if (msg.contains("api_key_hash_idx")) {
                         throw new DuplicateApiKeyException(
                                 "Duplicate API key hash and prefix value to an existing key.", e);
-                    } else if (msg.contains(Keys.KEY_API_KEY_API_KEY_OWNER_NAME_IDX.getName())) {
-                        throw new RuntimeException("Duplicate API key name for owner "
+                    } else if (msg.contains("api_key_owner_name_idx")) {
+                        throw new RuntimeException("Duplicate API key name '"
+                                + createHashedApiKeyRequest.getName() + "' for owner "
                                 + createHashedApiKeyRequest.getOwner(), e);
                     }
                 }
@@ -297,6 +266,7 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
         record.set(API_KEY.NAME, apiKey.getName());
         record.set(API_KEY.COMMENTS, apiKey.getComments());
         record.set(API_KEY.ENABLED, apiKey.getEnabled());
+        record.set(API_KEY.HASH_ALGORITHM, apiKey.getHashAlgorithm().getPrimitiveValue());
         return record;
     }
 
@@ -320,6 +290,8 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
                 .withName(record.get(API_KEY.NAME))
                 .withComments(record.get(API_KEY.COMMENTS))
                 .withEnabled(record.get(API_KEY.ENABLED))
+                .withHashAlgorithm(HashAlgorithm.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
+                        record.get(API_KEY.HASH_ALGORITHM)))
                 .build();
     }
 }

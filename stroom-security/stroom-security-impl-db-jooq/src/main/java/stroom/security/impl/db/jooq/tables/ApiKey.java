@@ -10,12 +10,12 @@ import java.util.function.Function;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function13;
+import org.jooq.Function14;
 import org.jooq.Identity;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Records;
-import org.jooq.Row13;
+import org.jooq.Row14;
 import org.jooq.Schema;
 import org.jooq.SelectField;
 import org.jooq.Table;
@@ -116,6 +116,11 @@ public class ApiKey extends TableImpl<ApiKeyRecord> {
      * The column <code>stroom.api_key.enabled</code>.
      */
     public final TableField<ApiKeyRecord, Boolean> ENABLED = createField(DSL.name("enabled"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BOOLEAN)), this, "");
+
+    /**
+     * The column <code>stroom.api_key.hash_algorithm</code>.
+     */
+    public final TableField<ApiKeyRecord, Byte> HASH_ALGORITHM = createField(DSL.name("hash_algorithm"), SQLDataType.TINYINT.nullable(false).defaultValue(DSL.inline("0", SQLDataType.TINYINT)), this, "");
 
     private ApiKey(Name alias, Table<ApiKeyRecord> aliased) {
         this(alias, aliased, null);
@@ -232,18 +237,18 @@ public class ApiKey extends TableImpl<ApiKeyRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row13 type methods
+    // Row14 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row13<Integer, Integer, Long, String, Long, String, String, String, String, Long, String, String, Boolean> fieldsRow() {
-        return (Row13) super.fieldsRow();
+    public Row14<Integer, Integer, Long, String, Long, String, String, String, String, Long, String, String, Boolean, Byte> fieldsRow() {
+        return (Row14) super.fieldsRow();
     }
 
     /**
      * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
      */
-    public <U> SelectField<U> mapping(Function13<? super Integer, ? super Integer, ? super Long, ? super String, ? super Long, ? super String, ? super String, ? super String, ? super String, ? super Long, ? super String, ? super String, ? super Boolean, ? extends U> from) {
+    public <U> SelectField<U> mapping(Function14<? super Integer, ? super Integer, ? super Long, ? super String, ? super Long, ? super String, ? super String, ? super String, ? super String, ? super Long, ? super String, ? super String, ? super Boolean, ? super Byte, ? extends U> from) {
         return convertFrom(Records.mapping(from));
     }
 
@@ -251,7 +256,7 @@ public class ApiKey extends TableImpl<ApiKeyRecord> {
      * Convenience mapping calling {@link SelectField#convertFrom(Class,
      * Function)}.
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function13<? super Integer, ? super Integer, ? super Long, ? super String, ? super Long, ? super String, ? super String, ? super String, ? super String, ? super Long, ? super String, ? super String, ? super Boolean, ? extends U> from) {
+    public <U> SelectField<U> mapping(Class<U> toType, Function14<? super Integer, ? super Integer, ? super Long, ? super String, ? super Long, ? super String, ? super String, ? super String, ? super String, ? super Long, ? super String, ? super String, ? super Boolean, ? super Byte, ? extends U> from) {
         return convertFrom(toType, Records.mapping(from));
     }
 }
