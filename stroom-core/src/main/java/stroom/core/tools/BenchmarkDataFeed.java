@@ -24,6 +24,8 @@ import stroom.util.shared.string.CIKey;
 import stroom.util.thread.CustomThreadFactory;
 import stroom.util.thread.StroomThreadGroup;
 
+import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -40,7 +42,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.zip.GZIPOutputStream;
 import javax.net.ssl.HttpsURLConnection;
 
 public class BenchmarkDataFeed {
@@ -181,7 +182,7 @@ public class BenchmarkDataFeed {
             OutputStream out = connection.getOutputStream();
 
             if (compression.equalsIgnoreCase("gzip")) {
-                out = new GZIPOutputStream(out);
+                out = new GzipCompressorOutputStream(out);
             }
 
             long bytesWritten = 0;

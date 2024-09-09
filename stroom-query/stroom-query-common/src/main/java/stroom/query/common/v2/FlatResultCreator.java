@@ -205,6 +205,7 @@ public class FlatResultCreator implements ResultCreator {
 
                 // Get top level items.
                 mappedDataStore.fetch(
+                        mappedDataStore.getColumns(),
                         resultRequest.getRequestedRange(),
                         OpenGroups.ALL,
                         resultRequest.getTimeFilter(),
@@ -396,6 +397,7 @@ public class FlatResultCreator implements ResultCreator {
             // Get top level items.
             // TODO : Add an option to get detail level items rather than root level items.
             dataStore.fetch(
+                    dataStore.getColumns(),
                     OffsetRange.UNBOUNDED,
                     OpenGroups.NONE,
                     timeFilter,

@@ -17,6 +17,8 @@
 
 package stroom.explorer.client.event;
 
+import stroom.task.client.Task;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
@@ -25,11 +27,14 @@ public class ExplorerEndTaskEvent extends GwtEvent<ExplorerEndTaskEvent.Handler>
 
     private static Type<Handler> TYPE;
 
-    private ExplorerEndTaskEvent() {
+    private final Task task;
+
+    private ExplorerEndTaskEvent(final Task task) {
+        this.task = task;
     }
 
-    public static void fire(final HasHandlers handlers) {
-        handlers.fireEvent(new ExplorerEndTaskEvent());
+    static void fire(final HasHandlers handlers, final Task task) {
+        handlers.fireEvent(new ExplorerEndTaskEvent(task));
     }
 
     public static Type<Handler> getType() {
@@ -47,6 +52,10 @@ public class ExplorerEndTaskEvent extends GwtEvent<ExplorerEndTaskEvent.Handler>
     @Override
     protected void dispatch(final Handler handler) {
         handler.onEnd(this);
+    }
+
+    public Task getTask() {
+        return task;
     }
 
     public interface Handler extends EventHandler {

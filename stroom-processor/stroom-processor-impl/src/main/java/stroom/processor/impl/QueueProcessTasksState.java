@@ -49,7 +49,6 @@ public class QueueProcessTasksState {
      */
     public void addCurrentlyQueuedTasks(final int count) {
         currentlyQueuedTasks.addAndGet(count);
-        totalQueuedCount.addAndGet(count);
     }
 
     /**
@@ -57,7 +56,7 @@ public class QueueProcessTasksState {
      *
      * @param count The number of unowned tasks that were added from the database to the task queue.
      */
-    public void addUnownedTasksToQueue(final int count) {
+    public void addTotalQueuedTasks(final int count) {
         totalQueuedCount.addAndGet(count);
     }
 

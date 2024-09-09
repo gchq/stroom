@@ -262,7 +262,7 @@ public class AnnotationManager {
 
                     ShowAnnotationEvent.fire(changeStatusPresenter, annotation, eventIdList);
                 })
-                .taskListener(new QuietTaskListener())
+                .taskHandlerFactory(new QuietTaskListener())
                 .exec();
     }
 

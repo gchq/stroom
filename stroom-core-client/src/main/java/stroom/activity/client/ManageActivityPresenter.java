@@ -180,7 +180,7 @@ public class ManageActivityPresenter
                                     "Choose Activity Quick Filter",
                                     helpUrl);
                         })
-                        .taskListener(this)
+                        .taskHandlerFactory(this)
                         .exec();
             }
         }, this);
@@ -249,7 +249,7 @@ public class ManageActivityPresenter
                     .create(ACTIVITY_RESOURCE)
                     .method(res -> res.fetch(e.getId()))
                     .onSuccess(this::onEdit)
-                    .taskListener(this)
+                    .taskHandlerFactory(this)
                     .exec();
         }
     }
@@ -283,7 +283,7 @@ public class ManageActivityPresenter
                                         listPresenter.getSelectionModel().clear();
                                         updateQuickFilterTooltipContentSupplier();
                                     })
-                                    .taskListener(this)
+                                    .taskHandlerFactory(this)
                                     .exec();
                         }
                     });

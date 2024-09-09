@@ -37,7 +37,7 @@ import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.client.view.QueryResultTabsView;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Indicators;
@@ -249,7 +249,7 @@ public class QueryEditPresenter
         destroyCurrentVis();
         currentVisPresenter = visPresenterProvider.get();
         currentVisPresenter.setQueryModel(queryModel);
-        currentVisPresenter.setTaskListener(this);
+        currentVisPresenter.setTaskHandlerFactory(this);
         if (VISUALISATION.equals(linkTabsLayoutView.getTabBar().getSelectedTab())) {
             linkTabsLayoutView.getLayerContainer().show(currentVisPresenter);
         }
@@ -413,9 +413,9 @@ public class QueryEditPresenter
     }
 
     @Override
-    public void setTaskListener(final TaskListener taskListener) {
-        queryModel.setTaskListener(taskListener);
-        queryHelpPresenter.setTaskListener(taskListener);
+    public void setTaskHandlerFactory(final TaskHandlerFactory taskHandlerFactory) {
+        queryModel.setTaskHandlerFactory(taskHandlerFactory);
+        queryHelpPresenter.setTaskHandlerFactory(taskHandlerFactory);
     }
 
 

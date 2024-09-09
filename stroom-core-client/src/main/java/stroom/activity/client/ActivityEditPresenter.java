@@ -214,7 +214,7 @@ public class ActivityEditPresenter
                 .method(res -> res.validate(activity))
                 .onSuccess(result -> afterValidation(result, details, consumer, event))
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskListener(this)
+                .taskHandlerFactory(this)
                 .exec();
     }
 
@@ -242,7 +242,7 @@ public class ActivityEditPresenter
                             update(activity, details, consumer, event);
                         })
                         .onFailure(RestErrorHandler.forPopup(this, event))
-                        .taskListener(this)
+                        .taskHandlerFactory(this)
                         .exec();
             } else {
                 update(activity, details, consumer, event);
@@ -263,7 +263,7 @@ public class ActivityEditPresenter
                     event.hide();
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskListener(this)
+                .taskHandlerFactory(this)
                 .exec();
     }
 

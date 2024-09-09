@@ -125,7 +125,6 @@ public class VisPresenter
     private final Timer timer;
     private List<Map<CIKey, String>> currentSelection;
     private boolean pause;
-    private int currentRequestCount;
 
     @Inject
     public VisPresenter(final EventBus eventBus, final VisView view,
@@ -139,7 +138,7 @@ public class VisPresenter
         this.currentPreferences = currentPreferences;
 
         visFrame = new VisFrame(eventBus);
-        visFrame.setTaskListener(getView().getRefreshButton());
+        visFrame.setTaskHandlerFactory(getView().getRefreshButton());
         visFrame.setUiHandlers(this);
         view.setVisFrame(visFrame);
 
@@ -164,18 +163,6 @@ public class VisPresenter
     /*****************
      * Start of Layout
      *****************/
-//    @Override
-//    public void setOpacity(final double opacity) {
-//        this.opacity = opacity;
-//        getWidget().getElement().getStyle().setOpacity(opacity);
-//        visFrame.getElement().getStyle().setOpacity(opacity);
-//    }
-
-//    @Override
-//    public double getOpacity() {
-//        return this.opacity;
-//    }
-//
     @Override
     public void setLayerVisible(final boolean fade, final boolean visible) {
         super.setLayerVisible(fade, visible);
@@ -222,14 +209,18 @@ public class VisPresenter
                 visFrame.setClassName(getClassName(event.getTheme()))));
 
         registerHandler(getView().getRefreshButton().addClickHandler(e -> {
-            if (pause) {
-                this.pause = false;
-                refresh();
-            } else {
-                this.pause = true;
-            }
-            getView().getRefreshButton().setPaused(this.pause);
+            setPause(!pause, true);
         }));
+    }
+
+    private void setPause(final boolean pause,
+                          final boolean refresh) {
+        // If curently paused then refresh if we are allowed.
+        if (refresh && this.pause) {
+            refresh();
+        }
+        this.pause = pause;
+        getView().getRefreshButton().setPaused(this.pause);
     }
 
     private String getClassName(final String theme) {
@@ -317,6 +308,7 @@ public class VisPresenter
             updateStatusMessage();
         }
 
+        setPause(false, false);
         getView().getRefreshButton().setRefreshing(true);
     }
 
@@ -340,8 +332,6 @@ public class VisPresenter
     }
 
     private void refresh() {
-        currentRequestCount++;
-        getView().getRefreshButton().setPaused(pause && currentRequestCount == 0);
         getView().getRefreshButton().setRefreshing(true);
         currentSearchModel.refresh(getComponentConfig().getId(), result -> {
             try {
@@ -351,8 +341,6 @@ public class VisPresenter
             } catch (final Exception e) {
                 GWT.log(e.getMessage());
             }
-            currentRequestCount--;
-            getView().getRefreshButton().setPaused(pause && currentRequestCount == 0);
             getView().getRefreshButton().setRefreshing(currentSearchModel.isSearching());
         });
     }
@@ -496,7 +484,7 @@ public class VisPresenter
                     }
                 })
                 .onFailure(caught -> failure(function, caught.getMessage()))
-                .taskListener(getView().getRefreshButton())
+                .taskHandlerFactory(getView().getRefreshButton())
                 .exec();
     }
 
@@ -507,7 +495,7 @@ public class VisPresenter
                 .method(res -> res.fetchLinkedScripts(
                         new FetchLinkedScriptRequest(scriptRef, scriptCache.getLoadedScripts())))
                 .onSuccess(result -> startInjectingScripts(result, function))
-                .taskListener(getView().getRefreshButton())
+                .taskHandlerFactory(getView().getRefreshButton())
                 .exec();
     }
 

@@ -85,7 +85,7 @@ public class SplashPresenter
                                                 consumer.accept(e.isOk());
                                             })
                                             .onFailure(RestErrorHandler.forPopup(this, e))
-                                            .taskListener(this)
+                                            .taskHandlerFactory(this)
                                             .exec();
                                 } else {
                                     AlertEvent.fireWarn(SplashPresenter.this,

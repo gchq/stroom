@@ -17,6 +17,7 @@
 package stroom.db.util;
 
 import stroom.util.NullSafe;
+import stroom.util.concurrent.ThreadUtil;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
@@ -58,6 +59,7 @@ import org.jooq.impl.SQLDataType;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.sql.SQLTransactionRollbackException;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
@@ -69,8 +71,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.sql.DataSource;
@@ -82,6 +87,8 @@ public final class JooqUtil {
 
     private static final String DEFAULT_ID_FIELD_NAME = "id";
     private static final Boolean RENDER_SCHEMA = false;
+    static final int MAX_DEADLOCK_RETRY_ATTEMPTS = 20;
+    private static final long SLEEP_INCREMENT_MS = 10;
 
     /**
      * The collation to use if you want case sensitivity. By default, our tables use {@code utf8mb4_0900_ai_ci}.
@@ -616,6 +623,76 @@ public final class JooqUtil {
                         .fetchOptional(table, idField.eq(id))
                         .map(record ->
                                 record.into(type)));
+    }
+
+    /**
+     * Runs runnable, but if it causes a SQL deadlock it will keep retrying it until it is successful
+     * or the retry limit is reached. runnable should be a single operation or idempotent such that
+     * there is no issue with part of it being run multiple times, i.e. runnable should be a
+     * single txn.
+     *
+     * @param messageSupplier A message describing what runnable is doing for logging purposes.
+     */
+    public static void withDeadlockRetries(final Runnable runnable,
+                                           final Supplier<String> messageSupplier) {
+        withDeadlockRetries(() -> {
+            runnable.run();
+            return null;
+        }, messageSupplier);
+    }
+
+    /**
+     * Calls {@link Supplier#get()}, but if it causes a SQL deadlock it will keep retrying
+     * {@link Supplier#get()} until it is successful or the retry limit is reached.
+     * supplier should be a single operation or idempotent such that there is no issue with part
+     * of it being run multiple times, i.e. supplier should be a single txn so the whole thing can
+     * roll back on deadlock.
+     *
+     * @param messageSupplier A message describing what runnable is doing for logging purposes.
+     */
+    public static <T> T withDeadlockRetries(final Supplier<T> supplier,
+                                            final Supplier<String> messageSupplier) {
+
+        final AtomicInteger attempt = new AtomicInteger(0);
+        final AtomicLong sleepMs = new AtomicLong();
+        while (true) {
+            try {
+                attempt.incrementAndGet();
+                final T result = supplier.get();
+                if (attempt.get() >= 2) {
+                    LOGGER.info("Ran '{}' successfully after {} deadlocks",
+                            NullSafe.supply(messageSupplier),
+                            attempt.get() - 1);
+                }
+
+                return result;
+            } catch (DataAccessException e) {
+                if (e.getCause() instanceof SQLTransactionRollbackException sqlTxnRollbackEx
+                        && NullSafe.containsIgnoringCase(sqlTxnRollbackEx.getMessage(), "deadlock")) {
+
+                    if (attempt.get() >= MAX_DEADLOCK_RETRY_ATTEMPTS) {
+                        throw new RuntimeException(LogUtil.message("Gave up retrying '{}' after {} deadlocks",
+                                NullSafe.supply(messageSupplier), attempt), e);
+                    }
+
+                    LOGGER.warn(() -> LogUtil.message(
+                            "Deadlock trying to run '{}' on attempt {}. Will retry in {} ms. " +
+                                    "Enable DEBUG for full stacktrace.",
+                            NullSafe.supply(messageSupplier),
+                            attempt.get(),
+                            sleepMs));
+                    LOGGER.debug(e.getMessage(), e);
+                    // Just ignore interrupts as are we are only sleeping for at most 200ms
+                    if (sleepMs.get() > 0) {
+                        ThreadUtil.sleepIgnoringInterrupts(sleepMs.get());
+                    }
+                    // Make the sleep a bit longer next time
+                    sleepMs.addAndGet(SLEEP_INCREMENT_MS);
+                } else {
+                    throw e;
+                }
+            }
+        }
     }
 
     private static Field<Integer> getIdField(Table<?> table) {

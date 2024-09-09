@@ -98,10 +98,9 @@ public class LmdbDataStore implements DataStore {
     private final ColumnExpressionMatcher columnExpressionMatcher;
     private final ExpressionOperator valueFilter;
     private final ValueReferenceIndex valueReferenceIndex;
-    private final List<Column> columns;
     private final CompiledColumns compiledColumns;
     private final CompiledColumn[] compiledColumnArray;
-    private final CompiledSorter<Item>[] compiledSorters;
+    private final CompiledSorters compiledSorters;
     private final CompiledDepths compiledDepths;
     private final LmdbPutFilter putFilter;
     private final AtomicLong totalResultCount = new AtomicLong();
@@ -167,7 +166,8 @@ public class LmdbDataStore implements DataStore {
 
         this.windowSupport = new WindowSupport(tableSettings);
         final TableSettings modifiedTableSettings = windowSupport.getTableSettings();
-        columns = Objects.requireNonNullElse(modifiedTableSettings.getColumns(), Collections.emptyList());
+        final List<Column> columns = Objects
+                .requireNonNullElse(modifiedTableSettings.getColumns(), Collections.emptyList());
         queue = new LmdbWriteQueue(resultStoreConfig.getValueQueueSize(), bufferFactory);
         maxSortedItems = resultStoreConfig.getMaxSortedItems();
         valueFilter = modifiedTableSettings.getValueFilter();
@@ -179,7 +179,7 @@ public class LmdbDataStore implements DataStore {
         this.compiledColumnArray = compiledColumns.getCompiledColumns();
         valueReferenceIndex = compiledColumns.getValueReferenceIndex();
         compiledDepths = new CompiledDepths(this.compiledColumnArray, modifiedTableSettings.showDetail());
-        compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), this.compiledColumnArray);
+        compiledSorters = new CompiledSorters(compiledDepths, this.compiledColumnArray);
         writerFactory = new DataWriterFactory(
                 errorConsumer,
                 resultStoreConfig.getMaxStringFieldLength());
@@ -820,12 +820,16 @@ public class LmdbDataStore implements DataStore {
     }
 
     @Override
-    public synchronized <R> void fetch(final OffsetRange range,
+    public synchronized <R> void fetch(final List<Column> columns,
+                                       final OffsetRange range,
                                        final OpenGroups openGroups,
                                        final TimeFilter timeFilter,
                                        final ItemMapper<R> mapper,
                                        final Consumer<R> resultConsumer,
                                        final Consumer<Long> totalRowCountConsumer) {
+        // Update our sort columns if needed.
+        compiledSorters.update(columns);
+
         final OffsetRange enforcedRange = Optional
                 .ofNullable(range)
                 .orElse(OffsetRange.ZERO_100);
@@ -891,7 +895,7 @@ public class LmdbDataStore implements DataStore {
             SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_GET_CHILDREN);
 
             // If we aren't sorting then just return results directly.
-            if (fetchState.justCount || compiledSorters[depth] == null) {
+            if (fetchState.justCount || compiledSorters.get(depth) == null) {
                 // Get children without sorting.
                 getUnsortedChildren(
                         readContext,
@@ -967,7 +971,7 @@ public class LmdbDataStore implements DataStore {
                                             readContext,
                                             key,
                                             storedValues);
-                                    final R row = mapper.create(columns, item);
+                                    final R row = mapper.create(item);
                                     if (row != null) {
                                         childCount++;
                                         fetchState.totalRowCount++;
@@ -975,7 +979,7 @@ public class LmdbDataStore implements DataStore {
                                         // Add children if the group is open.
                                         final int childDepth = depth + 1;
                                         if (openGroups.isOpen(item.getKey()) &&
-                                                compiledSorters.length > childDepth) {
+                                                compiledSorters.size() > childDepth) {
                                             getUnsortedChildren(
                                                     readContext,
                                                     key,
@@ -1000,7 +1004,7 @@ public class LmdbDataStore implements DataStore {
                                         final Key key = lmdbRowKeyFactory.createKey(parentKey, storedValues, keyBuffer);
                                         final int childDepth = depth + 1;
                                         if (openGroups.isOpen(key) &&
-                                                compiledSorters.length > childDepth) {
+                                                compiledSorters.size() > childDepth) {
                                             getUnsortedChildren(
                                                     readContext,
                                                     key,
@@ -1024,7 +1028,7 @@ public class LmdbDataStore implements DataStore {
                                             readContext,
                                             key,
                                             storedValues);
-                                    final R row = mapper.create(columns, item);
+                                    final R row = mapper.create(item);
                                     if (row != null) {
                                         childCount++;
                                         fetchState.totalRowCount++;
@@ -1049,7 +1053,7 @@ public class LmdbDataStore implements DataStore {
                                         final int childDepth = depth + 1;
                                         if (fetchState.keepGoing &&
                                                 openGroups.isOpen(key) &&
-                                                compiledSorters.length > childDepth) {
+                                                compiledSorters.size() > childDepth) {
                                             getUnsortedChildren(
                                                     readContext,
                                                     key,
@@ -1084,7 +1088,7 @@ public class LmdbDataStore implements DataStore {
         // Remember that we have gone into this group, so we don't keep trying.
         openGroups.complete(parentKey);
 
-        final CompiledSorter<Item> sorter = compiledSorters[depth];
+        final CompiledSorter<Item> sorter = compiledSorters.get(depth);
 
         lmdbRowKeyFactory.createChildKeyRange(parentKey, timeFilter, keyRange -> {
             final long lengthRemaining = range.getOffset() + range.getLength() - fetchState.length;
@@ -1115,7 +1119,7 @@ public class LmdbDataStore implements DataStore {
                             final Key key = lmdbRowKeyFactory.createKey(parentKey, storedValues, keyBuffer);
                             final ItemImpl item = new ItemImpl(readContext, key, storedValues);
                             if (mapper.hidesRows()) {
-                                final R row = mapper.create(columns, item);
+                                final R row = mapper.create(item);
                                 if (row != null) {
                                     totalRowCount++;
                                     sortedItems.add(new ItemImpl(readContext, key, storedValues));
@@ -1142,7 +1146,7 @@ public class LmdbDataStore implements DataStore {
 
                 if (!fetchState.reachedRowLimit) {
                     if (range.getOffset() <= fetchState.offset) {
-                        final R row = mapper.create(columns, item);
+                        final R row = mapper.create(item);
                         resultConsumer.accept(row);
                         fetchState.length++;
                         fetchState.reachedRowLimit = fetchState.length >= range.getLength();
@@ -1160,7 +1164,7 @@ public class LmdbDataStore implements DataStore {
                 // Add children if the group is open.
                 final int childDepth = depth + 1;
                 if (fetchState.keepGoing &&
-                        compiledSorters.length > childDepth &&
+                        compiledSorters.size() > childDepth &&
                         openGroups.isOpen(item.getKey())) {
                     getChildren(readContext,
                             item.getKey(),
@@ -1227,7 +1231,7 @@ public class LmdbDataStore implements DataStore {
                 if (key.isGrouped()) {
                     final Supplier<ChildData> childDataSupplier = () -> {
                         // If we don't have any children at the requested depth then return null.
-                        if (dataStore.compiledSorters.length <= key.getChildDepth()) {
+                        if (dataStore.compiledSorters.size() <= key.getChildDepth()) {
                             return null;
                         }
 
@@ -1326,7 +1330,7 @@ public class LmdbDataStore implements DataStore {
                                    final int depth) {
             // If we don't have any children at the requested depth then return 0.
             final LmdbDataStore dataStore = readContext.dataStore;
-            if (dataStore.compiledSorters.length <= depth) {
+            if (dataStore.compiledSorters.size() <= depth) {
                 return 0;
             }
 

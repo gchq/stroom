@@ -19,6 +19,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -155,5 +156,15 @@ public class WindowSupport {
 
     public List<SimpleDuration> getOffsets() {
         return offsets;
+    }
+
+    public static List<Column> modifyColumns(final TableSettings tableSettings) {
+        if (tableSettings == null || tableSettings.getColumns() == null) {
+            return Collections.emptyList();
+        }
+
+        final WindowSupport windowSupport = new WindowSupport(tableSettings);
+        final TableSettings modifiedTableSettings = windowSupport.getTableSettings();
+        return modifiedTableSettings.getColumns();
     }
 }

@@ -178,7 +178,7 @@ public class ManageGlobalPropertyListPresenter
                                 ManageGlobalPropertyListPresenter.this,
                                 caught.getMessage(),
                                 null))
-                .taskListener(getView())
+                .taskHandlerFactory(getView())
                 .exec();
     }
 
@@ -229,7 +229,7 @@ public class ManageGlobalPropertyListPresenter
                     // unless another node has already kicked it off
                     updateChildMapsTimer.update();
                 })
-                .taskListener(getView())
+                .taskHandlerFactory(getView())
                 .exec();
     }
 

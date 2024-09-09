@@ -215,17 +215,17 @@ public final class Column implements HasDisplayValue {
 
     @Override
     public String toString() {
-        return "Field{" +
+        return "Column{" +
                 "id='" + id + '\'' +
                 ", name='" + name + '\'' +
                 ", expression='" + expression + '\'' +
                 ", sort=" + sort +
                 ", filter=" + filter +
                 ", format=" + format +
+                ", group=" + group +
                 ", width=" + width +
                 ", visible=" + visible +
                 ", special=" + special +
-                ", group=" + group +
                 '}';
     }
 

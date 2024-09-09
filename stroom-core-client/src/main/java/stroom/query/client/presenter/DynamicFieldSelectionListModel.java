@@ -5,9 +5,9 @@ import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
 import stroom.query.client.DataSourceClient;
-import stroom.task.client.HasTaskListener;
-import stroom.task.client.TaskListener;
-import stroom.task.client.TaskListenerImpl;
+import stroom.task.client.DefaultTaskListener;
+import stroom.task.client.HasTaskHandlerFactory;
+import stroom.task.client.TaskHandlerFactory;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
@@ -23,14 +23,14 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 public class DynamicFieldSelectionListModel
-        implements FieldSelectionListModel, HasTaskListener, HasHandlers {
+        implements FieldSelectionListModel, HasTaskHandlerFactory, HasHandlers {
 
     private final EventBus eventBus;
     private final DataSourceClient dataSourceClient;
     private DocRef dataSourceRef;
     private Boolean queryable;
     private FindFieldCriteria lastCriteria;
-    private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
+    private TaskHandlerFactory taskHandlerFactory = new DefaultTaskListener(this);
 
     @Inject
     public DynamicFieldSelectionListModel(final EventBus eventBus,
@@ -77,7 +77,7 @@ public class DynamicFieldSelectionListModel
 
                         consumer.accept(resultPage);
                     }
-                }, taskListener);
+                }, taskHandlerFactory);
             }
         }
     }
@@ -97,7 +97,7 @@ public class DynamicFieldSelectionListModel
 
     @Override
     public void findFieldByName(final String fieldName, final Consumer<QueryField> consumer) {
-        dataSourceClient.findFieldByName(dataSourceRef, fieldName, queryable, consumer, taskListener);
+        dataSourceClient.findFieldByName(dataSourceRef, fieldName, queryable, consumer, taskHandlerFactory);
     }
 
     @Override
@@ -134,8 +134,8 @@ public class DynamicFieldSelectionListModel
     }
 
     @Override
-    public void setTaskListener(final TaskListener taskListener) {
-        this.taskListener.setTaskListener(taskListener);
+    public void setTaskHandlerFactory(final TaskHandlerFactory taskHandlerFactory) {
+        this.taskHandlerFactory = taskHandlerFactory;
     }
 
     @Override

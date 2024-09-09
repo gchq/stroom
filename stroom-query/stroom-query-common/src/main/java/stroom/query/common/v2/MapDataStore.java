@@ -65,7 +65,7 @@ public class MapDataStore implements DataStore {
     private final List<Column> columns;
     private final CompiledColumns compiledColumns;
     private final CompiledColumn[] compiledColumnsArray;
-    private final CompiledSorter<ItemImpl>[] compiledSorters;
+    private final CompiledSorters compiledSorters;
     private final CompiledDepths compiledDepths;
     private final Sizes maxResults;
     private final AtomicLong totalResultCount = new AtomicLong();
@@ -98,7 +98,7 @@ public class MapDataStore implements DataStore {
         valueReferenceIndex = compiledColumns.getValueReferenceIndex();
         this.compiledColumnsArray = compiledColumns.getCompiledColumns();
         final CompiledDepths compiledDepths = new CompiledDepths(this.compiledColumnsArray, tableSettings.showDetail());
-        this.compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), this.compiledColumnsArray);
+        this.compiledSorters = new CompiledSorters(compiledDepths, this.compiledColumnsArray);
         this.compiledDepths = compiledDepths;
         final KeyFactoryConfig keyFactoryConfig = new BasicKeyFactoryConfig();
         keyFactory = KeyFactoryFactory.create(keyFactoryConfig, compiledDepths);
@@ -112,14 +112,7 @@ public class MapDataStore implements DataStore {
         }
 
         // Find out if we have any sorting.
-        boolean hasSort = false;
-        for (final CompiledSorter<ItemImpl> sorter : compiledSorters) {
-            if (sorter != null) {
-                hasSort = true;
-                break;
-            }
-        }
-        this.hasSort = hasSort;
+        this.hasSort = compiledSorters.hasSort();
     }
 
     /**
@@ -217,7 +210,7 @@ public class MapDataStore implements DataStore {
         totalResultCount.getAndIncrement();
 
         final GroupingFunction groupingFunction = groupingFunctions[depth];
-        final Function<Stream<ItemImpl>, Stream<ItemImpl>> sortingFunction = compiledSorters[depth];
+        final Function<Stream<ItemImpl>, Stream<ItemImpl>> sortingFunction = compiledSorters.get(depth);
 
         childMap.compute(parentKey, (k, v) -> {
             ItemsImpl result = v;
@@ -272,12 +265,16 @@ public class MapDataStore implements DataStore {
     }
 
     @Override
-    public <R> void fetch(final OffsetRange range,
+    public <R> void fetch(final List<Column> columns,
+                          final OffsetRange range,
                           final OpenGroups openGroups,
                           final TimeFilter timeFilter,
                           final ItemMapper<R> mapper,
                           final Consumer<R> resultConsumer,
                           final Consumer<Long> totalRowCountConsumer) {
+        // Update our sort columns if needed.
+        compiledSorters.update(columns);
+
         final OffsetRange enforcedRange = Optional
                 .ofNullable(range)
                 .orElse(OffsetRange.UNBOUNDED);
@@ -317,7 +314,7 @@ public class MapDataStore implements DataStore {
             fetchState.totalRowCount++;
             if (!fetchState.reachedRowLimit) {
                 if (range.getOffset() <= fetchState.offset) {
-                    final R row = mapper.create(columns, item);
+                    final R row = mapper.create(item);
                     resultConsumer.accept(row);
                     fetchState.length++;
                     fetchState.reachedRowLimit = fetchState.length >= range.getLength();

@@ -37,6 +37,7 @@ import stroom.widget.util.client.DoubleClickTester;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.HasClickHandlers;
@@ -73,6 +74,7 @@ public class MainPresenter
     private boolean click;
     private final MenuItems menuItems;
     private TabData selectedTabData = null;
+    private int taskCount;
 
     @Inject
     public MainPresenter(final EventBus eventBus,
@@ -118,22 +120,13 @@ public class MainPresenter
 
         addRegisteredHandler(TaskStartEvent.getType(), event -> {
             // DebugPane.debug("taskStart:" + event.getTaskCount());
-
-            // Always try and start spinner even if it might be spinning
-            // already.
-            if (view.getSpinner() != null) {
-                view.getSpinner().start();
-            }
+            taskCount++;
+            updateSpinnerState();
         });
         addRegisteredHandler(TaskEndEvent.getType(), event -> {
             // DebugPane.debug("taskEnd:" + event.getTaskCount());
-
-            // Only stop spinner if we are no longer executing any tasks.
-            if (event.getTaskCount() == 0) {
-                if (view.getSpinner() != null) {
-                    view.getSpinner().stop();
-                }
-            }
+            taskCount--;
+            updateSpinnerState();
         });
         registerHandler(uiConfigCache.addPropertyChangeHandler(
                 event -> {
@@ -192,6 +185,24 @@ public class MainPresenter
 
         // Start the auto refresh timer.
         startAutoRefresh();
+    }
+
+    private void updateSpinnerState() {
+        if (taskCount < 0) {
+            GWT.log("Negative task count");
+        }
+
+        // Always try and start spinner even if it might be spinning
+        // already.
+        final SpinnerDisplay spinner = getView().getSpinner();
+        if (spinner != null) {
+            if (taskCount > 0) {
+                spinner.start();
+            } else if (taskCount == 0) {
+                // Only stop spinner if we are no longer executing any tasks.
+                spinner.stop();
+            }
+        }
     }
 
     @Override

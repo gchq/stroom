@@ -13,6 +13,63 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.5-beta.12] - 2024-09-06
+
+* Issue **#4424** : Fix alignment of _Current Tasks_ heading on the Jobs screen.
+
+* Issue **#4422** : Don't show _Edit Schedule_ in actions menu on Jobs screen for Distributed jobs.
+
+* Issue **#4418** : Fix missing css for `/stroom/sessionList`.
+
+* Issue **#4435** : Fix for progress spinner getting stuck on.
+
+* Issue **#4437** : Fix proxy not handling input files larger than 4 GiB.
+
+* Issue **#4069** : Reduce proxy memory usage.
+
+* Change the hard-coded test credentials to match those in v7.2 so that a test stack with 7.0 proxy and 7.2 stroom can communicate with each other. This change has no bearing on production deployments.
+
+* Issue **#3838** : Change ref data meta store to log a warning rather than error when meta entries are not present. This is consistent with behaviour in v7.2.
+
+* Fix verification of the `signer` key in the JWS headers when authentication is handled by an AWS load balancer. If you use AWS load balancers for authentication you must add the partial ARN(s) of your load balancer(s) to the property `stroom.security.authentication.openId.expectedSignerPrefixes`.
+
+
+## [v7.5-beta.11] - 2024-09-04
+
+* Issue **#4426** : Add INFO message when an index shard is created.
+
+* Issue **#4425** : Fix _Usage Date_ heading alignment on Edit Volume Group screen for both data/index volumes.
+
+
+## [v7.5-beta.10] - 2024-09-04
+
+* Uplift docker image JDK to `eclipse-temurin:21.0.4_7-jdk-alpine`.
+
+* Issue **#4416** : Allow dashboard table sorting to be changed post query.
+
+* Issue **#4421** : Change session state XML structure.
+
+* Issue **#4419** : Automatically unpause dashboard result components when a new search begins.
+
+* Rename migration from `V07_04_00_005__Orphaned_Doc_Perms` to `V07_05_00_005__Orphaned_Doc_Perms`.
+
+
+## [v7.5-beta.9] - 2024-08-30
+
+* Issue **#4383** : Add an authentication error screen to be shown when a user tries to login and there is an authentication problem or the user's account has been locked/disabled. Previously the user was re-directed to the sign-in screen even if cert auth was enabled.  Added the new property `stroom.ui.authErrorMessage` to allow setting generic HTML content to show the user when an authentication error occurs.
+
+* Issue **#4412** : Fix `/` key not working in quick filter text input fields.
+
+* Issue **#4400** : Fix missing styling on `sessionList` servlet.
+
+* Fix broken description pane in the stroomQL code completion.
+
+* Issue **#4411** : Prevent queueing too many processor tasks.
+
+* Issue **#4408** : Fix SQL deadlock between task queuing and task physical deletion.
+
+* Issue **#4410** : Allow over creation of processor tasks for bounded filters.
+
 * Issue **#4403** : Fix to make elastic indexes searchable with StroomQL.
 
 * Issue **#2897** : Fix issue of the effective stream intern pool returning incorrect sets of streams.
@@ -661,8 +718,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Fix Hard coded XSLT editor snippets.
 
-* Add editor snippets for StroomQL. `ids` => `eval StreamId = first(StreamId)
-eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `str` => `eval StreamId = first(StreamId)`.
+* Add editor snippets for StroomQL. `ids` => `eval StreamId = first(StreamId)\neval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `str` => `eval StreamId = first(StreamId)`.
 
 * Add XSLT completion snippets for stroom identity skeletons.
 
@@ -738,7 +794,11 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-beta.8...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-beta.12...HEAD
+[v7.5-beta.12]: https://github.com/gchq/stroom/compare/v7.5-beta.11...v7.5-beta.12
+[v7.5-beta.11]: https://github.com/gchq/stroom/compare/v7.5-beta.10...v7.5-beta.11
+[v7.5-beta.10]: https://github.com/gchq/stroom/compare/v7.5-beta.9...v7.5-beta.10
+[v7.5-beta.9]: https://github.com/gchq/stroom/compare/v7.5-beta.8...v7.5-beta.9
 [v7.5-beta.8]: https://github.com/gchq/stroom/compare/v7.5-beta.7...v7.5-beta.8
 [v7.5-beta.7]: https://github.com/gchq/stroom/compare/v7.5-beta.6...v7.5-beta.7
 [v7.5-beta.6]: https://github.com/gchq/stroom/compare/v7.5-beta.5...v7.5-beta.6

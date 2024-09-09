@@ -34,8 +34,11 @@ import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.net.HostNameUtil;
+import stroom.util.zip.ZipUtil;
 
 import jakarta.inject.Inject;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -53,8 +56,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -72,11 +73,11 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
         final Path file = getCurrentTestDir().resolve(
                 FileSystemTestUtil.getUniqueTestString() + "TestFileSystemZipProcessor.zip");
         try {
-            final ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(file));
-            zipOut.putNextEntry(new ZipEntry("test1.dat"));
-            zipOut.write("File1\nFile1\n".getBytes());
-            zipOut.closeEntry();
-            zipOut.close();
+            try (final ZipArchiveOutputStream zipOut = ZipUtil.createOutputStream(Files.newOutputStream(file))) {
+                zipOut.putArchiveEntry(new ZipArchiveEntry("test1.dat"));
+                zipOut.write("File1\nFile1\n".getBytes());
+                zipOut.closeArchiveEntry();
+            }
 
             final HashMap<String, String> expectedContent = new HashMap<>();
             expectedContent.put(null, "File1\nFile1\n");
@@ -102,11 +103,11 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
         final Path file = getCurrentTestDir().resolve(
                 FileSystemTestUtil.getUniqueTestString() + "TestFileSystemZipProcessor.zip");
         try {
-            final ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(file));
-            zipOut.putNextEntry(new ZipEntry("test1.dat"));
-            zipOut.write("File1\nFile1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
-            zipOut.closeEntry();
-            zipOut.close();
+            try (final ZipArchiveOutputStream zipOut = ZipUtil.createOutputStream(Files.newOutputStream(file))) {
+                zipOut.putArchiveEntry(new ZipArchiveEntry("test1.dat"));
+                zipOut.write("File1\nFile1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
+                zipOut.closeArchiveEntry();
+            }
 
             final HashMap<String, String> expectedContent = new HashMap<>();
             expectedContent.put(null, "File1\nFile1\nFile1\nFile1\nFile1\nFile1\n");
@@ -137,17 +138,17 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
         final Path file = getCurrentTestDir().resolve(
                 FileSystemTestUtil.getUniqueTestString() + "TestFileSystemZipProcessor.zip");
         try {
-            final ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(file));
-            zipOut.putNextEntry(new ZipEntry("test1.dat"));
-            zipOut.write("File1\nFile1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
-            zipOut.closeEntry();
-            zipOut.putNextEntry(new ZipEntry("test1.ctx"));
-            zipOut.write("Context1\nContext1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
-            zipOut.closeEntry();
-            zipOut.putNextEntry(new ZipEntry("test1.meta"));
-            zipOut.write("Meta11:1\nMeta12:1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
-            zipOut.closeEntry();
-            zipOut.close();
+            try (final ZipArchiveOutputStream zipOut = ZipUtil.createOutputStream(Files.newOutputStream(file))) {
+                zipOut.putArchiveEntry(new ZipArchiveEntry("test1.dat"));
+                zipOut.write("File1\nFile1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
+                zipOut.closeArchiveEntry();
+                zipOut.putArchiveEntry(new ZipArchiveEntry("test1.ctx"));
+                zipOut.write("Context1\nContext1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
+                zipOut.closeArchiveEntry();
+                zipOut.putArchiveEntry(new ZipArchiveEntry("test1.meta"));
+                zipOut.write("Meta11:1\nMeta12:1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
+                zipOut.closeArchiveEntry();
+            }
 
             final HashMap<String, String> expectedContent = new HashMap<>();
             expectedContent.put(null, "File1\nFile1\n");
@@ -189,26 +190,26 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                 FileSystemTestUtil.getUniqueTestString() + "TestFileSystemZipProcessor.zip");
         try {
             // Build a zip with an odd order
-            final ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(file));
-            zipOut.putNextEntry(new ZipEntry("entry1.dat"));
-            zipOut.write("File1\nFile1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
-            zipOut.closeEntry();
-            zipOut.putNextEntry(new ZipEntry("entry1.ctx"));
-            zipOut.write("Context1\nContext1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
-            zipOut.closeEntry();
-            zipOut.putNextEntry(new ZipEntry("entry1.meta"));
-            zipOut.write("Meta1a\nMeta1b\n".getBytes(StreamUtil.DEFAULT_CHARSET));
-            zipOut.closeEntry();
-            zipOut.putNextEntry(new ZipEntry("entry2.dat"));
-            zipOut.write("File2\nFile2\n".getBytes(StreamUtil.DEFAULT_CHARSET));
-            zipOut.closeEntry();
-            zipOut.putNextEntry(new ZipEntry("entry2.meta"));
-            zipOut.write("Meta2a\nMeta2b\n".getBytes(StreamUtil.DEFAULT_CHARSET));
-            zipOut.closeEntry();
-            zipOut.putNextEntry(new ZipEntry("entry2.ctx"));
-            zipOut.write("Context2\nContext2\n".getBytes(StreamUtil.DEFAULT_CHARSET));
-            zipOut.closeEntry();
-            zipOut.close();
+            try (final ZipArchiveOutputStream zipOut = ZipUtil.createOutputStream(Files.newOutputStream(file))) {
+                zipOut.putArchiveEntry(new ZipArchiveEntry("entry1.dat"));
+                zipOut.write("File1\nFile1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
+                zipOut.closeArchiveEntry();
+                zipOut.putArchiveEntry(new ZipArchiveEntry("entry1.ctx"));
+                zipOut.write("Context1\nContext1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
+                zipOut.closeArchiveEntry();
+                zipOut.putArchiveEntry(new ZipArchiveEntry("entry1.meta"));
+                zipOut.write("Meta1a\nMeta1b\n".getBytes(StreamUtil.DEFAULT_CHARSET));
+                zipOut.closeArchiveEntry();
+                zipOut.putArchiveEntry(new ZipArchiveEntry("entry2.dat"));
+                zipOut.write("File2\nFile2\n".getBytes(StreamUtil.DEFAULT_CHARSET));
+                zipOut.closeArchiveEntry();
+                zipOut.putArchiveEntry(new ZipArchiveEntry("entry2.meta"));
+                zipOut.write("Meta2a\nMeta2b\n".getBytes(StreamUtil.DEFAULT_CHARSET));
+                zipOut.closeArchiveEntry();
+                zipOut.putArchiveEntry(new ZipArchiveEntry("entry2.ctx"));
+                zipOut.write("Context2\nContext2\n".getBytes(StreamUtil.DEFAULT_CHARSET));
+                zipOut.closeArchiveEntry();
+            }
 
             final HashMap<String, String> expectedContent = new HashMap<>();
             expectedContent.put(null, "File1\nFile1\nFile2\nFile2\n");
@@ -263,14 +264,14 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
         final Path file = getCurrentTestDir().resolve(
                 FileSystemTestUtil.getUniqueTestString() + "TestFileSystemZipProcessor.zip");
         try {
-            final ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(file));
-            zipOut.putNextEntry(new ZipEntry("entry1.dat"));
-            zipOut.write("File1\nFile1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
-            zipOut.closeEntry();
-            zipOut.putNextEntry(new ZipEntry("entry2.dat"));
-            zipOut.write("File2\nFile2\n".getBytes(StreamUtil.DEFAULT_CHARSET));
-            zipOut.closeEntry();
-            zipOut.close();
+            try (final ZipArchiveOutputStream zipOut = ZipUtil.createOutputStream(Files.newOutputStream(file))) {
+                zipOut.putArchiveEntry(new ZipArchiveEntry("entry1.dat"));
+                zipOut.write("File1\nFile1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
+                zipOut.closeArchiveEntry();
+                zipOut.putArchiveEntry(new ZipArchiveEntry("entry2.dat"));
+                zipOut.write("File2\nFile2\n".getBytes(StreamUtil.DEFAULT_CHARSET));
+                zipOut.closeArchiveEntry();
+            }
 
             final HashMap<String, String> expectedContent = new HashMap<>();
             expectedContent.put(null, "File1\nFile1\nFile2\nFile2\n");

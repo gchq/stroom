@@ -26,6 +26,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.string.CIKey;
 
 import com.google.common.base.Strings;
+import org.apache.commons.compress.archivers.zip.Zip64Mode;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 
@@ -79,7 +80,7 @@ public class ZipOutput implements Output {
                 super.close();
             }
         };
-
+        zipOutputStream.setUseZip64(Zip64Mode.Always);
         outputStream = new ByteCountOutputStream(zipOutputStream);
     }
 
