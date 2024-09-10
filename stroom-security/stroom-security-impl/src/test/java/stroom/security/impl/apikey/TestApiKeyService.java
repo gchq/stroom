@@ -349,16 +349,20 @@ class TestApiKeyService {
                 .isEmpty();
     }
 
+    private User createUser(final String subjectId) {
+        return User.builder()
+                .uuid(subjectId + "_uuid")
+                .subjectId(subjectId)
+                .displayName(subjectId + "_displayName")
+                .build();
+    }
+
     @Test
     void fetchVerifiedIdentity_success_oneKey() {
         final String apiKeyStr = apiKeyGenerator.generateRandomApiKey();
         final String hash = apiKeyService.computeApiKeyHash(apiKeyStr);
 
-        final User owner = User.builder()
-                .uuid("myUuid")
-                .subjectId("mySubjectId")
-                .displayName("myDisplayName")
-                .build();
+        final User owner = createUser("mySubjectId");
         final UserRef ownerRef = owner.asRef();
 
         List<HashedApiKey> apiKeys = List.of(
@@ -388,41 +392,31 @@ class TestApiKeyService {
         final String apiKeyStr = apiKeyGenerator.generateRandomApiKey();
         final String hash = apiKeyService.computeApiKeyHash(apiKeyStr);
 
-        final UserRef owner1 = UserRef.builder()
-                .uuid("myUuid1")
-                .subjectId("mySubjectId1")
-                .displayName("myDisplayName1")
-                .build();
-        final UserRef owner2 = UserRef.builder()
-                .uuid("myUuid2")
-                .subjectId("mySubjectId2")
-                .displayName("myDisplayName2")
-                .build();
-        final UserRef owner3 = UserRef.builder()
-                .uuid("myUuid3")
-                .subjectId("mySubjectId3")
-                .displayName("myDisplayName3")
-                .build();
+        final User owner1 = createUser("mySubjectId1");
+        final User owner2 = createUser("mySubjectId2");
+        final User owner3 = createUser("mySubjectId3");
 
         List<HashedApiKey> apiKeys = List.of(
                 HashedApiKey.builder()
-                        .withOwner(owner1)
+                        .withOwner(owner1.asRef())
                         .withApiKeyHash("another hash")
                         .withHashAlgorithm(HashAlgorithm.BCRYPT)
                         .build(),
                 HashedApiKey.builder()
-                        .withOwner(owner2)
+                        .withOwner(owner2.asRef())
                         .withApiKeyHash("and another hash")
                         .withHashAlgorithm(HashAlgorithm.ARGON_2)
                         .build(),
                 HashedApiKey.builder()
-                        .withOwner(owner3)
+                        .withOwner(owner3.asRef())
                         .withApiKeyHash(hash)
                         .withHashAlgorithm(HashAlgorithm.SHA3_256)
                         .build());
 
         Mockito.when(mockApiKeyDao.fetchValidApiKeysByPrefix(Mockito.anyString()))
                 .thenReturn(apiKeys);
+        Mockito.when(mockUserDao.getByUuid(Mockito.eq(owner3.getUuid())))
+                .thenReturn(Optional.of(owner3));
 
         final Optional<UserIdentity> opUserIdentity = apiKeyService.fetchVerifiedIdentity(apiKeyStr);
 
