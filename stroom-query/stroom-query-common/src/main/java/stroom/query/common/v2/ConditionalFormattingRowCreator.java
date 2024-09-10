@@ -90,7 +90,7 @@ public class ConditionalFormattingRowCreator extends FilteredRowCreator {
     @Override
     public Row create(final Item item,
                       final List<String> stringValues,
-                      final Map<String, Object> fieldIdToValueMap) {
+                      final Map<CIKey, Object> fieldIdToValueMap) {
         Row row = null;
 
         // Removed in 7.5
