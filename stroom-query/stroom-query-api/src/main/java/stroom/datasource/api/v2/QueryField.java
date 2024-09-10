@@ -276,6 +276,16 @@ public class QueryField implements Field, HasDisplayValue {
                 .build();
     }
 
+    public static QueryField createBoolean(final CIKey name,
+                                           final Boolean queryable) {
+        return builder()
+                .fldName(name)
+                .fldType(FieldType.BOOLEAN)
+                .conditionSet(ConditionSet.DEFAULT_BOOLEAN)
+                .queryable(queryable)
+                .build();
+    }
+
     public static QueryField createDate(final String name) {
         return createDate(name, true);
     }
@@ -341,6 +351,21 @@ public class QueryField implements Field, HasDisplayValue {
     }
 
     /**
+     * A {@link QueryField} for a {@link stroom.docref.DocRef} type whose names are unique, allowing
+     * the name to be used as the value in expression terms.
+     */
+    public static QueryField createDocRefByUniqueName(final String docRefType,
+                                                      final CIKey name) {
+        return builder()
+                .fldName(name)
+                .fldType(FieldType.DOC_REF)
+                .conditionSet(ConditionSet.DOC_REF_ALL)
+                .docRefType(docRefType)
+                .queryable(Boolean.TRUE)
+                .build();
+    }
+
+    /**
      * A {@link QueryField} for a {@link stroom.docref.DocRef} type whose names are NOT unique.
      * The {@link stroom.docref.DocRef} name is used as the value in expression terms, accepting
      * that name=x may match >1 docrefs.
@@ -358,12 +383,45 @@ public class QueryField implements Field, HasDisplayValue {
 
     /**
      * A {@link QueryField} for a {@link stroom.docref.DocRef} type whose names are NOT unique.
+     * The {@link stroom.docref.DocRef} name is used as the value in expression terms, accepting
+     * that name=x may match >1 docrefs.
+     */
+    public static QueryField createDocRefByNonUniqueName(final String docRefType,
+                                                         final CIKey name) {
+        return builder()
+                .fldName(name)
+                .fldType(FieldType.DOC_REF)
+                .conditionSet(ConditionSet.DOC_REF_NAME)
+                .docRefType(docRefType)
+                .queryable(Boolean.TRUE)
+                .build();
+    }
+
+    /**
+     * A {@link QueryField} for a {@link stroom.docref.DocRef} type whose names are NOT unique.
      * The {@link stroom.docref.DocRef} uuid is used as the value in expression terms for a unique
      * match. Other conditions are not supported as that would require the user to enter uuids,
      * and it is not clear in the UI whether they are dealing in UUIDs or names.
      */
     public static QueryField createDocRefByUuid(final String docRefType,
                                                 final String name) {
+        return builder()
+                .fldName(name)
+                .fldType(FieldType.DOC_REF)
+                .conditionSet(ConditionSet.DOC_REF_UUID)
+                .docRefType(docRefType)
+                .queryable(Boolean.TRUE)
+                .build();
+    }
+
+    /**
+     * A {@link QueryField} for a {@link stroom.docref.DocRef} type whose names are NOT unique.
+     * The {@link stroom.docref.DocRef} uuid is used as the value in expression terms for a unique
+     * match. Other conditions are not supported as that would require the user to enter uuids,
+     * and it is not clear in the UI whether they are dealing in UUIDs or names.
+     */
+    public static QueryField createDocRefByUuid(final String docRefType,
+                                                final CIKey name) {
         return builder()
                 .fldName(name)
                 .fldType(FieldType.DOC_REF)
@@ -495,6 +553,7 @@ public class QueryField implements Field, HasDisplayValue {
         }
 
         public Builder fldName(final CIKey fldName) {
+            this.fldName = GwtNullSafe.get(fldName, CIKey::get);
             this.fldNameAsKey = fldName;
             return this;
         }

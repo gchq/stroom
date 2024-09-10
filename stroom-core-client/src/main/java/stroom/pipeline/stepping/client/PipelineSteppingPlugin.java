@@ -33,7 +33,7 @@ import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.task.client.DefaultTaskListener;
 
 import com.google.gwt.core.client.GWT;
@@ -74,7 +74,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
         final DocSelectionPopup chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Step With");
         chooser.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
-        chooser.setRequiredPermissions(DocumentPermissionNames.READ);
+        chooser.setRequiredPermissions(DocumentPermission.VIEW);
 
         final Runnable onShow;
         if (event.getPipelineRef() != null) {

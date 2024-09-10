@@ -18,6 +18,7 @@ package stroom.meta.shared;
 
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
+import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.util.shared.string.CIKey;
 
@@ -50,7 +51,8 @@ public class MetaFields {
 
     // Non grouped fields
     // Maps to the docref name (which is unique)
-    public static final QueryField FEED = QueryField.createDocRefByUniqueName("Feed", "Feed");
+    public static final QueryField FEED = QueryField.createDocRefByUniqueName(
+            FeedDoc.DOCUMENT_TYPE, CIKey.ofStaticKey("Feed"));
 
     // Maps to the docref uuid
     public static final QueryField PIPELINE = QueryField.createDocRefByUuid(

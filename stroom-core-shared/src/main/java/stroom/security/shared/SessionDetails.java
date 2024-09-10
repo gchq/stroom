@@ -16,7 +16,7 @@
 
 package stroom.security.shared;
 
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -28,7 +28,7 @@ import java.util.Objects;
 public class SessionDetails {
 
     @JsonProperty
-    private final UserName userName;
+    private final UserRef userRef;
     @JsonProperty
     private final long createMs;
     @JsonProperty
@@ -39,20 +39,20 @@ public class SessionDetails {
     private final String nodeName;
 
     @JsonCreator
-    public SessionDetails(@JsonProperty("userName") final UserName userName,
+    public SessionDetails(@JsonProperty("userRef") final UserRef userRef,
                           @JsonProperty("createMs") final long createMs,
                           @JsonProperty("lastAccessedMs") final long lastAccessedMs,
                           @JsonProperty("lastAccessedAgent") final String lastAccessedAgent,
                           @JsonProperty("nodeName") final String nodeName) {
-        this.userName = userName;
+        this.userRef = userRef;
         this.createMs = createMs;
         this.lastAccessedMs = lastAccessedMs;
         this.lastAccessedAgent = lastAccessedAgent;
         this.nodeName = nodeName;
     }
 
-    public UserName getUserName() {
-        return userName;
+    public UserRef getUserRef() {
+        return userRef;
     }
 
     public long getCreateMs() {
@@ -82,20 +82,20 @@ public class SessionDetails {
         final SessionDetails that = (SessionDetails) o;
         return createMs == that.createMs &&
                 lastAccessedMs == that.lastAccessedMs &&
-                Objects.equals(userName, that.userName) &&
+                Objects.equals(userRef, that.userRef) &&
                 Objects.equals(lastAccessedAgent, that.lastAccessedAgent) &&
                 Objects.equals(nodeName, that.nodeName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(userName, createMs, lastAccessedMs, lastAccessedAgent, nodeName);
+        return Objects.hash(userRef, createMs, lastAccessedMs, lastAccessedAgent, nodeName);
     }
 
     @Override
     public String toString() {
         return "SessionDetails{" +
-                "userName='" + userName + '\'' +
+                "userRef='" + userRef + '\'' +
                 ", createMs=" + createMs +
                 ", lastAccessedMs=" + lastAccessedMs +
                 ", lastAccessedAgent='" + lastAccessedAgent + '\'' +

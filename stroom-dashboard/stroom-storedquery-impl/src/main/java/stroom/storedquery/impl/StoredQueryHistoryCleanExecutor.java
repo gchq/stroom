@@ -17,11 +17,11 @@
 
 package stroom.storedquery.impl;
 
-import stroom.security.user.api.UserNameService;
+import stroom.security.user.api.UserRefLookup;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 
@@ -40,17 +40,17 @@ public class StoredQueryHistoryCleanExecutor {
     private final StoredQueryDao storedQueryDao;
     private final StoredQueryConfig storedQueryConfig;
     private final TaskContextFactory taskContextFactory;
-    private final UserNameService userNameService;
+    private final UserRefLookup userRefLookup;
 
     @Inject
     public StoredQueryHistoryCleanExecutor(final StoredQueryDao storedQueryDao,
                                            final StoredQueryConfig storedQueryConfig,
                                            final TaskContextFactory taskContextFactory,
-                                           final UserNameService userNameService) {
+                                           final UserRefLookup userRefLookup) {
         this.storedQueryDao = storedQueryDao;
         this.storedQueryConfig = storedQueryConfig;
         this.taskContextFactory = taskContextFactory;
-        this.userNameService = userNameService;
+        this.userRefLookup = userRefLookup;
     }
 
     public void exec() {
@@ -69,8 +69,8 @@ public class StoredQueryHistoryCleanExecutor {
 
         final List<String> users = storedQueryDao.getUsers(favourite);
         users.forEach(ownerUuid -> {
-            final String userDisplayName = userNameService.getByUuid(ownerUuid)
-                    .map(UserName::getUserIdentityForAudit)
+            final String userDisplayName = userRefLookup.getByUuid(ownerUuid)
+                    .map(UserRef::toInfoString)
                     .orElse("?");
             info(() -> "Cleaning query history for user '" + userDisplayName
                     + "' with ownerUuid '" + ownerUuid + "'");

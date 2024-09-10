@@ -25,7 +25,7 @@ import stroom.document.client.event.DirtyUiHandlers;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.feed.shared.FeedDoc;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -49,7 +49,7 @@ public class AnalyticStreamDestinationPresenter
         this.feedPresenter = feedPresenter;
 
         feedPresenter.setIncludedTypes(FeedDoc.DOCUMENT_TYPE);
-        feedPresenter.setRequiredPermissions(DocumentPermissionNames.READ);
+        feedPresenter.setRequiredPermissions(DocumentPermission.VIEW);
         view.setDestinationFeedView(feedPresenter.getView());
     }
 

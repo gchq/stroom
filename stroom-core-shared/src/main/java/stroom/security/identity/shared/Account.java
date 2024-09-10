@@ -328,7 +328,7 @@ public class Account implements HasIntegerId {
                 ", updateTimeMs=" + updateTimeMs +
                 ", createUser='" + createUser + '\'' +
                 ", updateUser='" + updateUser + '\'' +
-                ", userId='" + userId + '\'' +
+                ", subjectId='" + userId + '\'' +
                 ", email='" + email + '\'' +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +

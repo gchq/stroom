@@ -11,7 +11,7 @@ import stroom.data.store.impl.fs.shared.ValidationResult;
 import stroom.docref.DocRef;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
@@ -77,7 +77,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
     private static final String LOCK_NAME = "REFRESH_FS_VOLUMES";
     static final String ENTITY_TYPE = "FILE_SYSTEM_VOLUME";
-    private static final DocRef EVENT_DOCREF = new DocRef(ENTITY_TYPE, null, null);
+    private static final DocRef EVENT_DOCREF = new DocRef(ENTITY_TYPE, ENTITY_TYPE, ENTITY_TYPE);
     protected static final String TEMP_FILE_PREFIX = "stroomFsVolVal";
 
     private final FsVolumeDao fsVolumeDao;
@@ -129,7 +129,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     }
 
     public FsVolume create(final FsVolume fileVolume) {
-        return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION, () -> {
             FsVolume result;
             Path volPath = getAbsVolumePath(fileVolume);
             try {
@@ -194,7 +194,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     }
 
     public FsVolume update(final FsVolume fileVolume) {
-        return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION, () -> {
             AuditUtil.stamp(securityContext, fileVolume);
             final FsVolume result = fsVolumeDao.update(fileVolume);
 
@@ -205,7 +205,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     }
 
     public int delete(final int id) {
-        return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION, () -> {
             final int result = fsVolumeDao.delete(id);
 
             fireChange(EntityAction.DELETE);
@@ -215,7 +215,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     }
 
     public FsVolume fetch(final int id) {
-        return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION, () ->
+        return securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION, () ->
                 fsVolumeDao.fetch(id));
     }
 

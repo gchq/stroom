@@ -70,7 +70,7 @@ class TestDocRefInfoServiceImpl {
     void setUp() {
         docRefInfoService = new DocRefInfoServiceImpl(
                 mockDocRefInfoCache,
-                mockSecurityContext,
+                () -> mockSecurityContext,
                 mockExplorerActionHandlers);
     }
 

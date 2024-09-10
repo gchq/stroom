@@ -1,268 +1,455 @@
 package stroom.security.impl.db;
 
 import stroom.db.util.JooqUtil;
-import stroom.security.impl.BasicDocPermissions;
+import stroom.docref.DocRef;
+import stroom.explorer.shared.ExplorerConstants;
+import stroom.security.impl.DocTypeIdDao;
 import stroom.security.impl.DocumentPermissionDao;
 import stroom.security.impl.UserDocumentPermissions;
-import stroom.security.impl.db.jooq.tables.records.DocPermissionRecord;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.NullSafe;
-import stroom.util.concurrent.ThreadUtil;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
+import stroom.security.impl.db.jooq.tables.PermissionDoc;
+import stroom.security.impl.db.jooq.tables.PermissionDocCreate;
+import stroom.security.shared.DocumentPermission;
+import stroom.security.shared.DocumentUserPermissions;
+import stroom.security.shared.FetchDocumentUserPermissionsRequest;
+import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import org.jooq.Condition;
+import org.jooq.DSLContext;
+import org.jooq.OrderField;
+import org.jooq.Result;
+import org.jooq.impl.DSL;
+import org.jooq.types.UByte;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
-import static stroom.security.impl.db.jooq.tables.DocPermission.DOC_PERMISSION;
+import static stroom.security.impl.db.jooq.tables.PermissionDoc.PERMISSION_DOC;
+import static stroom.security.impl.db.jooq.tables.PermissionDocCreate.PERMISSION_DOC_CREATE;
+import static stroom.security.impl.db.jooq.tables.StroomUser.STROOM_USER;
 
 public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocumentPermissionDaoImpl.class);
-    // Max number of items to have in a sql IN (...) clause. The limit on the IN list size is governed by
-    // max_allowed_packet, which has a default of 4MB. 1000 allows us 4KB per item, so we should be well within
-    // the limit.
-    static final int IN_LIST_LIMIT = 1_000;
+    private static final BitSet EMPTY = new BitSet(0);
+    private static final PermissionDoc PERMISSION_DOC_SOURCE = new PermissionDoc("pd_source");
+    private static final PermissionDocCreate PERMISSION_DOC_CREATE_SOURCE = new PermissionDocCreate("pdc_source");
 
     private final SecurityDbConnProvider securityDbConnProvider;
+    private final DocTypeIdDao docTypeIdDao;
+    private final Provider<UserDaoImpl> userDaoProvider;
 
     @Inject
-    public DocumentPermissionDaoImpl(final SecurityDbConnProvider securityDbConnProvider) {
+    public DocumentPermissionDaoImpl(final SecurityDbConnProvider securityDbConnProvider,
+                                     final DocTypeIdDao docTypeIdDao,
+                                     final Provider<UserDaoImpl> userDaoProvider) {
         this.securityDbConnProvider = securityDbConnProvider;
-    }
-
-    @Override
-    public Set<String> getPermissionsForDocumentForUser(final String docUuid,
-                                                        final String userUuid) {
-        return JooqUtil.contextResult(securityDbConnProvider, context -> context
-                .select()
-                .from(DOC_PERMISSION)
-                .where(DOC_PERMISSION.USER_UUID.eq(userUuid))
-                .and(DOC_PERMISSION.DOC_UUID.eq(docUuid))
-                .fetchSet(DOC_PERMISSION.PERMISSION)
-        );
-    }
-
-    @Override
-    public BasicDocPermissions getPermissionsForDocument(final String docUuid) {
-        final BasicDocPermissions docPermissions = new BasicDocPermissions(docUuid);
-//        final Map<String, Set<String>> permissions = new HashMap<>();
-
-        JooqUtil.contextResult(securityDbConnProvider, context -> context
-                        .select()
-                        .from(DOC_PERMISSION)
-                        .where(DOC_PERMISSION.DOC_UUID.eq(docUuid))
-                        .fetch())
-                .forEach(rec ->
-                        docPermissions.add(
-                                rec.get(DOC_PERMISSION.USER_UUID),
-                                rec.get(DOC_PERMISSION.PERMISSION)));
-
-        return docPermissions;
-    }
-
-    @Override
-    public Map<String, BasicDocPermissions> getPermissionsForDocuments(final Collection<String> docUuids) {
-        final Map<String, BasicDocPermissions> docUuidToDocPermissionsMap = new HashMap<>();
-
-        JooqUtil.contextResult(securityDbConnProvider, context -> context
-                        .select()
-                        .from(DOC_PERMISSION)
-                        .where(DOC_PERMISSION.DOC_UUID.in(docUuids))
-                        .fetch())
-                .forEach(rec -> {
-                    final String userOrGroupUuid = rec.get(DOC_PERMISSION.USER_UUID);
-                    final String docUuid = rec.get(DOC_PERMISSION.DOC_UUID);
-                    final String permName = rec.get(DOC_PERMISSION.PERMISSION);
-
-                    docUuidToDocPermissionsMap.computeIfAbsent(docUuid, BasicDocPermissions::new)
-                            .add(userOrGroupUuid, permName);
-                });
-
-        return docUuidToDocPermissionsMap;
-    }
-
-    @Override
-    public Set<String> getDocumentOwnerUuids(final String docUuid) {
-        return new HashSet<>(JooqUtil.contextResult(securityDbConnProvider, context -> context
-                .select(DOC_PERMISSION.USER_UUID)
-                .from(DOC_PERMISSION)
-                .where(DOC_PERMISSION.DOC_UUID.eq(docUuid))
-                .and(DOC_PERMISSION.PERMISSION.eq(DocumentPermissionNames.OWNER))
-                .fetch(DOC_PERMISSION.USER_UUID)));
+        this.docTypeIdDao = docTypeIdDao;
+        this.userDaoProvider = userDaoProvider;
     }
 
     @Override
     public UserDocumentPermissions getPermissionsForUser(final String userUuid) {
-        final UserDocumentPermissions userDocumentPermissions = new UserDocumentPermissions();
+        Objects.requireNonNull(userUuid, "Null user UUID");
 
+        final Map<String, Byte> permissionMap = new ConcurrentHashMap<>();
         JooqUtil.contextResult(securityDbConnProvider, context -> context
-                        .selectDistinct(DOC_PERMISSION.DOC_UUID, DOC_PERMISSION.PERMISSION)
-                        .from(DOC_PERMISSION)
-                        .where(DOC_PERMISSION.USER_UUID.eq(userUuid))
+                        .select(PERMISSION_DOC.DOC_UUID, PERMISSION_DOC.PERMISSION_ID)
+                        .from(PERMISSION_DOC)
+                        .join(STROOM_USER).on(STROOM_USER.UUID.eq(PERMISSION_DOC.USER_UUID))
+                        .where(PERMISSION_DOC.USER_UUID.eq(userUuid))
+                        .and(STROOM_USER.ENABLED.eq(true))
                         .fetch())
-                .forEach(r -> userDocumentPermissions.addPermission(r.get(DOC_PERMISSION.DOC_UUID),
-                        r.get(DOC_PERMISSION.PERMISSION)));
-
-        return userDocumentPermissions;
+                .forEach(r -> {
+                    final String docUuid = r.get(PERMISSION_DOC.DOC_UUID);
+                    final byte permission = r.get(PERMISSION_DOC.PERMISSION_ID).byteValue();
+                    permissionMap.put(docUuid, permission);
+                });
+        return new UserDocumentPermissions(permissionMap);
     }
 
     @Override
-    public void addPermission(final String docRefUuid,
-                              final String userUuid,
-                              final String permission) {
+    public DocumentPermission getDocumentUserPermission(final String documentUuid, final String userUuid) {
+        Objects.requireNonNull(documentUuid, "Null document UUID");
+        Objects.requireNonNull(userUuid, "Null user UUID");
 
-        final DocPermissionRecord rec = DOC_PERMISSION.newRecord();
-        rec.setDocUuid(docRefUuid);
-        rec.setUserUuid(userUuid);
-        rec.setPermission(permission);
+        return JooqUtil.contextResult(securityDbConnProvider, context -> context
+                        .select(PERMISSION_DOC.PERMISSION_ID)
+                        .from(PERMISSION_DOC)
+                        .join(STROOM_USER).on(STROOM_USER.UUID.eq(PERMISSION_DOC.USER_UUID))
+                        .where(PERMISSION_DOC.DOC_UUID.eq(documentUuid))
+                        .and(PERMISSION_DOC.USER_UUID.eq(userUuid))
+                        .and(STROOM_USER.ENABLED.eq(true))
+                        .fetchOptional(PERMISSION_DOC.PERMISSION_ID))
+                .map(r -> DocumentPermission.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(r.byteValue()))
+                .orElse(null);
+    }
 
-        // Don't complain if we insert a perm record that we already have.
+    @Override
+    public void setDocumentUserPermission(final String documentUuid,
+                                          final String userUuid,
+                                          final DocumentPermission permission) {
+        Objects.requireNonNull(documentUuid, "Null document UUID");
+        Objects.requireNonNull(userUuid, "Null user UUID");
+        Objects.requireNonNull(permission, "Null permission");
+
+        final UByte permissionId = UByte.valueOf(permission.getPrimitiveValue());
+        JooqUtil.context(securityDbConnProvider, context -> context
+                .insertInto(PERMISSION_DOC)
+                .columns(PERMISSION_DOC.DOC_UUID,
+                        PERMISSION_DOC.USER_UUID,
+                        PERMISSION_DOC.PERMISSION_ID)
+                .values(documentUuid, userUuid, permissionId)
+                .onDuplicateKeyUpdate()
+                .set(PERMISSION_DOC.PERMISSION_ID, permissionId)
+                .execute());
+    }
+
+    @Override
+    public void removeDocumentUserPermission(final String documentUuid, final String userUuid) {
+        Objects.requireNonNull(documentUuid, "Null document UUID");
+        Objects.requireNonNull(userUuid, "Null user UUID");
+
+        JooqUtil.context(securityDbConnProvider, context -> context
+                .deleteFrom(PERMISSION_DOC)
+                .where(PERMISSION_DOC.DOC_UUID.eq(documentUuid))
+                .and(PERMISSION_DOC.USER_UUID.eq(userUuid))
+                .execute());
+    }
+
+    @Override
+    public void removeAllDocumentPermissions(final String documentUuid) {
+        Objects.requireNonNull(documentUuid, "Null document UUID");
+
+        JooqUtil.context(securityDbConnProvider, context -> context
+                .deleteFrom(PERMISSION_DOC)
+                .where(PERMISSION_DOC.DOC_UUID.eq(documentUuid))
+                .execute());
+    }
+
+    @Override
+    public BitSet getDocumentUserCreatePermissionsBitSet(final String documentUuid, final String userUuid) {
+        final List<Integer> docTypeIdList = getDocumentUserCreateDocTypeIds(documentUuid, userUuid);
+
+        if (docTypeIdList.isEmpty()) {
+            return EMPTY;
+        }
+
+        final int max = docTypeIdList.stream().mapToInt(v -> v).max().orElseThrow();
+        // Note that the bit set is created after we fetch the permissions just to be sure that the max id is correct.
+        final BitSet bitSet = new BitSet(max);
+        docTypeIdList.forEach(i -> bitSet.set(i, true));
+        return bitSet;
+    }
+
+    @Override
+    public Set<String> getDocumentUserCreatePermissions(final String documentUuid, final String userUuid) {
+        final List<Integer> docTypeIdList = getDocumentUserCreateDocTypeIds(documentUuid, userUuid);
+        if (docTypeIdList.isEmpty()) {
+            return Collections.emptySet();
+        }
+        return docTypeIdList
+                .stream()
+                .map(docTypeIdDao::get)
+                .collect(Collectors.toSet());
+    }
+
+    private List<Integer> getDocumentUserCreateDocTypeIds(final String documentUuid, final String userUuid) {
+        Objects.requireNonNull(documentUuid, "Null document UUID");
+        Objects.requireNonNull(userUuid, "Null user UUID");
+
+        return JooqUtil.contextResult(securityDbConnProvider, context -> context
+                        .select(PERMISSION_DOC_CREATE.DOC_TYPE_ID)
+                        .from(PERMISSION_DOC_CREATE)
+                        .join(STROOM_USER).on(STROOM_USER.UUID.eq(PERMISSION_DOC_CREATE.USER_UUID))
+                        .where(PERMISSION_DOC_CREATE.DOC_UUID.eq(documentUuid))
+                        .and(PERMISSION_DOC_CREATE.USER_UUID.eq(userUuid))
+                        .and(STROOM_USER.ENABLED.eq(true))
+                        .fetch())
+                .map(r -> r.get(PERMISSION_DOC_CREATE.DOC_TYPE_ID).intValue());
+    }
+
+    @Override
+    public void addDocumentUserCreatePermission(final String documentUuid,
+                                                final String userUuid,
+                                                final String documentType) {
+        Objects.requireNonNull(documentUuid, "Null document UUID");
+        Objects.requireNonNull(userUuid, "Null user UUID");
+        Objects.requireNonNull(documentType, "Null document type");
+
+        final UByte docTypeId = UByte.valueOf(docTypeIdDao.getOrCreateId(documentType));
+        JooqUtil.context(securityDbConnProvider, context -> context
+                .insertInto(PERMISSION_DOC_CREATE)
+                .columns(PERMISSION_DOC_CREATE.DOC_UUID,
+                        PERMISSION_DOC_CREATE.USER_UUID,
+                        PERMISSION_DOC_CREATE.DOC_TYPE_ID)
+                .values(documentUuid, userUuid, docTypeId)
+                .onDuplicateKeyUpdate()
+                .set(PERMISSION_DOC_CREATE.DOC_TYPE_ID, docTypeId)
+                .execute());
+    }
+
+    @Override
+    public void removeDocumentUserCreatePermission(final String documentUuid,
+                                                   final String userUuid,
+                                                   final String documentType) {
+        Objects.requireNonNull(documentUuid, "Null document UUID");
+        Objects.requireNonNull(userUuid, "Null user UUID");
+        Objects.requireNonNull(documentType, "Null document type");
+
+        final UByte docTypeId = UByte.valueOf(docTypeIdDao.getOrCreateId(documentType));
+        JooqUtil.context(securityDbConnProvider, context -> context
+                .deleteFrom(PERMISSION_DOC_CREATE)
+                .where(PERMISSION_DOC_CREATE.DOC_UUID.eq(documentUuid))
+                .and(PERMISSION_DOC_CREATE.USER_UUID.eq(userUuid))
+                .and(PERMISSION_DOC_CREATE.DOC_TYPE_ID.eq(docTypeId))
+                .execute());
+    }
+
+    @Override
+    public void removeDocumentUserCreatePermissions(final String documentUuid, final String userUuid) {
+        Objects.requireNonNull(documentUuid, "Null document UUID");
+        Objects.requireNonNull(userUuid, "Null user UUID");
+
+        JooqUtil.context(securityDbConnProvider, context -> context
+                .deleteFrom(PERMISSION_DOC_CREATE)
+                .where(PERMISSION_DOC_CREATE.DOC_UUID.eq(documentUuid))
+                .and(PERMISSION_DOC_CREATE.USER_UUID.eq(userUuid))
+                .execute());
+    }
+
+    @Override
+    public void removeAllDocumentCreatePermissions(final String documentUuid) {
+        Objects.requireNonNull(documentUuid, "Null document UUID");
+
+        JooqUtil.context(securityDbConnProvider, context -> context
+                .deleteFrom(PERMISSION_DOC_CREATE)
+                .where(PERMISSION_DOC_CREATE.DOC_UUID.eq(documentUuid))
+                .execute());
+    }
+
+    @Override
+    public void addDocumentPermissions(final String sourceDocUuid, final String destDocUuid) {
+        Objects.requireNonNull(sourceDocUuid, "Null source document UUID");
+        Objects.requireNonNull(destDocUuid, "Null destination document UUID");
+
+        // Add permissions.
         JooqUtil.context(securityDbConnProvider, context ->
-                JooqUtil.tryCreate(context, rec));
+                addDocumentPermissions(context, sourceDocUuid, destDocUuid));
     }
 
     @Override
-    public void removePermission(final String docRefUuid,
-                                 final String userUuid,
-                                 final String permission) {
-        JooqUtil.context(securityDbConnProvider, context -> context
-                .deleteFrom(DOC_PERMISSION)
-                .where(DOC_PERMISSION.USER_UUID.eq(userUuid))
-                .and(DOC_PERMISSION.DOC_UUID.equal(docRefUuid))
-                .and(DOC_PERMISSION.PERMISSION.eq(permission))
-                .execute()
-        );
+    public void setDocumentPermissions(final String sourceDocUuid, final String destDocUuid) {
+        Objects.requireNonNull(sourceDocUuid, "Null source document UUID");
+        Objects.requireNonNull(destDocUuid, "Null destination document UUID");
+
+        JooqUtil.transaction(securityDbConnProvider, context -> {
+            // Clear existing permssions.
+            clearDocumentPermissions(context, destDocUuid);
+            // Add new permissions.
+            addDocumentPermissions(context, sourceDocUuid, destDocUuid);
+        });
+    }
+
+    private void clearDocumentPermissions(final DSLContext context,
+                                          final String docUuid) {
+        // Clear permissions.
+        context
+                .deleteFrom(PERMISSION_DOC)
+                .where(PERMISSION_DOC.DOC_UUID.eq(docUuid))
+                .execute();
+    }
+
+    private void addDocumentPermissions(final DSLContext context,
+                                        final String sourceDocUuid,
+                                        final String destDocUuid) {
+        // Add permissions.
+        context
+                .insertInto(PERMISSION_DOC)
+                .columns(PERMISSION_DOC.DOC_UUID,
+                        PERMISSION_DOC.USER_UUID,
+                        PERMISSION_DOC.PERMISSION_ID)
+                .select(context
+                        .select(DSL.val(destDocUuid),
+                                PERMISSION_DOC_SOURCE.USER_UUID,
+                                PERMISSION_DOC_SOURCE.PERMISSION_ID)
+                        .from(PERMISSION_DOC_SOURCE)
+                        .where(PERMISSION_DOC_SOURCE.DOC_UUID.eq(sourceDocUuid)))
+                .onDuplicateKeyUpdate()
+                .set(PERMISSION_DOC.PERMISSION_ID, PERMISSION_DOC.PERMISSION_ID)
+                .execute();
     }
 
     @Override
-    public void removePermissions(final String docRefUuid,
-                                  final String userUuid,
-                                  final Set<String> permissions) {
-        if (permissions != null && !permissions.isEmpty()) {
-            Objects.requireNonNull(docRefUuid);
-            Objects.requireNonNull(userUuid);
-            JooqUtil.context(securityDbConnProvider, context -> context
-                    .deleteFrom(DOC_PERMISSION)
-                    .where(DOC_PERMISSION.USER_UUID.eq(userUuid))
-                    .and(DOC_PERMISSION.DOC_UUID.equal(docRefUuid))
-                    .and(DOC_PERMISSION.PERMISSION.in(permissions))
-                    .execute()
-            );
-        }
+    public void addDocumentCreatePermissions(String sourceDocUuid, String destDocUuid) {
+        Objects.requireNonNull(sourceDocUuid, "Null source document UUID");
+        Objects.requireNonNull(destDocUuid, "Null destination document UUID");
+
+        // Add create permissions.
+        JooqUtil.context(securityDbConnProvider, context ->
+                addDocumentCreatePermissions(context, sourceDocUuid, destDocUuid));
     }
 
     @Override
-    public void clearDocumentPermissionsForUser(String docRefUuid, String userUuid) {
-        JooqUtil.context(securityDbConnProvider, context -> context
-                .deleteFrom(DOC_PERMISSION)
-                .where(DOC_PERMISSION.USER_UUID.eq(userUuid))
-                .and(DOC_PERMISSION.DOC_UUID.equal(docRefUuid))
-                .execute()
-        );
+    public void setDocumentCreatePermissions(final String sourceDocUuid, final String destDocUuid) {
+        Objects.requireNonNull(sourceDocUuid, "Null source document UUID");
+        Objects.requireNonNull(destDocUuid, "Null destination document UUID");
+
+        JooqUtil.transaction(securityDbConnProvider, context -> {
+            // Clear existing permssions.
+            clearDocumentCreatePermissions(context, destDocUuid);
+            // Add new permissions.
+            addDocumentCreatePermissions(context, sourceDocUuid, destDocUuid);
+        });
+    }
+
+    private void addDocumentCreatePermissions(final DSLContext context,
+                                              final String sourceDocUuid,
+                                              final String destDocUuid) {
+        context
+                .insertInto(PERMISSION_DOC_CREATE)
+                .columns(PERMISSION_DOC_CREATE.DOC_UUID,
+                        PERMISSION_DOC_CREATE.USER_UUID,
+                        PERMISSION_DOC_CREATE.DOC_TYPE_ID)
+                .select(context
+                        .select(DSL.val(destDocUuid),
+                                PERMISSION_DOC_CREATE_SOURCE.USER_UUID,
+                                PERMISSION_DOC_CREATE_SOURCE.DOC_TYPE_ID)
+                        .from(PERMISSION_DOC_CREATE_SOURCE)
+                        .where(PERMISSION_DOC_CREATE_SOURCE.DOC_UUID.eq(sourceDocUuid)))
+                .onDuplicateKeyUpdate()
+                .set(PERMISSION_DOC_CREATE.DOC_TYPE_ID, PERMISSION_DOC_CREATE.DOC_TYPE_ID)
+                .execute();
+    }
+
+    private void clearDocumentCreatePermissions(final DSLContext context,
+                                                final String docUuid) {
+        // Clear create permissions.
+        context
+                .deleteFrom(PERMISSION_DOC_CREATE)
+                .where(PERMISSION_DOC_CREATE.DOC_UUID.eq(docUuid))
+                .execute();
     }
 
     @Override
-    public void clearDocumentPermissionsForDoc(final String docRefUuid) {
-        JooqUtil.context(securityDbConnProvider, context -> context
-                .deleteFrom(DOC_PERMISSION)
-                .where(DOC_PERMISSION.DOC_UUID.equal(docRefUuid))
-                .execute()
-        );
-    }
+    public ResultPage<DocumentUserPermissions> fetchDocumentUserPermissions(
+            final FetchDocumentUserPermissionsRequest request) {
+        Objects.requireNonNull(request, "Null request");
+        Objects.requireNonNull(request.getDocRef(), "Null doc ref");
+        final UserDaoImpl userDao = userDaoProvider.get();
 
-    @Override
-    public void clearDocumentPermissionsForDocs(final Set<String> docRefUuids) {
-        clearDocumentPermissionsForDocs(docRefUuids, IN_LIST_LIMIT);
-    }
+        final DocRef docRef = request.getDocRef();
 
-    // Pkg private to aid testing with a smaller batch size
-    void clearDocumentPermissionsForDocs(final Set<String> docRefUuids,
-                                         final int batchSize) {
-        if (NullSafe.hasItems(docRefUuids)) {
-            LOGGER.debug(() -> LogUtil.message("Deleting permission records for {} proc filter UUIDs",
-                    docRefUuids.size()));
-            final List<String> workingList = new ArrayList<>(docRefUuids);
-            final AtomicInteger totalCnt = new AtomicInteger();
-            JooqUtil.transaction(securityDbConnProvider, txnContext -> {
-                while (!workingList.isEmpty()) {
-                    // The in clause has limits so do a batch at a time. A view on workingList
-                    final List<String> subListView = workingList.subList(
-                            0,
-                            Math.min(workingList.size(), batchSize));
-                    if (!subListView.isEmpty()) {
-                        final int cnt = txnContext.deleteFrom(DOC_PERMISSION)
-                                .where(DOC_PERMISSION.DOC_UUID.in(subListView))
-                                .execute();
-                        totalCnt.addAndGet(cnt);
-                        LOGGER.debug(() -> LogUtil.message(
-                                "Deleted {} doc_permission records for a batch of {} doc UUIDs",
-                                cnt, subListView.size()));
-                        // Now clear limitedListView which clears the items from workingList
-                        subListView.clear();
-                    }
-                }
-            });
-            LOGGER.debug(() -> LogUtil.message("Deleted a total of {} doc_permission records for {} doc UUIDs",
-                    totalCnt, docRefUuids.size()));
-        }
-    }
+        final int offset = JooqUtil.getOffset(request.getPageRequest());
+        final int limit = JooqUtil.getLimit(request.getPageRequest(), true);
 
-    @Override
-    public void setOwner(final String docRefUuid,
-                         final String ownerUuid) {
-        boolean didSucceed = false;
-        try {
-            int retriesRemaining = 10;
-            while (!didSucceed && retriesRemaining-- > 0) {
-                try {
-                    JooqUtil.transaction(securityDbConnProvider, context -> {
-                        // Delete all existing owners, except the one we want
-                        final int delCount = context.deleteFrom(DOC_PERMISSION)
-                                .where(DOC_PERMISSION.USER_UUID.notEqual(ownerUuid))
-                                .and(DOC_PERMISSION.DOC_UUID.equal(docRefUuid))
-                                .and(DOC_PERMISSION.PERMISSION.eq(DocumentPermissionNames.OWNER))
-                                .execute();
-                        final int insertCount = context.insertInto(DOC_PERMISSION)
-                                .set(DOC_PERMISSION.DOC_UUID, docRefUuid)
-                                .set(DOC_PERMISSION.USER_UUID, ownerUuid)
-                                .set(DOC_PERMISSION.PERMISSION, DocumentPermissionNames.OWNER)
-                                .onDuplicateKeyIgnore()
-                                .execute();
-                        LOGGER.debug("docRefUuid: {}, ownerUuid: {}, delCount: {}, insertCount: {}",
-                                docRefUuid, ownerUuid, delCount, insertCount);
-                    });
-                    // Success so break out of the loop
-                    didSucceed = true;
-                } catch (Exception e) {
-                    LOGGER.debug("Error setting owner of document {} to user/group {}", docRefUuid, ownerUuid, e);
-                    if (e.getMessage().contains("Deadlock")) {
-                        // If we get a deadlock then have a tiny sleep to give the other thread a chance to finish
-                        // and go round again
-                        ThreadUtil.sleepIgnoringInterrupts(20);
-                    } else {
-                        throw e;
-                    }
-                }
+        final Collection<OrderField<?>> orderFields = userDao.createOrderFields(request);
+
+        final List<Condition> conditions = new ArrayList<>();
+
+        conditions.add(userDao.getUserCondition(request.getExpression()));
+        conditions.add(STROOM_USER.ENABLED.eq(true));
+
+        // If we have a single doc then try to deliver more useful permissions.
+        final Result<?> result = JooqUtil.contextResult(securityDbConnProvider, context -> {
+            if (request.isAllUsers()) {
+                return context.select(
+                                PERMISSION_DOC.PERMISSION_ID,
+                                STROOM_USER.UUID,
+                                STROOM_USER.NAME,
+                                STROOM_USER.DISPLAY_NAME,
+                                STROOM_USER.FULL_NAME,
+                                STROOM_USER.IS_GROUP)
+                        .from(STROOM_USER)
+                        .leftOuterJoin(PERMISSION_DOC)
+                        .on(PERMISSION_DOC.USER_UUID.eq(STROOM_USER.UUID)
+                                .and(PERMISSION_DOC.DOC_UUID.eq(docRef.getUuid())))
+                        .where(conditions)
+                        .orderBy(orderFields)
+                        .offset(offset)
+                        .limit(limit)
+                        .fetch();
+
+            } else if (ExplorerConstants.isFolderOrSystem(docRef)) {
+                conditions
+                        .add(PERMISSION_DOC.DOC_UUID.eq(docRef.getUuid())
+                                .or(PERMISSION_DOC_CREATE.DOC_UUID.eq(docRef.getUuid())));
+                return context.selectDistinct(
+                                PERMISSION_DOC.PERMISSION_ID,
+                                STROOM_USER.UUID,
+                                STROOM_USER.NAME,
+                                STROOM_USER.DISPLAY_NAME,
+                                STROOM_USER.FULL_NAME,
+                                STROOM_USER.IS_GROUP)
+                        .from(STROOM_USER)
+                        .leftOuterJoin(PERMISSION_DOC)
+                        .on(PERMISSION_DOC.USER_UUID.eq(STROOM_USER.UUID))
+                        .leftOuterJoin(PERMISSION_DOC_CREATE)
+                        .on(PERMISSION_DOC_CREATE.USER_UUID.eq(STROOM_USER.UUID))
+                        .where(conditions)
+                        .orderBy(orderFields)
+                        .offset(offset)
+                        .limit(limit)
+                        .fetch();
+
+            } else {
+                conditions
+                        .add(PERMISSION_DOC.DOC_UUID.eq(docRef.getUuid()));
+                return context.select(
+                                PERMISSION_DOC.PERMISSION_ID,
+                                STROOM_USER.UUID,
+                                STROOM_USER.NAME,
+                                STROOM_USER.DISPLAY_NAME,
+                                STROOM_USER.FULL_NAME,
+                                STROOM_USER.IS_GROUP)
+                        .from(STROOM_USER)
+                        .join(PERMISSION_DOC)
+                        .on(PERMISSION_DOC.USER_UUID.eq(STROOM_USER.UUID))
+                        .where(conditions)
+                        .orderBy(orderFields)
+                        .offset(offset)
+                        .limit(limit)
+                        .fetch();
             }
-        } catch (Exception e) {
-            throw new RuntimeException(LogUtil.message("Error setting owner of document {} to user/group {}",
-                    docRefUuid, ownerUuid), e);
-        }
+        });
 
-        if (!didSucceed) {
-            throw new RuntimeException(LogUtil.message("Error setting owner of document {} to user/group {} " +
-                    "after 10 tries", docRefUuid, ownerUuid));
-        }
+        final List<DocumentUserPermissions> list = result.map(r -> {
+            final UserRef userRef = UserRef
+                    .builder()
+                    .uuid(r.get(STROOM_USER.UUID))
+                    .subjectId(r.get(STROOM_USER.NAME))
+                    .displayName(r.get(STROOM_USER.DISPLAY_NAME))
+                    .fullName(r.get(STROOM_USER.FULL_NAME))
+                    .group(r.get(STROOM_USER.IS_GROUP))
+                    .build();
+            final UByte value = r.get(PERMISSION_DOC.PERMISSION_ID);
+            DocumentPermission documentPermission = null;
+            if (value != null) {
+                documentPermission = DocumentPermission.PRIMITIVE_VALUE_CONVERTER
+                        .fromPrimitiveValue(value.byteValue());
+            }
+
+            Set<String> documentCreatePermissions = null;
+            if (ExplorerConstants.isFolderOrSystem(docRef)) {
+                documentCreatePermissions =
+                        getDocumentUserCreatePermissions(docRef.getUuid(), userRef.getUuid());
+            }
+
+            return new DocumentUserPermissions(
+                    userRef,
+                    documentPermission,
+                    documentCreatePermissions);
+        });
+
+        return ResultPage.createCriterialBasedList(list, request);
     }
 }

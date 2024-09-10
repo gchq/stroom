@@ -30,7 +30,7 @@ import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.structure.client.presenter.PropertyListPresenter.Source;
 import stroom.pipeline.structure.client.view.NewPropertyUiHandlers;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
@@ -392,7 +392,7 @@ public class NewPropertyPresenter
         }
 
         entityDropDownPresenter.setIncludedTypes(property.getPropertyType().getDocRefTypes());
-        entityDropDownPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+        entityDropDownPresenter.setRequiredPermissions(DocumentPermission.USE);
         try {
             entityDropDownPresenter.setSelectedEntityReference(value);
         } catch (final RuntimeException e) {

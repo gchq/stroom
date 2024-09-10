@@ -12,6 +12,7 @@ import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Function14;
 import org.jooq.Identity;
+import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Records;
@@ -26,6 +27,7 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
+import stroom.security.impl.db.jooq.Indexes;
 import stroom.security.impl.db.jooq.Keys;
 import stroom.security.impl.db.jooq.Stroom;
 import stroom.security.impl.db.jooq.tables.records.ApiKeyRecord;
@@ -161,6 +163,11 @@ public class ApiKey extends TableImpl<ApiKeyRecord> {
     }
 
     @Override
+    public List<Index> getIndexes() {
+        return Arrays.asList(Indexes.API_KEY_API_KEY_PREFIX_IDX);
+    }
+
+    @Override
     public Identity<ApiKeyRecord, Integer> getIdentity() {
         return (Identity<ApiKeyRecord, Integer>) super.getIdentity();
     }
@@ -172,7 +179,7 @@ public class ApiKey extends TableImpl<ApiKeyRecord> {
 
     @Override
     public List<UniqueKey<ApiKeyRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.KEY_API_KEY_API_KEY_OWNER_NAME_IDX, Keys.KEY_API_KEY_API_KEY_PREFIX_HASH_IDX);
+        return Arrays.asList(Keys.KEY_API_KEY_API_KEY_OWNER_NAME_IDX, Keys.KEY_API_KEY_API_KEY_API_KEY_HASH_IDX);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package stroom.processor.impl.db;
 
+import stroom.docref.DocRef;
 import stroom.processor.impl.ProcessorTaskDeleteExecutor;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
@@ -27,7 +28,7 @@ import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 class TestProcessorTaskDeleteExecutorImpl extends AbstractProcessorTest {
 
     @Captor
-    private ArgumentCaptor<Set<String>> filterUuidsCaptor;
+    private ArgumentCaptor<Set<DocRef>> filterUuidsCaptor;
 
     Processor processor1;
     Processor processor2;
@@ -208,12 +209,12 @@ class TestProcessorTaskDeleteExecutorImpl extends AbstractProcessorTest {
                 .isEqualTo(0);
 
         Mockito.verify(mockDocumentPermissionService, Mockito.times(1))
-                .deleteDocumentPermissions(filterUuidsCaptor.capture());
+                .removeAllDocumentPermissions(filterUuidsCaptor.capture());
 
         // Make sure we ask to delete the perms for the phys deleted filter
-        final Set<String> filterUuids = filterUuidsCaptor.getValue();
+        final Set<DocRef> filterUuids = filterUuidsCaptor.getValue();
         assertThat(filterUuids)
                 .hasSize(1)
-                .containsExactly(processorFilter1a.getUuid());
+                .containsExactly(processorFilter1a.asDocRef());
     }
 }

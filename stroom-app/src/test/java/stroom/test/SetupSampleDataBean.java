@@ -45,6 +45,10 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.receive.common.StreamTargetStreamHandlers;
+import stroom.security.impl.AppPermissionDao;
+import stroom.security.impl.UserDao;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.User;
 import stroom.statistics.impl.hbase.entity.StroomStatsStoreStore;
 import stroom.statistics.impl.sql.entity.StatisticStoreStore;
 import stroom.test.common.StroomCoreServerTestFileUtil;
@@ -68,6 +72,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
@@ -112,6 +118,8 @@ public final class SetupSampleDataBean {
     private final StroomStatsStoreStore stroomStatsStoreStore;
     private final SampleDataGenerator sampleDataGenerator;
     private final StreamTargetStreamHandlers streamTargetStreamHandlers;
+    private final UserDao userDao;
+    private final AppPermissionDao appPermissionDao;
 
     @Inject
     SetupSampleDataBean(final FeedStore feedStore,
@@ -128,7 +136,9 @@ public final class SetupSampleDataBean {
                         final StatisticStoreStore statisticStoreStore,
                         final StroomStatsStoreStore stroomStatsStoreStore,
                         final SampleDataGenerator sampleDataGenerator,
-                        final StreamTargetStreamHandlers streamTargetStreamHandlers) {
+                        final StreamTargetStreamHandlers streamTargetStreamHandlers,
+                        final UserDao userDao,
+                        final AppPermissionDao appPermissionDao) {
         this.feedStore = feedStore;
         this.feedProperties = feedProperties;
         this.importExportSerializer = importExportSerializer;
@@ -144,9 +154,14 @@ public final class SetupSampleDataBean {
         this.stroomStatsStoreStore = stroomStatsStoreStore;
         this.sampleDataGenerator = sampleDataGenerator;
         this.streamTargetStreamHandlers = streamTargetStreamHandlers;
+        this.userDao = userDao;
+        this.appPermissionDao = appPermissionDao;
     }
 
     public void run(final boolean shutdown) {
+        // Create sample users [optional].
+        createSampleUsers();
+
         checkVolumesExist();
 
         // Sample data/config can exist in many projects so here we define all
@@ -611,4 +626,62 @@ public final class SetupSampleDataBean {
     //
     // searchExpressionService.save(expression);
     // }
+
+
+
+    private void createSampleUsers() {
+        for (final AppPermission permission : AppPermission.values()) {
+            // Create a user that has explicit permission.
+            final User user = createUser("user__" + permission.name().toLowerCase(Locale.ROOT));
+            appPermissionDao.addPermission(user.getUuid(), permission);
+
+            // Create a group that has explicit permission.
+            final User group1 = createGroup("group1__" + permission.name().toLowerCase(Locale.ROOT));
+            appPermissionDao.addPermission(group1.getUuid(), permission);
+
+            // Create a user that is a member of the group so inherits permission.
+            final User group1user = createUser("group1user__" + permission.name().toLowerCase(Locale.ROOT));
+            userDao.addUserToGroup(group1user.getUuid(), group1.getUuid());
+
+            // Create a group that is a member of the group so inherits permission.
+            final User group2 = createGroup("group2__" + permission.name().toLowerCase(Locale.ROOT));
+            userDao.addUserToGroup(group2.getUuid(), group1.getUuid());
+
+            // Create a user that is a member of group2 so inherits permission.
+            final User group2user = createUser("group2user__" + permission.name().toLowerCase(Locale.ROOT));
+            userDao.addUserToGroup(group2user.getUuid(), group2.getUuid());
+        }
+    }
+
+    private User createGroup(final String name) {
+        final Optional<User> optionalGroup = userDao.getGroupByName(name);
+        return optionalGroup.orElseGet(() -> {
+            final User user = User.builder()
+                    .subjectId(name)
+                    .uuid(UUID.randomUUID().toString())
+                    .group(true)
+                    .build();
+            user.setCreateUser("admin");
+            user.setUpdateUser("admin");
+            user.setCreateTimeMs(System.currentTimeMillis());
+            user.setUpdateTimeMs(System.currentTimeMillis());
+            return userDao.create(user);
+        });
+    }
+
+    private User createUser(final String name) {
+        final Optional<User> optional = userDao.getUserBySubjectId(name);
+        return optional.orElseGet(() -> {
+            final User user = User.builder()
+                    .subjectId(name)
+                    .uuid(UUID.randomUUID().toString())
+                    .group(false)
+                    .build();
+            user.setCreateUser("admin");
+            user.setUpdateUser("admin");
+            user.setCreateTimeMs(System.currentTimeMillis());
+            user.setUpdateTimeMs(System.currentTimeMillis());
+            return userDao.create(user);
+        });
+    }
 }

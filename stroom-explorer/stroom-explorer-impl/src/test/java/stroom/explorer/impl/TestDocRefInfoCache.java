@@ -5,7 +5,7 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.api.DocumentActionHandlers;
-import stroom.docstore.api.DocumentType;
+import stroom.docstore.api.DocumentTypeName;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
@@ -68,8 +68,8 @@ class TestDocRefInfoCache {
     void setUp() {
         final DocumentActionHandlers documentActionHandlers = new DocumentActionHandlers(
                 Map.of(
-                        new DocumentType(TYPE_FOO), new MyDocumentActionHandler(Set.of(DOC_REF_1, DOC_REF_2)),
-                        new DocumentType(TYPE_BAR), new MyDocumentActionHandler(Set.of(DOC_REF_3, DOC_REF_4))));
+                        new DocumentTypeName(TYPE_FOO), new MyDocumentActionHandler(Set.of(DOC_REF_1, DOC_REF_2)),
+                        new DocumentTypeName(TYPE_BAR), new MyDocumentActionHandler(Set.of(DOC_REF_3, DOC_REF_4))));
 
         docRefInfoCache = new DocRefInfoCache(
                 cacheManager,
@@ -88,7 +88,7 @@ class TestDocRefInfoCache {
                 .isNotEmpty();
         assertThat(docRefInfo.get().getDocRef())
                 .isEqualTo(docRef);
-        assertThat(docRefInfoCache.get(docRef.getUuid()))
+        assertThat(docRefInfoCache.get(docRef))
                 .isEqualTo(docRefInfoCache.get(docRef));
     }
 
@@ -103,7 +103,7 @@ class TestDocRefInfoCache {
                 .isNotEmpty();
         assertThat(docRefInfo.get().getDocRef())
                 .isEqualTo(docRef);
-        assertThat(docRefInfoCache.get(docRef.getUuid()))
+        assertThat(docRefInfoCache.get(docRef))
                 .isEqualTo(docRefInfoCache.get(docRef));
     }
 
@@ -112,22 +112,16 @@ class TestDocRefInfoCache {
         DocRef docRef = DOC_REF_1;
         Optional<DocRefInfo> docRefInfo = docRefInfoCache.get(stripType(docRef));
 
-        assertThat(docRefInfo)
-                .isNotEmpty();
-        assertThat(docRefInfo.get().getDocRef())
-                .isEqualTo(docRef);
-        assertThat(docRefInfoCache.get(docRef.getUuid()))
-                .isEqualTo(docRefInfoCache.get(docRef));
+        assertThat(docRefInfo).isNotEmpty();
+        assertThat(docRefInfo.get().getDocRef()).isEqualTo(docRef);
+        assertThat(docRefInfoCache.get(docRef)).isEqualTo(docRefInfoCache.get(docRef));
 
         docRef = DOC_REF_4;
         docRefInfo = docRefInfoCache.get(stripType(docRef));
 
-        assertThat(docRefInfo)
-                .isNotEmpty();
-        assertThat(docRefInfo.get().getDocRef())
-                .isEqualTo(docRef);
-        assertThat(docRefInfoCache.get(docRef.getUuid()))
-                .isEqualTo(docRefInfoCache.get(docRef));
+        assertThat(docRefInfo).isNotEmpty();
+        assertThat(docRefInfo.get().getDocRef()).isEqualTo(docRef);
+        assertThat(docRefInfoCache.get(docRef)).isEqualTo(docRefInfoCache.get(docRef));
     }
 
     @Test
@@ -138,12 +132,9 @@ class TestDocRefInfoCache {
 
         Optional<DocRefInfo> docRefInfo = docRefInfoCache.get(stripType(docRef));
 
-        assertThat(docRefInfo)
-                .isNotEmpty();
-        assertThat(docRefInfo.get().getDocRef())
-                .isEqualTo(docRef);
-        assertThat(docRefInfoCache.get(docRef.getUuid()))
-                .isEqualTo(docRefInfoCache.get(docRef));
+        assertThat(docRefInfo).isNotEmpty();
+        assertThat(docRefInfo.get().getDocRef()).isEqualTo(docRef);
+        assertThat(docRefInfoCache.get(docRef)).isEqualTo(docRefInfoCache.get(docRef));
     }
 
     @Test
@@ -181,11 +172,11 @@ class TestDocRefInfoCache {
 
     private static class MyDocumentActionHandler implements DocumentActionHandler {
 
-        private final Map<String, DocRef> docRefs = new HashMap<>();
+        private final Map<DocRef, DocRef> docRefs = new HashMap<>();
         private final String type;
 
         public MyDocumentActionHandler(final Set<DocRef> docRefs) {
-            docRefs.forEach(docRef -> this.docRefs.put(docRef.getUuid(), docRef));
+            docRefs.forEach(docRef -> this.docRefs.put(docRef, docRef));
             final Set<String> types = docRefs.stream()
                     .map(DocRef::getType)
                     .collect(Collectors.toSet());
@@ -211,8 +202,8 @@ class TestDocRefInfoCache {
         }
 
         @Override
-        public DocRefInfo info(final String uuid) {
-            return NullSafe.get(docRefs.get(uuid), TestDocRefInfoCache::buildInfo);
+        public DocRefInfo info(final DocRef docRef) {
+            return NullSafe.get(docRefs.get(docRef), TestDocRefInfoCache::buildInfo);
         }
     }
 
@@ -248,25 +239,25 @@ class TestDocRefInfoCache {
         }
 
         @Override
-        public DocRef moveDocument(final String uuid) {
+        public DocRef moveDocument(final DocRef docRef) {
             return null;
         }
 
         @Override
-        public DocRef renameDocument(final String uuid, final String name) {
+        public DocRef renameDocument(final DocRef docRef, final String name) {
             return null;
         }
 
         @Override
-        public void deleteDocument(final String uuid) {
+        public void deleteDocument(final DocRef docRef) {
 
         }
 
         @Override
-        public DocRefInfo info(final String uuid) {
+        public DocRefInfo info(final DocRef docRef) {
             return buildInfo(DocRef.builder()
                     .type(FolderExplorerActionHandler.DOCUMENT_TYPE.getType())
-                    .uuid(uuid)
+                    .uuid(docRef.getUuid())
                     .build());
         }
 

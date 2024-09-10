@@ -9,7 +9,7 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.PermissionException;
 
@@ -57,8 +57,8 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
             throw new RuntimeException("Unable to find tree node to copy");
         }
 
-        if (!securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.READ)) {
-            throw new PermissionException(securityContext.getUserIdentityForAudit(),
+        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
+            throw new PermissionException(securityContext.getUserRef(),
                     "You do not have permission to read (" + FOLDER + ")");
         }
 
@@ -72,27 +72,27 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
     }
 
     @Override
-    public DocRef moveDocument(final String uuid) {
-        final ExplorerTreeNode explorerTreeNode = explorerTreeDao.findByUUID(uuid);
+    public DocRef moveDocument(final DocRef docRef) {
+        final ExplorerTreeNode explorerTreeNode = explorerTreeDao.findByUUID(docRef.getUuid());
         if (explorerTreeNode == null) {
             throw new RuntimeException("Unable to find tree node to move");
         }
 
-        if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.READ)) {
-            throw new PermissionException(securityContext.getUserIdentityForAudit(),
+        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
+            throw new PermissionException(securityContext.getUserRef(),
                     "You do not have permission to read (" + FOLDER + ")");
         }
         return explorerTreeNode.getDocRef();
     }
 
     @Override
-    public DocRef renameDocument(final String uuid, final String name) {
-        final ExplorerTreeNode explorerTreeNode = explorerTreeDao.findByUUID(uuid);
+    public DocRef renameDocument(final DocRef docRef, final String name) {
+        final ExplorerTreeNode explorerTreeNode = explorerTreeDao.findByUUID(docRef.getUuid());
         if (explorerTreeNode == null) {
             throw new RuntimeException("Unable to find tree node to rename");
         }
-        if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.UPDATE)) {
-            throw new PermissionException(securityContext.getUserIdentityForAudit(),
+        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
+            throw new PermissionException(securityContext.getUserRef(),
                     "You do not have permission to update (" + FOLDER + ")");
         }
         NameValidationUtil.validate(NAME_PATTERN_VALUE, name);
@@ -101,28 +101,28 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
     }
 
     @Override
-    public void deleteDocument(final String uuid) {
-        final ExplorerTreeNode explorerTreeNode = explorerTreeDao.findByUUID(uuid);
+    public void deleteDocument(final DocRef docRef) {
+        final ExplorerTreeNode explorerTreeNode = explorerTreeDao.findByUUID(docRef.getUuid());
         if (explorerTreeNode == null) {
             throw new RuntimeException("Unable to find tree node to delete");
         }
-        if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.DELETE)) {
-            throw new PermissionException(securityContext.getUserIdentityForAudit(),
+        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.DELETE)) {
+            throw new PermissionException(securityContext.getUserRef(),
                     "You do not have permission to delete (" + FOLDER + ")");
         }
     }
 
     @Override
-    public DocRefInfo info(final String uuid) {
-        final ExplorerTreeNode explorerTreeNode = explorerTreeDao.findByUUID(uuid);
+    public DocRefInfo info(final DocRef docRef) {
+        final ExplorerTreeNode explorerTreeNode = explorerTreeDao.findByUUID(docRef.getUuid());
         if (explorerTreeNode == null) {
             throw new DocumentNotFoundException(DocRef.builder()
-                    .uuid(uuid)
+                    .uuid(docRef.getUuid())
                     .build());
         }
 
-        if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.READ)) {
-            throw new PermissionException(securityContext.getUserIdentityForAudit(),
+        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
+            throw new PermissionException(securityContext.getUserRef(),
                     "You do not have permission to read (" + FOLDER + ")");
         }
 

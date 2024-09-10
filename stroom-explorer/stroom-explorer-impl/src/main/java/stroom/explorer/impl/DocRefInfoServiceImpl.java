@@ -10,6 +10,7 @@ import stroom.security.api.SecurityContext;
 import stroom.util.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,22 +22,22 @@ import java.util.stream.Collectors;
 class DocRefInfoServiceImpl implements DocRefInfoService {
 
     private final DocRefInfoCache docRefInfoCache;
-    private final SecurityContext securityContext;
+    private final Provider<SecurityContext> securityContextProvider;
     private final ExplorerActionHandlers explorerActionHandlers;
 
     @Inject
     DocRefInfoServiceImpl(final DocRefInfoCache docRefInfoCache,
-                          final SecurityContext securityContext,
+                          final Provider<SecurityContext> securityContextProvider,
                           final ExplorerActionHandlers explorerActionHandlers) {
         this.docRefInfoCache = docRefInfoCache;
-        this.securityContext = securityContext;
+        this.securityContextProvider = securityContextProvider;
         this.explorerActionHandlers = explorerActionHandlers;
     }
 
     @Override
     public List<DocRef> findByType(final String type) {
         Objects.requireNonNull(type);
-        return securityContext.asProcessingUserResult(() -> {
+        return securityContextProvider.get().asProcessingUserResult(() -> {
             final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);
             Objects.requireNonNull(handler, () -> "No handler for type " + type);
             return new ArrayList<>(handler.listDocuments());
@@ -50,19 +51,12 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
 
     @Override
     public Optional<DocRefInfo> info(final String uuid) {
-        return docRefInfoCache.get(uuid);
+        return docRefInfoCache.get(DocRef.builder().uuid(uuid).build());
     }
 
     @Override
     public Optional<String> name(final DocRef docRef) {
         return info(docRef)
-                .map(DocRefInfo::getDocRef)
-                .map(DocRef::getName);
-    }
-
-    @Override
-    public Optional<String> name(final String uuid) {
-        return info(uuid)
                 .map(DocRefInfo::getDocRef)
                 .map(DocRef::getName);
     }
@@ -75,7 +69,7 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
         if (NullSafe.isEmptyString(nameFilter)) {
             return Collections.emptyList();
         } else {
-            return securityContext.asProcessingUserResult(() -> {
+            return securityContextProvider.get().asProcessingUserResult(() -> {
                 if (type == null) {
                     // No type so have to search all handlers
                     final List<DocRef> result = new ArrayList<>();
@@ -101,7 +95,7 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
         if (NullSafe.isEmptyCollection(nameFilters)) {
             return Collections.emptyList();
         } else {
-            return securityContext.asProcessingUserResult(() -> {
+            return securityContextProvider.get().asProcessingUserResult(() -> {
                 final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);
                 Objects.requireNonNull(handler, () -> "No handler for type " + type);
                 return handler.findByNames(nameFilters, allowWildCards, isCaseSensitive);

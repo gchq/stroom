@@ -1675,7 +1675,6 @@ button.main-menu svg {
 }
 
 .form-padding {
-    overflow: auto;
     padding: var(--control__gap--vertical) var(--control__gap--horizontal);
 }
 
@@ -2054,14 +2053,15 @@ button.main-menu svg {
 
 .findCell-path {
     display: flex;
-    font-size: 0.7rem;
+    font-size: .7rem;
     flex-grow: 1;
     opacity: .5;
 }
 
 .findCell-uuid {
     display: flex;
-    font-size: .7rem;
+    font-size: .6rem;
+    font-family: monospace;
     flex-grow: 0;
     opacity: .5;
 }
@@ -2179,69 +2179,6 @@ button.main-menu svg {
     display: flex;
 }
 
-.folderPermissionsUsers {
-    flex-basis: 15rem;
-    flex-shrink: 1;
-}
-
-.folderPermissionsCreatePermissions > div {
-    /* 0 height to prevent the create perms box taking the size of its contents.
-       We want it to take a height based on the flex layout of its parent */
-    height: 0px;
-}
-
-.folderPermissionsPermissionsContainer {
-    gap: var(--control__padding--vertical);
-    flex-basis: 15rem;
-    flex-shrink: 1;
-}
-
-.documentPermissionType-noPermission {
-    color: var(--text-color--disabled);
-}
-
-.documentPermissionType-destructive {
-}
-
-.documentPermissionType-destructive.documentPermissionType-inferred {
-    /* color: hsl(from var(--text-color--red) h s calc(l - 20%)); */
-    opacity: 90%;
-}
-
-.documentPermissionType-destructive.documentPermissionType-direct {
-    font-weight: 500;
-}
-
-.documentPermissionType-nonDestructive {
-}
-
-.documentPermissionType-nonDestructive.documentPermissionType-inferred {
-    /* color: hsl(from var(--text-color--green) h s calc(l - 20%)); */
-    opacity: 90%;
-}
-
-.documentPermissionType-nonDestructive.documentPermissionType-direct {
-    font-weight: 500;
-}
-
-.documentPermissionsUsers {
-    gap: var(--control__padding--vertical);
-    flex-basis: 15rem;
-    flex-shrink: 1;
-}
-
-.documentPermissionsPermissionsFormGrp > div {
-    flex-shrink: 0;
-    flex-grow: 0;
-}
-
-.documentPermissionsPermissions {
-    gap: var(--control__padding--vertical);
-    flex-basis: 11rem;
-    flex-shrink: 0;
-    flex-grow: 0;
-}
-
 .editNodeTagsAllTagsFrmGrp,
 .editNodeTagsNodeTagsFrmGrp {
     flex-basis: 200px;
@@ -2313,4 +2250,18 @@ button.main-menu svg {
 .ScheduledProcessingViewImpl,
 .DuplicateManagementViewImpl {
     border-top: 1px solid var(--splitter__background-color);
+}
+
+.documentPermissionChangeControls {
+    display: flex;
+    gap: 5px;
+    flex-direction: column;
+}
+
+.inherited {
+    opacity: 0.4;
+}
+
+.bold {
+    font-weight: 600;
 }

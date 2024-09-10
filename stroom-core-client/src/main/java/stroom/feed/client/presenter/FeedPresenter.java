@@ -28,7 +28,7 @@ import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -58,7 +58,7 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
 
         TabData selectedTab = SETTINGS;
 
-        if (securityContext.hasAppPermission(PermissionNames.VIEW_DATA_PERMISSION)) {
+        if (securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION)) {
             addTab(DATA, new AbstractTabProvider<FeedDoc, MetaPresenter>(eventBus) {
                 @Override
                 protected MetaPresenter createPresenter() {
@@ -77,7 +77,7 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
             selectedTab = DATA;
         }
 
-        if (securityContext.hasAppPermission(PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
+        if (securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION)) {
             addTab(TASKS, new AbstractTabProvider<FeedDoc, ProcessorTaskPresenter>(eventBus) {
                 @Override
                 protected ProcessorTaskPresenter createPresenter() {

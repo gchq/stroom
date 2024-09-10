@@ -84,8 +84,8 @@ import stroom.importexport.client.event.ShowDocRefDependenciesEvent;
 import stroom.importexport.client.event.ShowDocRefDependenciesEvent.DependencyType;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.DefaultTaskListener;
@@ -417,7 +417,7 @@ public class DocumentPluginEventManager extends Plugin {
                         documentTypeCache.fetch(documentTypes -> {
                             final List<ExplorerNode> deletableItems = getExplorerNodeListWithPermission(
                                     documentPermissionMap,
-                                    DocumentPermissionNames.DELETE,
+                                    DocumentPermission.DELETE,
                                     false);
                             if (deletableItems.size() > 0) {
                                 deleteItems(deletableItems, explorerListener);
@@ -768,7 +768,7 @@ public class DocumentPluginEventManager extends Plugin {
 
     private List<ExplorerNode> getExplorerNodeListWithPermission(
             final Map<ExplorerNode, ExplorerNodePermissions> documentPermissionMap,
-            final String permission,
+            final DocumentPermission permission,
             final boolean includeSystemNodes) {
         final List<ExplorerNode> list = new ArrayList<>();
         for (final Map.Entry<ExplorerNode, ExplorerNodePermissions> entry : documentPermissionMap.entrySet()) {
@@ -998,16 +998,16 @@ public class DocumentPluginEventManager extends Plugin {
                                     final boolean singleSelection,
                                     final Map<ExplorerNode, ExplorerNodePermissions> documentPermissionMap) {
         final List<ExplorerNode> readableItems = getExplorerNodeListWithPermission(documentPermissionMap,
-                DocumentPermissionNames.READ,
+                DocumentPermission.VIEW,
                 false);
         final ExplorerNode singleReadableItem = readableItems.stream()
                 .findFirst()
                 .orElse(null);
         final List<ExplorerNode> updatableItems = getExplorerNodeListWithPermission(documentPermissionMap,
-                DocumentPermissionNames.UPDATE,
+                DocumentPermission.EDIT,
                 false);
         final List<ExplorerNode> deletableItems = getExplorerNodeListWithPermission(documentPermissionMap,
-                DocumentPermissionNames.DELETE,
+                DocumentPermission.DELETE,
                 false);
 
         // Actions allowed based on permissions of selection
@@ -1047,24 +1047,25 @@ public class DocumentPluginEventManager extends Plugin {
         menuItems.add(createRenameMenuItem(updatableItems, 26, isRenameEnabled));
         menuItems.add(createDeleteMenuItem(deletableItems, 27, allowDelete));
 
-        if (securityContext.hasAppPermission(PermissionNames.IMPORT_CONFIGURATION)) {
+        if (securityContext.hasAppPermission(AppPermission.IMPORT_CONFIGURATION)) {
             menuItems.add(createImportMenuItem(28));
         }
-        if (securityContext.hasAppPermission(PermissionNames.EXPORT_CONFIGURATION)) {
+        if (securityContext.hasAppPermission(AppPermission.EXPORT_CONFIGURATION)) {
             menuItems.add(createExportMenuItem(29, readableItems));
         }
 
         // Only allow users to change permissions if they have a single item selected.
         if (singleSelection) {
             final List<ExplorerNode> ownedItems = getExplorerNodeListWithPermission(documentPermissionMap,
-                    DocumentPermissionNames.OWNER,
+                    DocumentPermission.OWNER,
                     true);
             if (ownedItems.size() == 1) {
+                final DocRef docRef = ownedItems.get(0).getDocRef();
                 menuItems.add(new Separator(30));
-                menuItems.add(createShowDependenciesFromMenuItem(ownedItems.get(0), 31));
-                menuItems.add(createShowDependantsMenuItem(ownedItems.get(0), 32));
+                menuItems.add(createShowDependenciesFromMenuItem(docRef, 31));
+                menuItems.add(createShowDependantsMenuItem(docRef, 32));
                 menuItems.add(new Separator(33));
-                menuItems.add(createPermissionsMenuItem(ownedItems.get(0), 34, true));
+                menuItems.add(createPermissionsMenuItem(docRef, 34, true));
             }
         }
     }
@@ -1425,12 +1426,12 @@ public class DocumentPluginEventManager extends Plugin {
                 .build();
     }
 
-    private MenuItem createPermissionsMenuItem(final ExplorerNode explorerNode,
+    private MenuItem createPermissionsMenuItem(final DocRef docRef,
                                                final int priority,
                                                final boolean enabled) {
         final Command command = () -> {
-            if (explorerNode != null) {
-                ShowPermissionsDialogEvent.fire(DocumentPluginEventManager.this, explorerNode);
+            if (docRef != null) {
+                ShowPermissionsDialogEvent.fire(DocumentPluginEventManager.this, docRef);
             }
         };
 
@@ -1462,26 +1463,26 @@ public class DocumentPluginEventManager extends Plugin {
                 .build();
     }
 
-    private MenuItem createShowDependantsMenuItem(final ExplorerNode explorerNode, final int priority) {
+    private MenuItem createShowDependantsMenuItem(final DocRef docRef, final int priority) {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.DEPENDENCIES)
                 .text("Dependants")
                 .command(() -> ShowDocRefDependenciesEvent.fire(
                         DocumentPluginEventManager.this,
-                        explorerNode.getDocRef(),
+                        docRef,
                         DependencyType.DEPENDANT))
                 .build();
     }
 
-    private MenuItem createShowDependenciesFromMenuItem(final ExplorerNode explorerNode, final int priority) {
+    private MenuItem createShowDependenciesFromMenuItem(final DocRef docRef, final int priority) {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.DEPENDENCIES)
                 .text("Dependencies")
                 .command(() -> ShowDocRefDependenciesEvent.fire(
                         DocumentPluginEventManager.this,
-                        explorerNode.getDocRef(),
+                        docRef,
                         DependencyType.DEPENDENCY))
                 .build();
     }

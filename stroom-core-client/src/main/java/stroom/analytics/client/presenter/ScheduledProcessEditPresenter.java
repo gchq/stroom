@@ -13,6 +13,8 @@ import stroom.job.shared.ScheduleReferenceTime;
 import stroom.job.shared.ScheduleRestriction;
 import stroom.node.client.NodeManager;
 import stroom.schedule.client.SchedulePopup;
+import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.widget.datepicker.client.DateTimePopup;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -37,6 +39,8 @@ public class ScheduledProcessEditPresenter
             GWT.create(ExecutionScheduleResource.class);
 
     private final DocSelectionBoxPresenter errorFeedPresenter;
+    private final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
+    private final ClientSecurityContext clientSecurityContext;
     private ExecutionSchedule executionSchedule;
 
     @Inject
@@ -46,8 +50,14 @@ public class ScheduledProcessEditPresenter
                                          final NodeManager nodeManager,
                                          final Provider<SchedulePopup> schedulePresenterProvider,
                                          final Provider<DateTimePopup> dateTimePopupProvider,
-                                         final RestFactory restFactory) {
+                                         final RestFactory restFactory,
+                                         final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter,
+                                         final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
+        this.userRefSelectionBoxPresenter = userRefSelectionBoxPresenter;
+        this.clientSecurityContext = clientSecurityContext;
+        view.setRunAsUserView(userRefSelectionBoxPresenter.getView());
+
         view.setUiHandlers(this);
         view.getStartTime().setPopupProvider(dateTimePopupProvider);
         view.getEndTime().setPopupProvider(dateTimePopupProvider);
@@ -96,6 +106,7 @@ public class ScheduledProcessEditPresenter
         super.onBind();
         registerHandler(errorFeedPresenter.addDataSelectionHandler(e -> onDirty()));
         registerHandler(getView().getScheduleBox().addValueChangeHandler(e -> onDirty()));
+        registerHandler(userRefSelectionBoxPresenter.addDataSelectionHandler(e -> onDirty()));
     }
 
     public void show(final ExecutionSchedule executionSchedule,
@@ -133,6 +144,12 @@ public class ScheduledProcessEditPresenter
         getView().setNode(executionSchedule.getNodeName());
         setScheduleBounds(executionSchedule.getScheduleBounds());
         getView().getScheduleBox().setValue(executionSchedule.getSchedule());
+
+        if (executionSchedule.getRunAsUser() == null) {
+            userRefSelectionBoxPresenter.setSelected(clientSecurityContext.getUserRef());
+        } else {
+            userRefSelectionBoxPresenter.setSelected(executionSchedule.getRunAsUser());
+        }
     }
 
     public void write(final Consumer<ExecutionSchedule> consumer,
@@ -159,6 +176,7 @@ public class ScheduledProcessEditPresenter
                             .schedule(scheduledTimes.getSchedule())
                             .contiguous(true)
                             .scheduleBounds(scheduleBounds)
+                            .runAsUser(userRefSelectionBoxPresenter.getSelected())
                             .build();
                     consumer.accept(schedule);
                 }

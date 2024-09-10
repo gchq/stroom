@@ -16,6 +16,7 @@
 
 package stroom.explorer.shared;
 
+import stroom.docref.DocRef;
 import stroom.util.shared.GwtNullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -70,6 +71,10 @@ public class DocumentTypes {
 
     public DocumentType getDocumentType(final String type) {
         return typeToDocumentTypeMap.get(type);
+    }
+
+    public static boolean isFolder(final DocRef docRef) {
+        return isFolder(docRef.getType());
     }
 
     public static boolean isFolder(final String type) {

@@ -32,7 +32,7 @@ import stroom.search.elastic.client.presenter.ElasticIndexSettingsPresenter.Elas
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexResource;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskHandlerFactory;
 
 import com.google.gwt.core.client.GWT;
@@ -70,10 +70,10 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
         this.fieldSelectionBoxModel = fieldSelectionBoxModel;
 
         clusterPresenter.setIncludedTypes(ElasticClusterDoc.DOCUMENT_TYPE);
-        clusterPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+        clusterPresenter.setRequiredPermissions(DocumentPermission.USE);
 
         pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
-        pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.READ);
+        pipelinePresenter.setRequiredPermissions(DocumentPermission.VIEW);
 
         view.setUiHandlers(this);
         view.setDefaultExtractionPipelineView(pipelinePresenter.getView());

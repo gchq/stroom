@@ -22,7 +22,7 @@ import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.NullSafe;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
@@ -81,9 +81,9 @@ public class LuceneIndexDocCacheImpl implements LuceneIndexDocCache, Clearable, 
     public LuceneIndexDoc get(final DocRef docRef) {
         Objects.requireNonNull(docRef, "Null DocRef supplied");
 
-        if (!securityContext.hasDocumentPermission(docRef, DocumentPermissionNames.USE)) {
+        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.USE)) {
             throw new PermissionException(
-                    securityContext.getUserIdentityForAudit(),
+                    securityContext.getUserRef(),
                     LogUtil.message("You are not authorised to read {}", docRef));
         }
         return cache.get(docRef);

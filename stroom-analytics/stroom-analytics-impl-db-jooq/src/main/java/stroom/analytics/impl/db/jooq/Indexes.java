@@ -23,4 +23,5 @@ public class Indexes {
     // -------------------------------------------------------------------------
 
     public static final Index EXECUTION_SCHEDULE_EXECUTION_SCHEDULE_DOC_IDX = Internal.createIndex(DSL.name("execution_schedule_doc_idx"), ExecutionSchedule.EXECUTION_SCHEDULE, new OrderField[] { ExecutionSchedule.EXECUTION_SCHEDULE.DOC_TYPE, ExecutionSchedule.EXECUTION_SCHEDULE.DOC_UUID }, false);
+    public static final Index EXECUTION_SCHEDULE_EXECUTION_SCHEDULE_ENABLED_IDX = Internal.createIndex(DSL.name("execution_schedule_enabled_idx"), ExecutionSchedule.EXECUTION_SCHEDULE, new OrderField[] { ExecutionSchedule.EXECUTION_SCHEDULE.DOC_TYPE, ExecutionSchedule.EXECUTION_SCHEDULE.DOC_UUID, ExecutionSchedule.EXECUTION_SCHEDULE.ENABLED, ExecutionSchedule.EXECUTION_SCHEDULE.NODE_NAME }, false);
 }

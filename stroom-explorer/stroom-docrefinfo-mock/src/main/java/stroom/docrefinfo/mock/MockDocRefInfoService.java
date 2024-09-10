@@ -19,17 +19,14 @@ public class MockDocRefInfoService implements DocRefInfoService {
 
     @Override
     public Optional<DocRefInfo> info(final String uuid) {
-        throw new UnsupportedOperationException();
+        return Optional.of(DocRefInfo.builder()
+                .docRef(DocRef.builder().uuid(uuid).build())
+                .build());
     }
 
     @Override
     public Optional<String> name(final DocRef docRef) {
         return Optional.ofNullable(docRef.getName());
-    }
-
-    @Override
-    public Optional<String> name(final String uuid) {
-        throw new UnsupportedOperationException();
     }
 
     @Override

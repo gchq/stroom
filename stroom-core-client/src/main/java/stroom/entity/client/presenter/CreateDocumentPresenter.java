@@ -26,7 +26,7 @@ import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskHandlerFactory;
 import stroom.widget.popup.client.event.DialogEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -73,7 +73,7 @@ public class CreateDocumentPresenter
         view.setFolderView(entityTreePresenter.getView());
 
         entityTreePresenter.setIncludedTypes(DocumentTypes.FOLDER_TYPES);
-        entityTreePresenter.setRequiredPermissions(DocumentPermissionNames.USE, DocumentPermissionNames.READ);
+        entityTreePresenter.setRequiredPermissions(DocumentPermission.USE, DocumentPermission.VIEW);
     }
 
     @ProxyEvent

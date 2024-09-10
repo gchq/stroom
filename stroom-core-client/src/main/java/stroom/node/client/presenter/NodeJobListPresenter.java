@@ -3,7 +3,7 @@ package stroom.node.client.presenter;
 import stroom.cell.info.client.CommandLink;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
+import stroom.data.grid.client.PagerViewWithHeading;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
 /**
  * Bottom pane of NodePresenter (Nodes tab). Lists jobNodes for a single node.
  */
-public class NodeJobListPresenter extends MyPresenterWidget<PagerView> implements Refreshable {
+public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading> implements Refreshable {
 
     private static final JobNodeResource JOB_NODE_RESOURCE = GWT.create(JobNodeResource.class);
     private static final String AUTO_REFRESH_ON_TITLE = "Turn Auto Refresh Off";
@@ -65,7 +65,7 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> implement
 
     @Inject
     public NodeJobListPresenter(final EventBus eventBus,
-                                final PagerView view,
+                                final PagerViewWithHeading view,
                                 final RestFactory restFactory,
                                 final SchedulePopup schedulePresenter,
                                 final MenuPresenter menuPresenter,
@@ -163,7 +163,7 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerView> implement
 
     private RestDataProvider<JobNodeAndInfo, JobNodeAndInfoListResponse> buildDataProvider(
             final EventBus eventBus,
-            final PagerView view,
+            final PagerViewWithHeading view,
             final RestFactory restFactory) {
 
         //noinspection Convert2Diamond

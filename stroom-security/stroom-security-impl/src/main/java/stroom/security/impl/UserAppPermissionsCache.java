@@ -18,12 +18,14 @@ package stroom.security.impl;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
-import stroom.docref.DocRef;
+import stroom.security.impl.event.PermissionChangeEvent;
+import stroom.security.shared.AppPermission;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
-import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.UserDocRefUtil;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -32,51 +34,40 @@ import jakarta.inject.Singleton;
 import java.util.Set;
 
 @Singleton
-@EntityEventHandler(type = UserDocRefUtil.USER, action = {
-        EntityAction.UPDATE,
-        EntityAction.DELETE,
-        EntityAction.CLEAR_CACHE})
-public class UserAppPermissionsCache implements Clearable, EntityEvent.Handler {
+public class UserAppPermissionsCache implements Clearable, PermissionChangeEvent.Handler {
 
     private static final String CACHE_NAME = "User App Permissions Cache";
 
     private final Provider<EntityEventBus> eventBusProvider;
-    private final LoadingStroomCache<String, Set<String>> cache;
+    private final LoadingStroomCache<UserRef, Set<AppPermission>> cache;
 
     @Inject
     UserAppPermissionsCache(final CacheManager cacheManager,
                             final Provider<AuthorisationConfig> authorisationConfigProvider,
-                            final UserAppPermissionService userAppPermissionService,
+                            final Provider<AppPermissionDao> appPermissionDaoProvider,
                             final Provider<EntityEventBus> eventBusProvider) {
         this.eventBusProvider = eventBusProvider;
         cache = cacheManager.createLoadingCache(
                 CACHE_NAME,
                 () -> authorisationConfigProvider.get().getUserAppPermissionsCache(),
-                userAppPermissionService::getPermissionNamesForUser);
+                userRef -> appPermissionDaoProvider.get().getPermissionsForUser(userRef.getUuid()));
     }
 
-    Set<String> get(final String userUuid) {
-        return cache.get(userUuid);
+    Set<AppPermission> get(final UserRef userRef) {
+        return cache.get(userRef);
     }
 
-    void remove(final String userUuid) {
-        cache.invalidate(userUuid);
+    void remove(final UserRef userRef) {
+        cache.invalidate(userRef);
 
         final EntityEventBus entityEventBus = eventBusProvider.get();
-        EntityEvent.fire(entityEventBus, UserDocRefUtil.createDocRef(userUuid), EntityAction.CLEAR_CACHE);
+        EntityEvent.fire(entityEventBus, UserDocRefUtil.createDocRef(userRef), EntityAction.CLEAR_CACHE);
     }
 
     @Override
-    public void onChange(final EntityEvent event) {
-        if (EntityAction.CLEAR_CACHE.equals(event.getAction())) {
-            clear();
-        } else {
-            final DocRef docRef = event.getDocRef();
-            if (docRef != null) {
-                if (UserDocRefUtil.USER.equals(docRef.getType())) {
-                    cache.invalidate(docRef.getUuid());
-                }
-            }
+    public void onChange(final PermissionChangeEvent event) {
+        if (event.getUserRef() != null) {
+            cache.invalidate(event.getUserRef());
         }
     }
 

@@ -16,8 +16,11 @@
                 </p>
             </form:HelpHTML>
             <g:FlowPanel styleName="max dock-container-vertical">
+                <!--
                 <g:Label ui:field="ownerLabel" addStyleNames="w-100"/>
                 <item:SelectionBox ui:field="ownerSelectionBox" addStyleNames="w-100"/>
+                -->
+                <g:SimplePanel ui:field="ownerPanel" addStyleNames="w-100"/>
             </g:FlowPanel>
         </form:FormGroup>
         <form:FormGroup identity="name" label="API Key Name">
@@ -58,8 +61,8 @@
             <g:FlowPanel styleName="max dock-container-vertical">
                 <g:TextArea ui:field="apiKeyTextArea" addStyleNames="w-100"/>
                 <g:FlowPanel styleName="max dock-container-horizontal align-center">
-                    <b:ButtonPanel ui:field="apiKeyButtonPanel" />
-                    <g:Label ui:field="copyToClipboardLabel" />
+                    <b:ButtonPanel ui:field="apiKeyButtonPanel"/>
+                    <g:Label ui:field="copyToClipboardLabel"/>
                 </g:FlowPanel>
             </g:FlowPanel>
         </form:FormGroup>

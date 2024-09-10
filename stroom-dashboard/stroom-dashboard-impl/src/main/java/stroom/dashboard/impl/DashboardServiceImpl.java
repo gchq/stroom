@@ -58,7 +58,7 @@ import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ParamFactory;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.storedquery.api.StoredQueryService;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
@@ -237,7 +237,7 @@ class DashboardServiceImpl implements DashboardService {
 
     @Override
     public ResourceGeneration downloadSearchResults(final DownloadSearchResultsRequest request) {
-        return securityContext.secureResult(PermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
             final DashboardSearchRequest searchRequest = request.getSearchRequest();
             final QueryKey queryKey = searchRequest.getQueryKey();
             ResourceKey resourceKey;
@@ -358,12 +358,12 @@ class DashboardServiceImpl implements DashboardService {
 
     private String getQueryFileName(final DashboardSearchRequest request) {
         final SearchRequestSource searchRequestSource = request.getSearchRequestSource();
-        final DocRefInfo dashDocRefInfo = dashboardStore.info(searchRequestSource.getOwnerDocUuid());
+        final DocRefInfo dashDocRefInfo = dashboardStore.info(searchRequestSource.getOwnerDocRef());
         final String dashboardName = NullSafe.getOrElse(
                 dashDocRefInfo,
                 DocRefInfo::getDocRef,
                 DocRef::getName,
-                searchRequestSource.getOwnerDocUuid());
+                searchRequestSource.getOwnerDocRef().getName());
         final String basename = dashboardName + "__" + searchRequestSource.getComponentId();
         return getFileName(basename, "json");
     }
@@ -490,7 +490,7 @@ class DashboardServiceImpl implements DashboardService {
                 final SearchRequestSource searchRequestSource = request.getSearchRequestSource();
                 final StoredQuery storedQuery = new StoredQuery();
                 storedQuery.setName("History");
-                storedQuery.setDashboardUuid(searchRequestSource.getOwnerDocUuid());
+                storedQuery.setDashboardUuid(searchRequestSource.getOwnerDocRef().getUuid());
                 storedQuery.setComponentId(searchRequestSource.getComponentId());
                 storedQuery.setQuery(query);
                 queryService.create(storedQuery);

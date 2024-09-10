@@ -17,50 +17,106 @@
 
 package stroom.security.client.presenter;
 
+import stroom.alert.client.event.ConfirmEvent;
+import stroom.dispatch.client.RestErrorHandler;
+import stroom.dispatch.client.RestFactory;
 import stroom.security.client.presenter.CreateMultipleUsersPresenter.CreateMultipleUsersView;
+import stroom.security.shared.User;
+import stroom.security.shared.UserResource;
+import stroom.task.client.TaskHandlerFactory;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.popup.client.view.DefaultHideRequestUiHandlers;
-import stroom.widget.popup.client.view.HideRequestUiHandlers;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+
 public class CreateMultipleUsersPresenter extends MyPresenterWidget<CreateMultipleUsersView> {
+
+    private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
+
+    private final RestFactory restFactory;
 
     @Inject
     public CreateMultipleUsersPresenter(final EventBus eventBus,
-                                        final CreateMultipleUsersView view) {
+                                        final CreateMultipleUsersView view,
+                                        final RestFactory restFactory) {
         super(eventBus, view);
+        this.restFactory = restFactory;
     }
 
-    public void show(final HidePopupRequestEvent.Handler handler) {
-        getView().setUiHandlers(new DefaultHideRequestUiHandlers(this));
-
-        final PopupSize popupSize = PopupSize.resizable(600, 600);
-        ShowPopupEvent.builder(this)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(popupSize)
-                .caption("Add Multiple External Identity Provider Users")
-                .onShow(e -> getView().focus())
-                .onHideRequest(handler)
-                .fire();
+    public void create(final Consumer<User> consumer,
+                       final HidePopupRequestEvent event,
+                       final TaskHandlerFactory taskHandlerFactory) {
+        final String usersCsvData = getView().getUsersCsvData();
+        if (usersCsvData != null && !usersCsvData.isEmpty()) {
+            restFactory
+                    .create(USER_RESOURCE)
+                    .method(res -> res.createUsersFromCsv(usersCsvData))
+                    .onSuccess(result -> {
+                        if (result != null) {
+                            final List<User> disabled = result
+                                    .stream()
+                                    .filter(user -> !user.isEnabled())
+                                    .collect(Collectors.toList());
+                            final Optional<User> nextSelection = result.stream().findFirst();
+                            if (disabled.size() > 0) {
+                                ConfirmEvent.fire(this,
+                                        "Some deleted users already exist with the same names, " +
+                                                "would you like to restore them?",
+                                        ok -> {
+                                            if (ok) {
+                                                enable(disabled, consumer, event, nextSelection, taskHandlerFactory);
+                                            } else {
+                                                nextSelection.ifPresent(consumer);
+                                                event.hide();
+                                            }
+                                        });
+                            } else {
+                                nextSelection.ifPresent(consumer);
+                                event.hide();
+                            }
+                        } else {
+                            event.hide();
+                        }
+                    })
+                    .onFailure(RestErrorHandler.forPopup(this, event))
+                    .taskHandlerFactory(taskHandlerFactory)
+                    .exec();
+        } else {
+            event.hide();
+        }
     }
 
-    public String getUsersCsvData() {
-        return getView().getUsersCsvData();
+    private void enable(final List<User> disabled,
+                        final Consumer<User> consumer,
+                        final HidePopupRequestEvent event,
+                        final Optional<User> nextSelection,
+                        final TaskHandlerFactory taskHandlerFactory) {
+        if (disabled.size() == 0) {
+            nextSelection.ifPresent(consumer);
+            event.hide();
+        } else {
+            final User user = disabled.remove(0);
+            user.setEnabled(true);
+            restFactory
+                    .create(USER_RESOURCE)
+                    .method(res -> res.update(user))
+                    .onSuccess(result -> {
+                        enable(disabled, consumer, event, nextSelection, taskHandlerFactory);
+                    })
+                    .taskHandlerFactory(taskHandlerFactory)
+                    .exec();
+        }
     }
 
-
-    // --------------------------------------------------------------------------------
-
-
-    public interface CreateMultipleUsersView extends View, HasUiHandlers<HideRequestUiHandlers> {
+    public interface CreateMultipleUsersView extends View {
 
         String getUsersCsvData();
 

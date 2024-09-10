@@ -72,17 +72,7 @@ public class EmailSender {
         Preconditions.checkNotNull(emailConfig, "Missing 'email' section in config");
         final SmtpConfig smtpConfig = Preconditions.checkNotNull(emailConfig.getSmtpConfig(),
                 "Missing 'smtp' section in email config");
-
-        final EmailPopulatingBuilder emailBuilder = EmailBuilder.startingBlank()
-                .from(emailConfig.getFromName(), emailConfig.getFromAddress())
-                .withReplyTo(emailConfig.getFromName(), emailConfig.getFromAddress());
-
-        addAddresses(emailDestination.getTo(), address ->
-                emailBuilder.withRecipient(address, address, RecipientType.TO));
-        addAddresses(emailDestination.getCc(), address ->
-                emailBuilder.withRecipient(address, address, RecipientType.CC));
-        addAddresses(emailDestination.getBcc(), address ->
-                emailBuilder.withRecipient(address, address, RecipientType.BCC));
+        final EmailPopulatingBuilder emailBuilder = EmailBuilder.startingBlank();
 
         try {
             validate(emailDestination);
@@ -96,53 +86,72 @@ public class EmailSender {
                     detection.getDetectorName());
             final String body = Objects.requireNonNullElse(renderedEmail.getBody(), "");
 
+            emailBuilder
+                    .from(emailConfig.getFromName(), emailConfig.getFromAddress())
+                    .withReplyTo(emailConfig.getFromName(), emailConfig.getFromAddress());
+
+            addAddresses(emailDestination.getTo(), address ->
+                    emailBuilder.withRecipient(address, address, RecipientType.TO));
+            addAddresses(emailDestination.getCc(), address ->
+                    emailBuilder.withRecipient(address, address, RecipientType.CC));
+            addAddresses(emailDestination.getBcc(), address ->
+                    emailBuilder.withRecipient(address, address, RecipientType.BCC));
+
             emailBuilder.withSubject(subject);
             if (looksLikeHtml(body)) {
                 emailBuilder.withHTMLText(body);
             } else {
                 emailBuilder.withPlainText(body);
             }
-        } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
+        } catch (Exception e) {
+            final String message = LogUtil.message("Error sending alert email using user ({}) at {}:{} - {}",
+                    smtpConfig.getUsername(),
+                    smtpConfig.getHost(),
+                    smtpConfig.getPort(),
+                    e.getMessage());
+            LOGGER.error(message, e);
+            throw new RuntimeException(message, e);
         }
 
         final Email email = emailBuilder.buildEmail();
+        try {
+            final MailerRegularBuilderImpl mailerBuilder = MailerBuilder
+                    .withTransportStrategy(smtpConfig.getTransportStrategy());
 
-        final MailerRegularBuilderImpl mailerBuilder = MailerBuilder
-                .withTransportStrategy(smtpConfig.getTransportStrategy());
+            if (!NullSafe.isEmptyString(smtpConfig.getUsername())
+                    && !NullSafe.isEmptyString(smtpConfig.getPassword())) {
+                mailerBuilder.withSMTPServer(
+                        smtpConfig.getHost(),
+                        smtpConfig.getPort(),
+                        smtpConfig.getUsername(),
+                        smtpConfig.getPassword());
+            } else {
+                mailerBuilder.withSMTPServer(
+                        smtpConfig.getHost(),
+                        smtpConfig.getPort());
+            }
 
-        if (!NullSafe.isEmptyString(smtpConfig.getUsername())
-                && !NullSafe.isEmptyString(smtpConfig.getPassword())) {
-            mailerBuilder.withSMTPServer(
-                    smtpConfig.getHost(),
-                    smtpConfig.getPort(),
+            LOGGER.info(() -> LogUtil.message(
+                    "Sending alert email to recipients {} with subject '{}'. See DEBUG for full detail.",
+                    recipientsToString(email), email.getSubject()));
+
+            LOGGER.debug(() -> LogUtil.message("Sending alert email {} using user ({}) at {}:{}",
+                    email,
                     smtpConfig.getUsername(),
-                    smtpConfig.getPassword());
-        } else {
-            mailerBuilder.withSMTPServer(
                     smtpConfig.getHost(),
-                    smtpConfig.getPort());
-        }
-
-        LOGGER.info(() -> LogUtil.message(
-                "Sending alert email to recipients {} with subject '{}'. See DEBUG for full detail.",
-                recipientsToString(email), email.getSubject()));
-
-        LOGGER.debug(() -> LogUtil.message("Sending alert email {} using user ({}) at {}:{}",
-                email,
-                smtpConfig.getUsername(),
-                smtpConfig.getHost(),
-                smtpConfig.getPort()));
-        try (Mailer mailer = mailerBuilder.buildMailer()) {
-            mailer.sendMail(email);
-        } catch (Exception e) {
-            LOGGER.error("Error sending alert email {} using user ({}) at {}:{} - {}",
+                    smtpConfig.getPort()));
+            try (final Mailer mailer = mailerBuilder.buildMailer()) {
+                mailer.sendMail(email);
+            }
+        } catch (final Exception e) {
+            final String message = LogUtil.message("Error sending alert email {} using user ({}) at {}:{} - {}",
                     email,
                     smtpConfig.getUsername(),
                     smtpConfig.getHost(),
                     smtpConfig.getPort(),
-                    e.getMessage(),
-                    e);
+                    e.getMessage());
+            LOGGER.error(message, e);
+            throw new RuntimeException(message, e);
         }
     }
 

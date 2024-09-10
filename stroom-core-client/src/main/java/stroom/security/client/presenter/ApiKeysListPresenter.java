@@ -20,10 +20,10 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.EditApiKeyPresenter.Mode;
 import stroom.security.shared.ApiKeyResource;
 import stroom.security.shared.ApiKeyResultPage;
+import stroom.security.shared.AppPermission;
 import stroom.security.shared.FindApiKeyCriteria;
 import stroom.security.shared.HashAlgorithm;
 import stroom.security.shared.HashedApiKey;
-import stroom.security.shared.PermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskHandlerFactory;
 import stroom.util.client.DataGridUtil;
@@ -95,9 +95,9 @@ public class ApiKeysListPresenter
         this.dataGrid.setSelectionModel(selectionModel, selectionEventManager);
         view.setDataWidget(dataGrid);
 
-        if (!securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
+        if (!securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
             // No Manage Users perms so can only see their own keys
-            criteria.setOwner(securityContext.getUserName());
+            criteria.setOwner(securityContext.getUserRef());
         }
         criteria.setSort(FindApiKeyCriteria.FIELD_EXPIRE_TIME);
 
@@ -257,10 +257,10 @@ public class ApiKeysListPresenter
 
         // Need manage users perm to CRUD keys for other users
         // If you don't have it no point in showing owner col
-        if (securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
+        if (securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
             final Column<HashedApiKey, String> ownerColumn = DataGridUtil.textColumnBuilder(
                             (HashedApiKey row) ->
-                                    row.getOwner().getUserIdentityForAudit())
+                                    row.getOwner().toDisplayString())
                     .enabledWhen(HashedApiKey::getEnabled)
                     .withSorting(FindApiKeyCriteria.FIELD_OWNER)
                     .build();

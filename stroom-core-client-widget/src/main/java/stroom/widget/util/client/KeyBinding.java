@@ -112,6 +112,7 @@ public class KeyBinding {
         addGotoKeySequence(Action.GOTO_DATA_RETENTION, KeyCodes.KEY_R);
         addGotoKeySequence(Action.GOTO_SEARCH_RESULTS, KeyCodes.KEY_S);
         addGotoKeySequence(Action.GOTO_TASKS, KeyCodes.KEY_T);
+        addGotoKeySequence(Action.GOTO_USER_GROUPS, KeyCodes.KEY_G);
         addGotoKeySequence(Action.GOTO_USER_PREFERENCES, KeyCodes.KEY_U);
         addGotoKeySequence(Action.GOTO_FS_VOLUMES, KeyCodes.KEY_V);
         addGotoKeySequence(Action.GOTO_USER_ACCOUNTS, KeyCodes.KEY_X);
@@ -638,9 +639,12 @@ public class KeyBinding {
         GOTO_SEARCH_RESULTS,
         GOTO_FS_VOLUMES,
         GOTO_APP_PERMS,
+        GOTO_DOC_PERMS,
         GOTO_INDEX_VOLUMES,
         GOTO_USER_ACCOUNTS,
+        GOTO_USER_GROUPS,
         GOTO_USER_PREFERENCES,
+        GOTO_USER_PERMISSION_REPORT,
 
         // Create Doc key sequences
         CREATE_ELASTIC_INDEX, // C

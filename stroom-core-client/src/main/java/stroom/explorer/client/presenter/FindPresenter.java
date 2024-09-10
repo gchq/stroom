@@ -1,10 +1,9 @@
 package stroom.explorer.client.presenter;
 
-import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.event.ShowFindEvent;
 import stroom.explorer.client.presenter.FindPresenter.FindProxy;
 import stroom.explorer.shared.ExplorerConstants;
+import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -26,9 +25,8 @@ public class FindPresenter
     public FindPresenter(final EventBus eventBus,
                          final FindView view,
                          final FindProxy proxy,
-                         final PagerView pagerView,
-                         final RestFactory restFactory) {
-        super(eventBus, view, proxy, pagerView, restFactory);
+                         final FindDocResultListPresenter findResultListPresenter) {
+        super(eventBus, view, proxy, findResultListPresenter);
     }
 
     @ProxyEvent
@@ -36,8 +34,19 @@ public class FindPresenter
     public void onShow(final ShowFindEvent event) {
         if (!showing) {
             showing = true;
-            focusText = true;
+
+            // Make sure we are set to focus text next time we show.
+            getFindResultListPresenter().setFocusText(true);
+
+            final ExplorerTreeFilter.Builder explorerTreeFilterBuilder =
+                    getFindResultListPresenter().getExplorerTreeFilterBuilder();
+            // Don't want favourites in the recent items as they are effectively duplicates
+            explorerTreeFilterBuilder.includedRootTypes(ExplorerConstants.SYSTEM);
+            explorerTreeFilterBuilder.setNameFilter(explorerTreeFilterBuilder.build().getNameFilter(), true);
+
+            // Refresh the results.
             refresh();
+
             final PopupSize popupSize = PopupSize.resizable(800, 600);
             ShowPopupEvent.builder(this)
                     .popupType(PopupType.CLOSE_DIALOG)
@@ -49,14 +58,6 @@ public class FindPresenter
                     .fire();
         }
     }
-
-    @Override
-    protected void updateFilter(final ExplorerTreeFilterBuilder explorerTreeFilterBuilder) {
-        explorerTreeFilterBuilder.setIncludedRootTypes(ExplorerConstants.SYSTEM);
-    }
-
-    // --------------------------------------------------------------------------------
-
 
     @ProxyCodeSplit
     public interface FindProxy extends Proxy<FindPresenter> {

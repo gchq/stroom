@@ -6,15 +6,14 @@ import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.EditApiKeyPresenter.EditApiKeyView;
 import stroom.security.shared.ApiKeyResource;
+import stroom.security.shared.AppPermission;
 import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.HashAlgorithm;
 import stroom.security.shared.HashedApiKey;
-import stroom.security.shared.PermissionNames;
-import stroom.security.shared.UserResource;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.util.shared.GwtNullSafe;
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserRef;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -31,18 +30,16 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.List;
-
 public class EditApiKeyPresenter
         extends MyPresenterWidget<EditApiKeyView>
         implements HidePopupRequestEvent.Handler, HasHandlers {
 
-    private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
     private static final ApiKeyResource API_KEY_RESOURCE = GWT.create(ApiKeyResource.class);
 
     private final RestFactory restFactory;
     private final ClientSecurityContext securityContext;
     private final UiConfigCache uiConfigCache;
+    private final UserRefSelectionBoxPresenter ownerPresenter;
 
     private HashedApiKey apiKey;
     private Runnable onChangeHandler;
@@ -52,30 +49,30 @@ public class EditApiKeyPresenter
                                final EditApiKeyView view,
                                final RestFactory restFactory,
                                final ClientSecurityContext securityContext,
-                               final UiConfigCache uiConfigCache) {
+                               final UiConfigCache uiConfigCache,
+                               final UserRefSelectionBoxPresenter ownerPresenter) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.securityContext = securityContext;
         this.uiConfigCache = uiConfigCache;
+        this.ownerPresenter = ownerPresenter;
 
-        getView().setCanSelectOwner(securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION));
+        reset();
+        getView().setOwnerView(ownerPresenter.getView());
+    }
 
-        restFactory
-                .create(USER_RESOURCE)
-                .method(res -> res.getAssociates(null))
-                .onSuccess(userNames ->
-                        getView().setUserNames(userNames))
-                .taskHandlerFactory(this)
-                .exec();
-
+    private void setMode(final Mode mode) {
+        final boolean isOwnerSelectionEnabled = Mode.PRE_CREATE.equals(mode)
+                && securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION);
+        ownerPresenter.setEnabled(isOwnerSelectionEnabled);
+        getView().setMode(mode);
         reset();
     }
 
     public void showCreateDialog(final Mode mode,
                                  final Runnable onChangeHandler) {
         this.onChangeHandler = onChangeHandler;
-        getView().setMode(mode);
-        reset();
+        setMode(mode);
         getView().setUiHandlers(new DefaultHideRequestUiHandlers(this));
 
         final String caption;
@@ -83,7 +80,7 @@ public class EditApiKeyPresenter
         if (Mode.PRE_CREATE.equals(mode)) {
             caption = "Create new API key";
             // Default to current user
-            getView().setOwner(securityContext.getUserName());
+            ownerPresenter.setSelected(securityContext.getUserRef());
         } else if (Mode.POST_CREATE.equals(mode)) {
             caption = "View created API key";
         } else {
@@ -119,10 +116,10 @@ public class EditApiKeyPresenter
                                final Runnable onChangeHandler) {
         this.onChangeHandler = onChangeHandler;
         this.apiKey = apiKey;
-        getView().setMode(mode);
-        reset();
+        setMode(mode);
+
         getView().setUiHandlers(new DefaultHideRequestUiHandlers(this));
-        getView().setOwner(apiKey.getOwner());
+        ownerPresenter.setSelected(apiKey.getOwner());
         getView().setName(apiKey.getName());
         getView().setPrefix(apiKey.getApiKeyPrefix());
         getView().setComments(apiKey.getComments());
@@ -240,7 +237,7 @@ public class EditApiKeyPresenter
         final long now = System.currentTimeMillis();
         final long expireTimeEpochMs = getView().getExpiresOnMs();
         final long maxExpiryEpochMs = now + uiConfig.getMaxApiKeyExpiryAgeMs();
-        final UserName owner = getView().getOwner();
+        final UserRef owner = ownerPresenter.getSelected();
         if (expireTimeEpochMs < now) {
             AlertEvent.fireError(this, "API Key expiry date cannot be in the past "
                     + ClientDateUtil.toISOString(maxExpiryEpochMs), event::reset);
@@ -267,9 +264,8 @@ public class EditApiKeyPresenter
                         apiKey = response.getHashedApiKey();
                         // API Key created so change the mode and update the fields on the dialog
                         // so the user can see the actual API key
-                        getView().setMode(Mode.POST_CREATE);
-                        reset();
-                        getView().setOwner(apiKey.getOwner());
+                        setMode(Mode.POST_CREATE);
+                        ownerPresenter.setSelected(apiKey.getOwner());
                         getView().setExpiresOn(apiKey.getExpireTimeMs());
                         getView().setName(apiKey.getName());
                         getView().setComments(apiKey.getComments());
@@ -315,17 +311,11 @@ public class EditApiKeyPresenter
 
     public interface EditApiKeyView extends View, HasUiHandlers<HideRequestUiHandlers> {
 
-        void setCanSelectOwner(boolean canSelectOwner);
-
         void setMode(final Mode mode);
 
         Mode getMode();
 
-        void setUserNames(final List<UserName> userNames);
-
-        void setOwner(final UserName owner);
-
-        UserName getOwner();
+        void setOwnerView(final View ownerSelectionView);
 
         void setName(final String name);
 

@@ -21,7 +21,7 @@ import stroom.query.common.v2.IndexFieldMap;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.IndexFieldProviders;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.string.CIKey;
@@ -57,9 +57,9 @@ public class IndexFieldProvidersImpl implements IndexFieldProviders {
         Objects.requireNonNull(fieldName, "Null field name supplied");
         Objects.requireNonNull(fieldName.get(), "Null field name supplied");
 
-        if (!securityContext.hasDocumentPermission(docRef, DocumentPermissionNames.USE)) {
+        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.USE)) {
             throw new PermissionException(
-                    securityContext.getUserIdentityForAudit(),
+                    securityContext.getUserRef(),
                     LogUtil.message("You are not authorised to read {}", docRef));
         }
         final IndexFieldProvider provider = providers.get(docRef.getType());

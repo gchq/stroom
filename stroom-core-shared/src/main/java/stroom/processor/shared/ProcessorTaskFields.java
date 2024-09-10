@@ -18,6 +18,7 @@ package stroom.processor.shared;
 
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
+import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.util.shared.string.CIKey;
 
@@ -50,26 +51,36 @@ public class ProcessorTaskFields {
     public static final String FIELD_NODE = "Node";
     public static final String FIELD_POLL_AGE = "Poll Age";
 
-    public static final QueryField CREATE_TIME = QueryField.createDate("Create Time");
-    public static final QueryField CREATE_TIME_MS = QueryField.createLong("Create Time Ms");
-    public static final QueryField START_TIME = QueryField.createDate("Start Time");
-    public static final QueryField START_TIME_MS = QueryField.createLong("Start Time Ms");
-    public static final QueryField END_TIME_MS = QueryField.createLong("End Time Ms");
-    public static final QueryField END_TIME = QueryField.createDate("End Time");
-    public static final QueryField STATUS_TIME_MS = QueryField.createLong("Status Time Ms");
-    public static final QueryField STATUS_TIME = QueryField.createDate("Status Time");
-    public static final QueryField META_ID = QueryField.createId("Meta Id");
-    public static final QueryField NODE_NAME = QueryField.createText(FIELD_NODE);
+    public static final QueryField CREATE_TIME = QueryField.createDate(
+            CIKey.ofStaticKey("Create Time"), true);
+    public static final QueryField CREATE_TIME_MS = QueryField.createLong(
+            CIKey.ofStaticKey("Create Time Ms"), true);
+    public static final QueryField START_TIME = QueryField.createDate(CIKey.ofStaticKey("Start Time"), true);
+    public static final QueryField START_TIME_MS = QueryField.createLong(
+            CIKey.ofStaticKey("Start Time Ms"), true);
+    public static final QueryField END_TIME_MS = QueryField.createLong(
+            CIKey.ofStaticKey("End Time Ms"), true);
+    public static final QueryField END_TIME = QueryField.createDate(CIKey.ofStaticKey("End Time"), true);
+    public static final QueryField STATUS_TIME_MS = QueryField.createLong(
+            CIKey.ofStaticKey("Status Time Ms"), true);
+    public static final QueryField STATUS_TIME = QueryField.createDate(
+            CIKey.ofStaticKey("Status Time"), true);
+    public static final QueryField META_ID = QueryField.createId(CIKey.ofStaticKey("Meta Id"), true);
+    public static final QueryField NODE_NAME = QueryField.createText(CIKey.ofStaticKey(FIELD_NODE), true);
     public static final QueryField PIPELINE = QueryField.createDocRefByUuid(
-            PipelineDoc.DOCUMENT_TYPE, FIELD_PIPELINE);
+            PipelineDoc.DOCUMENT_TYPE, CIKey.ofStaticKey(FIELD_PIPELINE));
     public static final QueryField PIPELINE_NAME = QueryField.createDocRefByNonUniqueName(
-            PipelineDoc.DOCUMENT_TYPE, FIELD_PIPELINE_NAME);
-    public static final QueryField PROCESSOR_FILTER_ID = QueryField.createId("Processor Filter Id");
-    public static final QueryField PROCESSOR_FILTER_PRIORITY = QueryField.createLong("Processor Filter Priority");
-    public static final QueryField PROCESSOR_ID = QueryField.createId("Processor Id");
-    public static final QueryField FEED = QueryField.createDocRefByUniqueName("Feed", FIELD_FEED);
-    public static final QueryField STATUS = QueryField.createText(FIELD_STATUS);
-    public static final QueryField TASK_ID = QueryField.createId("Task Id");
+            PipelineDoc.DOCUMENT_TYPE, CIKey.ofStaticKey(FIELD_PIPELINE_NAME));
+    public static final QueryField PROCESSOR_FILTER_ID = QueryField.createId(CIKey.ofStaticKey("Processor Filter Id"),
+            true);
+    public static final QueryField PROCESSOR_FILTER_PRIORITY = QueryField.createLong(CIKey.ofStaticKey(
+            "Processor Filter Priority"), true);
+    public static final QueryField PROCESSOR_ID = QueryField.createId(
+            CIKey.ofStaticKey("Processor Id"), true);
+    public static final QueryField FEED = QueryField.createDocRefByUniqueName(FeedDoc.DOCUMENT_TYPE,
+            CIKey.ofStaticKey(FIELD_FEED));
+    public static final QueryField STATUS = QueryField.createText(CIKey.ofStaticKey(FIELD_STATUS), true);
+    public static final QueryField TASK_ID = QueryField.createId(CIKey.ofStaticKey("Task Id"), true);
 
     static {
         FIELDS.add(CREATE_TIME);

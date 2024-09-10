@@ -21,7 +21,7 @@ import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.state.client.presenter.StateStoreSettingsPresenter.StateStoreSettingsView;
 import stroom.state.shared.ScyllaDbDoc;
 import stroom.state.shared.StateDoc;
@@ -49,7 +49,7 @@ public class StateStoreSettingsPresenter
         this.clusterPresenter = clusterPresenter;
 
         clusterPresenter.setIncludedTypes(ScyllaDbDoc.DOCUMENT_TYPE);
-        clusterPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+        clusterPresenter.setRequiredPermissions(DocumentPermission.USE);
 
         view.setUiHandlers(this);
         view.setClusterView(clusterPresenter.getView());

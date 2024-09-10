@@ -25,7 +25,7 @@ import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.shared.NodeFlag;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.ModelStringUtil;
 
 import com.google.gwt.user.client.ui.Focus;
@@ -52,7 +52,7 @@ public class BasicQuerySettingsPresenter
 //        final String[] types = dataSourceTypes.getTypes();
 //        dataSourceSelectionPresenter.setIncludedTypes(types);
         dataSourceSelectionPresenter.setNodeFlags(NodeFlag.DATA_SOURCE);
-        dataSourceSelectionPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+        dataSourceSelectionPresenter.setRequiredPermissions(DocumentPermission.USE);
 //        dataSourceSelectionPresenter.setSelectionTypes(types);
     }
 

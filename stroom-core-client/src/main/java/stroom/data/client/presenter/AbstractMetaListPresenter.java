@@ -55,7 +55,7 @@ import stroom.processor.shared.QueryData;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
@@ -626,7 +626,7 @@ public abstract class AbstractMetaListPresenter
         final DocSelectionPopup chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Process Data With");
         chooser.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
-        chooser.setRequiredPermissions(DocumentPermissionNames.READ);
+        chooser.setRequiredPermissions(DocumentPermission.VIEW);
         chooser.show(consumer);
     }
 

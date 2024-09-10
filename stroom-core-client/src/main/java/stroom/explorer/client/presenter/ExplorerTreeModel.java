@@ -27,6 +27,7 @@ import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FetchExplorerNodesRequest;
 import stroom.explorer.shared.NodeFlag;
 import stroom.explorer.shared.NodeFlag.NodeFlagGroups;
+import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskHandlerFactory;
 import stroom.util.shared.GwtNullSafe;
 
@@ -52,7 +53,7 @@ public class ExplorerTreeModel {
 
     private final OpenItems<ExplorerNodeKey> openItems = new OpenItems<>();
     private final NameFilterTimer timer = new NameFilterTimer();
-    private final ExplorerTreeFilterBuilder explorerTreeFilterBuilder = new ExplorerTreeFilterBuilder();
+    private final ExplorerTreeFilter.Builder explorerTreeFilterBuilder = ExplorerTreeFilter.builder();
     private final AbstractExplorerTree explorerTree;
     private final RestFactory restFactory;
     private final TaskHandlerFactory taskHandlerFactory;
@@ -94,27 +95,27 @@ public class ExplorerTreeModel {
     }
 
     public void setIncludedTypeSet(final Set<String> types) {
-        explorerTreeFilterBuilder.setIncludedTypeSet(types);
+        explorerTreeFilterBuilder.includedTypeSet(types);
     }
 
     public void setIncludedTypes(final String... types) {
-        explorerTreeFilterBuilder.setIncludedTypes(types);
+        explorerTreeFilterBuilder.includedTypes(types);
     }
 
     public void setIncludedRootTypes(final String... types) {
-        explorerTreeFilterBuilder.setIncludedRootTypes(types);
+        explorerTreeFilterBuilder.includedRootTypes(types);
     }
 
     public void setTags(final String... tags) {
-        explorerTreeFilterBuilder.setTags(tags);
+        explorerTreeFilterBuilder.tags(tags);
     }
 
     public void setNodeFlags(final NodeFlag... nodeFlags) {
-        explorerTreeFilterBuilder.setNodeFlags(GwtNullSafe.asSet(nodeFlags));
+        explorerTreeFilterBuilder.nodeFlags(GwtNullSafe.asSet(nodeFlags));
     }
 
-    public void setRequiredPermissions(final String... requiredPermissions) {
-        explorerTreeFilterBuilder.setRequiredPermissions(requiredPermissions);
+    public void setRequiredPermissions(final DocumentPermission... requiredPermissions) {
+        explorerTreeFilterBuilder.requiredPermissions(requiredPermissions);
     }
 
     public void setForceSelection(final ExplorerNode forceSelection) {

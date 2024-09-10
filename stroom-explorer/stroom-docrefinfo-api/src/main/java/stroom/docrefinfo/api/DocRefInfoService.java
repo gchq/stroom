@@ -11,15 +11,13 @@ public interface DocRefInfoService extends DocRefDecorator {
     /**
      * @return A list of all known and readable docRefs for the given type.
      */
-    List<DocRef> findByType(final String type);
+    List<DocRef> findByType(String type);
 
-    Optional<DocRefInfo> info(final DocRef docRef);
+    Optional<DocRefInfo> info(DocRef docRef);
 
-    Optional<DocRefInfo> info(final String uuid);
+    Optional<DocRefInfo> info(String uuid);
 
     Optional<String> name(DocRef docRef);
-
-    Optional<String> name(String uuid);
 
     /**
      * Find by match on the name.
@@ -31,10 +29,10 @@ public interface DocRefInfoService extends DocRefDecorator {
      * @param nameFilter The name of the {@link DocRef}s to filter by. If allowWildCards is true
      *                   find all matching else find those with an exact case-sensitive name match.
      */
-    List<DocRef> findByName(final String type,
-                            final String nameFilter,
-                            final boolean allowWildCards,
-                            final boolean isCaseSensitive);
+    List<DocRef> findByName(String type,
+                            String nameFilter,
+                            boolean allowWildCards,
+                            boolean isCaseSensitive);
 
     /**
      * Find by match on the name.
@@ -47,8 +45,8 @@ public interface DocRefInfoService extends DocRefDecorator {
      * @param nameFilters The names of the {@link DocRef}s to filter by. If allowWildCards is true
      *                    find all matching else find those with an exact case-sensitive name match.
      */
-    List<DocRef> findByNames(final String type,
-                             final List<String> nameFilters,
-                             final boolean allowWildCards,
-                             final boolean isCaseSensitive);
+    List<DocRef> findByNames(String type,
+                             List<String> nameFilters,
+                             boolean allowWildCards,
+                             boolean isCaseSensitive);
 }

@@ -5,14 +5,13 @@ import stroom.security.api.HasSession;
 import stroom.security.api.UserIdentity;
 import stroom.security.common.impl.UpdatableToken;
 import stroom.security.common.impl.UserIdentitySessionUtil;
-import stroom.security.shared.HasStroomUserIdentity;
+import stroom.security.shared.HasUserRef;
 import stroom.util.NullSafe;
 import stroom.util.authentication.HasRefreshable;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.SimpleUserName;
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserRef;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -20,15 +19,12 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class UserIdentityImpl
-        implements UserIdentity, HasSession, HasStroomUserIdentity, HasJwt, HasRefreshable {
+        implements UserIdentity, HasSession, HasUserRef, HasJwt, HasRefreshable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UserIdentityImpl.class);
 
     private final UpdatableToken updatableToken;
-    private final String subjectId;
-    private final String userUuid;
-    private final String displayName;
-    private final String fullName;
+    private final UserRef userRef;
     private final HttpSession httpSession;
 
     public UserIdentityImpl(final String userUuid,
@@ -44,32 +40,34 @@ public class UserIdentityImpl
                             final String fullName,
                             final HttpSession httpSession,
                             final UpdatableToken updatableToken) {
-        this.subjectId = Objects.requireNonNull(subjectId);
         this.updatableToken = Objects.requireNonNull(updatableToken);
-        this.userUuid = Objects.requireNonNull(userUuid);
-        this.displayName = displayName;
-        this.fullName = fullName;
+        this.userRef = new UserRef(
+                Objects.requireNonNull(userUuid),
+                Objects.requireNonNull(subjectId),
+                displayName,
+                fullName,
+                false);
         this.httpSession = httpSession;
     }
 
     @Override
     public String getSubjectId() {
-        return subjectId;
+        return userRef.getSubjectId();
     }
 
     @Override
     public String getDisplayName() {
-        return Objects.requireNonNullElse(displayName, subjectId);
+        return userRef.toDisplayString();
     }
 
     @Override
     public Optional<String> getFullName() {
-        return Optional.ofNullable(fullName);
+        return Optional.ofNullable(userRef.getFullName());
     }
 
     @Override
-    public String getUuid() {
-        return userUuid;
+    public UserRef getUserRef() {
+        return userRef;
     }
 
     @Override
@@ -142,21 +140,6 @@ public class UserIdentityImpl
     }
 
     @Override
-    public UserName asUserName() {
-        String displayName = getDisplayName();
-        if (Objects.equals(displayName, subjectId)) {
-            displayName = null;
-        }
-        return new SimpleUserName(
-                subjectId,
-                Objects.equals(displayName, subjectId)
-                        ? null
-                        : displayName,
-                getFullName().orElse(null),
-                userUuid);
-    }
-
-    @Override
     public boolean equals(final Object o) {
         if (this == o) {
             return true;
@@ -168,22 +151,19 @@ public class UserIdentityImpl
             return false;
         }
         final UserIdentityImpl that = (UserIdentityImpl) o;
-        return Objects.equals(userUuid, that.userUuid) && Objects.equals(httpSession, that.httpSession);
+        return Objects.equals(userRef, that.userRef) && Objects.equals(httpSession, that.httpSession);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), userUuid, httpSession);
+        return Objects.hash(super.hashCode(), userRef, httpSession);
     }
 
     @Override
     public String toString() {
         return "UserIdentityImpl{" +
                 "updatableToken=" + updatableToken +
-                ", id='" + subjectId + '\'' +
-                ", userUuid='" + userUuid + '\'' +
-                ", displayName='" + displayName + '\'' +
-                ", fullName='" + fullName + '\'' +
+                ", userRef='" + userRef + '\'' +
                 ", isInSession='" + isInSession() + '\'' +
                 '}';
     }

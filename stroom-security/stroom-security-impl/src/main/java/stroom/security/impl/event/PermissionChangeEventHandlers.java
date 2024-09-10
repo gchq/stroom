@@ -48,7 +48,7 @@ class PermissionChangeEventHandlers {
 
     public void fireLocally(final PermissionChangeEvent event) {
         if (!securityContext.isProcessingUser()) {
-            throw new PermissionException(securityContext.getUserIdentityForAudit(),
+            throw new PermissionException(securityContext.getUserRef(),
                     "Only the processing user can fire permission change events");
         }
 
@@ -58,7 +58,7 @@ class PermissionChangeEventHandlers {
                 try {
                     handler.onChange(event);
                 } catch (final Exception e) {
-                    LOGGER.error("Unable to handle onChange event!", e);
+                    LOGGER.error("Unable to handle onChange request!", e);
                 }
             }
         } catch (final RuntimeException e) {

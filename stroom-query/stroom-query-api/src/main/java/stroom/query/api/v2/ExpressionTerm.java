@@ -16,6 +16,7 @@
 
 package stroom.query.api.v2;
 
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.util.shared.StringUtil;
@@ -213,17 +214,19 @@ public final class ExpressionTerm extends ExpressionItem {
         IN_DICTIONARY("in dictionary"),
         IN_FOLDER("in folder"),
         IS_DOC_REF("is"),
+        IS_USER_REF("is"),
         IS_NULL("is null"),
         IS_NOT_NULL("is not null"),
-        MATCHES_REGEX("matches regex");
+        MATCHES_REGEX("matches regex"),
 
-//        public static final List<Condition> SIMPLE_CONDITIONS = Arrays.asList(
-//                EQUALS,
-//                GREATER_THAN,
-//                GREATER_THAN_OR_EQUAL_TO,
-//                LESS_THAN,
-//                LESS_THAN_OR_EQUAL_TO,
-//                BETWEEN);
+        // Permission related conditions.
+        OF_DOC_REF("of"),
+        USER_HAS_PERM("has permissions"),
+        USER_HAS_OWNER("has owner permission"),
+        USER_HAS_DELETE("has delete permission"),
+        USER_HAS_EDIT("has edit permission"),
+        USER_HAS_VIEW("has view permission"),
+        USER_HAS_USE("has use permission");
 
         public static final String IN_CONDITION_DELIMITER = ",";
 
@@ -274,6 +277,11 @@ public final class ExpressionTerm extends ExpressionItem {
          */
         public Builder field(final String value) {
             this.field = value;
+            return this;
+        }
+
+        public Builder field(final QueryField value) {
+            this.field = value.getFldName();
             return this;
         }
 

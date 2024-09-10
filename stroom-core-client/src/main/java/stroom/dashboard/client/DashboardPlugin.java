@@ -159,7 +159,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
     private void reopen(final ResultStoreInfo resultStoreInfo) {
         final SearchRequestSource source = resultStoreInfo.getSearchRequestSource();
         if (source != null && SourceType.DASHBOARD_UI.equals(source.getSourceType())) {
-            final DocRef docRef = new DocRef(DashboardDoc.DOCUMENT_TYPE, source.getOwnerDocUuid());
+            final DocRef docRef = source.getOwnerDocRef();
 
             // If the item isn't already open but we are forcing it open then,
             // create a new presenter and register it as open.

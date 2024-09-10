@@ -38,7 +38,7 @@ import stroom.security.api.SecurityContext;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.UserName;
+import stroom.util.shared.UserRef;
 import stroom.util.shared.string.CIHashSet;
 import stroom.util.shared.string.CIKey;
 
@@ -61,17 +61,17 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
 
     private static final Map<CIKey, Function<Annotation, Val>> VALUE_MAPPING = Map.ofEntries(
             nullSafeEntry(AnnotationFields.ID_FIELD, Annotation::getId),
-            nullSafeEntry(AnnotationFields.CREATED_ON_FIELD, Annotation::getCreateTime, createTimeEpochMs ->
-                    Val.nullSafeCreate(createTimeEpochMs, ValDate::create)),
-            nullSafeEntry(AnnotationFields.CREATED_BY_FIELD, Annotation::getCreateUser),
-            nullSafeEntry(AnnotationFields.UPDATED_ON_FIELD, Annotation::getUpdateTime, updateTimeEpochMs ->
-                    Val.nullSafeCreate(updateTimeEpochMs, ValDate::create)),
-            nullSafeEntry(AnnotationFields.UPDATED_BY_FIELD, Annotation::getUpdateUser),
+//            nullSafeEntry(AnnotationFields.CREATED_ON_FIELD, Annotation::getCreateTime, createTimeEpochMs ->
+//                    Val.nullSafeCreate(createTimeEpochMs, ValDate::create)),
+//            nullSafeEntry(AnnotationFields.CREATED_BY_FIELD, Annotation::getCreateUser),
+//            nullSafeEntry(AnnotationFields.UPDATED_ON_FIELD, Annotation::getUpdateTime, updateTimeEpochMs ->
+//                    Val.nullSafeCreate(updateTimeEpochMs, ValDate::create)),
+//            nullSafeEntry(AnnotationFields.UPDATED_BY_FIELD, Annotation::getUpdateUser),
             nullSafeEntry(AnnotationFields.TITLE_FIELD, Annotation::getTitle),
             nullSafeEntry(AnnotationFields.SUBJECT_FIELD, Annotation::getSubject),
             nullSafeEntry(AnnotationFields.STATUS_FIELD, Annotation::getStatus),
             nullSafeEntry(AnnotationFields.ASSIGNED_TO_FIELD, annotation ->
-                    NullSafe.get(annotation.getAssignedTo(), UserName::getUserIdentityForAudit)),
+                    NullSafe.get(annotation.getAssignedTo(), UserRef::toDisplayString)),
             nullSafeEntry(AnnotationFields.COMMENT_FIELD, Annotation::getComment),
             nullSafeEntry(AnnotationFields.HISTORY_FIELD, Annotation::getHistory));
 
@@ -85,7 +85,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
             Map.entry(AnnotationFields.SUBJECT_FIELD.getFldNameAsCIKey(), Annotation::getSubject),
             Map.entry(AnnotationFields.STATUS_FIELD.getFldNameAsCIKey(), Annotation::getStatus),
             Map.entry(AnnotationFields.ASSIGNED_TO_FIELD.getFldNameAsCIKey(), annotation ->
-                    NullSafe.get(annotation.getAssignedTo(), UserName::getUserIdentityForAudit)),
+                    NullSafe.get(annotation.getAssignedTo(), UserRef::toDisplayString)),
             Map.entry(AnnotationFields.COMMENT_FIELD.getFldNameAsCIKey(), Annotation::getComment),
             Map.entry(AnnotationFields.HISTORY_FIELD.getFldNameAsCIKey(), Annotation::getHistory));
 
@@ -275,8 +275,8 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
                     return ValString.create(str);
                 } else if (value instanceof Long aLong) {
                     return ValLong.create(aLong);
-                } else if (value instanceof final UserName userName) {
-                    return ValString.create(userName.getUserIdentityForAudit());
+                } else if (value instanceof final UserRef userRef) {
+                    return ValString.create(userRef.toDisplayString());
                 } else {
                     throw new RuntimeException("Unexpected type " + value.getClass().getName());
                 }

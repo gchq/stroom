@@ -33,15 +33,9 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Fix verification of the `signer` key in the JWS headers when authentication is handled by an AWS load balancer. If you use AWS load balancers for authentication you must add the partial ARN(s) of your load balancer(s) to the property `stroom.security.authentication.openId.expectedSignerPrefixes`.
 
-
-## [v7.5-beta.11] - 2024-09-04
-
 * Issue **#4426** : Add INFO message when an index shard is created.
 
 * Issue **#4425** : Fix _Usage Date_ heading alignment on Edit Volume Group screen for both data/index volumes.
-
-
-## [v7.5-beta.10] - 2024-09-04
 
 * Uplift docker image JDK to `eclipse-temurin:21.0.4_7-jdk-alpine`.
 
@@ -52,6 +46,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#4419** : Automatically unpause dashboard result components when a new search begins.
 
 * Rename migration from `V07_04_00_005__Orphaned_Doc_Perms` to `V07_05_00_005__Orphaned_Doc_Perms`.
+
+
+## [v7.6-beta.1] - 2024-08-30
+
+* Issue **#4345** : Write analytic email notification failures to the analytic error feed.
+
+* Issue **#4379** : Improve Stroom permission model.
 
 
 ## [v7.5-beta.9] - 2024-08-30
@@ -794,10 +795,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.5-beta.12...HEAD
-[v7.5-beta.12]: https://github.com/gchq/stroom/compare/v7.5-beta.11...v7.5-beta.12
-[v7.5-beta.11]: https://github.com/gchq/stroom/compare/v7.5-beta.10...v7.5-beta.11
-[v7.5-beta.10]: https://github.com/gchq/stroom/compare/v7.5-beta.9...v7.5-beta.10
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.6-beta.1...HEAD
+[v7.6-beta.1]: https://github.com/gchq/stroom/compare/v7.5-beta.9...v7.6-beta.1
 [v7.5-beta.9]: https://github.com/gchq/stroom/compare/v7.5-beta.8...v7.5-beta.9
 [v7.5-beta.8]: https://github.com/gchq/stroom/compare/v7.5-beta.7...v7.5-beta.8
 [v7.5-beta.7]: https://github.com/gchq/stroom/compare/v7.5-beta.6...v7.5-beta.7

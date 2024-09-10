@@ -15,7 +15,7 @@ import stroom.explorer.shared.FindInContentRequest;
 import stroom.index.lucene980.Lucene980LockFactory;
 import stroom.index.lucene980.analyser.AnalyzerFactory;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.concurrent.UncheckedInterruptedException;
@@ -230,7 +230,7 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
                     final String extension = doc.get(EXTENSION);
                     final String text = doc.get(TEXT);
                     if (highlighter.filter(text)) {
-                        if (securityContext.hasDocumentPermission(docRef, DocumentPermissionNames.READ)) {
+                        if (securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
                             if (total >= pageRequest.getOffset() &&
                                     total < pageRequest.getOffset() + pageRequest.getLength()) {
                                 try {
@@ -363,8 +363,8 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
 
     @Override
     public DocContentHighlights fetchHighlights(final FetchHighlightsRequest request) {
-        if (!securityContext.hasDocumentPermission(request.getDocRef(), DocumentPermissionNames.READ)) {
-            throw new PermissionException(securityContext.getUserIdentityForAudit(),
+        if (!securityContext.hasDocumentPermission(request.getDocRef(), DocumentPermission.VIEW)) {
+            throw new PermissionException(securityContext.getUserRef(),
                     "You do not have read permission on " + request.getDocRef());
         }
 

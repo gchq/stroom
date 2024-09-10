@@ -50,6 +50,7 @@ import stroom.util.concurrent.ThreadUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
+import stroom.util.shared.UserRef;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -152,7 +153,6 @@ class TestSearchResultCreation {
         final ResultStore resultStore = new ResultStore(
                 searchRequest.getSearchRequestSource(),
                 sizesProvider,
-                null,
                 null,
                 coprocessors,
                 "node",
@@ -287,8 +287,7 @@ class TestSearchResultCreation {
         final ResultStore resultStore = new ResultStore(
                 searchRequest.getSearchRequestSource(),
                 sizesProvider,
-                UUID.randomUUID().toString(),
-                "test_user_id",
+                UserRef.builder().uuid(UUID.randomUUID().toString()).build(),
                 coprocessors2,
                 "node",
                 new ResultStoreSettingsFactory().get(),
@@ -368,8 +367,7 @@ class TestSearchResultCreation {
         final ResultStore resultStore = new ResultStore(
                 searchRequest.getSearchRequestSource(),
                 sizesProvider,
-                UUID.randomUUID().toString(),
-                "test_user_id",
+                UserRef.builder().uuid(UUID.randomUUID().toString()).build(),
                 coprocessors2,
                 "node",
                 new ResultStoreSettingsFactory().get(),
@@ -479,7 +477,6 @@ class TestSearchResultCreation {
 
         final ResultStore resultStore = new ResultStore(
                 searchRequest.getSearchRequestSource(),
-                null,
                 null,
                 null,
                 coprocessors2,

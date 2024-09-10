@@ -79,12 +79,12 @@ public class StateDocStoreImpl implements StateDocStore {
         final DocRef created = store.createDocument(name);
 
         // Double-check the feed wasn't created elsewhere at the same time.
-        if (checkDuplicateName(name, created.getUuid())) {
+        if (checkDuplicateName(name, created)) {
             // Delete the newly created document as the name is duplicated.
 
             // Delete as a processing user to ensure we are allowed to delete the item as documents do not have
             // permissions added to them until after they are created in the store.
-            securityContext.asProcessingUser(() -> store.deleteDocument(created.getUuid()));
+            securityContext.asProcessingUser(() -> store.deleteDocument(created));
             throwNameException(name);
         }
 
@@ -109,11 +109,11 @@ public class StateDocStoreImpl implements StateDocStore {
         throw new EntityServiceException("A state store named '" + name + "' already exists");
     }
 
-    private boolean checkDuplicateName(final String name, final String whitelistUuid) {
+    private boolean checkDuplicateName(final String name, final DocRef whitelistDocRef) {
         final List<DocRef> list = list();
         for (final DocRef docRef : list) {
             if (name.equals(docRef.getName()) &&
-                    (whitelistUuid == null || !whitelistUuid.equals(docRef.getUuid()))) {
+                    (whitelistDocRef == null || !whitelistDocRef.equals(docRef))) {
                 return true;
             }
         }
@@ -177,26 +177,26 @@ public class StateDocStoreImpl implements StateDocStore {
     }
 
     @Override
-    public DocRef moveDocument(final String uuid) {
-        return store.moveDocument(uuid);
+    public DocRef moveDocument(final DocRef docRef) {
+        return store.moveDocument(docRef);
     }
 
     @Override
-    public DocRef renameDocument(final String uuid, final String name) {
+    public DocRef renameDocument(final DocRef docRef, final String name) {
         validateName(name);
 
         // Check a state store doesn't already exist with this name.
-        if (checkDuplicateName(name, uuid)) {
+        if (checkDuplicateName(name, docRef)) {
             throw new EntityServiceException("A state store named '" + name + "' already exists");
         }
 
-        return store.renameDocument(uuid, name);
+        return store.renameDocument(docRef, name);
     }
 
     @Override
-    public void deleteDocument(final String uuid) {
+    public void deleteDocument(final DocRef docRef) {
         // Drop the associated ScyllaDB table before deleting the document.
-        final StateDoc doc = readDocument(new DocRef(StateDoc.DOCUMENT_TYPE, uuid));
+        final StateDoc doc = readDocument(docRef);
         if (doc != null) {
             try {
                 final CqlSessionCache sessionCache = cqlSessionCacheProvider.get();
@@ -207,12 +207,12 @@ public class StateDocStoreImpl implements StateDocStore {
             }
         }
 
-        store.deleteDocument(uuid);
+        store.deleteDocument(docRef);
     }
 
     @Override
-    public DocRefInfo info(String uuid) {
-        return store.info(uuid);
+    public DocRefInfo info(DocRef docRef) {
+        return store.info(docRef);
     }
 
     @Override

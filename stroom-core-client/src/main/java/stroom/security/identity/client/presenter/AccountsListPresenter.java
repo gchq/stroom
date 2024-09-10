@@ -19,7 +19,7 @@ import stroom.security.identity.shared.Account;
 import stroom.security.identity.shared.AccountResource;
 import stroom.security.identity.shared.AccountResultPage;
 import stroom.security.identity.shared.FindAccountRequest;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskHandlerFactory;
 import stroom.util.client.DataGridUtil;
@@ -179,7 +179,7 @@ public class AccountsListPresenter
 
     private void initTableColumns() {
         // User Id
-        if (securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
+        if (securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
             final Column<Account, String> userIdColumn = DataGridUtil.textColumnBuilder(
                             Account::getUserId)
                     .enabledWhen(Account::isEnabled)

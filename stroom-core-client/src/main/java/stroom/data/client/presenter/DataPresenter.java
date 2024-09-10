@@ -34,7 +34,7 @@ import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.task.client.TaskHandlerFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SourceConfig;
@@ -197,7 +197,7 @@ public class DataPresenter
         addTab(metaTab);
         addTab(contextTab);
 
-        userHasPipelineSteppingPermission = securityContext.hasAppPermission(PermissionNames.STEPPING_PERMISSION);
+        userHasPipelineSteppingPermission = securityContext.hasAppPermission(AppPermission.STEPPING_PERMISSION);
 
         itemNavigatorPresenter.setDisplay(noNavigatorData);
         dataView.addSourceLinkClickHandler(event ->

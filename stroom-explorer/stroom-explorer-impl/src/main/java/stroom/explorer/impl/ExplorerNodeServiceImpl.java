@@ -9,7 +9,7 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.NullSafe;
 
 import jakarta.inject.Inject;
@@ -172,7 +172,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                 case NONE:
                     // Remove all current permissions, ignore permissions of the destination folder, just make the
                     // new item owned by the current user.
-                    clearDocumentPermissions(docRef);
+                    removeAllDocumentPermissions(docRef);
                     addDocumentPermissions(null, docRef, true, true);
                     break;
                 case SOURCE:
@@ -181,7 +181,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                 case DESTINATION:
                     // Remove all current permissions, add permissions of the destination folder, and make the new
                     // item owned by the current user.
-                    clearDocumentPermissions(docRef);
+                    removeAllDocumentPermissions(docRef);
                     addDocumentPermissions(destinationFolderRef, docRef, true, true);
                     break;
                 case COMBINED:
@@ -262,7 +262,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     @Override
     public Optional<ExplorerNode> getNode(final DocRef docRef) {
         // Only return entries the user has permission to see.
-        if (docRef != null && securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.USE)) {
+        if (docRef != null && securityContext.hasDocumentPermission(docRef, DocumentPermission.USE)) {
             return getNodeForDocRef(docRef)
                     .map(this::createExplorerNode);
         } else {
@@ -390,19 +390,28 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                 && sourceUuid != null
                 && DocumentTypes.isFolder(sourceType)) {
             final List<ExplorerNode> descendants = getDescendants(dest);
-            descendants.forEach(descendant ->
-                    documentPermissionService.addDocumentPermissions(
-                            source,
+            descendants.forEach(descendant -> {
+                documentPermissionService.addDocumentPermissions(source, descendant.getDocRef());
+                if (owner) {
+                    documentPermissionService.setPermission(
                             descendant.getDocRef(),
-                            owner)
-            );
+                            securityContext.getUserRef(),
+                            DocumentPermission.OWNER);
+                }
+            });
         }
 
-        documentPermissionService.addDocumentPermissions(source, dest, owner);
+        documentPermissionService.addDocumentPermissions(source, dest);
+        if (owner) {
+            documentPermissionService.setPermission(
+                    dest,
+                    securityContext.getUserRef(),
+                    DocumentPermission.OWNER);
+        }
     }
 
-    private void clearDocumentPermissions(final DocRef docRef) {
-        documentPermissionService.clearDocumentPermissions(docRef.getUuid());
+    private void removeAllDocumentPermissions(final DocRef docRef) {
+        documentPermissionService.removeAllDocumentPermissions(docRef);
     }
 
     private ExplorerNode createExplorerNode(final ExplorerTreeNode explorerTreeNode) {

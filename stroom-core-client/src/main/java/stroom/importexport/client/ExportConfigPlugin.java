@@ -21,6 +21,7 @@ import stroom.core.client.presenter.Plugin;
 import stroom.importexport.client.event.ExportConfigEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Separator;
@@ -45,7 +46,7 @@ public class ExportConfigPlugin extends Plugin {
     @Override
     public void onReveal(final BeforeRevealMenubarEvent event) {
         // Add items to the tools menu.
-        if (securityContext.hasAppPermission("Export Configuration")) {
+        if (securityContext.hasAppPermission(AppPermission.EXPORT_CONFIGURATION)) {
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, new Separator(200));
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
                     new IconMenuItem.Builder()

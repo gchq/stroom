@@ -33,7 +33,7 @@ import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.task.client.HasTaskHandlerFactory;
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
@@ -171,8 +171,8 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                     // Check document permissions and read.
                     securityContext
                             .hasDocumentPermission(
-                                    docRef.getUuid(),
-                                    DocumentPermissionNames.UPDATE,
+                                    docRef,
+                                    DocumentPermission.EDIT,
                                     allowUpdate -> {
                                         ((HasDocumentRead<D>) documentEditPresenter).read(
                                                 getDocRef(doc),

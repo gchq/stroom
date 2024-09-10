@@ -20,13 +20,14 @@ package stroom.processor.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.data.client.presenter.ExpressionPresenter;
+import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.ShowPermissionsDialogEvent;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.explorer.shared.ExplorerNode;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorListRow;
@@ -35,9 +36,20 @@ import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.security.shared.DocPermissionResource;
+import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
+import stroom.util.client.CountDownAndRun;
+import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.Selection;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -47,8 +59,9 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.Objects;
+import java.util.List;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class ProcessorPresenter
         extends MyPresenterWidget<ProcessorPresenter.ProcessorView>
@@ -62,15 +75,19 @@ public class ProcessorPresenter
     private final ExpressionTreePresenter expressionPresenter;
     private final RestFactory restFactory;
     private final ProcessorInfoBuilder processorInfoBuilder;
+    private final Provider<ExpressionPresenter> filterPresenterProvider;
+    private final Provider<BatchProcessorFilterEditPresenter> batchProcessorFilterEditPresenterProvider;
 
     private ProcessorType processorType;
     private DocRef docRef;
-    private ProcessorListRow selectedProcessor;
+    //    private ProcessorListRow selectedProcessor;
     private ButtonView addButton;
     private ButtonView editButton;
     private ButtonView duplicateButton;
     private ButtonView removeButton;
-    private ButtonView permissionsButton;
+    //    private ButtonView permissionsButton;
+    private ButtonView filterButton;
+    private ButtonView batchEditButton;
 
     private boolean allowCreate;
     private boolean allowUpdate;
@@ -86,13 +103,18 @@ public class ProcessorPresenter
                               final Provider<ProcessorEditPresenter> processorEditPresenterProvider,
                               final ExpressionTreePresenter expressionPresenter,
                               final RestFactory restFactory,
-                              final ProcessorInfoBuilder processorInfoBuilder) {
+                              final ProcessorInfoBuilder processorInfoBuilder,
+                              final Provider<ExpressionPresenter> filterPresenterProvider,
+                              final Provider<BatchProcessorFilterEditPresenter>
+                                      batchProcessorFilterEditPresenterProvider) {
         super(eventBus, view);
         this.processorListPresenter = processorListPresenter;
         this.processorEditPresenterProvider = processorEditPresenterProvider;
         this.expressionPresenter = expressionPresenter;
         this.restFactory = restFactory;
         this.processorInfoBuilder = processorInfoBuilder;
+        this.filterPresenterProvider = filterPresenterProvider;
+        this.batchProcessorFilterEditPresenterProvider = batchProcessorFilterEditPresenterProvider;
 
         // Stop users from selecting expression items.
         expressionPresenter.setSelectionModel(null);
@@ -166,18 +188,73 @@ public class ProcessorPresenter
                 }
             }));
 
-            if (isAdmin) {
-                permissionsButton = processorListPresenter.getView().addButton(SvgPresets.LOCKED_AMBER);
-                permissionsButton.setTitle("Permissions");
-                registerHandler(permissionsButton.addClickHandler(event -> {
-                    if (allowUpdate) {
-                        setPermissions();
+//            if (isAdmin) {
+//                permissionsButton = processorListPresenter.getView().addButton(SvgPresets.LOCKED_AMBER);
+//                permissionsButton.setTitle("Permissions");
+//                registerHandler(permissionsButton.addClickHandler(event -> {
+//                    if (allowUpdate) {
+//                        setPermissions();
+//                    }
+//                }));
+//            }
+
+            filterButton = processorListPresenter.getView().addButton(new Preset(
+                    SvgImage.FILTER,
+                    "Filter Processors",
+                    true));
+            registerHandler(filterButton.addClickHandler(e -> {
+                if (MouseUtil.isPrimary(e)) {
+                    onFilter();
+                }
+            }));
+
+            if (allowUpdate) {
+                batchEditButton = processorListPresenter.getView().addButton(new Preset(
+                        SvgImage.GENERATE,
+                        "Batch Edit Current Processors",
+                        true));
+                registerHandler(batchEditButton.addClickHandler(e -> {
+                    if (MouseUtil.isPrimary(e)) {
+                        onBatchEdit();
                     }
                 }));
             }
 
             enableButtons(false);
         }
+    }
+
+    private void onBatchEdit() {
+        final BatchProcessorFilterEditPresenter presenter =
+                batchProcessorFilterEditPresenterProvider.get();
+        presenter.show(processorListPresenter.getExpression(),
+                GwtNullSafe.get(processorListPresenter.getCurrentResultPageResponse(), ResultPage::getPageResponse),
+                () -> processorListPresenter.refresh());
+    }
+
+    private void onFilter() {
+        final ExpressionPresenter presenter = filterPresenterProvider.get();
+        final HidePopupRequestEvent.Handler handler = e -> {
+            if (e.isOk()) {
+                processorListPresenter.setExpression(presenter.write());
+                refresh();
+            }
+            e.hide();
+        };
+
+        presenter.read(processorListPresenter.getExpression(),
+                ProcessorFilterFields.PROCESSOR_FILTERS_DOC_REF,
+                ProcessorFilterFields.getFields());
+
+        presenter.getWidget().getElement().addClassName("default-min-sizes");
+        final PopupSize popupSize = PopupSize.resizable(800, 600);
+        ShowPopupEvent.builder(presenter)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Filter Processors")
+                .onShow(e -> presenter.focus())
+                .onHideRequest(handler)
+                .fire();
     }
 
     private void enableButtons(final boolean enabled) {
@@ -205,13 +282,13 @@ public class ProcessorPresenter
                 removeButton.setEnabled(false);
             }
         }
-        if (permissionsButton != null) {
-            if (allowUpdate) {
-                permissionsButton.setEnabled(enabled);
-            } else {
-                permissionsButton.setEnabled(false);
-            }
-        }
+//        if (permissionsButton != null) {
+//            if (allowUpdate) {
+//                permissionsButton.setEnabled(enabled);
+//            } else {
+//                permissionsButton.setEnabled(false);
+//            }
+//        }
     }
 
     @Override
@@ -229,7 +306,7 @@ public class ProcessorPresenter
     }
 
     private void updateData() {
-        selectedProcessor = processorListPresenter.getSelectionModel().getSelected();
+        final ProcessorListRow selectedProcessor = processorListPresenter.getSelectionModel().getSelected();
         setData(selectedProcessor);
         enableButtons(selectedProcessor instanceof ProcessorFilterRow);
     }
@@ -255,7 +332,7 @@ public class ProcessorPresenter
 
     private void addProcessor() {
         if (allowCreate) {
-            edit(null, defaultExpression, null);
+            edit(null, defaultExpression);
         }
     }
 
@@ -265,6 +342,7 @@ public class ProcessorPresenter
     private void duplicateProcessor() {
         if (allowCreate) {
             // Now create the processor filter using the find stream criteria.
+            final ProcessorListRow selectedProcessor = processorListPresenter.getSelectionModel().getSelected();
             final ProcessorFilterRow row = (ProcessorFilterRow) selectedProcessor;
             final ProcessorFilter processorFilter = row.getProcessorFilter();
             final ProcessorFilter copy = processorFilter
@@ -277,11 +355,12 @@ public class ProcessorPresenter
                     .updateUser(null)
                     .createTimeMs(null)
                     .build();
-            edit(copy, null, null);
+            edit(copy, null);
         }
     }
 
     private void editProcessor() {
+        final ProcessorListRow selectedProcessor = processorListPresenter.getSelectionModel().getSelected();
         if (selectedProcessor != null) {
             if (selectedProcessor instanceof ProcessorFilterRow) {
                 final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) selectedProcessor;
@@ -297,7 +376,7 @@ public class ProcessorPresenter
                                         "Unable to load filter",
                                         null);
                             } else {
-                                edit(loadedFilter, null, processorFilterRow.getOwnerDisplayName());
+                                edit(loadedFilter, null);
                             }
                         })
                         .taskHandlerFactory(this)
@@ -307,8 +386,7 @@ public class ProcessorPresenter
     }
 
     private void edit(final ProcessorFilter filter,
-                      final ExpressionOperator defaultExpression,
-                      final String ownerDisplayName) {
+                      final ExpressionOperator defaultExpression) {
         if (editInterceptor.get()) {
             if (filter == null && ProcessorType.STREAMING_ANALYTIC.equals(processorType)) {
                 processorEditPresenterProvider.get()
@@ -320,16 +398,16 @@ public class ProcessorPresenter
                                 null,
                                 result -> {
                                     if (result != null) {
-                                        // The owner can't be changed in the editor
-                                        refresh(result, ownerDisplayName);
+                                        // The runAsUser can't be changed in the editor
+                                        refresh(result);
                                     }
                                 });
             } else {
                 processorEditPresenterProvider.get()
                         .show(processorType, docRef, filter, null, result -> {
                             if (result != null) {
-                                // The owner can't be changed in the editor
-                                refresh(result, ownerDisplayName);
+                                // The runAsUser can't be changed in the editor
+                                refresh(result);
                             }
                         });
             }
@@ -337,62 +415,67 @@ public class ProcessorPresenter
     }
 
     private void removeProcessor() {
-        if (selectedProcessor instanceof ProcessorFilterRow) {
-            final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) selectedProcessor;
-            ConfirmEvent.fire(this, "Are you sure you want to delete this filter?", result -> {
-                if (result) {
-                    restFactory
-                            .create(PROCESSOR_FILTER_RESOURCE)
-                            .method(res -> res.delete(processorFilterRow.getProcessorFilter().getId()))
-                            .onSuccess(res -> processorListPresenter.refresh())
-                            .taskHandlerFactory(this)
-                            .exec();
+        final Selection<ProcessorListRow> selection = processorListPresenter.getSelectionModel().getSelection();
+        if (selection != null && selection.getSelectedItems() != null) {
+            final List<ProcessorFilterRow> rows = selection
+                    .getSelectedItems()
+                    .stream()
+                    .filter(s -> s instanceof ProcessorFilterRow)
+                    .map(s -> (ProcessorFilterRow) s)
+                    .collect(Collectors.toList());
+            if (rows.size() > 0) {
+                String message = "Are you sure you want to delete the selected filter?";
+                if (rows.size() > 1) {
+                    message = "Are you sure you want to delete the selected filters?";
                 }
-            });
+                ConfirmEvent.fire(this, message, result -> {
+                    if (result) {
+                        final CountDownAndRun countDownAndRun = new CountDownAndRun(rows.size(), () ->
+                                processorListPresenter.refresh());
+                        for (final ProcessorFilterRow row : rows) {
+                            restFactory
+                                    .create(PROCESSOR_FILTER_RESOURCE)
+                                    .method(res -> res.delete(row.getProcessorFilter().getId()))
+                                    .onSuccess(res ->
+                                            countDownAndRun.countdown())
+                                    .onFailure(new DefaultErrorHandler(this, () ->
+                                            countDownAndRun.countdown()))
+                                    .taskHandlerFactory(this)
+                                    .exec();
+                        }
+                    }
+                });
+            }
         }
     }
 
-    private void setPermissions() {
-        if (selectedProcessor instanceof ProcessorFilterRow) {
-            final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) selectedProcessor;
-            final DocRef processorFilterRef = new DocRef(ProcessorFilter.ENTITY_TYPE,
-                    processorFilterRow.getProcessorFilter().getUuid(),
-                    null);
-            final ExplorerNode explorerNode = ExplorerNode.builder()
-                    .docRef(processorFilterRef)
-                    .build();
-            ShowPermissionsDialogEvent.fire(this, explorerNode);
-        }
+//    private void setPermissions() {
+//        if (selectedProcessor instanceof ProcessorFilterRow) {
+//            final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) selectedProcessor;
+//            final DocRef processorFilterRef = new DocRef(ProcessorFilter.ENTITY_TYPE,
+//                    processorFilterRow.getProcessorFilter().getUuid(),
+//                    null);
+//            ShowPermissionsDialogEvent.fire(this, processorFilterRef);
+//        }
+//    }
+
+    public void refresh() {
+        refresh(processorListPresenter.getSelectionModel().getSelected());
     }
 
     public void refresh(final ProcessorFilter processorFilter) {
-        Objects.requireNonNull(processorFilter);
-        restFactory
-                .create(DOC_PERMISSION_RESOURCE)
-                .method(res -> res.getDocumentOwners(processorFilter.getUuid()))
-                .onSuccess(owners -> {
-                    String ownerDisplayName;
-                    if (owners == null || owners.size() == 0) {
-                        ownerDisplayName = "Error: No owner";
-                    } else if (owners.size() > 1) {
-                        ownerDisplayName = "Error: Multiple owners";
-                    } else {
-                        ownerDisplayName = owners.get(0).getDisplayName();
-                    }
-                    refresh(processorFilter, ownerDisplayName);
-                })
-                .taskHandlerFactory(this)
-                .exec();
+        refresh(GwtNullSafe.get(processorFilter, ProcessorFilterRow::new));
     }
 
-    public void refresh(final ProcessorFilter processorFilter, final String ownerDisplayName) {
-
-        final ProcessorListRow processorListRow = new ProcessorFilterRow(processorFilter, ownerDisplayName);
-        processorListPresenter.setNextSelection(processorListRow);
+    public void refresh(final ProcessorListRow row) {
+        processorListPresenter.setNextSelection(row);
         processorListPresenter.refresh();
 
-        processorListPresenter.getSelectionModel().clear();
-        processorListPresenter.getSelectionModel().setSelected(processorListRow, true);
+        if (row != null) {
+            processorListPresenter.getSelectionModel().clear();
+            processorListPresenter.getSelectionModel().setSelected(row, true);
+        }
+
         updateData();
     }
 

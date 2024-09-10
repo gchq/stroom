@@ -35,7 +35,7 @@ import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Message;
@@ -99,7 +99,7 @@ public class ImportConfigConfirmPresenter extends
 
         rootFolderPresenter.setSelectedEntityReference(ExplorerConstants.SYSTEM_DOC_REF);
         rootFolderPresenter.setIncludedTypes(ExplorerConstants.FOLDER);
-        rootFolderPresenter.setRequiredPermissions(DocumentPermissionNames.READ);
+        rootFolderPresenter.setRequiredPermissions(DocumentPermission.VIEW);
         rootFolderPresenter.setAllowFolderSelection(true);
 
         this.tooltipPresenter = tooltipPresenter;

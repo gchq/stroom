@@ -52,6 +52,7 @@ import stroom.processor.shared.ProcessorListRowResultPage;
 import stroom.processor.shared.ProcessorResource;
 import stroom.processor.shared.ProcessorRow;
 import stroom.processor.shared.ProcessorType;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
@@ -85,7 +86,6 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
     private final TooltipPresenter tooltipPresenter;
     private final FetchProcessorRequest request;
     private final ProcessorInfoBuilder processorInfoBuilder;
-    private boolean doneDataDisplay = false;
     private Column<ProcessorListRow, Expander> expanderColumn;
     private ProcessorListRow nextSelection;
     private final MyDataGrid<ProcessorListRow> dataGrid;
@@ -97,6 +97,9 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
     private final RestSaveQueue<Integer, Integer> processorFilterMaxProcessingTasksSaveQueue;
 
     private boolean allowUpdate;
+    private ExpressionOperator expression;
+    private boolean initiated;
+    private ProcessorListRowResultPage currentResultPageResponse;
 
     @Inject
     public ProcessorListPresenter(final EventBus eventBus,
@@ -114,26 +117,6 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         this.processorInfoBuilder = processorInfoBuilder;
 
         request = new FetchProcessorRequest();
-        dataProvider = new RestDataProvider<ProcessorListRow, ProcessorListRowResultPage>(eventBus) {
-            @Override
-            protected void exec(final Range range,
-                                final Consumer<ProcessorListRowResultPage> dataConsumer,
-                                final RestErrorHandler errorHandler) {
-                restFactory
-                        .create(PROCESSOR_FILTER_RESOURCE)
-                        .method(res -> res.find(request))
-                        .onSuccess(dataConsumer)
-                        .onFailure(errorHandler)
-                        .taskHandlerFactory(view)
-                        .exec();
-            }
-
-            @Override
-            protected void changeData(final ProcessorListRowResultPage data) {
-                super.changeData(data);
-                onChangeData(data);
-            }
-        };
         processorEnabledSaveQueue = new RestSaveQueue<Integer, Boolean>(eventBus) {
             @Override
             protected void doAction(final Integer key, final Boolean value, final Consumer<Integer> consumer) {
@@ -192,6 +175,29 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                         })
                         .taskHandlerFactory(getView())
                         .exec();
+            }
+        };
+
+        dataProvider = new RestDataProvider<ProcessorListRow, ProcessorListRowResultPage>(getEventBus()) {
+            @Override
+            protected void exec(final Range range,
+                                final Consumer<ProcessorListRowResultPage> dataConsumer,
+                                final RestErrorHandler errorHandler) {
+                request.setExpression(expression);
+                restFactory
+                        .create(PROCESSOR_FILTER_RESOURCE)
+                        .method(res -> res.find(request))
+                        .onSuccess(dataConsumer)
+                        .onFailure(errorHandler)
+                        .taskHandlerFactory(getView())
+                        .exec();
+            }
+
+            @Override
+            protected void changeData(final ProcessorListRowResultPage data) {
+                currentResultPageResponse = data;
+                super.changeData(data);
+                onChangeData(data);
             }
         };
     }
@@ -545,52 +551,42 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
 
     @Override
     public void refresh() {
-        dataProvider.refresh();
-    }
-
-    private void doDataDisplay() {
-        if (!doneDataDisplay) {
-            doneDataDisplay = true;
+        if (!initiated) {
+            initiated = true;
             dataProvider.addDataDisplay(dataGrid);
         } else {
             dataProvider.refresh();
         }
     }
 
-    private void setPipeline(final DocRef pipelineRef) {
-        request.setExpression(ProcessorFilterExpressionUtil.createPipelineExpression(pipelineRef));
-        doDataDisplay();
-    }
-
-    private void setAnalyticRule(final DocRef analyticRuleRef) {
-        request.setExpression(ProcessorFilterExpressionUtil.createAnalyticRuleExpression(analyticRuleRef));
-        doDataDisplay();
-    }
-
-    private void setFolder(final DocRef folder) {
-        request.setExpression(ProcessorFilterExpressionUtil.createFolderExpression(folder));
-        doDataDisplay();
-    }
-
-    private void setNullCriteria() {
-        request.setExpression(ProcessorFilterExpressionUtil.createBasicExpression());
-        doDataDisplay();
-    }
-
     @Override
     public void read(final DocRef docRef, final Object document, final boolean readOnly) {
         if (docRef == null) {
-            setNullCriteria();
+            expression = ProcessorFilterExpressionUtil.createBasicExpression();
         } else if (PipelineDoc.DOCUMENT_TYPE.equals(docRef.getType())) {
-            setPipeline(docRef);
+            expression = ProcessorFilterExpressionUtil.createPipelineExpression(docRef);
         } else if (AnalyticRuleDoc.DOCUMENT_TYPE.equals(docRef.getType())) {
-            setAnalyticRule(docRef);
+            expression = ProcessorFilterExpressionUtil.createAnalyticRuleExpression(docRef);
         } else {
-            setFolder(docRef);
+            expression = ProcessorFilterExpressionUtil.createFolderExpression(docRef);
         }
+
+        refresh();
+    }
+
+    public ExpressionOperator getExpression() {
+        return expression;
+    }
+
+    public void setExpression(final ExpressionOperator expression) {
+        this.expression = expression;
     }
 
     void setNextSelection(final ProcessorListRow nextSelection) {
         this.nextSelection = nextSelection;
+    }
+
+    public ProcessorListRowResultPage getCurrentResultPageResponse() {
+        return currentResultPageResponse;
     }
 }

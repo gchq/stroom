@@ -52,7 +52,7 @@ import stroom.pipeline.state.PipelineContext;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.shared.AppPermission;
 import stroom.task.api.TaskContext;
 import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
@@ -151,7 +151,7 @@ class SteppingRequestHandler {
         this.taskContext = taskContext;
         taskContext.info(() -> "Started stepping");
 
-        return securityContext.secureResult(PermissionNames.STEPPING_PERMISSION, () -> {
+        return securityContext.secureResult(AppPermission.STEPPING_PERMISSION, () -> {
             // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission
             // on can be read.
             return securityContext.useAsReadResult(() -> {
@@ -264,7 +264,7 @@ class SteppingRequestHandler {
             final List<Long> streamIdList = getFilteredStreamIdList(criteria);
             currentStreamIndex = -1;
 
-            if (streamIdList.size() > 0) {
+            if (!streamIdList.isEmpty()) {
                 if (StepType.FIRST.equals(stepType)) {
                     // If we are trying to find the first record then start with
                     // the first stream, first stream no, first record.

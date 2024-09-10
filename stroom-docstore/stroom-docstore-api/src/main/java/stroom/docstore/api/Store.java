@@ -25,13 +25,13 @@ public interface Store<D extends Doc>
     DocRef copyDocument(String originalUuid,
                         String newName);
 
-    DocRef moveDocument(String uuid);
+    DocRef moveDocument(DocRef docRef);
 
-    DocRef renameDocument(String uuid, String name);
+    DocRef renameDocument(DocRef docRef, String name);
 
-    void deleteDocument(String uuid);
+    void deleteDocument(DocRef docRef);
 
-    DocRefInfo info(String uuid);
+    DocRefInfo info(DocRef docRef);
 
     ////////////////////////////////////////////////////////////////////////
     // END OF ExplorerActionHandler

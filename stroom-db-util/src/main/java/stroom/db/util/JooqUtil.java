@@ -713,7 +713,7 @@ public final class JooqUtil {
                                final int defaultValue) {
         if (pageRequest != null) {
             if (pageRequest.getLength() != null) {
-                if (oneLarger) {
+                if (oneLarger && pageRequest.getLength() < Integer.MAX_VALUE) {
                     return pageRequest.getLength() + 1;
                 } else {
                     return pageRequest.getLength();

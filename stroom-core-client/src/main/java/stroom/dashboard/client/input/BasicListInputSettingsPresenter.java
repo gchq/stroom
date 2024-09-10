@@ -23,7 +23,7 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ListInputComponentSettings;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermission;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
@@ -47,7 +47,7 @@ public class BasicListInputSettingsPresenter
         this.dictionaryPresenter = dictionaryPresenter;
 
         dictionaryPresenter.setIncludedTypes(DictionaryDoc.DOCUMENT_TYPE);
-        dictionaryPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+        dictionaryPresenter.setRequiredPermissions(DocumentPermission.USE);
 
         view.setDictionaryView(dictionaryPresenter.getView());
     }

@@ -755,7 +755,6 @@ appConfig:
         expireAfterWrite: "PT1M"
         maximumSize: 1000
         refreshAfterWrite: null
-      authenticationRequired: true
       maxApiKeyExpiryAge: "P365D"
       openId:
         authEndpoint: null
@@ -781,6 +780,11 @@ appConfig:
         validateAudience: true
       preventLogin: false
     authorisation:
+      appPermissionIdCache:
+        expireAfterAccess: "PT30M"
+        expireAfterWrite: null
+        maximumSize: 1000
+        refreshAfterWrite: null
       db:
         connection:
           jdbcDriverClassName: null
@@ -797,12 +801,12 @@ appConfig:
           minimumIdle: 10
           prepStmtCacheSize: 25
           prepStmtCacheSqlLimit: 256
-      userAppPermissionsCache:
+      docTypeIdCache:
         expireAfterAccess: "PT30M"
         expireAfterWrite: null
         maximumSize: 1000
         refreshAfterWrite: null
-      userByDisplayNameCache:
+      userAppPermissionsCache:
         expireAfterAccess: "PT30M"
         expireAfterWrite: null
         maximumSize: 1000
