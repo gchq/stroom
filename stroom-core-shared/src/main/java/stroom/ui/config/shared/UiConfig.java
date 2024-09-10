@@ -18,6 +18,7 @@ package stroom.ui.config.shared;
 
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.StandardExplorerTags;
+import stroom.security.shared.HashAlgorithm;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.validation.AllMatchPattern;
@@ -160,6 +161,13 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
             "This property should contain a sub set of the tags in property stroom.explorer.suggestedTags")
     private final Set<String> referencePipelineSelectorIncludedTags;
 
+    @JsonProperty
+    @JsonPropertyDescription("The default hash algorithm for hashing API keys. API keys are not stored, only their " +
+            "hash and prefix are. Different hash algorithm offer different levels of performance and security. " +
+            "If not set 'SHA3_256' will be used. Possible values are 'SHA3_256', 'SHA2_256', 'BCRYPT' and 'ARGON2'. " +
+            "This property controls the default value of a selection box, but the user select a different one.")
+    private final HashAlgorithm defaultApiKeyHashAlgorithm;
+
     public UiConfig() {
         welcomeHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
         aboutHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
@@ -188,6 +196,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         nestedIndexFieldsDelimiterPattern = "[.:]"; // : is to split the special annotation:XXX fields
         referencePipelineSelectorIncludedTags = StandardExplorerTags.asTagNameSet(
                 StandardExplorerTags.REFERENCE_LOADER);
+        defaultApiKeyHashAlgorithm = HashAlgorithm.SHA3_256;
     }
 
     @JsonCreator
@@ -217,7 +226,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                     @JsonProperty("nodeMonitoring") final NodeMonitoringConfig nodeMonitoring,
                     @JsonProperty("analyticUiDefaultConfig") final AnalyticUiDefaultConfig analyticUiDefaultConfig,
                     @JsonProperty("nestedIndexFieldsDelimiterPattern") final String nestedIndexFieldsDelimiterPattern,
-                    @JsonProperty("referencePipelineSelectorIncludedTags") final Set<String> referencePipelineSelectorIncludedTags) {
+                    @JsonProperty("referencePipelineSelectorIncludedTags") final Set<String> referencePipelineSelectorIncludedTags,
+                    @JsonProperty("defaultApiKeyHashAlgorithm") final HashAlgorithm defaultApiKeyHashAlgorithm) {
         this.welcomeHtml = welcomeHtml;
         this.aboutHtml = aboutHtml;
         this.maintenanceMessage = maintenanceMessage;
@@ -244,6 +254,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         this.analyticUiDefaultConfig = analyticUiDefaultConfig;
         this.nestedIndexFieldsDelimiterPattern = nestedIndexFieldsDelimiterPattern;
         this.referencePipelineSelectorIncludedTags = referencePipelineSelectorIncludedTags;
+        this.defaultApiKeyHashAlgorithm = defaultApiKeyHashAlgorithm;
     }
 
     public String getWelcomeHtml() {
@@ -414,6 +425,10 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         return referencePipelineSelectorIncludedTags;
     }
 
+    public HashAlgorithm getDefaultApiKeyHashAlgorithm() {
+        return defaultApiKeyHashAlgorithm;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -447,8 +462,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 && Objects.equals(analyticUiDefaultConfig, uiConfig.analyticUiDefaultConfig)
                 && Objects.equals(nodeMonitoring, uiConfig.nodeMonitoring)
                 && Objects.equals(nestedIndexFieldsDelimiterPattern, uiConfig.nestedIndexFieldsDelimiterPattern)
-                && Objects.equals(referencePipelineSelectorIncludedTags,
-                uiConfig.referencePipelineSelectorIncludedTags);
+                && Objects.equals(referencePipelineSelectorIncludedTags, uiConfig.referencePipelineSelectorIncludedTags)
+                && Objects.equals(defaultApiKeyHashAlgorithm, uiConfig.defaultApiKeyHashAlgorithm);
     }
 
     @Override
@@ -476,7 +491,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 nodeMonitoring,
                 analyticUiDefaultConfig,
                 nestedIndexFieldsDelimiterPattern,
-                referencePipelineSelectorIncludedTags);
+                referencePipelineSelectorIncludedTags,
+                defaultApiKeyHashAlgorithm);
     }
 
     @Override
@@ -506,6 +522,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 ", analyticUiDefaultConfig=" + analyticUiDefaultConfig +
                 ", nestedIndexFieldsDelimiterPattern=" + nestedIndexFieldsDelimiterPattern +
                 ", referencePipelineSelectorIncludedTags=" + referencePipelineSelectorIncludedTags +
+                ", defaultApiKeyHashAlgorithm=" + defaultApiKeyHashAlgorithm +
                 '}';
     }
 }

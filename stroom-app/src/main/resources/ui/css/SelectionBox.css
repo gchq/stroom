@@ -1,6 +1,5 @@
 .SelectionBox {
 	width: 200px;
-	cursor: pointer;
 }
 
 .pointer {
@@ -47,12 +46,20 @@
     cursor: pointer;
 }
 
+.svgIconBox-icon-outer:has(.svgIconBox-icon-inner.svgIconBox-readonly),
+.svgIconBox-icon-inner.svgIconBox-readonly {
+    cursor: default;
+}
+
+.svgIconBox-icon-inner.svgIconBox-readonly svg {
+    opacity: 0.5;
+}
+
 .svgIconBox-icon-inner {
     width: 100%;
     display: flex;
     align-items: center;
     flex-direction: column;
-    cursor: pointer;
 }
 
 .SelectionPopup .gwt-ListBox {
@@ -90,5 +97,3 @@
     background-color: var(--row__background-color--selected--hovered);
     color:  var(--row__text-color--selected);
 }
-
-
