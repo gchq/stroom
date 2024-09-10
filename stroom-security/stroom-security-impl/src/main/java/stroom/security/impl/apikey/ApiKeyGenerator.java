@@ -68,7 +68,6 @@ public class ApiKeyGenerator {
      * code part of the API key and the string matches the pattern for an API key.
      */
     boolean isApiKey(final String apiKey) {
-        LOGGER.debug("apiKey: '{}'", apiKey);
         if (NullSafe.isBlankString(apiKey)) {
             return false;
         } else {

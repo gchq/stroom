@@ -4,18 +4,18 @@
 package stroom.security.impl.db.jooq;
 
 
-import stroom.security.impl.db.jooq.tables.DocPermission;
-
 import org.jooq.Index;
 import org.jooq.OrderField;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
 
+import stroom.security.impl.db.jooq.tables.DocPermission;
+
 
 /**
  * A class modelling indexes of tables in stroom.
  */
-@SuppressWarnings({ "all", "unchecked", "rawtypes" })
+@SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
 public class Indexes {
 
     // -------------------------------------------------------------------------

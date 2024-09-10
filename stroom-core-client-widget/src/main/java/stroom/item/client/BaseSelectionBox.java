@@ -22,12 +22,14 @@ public class BaseSelectionBox<T, I extends SelectionItem>
         extends Composite
         implements SelectionBoxView<T, I>, Focus, HasValueChangeHandlers<T> {
 
+    public static final String POINTER_CLASS_NAME = "pointer";
     private final TextBox textBox;
     private final SvgIconBox svgIconBox;
     private SelectionListModel<T, I> model;
     private T value;
     private SelectionPopup<T, I> popup;
     private boolean allowTextEntry;
+    private boolean isEnabled = true;
 
     private final EventBinder eventBinder = new EventBinder() {
         @Override
@@ -60,10 +62,20 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     public void setAllowTextEntry(final boolean allowTextEntry) {
         this.allowTextEntry = allowTextEntry;
         textBox.setReadOnly(!allowTextEntry);
-        if (allowTextEntry) {
-            textBox.removeStyleName("pointer");
+        updatePointer();
+    }
+
+    private void updatePointer() {
+        if (allowTextEntry || !isEnabled()) {
+            textBox.removeStyleName(POINTER_CLASS_NAME);
         } else {
-            textBox.addStyleName("pointer");
+            textBox.addStyleName(POINTER_CLASS_NAME);
+        }
+
+        if (isEnabled()) {
+            svgIconBox.addStyleName(POINTER_CLASS_NAME);
+        } else {
+            svgIconBox.removeStyleName(POINTER_CLASS_NAME);
         }
     }
 
@@ -71,6 +83,10 @@ public class BaseSelectionBox<T, I extends SelectionItem>
         if (!allowTextEntry) {
             showPopup();
         }
+    }
+
+    private boolean isEnabled() {
+        return this.isEnabled;
     }
 
     @Override
@@ -141,7 +157,10 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     }
 
     public void setEnabled(final boolean enabled) {
+        this.isEnabled = enabled;
         textBox.setEnabled(enabled);
+        svgIconBox.setReadonly(!enabled);
+        updatePointer();
     }
 
     public T getValue() {
