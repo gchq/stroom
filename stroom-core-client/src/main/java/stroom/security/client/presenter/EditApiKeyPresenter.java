@@ -8,6 +8,7 @@ import stroom.security.client.presenter.EditApiKeyPresenter.EditApiKeyView;
 import stroom.security.shared.ApiKeyResource;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.CreateHashedApiKeyRequest;
+import stroom.security.shared.HashAlgorithm;
 import stroom.security.shared.HashedApiKey;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
@@ -56,17 +57,22 @@ public class EditApiKeyPresenter
         this.uiConfigCache = uiConfigCache;
         this.ownerPresenter = ownerPresenter;
 
-        getView().setCanSelectOwner(securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION));
+        reset();
         getView().setOwnerView(ownerPresenter.getView());
+    }
 
+    private void setMode(final Mode mode) {
+        final boolean isOwnerSelectionEnabled = Mode.PRE_CREATE.equals(mode)
+                && securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION);
+        ownerPresenter.setEnabled(isOwnerSelectionEnabled);
+        getView().setMode(mode);
         reset();
     }
 
     public void showCreateDialog(final Mode mode,
                                  final Runnable onChangeHandler) {
         this.onChangeHandler = onChangeHandler;
-        getView().setMode(mode);
-        reset();
+        setMode(mode);
         getView().setUiHandlers(new DefaultHideRequestUiHandlers(this));
 
         final String caption;
@@ -82,19 +88,27 @@ public class EditApiKeyPresenter
         }
 
         final PopupSize popupSize = PopupSize.resizableX(600);
-        ShowPopupEvent.builder(this)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(popupSize)
-                .caption(caption)
-                .onShow(e ->
-                        getView().focus())
-                .onHideRequest(this)
-                .fire();
+        uiConfigCache.get(uiConfigCache -> {
+            if (Mode.PRE_CREATE.equals(mode)) {
+                getView().setHashAlgorithm(GwtNullSafe.requireNonNullElse(
+                        uiConfigCache.getDefaultApiKeyHashAlgorithm(),
+                        HashAlgorithm.DEFAULT));
+            }
+            ShowPopupEvent.builder(this)
+                    .popupType(PopupType.OK_CANCEL_DIALOG)
+                    .popupSize(popupSize)
+                    .caption(caption)
+                    .onShow(e ->
+                            getView().focus())
+                    .onHideRequest(this)
+                    .fire();
+        });
     }
 
     private void reset() {
         uiConfigCache.get(uiConfig ->
-                getView().reset(System.currentTimeMillis() + uiConfig.getMaxApiKeyExpiryAgeMs()), this);
+                        getView().reset(System.currentTimeMillis() + uiConfig.getMaxApiKeyExpiryAgeMs()),
+                this);
     }
 
     public void showEditDialog(final HashedApiKey apiKey,
@@ -102,8 +116,8 @@ public class EditApiKeyPresenter
                                final Runnable onChangeHandler) {
         this.onChangeHandler = onChangeHandler;
         this.apiKey = apiKey;
-        getView().setMode(mode);
-        reset();
+        setMode(mode);
+
         getView().setUiHandlers(new DefaultHideRequestUiHandlers(this));
         ownerPresenter.setSelected(apiKey.getOwner());
         getView().setName(apiKey.getName());
@@ -111,6 +125,7 @@ public class EditApiKeyPresenter
         getView().setComments(apiKey.getComments());
         getView().setExpiresOn(apiKey.getExpireTimeMs());
         getView().setEnabled(apiKey.getEnabled());
+        getView().setHashAlgorithm(apiKey.getHashAlgorithm());
 
         final PopupSize popupSize = PopupSize.resizableX(600);
         ShowPopupEvent.builder(this)
@@ -239,7 +254,8 @@ public class EditApiKeyPresenter
                     expireTimeEpochMs,
                     getView().getName(),
                     getView().getComments(),
-                    getView().isEnabled());
+                    getView().isEnabled(),
+                    getView().getHashAlgorithm());
 //            GWT.log("sending create req");
             restFactory
                     .create(API_KEY_RESOURCE)
@@ -248,8 +264,7 @@ public class EditApiKeyPresenter
                         apiKey = response.getHashedApiKey();
                         // API Key created so change the mode and update the fields on the dialog
                         // so the user can see the actual API key
-                        getView().setMode(Mode.POST_CREATE);
-                        reset();
+                        setMode(Mode.POST_CREATE);
                         ownerPresenter.setSelected(apiKey.getOwner());
                         getView().setExpiresOn(apiKey.getExpireTimeMs());
                         getView().setName(apiKey.getName());
@@ -257,6 +272,7 @@ public class EditApiKeyPresenter
                         getView().setEnabled(apiKey.getEnabled());
                         getView().setApiKey(response.getApiKey());
                         getView().setPrefix(apiKey.getApiKeyPrefix());
+                        getView().setHashAlgorithm(apiKey.getHashAlgorithm());
 
                         event.reset();
                         onChangeHandler.run();
@@ -278,12 +294,12 @@ public class EditApiKeyPresenter
          */
         PRE_CREATE,
         /**
-         * Immediately after creation of the key, when the API key is still in memory and
-         * can be shown.
+         * Immediately after creation of the key, when the API key string is
+         * still in memory and can be shown.
          */
         POST_CREATE,
         /**
-         * Editing of the record at a later date when the API key is no longer
+         * Editing of the record at a later date when the API key string is no longer
          * available to show to the user.
          */
         EDIT
@@ -295,13 +311,11 @@ public class EditApiKeyPresenter
 
     public interface EditApiKeyView extends View, HasUiHandlers<HideRequestUiHandlers> {
 
-        void setCanSelectOwner(boolean canSelectOwner);
-
         void setMode(final Mode mode);
 
         Mode getMode();
 
-        void setOwnerView(final View view);
+        void setOwnerView(final View ownerSelectionView);
 
         void setName(final String name);
 
@@ -326,5 +340,9 @@ public class EditApiKeyPresenter
         void focus();
 
         void reset(Long milliseconds);
+
+        void setHashAlgorithm(HashAlgorithm hashAlgorithm);
+
+        HashAlgorithm getHashAlgorithm();
     }
 }

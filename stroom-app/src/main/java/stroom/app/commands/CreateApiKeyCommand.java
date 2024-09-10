@@ -5,8 +5,11 @@ import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.UserService;
 import stroom.security.impl.apikey.ApiKeyService;
+import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.CreateHashedApiKeyResponse;
+import stroom.security.shared.HashAlgorithm;
 import stroom.security.shared.User;
+import stroom.ui.config.shared.UiConfig;
 import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.UserRef;
@@ -45,12 +48,14 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
     private static final String API_KEY_NAME_ARG_NAME = "keyName";
     private static final String OUTPUT_FILE_PATH_ARG_NAME = "outFile";
     private static final String COMMENTS_ARG_NAME = "comments";
+    private static final String HASH_ALGORITHM_ARG_NAME = "hashAlgorithm";
     private static final Set<String> ARGUMENT_NAMES = Set.of(
             USER_ID_ARG_NAME,
             EXPIRY_DAYS_ARG_NAME,
             API_KEY_NAME_ARG_NAME,
             OUTPUT_FILE_PATH_ARG_NAME,
-            COMMENTS_ARG_NAME);
+            COMMENTS_ARG_NAME,
+            HASH_ALGORITHM_ARG_NAME);
 
     @Inject
     private ApiKeyService apiKeyService;
@@ -60,6 +65,8 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
     private SecurityContext securityContext;
     @Inject
     private StroomEventLoggingService stroomEventLoggingService;
+    @Inject
+    private UiConfig uiConfig;
 
     public CreateApiKeyCommand(final Path configFile) {
         super(configFile, COMMAND_NAME, COMMAND_DESCRIPTION);
@@ -98,6 +105,12 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
                 .type(String.class)
                 .required(false)
                 .help("Comments relating to this key");
+
+        subparser.addArgument(asArg('a', HASH_ALGORITHM_ARG_NAME))
+                .dest(HASH_ALGORITHM_ARG_NAME)
+                .type(String.class)
+                .required(false)
+                .help("Hash algorithm name");
     }
 
     @Override
@@ -120,7 +133,8 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
                 .map(User::asRef)
                 .ifPresentOrElse(
                         userName -> {
-                            final CreateHashedApiKeyResponse response = createApiKey(namespace, userName);
+                            final CreateHashedApiKeyResponse response = createApiKey(
+                                    namespace, userName);
                             if (outputApiKey(response, outputPath)) {
                                 final String msg = LogUtil.message("API key successfully created for user '{}'",
                                         userId);
@@ -151,7 +165,14 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
         if (lifetimeDays != null && lifetimeDays <= 0) {
             throw new RuntimeException(EXPIRY_DAYS_ARG_NAME + " must be greater than zero.");
         }
-        LOGGER.info("Creating API key for user '{}'", userRef.toInfoString());
+
+        final HashAlgorithm hashAlgorithm = Objects.requireNonNullElse(
+                namespace.get(HASH_ALGORITHM_ARG_NAME),
+                HashAlgorithm.DEFAULT);
+
+        LOGGER.info("Creating API key for user '{}' using algorithm '{}'",
+                userRef.toInfoString(),
+                hashAlgorithm.getDisplayValue());
 
         // Service will give us a default expire time if null
         final Long expireTimeEpochMs = NullSafe.get(
@@ -163,12 +184,13 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
                 namespace.getString(COMMENTS_ARG_NAME),
                 "Created by 'create_api_key' command.");
 
-        return apiKeyService.create(new stroom.security.shared.CreateHashedApiKeyRequest(
+        return apiKeyService.create(new CreateHashedApiKeyRequest(
                 userRef,
                 expireTimeEpochMs,
                 apiKeyName,
                 comments,
-                true));
+                true,
+                hashAlgorithm));
     }
 
     /**

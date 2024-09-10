@@ -12,6 +12,13 @@ public class SelectionBox<T> extends BaseSelectionBox<T, SimpleSelectionItemWrap
         setModel(model);
     }
 
+    /**
+     * Set this if you want a custom display value for each item.
+     * If not set it will do the following:
+     * <p>If the item implements {@link stroom.docref.HasDisplayValue} use the displayValue.</p>
+     * <p>If the item is a {@link String} use that.</p>
+     * <p>Else use the value of {@link Object#toString()}.</p>
+     */
     public void setDisplayValueFunction(final Function<T, String> displayValueFunction) {
         model.setDisplayValueFunction(displayValueFunction);
     }

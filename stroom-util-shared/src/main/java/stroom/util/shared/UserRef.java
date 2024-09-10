@@ -151,6 +151,10 @@ public final class UserRef {
         return new Builder();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Builder {
 
         private String uuid;

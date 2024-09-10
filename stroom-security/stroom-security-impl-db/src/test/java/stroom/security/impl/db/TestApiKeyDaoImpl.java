@@ -4,8 +4,7 @@ import stroom.security.impl.HashedApiKeyParts;
 import stroom.security.impl.TestModule;
 import stroom.security.impl.UserDao;
 import stroom.security.impl.apikey.ApiKeyDao;
-import stroom.security.impl.apikey.ApiKeyService.DuplicateHashException;
-import stroom.security.impl.apikey.ApiKeyService.DuplicatePrefixException;
+import stroom.security.impl.apikey.ApiKeyService.DuplicateApiKeyException;
 import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.FindApiKeyCriteria;
 import stroom.security.shared.HashedApiKey;
@@ -29,8 +28,10 @@ import org.junit.jupiter.api.Test;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -39,6 +40,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestApiKeyDaoImpl {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestApiKeyDaoImpl.class);
+
+    public static final String USER_1 = "user1";
+    public static final String USER_2 = "user2";
+    public static final String USER_3 = "user3";
+
+    private static final Map<String, String> SUBJECT_ID_TO_UUID_MAP = Map.of(
+            USER_1, "user1_uuid",
+            USER_2, "user2_uuid",
+            USER_3, "user3_uuid");
+
+    private static final Map<String, String> UUID_TO_SUBJECT_ID_MAP = SUBJECT_ID_TO_UUID_MAP.entrySet()
+            .stream()
+            .collect(Collectors.toMap(Entry::getValue, Entry::getKey));
 
     private static final Instant EXPIRY_IN_PAST = Instant.now().minus(10, ChronoUnit.DAYS);
     private static final Instant EXPIRY_IN_FUTURE = Instant.now().plus(10, ChronoUnit.DAYS);
@@ -186,7 +200,7 @@ class TestApiKeyDaoImpl {
     }
 
     @Test
-    void testCreate() throws DuplicateHashException, DuplicatePrefixException {
+    void testCreate() throws DuplicateApiKeyException {
         final String saltedApiKeyHash = "myHash";
         final String prefix = "sak_1234567_";
 
@@ -224,111 +238,143 @@ class TestApiKeyDaoImpl {
                 .isEqualTo(request.getExpireTimeMs());
     }
 
-    @Test
-    void testCreate_dupHashes() throws DuplicateHashException, DuplicatePrefixException {
-        final String hash1 = "myHash";
-        final String prefix1 = "sak_1234567_";
 
-        final String hash2 = hash1;
-        final String prefix2 = "sak_7654321_";
+    private HashedApiKey createApiKey(final String ownerSubjectId,
+                                      final String keyName,
+                                      final String prefix,
+                                      final String hash) throws DuplicateApiKeyException {
 
-        final UserRef user = createUser("user1");
+        final UserRef user = createUser(ownerSubjectId);
 
         final CreateHashedApiKeyRequest request1 = CreateHashedApiKeyRequest.builder()
                 .withExpireTimeMs(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli())
-                .withName("myKey1")
+                .withName(keyName)
                 .withOwner(user)
                 .withEnabled(true)
                 .withComments("myComments")
                 .build();
 
-        final HashedApiKey apiKey1 = apiKeyDao.create(
+        return apiKeyDao.create(
                 request1,
-                new HashedApiKeyParts(hash1, prefix1));
-
-        final CreateHashedApiKeyRequest request2 = CreateHashedApiKeyRequest.builder()
-                .withExpireTimeMs(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli())
-                .withName("myKey2")
-                .withOwner(user)
-                .withEnabled(true)
-                .withComments("myComments")
-                .build();
-
-        Assertions.assertThatThrownBy(
-                        () -> {
-                            apiKeyDao.create(
-                                    request2,
-                                    new HashedApiKeyParts(hash2, prefix2));
-                        })
-                .isInstanceOf(DuplicateHashException.class);
+                new HashedApiKeyParts(hash, prefix));
     }
 
     @Test
-    void testCreate_dupNames() throws DuplicateHashException, DuplicatePrefixException {
+    void testCreate_dupHashes() throws DuplicateApiKeyException {
+        final String user1 = USER_1;
+        final String user2 = USER_2;
+        final String hash1 = "hash1";
+        final String prefix1 = "sak_1234567_";
+
+        final String hash2 = "hash2";
+        final String prefix2 = "sak_7654321_";
+
+        final HashedApiKey key1a = createApiKey(user1, "key1a", prefix1, hash1);
+
+        // Same prefix and hash as an existing key
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            createApiKey(user1, "key1b", prefix1, hash1);
+                        })
+                .isInstanceOf(DuplicateApiKeyException.class);
+
+        // Same prefix and hash as an existing key, even with diff user
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            createApiKey(user2, "key1c", prefix1, hash1);
+                        })
+                .isInstanceOf(DuplicateApiKeyException.class);
+
+        // Diff prefix, but same hash
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            createApiKey(user1, "key2", prefix2, hash1);
+                        })
+                .isInstanceOf(DuplicateApiKeyException.class);
+
+        // Diff hash, same prefix
+        final HashedApiKey key3 = createApiKey(user1, "key3", prefix1, hash2);
+    }
+
+    @Test
+    void testCreate_dupKeyNames() throws DuplicateApiKeyException {
+        final String user1 = USER_1;
+        final String user2 = USER_2;
         final String hash1 = "myHash1";
         final String prefix1 = "sak_1234567_";
 
         final String hash2 = "myHash2";
         final String prefix2 = "sak_7654321_";
 
-        final UserRef user = createUser("user1");
+        final String keyName = "dup_name";
 
-        final CreateHashedApiKeyRequest request1 = CreateHashedApiKeyRequest.builder()
-                .withExpireTimeMs(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli())
-                .withName("myKey1")
-                .withOwner(user)
-                .withEnabled(true)
-                .withComments("myComments")
-                .build();
+        // Creates OK
+        createApiKey(user1, keyName, hash1, prefix1);
 
-        final HashedApiKey apiKey1 = apiKeyDao.create(
-                request1,
-                new HashedApiKeyParts(hash1, prefix1));
-
-        final CreateHashedApiKeyRequest request2 = CreateHashedApiKeyRequest.builder()
-                .withExpireTimeMs(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli())
-                .withName("myKey1")
-                .withOwner(user)
-                .withEnabled(true)
-                .withComments("myComments")
-                .build();
-
+        // Can't create, same name for owner
         Assertions.assertThatThrownBy(
                         () -> {
-                            apiKeyDao.create(
-                                    request2,
-                                    new HashedApiKeyParts(hash2, prefix2));
+                            createApiKey(user1, keyName, hash2, prefix2);
                         })
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("name");
+
+        // Creates OK, same keyName but different user
+        createApiKey(user2, keyName, hash2, prefix2);
     }
 
     private void doFetchVerifiedIdentityTest(final HashedApiKey apiKey, boolean isValid) {
 
-        final Optional<String> optUuid = apiKeyDao.fetchVerifiedUserUuid(apiKey.getApiKeyHash());
+        final List<HashedApiKey> apiKeys = apiKeyDao.fetchValidApiKeysByPrefix(apiKey.getApiKeyPrefix());
         if (isValid) {
-            assertThat(optUuid)
-                    .hasValue(apiKey.getOwner().getUuid());
+            assertThat(apiKeys)
+                    .hasSize(1);
+            final HashedApiKey fetchedKey = apiKeys.getFirst();
+            assertThat(fetchedKey.getApiKeyPrefix())
+                    .isEqualTo(apiKey.getApiKeyPrefix());
+            assertThat(fetchedKey.getApiKeyHash())
+                    .isEqualTo(apiKey.getApiKeyHash());
+            assertThat(fetchedKey.getExpireTimeMs())
+                    .isGreaterThan(System.currentTimeMillis());
+            assertThat(fetchedKey.getEnabled())
+                    .isTrue();
+            assertThat(fetchedKey.getOwner())
+                    .isEqualTo(apiKey.getOwner());
         } else {
-            assertThat(optUuid)
+            assertThat(apiKeys)
                     .isEmpty();
         }
     }
 
     private void loadData() {
-        user1ApiKey1 = apiKey("user1 key 1 valid", "user1", EXPIRY_IN_FUTURE, true);
-        user1ApiKey2 = apiKey("user1 key 2 valid", "user1", EXPIRY_IN_FUTURE, true);
-        user1ApiKey3 = apiKey("user1 key 3 invalid", "user1", EXPIRY_IN_PAST, true);
-        user1ApiKey4 = apiKey("user1 key 4 invalid", "user1", EXPIRY_IN_FUTURE, false);
-        user1ApiKey5 = apiKey("user1 key 5 invalid", "user1", EXPIRY_IN_PAST, false);
+//        final long nowMs = Instant.now().toEpochMilli();
+//
+//        UUID_TO_SUBJECT_ID_MAP.forEach((uuid, subjectId) -> {
+//            final User user = User.builder()
+//                    .subjectId(subjectId)
+//                    .uuid(uuid)
+//                    .group(false)
+//                    .build();
+//            user.setCreateUser(subjectId);
+//            user.setUpdateUser(subjectId);
+//            user.setCreateTimeMs(nowMs);
+//            user.setUpdateTimeMs(nowMs);
+//            userDao.create(user);
+//        });
 
-        user2ApiKey1 = apiKey("user2 key 1 valid", "user2", EXPIRY_IN_FUTURE, true);
-        user2ApiKey2 = apiKey("user2 key 2 valid", "user2", EXPIRY_IN_FUTURE, true);
-        user2ApiKey3 = apiKey("user2 key 3 invalid", "user2", EXPIRY_IN_PAST, true);
-        user2ApiKey4 = apiKey("user2 key 4 invalid", "user2", EXPIRY_IN_FUTURE, false);
-        user2ApiKey5 = apiKey("user2 key 5 invalid", "user2", EXPIRY_IN_PAST, false);
+        user1ApiKey1 = apiKey("user1 key 1 valid", USER_1, EXPIRY_IN_FUTURE, true);
+        user1ApiKey2 = apiKey("user1 key 2 valid", USER_1, EXPIRY_IN_FUTURE, true);
+        user1ApiKey3 = apiKey("user1 key 3 invalid", USER_1, EXPIRY_IN_PAST, true);
+        user1ApiKey4 = apiKey("user1 key 4 invalid", USER_1, EXPIRY_IN_FUTURE, false);
+        user1ApiKey5 = apiKey("user1 key 5 invalid", USER_1, EXPIRY_IN_PAST, false);
 
-        user3ApiKey1 = apiKey("user3 key 1 valid", "user3", EXPIRY_IN_FUTURE, true);
+        user2ApiKey1 = apiKey("user2 key 1 valid", USER_2, EXPIRY_IN_FUTURE, true);
+        user2ApiKey2 = apiKey("user2 key 2 valid", USER_2, EXPIRY_IN_FUTURE, true);
+        user2ApiKey3 = apiKey("user2 key 3 invalid", USER_2, EXPIRY_IN_PAST, true);
+        user2ApiKey4 = apiKey("user2 key 4 invalid", USER_2, EXPIRY_IN_FUTURE, false);
+        user2ApiKey5 = apiKey("user2 key 5 invalid", USER_2, EXPIRY_IN_PAST, false);
+
+        user3ApiKey1 = apiKey("user3 key 1 valid", USER_3, EXPIRY_IN_FUTURE, true);
     }
 
     private HashedApiKey apiKey(final String keyName,
@@ -342,10 +388,11 @@ class TestApiKeyDaoImpl {
 
         final CreateHashedApiKeyRequest createHashedApiKeyRequest = CreateHashedApiKeyRequest.builder()
                 .withName(keyName)
-                .withOwner(UserRef.builder()
-                        .uuid(user.getUuid())
-                        .subjectId(userSubjectId)
-                        .build())
+                .withOwner(user)
+//                .withOwner(SimpleUserName.builder()
+//                        .uuid(userSubjectId + "_uuid")
+//                        .subjectId(userSubjectId)
+//                        .build())
                 .withEnabled(enabled)
                 .withExpireTimeMs(expiryTime.toEpochMilli())
                 .build();
@@ -354,7 +401,7 @@ class TestApiKeyDaoImpl {
 
         try {
             return apiKeyDao.create(createHashedApiKeyRequest, hashedApiKeyParts);
-        } catch (DuplicateHashException | DuplicatePrefixException e) {
+        } catch (DuplicateApiKeyException e) {
             throw new RuntimeException(e);
         }
     }

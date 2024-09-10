@@ -4,6 +4,13 @@
 package stroom.security.impl.db.jooq;
 
 
+import java.util.Arrays;
+import java.util.List;
+
+import org.jooq.Catalog;
+import org.jooq.Table;
+import org.jooq.impl.SchemaImpl;
+
 import stroom.security.impl.db.jooq.tables.ApiKey;
 import stroom.security.impl.db.jooq.tables.PermissionApp;
 import stroom.security.impl.db.jooq.tables.PermissionAppId;
@@ -13,13 +20,6 @@ import stroom.security.impl.db.jooq.tables.PermissionDocId;
 import stroom.security.impl.db.jooq.tables.PermissionDocTypeId;
 import stroom.security.impl.db.jooq.tables.StroomUser;
 import stroom.security.impl.db.jooq.tables.StroomUserGroup;
-
-import org.jooq.Catalog;
-import org.jooq.Table;
-import org.jooq.impl.SchemaImpl;
-
-import java.util.Arrays;
-import java.util.List;
 
 
 /**

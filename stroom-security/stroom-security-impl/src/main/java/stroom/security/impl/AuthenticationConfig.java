@@ -27,7 +27,7 @@ public class AuthenticationConfig extends AbstractConfig implements IsStroomConf
     public AuthenticationConfig() {
         apiKeyCache = CacheConfig.builder()
                 .maximumSize(1_000L)
-                .expireAfterWrite(StroomDuration.ofSeconds(5))
+                .expireAfterWrite(StroomDuration.ofSeconds(60))
                 .build();
         maxApiKeyExpiryAge = StroomDuration.ofDays(365);
         openIdConfig = new StroomOpenIdConfig();

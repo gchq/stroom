@@ -4,14 +4,14 @@
 package stroom.security.impl.db.jooq.tables.records;
 
 
-import stroom.security.impl.db.jooq.tables.PermissionAppId;
-
 import org.jooq.Field;
 import org.jooq.Record1;
 import org.jooq.Record2;
 import org.jooq.Row2;
 import org.jooq.impl.UpdatableRecordImpl;
 import org.jooq.types.UByte;
+
+import stroom.security.impl.db.jooq.tables.PermissionAppId;
 
 
 /**

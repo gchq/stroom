@@ -24,18 +24,22 @@ public class CreateHashedApiKeyRequest {
     private final String comments;
     @JsonProperty
     private final boolean enabled;
+    @JsonProperty
+    private final HashAlgorithm hashAlgorithm;
 
     @JsonCreator
     public CreateHashedApiKeyRequest(@JsonProperty("owner") final UserRef owner,
                                      @JsonProperty("expireTimeMs") final Long expireTimeMs,
                                      @JsonProperty("name") final String name,
                                      @JsonProperty("comments") final String comments,
-                                     @JsonProperty("enabled") final boolean enabled) {
-        this.owner = owner;
+                                     @JsonProperty("enabled") final boolean enabled,
+                                     @JsonProperty("hashAlgorithm") final HashAlgorithm hashAlgorithm) {
+        this.owner = Objects.requireNonNull(owner);
         this.expireTimeMs = expireTimeMs;
-        this.name = name;
+        this.name = Objects.requireNonNull(name);
         this.comments = comments;
         this.enabled = enabled;
+        this.hashAlgorithm = Objects.requireNonNull(hashAlgorithm);
     }
 
     private CreateHashedApiKeyRequest(final Builder builder) {
@@ -44,6 +48,7 @@ public class CreateHashedApiKeyRequest {
         name = builder.name;
         comments = builder.comments;
         enabled = builder.enabled;
+        hashAlgorithm = builder.hashAlgorithm;
     }
 
     public static Builder builder() {
@@ -57,6 +62,7 @@ public class CreateHashedApiKeyRequest {
         builder.name = copy.getName();
         builder.comments = copy.getComments();
         builder.enabled = copy.getEnabled();
+        builder.hashAlgorithm = copy.getHashAlgorithm();
         return builder;
     }
 
@@ -80,6 +86,10 @@ public class CreateHashedApiKeyRequest {
         return enabled;
     }
 
+    public HashAlgorithm getHashAlgorithm() {
+        return hashAlgorithm;
+    }
+
     @Override
     public boolean equals(final Object object) {
         if (this == object) {
@@ -88,16 +98,16 @@ public class CreateHashedApiKeyRequest {
         if (object == null || getClass() != object.getClass()) {
             return false;
         }
-        final CreateHashedApiKeyRequest that = (CreateHashedApiKeyRequest) object;
-        return enabled == that.enabled && Objects.equals(owner, that.owner) && Objects.equals(
+        final CreateHashedApiKeyRequest request = (CreateHashedApiKeyRequest) object;
+        return enabled == request.enabled && Objects.equals(owner, request.owner) && Objects.equals(
                 expireTimeMs,
-                that.expireTimeMs) && Objects.equals(name, that.name) && Objects.equals(comments,
-                that.comments);
+                request.expireTimeMs) && Objects.equals(name, request.name) && Objects.equals(comments,
+                request.comments) && hashAlgorithm == request.hashAlgorithm;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(owner, expireTimeMs, name, comments, enabled);
+        return Objects.hash(owner, expireTimeMs, name, comments, enabled, hashAlgorithm);
     }
 
     @Override
@@ -108,6 +118,7 @@ public class CreateHashedApiKeyRequest {
                 ", name='" + name + '\'' +
                 ", comments='" + comments + '\'' +
                 ", enabled=" + enabled +
+                ", hashAlgorithm=" + hashAlgorithm +
                 '}';
     }
 
@@ -121,6 +132,7 @@ public class CreateHashedApiKeyRequest {
         private String name;
         private String comments;
         private boolean enabled = true;
+        private HashAlgorithm hashAlgorithm = HashAlgorithm.DEFAULT;
 
         private Builder() {
         }
@@ -151,6 +163,11 @@ public class CreateHashedApiKeyRequest {
 
         public Builder withEnabled(final boolean val) {
             enabled = val;
+            return this;
+        }
+
+        public Builder withHashAlgorithm(final HashAlgorithm val) {
+            hashAlgorithm = val;
             return this;
         }
 

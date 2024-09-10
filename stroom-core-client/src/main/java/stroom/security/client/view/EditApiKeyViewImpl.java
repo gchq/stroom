@@ -1,8 +1,11 @@
 package stroom.security.client.view;
 
+import stroom.item.client.SelectionBox;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.security.client.presenter.EditApiKeyPresenter.EditApiKeyView;
 import stroom.security.client.presenter.EditApiKeyPresenter.Mode;
+import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
+import stroom.security.shared.HashAlgorithm;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.ClipboardUtil;
 import stroom.widget.button.client.ButtonPanel;
@@ -25,22 +28,27 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.stream.Collectors;
+
 public class EditApiKeyViewImpl
         extends ViewWithUiHandlers<HideRequestUiHandlers>
         implements EditApiKeyView {
 
     private final Widget widget;
     private Mode mode;
-    private boolean canSelectOwner;
 
     @UiField
-    SimplePanel owner;
+    SimplePanel ownerPanel;
     @UiField
     TextBox nameTextBox;
     @UiField
     TextArea commentsTextArea;
     @UiField
     MyDateBox expiresOnDateBox;
+    @UiField
+    SelectionBox<HashAlgorithm> hashAlgorithmSelectionBox;
     @UiField
     CustomCheckBox enabledCheckBox;
 
@@ -59,11 +67,20 @@ public class EditApiKeyViewImpl
     @UiField
     Label copyToClipboardLabel;
 
+    private UserRefSelectionBoxPresenter ownerSelectionView = null;
+
     @Inject
     public EditApiKeyViewImpl(final Binder binder,
                               final UserPreferencesManager userPreferencesManager) {
         widget = binder.createAndBindUi(this);
         widget.addAttachHandler(event -> focus());
+//        this.uiConfigCache = uiConfigCache;
+
+        hashAlgorithmSelectionBox.addItems(Arrays.stream(HashAlgorithm.values())
+                .sorted(Comparator.comparing(HashAlgorithm::getDisplayValue))
+                .collect(Collectors.toList()));
+
+//        ownerSelectionBox.setDisplayValueFunction(UserName::getUserIdentityForAudit);
 
         apiKeyTextArea.setEnabled(false);
         prefixTextBox.setEnabled(false);
@@ -83,20 +100,6 @@ public class EditApiKeyViewImpl
             };
             timer.schedule(3_000);
         });
-    }
-
-    @Override
-    public void setCanSelectOwner(final boolean canSelectOwner) {
-        this.canSelectOwner = canSelectOwner;
-        setOwnerControlsVisibility();
-    }
-
-    private void setOwnerControlsVisibility() {
-        if (canSelectOwner && Mode.PRE_CREATE.equals(mode)) {
-            owner.setVisible(true);
-        } else {
-            owner.setVisible(false);
-        }
     }
 
     @Override
@@ -120,7 +123,6 @@ public class EditApiKeyViewImpl
         apiKeyFormGroup.setVisible(isApiKeyVisible);
         apiKeyButtonPanel.setVisible(isApiKeyVisible);
         setEnabledStates(mode);
-        setOwnerControlsVisibility();
     }
 
     private void setEnabledStates(final Mode mode) {
@@ -129,17 +131,20 @@ public class EditApiKeyViewImpl
             nameTextBox.setEnabled(true);
             commentsTextArea.setEnabled(true);
             enabledCheckBox.setEnabled(true);
+            hashAlgorithmSelectionBox.setEnabled(true);
         } else if (Mode.POST_CREATE.equals(mode)) {
             // POST_CREATE is just to view what has been created, so user can't change anything
             expiresOnDateBox.setEnabled(false);
             nameTextBox.setEnabled(false);
             commentsTextArea.setEnabled(false);
             enabledCheckBox.setEnabled(false);
+            hashAlgorithmSelectionBox.setEnabled(false);
         } else if (Mode.EDIT.equals(mode)) {
             expiresOnDateBox.setEnabled(false);
             nameTextBox.setEnabled(true);
             commentsTextArea.setEnabled(true);
             enabledCheckBox.setEnabled(true);
+            hashAlgorithmSelectionBox.setEnabled(false);
         }
     }
 
@@ -149,8 +154,8 @@ public class EditApiKeyViewImpl
     }
 
     @Override
-    public void setOwnerView(final View view) {
-
+    public void setOwnerView(final View ownerSelectionView) {
+        ownerPanel.setWidget(ownerSelectionView.asWidget());
     }
 
     @Override
@@ -214,11 +219,20 @@ public class EditApiKeyViewImpl
     public void reset(final Long milliseconds) {
         nameTextBox.setText("");
         commentsTextArea.setText("");
-        owner = null;
         expiresOnDateBox.setMilliseconds(milliseconds);
         enabledCheckBox.setValue(true);
         prefixTextBox.setText("");
         apiKeyTextArea.setText("");
+    }
+
+    @Override
+    public void setHashAlgorithm(final HashAlgorithm hashAlgorithm) {
+        hashAlgorithmSelectionBox.setValue(hashAlgorithm);
+    }
+
+    @Override
+    public HashAlgorithm getHashAlgorithm() {
+        return hashAlgorithmSelectionBox.getValue();
     }
 
     @Override
