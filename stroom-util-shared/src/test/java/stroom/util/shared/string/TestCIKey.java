@@ -472,6 +472,7 @@ public class TestCIKey {
             });
         });
 
+        // No CIKey, so have the added cost of lower-casing the key to do the equality check
         final TimedCase noCiKeyCase = TimedCase.of("No CIKey", (round, iterations) -> {
             doWorkOnThreads(cpuCount, iterations, executorService, () -> {
                 for (int j = 0; j < keys.size(); j++) {

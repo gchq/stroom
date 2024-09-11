@@ -32,11 +32,9 @@ public class CIKeys {
     // The cost of a hashmap get is less than the combined cost of CIKey object creation and
     // the toLowerCase call.
     // Have to be concurrent maps as various classes in potentially multiple threads will call
-    // commonKey()
+    // commonKey(). Not much perf difference as compared to a HashMap in tests
     static final Map<String, CIKey> KEY_TO_COMMON_CIKEY_MAP = new ConcurrentHashMap<>();
     static final Map<String, CIKey> LOWER_KEY_TO_COMMON_CIKEY_MAP = new ConcurrentHashMap<>();
-//    static final Map<String, CIKey> KEY_TO_COMMON_CIKEY_MAP = new HashMap<>();
-//    static final Map<String, CIKey> LOWER_KEY_TO_COMMON_CIKEY_MAP = new HashMap<>();
 
     // Upper camel case keys
     public static final CIKey AUTHORIZATION = commonKey("Authorization");
@@ -198,6 +196,9 @@ public class CIKeys {
         return ciKey;
     }
 
+    /**
+     * @return The set of all common {@link CIKey}s
+     */
     static Set<CIKey> commonKeys() {
         return Set.copyOf(KEY_TO_COMMON_CIKEY_MAP.values());
     }
