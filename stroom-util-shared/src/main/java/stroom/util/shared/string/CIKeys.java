@@ -35,6 +35,8 @@ public class CIKeys {
     // commonKey()
     static final Map<String, CIKey> KEY_TO_COMMON_CIKEY_MAP = new ConcurrentHashMap<>();
     static final Map<String, CIKey> LOWER_KEY_TO_COMMON_CIKEY_MAP = new ConcurrentHashMap<>();
+//    static final Map<String, CIKey> KEY_TO_COMMON_CIKEY_MAP = new HashMap<>();
+//    static final Map<String, CIKey> LOWER_KEY_TO_COMMON_CIKEY_MAP = new HashMap<>();
 
     // Upper camel case keys
     public static final CIKey AUTHORIZATION = commonKey("Authorization");

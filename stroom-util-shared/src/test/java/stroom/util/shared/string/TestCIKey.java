@@ -42,6 +42,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -422,12 +426,9 @@ public class TestCIKey {
                 .build();
     }
 
-    /**
-     * On my PC, roughly 300 nanos for Common Key vs 1500 nanos for Dynamic Key
-     */
     @Test
     @Disabled
-    // manual run only
+        // manual run only
     void testPerf() {
         final List<String> keys = new ArrayList<>(CIKeys.commonKeys()
                 .stream()
@@ -440,9 +441,12 @@ public class TestCIKey {
                 .map(key -> GwtNullSafe.get(key, String::toLowerCase))
                 .toList();
 
+        final int cpuCount = Runtime.getRuntime().availableProcessors();
+        final ExecutorService executorService = Executors.newFixedThreadPool(cpuCount);
+
         // Will always get the CIKey instance from a map.
         final TimedCase commonKeyCase = TimedCase.of("Common Key", (round, iterations) -> {
-            for (int i = 0; i < iterations; i++) {
+            doWorkOnThreads(cpuCount, iterations, executorService, () -> {
                 for (int j = 0; j < keys.size(); j++) {
                     final String key = keys.get(j);
                     final String lowerKey = lowerKeys.get(j);
@@ -451,12 +455,12 @@ public class TestCIKey {
                         throw new RuntimeException("Mismatch");
                     }
                 }
-            }
+            });
         });
 
         // Will always create a new CIKey instance, except for "" and null.
         final TimedCase dynamicKeyCase = TimedCase.of("Dynamic Key", (round, iterations) -> {
-            for (int i = 0; i < iterations; i++) {
+            doWorkOnThreads(cpuCount, iterations, executorService, () -> {
                 for (int j = 0; j < keys.size(); j++) {
                     final String key = keys.get(j);
                     final String lowerKey = lowerKeys.get(j);
@@ -465,11 +469,11 @@ public class TestCIKey {
                         throw new RuntimeException("Mismatch");
                     }
                 }
-            }
+            });
         });
 
         final TimedCase noCiKeyCase = TimedCase.of("No CIKey", (round, iterations) -> {
-            for (int i = 0; i < iterations; i++) {
+            doWorkOnThreads(cpuCount, iterations, executorService, () -> {
                 for (int j = 0; j < keys.size(); j++) {
                     String key = keys.get(j);
                     String lowerKey = lowerKeys.get(j);
@@ -485,7 +489,7 @@ public class TestCIKey {
                         }
                     }
                 }
-            }
+            });
         });
 
         TestUtil.comparePerformance(
@@ -495,5 +499,28 @@ public class TestCIKey {
                 commonKeyCase,
                 dynamicKeyCase,
                 noCiKeyCase);
+    }
+
+    private void doWorkOnThreads(final int threadCount,
+                                 final long iterations,
+                                 final ExecutorService executorService,
+                                 final Runnable work) {
+
+        final List<CompletableFuture<Void>> futures = new ArrayList<>();
+        for (int i = 0; i < threadCount; i++) {
+            futures.add(CompletableFuture.runAsync(() -> {
+                for (int j = 0; j < iterations; j++) {
+                    work.run();
+                }
+            }, executorService));
+        }
+
+        for (final CompletableFuture<Void> future : futures) {
+            try {
+                future.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }
