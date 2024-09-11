@@ -181,6 +181,18 @@ public class NullSafe {
     }
 
     /**
+     * Return first value in the list or an empty {@link Optional} if the list
+     * is null, empty or the first item is null.
+     */
+    public static <T> Optional<T> first(final List<T> list) {
+        if (list == null || list.isEmpty()) {
+            return Optional.empty();
+        } else {
+            return Optional.ofNullable(list.getFirst());
+        }
+    }
+
+    /**
      * Return first non-null value or an empty {@link Optional} if all are null
      */
     public static <T> Optional<T> coalesce(final T... vals) {

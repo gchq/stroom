@@ -240,6 +240,24 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testFirst() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<List<String>>() {
+                })
+                .withWrappedOutputType(new TypeLiteral<Optional<String>>() {
+                })
+                .withSingleArgTestFunction(NullSafe::first)
+                .withSimpleEqualityAssertion()
+                .addCase(null, Optional.empty())
+                .addCase(Collections.emptyList(), Optional.empty())
+                .addCase(Arrays.asList((String) null), Optional.empty())
+                .addCase(Arrays.asList((String) null, (String) null), Optional.empty())
+                .addCase(List.of("foo"), Optional.of("foo"))
+                .addCase(List.of("foo", "bar"), Optional.of("foo"))
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testCoalesce_twoValues() {
         return TestUtil.buildDynamicTestStream()
                 .withInputTypes(String.class, String.class)

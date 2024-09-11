@@ -41,7 +41,11 @@ import java.util.stream.Collectors;
  * form of {@code key}.
  * <p>
  * Useful as a case-insensitive cache key that retains the case of the
- * original string at the cost of wrapping it in another object.
+ * original string at the cost of wrapping it in another object. Also
+ * useful for case insensitive comparisons of common strings.
+ * </p>
+ * <p>
+ * See {@link CIKeys} for common {@link CIKey} instances.
  * </p>
  */
 @JsonInclude(Include.NON_NULL)
@@ -179,9 +183,9 @@ public class CIKey implements Comparable<CIKey> {
     }
 
     /**
-     * Create a {@link CIKey} for a key that is known NOT to be in {@link CIKey}s list
-     * of common keys and is a key that will not be added to the list of common keys in future.
-     * This is a minor optimisation.
+     * Create a {@link CIKey} for a key that is known NOT to be in {@link CIKey}s map
+     * of common keys and is a key that will not be added to the map of common keys in future.
+     * This is a minor optimisation that saves a pointless map lookup.
      */
     public static CIKey ofDynamicKey(final String dynamicKey) {
         if (dynamicKey == null) {
@@ -196,8 +200,9 @@ public class CIKey implements Comparable<CIKey> {
     /**
      * Create a {@link CIKey} for an upper or mixed case key, e.g. "FOO", or "Foo",
      * that will be held as a static variable. This has the additional cost of
-     * interning the lower-case form of the key. Only use this for static {@link CIKey}
-     * instances as
+     * interning the lower-case form of the key. Only use this for commonly used
+     * static {@link CIKey} instances as if the key is not already held in the map
+     * of common {@link CIKey}s then it will be added.
      */
     public static CIKey ofStaticKey(final String key) {
         if (key == null) {
@@ -247,13 +252,19 @@ public class CIKey implements Comparable<CIKey> {
         return key;
     }
 
+    /**
+     * @return The lowercase form of the wrapped string.
+     */
     @JsonIgnore
     public String getAsLowerCase() {
         return lowerKey;
     }
 
+    /**
+     * @return True if str is equal to the string wrapped in this {@link CIKey}, ignoring case.
+     */
     public boolean equalsIgnoreCase(final String str) {
-        return CIKey.equalsIgnoreCase(this, str);
+        return CIKey.equalsIgnoreCase(str, this);
     }
 
     /**

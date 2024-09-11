@@ -17,6 +17,7 @@
 package stroom.util.shared.string;
 
 import stroom.test.common.TestUtil;
+import stroom.test.common.TestUtil.TimedCase;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -28,10 +29,12 @@ import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -416,5 +419,47 @@ public class TestCIKey {
                 .addCase(Tuple.of(CIKey.ofDynamicKey("aaa"), CIKey.ofDynamicKey("AAA")), 0)
                 .addCase(Tuple.of(CIKey.ofDynamicKey("a"), CIKey.ofDynamicKey("aaa")), -1)
                 .build();
+    }
+
+    /**
+     * On my PC, roughly 300 nanos for Common Key vs 1500 nanos for Dynamic Key
+     */
+    @Test
+    @Disabled
+    // manual run only
+    void testPerf() {
+        final List<String> keys = new ArrayList<>(CIKeys.commonKeys()
+                .stream()
+                .map(CIKey::get)
+                .toList());
+        keys.add(CIKey.EMPTY_STRING.get());
+        keys.add(null);
+
+        // Will always get the CIKey instance from a map.
+        final TimedCase commonKeyCase = TimedCase.of("Common Key", (round, iterations) -> {
+            for (int i = 0; i < iterations; i++) {
+                for (final String key : keys) {
+                    final CIKey ciKey = CIKey.of(key);
+                    Objects.requireNonNull(ciKey);
+                }
+            }
+        });
+
+        // Will always create a new CIKey instance, except for "" and null.
+        final TimedCase dynamicKeyCase = TimedCase.of("Dynamic Key", (round, iterations) -> {
+            for (int i = 0; i < iterations; i++) {
+                for (final String key : keys) {
+                    final CIKey ciKey = CIKey.ofDynamicKey(key);
+                    Objects.requireNonNull(ciKey);
+                }
+            }
+        });
+
+        TestUtil.comparePerformance(
+                3,
+                1_000_000,
+                LOGGER::info,
+                commonKeyCase,
+                dynamicKeyCase);
     }
 }

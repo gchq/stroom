@@ -16,10 +16,15 @@
 
 package stroom.util.shared.string;
 
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 class TestCIKeys {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestCIKeys.class);
 
     @Test
     void test() {

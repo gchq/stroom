@@ -130,12 +130,13 @@ class SearchableTaskProgress implements Searchable {
                     .flatMap(List::stream)
                     .map(taskProgress -> {
                         final Map<CIKey, Object> attributeMap = new HashMap<>();
-                        attributeMap.put(TaskManagerFields.FIELD_NODE_KEY, taskProgress.getNodeName());
-                        attributeMap.put(TaskManagerFields.FIELD_NAME_KEY, taskProgress.getTaskName());
-                        attributeMap.put(TaskManagerFields.FIELD_USER_KEY, taskProgress.getUserName());
-                        attributeMap.put(TaskManagerFields.FIELD_SUBMIT_TIME_KEY, taskProgress.getSubmitTimeMs());
-                        attributeMap.put(TaskManagerFields.FIELD_AGE_KEY, taskProgress.getAgeMs());
-                        attributeMap.put(TaskManagerFields.FIELD_INFO_KEY, taskProgress.getTaskInfo());
+                        attributeMap.put(TaskManagerFields.NODE.getFldNameAsCIKey(), taskProgress.getNodeName());
+                        attributeMap.put(TaskManagerFields.NAME.getFldNameAsCIKey(), taskProgress.getTaskName());
+                        attributeMap.put(TaskManagerFields.USER.getFldNameAsCIKey(), taskProgress.getUserName());
+                        attributeMap.put(
+                                TaskManagerFields.SUBMIT_TIME.getFldNameAsCIKey(), taskProgress.getSubmitTimeMs());
+                        attributeMap.put(TaskManagerFields.AGE.getFldNameAsCIKey(), taskProgress.getAgeMs());
+                        attributeMap.put(TaskManagerFields.INFO.getFldNameAsCIKey(), taskProgress.getTaskInfo());
                         return attributeMap;
                     })
                     .filter(attributeMap -> expressionMatcher.match(attributeMap, criteria.getExpression()))

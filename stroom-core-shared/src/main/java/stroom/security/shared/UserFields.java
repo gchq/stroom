@@ -6,12 +6,13 @@ import stroom.datasource.api.v2.QueryField;
 import stroom.util.shared.filter.FilterFieldDefinition;
 import stroom.util.shared.string.CIKey;
 
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class UserFields {
 
@@ -49,24 +50,24 @@ public class UserFields {
     public static final FilterFieldDefinition FIELD_DEF_FULL_NAME = FilterFieldDefinition.qualifiedField(
             FIELD_FULL_NAME);
 
-    public static final List<FilterFieldDefinition> FILTER_FIELD_DEFINITIONS = Arrays.asList(
+    public static final List<FilterFieldDefinition> FILTER_FIELD_DEFINITIONS = List.of(
             FIELD_DEF_IS_GROUP,
             FIELD_DEF_NAME,
             FIELD_DEF_DISPLAY_NAME,
             FIELD_DEF_FULL_NAME);
 
-    public static final Set<QueryField> DEFAULT_FIELDS = new HashSet<>();
-    public static final Map<CIKey, QueryField> ALL_FIELD_MAP = new HashMap<>();
+    public static final Set<QueryField> DEFAULT_FIELDS = new HashSet<>(List.of(
+            DISPLAY_NAME,
+            NAME));
 
-    static {
-        DEFAULT_FIELDS.add(DISPLAY_NAME);
-        DEFAULT_FIELDS.add(NAME);
-
-        ALL_FIELD_MAP.put(IS_GROUP.getFldNameAsCIKey(), IS_GROUP);
-        ALL_FIELD_MAP.put(NAME.getFldNameAsCIKey(), NAME);
-        ALL_FIELD_MAP.put(DISPLAY_NAME.getFldNameAsCIKey(), DISPLAY_NAME);
-        ALL_FIELD_MAP.put(FULL_NAME.getFldNameAsCIKey(), FULL_NAME);
-        ALL_FIELD_MAP.put(GROUP_CONTAINS.getFldNameAsCIKey(), GROUP_CONTAINS);
-        ALL_FIELD_MAP.put(PARENT_GROUP.getFldNameAsCIKey(), PARENT_GROUP);
-    }
+    public static final Map<CIKey, QueryField> ALL_FIELD_MAP = Stream.of(
+                    IS_GROUP,
+                    NAME,
+                    DISPLAY_NAME,
+                    FULL_NAME,
+                    GROUP_CONTAINS,
+                    PARENT_GROUP)
+            .collect(Collectors.toMap(
+                    QueryField::getFldNameAsCIKey,
+                    Function.identity()));
 }

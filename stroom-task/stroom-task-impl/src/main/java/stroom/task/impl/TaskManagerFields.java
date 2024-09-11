@@ -34,19 +34,13 @@ public class TaskManagerFields {
     public static final String FIELD_AGE = "Age";
     public static final String FIELD_INFO = "Info";
 
-    public static final CIKey FIELD_NODE_KEY = CIKey.ofStaticKey(FIELD_NODE);
-    public static final CIKey FIELD_NAME_KEY = CIKey.ofStaticKey(FIELD_NAME);
-    public static final CIKey FIELD_USER_KEY = CIKey.ofStaticKey(FIELD_USER);
-    public static final CIKey FIELD_SUBMIT_TIME_KEY = CIKey.ofStaticKey(FIELD_SUBMIT_TIME);
-    public static final CIKey FIELD_AGE_KEY = CIKey.ofStaticKey(FIELD_AGE);
-    public static final CIKey FIELD_INFO_KEY = CIKey.ofStaticKey(FIELD_INFO);
-
-    public static final QueryField NODE = QueryField.createText(FIELD_NODE);
-    public static final QueryField NAME = QueryField.createText(FIELD_NAME);
-    public static final QueryField USER = QueryField.createText(FIELD_USER);
-    public static final QueryField SUBMIT_TIME = QueryField.createDate(FIELD_SUBMIT_TIME);
-    public static final QueryField AGE = QueryField.createLong(FIELD_AGE);
-    public static final QueryField INFO = QueryField.createText(FIELD_INFO);
+    public static final QueryField NODE = QueryField.createText(CIKey.ofStaticKey(FIELD_NODE), true);
+    public static final QueryField NAME = QueryField.createText(CIKey.ofStaticKey(FIELD_NAME), true);
+    public static final QueryField USER = QueryField.createText(CIKey.ofStaticKey(FIELD_USER), true);
+    public static final QueryField SUBMIT_TIME = QueryField.createDate(
+            CIKey.ofStaticKey(FIELD_SUBMIT_TIME), true);
+    public static final QueryField AGE = QueryField.createLong(CIKey.ofStaticKey(FIELD_AGE), true);
+    public static final QueryField INFO = QueryField.createText(CIKey.ofStaticKey(FIELD_INFO), true);
 
     private static final List<QueryField> FIELDS = List.of(
             NODE,
@@ -56,13 +50,10 @@ public class TaskManagerFields {
             AGE,
             INFO);
 
-    private static final Map<CIKey, QueryField> FIELD_MAP = Map.of(
-            FIELD_NODE_KEY, NODE,
-            FIELD_NAME_KEY, NAME,
-            FIELD_USER_KEY, USER,
-            FIELD_SUBMIT_TIME_KEY, SUBMIT_TIME,
-            FIELD_AGE_KEY, AGE,
-            FIELD_INFO_KEY, INFO);
+    private static final Map<CIKey, QueryField> FIELD_MAP = FIELDS.stream()
+            .collect(Collectors.toMap(
+                    QueryField::getFldNameAsCIKey,
+                    Function.identity()));
 
     private static final Map<String, CIKey> NAME_TO_KEY_MAP = FIELD_MAP.keySet()
             .stream()

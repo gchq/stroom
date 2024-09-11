@@ -5,6 +5,7 @@ import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.util.shared.string.CIKey;
+import stroom.util.shared.string.CIKeys;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,18 +26,15 @@ public class ProcessorFields {
     private static final Map<CIKey, QueryField> ALL_FIELD_MAP;
 
 
-    public static final QueryField ID = QueryField.createId(CIKey.ofStaticKey("Processor Id"), true);
-    public static final QueryField PROCESSOR_TYPE = QueryField.createText(
-            CIKey.ofStaticKey("Processor Type"), true);
+    public static final QueryField ID = QueryField.createId(CIKeys.PROCESSOR__ID, true);
+    public static final QueryField PROCESSOR_TYPE = QueryField.createText(CIKeys.PROCESSOR__TYPE, true);
     public static final QueryField PIPELINE = QueryField.createDocRefByUuid(
-            PipelineDoc.DOCUMENT_TYPE, CIKey.ofStaticKey("Processor Pipeline"));
+            PipelineDoc.DOCUMENT_TYPE, CIKeys.PROCESSOR__PIPELINE);
     public static final QueryField ANALYTIC_RULE = QueryField.createDocRefByUuid(
-            AnalyticRuleDoc.DOCUMENT_TYPE, CIKey.ofStaticKey("Analytic Rule"));
-    public static final QueryField ENABLED = QueryField.createBoolean(
-            CIKey.ofStaticKey("Processor Enabled"), true);
-    public static final QueryField DELETED = QueryField.createBoolean(
-            CIKey.ofStaticKey("Processor Deleted"), true);
-    public static final QueryField UUID = QueryField.createText(CIKey.ofStaticKey("Processor UUID"), true);
+            AnalyticRuleDoc.DOCUMENT_TYPE, CIKeys.ANALYTIC__RULE);
+    public static final QueryField ENABLED = QueryField.createBoolean(CIKeys.PROCESSOR__ENABLED, true);
+    public static final QueryField DELETED = QueryField.createBoolean(CIKeys.PROCESSOR__DELETED, true);
+    public static final QueryField UUID = QueryField.createText(CIKeys.PROCESSOR__UUID, true);
 
     static {
         FIELDS.add(ID);

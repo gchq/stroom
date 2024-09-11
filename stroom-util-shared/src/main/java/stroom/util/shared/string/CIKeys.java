@@ -17,6 +17,7 @@
 package stroom.util.shared.string;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -77,6 +78,7 @@ public class CIKeys {
     public static final CIKey TYPE = commonKey("Type");
     public static final CIKey UPLOAD_USERNAME = commonKey("UploadUsername");
     public static final CIKey UPLOAD_USER_ID = commonKey("UploadUserId");
+    public static final CIKey USER = commonKey("User");
     public static final CIKey UUID = commonKey("UUID");
     public static final CIKey VALUE = commonKey("Value");
     public static final CIKey VALUE_TYPE = commonKey("ValueType");
@@ -170,8 +172,11 @@ public class CIKeys {
     }
 
     /**
-     * Only intended for use on static {@link CIKey} instances due to the cost of
-     * interning
+     * Add key to the map of common keys for re-use.
+     * <p>
+     * Only intended for use on static and commonly used {@link CIKey} instances due to the cost of
+     * string interning and storage.
+     * </p>
      */
     static CIKey commonKey(final String key) {
         final CIKey ciKey;
@@ -189,5 +194,9 @@ public class CIKeys {
         CIKeys.KEY_TO_COMMON_CIKEY_MAP.put(key, ciKey);
         CIKeys.LOWER_KEY_TO_COMMON_CIKEY_MAP.put(ciKey.getAsLowerCase(), ciKey);
         return ciKey;
+    }
+
+    static Set<CIKey> commonKeys() {
+        return Set.copyOf(KEY_TO_COMMON_CIKEY_MAP.values());
     }
 }

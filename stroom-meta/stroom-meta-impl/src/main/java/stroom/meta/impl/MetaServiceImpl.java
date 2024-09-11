@@ -153,10 +153,8 @@ public class MetaServiceImpl implements MetaService, Searchable {
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(secureExpression);
         findMetaCriteria.setPageRequest(PageRequest.oneRow());
         final List<Meta> list = find(findMetaCriteria).getValues();
-        if (list == null || list.size() == 0) {
-            return null;
-        }
-        return list.get(0);
+        return NullSafe.first(list)
+                .orElse(null);
     }
 
     @Override

@@ -5,6 +5,7 @@ import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.util.shared.string.CIKey;
+import stroom.util.shared.string.CIKeys;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +48,7 @@ public class DocumentPermissionFields {
             .build();
     public static final QueryField USER = QueryField
             .builder()
-            .fldName(CIKey.ofStaticKey("User"))
+            .fldName(CIKeys.USER)
             .fldType(FieldType.USER_REF)
             .conditionSet(ConditionSet.DOC_USER_IS)
             .queryable(true)
