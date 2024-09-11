@@ -22,6 +22,7 @@ import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.CompareUtil;
+import stroom.util.shared.GwtNullSafe;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -435,12 +436,20 @@ public class TestCIKey {
         keys.add(CIKey.EMPTY_STRING.get());
         keys.add(null);
 
+        final List<String> lowerKeys = keys.stream()
+                .map(key -> GwtNullSafe.get(key, String::toLowerCase))
+                .toList();
+
         // Will always get the CIKey instance from a map.
         final TimedCase commonKeyCase = TimedCase.of("Common Key", (round, iterations) -> {
             for (int i = 0; i < iterations; i++) {
-                for (final String key : keys) {
+                for (int j = 0; j < keys.size(); j++) {
+                    final String key = keys.get(j);
+                    final String lowerKey = lowerKeys.get(j);
                     final CIKey ciKey = CIKey.of(key);
-                    Objects.requireNonNull(ciKey);
+                    if (!CIKey.equalsIgnoreCase(ciKey, lowerKey)) {
+                        throw new RuntimeException("Mismatch");
+                    }
                 }
             }
         });
@@ -448,9 +457,33 @@ public class TestCIKey {
         // Will always create a new CIKey instance, except for "" and null.
         final TimedCase dynamicKeyCase = TimedCase.of("Dynamic Key", (round, iterations) -> {
             for (int i = 0; i < iterations; i++) {
-                for (final String key : keys) {
+                for (int j = 0; j < keys.size(); j++) {
+                    final String key = keys.get(j);
+                    final String lowerKey = lowerKeys.get(j);
                     final CIKey ciKey = CIKey.ofDynamicKey(key);
-                    Objects.requireNonNull(ciKey);
+                    if (!CIKey.equalsIgnoreCase(ciKey, lowerKey)) {
+                        throw new RuntimeException("Mismatch");
+                    }
+                }
+            }
+        });
+
+        final TimedCase noCiKeyCase = TimedCase.of("No CIKey", (round, iterations) -> {
+            for (int i = 0; i < iterations; i++) {
+                for (int j = 0; j < keys.size(); j++) {
+                    String key = keys.get(j);
+                    String lowerKey = lowerKeys.get(j);
+                    if (key == null && lowerKey == null) {
+                        // this is ok
+                    } else if (key == null) {
+                        throw new RuntimeException("Mismatch");
+                    } else {
+                        // In a cache key situation we would have to ensure both sides are lower-cased
+                        key = key.toLowerCase();
+                        if (!key.equals(lowerKey)) {
+                            throw new RuntimeException("Mismatch");
+                        }
+                    }
                 }
             }
         });
@@ -460,6 +493,7 @@ public class TestCIKey {
                 1_000_000,
                 LOGGER::info,
                 commonKeyCase,
-                dynamicKeyCase);
+                dynamicKeyCase,
+                noCiKeyCase);
     }
 }
