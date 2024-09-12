@@ -1,18 +1,23 @@
 package stroom.dispatch.client;
 
-import stroom.task.client.TaskListener;
+import stroom.task.client.Task;
+import stroom.task.client.TaskHandler;
+import stroom.task.client.TaskHandlerFactory;
 
-public class QuietTaskListener implements TaskListener {
-
-    private final String name = this.getClass().getName();
-
-    @Override
-    public void incrementTaskCount() {
-
-    }
+public class QuietTaskListener implements TaskHandlerFactory {
 
     @Override
-    public void decrementTaskCount() {
+    public TaskHandler createTaskHandler() {
+        return new TaskHandler() {
+            @Override
+            public void onStart(final Task task) {
 
+            }
+
+            @Override
+            public void onEnd(final Task task) {
+
+            }
+        };
     }
 }

@@ -111,7 +111,7 @@ public class ScheduledProcessingPresenter
                     null);
 
         } else {
-            scheduledProcessEditPresenter.setTaskListener(this);
+            scheduledProcessEditPresenter.setTaskHandlerFactory(this);
             scheduledProcessEditPresenter.show(newSchedule, executionSchedule -> {
                 if (executionSchedule != null) {
                     restFactory
@@ -121,7 +121,7 @@ public class ScheduledProcessingPresenter
                                 scheduledProcessListPresenter.refresh();
                                 scheduledProcessListPresenter.setSelected(created);
                             })
-                            .taskListener(this)
+                            .taskHandlerFactory(this)
                             .exec();
                 }
             });
@@ -131,7 +131,7 @@ public class ScheduledProcessingPresenter
     public void edit() {
         final ExecutionSchedule selected = scheduledProcessListPresenter.getSelected();
         if (selected != null) {
-            scheduledProcessEditPresenter.setTaskListener(this);
+            scheduledProcessEditPresenter.setTaskHandlerFactory(this);
             scheduledProcessEditPresenter.show(selected, executionSchedule -> {
                 if (executionSchedule != null) {
                     restFactory
@@ -141,7 +141,7 @@ public class ScheduledProcessingPresenter
                                 scheduledProcessListPresenter.refresh();
                                 scheduledProcessListPresenter.setSelected(updated);
                             })
-                            .taskListener(this)
+                            .taskHandlerFactory(this)
                             .exec();
                 }
             });
@@ -155,7 +155,7 @@ public class ScheduledProcessingPresenter
                     .create(EXECUTION_SCHEDULE_RESOURCE)
                     .method(res -> res.deleteExecutionSchedule(selected))
                     .onSuccess(success -> scheduledProcessListPresenter.refresh())
-                    .taskListener(this)
+                    .taskHandlerFactory(this)
                     .exec();
         }
     }

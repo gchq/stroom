@@ -98,7 +98,7 @@ class SessionListServlet extends HttpServlet implements IsServlet {
         response.setContentType("text/html");
 
         response.getWriter().write("<html>" +
-                "<head><link type=\"text/css\" href=\"ui/css/SessionList.css\" rel=\"stylesheet\" /></head>" +
+                "<head><link type=\"text/css\" href=\"/ui/css/SessionList.css\" rel=\"stylesheet\" /></head>" +
                 "<body>");
         response.getWriter().write("<table>");
         response.getWriter().write("<thead>" +

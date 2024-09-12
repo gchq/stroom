@@ -158,6 +158,10 @@
 
 .curveTab .curveTab-spinner {
     position: absolute;
+    transition: opacity 0.2s ease-in-out;
+    -webkit-transition: opacity 0.2s ease-in-out;
+    -moz-transition: opacity 0.2s ease-in-out;
+    -o-transition: opacity 0.2s ease-in-out;
 }
 
 .curveTab .curveTab-spinner svg {

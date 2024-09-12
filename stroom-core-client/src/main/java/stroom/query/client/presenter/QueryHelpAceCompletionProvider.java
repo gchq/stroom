@@ -10,9 +10,9 @@ import stroom.query.shared.CompletionSnippet;
 import stroom.query.shared.CompletionValue;
 import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.QueryResource;
-import stroom.task.client.HasTaskListener;
-import stroom.task.client.TaskListener;
-import stroom.task.client.TaskListenerImpl;
+import stroom.task.client.DefaultTaskListener;
+import stroom.task.client.HasTaskHandlerFactory;
+import stroom.task.client.TaskHandlerFactory;
 import stroom.util.shared.PageRequest;
 
 import com.google.gwt.core.client.GWT;
@@ -31,14 +31,14 @@ import javax.inject.Inject;
 
 
 public class QueryHelpAceCompletionProvider
-        implements AceCompletionProvider, HasTaskListener, HasHandlers {
+        implements AceCompletionProvider, HasTaskHandlerFactory, HasHandlers {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
     private final EventBus eventBus;
     private final RestFactory restFactory;
     private final MarkdownConverter markdownConverter;
-    private final TaskListenerImpl taskListener = new TaskListenerImpl(this);
+    private TaskHandlerFactory taskHandlerFactory = new DefaultTaskListener(this);
 
     private DocRef dataSourceRef;
     private boolean showAll = true;
@@ -79,7 +79,7 @@ public class QueryHelpAceCompletionProvider
 
                     callback.invokeWithCompletions(aceCompletions);
                 })
-                .taskListener(taskListener)
+                .taskHandlerFactory(taskHandlerFactory)
                 .exec();
     }
 
@@ -131,8 +131,8 @@ public class QueryHelpAceCompletionProvider
     }
 
     @Override
-    public void setTaskListener(final TaskListener taskListener) {
-        this.taskListener.setTaskListener(taskListener);
+    public void setTaskHandlerFactory(final TaskHandlerFactory taskHandlerFactory) {
+        this.taskHandlerFactory = taskHandlerFactory;
     }
 
     @Override

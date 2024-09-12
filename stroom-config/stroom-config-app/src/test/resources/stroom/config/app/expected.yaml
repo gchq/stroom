@@ -590,6 +590,7 @@ appConfig:
       maxElements: 1000000
   processor:
     assignTasks: true
+    createTasksBeyondProcessLimit: true
     databaseMultiInsertMaxBatchSize: 500
     db:
       connection:
@@ -751,7 +752,7 @@ appConfig:
     authentication:
       apiKeyCache:
         expireAfterAccess: null
-        expireAfterWrite: "PT5S"
+        expireAfterWrite: "PT1M"
         maximumSize: 1000
         refreshAfterWrite: null
       authenticationRequired: true
@@ -1129,6 +1130,7 @@ appConfig:
         \ escape }}, Event ID: {{ linkedEvent.eventId | escape }}</li>\n    {% endfor\
         \ %}\n  </ul>\n  {% endif %}\n</body>\n{% endif %}\n"
       defaultSubjectTemplate: "Detector '{{ detectorName | escape }}' Alert"
+    defaultApiKeyHashAlgorithm: "SHA3_256"
     defaultMaxResults: "1000000,100,10,1"
     helpSubPathDocumentation: "/user-guide/content/documentation/"
     helpSubPathExpressions: "/user-guide/dashboards/expressions/"

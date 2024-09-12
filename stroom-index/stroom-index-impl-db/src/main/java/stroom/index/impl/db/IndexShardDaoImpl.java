@@ -313,7 +313,19 @@ class IndexShardDaoImpl implements IndexShardDao {
                 .and(currentStateCondition)
                 .execute()) > 0;
 
-        LOGGER.debug("Setting shard status to {} for shard id {}, didUpdate: {}", status, id, didUpdate);
+        if (LOGGER.isDebugEnabled()) {
+            if (didUpdate) {
+                LOGGER.debug("Set shard status to {} for shard id {}", status, id);
+            } else {
+                try {
+                    final Optional<IndexShardStatus> optStatus = fetch(id)
+                            .map(IndexShard::getStatus);
+                    LOGGER.debug("Unable to update status to {} for shard id {}, optStatus: {}", status, id, optStatus);
+                } catch (Exception e) {
+                    LOGGER.debug("Error trying to fetch shard for debug", e);
+                }
+            }
+        }
 
         return didUpdate;
     }

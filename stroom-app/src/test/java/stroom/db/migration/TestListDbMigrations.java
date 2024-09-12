@@ -149,7 +149,7 @@ public class TestListDbMigrations {
     }
 
     private void appendOtherMig(final Version version, final Script script, final StringBuilder sb) {
-        final String branch = version.getMinor() + "." + version.getMinor();
+        final String branch = version.getMajor() + "." + version.getMinor();
         final String githubUrl = "https://github.com/gchq/stroom/tree/" + branch + "/" + script.relPath.toString();
         final String template = """
 
@@ -159,7 +159,7 @@ public class TestListDbMigrations {
                 **Path**: `{}`
 
                 It is not possible to display the content here.
-                The file can be viewed on : \\{\\{< external-link "GitHub" "{}" >}}""";
+                The file can be viewed on : {{< external-link "GitHub" "{}" >}}""";
         sb.append(LogUtil.message(
                 template,
                 script.fileName,

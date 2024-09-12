@@ -203,7 +203,7 @@ public class StroomStatsStoreCustomMaskListPresenter
                                     updateState(new HashSet<>(res.getValues()));
                                     DirtyEvent.fire(thisInstance, true);
                                 })
-                                .taskListener(this)
+                                .taskHandlerFactory(this)
                                 .exec();
                     }
                 });
@@ -297,7 +297,7 @@ public class StroomStatsStoreCustomMaskListPresenter
 
                     updateState(result.getCustomRollUpMasks());
                 })
-                .taskListener(this)
+                .taskHandlerFactory(this)
                 .exec();
     }
 

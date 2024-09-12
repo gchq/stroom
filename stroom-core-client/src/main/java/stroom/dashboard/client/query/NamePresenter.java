@@ -103,7 +103,7 @@ public class NamePresenter
                     event.hide();
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskListener(this)
+                .taskHandlerFactory(this)
                 .exec();
     }
 
@@ -118,7 +118,7 @@ public class NamePresenter
                     event.hide();
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskListener(this)
+                .taskHandlerFactory(this)
                 .exec();
     }
 

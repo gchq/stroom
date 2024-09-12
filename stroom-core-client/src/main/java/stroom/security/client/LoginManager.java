@@ -22,8 +22,6 @@ import stroom.security.client.api.event.LogoutEvent;
 import stroom.security.shared.AppPermissionResource;
 import stroom.security.shared.SessionResource;
 import stroom.task.client.DefaultTaskListener;
-import stroom.task.client.TaskEndEvent;
-import stroom.task.client.TaskStartEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -56,7 +54,6 @@ public class LoginManager implements HasHandlers {
 
     public void fetchUserAndPermissions() {
         // When we start the application we will try and auto login using a client certificates.
-        TaskStartEvent.fire(this, "Fetching permissions...");
         restFactory
                 .create(APP_PERMISSION_RESOURCE)
                 .method(AppPermissionResource::getUserAndPermissions)
@@ -66,13 +63,11 @@ public class LoginManager implements HasHandlers {
                     } else {
                         logout();
                     }
-                    TaskEndEvent.fire(LoginManager.this);
                 })
                 .onFailure(throwable -> {
                     AlertEvent.fireInfo(LoginManager.this, throwable.getMessage(), this::logout);
-                    TaskEndEvent.fire(LoginManager.this);
                 })
-                .taskListener(new DefaultTaskListener(this))
+                .taskHandlerFactory(new DefaultTaskListener(this), "Fetching permissions...")
                 .exec();
     }
 
@@ -84,7 +79,7 @@ public class LoginManager implements HasHandlers {
                 .onSuccess(response -> setLocation(response.getUrl()))
                 .onFailure(restError -> AlertEvent
                         .fireErrorFromException(LoginManager.this, restError.getException(), null))
-                .taskListener(new DefaultTaskListener(this))
+                .taskHandlerFactory(new DefaultTaskListener(this))
                 .exec();
     }
 

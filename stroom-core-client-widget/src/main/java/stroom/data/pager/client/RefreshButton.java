@@ -1,7 +1,9 @@
 package stroom.data.pager.client;
 
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskListener;
+import stroom.task.client.Task;
+import stroom.task.client.TaskHandler;
+import stroom.task.client.TaskHandlerFactory;
 import stroom.widget.button.client.SvgButton;
 
 import com.google.gwt.core.client.GWT;
@@ -14,7 +16,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 
 public class RefreshButton
         extends Composite
-        implements TaskListener {
+        implements TaskHandlerFactory {
 
     private final SvgButton button;
     private int taskCount;
@@ -105,23 +107,27 @@ public class RefreshButton
     }
 
     @Override
-    public void incrementTaskCount() {
-        taskCount++;
-        updateRefreshState();
+    public TaskHandler createTaskHandler() {
+        return new TaskHandler() {
+            @Override
+            public void onStart(final Task task) {
+                taskCount++;
+                updateRefreshState();
+            }
+
+            @Override
+            public void onEnd(final Task task) {
+                taskCount--;
+                updateRefreshState();
+            }
+        };
     }
 
-    @Override
-    public void decrementTaskCount() {
-        taskCount--;
-
+    public void updateRefreshState() {
         if (taskCount < 0) {
             GWT.log("Negative task count");
         }
 
-        updateRefreshState();
-    }
-
-    public void updateRefreshState() {
         final boolean refreshState = refreshing || taskCount > 0;
         if (refreshState != this.refreshState) {
             this.refreshState = refreshState;
@@ -130,13 +136,13 @@ public class RefreshButton
             } else {
                 button.removeStyleName("refreshing");
             }
-            update();
         }
+        update();
     }
 
     private void update() {
-        if (allowPause && !paused) {
-            setEnabled(refreshState);
+        if (allowPause) {
+            setEnabled(paused || refreshing || taskCount > 0);
         }
     }
 }

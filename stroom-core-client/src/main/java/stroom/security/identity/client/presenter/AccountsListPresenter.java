@@ -21,7 +21,7 @@ import stroom.security.identity.shared.AccountResultPage;
 import stroom.security.identity.shared.FindAccountRequest;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.GwtNullSafe;
@@ -170,7 +170,7 @@ public class AccountsListPresenter
                                 this.refresh();
                             })
                             .onFailure(e -> AlertEvent.fireError(this, e.getMessage(), this::refresh))
-                            .taskListener(getView())
+                            .taskHandlerFactory(getView())
                             .exec();
                 }
             });
@@ -230,7 +230,7 @@ public class AccountsListPresenter
 
     private void fetchData(final Range range,
                            final Consumer<AccountResultPage> dataConsumer,
-                           final TaskListener taskListener) {
+                           final TaskHandlerFactory taskHandlerFactory) {
         final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
         final FindAccountRequest criteria = new FindAccountRequest(pageRequest, sortList, filter);
         restFactory
@@ -242,7 +242,7 @@ public class AccountsListPresenter
                                 this,
                                 "Error fetching accounts: " + throwable.getMessage(),
                                 null))
-                .taskListener(taskListener)
+                .taskHandlerFactory(taskHandlerFactory)
                 .exec();
     }
 

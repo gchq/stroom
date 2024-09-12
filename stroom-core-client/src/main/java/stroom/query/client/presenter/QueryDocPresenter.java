@@ -49,7 +49,7 @@ public class QueryDocPresenter
                              final Provider<MarkdownEditPresenter> markdownEditPresenterProvider) {
         super(eventBus, view);
 
-        queryDocEditPresenter.setTaskListener(this);
+        queryDocEditPresenter.setTaskHandlerFactory(this);
         queryDocDocumentEditTabProvider = new DocumentEditTabProvider<>(
                 () -> queryDocEditPresenter);
 

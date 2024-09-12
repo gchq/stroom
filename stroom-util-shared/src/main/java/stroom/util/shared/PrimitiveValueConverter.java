@@ -26,7 +26,14 @@ public class PrimitiveValueConverter<E extends HasPrimitiveValue> {
     public PrimitiveValueConverter(E[] values) {
         map = new HashMap<>(values.length);
         for (E value : values) {
-            map.put(value.getPrimitiveValue(), value);
+            final byte primitiveValue = value.getPrimitiveValue();
+            final E previousValue = map.put(primitiveValue, value);
+            if (previousValue != null) {
+                throw new IllegalArgumentException(
+                        "Values: " + previousValue
+                                + " and " + value
+                                + " have the same primitive value " + primitiveValue);
+            }
         }
     }
 

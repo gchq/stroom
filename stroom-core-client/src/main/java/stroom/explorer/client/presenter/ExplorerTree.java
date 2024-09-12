@@ -18,7 +18,7 @@ package stroom.explorer.client.presenter;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 
@@ -27,10 +27,10 @@ public class ExplorerTree extends AbstractExplorerTree {
     private MultiSelectionModelImpl<ExplorerNode> multiSelectionModel;
 
     public ExplorerTree(final RestFactory restFactory,
-                        final TaskListener taskListener,
+                        final TaskHandlerFactory taskHandlerFactory,
                         final boolean allowMultiSelect,
                         final boolean showAlerts) {
-        super(restFactory, taskListener, allowMultiSelect, showAlerts);
+        super(restFactory, taskHandlerFactory, allowMultiSelect, showAlerts);
     }
 
     @Override

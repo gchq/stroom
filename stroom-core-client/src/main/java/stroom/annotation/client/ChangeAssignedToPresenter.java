@@ -93,7 +93,7 @@ public class ChangeAssignedToPresenter
                                     e.hide();
                                 })
                                 .onFailure(RestErrorHandler.forPopup(this, e))
-                                .taskListener(this)
+                                .taskHandlerFactory(this)
                                 .exec();
                     } else {
                         e.hide();
@@ -124,7 +124,7 @@ public class ChangeAssignedToPresenter
                     .create(userResource)
                     .method(res -> res.getAssociates(filter))
                     .onSuccess(consumer)
-                    .taskListener(this)
+                    .taskHandlerFactory(this)
                     .exec();
         });
         assignedToPresenter.clearFilter();

@@ -20,6 +20,8 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
+    implementation libs.bcrypt
+    implementation libs.bouncy_castle
     implementation libs.caffeine
     implementation libs.commons_codec
     implementation libs.commons_csv

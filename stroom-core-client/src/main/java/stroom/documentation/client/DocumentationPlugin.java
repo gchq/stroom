@@ -29,7 +29,7 @@ import stroom.documentation.shared.DocumentationDoc;
 import stroom.documentation.shared.DocumentationResource;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskHandlerFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -68,13 +68,13 @@ public class DocumentationPlugin extends DocumentPlugin<DocumentationDoc> {
     public void load(final DocRef docRef,
                      final Consumer<DocumentationDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskListener taskListener) {
+                     final TaskHandlerFactory taskHandlerFactory) {
         restFactory
                 .create(DOCUMENTATION_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskListener(taskListener)
+                .taskHandlerFactory(taskHandlerFactory)
                 .exec();
     }
 
@@ -83,13 +83,13 @@ public class DocumentationPlugin extends DocumentPlugin<DocumentationDoc> {
                      final DocumentationDoc document,
                      final Consumer<DocumentationDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskListener taskListener) {
+                     final TaskHandlerFactory taskHandlerFactory) {
         restFactory
                 .create(DOCUMENTATION_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskListener(taskListener)
+                .taskHandlerFactory(taskHandlerFactory)
                 .exec();
     }
 
