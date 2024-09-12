@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,6 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.shared.GWT;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.view.client.Range;
@@ -350,7 +349,7 @@ public abstract class AbstractMetaListPresenter
     }
 
     void addFeedColumn() {
-        dataGrid.addResizableColumn(
+        dataGrid.addAutoResizableColumn(
                 DataGridUtil.docRefColumnBuilder((MetaRow metaRow) ->
                                         Optional.ofNullable(metaRow)
                                                 .map(this::getFeed)
@@ -409,7 +408,7 @@ public abstract class AbstractMetaListPresenter
                         .withSorting(MetaFields.PIPELINE_NAME)
                         .build(),
                 "Pipeline",
-                ColumnSizeConstants.BIG_COL);
+                350);
     }
 
     protected MultiSelectionModel<MetaRow> getSelectionModel() {
@@ -470,46 +469,46 @@ public abstract class AbstractMetaListPresenter
                 size);
     }
 
-    void addColouredSizeAttributeColumn(final String name,
-                                        final QueryField attribute,
-                                        final Function<String, String> formatter,
-                                        final int size) {
-
-        final Function<MetaRow, String> extractor = metaRow -> {
-            final String value = metaRow.getAttributeValue(attribute.getFldName());
-            if (value == null) {
-                return null;
-            } else {
-                return formatter.apply(value);
-            }
-        };
-
-        final Function<String, String> colourFunc = val -> {
-            if (val == null) {
-                return "black";
-            } else if (val.endsWith("B")) {
-                return "blue";
-            } else if (val.endsWith("K")) {
-                return "green";
-            } else if (val.endsWith("M")) {
-                return "#FF7F00";
-            } else if (val.endsWith("G")) {
-                return "red";
-            } else {
-                return "red";
-            }
-        };
-
-        final Column<MetaRow, SafeHtml> column = DataGridUtil.htmlColumnBuilder(
-                        DataGridUtil.colouredCellExtractor(extractor, colourFunc))
-                .rightAligned()
-                .build();
-
-        dataGrid.addResizableColumn(
-                column,
-                DataGridUtil.createRightAlignedHeader(name),
-                size);
-    }
+//    void addColouredSizeAttributeColumn(final String name,
+//                                        final QueryField attribute,
+//                                        final Function<String, String> formatter,
+//                                        final int size) {
+//
+//        final Function<MetaRow, String> extractor = metaRow -> {
+//            final String value = metaRow.getAttributeValue(attribute.getFldName());
+//            if (value == null) {
+//                return null;
+//            } else {
+//                return formatter.apply(value);
+//            }
+//        };
+//
+//        final Function<String, String> colourFunc = val -> {
+//            if (val == null) {
+//                return "black";
+//            } else if (val.endsWith("B")) {
+//                return "blue";
+//            } else if (val.endsWith("K")) {
+//                return "green";
+//            } else if (val.endsWith("M")) {
+//                return "#FF7F00";
+//            } else if (val.endsWith("G")) {
+//                return "red";
+//            } else {
+//                return "red";
+//            }
+//        };
+//
+//        final Column<MetaRow, SafeHtml> column = DataGridUtil.htmlColumnBuilder(
+//                        DataGridUtil.colouredCellExtractor(extractor, colourFunc))
+//                .rightAligned()
+//                .build();
+//
+//        dataGrid.addResizableColumn(
+//                column,
+//                DataGridUtil.createRightAlignedHeader(name),
+//                size);
+//    }
 
     void addEndColumn() {
         dataGrid.addEndColumn(new EndColumn<>());

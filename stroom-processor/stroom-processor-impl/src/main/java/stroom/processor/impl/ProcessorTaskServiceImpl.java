@@ -97,7 +97,9 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
         if (!ProcessorTaskFields.PROCESSOR_TASK_PSEUDO_DOC_REF.equals(criteria.getDataSourceRef())) {
             return ResultPage.empty();
         }
-        return FieldInfoResultPageBuilder.builder(criteria).addAll(ProcessorTaskFields.getFields()).build();
+        return FieldInfoResultPageBuilder.builder(criteria)
+                .addAll(ProcessorTaskFields.getFields())
+                .build();
     }
 
     @Override

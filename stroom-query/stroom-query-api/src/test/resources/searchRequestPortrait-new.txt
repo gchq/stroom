@@ -138,6 +138,8 @@ class stroom.query.api.v2.Column - public stroom.query.api.v2.Column$Builder str
 class stroom.query.api.v2.Column - public stroom.query.api.v2.Filter stroom.query.api.v2.Column.getFilter()
 class stroom.query.api.v2.Column - public stroom.query.api.v2.Format stroom.query.api.v2.Column.getFormat()
 class stroom.query.api.v2.Column - public stroom.query.api.v2.Sort stroom.query.api.v2.Column.getSort()
+class stroom.query.api.v2.Column - public stroom.util.shared.string.CIKey stroom.query.api.v2.Column.getIdAsCIKey()
+class stroom.query.api.v2.Column - public stroom.util.shared.string.CIKey stroom.query.api.v2.Column.getNameAsCIKey()
 class stroom.query.api.v2.Column$Builder - public boolean java.lang.Object.equals(java.lang.Object)
 class stroom.query.api.v2.Column$Builder - public final native java.lang.Class<?> java.lang.Object.getClass()
 class stroom.query.api.v2.Column$Builder - public final native void java.lang.Object.notify()

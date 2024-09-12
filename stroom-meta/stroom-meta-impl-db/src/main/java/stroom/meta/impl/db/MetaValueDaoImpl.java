@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -216,13 +217,13 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
     }
 
     /**
-     * Convert a basic data list to a list of meta data using data attribute keys and values.
+     * Convert a basic meta list to a list of meta data using data attribute keys and values.
      */
     @Override
-    public Map<Long, Map<String, String>> getAttributes(final List<Meta> list) {
-        final Map<Long, Map<String, String>> attributeMap = new HashMap<>();
+    public Map<Long, Map<CIKey, String>> getAttributes(final List<Meta> list) {
+        final Map<Long, Map<CIKey, String>> attributeMap = new HashMap<>();
 
-        // Get a list of valid data ids.
+        // Get a list of valid meta ids.
         final List<Long> idList = list.stream()
                 .map(Meta::getId)
                 .collect(Collectors.toList());
@@ -239,9 +240,10 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
                 .forEach(r -> {
                     final int keyId = r.get(META_VAL.META_KEY_ID);
                     metaKeyService.getNameForId(keyId).ifPresent(name -> {
-                        final long dataId = r.get(META_VAL.META_ID);
+                        final long metaId = r.get(META_VAL.META_ID);
                         final String value = String.valueOf(r.get(META_VAL.VAL));
-                        attributeMap.computeIfAbsent(dataId, k -> new HashMap<>()).put(name, value);
+                        attributeMap.computeIfAbsent(metaId, k -> new HashMap<>())
+                                .put(CIKey.of(name), value);
                     });
                 });
 

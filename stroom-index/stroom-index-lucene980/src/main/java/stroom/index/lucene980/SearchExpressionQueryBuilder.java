@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.index.lucene980;
@@ -31,6 +30,7 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.IndexFieldCache;
 import stroom.search.impl.SearchException;
+import stroom.util.NullSafe;
 
 import org.apache.lucene980.analysis.Analyzer;
 import org.apache.lucene980.document.DoubleField;
@@ -223,28 +223,19 @@ class SearchExpressionQueryBuilder {
                 }
             }
         }
-
         return null;
     }
 
     private Query getTermQuery(final ExpressionTerm term,
                                final Set<String> terms) {
-        String field = term.getField();
+        // Clean strings to remove unwanted whitespace that the user may have added accidentally.
+        final String field = NullSafe.trim(term.getField());
         final Condition condition = term.getCondition();
-        String value = term.getValue();
+        final String value = NullSafe.trim(term.getValue());
         final DocRef docRef = term.getDocRef();
 
-        // Clean strings to remove unwanted whitespace that the user may have
-        // added accidentally.
-        if (field != null) {
-            field = field.trim();
-        }
-        if (value != null) {
-            value = value.trim();
-        }
-
         // Try and find the referenced field.
-        if (field == null || field.isEmpty()) {
+        if (field.isEmpty()) {
             throw new SearchException("Field not set");
         }
         final IndexField indexField = indexFieldCache.get(indexDocRef, field);
@@ -263,11 +254,10 @@ class SearchExpressionQueryBuilder {
                 throw new SearchException("Doc Ref not set for field: " + field);
             }
         } else {
-            if (value == null || value.isEmpty()) {
+            if (value.isEmpty()) {
                 return null;
             }
         }
-
 
         // Create a query based on the field type and condition.
         if (FieldType.INTEGER.equals(indexField.getFldType())) {

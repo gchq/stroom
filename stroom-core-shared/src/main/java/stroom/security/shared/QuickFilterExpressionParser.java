@@ -6,6 +6,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.string.CIKey;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +39,7 @@ public class QuickFilterExpressionParser {
 
     public static ExpressionOperator parse(final String userInput,
                                            final Set<QueryField> defaultFields,
-                                           final Map<String, QueryField> fieldMap) {
+                                           final Map<CIKey, QueryField> fieldMap) {
 
         // user input like 'vent type:pipe' or just 'vent'
 
@@ -54,7 +55,7 @@ public class QuickFilterExpressionParser {
 
     private static void extractMatchTokens(final String userInput,
                                            final Set<QueryField> defaultFields,
-                                           final Map<String, QueryField> fieldMap,
+                                           final Map<CIKey, QueryField> fieldMap,
                                            final ExpressionOperator.Builder builder) {
         final List<String> parts = splitInput(userInput);
         for (final String part : parts) {
@@ -63,7 +64,7 @@ public class QuickFilterExpressionParser {
                     final String[] subParts = part.split(QUALIFIER_DELIMITER_STR);
                     if (part.endsWith(QUALIFIER_DELIMITER_STR)) {
                         final String fieldName = subParts[0];
-                        final QueryField field = fieldMap.get(fieldName);
+                        final QueryField field = fieldMap.get(CIKey.of(fieldName));
                         if (field == null) {
                             throw new RuntimeException("Unknown qualifier '" + fieldName
                                     + "'. Valid qualifiers: " + fieldMap.keySet());
@@ -74,7 +75,7 @@ public class QuickFilterExpressionParser {
                         throw new RuntimeException("Invalid token " + part);
                     } else {
                         final String fieldName = subParts[0];
-                        final QueryField field = fieldMap.get(fieldName);
+                        final QueryField field = fieldMap.get(CIKey.of(fieldName));
                         if (field == null) {
                             throw new RuntimeException("Unknown qualifier '" + fieldName
                                     + "'. Valid qualifiers: " + fieldMap.keySet());

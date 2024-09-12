@@ -20,7 +20,7 @@ public interface DocRefInfoService extends DocRefDecorator {
     Optional<String> name(DocRef docRef);
 
     /**
-     * Find by case-sensitive match on the name.
+     * Find by match on the name.
      * If allowWildCards is true '*' can be used to denote a 0-many char wild card.
      * Names may not be unique for a given type, so a non-wild carded nameFilter may return
      * more than one {@link DocRef}.
@@ -31,10 +31,11 @@ public interface DocRefInfoService extends DocRefDecorator {
      */
     List<DocRef> findByName(String type,
                             String nameFilter,
-                            boolean allowWildCards);
+                            boolean allowWildCards,
+                            boolean isCaseSensitive);
 
     /**
-     * Find by case-sensitive match on the name.
+     * Find by match on the name.
      * If allowWildCards is true '*' can be used to denote a 0-many char wild card.
      * Names may not be unique for a given type, so a non-wild carded nameFilter may return
      * more than one {@link DocRef}. Applies all nameFilters using an OR, i.e. returns all docRefs
@@ -46,5 +47,6 @@ public interface DocRefInfoService extends DocRefDecorator {
      */
     List<DocRef> findByNames(String type,
                              List<String> nameFilters,
-                             boolean allowWildCards);
+                             boolean allowWildCards,
+                             boolean isCaseSensitive);
 }

@@ -60,11 +60,9 @@ import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.Suggestions;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.BulkDocumentPermissionChangeRequest;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
 import stroom.security.shared.DocumentUserPermissions;
-import stroom.security.shared.SingleDocumentPermissionChangeRequest;
 import stroom.suggestions.api.SuggestionsQueryHandler;
 import stroom.svg.shared.SvgImage;
 import stroom.util.NullSafe;
@@ -78,10 +76,10 @@ import stroom.util.logging.LogUtil;
 import stroom.util.logging.Metrics;
 import stroom.util.logging.Metrics.LocalMetrics;
 import stroom.util.shared.Clearable;
-import stroom.util.shared.PageRequest;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -1747,9 +1745,9 @@ class ExplorerServiceImpl
                                     final ExpressionMatcher expressionMatcher,
                                     final ExpressionOperator expression) {
         if (node.hasNodeFlag(NodeFlag.FILTER_MATCH) && node.getDocRef() != null) {
-            final Map<String, Object> attributes = new HashMap<>();
-            attributes.put(DocumentPermissionFields.DOCUMENT.getFldName(), node.getDocRef());
-            attributes.put(DocumentPermissionFields.CHILDREN.getFldName(), new TermMatcher() {
+            final Map<CIKey, Object> attributes = new HashMap<>();
+            attributes.put(DocumentPermissionFields.DOCUMENT.getFldNameAsCIKey(), node.getDocRef());
+            attributes.put(DocumentPermissionFields.CHILDREN.getFldNameAsCIKey(), new TermMatcher() {
                 @Override
                 public boolean match(final QueryField queryField,
                                      final Condition condition,
@@ -1767,7 +1765,7 @@ class ExplorerServiceImpl
                     return false;
                 }
             });
-            attributes.put(DocumentPermissionFields.DESCENDANTS.getFldName(), new TermMatcher() {
+            attributes.put(DocumentPermissionFields.DESCENDANTS.getFldNameAsCIKey(), new TermMatcher() {
                 @Override
                 public boolean match(final QueryField queryField,
                                      final Condition condition,
@@ -1784,7 +1782,7 @@ class ExplorerServiceImpl
                     return false;
                 }
             });
-            attributes.put(DocumentPermissionFields.USER.getFldName(), new TermMatcher() {
+            attributes.put(DocumentPermissionFields.USER.getFldNameAsCIKey(), new TermMatcher() {
                 @Override
                 public boolean match(final QueryField queryField,
                                      final Condition condition,
@@ -1810,10 +1808,10 @@ class ExplorerServiceImpl
                     };
                 }
             });
-            attributes.put(DocumentPermissionFields.DOCUMENT_TYPE.getFldName(), node.getDocRef().getType());
-            attributes.put(DocumentPermissionFields.DOCUMENT_UUID.getFldName(), node.getDocRef().getUuid());
-            attributes.put(DocumentPermissionFields.DOCUMENT_NAME.getFldName(), node.getDocRef().getName());
-            attributes.put(DocumentPermissionFields.DOCUMENT_TAG.getFldName(), node.getTags());
+            attributes.put(DocumentPermissionFields.DOCUMENT_TYPE.getFldNameAsCIKey(), node.getDocRef().getType());
+            attributes.put(DocumentPermissionFields.DOCUMENT_UUID.getFldNameAsCIKey(), node.getDocRef().getUuid());
+            attributes.put(DocumentPermissionFields.DOCUMENT_NAME.getFldNameAsCIKey(), node.getDocRef().getName());
+            attributes.put(DocumentPermissionFields.DOCUMENT_TAG.getFldNameAsCIKey(), node.getTags());
 
             return expressionMatcher.match(attributes, expression);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.net.HostNameUtil;
+import stroom.util.shared.string.CIKeys;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -40,7 +41,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class SourceForwarder {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SourceForwarder.class);
-    private static final String PROXY_FORWARD_ID = "ProxyForwardId";
 
     private final FeedDao feedDao;
     private final RepoSources sources;
@@ -189,13 +189,13 @@ public class SourceForwarder {
             attributeMap.put(StandardHeaderArguments.TYPE, feedKey.type());
         }
         if (LOGGER.isDebugEnabled()) {
-            attributeMap.put(PROXY_FORWARD_ID, String.valueOf(thisPostId));
+            attributeMap.put(CIKeys.PROXY_FORWARD_ID, String.valueOf(thisPostId));
         }
 
         final StreamHandlers streamHandlers;
         // If we have reached the max tried limit then send the data to the failure destination for this forwarder.
         if (forwardSource.getTries() >= forwardRetryConfig.getMaxTries()) {
-            attributeMap.put("ForwardError", forwardSource.getError());
+            attributeMap.put(CIKeys.FORWARD_ERROR, forwardSource.getError());
             streamHandlers = failureDestinations.getProvider(forwardSource.getForwardDest().getName());
         } else {
             streamHandlers = forwarderDestinations.getProvider(forwardSource.getForwardDest().getName());

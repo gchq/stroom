@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.meta.mock;
 
 import stroom.data.retention.api.DataRetentionRuleAction;
@@ -23,6 +39,7 @@ import stroom.meta.shared.Status;
 import stroom.util.NullSafe;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.string.CIKey;
 import stroom.util.time.TimePeriod;
 
 import jakarta.inject.Singleton;
@@ -188,9 +205,9 @@ public class MockMetaService implements MetaService, Clearable {
             try {
                 final Meta meta = entry.getValue();
 //                final MetaRow row = new MetaRow(meta);
-                final Map<String, Object> attributeMap = createAttributeMap(meta);
-                if (criteria.getExpression() == null || expressionMatcher.match(attributeMap,
-                        criteria.getExpression())) {
+                final Map<CIKey, Object> attributeMap = createAttributeMap(meta);
+                if (criteria.getExpression() == null
+                        || expressionMatcher.match(attributeMap, criteria.getExpression())) {
                     list.add(meta);
                 }
             } catch (final RuntimeException e) {
@@ -219,27 +236,27 @@ public class MockMetaService implements MetaService, Clearable {
     /**
      * Turns a data row object into a generic map of attributes for use by an expression filter.
      */
-    private static Map<String, Object> createAttributeMap(final Meta meta) {
-        final Map<String, Object> attributeMap = new HashMap<>();
+    private static Map<CIKey, Object> createAttributeMap(final Meta meta) {
+        final Map<CIKey, Object> attributeMap = new HashMap<>();
 
         if (meta != null) {
-            attributeMap.put(MetaFields.ID.getFldName(), meta.getId());
-            attributeMap.put(MetaFields.CREATE_TIME.getFldName(), meta.getCreateMs());
-            attributeMap.put(MetaFields.EFFECTIVE_TIME.getFldName(), meta.getEffectiveMs());
-            attributeMap.put(MetaFields.STATUS_TIME.getFldName(), meta.getStatusMs());
-            attributeMap.put(MetaFields.STATUS.getFldName(), meta.getStatus().getDisplayValue());
+            attributeMap.put(CIKey.of(MetaFields.ID.getFldName()), meta.getId());
+            attributeMap.put(CIKey.of(MetaFields.CREATE_TIME.getFldName()), meta.getCreateMs());
+            attributeMap.put(CIKey.of(MetaFields.EFFECTIVE_TIME.getFldName()), meta.getEffectiveMs());
+            attributeMap.put(CIKey.of(MetaFields.STATUS_TIME.getFldName()), meta.getStatusMs());
+            attributeMap.put(CIKey.of(MetaFields.STATUS.getFldName()), meta.getStatus().getDisplayValue());
             if (meta.getParentMetaId() != null) {
-                attributeMap.put(MetaFields.PARENT_ID.getFldName(), meta.getParentMetaId());
+                attributeMap.put(CIKey.of(MetaFields.PARENT_ID.getFldName()), meta.getParentMetaId());
             }
             if (meta.getTypeName() != null) {
-                attributeMap.put(MetaFields.TYPE.getFldName(), meta.getTypeName());
+                attributeMap.put(CIKey.of(MetaFields.TYPE.getFldName()), meta.getTypeName());
             }
             final String feedName = meta.getFeedName();
             if (feedName != null) {
-                attributeMap.put(MetaFields.FEED.getFldName(), feedName);
+                attributeMap.put(CIKey.of(MetaFields.FEED.getFldName()), feedName);
             }
             final String pipelineUuid = meta.getPipelineUuid();
-            attributeMap.put(MetaFields.PIPELINE.getFldName(), pipelineUuid);
+            attributeMap.put(CIKey.of(MetaFields.PIPELINE.getFldName()), pipelineUuid);
 //            if (processor != null) {
 //                final String pipelineUuid = processor.getPipelineUuid();
 //                if (pipelineUuid != null) {

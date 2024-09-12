@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.index.mock;
@@ -24,11 +23,13 @@ import stroom.docref.StringMatch;
 import stroom.index.impl.IndexFieldService;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.LuceneIndexDoc;
+import stroom.query.common.v2.IndexFieldMap;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.string.CIKey;
 import stroom.util.string.StringMatcher;
 
 import jakarta.inject.Inject;
@@ -102,18 +103,20 @@ public class MockIndexFieldService implements IndexFieldService {
     }
 
     @Override
-    public IndexField getIndexField(final DocRef docRef, final String fieldName) {
+    public IndexFieldMap getIndexFields(final DocRef docRef, final CIKey fieldName) {
         final FindFieldCriteria findIndexFieldCriteria = new FindFieldCriteria(
                 PageRequest.oneRow(),
                 null,
                 docRef,
-                StringMatch.equals(fieldName),
+                StringMatch.equalsIgnoreCase(fieldName.get()),
                 null);
         final ResultPage<IndexField> resultPage = findFields(findIndexFieldCriteria);
+
         if (resultPage.size() > 0) {
-            return resultPage.getFirst();
+            return IndexFieldMap.fromFieldList(fieldName, resultPage.getValues());
+        } else {
+            return null;
         }
-        return null;
     }
 
     @Override

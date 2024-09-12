@@ -74,6 +74,7 @@ import stroom.util.scheduler.TriggerFactory;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 import stroom.util.shared.scheduler.Schedule;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -204,7 +205,7 @@ public class ScheduledQueryAnalyticExecutor {
                 .builder()
                 .ownerDocRef(analytic.asDocRef())
                 .enabled(true)
-                .nodeName(StringMatch.equals(nodeInfo.getThisNodeName(), true))
+                .nodeName(StringMatch.equalsIgnoreCase(nodeInfo.getThisNodeName()))
                 .build();
 
         final ResultPage<ExecutionSchedule> executionSchedules = executionScheduleDao.fetchExecutionSchedule(request);
@@ -361,7 +362,7 @@ public class ScheduledQueryAnalyticExecutor {
                     // Now consume all results as detections.
                     final TableSettings tableSettings = resultRequest.getMappings().getFirst();
                     final List<Column> columns = WindowSupport.modifyColumns(tableSettings);
-                    final Map<String, String> paramMap = ParamUtil
+                    final Map<CIKey, String> paramMap = ParamUtil
                             .createParamMap(mappedRequest.getQuery().getParams());
                     final CompiledColumns compiledColumns = CompiledColumns.create(
                             expressionContext,

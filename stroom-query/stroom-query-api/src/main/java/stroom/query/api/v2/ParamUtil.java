@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,14 @@
 package stroom.query.api.v2;
 
 
+import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.string.CIKey;
+
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public final class ParamUtil {
 
@@ -104,7 +107,8 @@ public final class ParamUtil {
         return list;
     }
 
-    public static String replaceParameters(final String value, final Map<String, String> paramMap) {
+    public static String replaceParameters(final String value,
+                                           final Map<CIKey, String> paramMap) {
         if (value == null) {
             return null;
         }
@@ -152,7 +156,7 @@ public final class ParamUtil {
                 case '}':
                     if (paramStart != -1) {
                         final String key = value.substring(paramStart + 2, i);
-                        String replacement = paramMap.get(key);
+                        String replacement = paramMap.get(CIKey.of(key));
                         if (replacement != null) {
                             sb.append(replacement);
                         }
@@ -175,20 +179,15 @@ public final class ParamUtil {
     }
 
 
-    public static Map<String, String> createParamMap(final List<Param> params) {
+    public static Map<CIKey, String> createParamMap(final List<Param> params) {
         // Create a parameter map.
-        final Map<String, String> paramMap;
-        if (params != null) {
-            paramMap = new HashMap<>();
-            for (final Param param : params) {
-                if (param.getKey() != null && param.getValue() != null) {
-                    paramMap.put(param.getKey(), param.getValue());
-                }
-            }
-        } else {
-            paramMap = Collections.emptyMap();
-        }
-        return paramMap;
+        return GwtNullSafe.stream(params)
+                .filter(param ->
+                        param.getKey() != null
+                                && param.getValue() != null)
+                .collect(Collectors.toMap(
+                        param -> CIKey.of(param.getKey()),
+                        Param::getValue));
     }
 
     public static String getCombinedParameterString(final List<Param> params) {

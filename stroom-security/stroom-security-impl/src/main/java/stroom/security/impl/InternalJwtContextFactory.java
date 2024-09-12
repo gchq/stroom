@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.impl;
 
 import stroom.security.common.impl.JwtContextFactory;
@@ -9,6 +25,8 @@ import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.string.CIKey;
+import stroom.util.shared.string.CIKeys;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -36,7 +54,8 @@ class InternalJwtContextFactory implements JwtContextFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(InternalJwtContextFactory.class);
 
-    private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final CIKey AUTHORIZATION_HEADER_KEY = CIKeys.AUTHORIZATION;
+    private static final String AUTHORIZATION_HEADER = AUTHORIZATION_HEADER_KEY.get();
 
     private final OpenIdClientFactory openIdClientDetailsFactory;
     private final PublicJsonWebKeyProvider publicJsonWebKeyProvider;
@@ -58,9 +77,9 @@ class InternalJwtContextFactory implements JwtContextFactory {
     }
 
     @Override
-    public void removeAuthorisationEntries(final Map<String, String> headers) {
+    public void removeAuthorisationEntries(final Map<CIKey, String> headers) {
         if (NullSafe.hasEntries(headers)) {
-            headers.remove(AUTHORIZATION_HEADER);
+            headers.remove(AUTHORIZATION_HEADER_KEY);
         }
     }
 

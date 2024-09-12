@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.meta.impl.db;
 
 import stroom.data.retention.api.DataRetentionConfig;
@@ -58,6 +74,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.string.CIKey;
 import stroom.util.time.TimePeriod;
 
 import io.vavr.Tuple;
@@ -88,7 +105,6 @@ import org.jooq.impl.DSL;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -295,7 +311,11 @@ public class MetaDaoImpl implements MetaDao {
     private List<String> getPipelineUuidsByName(final List<String> pipelineNames) {
         // Can't cache this in a simple map due to pipes being renamed, but
         // docRefInfoService should cache most of this anyway.
-        return docRefInfoService.findByNames(PipelineDoc.DOCUMENT_TYPE, pipelineNames, true)
+        return docRefInfoService.findByNames(
+                        PipelineDoc.DOCUMENT_TYPE,
+                        pipelineNames,
+                        true,
+                        false)
                 .stream()
                 .map(DocRef::getUuid)
                 .collect(Collectors.toList());
@@ -1210,25 +1230,43 @@ public class MetaDaoImpl implements MetaDao {
         return (Integer) result;
     }
 
-    private boolean isUsed(final Set<String> fieldSet,
-                           final String[] resultFields,
+    private boolean isUsed(final CIKey field,
+                           final List<CIKey> resultFields,
                            final ExpressionCriteria criteria) {
-        return Arrays.stream(resultFields).filter(Objects::nonNull).anyMatch(fieldSet::contains) ||
-                ExpressionUtil.termCount(criteria.getExpression(), fieldSet) > 0;
+        final boolean isInResultFields = NullSafe.stream(resultFields)
+                .filter(Objects::nonNull)
+                .anyMatch(resultField -> Objects.equals(resultField, field));
+
+        return isInResultFields
+                || ExpressionUtil.termCount(criteria.getExpression(), field.get()) > 0;
+    }
+
+    private boolean isUsed(final Set<CIKey> fieldSet,
+                           final List<CIKey> resultFields,
+                           final ExpressionCriteria criteria) {
+        final boolean isInResultFields = NullSafe.stream(resultFields)
+                .filter(Objects::nonNull)
+                .anyMatch(fieldSet::contains);
+
+        return isInResultFields || ExpressionUtil.termCount(
+                criteria.getExpression(),
+                fieldSet.stream()
+                        .map(CIKey::get).collect(Collectors.toSet())) > 0;
     }
 
     @Override
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
                        final ValuesConsumer consumer) {
-        final String[] fieldNames = fieldIndex.getFields();
-        final boolean feedUsed = isUsed(Set.of(MetaFields.FEED.getFldName()), fieldNames, criteria);
-        final boolean typeUsed = isUsed(Set.of(MetaFields.TYPE.getFldName()), fieldNames, criteria);
-        final boolean pipelineUsed = isUsed(Set.of(MetaFields.PIPELINE.getFldName()), fieldNames, criteria);
-        final Set<String> extendedFieldNames = MetaFields
+
+        final List<CIKey> fieldNames = fieldIndex.getFieldsAsCIKeys();
+        final boolean feedUsed = isUsed(MetaFields.FEED.getFldNameAsCIKey(), fieldNames, criteria);
+        final boolean typeUsed = isUsed(MetaFields.TYPE.getFldNameAsCIKey(), fieldNames, criteria);
+        final boolean pipelineUsed = isUsed(MetaFields.PIPELINE.getFldNameAsCIKey(), fieldNames, criteria);
+        final Set<CIKey> extendedFieldNames = MetaFields
                 .getExtendedFields()
                 .stream()
-                .map(QueryField::getFldName)
+                .map(QueryField::getFldNameAsCIKey)
                 .collect(Collectors.toSet());
         final boolean extendedValuesUsed = isUsed(extendedFieldNames, fieldNames, criteria);
 
@@ -1239,12 +1277,13 @@ public class MetaDaoImpl implements MetaDao {
         final Mapper<?>[] mappers = valueMapper.getMappersForFieldNames(fieldNames);
 
         // Deal with extended fields.
-        final int[] extendedFieldKeys = new int[fieldNames.length];
+        final int fieldCount = fieldNames.size();
+        final int[] extendedFieldKeys = new int[fieldCount];
         final List<Integer> extendedFieldKeyIdList = new ArrayList<>();
         final Map<Long, Map<Integer, Long>> extendedFieldValueMap = new HashMap<>();
-        for (int i = 0; i < fieldNames.length; i++) {
+        for (int i = 0; i < fieldCount; i++) {
             final int index = i;
-            final String fieldName = fieldNames[i];
+            final CIKey fieldName = fieldNames.get(i);
             extendedFieldKeys[i] = -1;
 
             if (extendedFieldNames.contains(fieldName)) {
@@ -1305,14 +1344,14 @@ public class MetaDaoImpl implements MetaDao {
                     }
 
                     result.forEach(r -> {
-                        final Val[] arr = new Val[fieldNames.length];
+                        final Val[] arr = new Val[fieldCount];
 
                         Map<Integer, Long> extendedValues = null;
                         if (extendedValuesUsed) {
                             extendedValues = extendedFieldValueMap.get(r.get(meta.ID));
                         }
 
-                        for (int i = 0; i < fieldNames.length; i++) {
+                        for (int i = 0; i < fieldCount; i++) {
                             Val val = ValNull.INSTANCE;
                             final Mapper<?> mapper = mappers[i];
                             if (mapper != null) {
@@ -1887,10 +1926,10 @@ public class MetaDaoImpl implements MetaDao {
         if (expressionItem == null) {
             return true;
         } else {
-            final Map<String, QueryField> fieldMap = MetaFields.getAllFieldMap();
+            final Map<CIKey, QueryField> fieldMap = MetaFields.getAllFieldMap();
 
             return ExpressionUtil.validateExpressionTerms(expressionItem, term -> {
-                final QueryField field = fieldMap.get(term.getField());
+                final QueryField field = fieldMap.get(MetaFields.createCIKey(term.getField()));
                 if (field == null) {
                     throw new RuntimeException(LogUtil.message("Unknown field {} in term {}, in expression {}",
                             term.getField(), term, expressionItem));

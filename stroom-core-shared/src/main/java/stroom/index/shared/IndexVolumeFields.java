@@ -1,6 +1,7 @@
 package stroom.index.shared;
 
 import stroom.datasource.api.v2.QueryField;
+import stroom.util.shared.string.CIKey;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,11 +18,12 @@ public class IndexVolumeFields {
     public static final String FIELD_PATH = "Path";
 
     private static final List<QueryField> FIELDS = new ArrayList<>();
-    private static final Map<String, QueryField> FIELD_MAP;
+    private static final Map<CIKey, QueryField> FIELD_MAP;
 
-    public static final QueryField GROUP_ID = QueryField.createId(FIELD_GROUP_ID);
-    public static final QueryField NODE_NAME = QueryField.createText(FIELD_NODE_NAME);
-    public static final QueryField PATH = QueryField.createText(FIELD_PATH);
+    public static final QueryField GROUP_ID = QueryField.createId(CIKey.ofStaticKey(FIELD_GROUP_ID), true);
+    public static final QueryField NODE_NAME = QueryField.createText(
+            CIKey.ofStaticKey(FIELD_NODE_NAME), true);
+    public static final QueryField PATH = QueryField.createText(CIKey.ofStaticKey(FIELD_PATH), true);
 
     // Id's
     public static final QueryField ID = QueryField.createId(FIELD_ID);
@@ -35,14 +37,17 @@ public class IndexVolumeFields {
         // Id's
         FIELDS.add(ID);
 
-        FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
+        FIELD_MAP = FIELDS.stream()
+                .collect(Collectors.toMap(
+                        QueryField::getFldNameAsCIKey,
+                        Function.identity()));
     }
 
     public static List<QueryField> getFields() {
         return new ArrayList<>(FIELDS);
     }
 
-    public static Map<String, QueryField> getFieldMap() {
+    public static Map<CIKey, QueryField> getFieldMap() {
         return FIELD_MAP;
     }
 }

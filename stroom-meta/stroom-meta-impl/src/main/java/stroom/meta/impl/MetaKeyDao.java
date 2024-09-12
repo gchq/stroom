@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,10 +12,11 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.meta.impl;
+
+import stroom.util.shared.string.CIKey;
 
 import java.util.Optional;
 
@@ -23,7 +24,11 @@ public interface MetaKeyDao {
 
     Optional<String> getNameForId(final int keyId);
 
-    Optional<Integer> getIdForName(final String name);
+    Optional<Integer> getIdForName(final CIKey name);
+
+    default Optional<Integer> getIdForName(final String name) {
+        return getIdForName(CIKey.of(name));
+    }
 
     Integer getMinId();
 

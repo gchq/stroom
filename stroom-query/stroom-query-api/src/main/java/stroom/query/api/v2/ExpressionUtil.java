@@ -1,9 +1,27 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.api.v2;
 
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.string.CIKey;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -101,19 +119,24 @@ public class ExpressionUtil {
     }
 
     public static List<String> fields(final ExpressionOperator expressionOperator) {
-        return terms(expressionOperator,
-                null).stream().map(ExpressionTerm::getField).collect(Collectors.toList());
+        return terms(expressionOperator, null)
+                .stream()
+                .map(ExpressionTerm::getField)
+                .collect(Collectors.toList());
     }
 
     public static List<String> values(final ExpressionOperator expressionOperator) {
-        return terms(expressionOperator,
-                null).stream().map(ExpressionTerm::getValue).collect(Collectors.toList());
+        return terms(expressionOperator, null)
+                .stream()
+                .map(ExpressionTerm::getValue)
+                .collect(Collectors.toList());
     }
 
     public static List<String> values(final ExpressionOperator expressionOperator, final String fieldName) {
-        return terms(expressionOperator,
-                Collections.singleton(fieldName)).stream().map(ExpressionTerm::getValue).collect(
-                Collectors.toList());
+        return terms(expressionOperator, Collections.singleton(fieldName))
+                .stream()
+                .map(ExpressionTerm::getValue).collect(
+                        Collectors.toList());
     }
 
     public static List<ExpressionTerm> terms(final ExpressionOperator expressionOperator,
@@ -133,16 +156,16 @@ public class ExpressionUtil {
             for (final ExpressionItem item : expressionOperator.getChildren()) {
                 if (item.enabled()) {
                     if (item instanceof ExpressionTerm) {
-                        final ExpressionTerm expressionTerm = (ExpressionTerm) item;
+                        //noinspection PatternVariableCanBeUsed // GWT
+                        final ExpressionTerm term = (ExpressionTerm) item;
                         if (fieldNames == null || fieldNames.stream()
                                 .anyMatch(fieldName ->
-                                        fieldName.equals(expressionTerm.getField()) &&
-                                                (Condition.IS_DOC_REF.equals(expressionTerm.getCondition()) &&
-                                                        expressionTerm.getDocRef() != null &&
-                                                        expressionTerm.getDocRef().getUuid() != null) ||
-                                                (expressionTerm.getValue() != null &&
-                                                        expressionTerm.getValue().length() > 0))) {
-                            terms.add(expressionTerm);
+                                        fieldName.equalsIgnoreCase(term.getField()) &&
+                                                (Condition.IS_DOC_REF.equals(term.getCondition()) &&
+                                                        term.getDocRef() != null &&
+                                                        term.getDocRef().getUuid() != null) ||
+                                                (GwtNullSafe.isNonEmptyString(term.getValue())))) {
+                            terms.add(term);
                         }
                     } else if (item instanceof ExpressionOperator) {
                         addTerms((ExpressionOperator) item, fieldNames, terms);
@@ -203,7 +226,7 @@ public class ExpressionUtil {
         if (query != null) {
             ExpressionOperator expression = query.getExpression();
             if (query.getParams() != null && expression != null) {
-                final Map<String, String> paramMap = ParamUtil.createParamMap(query.getParams());
+                final Map<CIKey, String> paramMap = ParamUtil.createParamMap(query.getParams());
                 expression = replaceExpressionParameters(expression, paramMap);
             }
             result = query.copy().expression(expression).build();
@@ -215,7 +238,7 @@ public class ExpressionUtil {
                                                                  final List<Param> params) {
         final ExpressionOperator result;
         if (operator != null) {
-            final Map<String, String> paramMap = ParamUtil.createParamMap(params);
+            final Map<CIKey, String> paramMap = ParamUtil.createParamMap(params);
             result = replaceExpressionParameters(operator, paramMap);
         } else {
             result = null;
@@ -224,7 +247,7 @@ public class ExpressionUtil {
     }
 
     public static ExpressionOperator replaceExpressionParameters(final ExpressionOperator operator,
-                                                                 final Map<String, String> paramMap) {
+                                                                 final Map<CIKey, String> paramMap) {
         final ExpressionOperator.Builder builder = ExpressionOperator
                 .builder()
                 .enabled(operator.getEnabled())
@@ -232,10 +255,12 @@ public class ExpressionUtil {
         if (operator.getChildren() != null) {
             for (ExpressionItem child : operator.getChildren()) {
                 if (child instanceof ExpressionOperator) {
+                    //noinspection PatternVariableCanBeUsed // GWT
                     final ExpressionOperator childOperator = (ExpressionOperator) child;
                     builder.addOperator(replaceExpressionParameters(childOperator, paramMap));
 
                 } else if (child instanceof ExpressionTerm) {
+                    //noinspection PatternVariableCanBeUsed // GWT
                     final ExpressionTerm term = (ExpressionTerm) child;
                     final String value = term.getValue();
                     final String replaced = ParamUtil.replaceParameters(value, paramMap);
@@ -276,6 +301,7 @@ public class ExpressionUtil {
             }
             if (continueWalking) {
                 if (expressionItem instanceof ExpressionOperator) {
+                    //noinspection PatternVariableCanBeUsed // GWT
                     final ExpressionOperator expressionOperator = (ExpressionOperator) expressionItem;
                     final List<ExpressionItem> children = expressionOperator.getChildren();
                     if (children != null && !children.isEmpty()) {
@@ -291,6 +317,10 @@ public class ExpressionUtil {
         }
         return continueWalking;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface ExpressionItemVisitor {
 

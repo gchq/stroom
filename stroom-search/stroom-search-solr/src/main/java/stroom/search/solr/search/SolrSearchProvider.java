@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.search.solr.search;
@@ -33,6 +32,7 @@ import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.FieldInfoResultPageBuilder;
 import stroom.query.common.v2.IndexFieldCache;
+import stroom.query.common.v2.IndexFieldMap;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
@@ -41,9 +41,10 @@ import stroom.search.solr.SolrIndexStore;
 import stroom.search.solr.search.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.search.solr.shared.SolrIndexDataSourceFieldUtil;
 import stroom.search.solr.shared.SolrIndexDoc;
-import stroom.search.solr.shared.SolrIndexField;
 import stroom.security.api.SecurityContext;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -51,9 +52,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 // used by DI
 @SuppressWarnings("unused")
@@ -106,17 +109,25 @@ public class SolrSearchProvider implements SearchProvider, IndexFieldProvider {
     }
 
     @Override
-    public IndexField getIndexField(final DocRef docRef, final String fieldName) {
+    public IndexFieldMap getIndexFields(final DocRef docRef, final CIKey fieldName) {
         final SolrIndexDoc index = solrIndexStore.readDocument(docRef);
         if (index != null && index.getFields() != null) {
-            final Optional<SolrIndexField> optionalSolrIndexField = index
+            final Map<String, IndexField> fieldMap = index
                     .getFields()
                     .stream()
-                    .filter(field -> Objects.equals(fieldName, field.getFldName()))
-                    .findFirst();
-            return optionalSolrIndexField.orElse(null);
+                    .filter(field ->
+                            CIKey.equalsIgnoreCase(fieldName, field.getFldName()))
+                    .map(solrIndexField -> (IndexField) solrIndexField)
+                    .collect(Collectors.toMap(IndexField::getFldName, Function.identity()));
+
+            if (GwtNullSafe.hasEntries(fieldMap)) {
+                return IndexFieldMap.fromFieldsMap(fieldName, fieldMap);
+            } else {
+                return null;
+            }
+        } else {
+            return null;
         }
-        return null;
     }
 
     @Override

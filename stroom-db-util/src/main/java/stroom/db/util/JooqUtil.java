@@ -34,8 +34,10 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
 import stroom.util.shared.Selection;
 import stroom.util.shared.StringCriteria;
+import stroom.util.shared.string.CIKey;
 import stroom.util.string.PatternUtil;
 
+import org.jooq.Collation;
 import org.jooq.Condition;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
@@ -88,12 +90,23 @@ public final class JooqUtil {
     static final int MAX_DEADLOCK_RETRY_ATTEMPTS = 20;
     private static final long SLEEP_INCREMENT_MS = 10;
 
+    /**
+     * The collation to use if you want case sensitivity. By default, our tables use {@code utf8mb4_0900_ai_ci}.
+     */
+    public static final String CASE_SENSITIVE_COLLATION_NAME = "utf8mb4_0900_as_cs";
+    public static final Collation CASE_SENSITIVE_COLLATION = DSL.collation(CASE_SENSITIVE_COLLATION_NAME);
+
     private JooqUtil() {
         // Utility class.
     }
 
     public static void disableJooqLogoInLogs() {
         System.getProperties().setProperty("org.jooq.no-logo", "true");
+    }
+
+    public static Field<String> withCaseSensitiveCollation(final Field<String> field) {
+        return NullSafe.get(field,
+                field2 -> field2.collate(CASE_SENSITIVE_COLLATION_NAME));
     }
 
     private static Settings createSettings(final boolean isExecuteWithOptimisticLocking) {
@@ -879,7 +892,7 @@ public final class JooqUtil {
         return condition.or(() -> Optional.of(field.isNotNull()));
     }
 
-    public static Collection<OrderField<?>> getOrderFields(final Map<String, Field<?>> fieldMap,
+    public static Collection<OrderField<?>> getOrderFields(final Map<CIKey, Field<?>> fieldMap,
                                                            final BaseCriteria criteria,
                                                            final OrderField<?>... defaultSortFields) {
         if (criteria.getSortList() == null || criteria.getSortList().isEmpty()) {
@@ -898,9 +911,9 @@ public final class JooqUtil {
         }
     }
 
-    private static Optional<OrderField<?>> getOrderField(final Map<String, Field<?>> fieldMap,
+    private static Optional<OrderField<?>> getOrderField(final Map<CIKey, Field<?>> fieldMap,
                                                          final CriteriaFieldSort sort) {
-        final Field<?> field = fieldMap.get(sort.getId());
+        final Field<?> field = fieldMap.get(CIKey.of(sort.getId()));
 
         if (field != null) {
             if (sort.isDesc()) {

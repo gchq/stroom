@@ -89,7 +89,33 @@ class TestNullSafe {
                 Level1::getNonNullLevel2,
                 nonNullLevel1.getNonNullLevel2()))
                 .isTrue();
+        assertThat(NullSafe.equals(null, Level1::getNonNullLevel2, null))
+                .isTrue();
     }
+
+    @TestFactory
+    Stream<DynamicTest> testEqualsIgnoreCase1() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple2<AtomicReference<String>, String>>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    final AtomicReference<String> ref = testCase.getInput()._1;
+                    final String other = testCase.getInput()._2;
+                    return NullSafe.equalsIgnoreCase(ref, AtomicReference::get, other);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(null, "foo"), false)
+                .addCase(Tuple.of(new AtomicReference<>(), "foo"), false)
+                .addCase(Tuple.of(new AtomicReference<>("bar"), "foo"), false)
+                .addCase(Tuple.of(new AtomicReference<>("foo"), "foo"), true)
+                .addCase(Tuple.of(new AtomicReference<>("FOO"), "foo"), true)
+                .addCase(Tuple.of(new AtomicReference<>("foo"), "FOO"), true)
+                .addCase(Tuple.of(null, null), true)
+                .addCase(Tuple.of(new AtomicReference<>(), null), false)
+                .build();
+    }
+
 
     @Test
     void testEquals2() {
@@ -210,6 +236,24 @@ class TestNullSafe {
                 .addCase(new String[]{null, "foo", null}, Optional.of("foo"))
                 .addCase(new String[]{null, "foo", "bar"}, Optional.of("foo"))
                 .addCase(new String[]{"1", "2", "3"}, Optional.of("1"))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testFirst() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<List<String>>() {
+                })
+                .withWrappedOutputType(new TypeLiteral<Optional<String>>() {
+                })
+                .withSingleArgTestFunction(NullSafe::first)
+                .withSimpleEqualityAssertion()
+                .addCase(null, Optional.empty())
+                .addCase(Collections.emptyList(), Optional.empty())
+                .addCase(Arrays.asList((String) null), Optional.empty())
+                .addCase(Arrays.asList((String) null, (String) null), Optional.empty())
+                .addCase(List.of("foo"), Optional.of("foo"))
+                .addCase(List.of("foo", "bar"), Optional.of("foo"))
                 .build();
     }
 

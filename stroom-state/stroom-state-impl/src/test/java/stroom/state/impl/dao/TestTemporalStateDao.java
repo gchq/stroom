@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,19 +12,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package stroom.state.impl;
+package stroom.state.impl.dao;
 
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.language.functions.FieldIndex;
-import stroom.state.impl.dao.TemporalState;
-import stroom.state.impl.dao.TemporalStateDao;
-import stroom.state.impl.dao.TemporalStateFields;
-import stroom.state.impl.dao.TemporalStateRequest;
+import stroom.state.impl.ScyllaDbUtil;
+import stroom.util.shared.string.CIKeys;
 
 import org.junit.jupiter.api.Test;
 
@@ -58,9 +55,12 @@ class TestTemporalStateDao {
             assertThat(res.getValueAsString()).isEqualTo("test");
 
             final FieldIndex fieldIndex = new FieldIndex();
-            fieldIndex.create(TemporalStateFields.KEY);
+            fieldIndex.create(CIKeys.KEY);
             final AtomicInteger count = new AtomicInteger();
-            stateDao.search(new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex, null,
+            stateDao.search(new ExpressionCriteria(
+                            ExpressionOperator.builder().build()),
+                    fieldIndex,
+                    null,
                     v -> count.incrementAndGet());
             assertThat(count.get()).isEqualTo(100);
         });
@@ -105,10 +105,10 @@ class TestTemporalStateDao {
     }
 
     private void insertData(final TemporalStateDao stateDao,
-                                    final Instant refTime,
-                                    final String value,
-                                    final int rows,
-                                    final long deltaSeconds) {
+                            final Instant refTime,
+                            final String value,
+                            final int rows,
+                            final long deltaSeconds) {
         final ByteBuffer byteBuffer = ByteBuffer.wrap((value).getBytes(StandardCharsets.UTF_8));
         for (int i = 0; i < rows; i++) {
             final Instant effectiveTime = refTime.plusSeconds(i * deltaSeconds);

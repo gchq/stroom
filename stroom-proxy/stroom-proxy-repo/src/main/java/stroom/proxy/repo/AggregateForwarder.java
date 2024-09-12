@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.net.HostNameUtil;
+import stroom.util.shared.string.CIKeys;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -43,7 +44,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class AggregateForwarder {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AggregateForwarder.class);
-    private static final String PROXY_FORWARD_ID = "ProxyForwardId";
 
     private final FeedDao feedDao;
     private final SourceItemDao sourceItemDao;
@@ -172,7 +172,7 @@ public class AggregateForwarder {
         final AtomicReference<String> error = new AtomicReference<>();
 
         final List<SourceItems> items = sourceItemDao.fetchSourceItemsByAggregateId(aggregate.id());
-        if (items.size() > 0) {
+        if (!items.isEmpty()) {
             final FeedKey feedKey = feedDao.getKey(aggregate.feedId());
             final long thisPostId = proxyForwardId.incrementAndGet();
             final String info = thisPostId + " " + feedKey.feed() + " - " + feedKey.type();
@@ -186,13 +186,13 @@ public class AggregateForwarder {
                 attributeMap.put(StandardHeaderArguments.TYPE, feedKey.type());
             }
             if (LOGGER.isDebugEnabled()) {
-                attributeMap.put(PROXY_FORWARD_ID, String.valueOf(thisPostId));
+                attributeMap.put(CIKeys.PROXY_FORWARD_ID, String.valueOf(thisPostId));
             }
 
             final StreamHandlers streamHandlers;
             // If we have reached the max tried limit then send the data to the failure destination for this forwarder.
             if (forwardAggregate.getTries() >= forwardRetryConfigProvider.get().getMaxTries()) {
-                attributeMap.put("ForwardError", forwardAggregate.getError());
+                attributeMap.put(CIKeys.FORWARD_ERROR, forwardAggregate.getError());
                 streamHandlers = failureDestinations.getProvider(forwardAggregate.getForwardDest().getName());
             } else {
                 streamHandlers = forwarderDestinations.getProvider(forwardAggregate.getForwardDest().getName());

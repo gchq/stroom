@@ -97,6 +97,10 @@ public abstract class AbstractToken {
         return toTokenString(false);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     abstract static class AbstractTokenBuilder<T extends AbstractToken, B extends AbstractTokenBuilder<T, ?>> {
 
         TokenType tokenType;

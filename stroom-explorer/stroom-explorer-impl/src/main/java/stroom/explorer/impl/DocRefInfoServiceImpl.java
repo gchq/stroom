@@ -64,7 +64,8 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
     @Override
     public List<DocRef> findByName(final String type,
                                    final String nameFilter,
-                                   final boolean allowWildCards) {
+                                   final boolean allowWildCards,
+                                   final boolean isCaseSensitive) {
         if (NullSafe.isEmptyString(nameFilter)) {
             return Collections.emptyList();
         } else {
@@ -73,13 +74,13 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
                     // No type so have to search all handlers
                     final List<DocRef> result = new ArrayList<>();
                     explorerActionHandlers.forEach((handlerType, handler) -> {
-                        result.addAll(handler.findByName(nameFilter, allowWildCards));
+                        result.addAll(handler.findByName(nameFilter, allowWildCards, isCaseSensitive));
                     });
                     return result;
                 } else {
                     final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);
                     Objects.requireNonNull(handler, () -> "No handler for type " + type);
-                    return handler.findByName(nameFilter, allowWildCards);
+                    return handler.findByName(nameFilter, allowWildCards, isCaseSensitive);
                 }
             });
         }
@@ -88,7 +89,8 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
     @Override
     public List<DocRef> findByNames(final String type,
                                     final List<String> nameFilters,
-                                    final boolean allowWildCards) {
+                                    final boolean allowWildCards,
+                                    final boolean isCaseSensitive) {
         Objects.requireNonNull(type);
         if (NullSafe.isEmptyCollection(nameFilters)) {
             return Collections.emptyList();
@@ -96,7 +98,7 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
             return securityContextProvider.get().asProcessingUserResult(() -> {
                 final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);
                 Objects.requireNonNull(handler, () -> "No handler for type " + type);
-                return handler.findByNames(nameFilters, allowWildCards);
+                return handler.findByNames(nameFilters, allowWildCards, isCaseSensitive);
             });
         }
     }
@@ -124,7 +126,11 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
 
         // Allow decorate by name alone if feed (special case).
         if (FeedDoc.DOCUMENT_TYPE.equals(docRef.getType()) && docRef.getUuid() == null) {
-            final List<DocRef> list = findByName(docRef.getType(), docRef.getName(), false);
+            final List<DocRef> list = findByName(
+                    docRef.getType(),
+                    docRef.getName(),
+                    false,
+                    true);
             if (!NullSafe.isEmptyCollection(list)) {
                 return list.getFirst();
             } else {
