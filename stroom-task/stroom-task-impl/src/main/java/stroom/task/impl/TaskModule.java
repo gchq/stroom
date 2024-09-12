@@ -51,7 +51,8 @@ public class TaskModule extends AbstractModule {
         // TODO 10/03/2022 AT: Need to move SearchableDual to a better home
         GuiceUtil.buildMultiBinder(binder(), Searchable.class)
                 .addBinding(SearchableTaskProgress.class)
-                .addBinding(SearchableDual.class);
+                .addBinding(SearchableDual.class)
+                .addBinding(SearchableRows.class);
 
         // Make sure the first thing to start and the last thing to stop is the task manager.
         LifecycleBinder.create(binder())

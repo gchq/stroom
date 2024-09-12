@@ -49,6 +49,8 @@ class TestFieldIndex {
                 .isEqualTo(null);
         assertThat(fieldIndex.getPos("foo"))
                 .isEqualTo(0);
+        assertThat(fieldIndex.getPos("FOO"))
+                .isEqualTo(0);
         assertThat(fieldIndex.getPos("bar"))
                 .isEqualTo(1);
 
@@ -80,6 +82,8 @@ class TestFieldIndex {
         assertThat(fieldIndex.getPos("xxx"))
                 .isEqualTo(null);
         assertThat(fieldIndex.getPos("foo"))
+                .isEqualTo(0);
+        assertThat(fieldIndex.getPos("FOO"))
                 .isEqualTo(0);
         assertThat(fieldIndex.getPos("bar"))
                 .isEqualTo(1);

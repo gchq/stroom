@@ -16,6 +16,8 @@
 
 package stroom.util.shared.string;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -200,6 +202,7 @@ public class CIKeys {
      * @return The set of all common {@link CIKey}s
      */
     static Set<CIKey> commonKeys() {
-        return Set.copyOf(KEY_TO_COMMON_CIKEY_MAP.values());
+        //noinspection Java9CollectionFactory // GWT :-(
+        return Collections.unmodifiableSet(new HashSet<>(KEY_TO_COMMON_CIKEY_MAP.values()));
     }
 }

@@ -49,6 +49,10 @@ class Concat extends AbstractManyChildFunction {
         return new Gen(childGenerators);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static final class Gen extends AbstractManyChildGenerator {
 
         Gen(final Generator[] childGenerators) {

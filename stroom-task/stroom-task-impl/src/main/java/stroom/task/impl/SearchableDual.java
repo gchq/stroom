@@ -41,8 +41,7 @@ public class SearchableDual implements Searchable {
             "Dual",
             "Dual");
 
-    private static final QueryField DUMMY_FIELD = QueryField.createText(
-            "Dummy", true);
+    private static final QueryField DUMMY_FIELD = QueryField.createText(CIKey.ofStaticKey("Dummy"), true);
 
     private static final List<QueryField> FIELDS = Collections.singletonList(DUMMY_FIELD);
 

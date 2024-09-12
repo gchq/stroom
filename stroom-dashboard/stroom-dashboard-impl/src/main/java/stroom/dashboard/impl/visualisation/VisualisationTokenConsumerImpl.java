@@ -191,6 +191,9 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
                                                  final String visName,
                                                  final Controls controls,
                                                  final TableSettings parentTableSettings) {
+
+        // TODO This will error if we get >1 col with the same name.
+        //  Need to change stroomQL so it prevents multiple columns in the select with the same name.
         final Map<CIKey, Column> columnMap = NullSafe.stream(parentTableSettings.getColumns())
                 .collect(Collectors.toMap(Column::getNameAsCIKey, Function.identity()));
 

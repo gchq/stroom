@@ -41,26 +41,28 @@ public class FieldIndex {
 
     public int create(final String fieldName) {
         final CIKey caseInsensitiveFieldName = CIKey.of(fieldName);
-        return fieldToPos.computeIfAbsent(caseInsensitiveFieldName, k ->
-                addField(caseInsensitiveFieldName));
+        return create(caseInsensitiveFieldName);
     }
 
     public int create(final CIKey caseInsensitiveFieldName) {
-        return fieldToPos.computeIfAbsent(caseInsensitiveFieldName, k ->
+        final Integer pos = fieldToPos.computeIfAbsent(caseInsensitiveFieldName, k ->
                 addField(caseInsensitiveFieldName));
+        return pos;
     }
 
     private synchronized int addField(final CIKey fieldName) {
         fieldList.add(fieldName);
-        return fieldList.size() - 1;
+        final int pos = fieldList.size() - 1;
+        return pos;
     }
 
     public Integer getPos(final String fieldName) {
-        return fieldToPos.get(CIKey.of(fieldName));
+        return getPos(CIKey.of(fieldName));
     }
 
     public Integer getPos(final CIKey caseInsensitiveFieldName) {
-        return fieldToPos.get(caseInsensitiveFieldName);
+        final Integer pos = fieldToPos.get(caseInsensitiveFieldName);
+        return pos;
     }
 
     public String getField(final int pos) {
