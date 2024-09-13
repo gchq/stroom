@@ -437,16 +437,19 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     @Override
                     public void onHideRequest(final boolean autoClose, final boolean ok) {
                         if (ok) {
-                            final TableResultRequest tableResultRequest = TableResultRequest
-                                    .builder()
-                                    .componentId(getComponentConfig().getId())
-                                    .requestedRange(new OffsetRange(0, Integer.MAX_VALUE))
-                                    .tableSettings(TablePresenter.this.tableResultRequest.getTableSettings())
-                                    .fetch(Fetch.ALL)
-                                    .build();
-
                             final List<ComponentResultRequest> requests = new ArrayList<>();
-                            requests.add(tableResultRequest);
+                            currentSearch.getComponentSettingsMap().entrySet()
+                                    .stream()
+                                    .filter(settings -> settings.getValue() instanceof TableComponentSettings)
+                                    .forEach(tableSettings -> requests.add(TableResultRequest
+                                            .builder()
+                                            .componentId(tableSettings.getKey())
+                                            .requestedRange(new OffsetRange(0, Integer.MAX_VALUE))
+                                            .tableName(getTableName(tableSettings.getKey()))
+                                            .tableSettings(((TableComponentSettings) tableSettings.getValue()).copy()
+                                                    .buildTableSettings())
+                                            .fetch(Fetch.ALL)
+                                            .build()));
 
                             final Search search = Search
                                     .builder()
@@ -472,6 +475,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                             searchRequest,
                                             getComponentConfig().getId(),
                                             downloadPresenter.getFileType(),
+                                            downloadPresenter.downloadAllTables(),
                                             downloadPresenter.isSample(),
                                             downloadPresenter.getPercent());
                             final Rest<ResourceGeneration> rest = restFactory.create();
@@ -495,6 +499,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         popupUiHandlers);
             }
         }
+    }
+
+    private String getTableName(final String componentId) {
+        return Optional.ofNullable(getComponents().get(componentId))
+                .map(component -> component.getComponentConfig().getName())
+                .orElse(null);
     }
 
     private DateTimeSettings getDateTimeSettings() {
