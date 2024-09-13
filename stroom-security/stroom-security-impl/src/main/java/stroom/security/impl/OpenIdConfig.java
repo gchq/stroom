@@ -80,6 +80,11 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig {
      */
     private final String requestScope;
 
+    /**
+     * Redirect URI
+     */
+    private final String redirectUri;
+
     public OpenIdConfig() {
         useInternal = true;
         openIdConfigurationEndpoint = null;
@@ -92,6 +97,7 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig {
         clientSecret = null;
         clientId = null;
         requestScope = null;
+        redirectUri = null;
     }
 
     @JsonCreator
@@ -105,7 +111,8 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig {
                         @JsonProperty("formTokenRequest") final boolean formTokenRequest,
                         @JsonProperty("clientId") final String clientId,
                         @JsonProperty("clientSecret") final String clientSecret,
-                        @JsonProperty("requestScope") final String requestScope) {
+                        @JsonProperty("requestScope") final String requestScope,
+                        @JsonProperty("redirectUri") final String redirectUri) {
         this.useInternal = useInternal;
         this.openIdConfigurationEndpoint = openIdConfigurationEndpoint;
         this.issuer = issuer;
@@ -117,6 +124,7 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
         this.requestScope = requestScope;
+        this.redirectUri = redirectUri;
     }
 
     /**
@@ -130,9 +138,9 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig {
         return useInternal;
     }
 
+    @JsonProperty
     @JsonPropertyDescription("You can set an openid-configuration URL to automatically configure much of the openid " +
             "settings. Without this the other endpoints etc must be set manually.")
-    @JsonProperty
     public String getOpenIdConfigurationEndpoint() {
         return openIdConfigurationEndpoint;
     }
@@ -198,6 +206,13 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig {
         return requestScope;
     }
 
+    @JsonProperty
+    @JsonPropertyDescription("Redirect URI used to receive the authorisation code from the remote server. " +
+            "If not specified, the user is redirected to the original request URL.")
+    public String getRedirectUri() {
+        return redirectUri;
+    }
+
     @Override
     public String toString() {
         return "OpenIdConfig{" +
@@ -212,6 +227,7 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig {
                 ", clientId='" + clientId + '\'' +
                 ", clientSecret='" + clientSecret + '\'' +
                 ", requestScope='" + requestScope + '\'' +
+                ", redirectUri='" + redirectUri + '\'' +
                 '}';
     }
 }
