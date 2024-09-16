@@ -4,13 +4,13 @@
 package stroom.data.store.impl.fs.db.jooq.tables.records;
 
 
+import stroom.data.store.impl.fs.db.jooq.tables.FsVolume;
+
 import org.jooq.Field;
 import org.jooq.Record1;
 import org.jooq.Record13;
 import org.jooq.Row13;
 import org.jooq.impl.UpdatableRecordImpl;
-
-import stroom.data.store.impl.fs.db.jooq.tables.FsVolume;
 
 
 /**

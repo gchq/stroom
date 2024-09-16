@@ -68,7 +68,7 @@ public class TestQueuesWithTaskContext extends AbstractCoreIntegrationTest {
                                 taskManager.terminate(taskContext.getTaskId());
                                 consumptionStartLatch.countDown();
 
-                                final CompletableFuture<Void>[] consumers = new CompletableFuture[threads];
+                                final CompletableFuture<?>[] consumers = new CompletableFuture[threads];
 
                                 for (int i = 0; i < threads; i++) {
                                     final CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
@@ -102,7 +102,7 @@ public class TestQueuesWithTaskContext extends AbstractCoreIntegrationTest {
                             "producers",
                             TerminateHandlerFactory.NOOP_FACTORY,
                             tc -> {
-                                final CompletableFuture<Void>[] producers = new CompletableFuture[threads];
+                                final CompletableFuture<?>[] producers = new CompletableFuture[threads];
 
                                 for (int i = 0; i < threads; i++) {
                                     final CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {

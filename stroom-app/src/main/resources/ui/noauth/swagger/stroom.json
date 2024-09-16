@@ -12306,6 +12306,10 @@
             "type" : "integer",
             "format" : "int64"
           },
+          "hashAlgorithm" : {
+            "type" : "string",
+            "enum" : [ "SHA3_256", "SHA2_256", "BCRYPT", "ARGON_2" ]
+          },
           "name" : {
             "type" : "string"
           },
@@ -15198,6 +15202,10 @@
           "expireTimeMs" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "hashAlgorithm" : {
+            "type" : "string",
+            "enum" : [ "SHA3_256", "SHA2_256", "BCRYPT", "ARGON_2" ]
           },
           "id" : {
             "type" : "integer",
@@ -20648,6 +20656,10 @@
           },
           "authErrorMessage" : {
             "type" : "string"
+          },
+          "defaultApiKeyHashAlgorithm" : {
+            "type" : "string",
+            "enum" : [ "SHA3_256", "SHA2_256", "BCRYPT", "ARGON_2" ]
           },
           "defaultMaxResults" : {
             "type" : "string"

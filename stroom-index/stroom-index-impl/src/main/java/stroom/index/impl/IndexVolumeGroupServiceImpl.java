@@ -31,7 +31,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.OptionalLong;
-import java.util.stream.Collectors;
 
 @Singleton
 @EntityEventHandler(type = IndexVolumeServiceImpl.ENTITY_TYPE, action = {

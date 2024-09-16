@@ -4,12 +4,6 @@
 package stroom.security.identity.db.jooq;
 
 
-import org.jooq.ForeignKey;
-import org.jooq.TableField;
-import org.jooq.UniqueKey;
-import org.jooq.impl.DSL;
-import org.jooq.impl.Internal;
-
 import stroom.security.identity.db.jooq.tables.Account;
 import stroom.security.identity.db.jooq.tables.JsonWebKey;
 import stroom.security.identity.db.jooq.tables.OauthClient;
@@ -18,6 +12,12 @@ import stroom.security.identity.db.jooq.tables.records.AccountRecord;
 import stroom.security.identity.db.jooq.tables.records.JsonWebKeyRecord;
 import stroom.security.identity.db.jooq.tables.records.OauthClientRecord;
 import stroom.security.identity.db.jooq.tables.records.TokenTypeRecord;
+
+import org.jooq.ForeignKey;
+import org.jooq.TableField;
+import org.jooq.UniqueKey;
+import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 
 
 /**

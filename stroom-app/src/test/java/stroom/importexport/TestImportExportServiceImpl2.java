@@ -47,7 +47,7 @@ class TestImportExportServiceImpl2 extends AbstractCoreIntegrationTest {
     void testImportZip() throws IOException {
         final Path rootTestDir = StroomCoreServerTestFileUtil.getTestResourcesDir();
         final Path importDir = rootTestDir.resolve("samples/config");
-        final Path zipFile = getCurrentTestDir().resolve(UUID.randomUUID().toString() + ".zip");
+        final Path zipFile = getCurrentTestDir().resolve(UUID.randomUUID() + ".zip");
 
         ZipUtil.zip(zipFile, importDir, Pattern.compile(".*DATA_SPLITTER.*"), null);
         assertThat(Files.isRegularFile(zipFile)).isTrue();

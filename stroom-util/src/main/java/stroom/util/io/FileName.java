@@ -67,8 +67,9 @@ public class FileName {
             return false;
         }
         final FileName fileName = (FileName) o;
-        return Objects.equals(fullName, fileName.fullName) && Objects.equals(baseName,
-                fileName.baseName) && Objects.equals(extension, fileName.extension);
+        return Objects.equals(fullName, fileName.fullName) &&
+                Objects.equals(baseName, fileName.baseName) &&
+                Objects.equals(extension, fileName.extension);
     }
 
     @Override

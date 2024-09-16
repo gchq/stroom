@@ -21,7 +21,6 @@ import stroom.test.common.util.test.StroomUnitTest;
 import org.apache.lucene980.analysis.Analyzer;
 import org.apache.lucene980.analysis.TokenStream;
 import org.apache.lucene980.analysis.core.SimpleAnalyzer;
-import org.apache.lucene980.analysis.core.StopAnalyzer;
 import org.apache.lucene980.analysis.en.EnglishAnalyzer;
 import org.apache.lucene980.analysis.standard.StandardAnalyzer;
 import org.apache.lucene980.analysis.tokenattributes.CharTermAttribute;

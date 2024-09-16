@@ -4,17 +4,17 @@
 package stroom.security.identity.db.jooq;
 
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.security.identity.db.jooq.tables.Account;
+import stroom.security.identity.db.jooq.tables.JsonWebKey;
+import stroom.security.identity.db.jooq.tables.OauthClient;
+import stroom.security.identity.db.jooq.tables.TokenType;
 
 import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
-import stroom.security.identity.db.jooq.tables.Account;
-import stroom.security.identity.db.jooq.tables.JsonWebKey;
-import stroom.security.identity.db.jooq.tables.OauthClient;
-import stroom.security.identity.db.jooq.tables.TokenType;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**

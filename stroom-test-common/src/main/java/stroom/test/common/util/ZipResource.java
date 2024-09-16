@@ -19,6 +19,7 @@ package stroom.test.common.util;
 import stroom.util.io.StreamUtil;
 import stroom.util.zip.ZipUtil;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -61,7 +62,11 @@ public class ZipResource {
     }
 
     public byte[] getBytes() throws IOException {
-        return StreamUtil.streamToBuffer(getStream()).toByteArray();
+        try (final ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            StreamUtil.streamToStream(getStream(), baos);
+            baos.flush();
+            return baos.toByteArray();
+        }
     }
 
     public void before() throws IOException {

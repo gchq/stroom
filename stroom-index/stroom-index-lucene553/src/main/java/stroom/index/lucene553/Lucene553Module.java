@@ -17,7 +17,6 @@
 package stroom.index.lucene553;
 
 import stroom.index.impl.LuceneProvider;
-import stroom.search.extraction.MemoryIndex;
 import stroom.util.guice.GuiceUtil;
 
 import com.google.inject.AbstractModule;

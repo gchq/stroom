@@ -16,8 +16,6 @@
 
 package stroom.proxy.app;
 
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,8 +35,6 @@ import java.io.OutputStream;
 import java.nio.file.Path;
 
 public class ProxyYamlUtil {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyYamlUtil.class);
 
     private ProxyYamlUtil() {
         // Utility
