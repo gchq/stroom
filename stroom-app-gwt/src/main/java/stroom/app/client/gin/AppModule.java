@@ -74,6 +74,7 @@ import stroom.iframe.client.presenter.IFramePresenter;
 import stroom.iframe.client.presenter.IFramePresenter.IFrameView;
 import stroom.iframe.client.view.IFrameContentViewImpl;
 import stroom.iframe.client.view.IFrameViewImpl;
+import stroom.main.client.presenter.GlobalKeyHandlerImpl;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.main.client.presenter.MainPresenter.MainProxy;
 import stroom.main.client.presenter.MainPresenter.MainView;
@@ -88,6 +89,7 @@ import stroom.widget.tab.client.view.CurveTabLayoutViewImpl;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter.TooltipView;
 import stroom.widget.tooltip.client.view.TooltipViewImpl;
+import stroom.widget.util.client.GlobalKeyHandler;
 
 import com.google.inject.Singleton;
 import com.google.web.bindery.event.shared.EventBus;
@@ -109,6 +111,7 @@ public class AppModule extends AbstractPresenterModule {
         bind(TokenFormatter.class).to(ParameterTokenFormatter.class).in(Singleton.class);
         bind(RootPresenter.class).asEagerSingleton();
         bind(PlaceManager.class).to(InactivePlaceManager.class).in(Singleton.class);
+        bind(GlobalKeyHandler.class).to(GlobalKeyHandlerImpl.class).in(Singleton.class);
         // bind(PlaceManager.class).to(AppPlaceManager.class).in(Singleton.class);
         // install(new DefaultModule(AppPlaceManager.class));
 

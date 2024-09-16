@@ -6,6 +6,8 @@ import stroom.widget.tab.client.view.GlobalResizeObserver;
 
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -181,6 +183,10 @@ public abstract class AbstractEditorViewImpl extends ViewImpl {
 
     public HandlerRegistration addKeyDownHandler(final KeyDownHandler handler) {
         return getContentPanel().addDomHandler(handler, KeyDownEvent.getType());
+    }
+
+    public HandlerRegistration addKeyUpHandler(final KeyUpHandler handler) {
+        return getContentPanel().addDomHandler(handler, KeyUpEvent.getType());
     }
 
     public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<String> handler) {
