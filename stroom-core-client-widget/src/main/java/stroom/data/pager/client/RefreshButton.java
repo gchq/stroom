@@ -81,20 +81,16 @@ public class RefreshButton
         } else {
             button.removeStyleName("allowPause");
         }
-
         update();
     }
 
     public void setPaused(final boolean paused) {
         this.paused = paused;
         if (paused) {
-            button.setTitle("Resume Update");
             button.addStyleName("paused");
         } else {
-            button.setTitle("Pause Update");
             button.removeStyleName("paused");
         }
-
         update();
     }
 
@@ -143,6 +139,16 @@ public class RefreshButton
     private void update() {
         if (allowPause) {
             setEnabled(paused || refreshing || taskCount > 0);
+
+            if (paused) {
+                button.setTitle("Resume Update");
+            } else if (refreshing || taskCount > 0) {
+                button.setTitle("Pause Update");
+            } else {
+                button.setTitle("Not Updating");
+            }
+        } else {
+            button.setTitle("Refresh");
         }
     }
 }

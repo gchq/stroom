@@ -198,7 +198,7 @@ public class QueryResultVisPresenter
 
     private void setPause(final boolean pause,
                           final boolean refresh) {
-        // If curently paused then refresh if we are allowed.
+        // If currently paused then refresh if we are allowed.
         if (refresh && this.pause) {
             refresh();
         }
