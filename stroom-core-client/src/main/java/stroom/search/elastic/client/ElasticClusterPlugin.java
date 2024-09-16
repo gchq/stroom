@@ -29,7 +29,7 @@ import stroom.search.elastic.client.presenter.ElasticClusterPresenter;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticClusterResource;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -70,13 +70,13 @@ public class ElasticClusterPlugin extends DocumentPlugin<ElasticClusterDoc> {
     public void load(final DocRef docRef,
                      final Consumer<ElasticClusterDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskHandlerFactory taskHandlerFactory) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(ELASTIC_CLUSTER_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
@@ -85,13 +85,13 @@ public class ElasticClusterPlugin extends DocumentPlugin<ElasticClusterDoc> {
                      final ElasticClusterDoc document,
                      final Consumer<ElasticClusterDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskHandlerFactory taskHandlerFactory) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(ELASTIC_CLUSTER_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 

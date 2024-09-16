@@ -29,10 +29,10 @@ import stroom.content.client.event.SelectContentTabEvent.SelectContentTabHandler
 import stroom.data.table.client.Refreshable;
 import stroom.explorer.client.presenter.RecentItems;
 import stroom.main.client.presenter.MainPresenter;
-import stroom.task.client.DefaultTaskListener;
-import stroom.task.client.HasTaskHandlerFactory;
-import stroom.task.client.TaskHandler;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.HasTaskMonitorFactory;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.tab.client.presenter.CurveTabLayoutPresenter;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
@@ -154,10 +154,10 @@ public class ContentTabPanePresenter
         forceReveal();
         add(event.getTabData(), event.getLayer());
 
-        if (event.getLayer() instanceof HasTaskHandlerFactory) {
+        if (event.getLayer() instanceof HasTaskMonitorFactory) {
             final AbstractTab tab = getView().getTabBar().getTab(event.getTabData());
-            ((HasTaskHandlerFactory) event.getLayer())
-                    .setTaskHandlerFactory(new TabTaskListener(tab));
+            ((HasTaskMonitorFactory) event.getLayer())
+                    .setTaskMonitorFactory(new TabTaskMonitorFactory(tab));
         }
     }
 
@@ -176,9 +176,9 @@ public class ContentTabPanePresenter
             }
         }
 
-        if (event.getTabData() instanceof HasTaskHandlerFactory) {
-            ((HasTaskHandlerFactory) event.getTabData())
-                    .setTaskHandlerFactory(new DefaultTaskListener(this));
+        if (event.getTabData() instanceof HasTaskMonitorFactory) {
+            ((HasTaskMonitorFactory) event.getTabData())
+                    .setTaskMonitorFactory(new DefaultTaskMonitorFactory(this));
         }
     }
 
@@ -230,17 +230,17 @@ public class ContentTabPanePresenter
 
     }
 
-    private static class TabTaskListener implements TaskHandlerFactory {
+    private static class TabTaskMonitorFactory implements TaskMonitorFactory {
 
         private final AbstractTab tab;
 
-        public TabTaskListener(final AbstractTab tab) {
+        public TabTaskMonitorFactory(final AbstractTab tab) {
             this.tab = tab;
         }
 
         @Override
-        public TaskHandler createTaskHandler() {
-            return tab.createTaskHandler();
+        public TaskMonitor createTaskMonitor() {
+            return tab.createTaskMonitor();
         }
     }
 }

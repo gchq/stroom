@@ -1,6 +1,6 @@
 package stroom.dispatch.client;
 
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 
 import org.fusesource.restygwt.client.DirectRestService;
 
@@ -23,9 +23,9 @@ public interface RestFactory {
         /**
          * Set a task listener if we want to listen to the request start and finish events.
          **/
-        TaskExecutor<T, R> taskHandlerFactory(TaskHandlerFactory taskHandlerFactory);
+        TaskExecutor<T, R> taskMonitorFactory(TaskMonitorFactory taskMonitorFactory);
 
-        TaskExecutor<T, R> taskHandlerFactory(TaskHandlerFactory taskHandlerFactory, String taskMessage);
+        TaskExecutor<T, R> taskMonitorFactory(TaskMonitorFactory taskMonitorFactory, String taskMessage);
 
         MethodExecutor<T, R> onSuccess(Consumer<R> resultConsumer);
 

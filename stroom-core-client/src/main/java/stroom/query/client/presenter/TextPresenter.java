@@ -28,7 +28,7 @@ import stroom.pipeline.shared.SourceLocation;
 import stroom.query.api.v2.Column;
 import stroom.query.client.presenter.TextPresenter.TextView;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.TextRange;
 
@@ -608,7 +608,7 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
                                     }
                                 }
                             })
-                            .taskHandlerFactory(getView())
+                            .taskMonitorFactory(getView())
                             .exec();
                 }
             };
@@ -719,7 +719,7 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
 
     }
 
-    public interface TextView extends View, HasUiHandlers<TextUiHandlers>, TaskHandlerFactory {
+    public interface TextView extends View, HasUiHandlers<TextUiHandlers>, TaskMonitorFactory {
 
         void setContent(View view);
 

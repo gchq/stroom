@@ -2,8 +2,8 @@ package stroom.data.pager.client;
 
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.Task;
-import stroom.task.client.TaskHandler;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.SvgButton;
 
 import com.google.gwt.core.client.GWT;
@@ -16,7 +16,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 
 public class RefreshButton
         extends Composite
-        implements TaskHandlerFactory {
+        implements TaskMonitorFactory {
 
     private final SvgButton button;
     private int taskCount;
@@ -107,8 +107,8 @@ public class RefreshButton
     }
 
     @Override
-    public TaskHandler createTaskHandler() {
-        return new TaskHandler() {
+    public TaskMonitor createTaskMonitor() {
+        return new TaskMonitor() {
             @Override
             public void onStart(final Task task) {
                 taskCount++;

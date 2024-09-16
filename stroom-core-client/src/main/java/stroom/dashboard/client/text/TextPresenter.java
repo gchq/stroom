@@ -44,7 +44,7 @@ import stroom.query.api.v2.Column;
 import stroom.query.client.presenter.TableRow;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.EqualsUtil;
@@ -622,7 +622,7 @@ public class TextPresenter
                                     }
                                 }
                             })
-                            .taskHandlerFactory(getView())
+                            .taskMonitorFactory(getView())
                             .exec();
                 }
             };
@@ -731,7 +731,7 @@ public class TextPresenter
     // --------------------------------------------------------------------------------
 
 
-    public interface TextView extends View, HasUiHandlers<TextUiHandlers>, TaskHandlerFactory {
+    public interface TextView extends View, HasUiHandlers<TextUiHandlers>, TaskMonitorFactory {
 
         void setContent(View view);
 

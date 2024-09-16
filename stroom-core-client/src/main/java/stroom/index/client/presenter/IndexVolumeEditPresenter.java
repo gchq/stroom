@@ -27,7 +27,7 @@ import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.index.shared.IndexVolumeResource;
 import stroom.item.client.SelectionBox;
 import stroom.node.client.NodeManager;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -67,7 +67,7 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
     void show(final IndexVolume volume,
               final String caption,
               final Consumer<IndexVolume> consumer,
-              final TaskHandlerFactory taskHandlerFactory) {
+              final TaskMonitorFactory taskMonitorFactory) {
         nodeManager.listAllNodes(
                 nodeNames -> {
                     read(nodeNames, volume);
@@ -84,12 +84,12 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
                                         write();
                                         if (volume.getId() != null) {
                                             doWithVolumeValidation(volume, () ->
-                                                            updateVolume(consumer, volume, e, taskHandlerFactory),
-                                                    e, taskHandlerFactory);
+                                                            updateVolume(consumer, volume, e, taskMonitorFactory),
+                                                    e, taskMonitorFactory);
                                         } else {
                                             doWithVolumeValidation(volume, () ->
-                                                            createIndexVolume(consumer, volume, e, taskHandlerFactory),
-                                                    e, taskHandlerFactory);
+                                                            createIndexVolume(consumer, volume, e, taskMonitorFactory),
+                                                    e, taskMonitorFactory);
                                         }
 
                                     } catch (final RuntimeException ex) {
@@ -104,13 +104,13 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
                             .fire();
                 },
                 throwable -> AlertEvent.fireError(IndexVolumeEditPresenter.this, throwable.getMessage(), null),
-                taskHandlerFactory);
+                taskMonitorFactory);
     }
 
     private void doWithVolumeValidation(final IndexVolume volume,
                                         final Runnable work,
                                         final HidePopupRequestEvent event,
-                                        final TaskHandlerFactory taskHandlerFactory) {
+                                        final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(INDEX_VOLUME_RESOURCE)
                 .method(res -> res.validate(volume))
@@ -140,14 +140,14 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
                 .onFailure(throwable -> {
                     AlertEvent.fireError(IndexVolumeEditPresenter.this, throwable.getMessage(), event::reset);
                 })
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
     private void createIndexVolume(final Consumer<IndexVolume> savedVolumeConsumer,
                                    final IndexVolume volume,
                                    final HidePopupRequestEvent event,
-                                   final TaskHandlerFactory taskHandlerFactory) {
+                                   final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(INDEX_VOLUME_RESOURCE)
                 .method(res -> res.create(volume))
@@ -156,14 +156,14 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
                     event.hide();
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
     private void updateVolume(final Consumer<IndexVolume> consumer,
                               final IndexVolume volume,
                               final HidePopupRequestEvent event,
-                              final TaskHandlerFactory taskHandlerFactory) {
+                              final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(INDEX_VOLUME_RESOURCE)
                 .method(res -> res.update(volume.getId(), volume))
@@ -172,7 +172,7 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
                     event.hide();
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 

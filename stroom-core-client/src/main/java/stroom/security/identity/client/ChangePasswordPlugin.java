@@ -6,7 +6,7 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.identity.client.presenter.CurrentPasswordPresenter;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.DefaultTaskListener;
+import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
@@ -48,6 +48,6 @@ public class ChangePasswordPlugin extends Plugin {
 
                 event.getMenuItems().addMenuItem(MenuKeys.USER_MENU, changePasswordMenuItem);
             }
-        }, new DefaultTaskListener(this));
+        }, new DefaultTaskMonitorFactory(this));
     }
 }

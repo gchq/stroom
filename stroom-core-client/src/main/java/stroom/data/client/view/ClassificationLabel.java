@@ -16,7 +16,7 @@
 
 package stroom.data.client.view;
 
-import stroom.task.client.DefaultTaskListener;
+import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 
 import com.google.gwt.core.client.GWT;
@@ -55,7 +55,7 @@ public class ClassificationLabel extends Composite {
                     }
                 }
             }
-        }, new DefaultTaskListener(this));
+        }, new DefaultTaskMonitorFactory(this));
     }
 
     public void setClassification(final String text) {

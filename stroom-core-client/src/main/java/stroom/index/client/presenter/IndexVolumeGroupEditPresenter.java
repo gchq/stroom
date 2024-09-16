@@ -117,7 +117,7 @@ public class IndexVolumeGroupEditPresenter
                                             .onSuccess(response -> delayedUpdate.update())
                                             .onFailure(throwable -> {
                                             })
-                                            .taskHandlerFactory(this)
+                                            .taskMonitorFactory(this)
                                             .exec()
                             ),
                     throwable -> {
@@ -139,7 +139,7 @@ public class IndexVolumeGroupEditPresenter
                     .create(INDEX_VOLUME_RESOURCE)
                     .method(res -> res.fetch(volume.getId()))
                     .onSuccess(result -> editVolume(result, "Edit Volume"))
-                    .taskHandlerFactory(volumeStatusListPresenter.getTaskListener())
+                    .taskMonitorFactory(volumeStatusListPresenter.getTaskListener())
                     .exec();
         }
     }
@@ -169,7 +169,7 @@ public class IndexVolumeGroupEditPresenter
                                         .create(INDEX_VOLUME_RESOURCE)
                                         .method(res -> res.delete(volume.getId()))
                                         .onSuccess(response -> volumeStatusListPresenter.refresh())
-                                        .taskHandlerFactory(this)
+                                        .taskMonitorFactory(this)
                                         .exec();
                             }
                         }
@@ -265,7 +265,7 @@ public class IndexVolumeGroupEditPresenter
                         }
                     })
                     .onFailure(RestErrorHandler.forPopup(this, event))
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         }
     }
@@ -281,7 +281,7 @@ public class IndexVolumeGroupEditPresenter
                     event.hide();
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskHandlerFactory(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 

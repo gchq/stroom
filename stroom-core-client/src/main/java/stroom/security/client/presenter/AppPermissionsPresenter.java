@@ -92,7 +92,7 @@ public class AppPermissionsPresenter
                         AppPermissionsPresenter.this.userAppPermissions = userAppPermissions;
                         updateAllPermissions();
                     })
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         }
     }
@@ -113,7 +113,7 @@ public class AppPermissionsPresenter
                         dataGrid.setRowData(0, allPermissions);
                         dataGrid.setRowCount(allPermissions.size(), true);
                     })
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         }
     }
@@ -152,7 +152,7 @@ public class AppPermissionsPresenter
                         .create(APP_PERMISSION_RESOURCE)
                         .method(res -> res.changeUser(request))
                         .onSuccess(result -> refresh())
-                        .taskHandlerFactory(this)
+                        .taskMonitorFactory(this)
                         .exec();
             });
         }

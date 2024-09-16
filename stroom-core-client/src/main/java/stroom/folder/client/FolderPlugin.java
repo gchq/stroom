@@ -27,7 +27,7 @@ import stroom.document.client.DocumentTabData;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -70,7 +70,7 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
     public void load(final DocRef docRef,
                      final Consumer<DocRef> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskHandlerFactory taskHandlerFactory) {
+                     final TaskMonitorFactory taskMonitorFactory) {
 
     }
 
@@ -79,7 +79,7 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
                      final DocRef document,
                      final Consumer<DocRef> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskHandlerFactory taskHandlerFactory) {
+                     final TaskMonitorFactory taskMonitorFactory) {
 
     }
 
@@ -89,7 +89,7 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
                                 final Handler closeHandler,
                                 final DocumentTabData tabData,
                                 final boolean fullScreen,
-                                final TaskHandlerFactory taskHandlerFactory) {
+                                final TaskMonitorFactory taskMonitorFactory) {
         if (documentEditPresenter instanceof FolderPresenter) {
             ((FolderPresenter) documentEditPresenter).read(docRef);
         } else if (documentEditPresenter instanceof FolderRootPresenter) {

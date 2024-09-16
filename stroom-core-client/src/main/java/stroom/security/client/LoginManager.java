@@ -21,7 +21,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.event.LogoutEvent;
 import stroom.security.shared.AppPermissionResource;
 import stroom.security.shared.SessionResource;
-import stroom.task.client.DefaultTaskListener;
+import stroom.task.client.DefaultTaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -67,7 +67,7 @@ public class LoginManager implements HasHandlers {
                 .onFailure(throwable -> {
                     AlertEvent.fireInfo(LoginManager.this, throwable.getMessage(), this::logout);
                 })
-                .taskHandlerFactory(new DefaultTaskListener(this), "Fetching permissions...")
+                .taskMonitorFactory(new DefaultTaskMonitorFactory(this), "Fetching permissions...")
                 .exec();
     }
 
@@ -79,7 +79,7 @@ public class LoginManager implements HasHandlers {
                 .onSuccess(response -> setLocation(response.getUrl()))
                 .onFailure(restError -> AlertEvent
                         .fireErrorFromException(LoginManager.this, restError.getException(), null))
-                .taskHandlerFactory(new DefaultTaskListener(this))
+                .taskMonitorFactory(new DefaultTaskMonitorFactory(this))
                 .exec();
     }
 

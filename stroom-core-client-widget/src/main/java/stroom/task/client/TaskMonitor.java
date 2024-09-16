@@ -1,6 +1,6 @@
 package stroom.task.client;
 
-public interface TaskHandler {
+public interface TaskMonitor {
 
     void onStart(Task task);
 

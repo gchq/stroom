@@ -35,7 +35,7 @@ import stroom.statistics.impl.sql.shared.StatisticResource;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -107,7 +107,7 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
     private void doConfirmSave(final DocumentEditPresenter<?, StatisticStoreDoc> presenter,
                                final StatisticStoreDoc entity,
                                final StatisticStoreDoc entityFromDb,
-                               final TaskHandlerFactory taskHandlerFactory) {
+                               final TaskMonitorFactory taskMonitorFactory) {
         // get the persisted versions of the fields we care about
         final StatisticType prevType = entityFromDb.getStatisticType();
         final StatisticRollUpType prevRollUpType = entityFromDb.getRollUpType();
@@ -134,7 +134,7 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
                             "change.<br/><br/>" + "Do you wish to continue?"),
                     result -> {
                         if (result) {
-                            doSave(presenter, writtenEntity, taskHandlerFactory);
+                            doSave(presenter, writtenEntity, taskMonitorFactory);
                         } else {
                             // Re-enable popup buttons.
                         }
@@ -142,32 +142,32 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
         } else {
             // user has changed some attributes we don't care about so just do
             // the save
-            doSave(presenter, writtenEntity, taskHandlerFactory);
+            doSave(presenter, writtenEntity, taskMonitorFactory);
         }
     }
 
     private void doSave(final DocumentEditPresenter<?, StatisticStoreDoc> presenter,
                         final StatisticStoreDoc entity,
-                        final TaskHandlerFactory taskHandlerFactory) {
+                        final TaskMonitorFactory taskMonitorFactory) {
         save(DocRefUtil.create(entity), entity, doc ->
                         presenter.read(DocRefUtil.create(doc), doc,
                                 presenter.isReadOnly()),
                 throwable -> {
                 },
-                taskHandlerFactory);
+                taskMonitorFactory);
     }
 
     @Override
     public void load(final DocRef docRef,
                      final Consumer<StatisticStoreDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskHandlerFactory taskHandlerFactory) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(STATISTIC_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
@@ -176,13 +176,13 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
                      final StatisticStoreDoc document,
                      final Consumer<StatisticStoreDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskHandlerFactory taskHandlerFactory) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(STATISTIC_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 }

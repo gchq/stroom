@@ -29,7 +29,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.state.client.presenter.StateStorePresenter;
 import stroom.state.shared.StateDoc;
 import stroom.state.shared.StateDocResource;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -70,13 +70,13 @@ public class StateStorePlugin extends DocumentPlugin<StateDoc> {
     public void load(final DocRef docRef,
                      final Consumer<StateDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskHandlerFactory taskHandlerFactory) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(STATE_STORE_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
@@ -85,13 +85,13 @@ public class StateStorePlugin extends DocumentPlugin<StateDoc> {
                      final StateDoc document,
                      final Consumer<StateDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskHandlerFactory taskHandlerFactory) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(STATE_STORE_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 

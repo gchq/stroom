@@ -116,7 +116,7 @@ public class DependenciesPresenter
                         .method(res -> res.fetchDependencies(criteria))
                         .onSuccess(dataConsumer)
                         .onFailure(errorHandler)
-                        .taskHandlerFactory(view)
+                        .taskMonitorFactory(view)
                         .exec();
             }
         };
@@ -308,7 +308,7 @@ public class DependenciesPresenter
                             "ProcessorFilter",
                             SvgImage.FILTER);
                 })
-                .taskHandlerFactory(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 

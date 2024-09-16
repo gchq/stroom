@@ -30,7 +30,7 @@ import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.index.shared.IndexVolumeFields;
 import stroom.index.shared.IndexVolumeResource;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
@@ -265,14 +265,14 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
                             }
                         })
                         .onFailure(errorHandler)
-                        .taskHandlerFactory(getView())
+                        .taskMonitorFactory(getView())
                         .exec();
             }
         };
         dataProvider.addDataDisplay(dataGrid);
     }
 
-    public TaskHandlerFactory getTaskListener() {
+    public TaskMonitorFactory getTaskListener() {
         return getView();
     }
 }

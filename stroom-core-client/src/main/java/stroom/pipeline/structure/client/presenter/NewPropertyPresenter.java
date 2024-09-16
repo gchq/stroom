@@ -297,7 +297,7 @@ public class NewPropertyPresenter
 
                         dataTypePresenterInitialised = true;
                     })
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
 
             dataTypeWidget.addValueChangeHandler(event -> {
@@ -347,7 +347,7 @@ public class NewPropertyPresenter
 
                         dataTypePresenterInitialised = true;
                     })
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
 
             dataTypeWidget.addValueChangeHandler(event -> {

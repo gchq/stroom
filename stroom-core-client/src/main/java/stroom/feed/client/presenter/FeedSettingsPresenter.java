@@ -128,7 +128,7 @@ public class FeedSettingsPresenter
                         getView().getContextEncoding().setValue(ensureEncoding(feed.getContextEncoding()));
                     }
                 })
-                .taskHandlerFactory(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 
@@ -150,7 +150,7 @@ public class FeedSettingsPresenter
                         getView().getVolumeGroup().setValue(feed.getVolumeGroup());
                     }
                 })
-                .taskHandlerFactory(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 

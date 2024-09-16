@@ -18,8 +18,8 @@ package stroom.dispatch.client;
 
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
-import stroom.task.client.TaskHandler;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.PropertyMap;
 import stroom.util.shared.ResourceKey;
 
@@ -30,20 +30,20 @@ import com.google.gwt.user.client.ui.FormPanel.SubmitHandler;
 
 public abstract class AbstractSubmitCompleteHandler implements SubmitHandler, SubmitCompleteHandler {
 
-    private final TaskHandlerFactory taskHandlerFactory;
+    private final TaskMonitorFactory taskMonitorFactory;
     private final Task task;
-    private TaskHandler taskHandler;
+    private TaskMonitor taskMonitor;
 
     public AbstractSubmitCompleteHandler(final String taskName,
-                                         final TaskHandlerFactory taskHandlerFactory) {
+                                         final TaskMonitorFactory taskMonitorFactory) {
         this.task = new SimpleTask(taskName);
-        this.taskHandlerFactory = taskHandlerFactory;
+        this.taskMonitorFactory = taskMonitorFactory;
     }
 
     @Override
     public void onSubmit(final SubmitEvent event) {
-        taskHandler = taskHandlerFactory.createTaskHandler();
-        taskHandler.onStart(task);
+        taskMonitor = taskMonitorFactory.createTaskMonitor();
+        taskMonitor.onStart(task);
     }
 
     @Override
@@ -66,7 +66,7 @@ public abstract class AbstractSubmitCompleteHandler implements SubmitHandler, Su
         } else {
             onFailure("Unable to read file");
         }
-        taskHandler.onEnd(task);
+        taskMonitor.onEnd(task);
     }
 
     protected abstract void onSuccess(ResourceKey resourceKey);

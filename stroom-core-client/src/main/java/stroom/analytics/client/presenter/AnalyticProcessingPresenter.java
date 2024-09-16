@@ -31,7 +31,7 @@ import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.HasChangeDataHandlers;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 
 import com.google.inject.Inject;
@@ -179,11 +179,11 @@ public class AnalyticProcessingPresenter
     }
 
     @Override
-    public void setTaskHandlerFactory(final TaskHandlerFactory taskHandlerFactory) {
-        super.setTaskHandlerFactory(taskHandlerFactory);
-        this.scheduledProcessingPresenter.setTaskHandlerFactory(taskHandlerFactory);
-        this.tableBuilderProcessingPresenter.setTaskHandlerFactory(taskHandlerFactory);
-        this.streamingProcessingPresenter.setTaskHandlerFactory(taskHandlerFactory);
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        super.setTaskMonitorFactory(taskMonitorFactory);
+        this.scheduledProcessingPresenter.setTaskMonitorFactory(taskMonitorFactory);
+        this.tableBuilderProcessingPresenter.setTaskMonitorFactory(taskMonitorFactory);
+        this.streamingProcessingPresenter.setTaskMonitorFactory(taskMonitorFactory);
     }
 
     public interface AnalyticProcessingView extends View, HasUiHandlers<AnalyticProcessingUiHandlers> {

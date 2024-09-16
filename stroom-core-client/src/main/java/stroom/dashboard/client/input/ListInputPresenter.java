@@ -108,7 +108,7 @@ public class ListInputPresenter
                             getView().setAllowTextEntry(settings.isAllowTextEntry());
                         }
                     })
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         } else {
             getView().setValues(settings.getValues());

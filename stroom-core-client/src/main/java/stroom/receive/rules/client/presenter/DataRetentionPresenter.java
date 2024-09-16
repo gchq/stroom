@@ -31,7 +31,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
-import stroom.task.client.TaskHandler;
+import stroom.task.client.TaskMonitor;
 import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -127,9 +127,9 @@ public class DataRetentionPresenter
     }
 
     public void selectTab(final TabData tab) {
-        final TaskHandler taskHandler = createTaskHandler();
+        final TaskMonitor taskMonitor = createTaskMonitor();
         final Task task = new SimpleTask("Selecting tab");
-        taskHandler.onStart(task);
+        taskMonitor.onStart(task);
         Scheduler.get().scheduleDeferred(() -> {
             if (tab != null) {
                 getContent(tab, content -> {
@@ -147,7 +147,7 @@ public class DataRetentionPresenter
                     }
                 });
             }
-            taskHandler.onEnd(task);
+            taskMonitor.onEnd(task);
         });
     }
 
