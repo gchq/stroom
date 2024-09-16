@@ -46,6 +46,8 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
     private final String comments;
     @JsonProperty
     private final boolean enabled;
+    @JsonProperty
+    private final HashAlgorithm hashAlgorithm;
 
     @JsonCreator
     public HashedApiKey(@JsonProperty("id") final Integer id,
@@ -60,7 +62,8 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
                         @JsonProperty("expireTimeMs") final Long expireTimeMs,
                         @JsonProperty("name") final String name,
                         @JsonProperty("comments") final String comments,
-                        @JsonProperty("enabled") final boolean enabled) {
+                        @JsonProperty("enabled") final boolean enabled,
+                        @JsonProperty("hashAlgorithm") final HashAlgorithm hashAlgorithm) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -74,6 +77,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
         this.name = name;
         this.comments = comments;
         this.enabled = enabled;
+        this.hashAlgorithm = Objects.requireNonNull(hashAlgorithm);
     }
 
     private HashedApiKey(final Builder builder) {
@@ -90,6 +94,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
         name = builder.name;
         comments = builder.comments;
         enabled = builder.enabled;
+        hashAlgorithm = builder.hashAlgorithm;
     }
 
     public static Builder builder() {
@@ -111,6 +116,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
         builder.name = copy.getName();
         builder.comments = copy.getComments();
         builder.enabled = copy.getEnabled();
+        builder.hashAlgorithm = copy.getHashAlgorithm();
         return builder;
     }
 
@@ -171,6 +177,10 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
         return enabled;
     }
 
+    public HashAlgorithm getHashAlgorithm() {
+        return hashAlgorithm;
+    }
+
     @Override
     public boolean equals(final Object object) {
         if (this == object) {
@@ -179,18 +189,18 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
         if (object == null || getClass() != object.getClass()) {
             return false;
         }
-        final HashedApiKey apiKey1 = (HashedApiKey) object;
-        return version == apiKey1.version && enabled == apiKey1.enabled && Objects.equals(id,
-                apiKey1.id) && Objects.equals(createTimeMs, apiKey1.createTimeMs) && Objects.equals(
-                createUser,
-                apiKey1.createUser) && Objects.equals(updateTimeMs,
-                apiKey1.updateTimeMs) && Objects.equals(updateUser,
-                apiKey1.updateUser) && Objects.equals(owner, apiKey1.owner)
-                && Objects.equals(apiKeyHash, apiKey1.apiKeyHash)
-                && Objects.equals(apiKeyPrefix, apiKey1.apiKeyPrefix)
-                && Objects.equals(expireTimeMs, apiKey1.expireTimeMs) && Objects.equals(
+        final HashedApiKey that = (HashedApiKey) object;
+        return version == that.version && enabled == that.enabled && Objects.equals(id,
+                that.id) && Objects.equals(createTimeMs,
+                that.createTimeMs) && Objects.equals(createUser, that.createUser) && Objects.equals(
+                updateTimeMs,
+                that.updateTimeMs) && Objects.equals(updateUser, that.updateUser) && Objects.equals(
+                owner,
+                that.owner) && Objects.equals(apiKeyHash, that.apiKeyHash) && Objects.equals(
+                apiKeyPrefix,
+                that.apiKeyPrefix) && Objects.equals(expireTimeMs, that.expireTimeMs) && Objects.equals(
                 name,
-                apiKey1.name) && Objects.equals(comments, apiKey1.comments);
+                that.name) && Objects.equals(comments, that.comments) && hashAlgorithm == that.hashAlgorithm;
     }
 
     @Override
@@ -207,7 +217,8 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
                 expireTimeMs,
                 name,
                 comments,
-                enabled);
+                enabled,
+                hashAlgorithm);
     }
 
     @Override
@@ -221,6 +232,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
                 ", expireTimeMs=" + expireTimeMs + '\'' +
                 ", name='" + name + '\'' +
                 ", enabled=" + enabled +
+                ", hashAlgorithm=" + hashAlgorithm +
                 '}';
     }
 
@@ -242,6 +254,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
         private String name;
         private String comments;
         private boolean enabled = true;
+        private HashAlgorithm hashAlgorithm = HashAlgorithm.DEFAULT;
 
         private Builder() {
         }
@@ -324,6 +337,11 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
 
         public Builder withEnabled(final boolean val) {
             enabled = val;
+            return this;
+        }
+
+        public Builder withHashAlgorithm(final HashAlgorithm val) {
+            hashAlgorithm = val;
             return this;
         }
 

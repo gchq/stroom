@@ -21,6 +21,7 @@ import stroom.security.client.presenter.EditApiKeyPresenter.Mode;
 import stroom.security.shared.ApiKeyResource;
 import stroom.security.shared.ApiKeyResultPage;
 import stroom.security.shared.FindApiKeyCriteria;
+import stroom.security.shared.HashAlgorithm;
 import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.shared.SvgImage;
@@ -293,6 +294,14 @@ public class ApiKeysListPresenter
                 .withSorting(FindApiKeyCriteria.FIELD_EXPIRE_TIME)
                 .build();
         dataGrid.addColumn(expiresOnColumn, "Expires On", ColumnSizeConstants.DATE_AND_DURATION_COL);
+
+        final Column<HashedApiKey, String> hashAlgorithmColumn = DataGridUtil.textColumnBuilder(
+                        HashedApiKey::getHashAlgorithm,
+                        HashAlgorithm::getDisplayValue)
+                .enabledWhen(HashedApiKey::getEnabled)
+                .withSorting(FindApiKeyCriteria.FIELD_HASH_ALGORITHM)
+                .build();
+        dataGrid.addResizableColumn(hashAlgorithmColumn, "Hash Algorithm", 120);
 
         final Column<HashedApiKey, String> commentsColumn = DataGridUtil.textColumnBuilder(HashedApiKey::getComments)
                 .enabledWhen(HashedApiKey::getEnabled)
