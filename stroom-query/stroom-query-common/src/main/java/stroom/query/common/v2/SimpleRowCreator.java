@@ -31,22 +31,21 @@ public class SimpleRowCreator implements ItemMapper<Row> {
         this.keyFactory = keyFactory;
         this.errorConsumer = errorConsumer;
 
-        final Map<ColumnKey, ColIndex> originalColumnMap = new HashMap<>();
+        // Map original columns to their position.
+        final Map<Column, Integer> originalColumnIndex = new HashMap<>();
         for (int i = 0; i < originalColumns.size(); i++) {
             final Column column = originalColumns.get(i);
-            originalColumnMap.put(
-                    ColumnKey.create(column),
-                    new ColIndex(column, i));
+            originalColumnIndex.put(column, i);
         }
 
+        // Map new columns to original columns as close as we can.
+        final ColumnMap columnMap = new ColumnMap(originalColumns, newColumns);
         functions = new ArrayList<>();
-        for (final Column column : newColumns) {
-            final ColumnKey colKey = ColumnKey.create(column);
-            final ColIndex colIndex = originalColumnMap.get(colKey);
-
-            if (colIndex != null) {
-                final int index = colIndex.index;
-                final ColumnFunction f = new ColumnFunction(column) {
+        for (final Column newColumn : newColumns) {
+            final Column originalColumn = columnMap.getOrignalColumnFromNewColumn(newColumn);
+            if (originalColumn != null) {
+                final int index = originalColumnIndex.get(originalColumn);
+                final ColumnFunction f = new ColumnFunction(newColumn) {
                     @Override
                     public String apply(final Item item) {
                         try {
@@ -64,7 +63,7 @@ public class SimpleRowCreator implements ItemMapper<Row> {
                 functions.add(f);
 
             } else {
-                functions.add(new ColumnFunction(column));
+                functions.add(new ColumnFunction(newColumn));
             }
         }
     }
@@ -95,9 +94,5 @@ public class SimpleRowCreator implements ItemMapper<Row> {
     @Override
     public boolean hidesRows() {
         return false;
-    }
-
-    private record ColIndex(Column column, int index) {
-
     }
 }
