@@ -16,7 +16,6 @@
 
 package stroom.main.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.CorePresenter;
@@ -42,7 +41,6 @@ import com.google.gwt.event.dom.client.HasDoubleClickHandlers;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.shared.GwtEvent.Type;
-import com.google.gwt.http.client.UrlBuilder;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -102,24 +100,13 @@ public class MainPresenter
         registerHandler(uiConfigCache.addPropertyChangeHandler(
                 event -> {
                     final ExtendedUiConfig uiConfig = event.getProperties();
+                    if (uiConfig.getHtmlTitle() != null) {
+                        Window.setTitle(uiConfig.getHtmlTitle());
+                    }
                     if (uiConfig.getTheme() != null) {
                         getView().setBorderStyle(uiConfig.getTheme().getPageBorder());
                     }
                     getView().setBanner(uiConfig.getMaintenanceMessage());
-                    if (uiConfig.getRequireReactWrapper()) {
-                        final Object parentIframe = getParentIframe();
-                        if (parentIframe == null) {
-                            AlertEvent.fireWarn(
-                                    this,
-                                    "You have reached Stroom outside of an IFrame you will now be redirected",
-                                    () -> {
-                                        UrlBuilder builder = new UrlBuilder();
-                                        builder.setProtocol(Window.Location.getProtocol());
-                                        builder.setHost(Window.Location.getHost());
-                                        Window.Location.replace(builder.buildString());
-                                    });
-                        }
-                    }
                 }
         ));
 
