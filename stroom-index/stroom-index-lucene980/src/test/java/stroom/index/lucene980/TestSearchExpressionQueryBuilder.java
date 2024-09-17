@@ -13,6 +13,7 @@ import stroom.query.common.v2.MockIndexFieldCache;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,6 +40,16 @@ public class TestSearchExpressionQueryBuilder {
 
         final WordListProvider wordListProvider = new WordListProvider() {
             @Override
+            public List<DocRef> findByName(final String name) {
+                return List.of(dictionaryRef);
+            }
+
+            @Override
+            public Optional<DocRef> findByUuid(final String uuid) {
+                return Optional.empty();
+            }
+
+            @Override
             public String getCombinedData(final DocRef dictionaryRef) {
                 return null;
             }
@@ -46,16 +57,6 @@ public class TestSearchExpressionQueryBuilder {
             @Override
             public String[] getWords(final DocRef dictionaryRef) {
                 return "1\n2\n3\n4".split("\n");
-            }
-
-            @Override
-            public Set<DocRef> listDocuments() {
-                return Set.of(dictionaryRef);
-            }
-
-            @Override
-            public List<DocRef> findByNames(final List<String> names, final boolean allowWildCards) {
-                return List.of(dictionaryRef);
             }
         };
 
