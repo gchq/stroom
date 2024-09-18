@@ -155,7 +155,7 @@ public abstract class AbstractMetaListPresenter
                             .method(res -> res.findMetaRow(criteria))
                             .onSuccess(dataConsumer)
                             .onFailure(errorHandler)
-                            .taskHandlerFactory(view)
+                            .taskMonitorFactory(view)
                             .exec();
                 } else {
                     dataConsumer.accept(new ResultPage<>(Collections.emptyList()));
@@ -678,7 +678,7 @@ public abstract class AbstractMetaListPresenter
                                             ? "s"
                                             : ""),
                                     this::refresh))
-                    .taskHandlerFactory(getView())
+                    .taskMonitorFactory(getView())
                     .exec();
         };
     }
@@ -688,7 +688,7 @@ public abstract class AbstractMetaListPresenter
                 .create(DATA_RESOURCE)
                 .method(res -> res.download(criteria))
                 .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
-                .taskHandlerFactory(getView())
+                .taskMonitorFactory(getView())
                 .exec();
     }
 
@@ -721,7 +721,7 @@ public abstract class AbstractMetaListPresenter
                         AlertEvent.fireInfo(this, "Created processor filter", null);
                     }
                 })
-                .taskHandlerFactory(getView())
+                .taskMonitorFactory(getView())
                 .exec();
 
     }
@@ -797,7 +797,7 @@ public abstract class AbstractMetaListPresenter
                         }
                     }
                 })
-                .taskHandlerFactory(getView())
+                .taskMonitorFactory(getView())
                 .exec();
 
     }

@@ -25,7 +25,7 @@ import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.state.client.presenter.ScyllaDbSettingsPresenter.ScyllaDbSettingsView;
 import stroom.state.shared.ScyllaDbDoc;
 import stroom.state.shared.ScyllaDbDocResource;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -63,7 +63,7 @@ public class ScyllaDbSettingsPresenter
     }
 
     @Override
-    public void onTestConnection(TaskHandlerFactory taskHandlerFactory) {
+    public void onTestConnection(TaskMonitorFactory taskMonitorFactory) {
         final ScyllaDbDoc cluster = onWrite(new ScyllaDbDoc());
         restFactory
                 .create(SCYLLA_DB_RESOURCE)
@@ -75,7 +75,7 @@ public class ScyllaDbSettingsPresenter
                         AlertEvent.fireError(this, "Connection Failure", result.getMessage(), null);
                     }
                 })
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 

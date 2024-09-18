@@ -197,8 +197,7 @@ class TestDictionaryStoreImpl {
     @Test
     void nullWords() {
         final String[] words = getDictionaryStore().getWords(DictionaryDoc.buildDocRef().randomUuid().build());
-        Assertions.assertThat(words)
-                .isNull();
+        Assertions.assertThat(words.length).isZero();
     }
 
     private DocRef createDoc(final String data, final String name, final DocRef... imports) {

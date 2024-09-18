@@ -25,9 +25,9 @@ import stroom.query.shared.CompletionValue;
 import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.QueryHelpType;
 import stroom.query.shared.QueryResource;
-import stroom.task.client.DefaultTaskListener;
-import stroom.task.client.HasTaskHandlerFactory;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.HasTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 
 import com.google.gwt.core.client.GWT;
@@ -47,7 +47,7 @@ import javax.inject.Inject;
 
 
 public class QueryHelpAceCompletionProvider
-        implements AceCompletionProvider, HasTaskHandlerFactory, HasHandlers {
+        implements AceCompletionProvider, HasTaskMonitorFactory, HasHandlers {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
@@ -55,7 +55,7 @@ public class QueryHelpAceCompletionProvider
     private final RestFactory restFactory;
     private final MarkdownConverter markdownConverter;
     private final UiConfigCache uiConfigCache;
-    private TaskHandlerFactory taskHandlerFactory = new DefaultTaskListener(this);
+    private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
 
     private DocRef dataSourceRef;
     private Set<QueryHelpType> includedTypes = QueryHelpType.ALL_TYPES;
@@ -99,7 +99,7 @@ public class QueryHelpAceCompletionProvider
 
                         callback.invokeWithCompletions(aceCompletions);
                     })
-                    .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                     .exec();
         });
     }
@@ -152,8 +152,8 @@ public class QueryHelpAceCompletionProvider
     }
 
     @Override
-    public void setTaskHandlerFactory(final TaskHandlerFactory taskHandlerFactory) {
-        this.taskHandlerFactory = taskHandlerFactory;
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        this.taskMonitorFactory = taskMonitorFactory;
     }
 
     @Override

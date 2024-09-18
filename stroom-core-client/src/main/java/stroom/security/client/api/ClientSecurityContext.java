@@ -16,7 +16,7 @@
 
 package stroom.security.client.api;
 
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.UserName;
 
 import java.util.function.Consumer;
@@ -60,5 +60,5 @@ public interface ClientSecurityContext {
                                String permission,
                                Consumer<Boolean> consumer,
                                Consumer<Throwable> errorHandler,
-                               TaskHandlerFactory taskHandlerFactory);
+                               TaskMonitorFactory taskMonitorFactory);
 }

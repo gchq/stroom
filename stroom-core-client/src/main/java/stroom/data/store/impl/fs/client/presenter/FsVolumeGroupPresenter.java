@@ -100,7 +100,7 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
                     .create(FS_VOLUME_GROUP_RESOURCE)
                     .method(res -> res.fetch(volume.getId()))
                     .onSuccess(this::edit)
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         }
     }
@@ -130,7 +130,7 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
                                         .create(FS_VOLUME_GROUP_RESOURCE)
                                         .method(res -> res.delete(volume.getId()))
                                         .onSuccess(response -> refresh())
-                                        .taskHandlerFactory(this)
+                                        .taskMonitorFactory(this)
                                         .exec();
                             }
                         }

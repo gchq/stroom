@@ -1,8 +1,0 @@
-.stroom-theme-darker {
-    --page__background-color-rgb: 26, 29, 33;
-    --navigation__background-color: #16181c;
-}
-
-.stroom-theme-darker .navigation {
-    background-image: linear-gradient(#221127, #000);
-}

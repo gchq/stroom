@@ -27,7 +27,7 @@ import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.popup.client.event.DialogEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -158,9 +158,9 @@ public class CreateDocumentPresenter
     }
 
     @Override
-    public void setTaskHandlerFactory(final TaskHandlerFactory taskHandlerFactory) {
-        super.setTaskHandlerFactory(taskHandlerFactory);
-        entityTreePresenter.setTaskHandlerFactory(taskHandlerFactory);
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        super.setTaskMonitorFactory(taskMonitorFactory);
+        entityTreePresenter.setTaskMonitorFactory(taskMonitorFactory);
     }
 
     // --------------------------------------------------------------------------------

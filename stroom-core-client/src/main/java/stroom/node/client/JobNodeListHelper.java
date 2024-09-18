@@ -25,7 +25,7 @@ import stroom.schedule.client.SchedulePopup;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.task.client.event.OpenTaskManagerEvent;
 import stroom.util.client.DataGridUtil;
 import stroom.util.client.DataGridUtil.ColumnBuilder;
@@ -66,7 +66,7 @@ public class JobNodeListHelper {
     private final MenuPresenter menuPresenter;
 
     private final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel;
-    private final TaskHandlerFactory taskHandlerFactory;
+    private final TaskMonitorFactory taskMonitorFactory;
     private final HasHandlers hasHandlers;
     private final Runnable refreshFunc;
 
@@ -77,7 +77,7 @@ public class JobNodeListHelper {
                              final SchedulePopup schedulePresenter,
                              final MenuPresenter menuPresenter,
                              final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel,
-                             final TaskHandlerFactory taskHandlerFactory,
+                             final TaskMonitorFactory taskMonitorFactory,
                              final HasHandlers hasHandlers,
                              final Runnable refreshFunc) {
         this.dateTimeFormatter = dateTimeFormatter;
@@ -85,7 +85,7 @@ public class JobNodeListHelper {
         this.schedulePresenter = schedulePresenter;
         this.menuPresenter = menuPresenter;
         this.selectionModel = selectionModel;
-        this.taskHandlerFactory = taskHandlerFactory;
+        this.taskMonitorFactory = taskMonitorFactory;
         this.hasHandlers = hasHandlers;
         this.refreshFunc = refreshFunc;
     }
@@ -118,7 +118,7 @@ public class JobNodeListHelper {
                 ok -> {
                     restFactory.create(JOB_NODE_RESOURCE)
                             .call(resource -> resource.execute(jobNode.getId()))
-                            .taskHandlerFactory(taskHandlerFactory)
+                            .taskMonitorFactory(taskMonitorFactory)
                             .exec();
                 });
     }
@@ -132,13 +132,13 @@ public class JobNodeListHelper {
                         setSchedule(jobNodeAndInfo, jobNodeInfo))
                 .onFailure(throwable ->
                         setSchedule(jobNodeAndInfo, null))
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
     public FieldUpdater<JobNodeAndInfo, TickBoxState> createEnabledStateFieldUpdater(
             final HasHandlers handlers,
-            final TaskHandlerFactory taskHandlerFactory,
+            final TaskMonitorFactory taskMonitorFactory,
             final Runnable onSuccessHandler) {
 
         return (int rowIndex, JobNodeAndInfo jobNodeAndInfo, TickBoxState value) -> {
@@ -153,7 +153,7 @@ public class JobNodeListHelper {
                             JobNodeChangeEvent.fire(handlers, jobNodeAndInfo.getJobNode());
                             GwtNullSafe.run(onSuccessHandler);
                         })
-                        .taskHandlerFactory(taskHandlerFactory)
+                        .taskMonitorFactory(taskMonitorFactory)
                         .exec();
             }
         };
@@ -218,7 +218,7 @@ public class JobNodeListHelper {
                                             JobNodeChangeEvent.fire(hasHandlers, selectedItems);
                                             GwtNullSafe.run(refreshFunc);
                                         })
-                                        .taskHandlerFactory(taskHandlerFactory)
+                                        .taskMonitorFactory(taskMonitorFactory)
                                         .exec();
                             });
                         }
@@ -235,7 +235,7 @@ public class JobNodeListHelper {
                                 JobNodeChangeEvent.fire(hasHandlers, jobNode);
                                 GwtNullSafe.run(refreshFunc);
                             })
-                            .taskHandlerFactory(taskHandlerFactory)
+                            .taskMonitorFactory(taskMonitorFactory)
                             .exec();
                 });
             }
@@ -412,7 +412,7 @@ public class JobNodeListHelper {
                                 JobNodeAndInfo::isEnabled)
                         .enabledWhen(this::isJobNodeEnabled)
                         .withFieldUpdater(createEnabledStateFieldUpdater(
-                                hasHandlers, taskHandlerFactory, refreshFunc));
+                                hasHandlers, taskMonitorFactory, refreshFunc));
 
         if (isSortable) {
             builder.withSorting(FindJobNodeCriteria.FIELD_ID_ENABLED);

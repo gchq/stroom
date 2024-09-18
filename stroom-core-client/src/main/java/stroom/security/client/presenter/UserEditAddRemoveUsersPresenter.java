@@ -86,17 +86,17 @@ public class UserEditAddRemoveUsersPresenter
                         .create(APP_PERMISSION_RESOURCE)
                         .method(res -> res.changeUser(request))
                         .onSuccess(result -> refresh())
-                        .taskHandlerFactory(this)
+                        .taskMonitorFactory(this)
                         .exec();
             };
 
             if (!relatedUser.isGroup()) {
                 final SelectGroupPresenter selectGroupPresenter = selectGroupPresenterProvider.get();
-                selectGroupPresenter.setTaskHandlerFactory(this);
+                selectGroupPresenter.setTaskMonitorFactory(this);
                 selectGroupPresenter.show(consumer);
             } else {
                 final SelectUserPresenter selectUserPresenter = selectUserPresenterProvider.get();
-                selectUserPresenter.setTaskHandlerFactory(this);
+                selectUserPresenter.setTaskMonitorFactory(this);
                 selectUserPresenter.show(consumer);
             }
 
@@ -113,7 +113,7 @@ public class UserEditAddRemoveUsersPresenter
                         .create(APP_PERMISSION_RESOURCE)
                         .method(res -> res.changeUser(request))
                         .onSuccess(result -> refresh())
-                        .taskHandlerFactory(this)
+                        .taskMonitorFactory(this)
                         .exec();
             }
         }));

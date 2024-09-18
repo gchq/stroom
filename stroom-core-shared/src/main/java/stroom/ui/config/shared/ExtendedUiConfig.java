@@ -209,11 +209,6 @@ public class ExtendedUiConfig {
     }
 
     @JsonIgnore
-    public Boolean getRequireReactWrapper() {
-        return uiConfig.getRequireReactWrapper();
-    }
-
-    @JsonIgnore
     public NodeMonitoringConfig getNodeMonitoring() {
         return uiConfig.getNodeMonitoring();
     }

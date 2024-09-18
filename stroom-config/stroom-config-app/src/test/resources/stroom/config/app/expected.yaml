@@ -1167,7 +1167,6 @@ appConfig:
       - "extraction"
     referencePipelineSelectorIncludedTags:
     - "reference-loader"
-    requireReactWrapper: true
     source:
       maxCharactersInPreviewFetch: 30000
       maxCharactersPerFetch: 80000

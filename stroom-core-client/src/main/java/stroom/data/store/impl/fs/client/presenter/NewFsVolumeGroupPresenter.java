@@ -104,7 +104,7 @@ public class NewFsVolumeGroupPresenter
                     }
                 })
                 .onFailure(RestErrorHandler.forPopup(this, e))
-                .taskHandlerFactory(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 
@@ -117,7 +117,7 @@ public class NewFsVolumeGroupPresenter
                     e.hide();
                 })
                 .onFailure(RestErrorHandler.forPopup(this, e))
-                .taskHandlerFactory(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 

@@ -61,10 +61,9 @@ public class MapDataStore implements DataStore {
     private final Map<Key, ItemsImpl> childMap = new ConcurrentHashMap<>();
 
     private final ValueReferenceIndex valueReferenceIndex;
-    private final List<Column> columns;
     private final CompiledColumns compiledColumns;
     private final CompiledColumn[] compiledColumnsArray;
-    private final CompiledSorters compiledSorters;
+    private final CompiledSorters<ItemImpl> compiledSorters;
     private final CompiledDepths compiledDepths;
     private final Sizes maxResults;
     private final AtomicLong totalResultCount = new AtomicLong();
@@ -89,7 +88,7 @@ public class MapDataStore implements DataStore {
                         final ErrorConsumer errorConsumer,
                         final ResultStoreMapConfig resultStoreMapConfig) {
         this.componentId = componentId;
-        columns = tableSettings.getColumns();
+        List<Column> columns = tableSettings.getColumns();
         this.dateTimeSettings = expressionContext == null
                 ? null
                 : expressionContext.getDateTimeSettings();
@@ -97,7 +96,7 @@ public class MapDataStore implements DataStore {
         valueReferenceIndex = compiledColumns.getValueReferenceIndex();
         this.compiledColumnsArray = compiledColumns.getCompiledColumns();
         final CompiledDepths compiledDepths = new CompiledDepths(this.compiledColumnsArray, tableSettings.showDetail());
-        this.compiledSorters = new CompiledSorters(compiledDepths, this.compiledColumnsArray);
+        this.compiledSorters = new CompiledSorters<>(compiledDepths, columns);
         this.compiledDepths = compiledDepths;
         final KeyFactoryConfig keyFactoryConfig = new BasicKeyFactoryConfig();
         keyFactory = KeyFactoryFactory.create(keyFactoryConfig, compiledDepths);

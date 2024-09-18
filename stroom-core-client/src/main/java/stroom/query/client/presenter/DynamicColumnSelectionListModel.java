@@ -17,9 +17,9 @@ import stroom.query.client.presenter.DynamicColumnSelectionListModel.ColumnSelec
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.DefaultTaskListener;
-import stroom.task.client.HasTaskHandlerFactory;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.HasTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 public class DynamicColumnSelectionListModel
-        implements SelectionListModel<Column, ColumnSelectionItem>, HasTaskHandlerFactory, HasHandlers {
+        implements SelectionListModel<Column, ColumnSelectionItem>, HasTaskMonitorFactory, HasHandlers {
 
     private static final String NONE_TITLE = "[ none ]";
 
@@ -48,7 +48,7 @@ public class DynamicColumnSelectionListModel
     private final ClientSecurityContext clientSecurityContext;
     private DocRef dataSourceRef;
     private FindFieldCriteria lastCriteria;
-    private TaskHandlerFactory taskHandlerFactory = new DefaultTaskListener(this);
+    private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
 
     @Inject
     public DynamicColumnSelectionListModel(final EventBus eventBus,
@@ -85,7 +85,7 @@ public class DynamicColumnSelectionListModel
                             createResults(stringMatch, parentPath, pageRequest, response);
                     consumer.accept(resultPage);
                 }
-            }, taskHandlerFactory);
+            }, taskMonitorFactory);
         }
     }
 
@@ -249,8 +249,8 @@ public class DynamicColumnSelectionListModel
     }
 
     @Override
-    public void setTaskHandlerFactory(final TaskHandlerFactory taskHandlerFactory) {
-        this.taskHandlerFactory = taskHandlerFactory;
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        this.taskMonitorFactory = taskMonitorFactory;
     }
 
     @Override

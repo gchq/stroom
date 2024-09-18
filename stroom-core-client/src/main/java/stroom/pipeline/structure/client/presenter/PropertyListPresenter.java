@@ -433,7 +433,7 @@ public class PropertyListPresenter
 
                         setData(propertyList);
                     })
-                    .taskHandlerFactory(getView())
+                    .taskMonitorFactory(getView())
                     .exec();
         } else {
             setData(propertyList);

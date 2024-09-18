@@ -259,7 +259,7 @@ public class SelectUserPresenter
                                         e.hide();
                                     })
                                     .onFailure(RestErrorHandler.forPopup(this, e))
-                                    .taskHandlerFactory(this)
+                                    .taskMonitorFactory(this)
                                     .exec();
                         }
                     }

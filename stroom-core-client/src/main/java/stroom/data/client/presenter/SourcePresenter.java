@@ -15,7 +15,7 @@ import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SourceConfig;
 import stroom.util.shared.Count;
@@ -426,7 +426,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
                         SourcePresenter.this,
                         caught.getMessage(),
                         null))
-                .taskHandlerFactory(getView())
+                .taskMonitorFactory(getView())
                 .exec();
     }
 
@@ -871,7 +871,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
     // ===================================================================
 
 
-    public interface SourceView extends View, TaskHandlerFactory {
+    public interface SourceView extends View, TaskMonitorFactory {
 
         void setProgressView(final View view);
 

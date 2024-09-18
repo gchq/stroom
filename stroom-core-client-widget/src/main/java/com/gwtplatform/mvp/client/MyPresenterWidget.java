@@ -16,10 +16,10 @@
 
 package com.gwtplatform.mvp.client;
 
-import stroom.task.client.DefaultTaskListener;
-import stroom.task.client.HasTaskHandlerFactory;
-import stroom.task.client.TaskHandler;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.HasTaskMonitorFactory;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.web.bindery.event.shared.Event.Type;
@@ -28,9 +28,9 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 
 public class MyPresenterWidget<V extends View>
         extends PresenterWidget<V>
-        implements Layer, TaskHandlerFactory, HasTaskHandlerFactory {
+        implements Layer, TaskMonitorFactory, HasTaskMonitorFactory {
 
-    private TaskHandlerFactory taskHandlerFactory = new DefaultTaskListener(this);
+    private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
 
     public MyPresenterWidget(final EventBus eventBus, final V view) {
         super(eventBus, view);
@@ -64,12 +64,12 @@ public class MyPresenterWidget<V extends View>
     }
 
     @Override
-    public void setTaskHandlerFactory(final TaskHandlerFactory taskHandlerFactory) {
-        this.taskHandlerFactory = taskHandlerFactory;
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        this.taskMonitorFactory = taskMonitorFactory;
     }
 
     @Override
-    public TaskHandler createTaskHandler() {
-        return taskHandlerFactory.createTaskHandler();
+    public TaskMonitor createTaskMonitor() {
+        return taskMonitorFactory.createTaskMonitor();
     }
 }

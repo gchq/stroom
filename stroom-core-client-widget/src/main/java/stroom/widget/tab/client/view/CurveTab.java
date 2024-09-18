@@ -18,7 +18,7 @@ package stroom.widget.tab.client.view;
 
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskHandler;
+import stroom.task.client.TaskMonitor;
 import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.util.client.SvgImageUtil;
 
@@ -142,7 +142,7 @@ public class CurveTab extends AbstractTab {
     }
 
     @Override
-    public TaskHandler createTaskHandler() {
-        return spinnerSmall.createTaskHandler();
+    public TaskMonitor createTaskMonitor() {
+        return spinnerSmall.createTaskMonitor();
     }
 }

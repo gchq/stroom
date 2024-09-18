@@ -25,7 +25,7 @@ import stroom.security.shared.HashAlgorithm;
 import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Selection;
@@ -210,7 +210,7 @@ public class ApiKeysListPresenter
                                 onSuccess.run();
                             })
                             .onFailure(onFailure)
-                            .taskHandlerFactory(getView())
+                            .taskMonitorFactory(getView())
                             .exec();
                 }
             });
@@ -227,7 +227,7 @@ public class ApiKeysListPresenter
                                 onSuccess.run();
                             })
                             .onFailure(onFailure)
-                            .taskHandlerFactory(getView())
+                            .taskMonitorFactory(getView())
                             .exec();
                 }
             });
@@ -315,7 +315,7 @@ public class ApiKeysListPresenter
     private void fetchData(final Range range,
                            final Consumer<ApiKeyResultPage> dataConsumer,
                            final RestErrorHandler errorHandler,
-                           final TaskHandlerFactory taskHandlerFactory) {
+                           final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(API_KEY_RESOURCE)
                 .method(res -> res.find(criteria))
@@ -342,7 +342,7 @@ public class ApiKeysListPresenter
                             "Error fetching API Keys: " + throwable.getMessage(),
                             null);
                 })
-                .taskHandlerFactory(taskHandlerFactory)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 

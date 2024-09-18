@@ -230,7 +230,7 @@ public final class ManageGlobalPropertyEditPresenter
                         show(configProperty, hideRunnable))
                 .onFailure(error ->
                         showError(error, "Error fetching property " + propertyName, null))
-                .taskHandlerFactory(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 
@@ -330,7 +330,7 @@ public final class ManageGlobalPropertyEditPresenter
 //                    updateEffectiveValueForNode(nodeName, ERROR_VALUE);
                     delayedUpdate.update();
                 })
-                .taskHandlerFactory(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 
@@ -470,7 +470,7 @@ public final class ManageGlobalPropertyEditPresenter
                     })
                     .onFailure(throwable ->
                             showError(throwable, "Error creating property", event::reset))
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         } else {
             restFactory
@@ -485,7 +485,7 @@ public final class ManageGlobalPropertyEditPresenter
                     })
                     .onFailure(throwable ->
                             showError(throwable, "Error updating property", event::reset))
-                    .taskHandlerFactory(this)
+                    .taskMonitorFactory(this)
                     .exec();
         }
     }

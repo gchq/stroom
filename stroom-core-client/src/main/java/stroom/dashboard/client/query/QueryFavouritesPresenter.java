@@ -190,7 +190,7 @@ public class QueryFavouritesPresenter
                                 .fire();
                     }
                 })
-                .taskHandlerFactory(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 
@@ -203,7 +203,7 @@ public class QueryFavouritesPresenter
                 .create(STORED_QUERY_RESOURCE)
                 .method(res -> res.delete(query))
                 .onSuccess(result -> refresh(false))
-                .taskHandlerFactory(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 

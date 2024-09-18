@@ -74,6 +74,7 @@ import stroom.iframe.client.presenter.IFramePresenter;
 import stroom.iframe.client.presenter.IFramePresenter.IFrameView;
 import stroom.iframe.client.view.IFrameContentViewImpl;
 import stroom.iframe.client.view.IFrameViewImpl;
+import stroom.main.client.presenter.GlobalKeyHandlerImpl;
 import stroom.widget.dropdowntree.client.view.DropDownView;
 import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupView;
@@ -81,6 +82,7 @@ import stroom.widget.dropdowntree.client.view.ExplorerPopupViewImpl;
 import stroom.widget.progress.client.presenter.ProgressPresenter;
 import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 import stroom.widget.progress.client.view.ProgressViewImpl;
+import stroom.widget.util.client.GlobalKeyHandler;
 
 import com.google.inject.Singleton;
 import com.google.web.bindery.event.shared.EventBus;
@@ -100,6 +102,7 @@ public class DashboardAppModule extends AbstractPresenterModule {
         bind(TokenFormatter.class).to(ParameterTokenFormatter.class).in(Singleton.class);
         bind(RootPresenter.class).asEagerSingleton();
         bind(PlaceManager.class).to(InactivePlaceManager.class).in(Singleton.class);
+        bind(GlobalKeyHandler.class).to(GlobalKeyHandlerImpl.class).in(Singleton.class);
         bind(UrlParameters.class).in(Singleton.class);
         bind(DelegatingAceCompleter.class).asEagerSingleton();
         bind(DataDisplaySupport.class).asEagerSingleton();

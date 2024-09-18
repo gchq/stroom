@@ -143,7 +143,7 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
                                 .collect(Collectors.toList());
                         updateGrid(filteredUsers);
                     })
-                    .taskHandlerFactory(pagerView)
+                    .taskMonitorFactory(pagerView)
                     .exec();
         } else {
             updateGrid(Collections.emptyList());

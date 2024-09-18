@@ -60,7 +60,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -78,8 +77,6 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     private final DocumentSerialiser2<D> serialiser;
     private final String type;
     private final Class<D> clazz;
-
-    private final AtomicBoolean dirty = new AtomicBoolean();
 
     @Inject
     StoreImpl(final Persistence persistence,
@@ -205,7 +202,6 @@ public class StoreImpl<D extends Doc> implements Store<D> {
             final DocRef docRef = new DocRef(type, uuid);
             persistence.delete(docRef);
             EntityEvent.fire(entityEventBus, docRef, EntityAction.DELETE);
-            dirty.set(true);
         });
     }
 
@@ -374,7 +370,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                                 convertedDataMap,
                                 new AuditFieldFilter<>(),
                                 updatedFields);
-                        if (updatedFields.size() == 0) {
+                        if (updatedFields.isEmpty()) {
                             importState.setState(State.EQUAL);
                         }
                     }
@@ -427,8 +423,6 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                 } else {
                     EntityEvent.fire(entityEventBus, docRef, EntityAction.CREATE);
                 }
-
-                dirty.set(true);
 
             } catch (final IOException e) {
                 LOGGER.error(e::getMessage, e);
@@ -536,7 +530,6 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                 try {
                     persistence.write(docRef, false, data);
                     EntityEvent.fire(entityEventBus, docRef, EntityAction.CREATE);
-                    dirty.set(true);
                 } catch (final IOException e) {
                     throw new UncheckedIOException(e);
                 }
@@ -664,7 +657,6 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
                     persistence.write(docRef, true, newData);
                     EntityEvent.fire(entityEventBus, docRef, oldDocRef, EntityAction.UPDATE);
-                    dirty.set(true);
                 } catch (final IOException e) {
                     throw new UncheckedIOException(e);
                 }

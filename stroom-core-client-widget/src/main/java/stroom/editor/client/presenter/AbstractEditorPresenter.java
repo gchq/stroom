@@ -1,6 +1,7 @@
 package stroom.editor.client.presenter;
 
 import stroom.util.shared.GwtNullSafe;
+import stroom.widget.util.client.GlobalKeyHandler;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
@@ -25,7 +26,8 @@ public abstract class AbstractEditorPresenter<V extends BaseEditorView>
     AbstractEditorPresenter(final EventBus eventBus,
                             final V view,
                             final DelegatingAceCompleter delegatingAceCompleter,
-                            final CurrentPreferences currentPreferences) {
+                            final CurrentPreferences currentPreferences,
+                            final GlobalKeyHandler globalKeyHandler) {
         super(eventBus, view);
         this.delegatingAceCompleter = delegatingAceCompleter;
 
@@ -35,11 +37,8 @@ public abstract class AbstractEditorPresenter<V extends BaseEditorView>
 
 //        registerHandler(view.addMouseDownHandler(event -> contextMenu.hide()));
 
-        registerHandler(view.addKeyDownHandler(event -> {
-            if (event.isAltKeyDown() || event.isControlKeyDown()) {
-                eventBus.fireEvent(event);
-            }
-        }));
+        registerHandler(view.addKeyDownHandler(globalKeyHandler::onKeyDown));
+        registerHandler(view.addKeyUpHandler(globalKeyHandler::onKeyUp));
         registerHandler(eventBus.addHandler(
                 ChangeCurrentPreferencesEvent.getType(),
                 this::handlePreferencesChange));

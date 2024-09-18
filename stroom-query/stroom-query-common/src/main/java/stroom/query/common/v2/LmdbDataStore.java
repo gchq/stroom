@@ -100,7 +100,7 @@ public class LmdbDataStore implements DataStore {
     private final ValueReferenceIndex valueReferenceIndex;
     private final CompiledColumns compiledColumns;
     private final CompiledColumn[] compiledColumnArray;
-    private final CompiledSorters compiledSorters;
+    private final CompiledSorters<Item> compiledSorters;
     private final CompiledDepths compiledDepths;
     private final LmdbPutFilter putFilter;
     private final AtomicLong totalResultCount = new AtomicLong();
@@ -179,7 +179,7 @@ public class LmdbDataStore implements DataStore {
         this.compiledColumnArray = compiledColumns.getCompiledColumns();
         valueReferenceIndex = compiledColumns.getValueReferenceIndex();
         compiledDepths = new CompiledDepths(this.compiledColumnArray, modifiedTableSettings.showDetail());
-        compiledSorters = new CompiledSorters(compiledDepths, this.compiledColumnArray);
+        compiledSorters = new CompiledSorters<>(compiledDepths, columns);
         writerFactory = new DataWriterFactory(
                 errorConsumer,
                 resultStoreConfig.getMaxStringFieldLength());

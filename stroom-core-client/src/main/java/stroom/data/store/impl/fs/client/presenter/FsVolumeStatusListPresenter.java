@@ -98,7 +98,7 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
                             .method(resource -> resource.find(criteria))
                             .onSuccess(dataConsumer)
                             .onFailure(errorHandler)
-                            .taskHandlerFactory(getView())
+                            .taskMonitorFactory(getView())
                             .exec();
                 }
             };

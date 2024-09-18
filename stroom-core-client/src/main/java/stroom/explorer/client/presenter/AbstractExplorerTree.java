@@ -23,7 +23,7 @@ import stroom.explorer.client.view.ExplorerCell;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.NodeFlag;
-import stroom.task.client.TaskHandlerFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.AbstractSelectionEventManager;
@@ -73,7 +73,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
     private Consumer<FetchExplorerNodeResult> changeHandler = null;
 
     AbstractExplorerTree(final RestFactory restFactory,
-                         final TaskHandlerFactory taskHandlerFactory,
+                         final TaskMonitorFactory taskMonitorFactory,
                          final boolean allowMultiSelect,
                          final boolean showAlerts) {
         this.allowMultiSelect = allowMultiSelect;
@@ -95,7 +95,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
                 new ExplorerTreeSelectionEventManager(cellTable);
         cellTable.setSelectionModel(selectionModel, selectionEventManager);
 
-        treeModel = new ExplorerTreeModel(this, restFactory, taskHandlerFactory) {
+        treeModel = new ExplorerTreeModel(this, restFactory, taskMonitorFactory) {
             @Override
             protected void onDataChanged(final FetchExplorerNodeResult result) {
                 onData(result);

@@ -21,6 +21,7 @@ import stroom.ui.config.shared.UserPreferencesService;
 import stroom.util.shared.IsServlet;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.Set;
 
@@ -29,9 +30,9 @@ public class StroomServlet extends AppServlet implements IsServlet {
     private static final Set<String> PATH_SPECS = Set.of("");  // Empty string == exact match on context root, ie. /
 
     @Inject
-    StroomServlet(final UiConfig uiConfig,
-                  final UserPreferencesService userPreferencesService) {
-        super(uiConfig, userPreferencesService);
+    StroomServlet(final Provider<UiConfig> uiConfigProvider,
+                  final Provider<UserPreferencesService> userPreferencesServiceProvider) {
+        super(uiConfigProvider, userPreferencesServiceProvider);
     }
 
     String getScript() {

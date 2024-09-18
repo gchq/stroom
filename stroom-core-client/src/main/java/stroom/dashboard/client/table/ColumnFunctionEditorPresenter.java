@@ -125,7 +125,7 @@ public class ColumnFunctionEditorPresenter
 
     @Override
     public void onShow(final ShowPopupEvent e) {
-        queryHelpPresenter.setTaskHandlerFactory(this);
+        queryHelpPresenter.setTaskMonitorFactory(this);
         queryHelpPresenter.setIncludedTypes(EnumSet.of(
                 QueryHelpType.FIELD,
                 QueryHelpType.FUNCTION));
@@ -167,7 +167,7 @@ public class ColumnFunctionEditorPresenter
                                 }
                             })
                             .onFailure(RestErrorHandler.forPopup(this, e))
-                            .taskHandlerFactory(this)
+                            .taskMonitorFactory(this)
                             .exec();
                 }
             }

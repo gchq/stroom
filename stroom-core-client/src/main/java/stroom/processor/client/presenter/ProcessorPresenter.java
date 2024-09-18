@@ -300,7 +300,7 @@ public class ProcessorPresenter
                                 edit(loadedFilter, null, processorFilterRow.getOwnerDisplayName());
                             }
                         })
-                        .taskHandlerFactory(this)
+                        .taskMonitorFactory(this)
                         .exec();
             }
         }
@@ -345,7 +345,7 @@ public class ProcessorPresenter
                             .create(PROCESSOR_FILTER_RESOURCE)
                             .method(res -> res.delete(processorFilterRow.getProcessorFilter().getId()))
                             .onSuccess(res -> processorListPresenter.refresh())
-                            .taskHandlerFactory(this)
+                            .taskMonitorFactory(this)
                             .exec();
                 }
             });
@@ -381,7 +381,7 @@ public class ProcessorPresenter
                     }
                     refresh(processorFilter, ownerDisplayName);
                 })
-                .taskHandlerFactory(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 

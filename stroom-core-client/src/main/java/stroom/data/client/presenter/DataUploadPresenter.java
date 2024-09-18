@@ -99,7 +99,7 @@ public class DataUploadPresenter
                                             currentHideRequest.hide();
                                         }))
                         .onFailure(throwable -> error("Error uploading file: " + throwable.getMessage()))
-                        .taskHandlerFactory(DataUploadPresenter.this)
+                        .taskMonitorFactory(DataUploadPresenter.this)
                         .exec();
             }
 

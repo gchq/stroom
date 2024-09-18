@@ -18,7 +18,6 @@
 package stroom.pipeline.xsltfunctions;
 
 import stroom.dictionary.api.WordListProvider;
-import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -34,6 +33,7 @@ import net.sf.saxon.value.StringValue;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 class Dictionary extends StroomExtensionFunctionCall {
 
@@ -65,35 +65,39 @@ class Dictionary extends StroomExtensionFunctionCall {
                 } else {
                     try {
                         // Try by UUID
-                        try {
-                            DocRef docRef = new DocRef(DictionaryDoc.DOCUMENT_TYPE, name);
-                            result = wordListProvider.getCombinedData(docRef);
-                            if (result == null) {
-                                LOGGER.debug(() -> "Unable to load dictionary by UUID '" + name + "'");
-                            }
-                        } catch (final RuntimeException e) {
-                            LOGGER.debug(() -> "Exception loading dictionary by UUID '" + name + "'", e);
-                        }
+                        final Optional<DocRef> optionalDocRef = wordListProvider.findByUuid(name);
+                        final DocRef docRef;
+                        if (optionalDocRef.isEmpty()) {
+                            LOGGER.debug(() -> "Unable to load dictionary by UUID '" + name + "'");
 
-                        if (result == null) {
                             // Try and load a dictionary with the supplied name.
                             final List<DocRef> list = wordListProvider.findByName(name);
 
-                            if (list == null || list.size() == 0) {
+                            if (list == null || list.isEmpty()) {
                                 log(context, Severity.WARNING, "Dictionary not found with name '" + name
                                         + "'. You might not have permission to access this dictionary", null);
+                                docRef = null;
+
                             } else {
                                 if (list.size() > 1) {
                                     log(context, Severity.INFO, "Multiple dictionaries found with name '" + name
                                             + "' - using the first one that was created", null);
                                 }
 
-                                final DocRef docRef = list.get(0);
-                                result = wordListProvider.getCombinedData(docRef);
+                                docRef = list.getFirst();
+                            }
+                        } else {
+                            docRef = optionalDocRef.get();
+                        }
 
-                                if (result == null) {
-                                    log(context, Severity.INFO, "Unable to find dictionary " + docRef, null);
-                                }
+                        if (docRef == null) {
+                            log(context, Severity.INFO, "Unable to find dictionary " + name, null);
+
+                        } else {
+                            try {
+                                result = wordListProvider.getCombinedData(docRef);
+                            } catch (final RuntimeException e) {
+                                LOGGER.debug(() -> "Exception loading dictionary '" + docRef + "'", e);
                             }
                         }
                     } catch (final RuntimeException e) {

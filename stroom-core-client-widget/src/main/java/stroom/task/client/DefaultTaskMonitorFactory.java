@@ -2,17 +2,17 @@ package stroom.task.client;
 
 import com.google.gwt.event.shared.HasHandlers;
 
-public class DefaultTaskListener implements TaskHandlerFactory {
+public class DefaultTaskMonitorFactory implements TaskMonitorFactory {
 
     private final HasHandlers hasHandlers;
 
-    public DefaultTaskListener(final HasHandlers hasHandlers) {
+    public DefaultTaskMonitorFactory(final HasHandlers hasHandlers) {
         this.hasHandlers = hasHandlers;
     }
 
     @Override
-    public TaskHandler createTaskHandler() {
-        return new TaskHandler() {
+    public TaskMonitor createTaskMonitor() {
+        return new TaskMonitor() {
             @Override
             public void onStart(final Task task) {
                 // Add the task to the map.

@@ -22,6 +22,7 @@ import stroom.util.shared.IsServlet;
 import stroom.util.shared.ResourcePaths;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.Set;
 
@@ -30,9 +31,9 @@ public class SignInServlet extends AppServlet implements IsServlet {
     private static final Set<String> PATH_SPECS = Set.of(ResourcePaths.SIGN_IN_PATH);
 
     @Inject
-    SignInServlet(final UiConfig uiConfig,
-                  final UserPreferencesService userPreferencesService) {
-        super(uiConfig, userPreferencesService);
+    SignInServlet(final Provider<UiConfig> uiConfigProvider,
+                  final Provider<UserPreferencesService> userPreferencesServiceProvider) {
+        super(uiConfigProvider, userPreferencesServiceProvider);
     }
 
     String getScript() {

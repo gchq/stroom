@@ -160,7 +160,7 @@ public class NewPipelineReferencePresenter
 
                     initialised = true;
                 })
-                .taskHandlerFactory(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 
