@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryHelpDetail;
 import stroom.query.shared.QueryHelpRequest;
 import stroom.query.shared.QueryHelpRow;
+import stroom.query.shared.QueryHelpType;
 import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.util.logging.LambdaLogger;
@@ -49,6 +50,8 @@ import jakarta.ws.rs.client.Entity;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @AutoLogged
 class QueryResourceImpl implements QueryResource {
@@ -61,6 +64,7 @@ class QueryResourceImpl implements QueryResource {
     private final Provider<Structures> structuresProvider;
     private final Provider<Fields> fieldsProvider;
     private final Provider<Functions> functionsProvider;
+    private final Provider<Visualisations> visualisationProvider;
 
     @Inject
     QueryResourceImpl(final Provider<NodeService> nodeServiceProvider,
@@ -68,13 +72,15 @@ class QueryResourceImpl implements QueryResource {
                       final Provider<DataSources> dataSourcesProvider,
                       final Provider<Structures> structuresProvider,
                       final Provider<Fields> fieldsProvider,
-                      final Provider<Functions> functionsProvider) {
+                      final Provider<Functions> functionsProvider,
+                      final Provider<Visualisations> visualisationProvider) {
         this.nodeServiceProvider = nodeServiceProvider;
         this.queryServiceProvider = dashboardServiceProvider;
         this.dataSourcesProvider = dataSourcesProvider;
         this.structuresProvider = structuresProvider;
         this.fieldsProvider = fieldsProvider;
         this.functionsProvider = functionsProvider;
+        this.visualisationProvider = visualisationProvider;
     }
 
     @Override
@@ -167,16 +173,25 @@ class QueryResourceImpl implements QueryResource {
         final ResultPageBuilder<QueryHelpRow> resultPageBuilder =
                 new InexactResultPageBuilder<>(request.getPageRequest());
         PageRequest pageRequest = request.getPageRequest();
-        if (request.isShowAll()) {
+        if (request.isTypeIncluded(QueryHelpType.DATA_SOURCE)) {
             dataSourcesProvider.get().addRows(pageRequest, parentPath, stringMatcher, resultPageBuilder);
             pageRequest = reducePageRequest(pageRequest, resultPageBuilder.size());
+        }
+        if (request.isTypeIncluded(QueryHelpType.STRUCTURE)) {
             structuresProvider.get().addRows(pageRequest, parentPath, stringMatcher, resultPageBuilder);
             pageRequest = reducePageRequest(pageRequest, resultPageBuilder.size());
-            request.setPageRequest(pageRequest);
         }
-        fieldsProvider.get().addRows(request, resultPageBuilder);
-        pageRequest = reducePageRequest(pageRequest, resultPageBuilder.size());
-        functionsProvider.get().addRows(pageRequest, parentPath, stringMatcher, resultPageBuilder);
+        request.setPageRequest(pageRequest);
+        if (request.isTypeIncluded(QueryHelpType.FIELD)) {
+            fieldsProvider.get().addRows(request, resultPageBuilder);
+            pageRequest = reducePageRequest(pageRequest, resultPageBuilder.size());
+        }
+        if (request.isTypeIncluded(QueryHelpType.FUNCTION)) {
+            functionsProvider.get().addRows(pageRequest, parentPath, stringMatcher, resultPageBuilder);
+        }
+        if (request.isTypeIncluded(QueryHelpType.VISUALISATION)) {
+            visualisationProvider.get().addRows(pageRequest, parentPath, stringMatcher, resultPageBuilder);
+        }
         return resultPageBuilder.build();
     }
 
@@ -184,14 +199,42 @@ class QueryResourceImpl implements QueryResource {
     @AutoLogged(OperationType.UNLOGGED)
     public ResultPage<CompletionItem> fetchCompletions(final CompletionsRequest request) {
         final List<CompletionItem> list = new ArrayList<>();
-        final PageRequest pageRequest = request.getPageRequest();
-        if (request.isShowAll()) {
-            dataSourcesProvider.get().addCompletions(request, reducePageRequest(pageRequest, 0), list);
-            structuresProvider.get().addCompletions(request, reducePageRequest(pageRequest, list.size()), list);
+        final ContextualQueryHelp contextualQueryHelp = queryServiceProvider.get()
+                .getQueryHelpContext(request.getText(), request.getRow(), request.getColumn());
+
+        final Set<QueryHelpType> contextualHelpTypes = contextualQueryHelp.queryHelpTypes();
+
+        LOGGER.debug("\n  request: {}, \n  contextualQueryHelp: {}", request, contextualQueryHelp);
+        // Only return the types asked for by the client and that are appropriate for the context
+        final AtomicInteger maxCompletions = new AtomicInteger(request.getMaxCompletions());
+        if (isTypeIncluded(request, contextualHelpTypes, QueryHelpType.DATA_SOURCE)) {
+            dataSourcesProvider.get().addCompletions(request, reduceMaxCompletions(maxCompletions, list), list);
         }
-        fieldsProvider.get().addCompletions(request, reducePageRequest(pageRequest, list.size()), list);
-        functionsProvider.get().addCompletions(request, reducePageRequest(pageRequest, list.size()), list);
-        return ResultPage.createCriterialBasedList(list, request);
+        if (isTypeIncluded(request, contextualHelpTypes, QueryHelpType.STRUCTURE)) {
+            structuresProvider.get().addCompletions(
+                    request,
+                    reduceMaxCompletions(maxCompletions, list),
+                    list,
+                    contextualQueryHelp.applicableStructureItems());
+        }
+        if (isTypeIncluded(request, contextualHelpTypes, QueryHelpType.FIELD)) {
+            fieldsProvider.get().addCompletions(request, reduceMaxCompletions(maxCompletions, list), list);
+        }
+        if (isTypeIncluded(request, contextualHelpTypes, QueryHelpType.FUNCTION)) {
+            functionsProvider.get().addCompletions(request, reduceMaxCompletions(maxCompletions, list), list);
+        }
+        if (isTypeIncluded(request, contextualHelpTypes, QueryHelpType.VISUALISATION)) {
+            visualisationProvider.get().addCompletions(request, reduceMaxCompletions(maxCompletions, list), list);
+        }
+
+        return ResultPage.createUnboundedList(list);
+    }
+
+    private boolean isTypeIncluded(final CompletionsRequest request,
+                                   final Set<QueryHelpType> contextualHelpTypes,
+                                   final QueryHelpType queryHelpType) {
+        return request.isTypeIncluded(queryHelpType)
+                && contextualHelpTypes.contains(queryHelpType);
     }
 
     @Override
@@ -206,11 +249,17 @@ class QueryResourceImpl implements QueryResource {
         result = result.or(() -> structuresProvider.get().fetchDetail(row));
         result = result.or(() -> fieldsProvider.get().fetchDetail(row));
         result = result.or(() -> functionsProvider.get().fetchDetail(row));
+        result = result.or(() -> visualisationProvider.get().fetchDetail(row));
 
         return result.orElse(null);
     }
 
     private PageRequest reducePageRequest(final PageRequest pageRequest, final int size) {
         return new PageRequest(pageRequest.getOffset(), pageRequest.getLength() - size);
+    }
+
+    private int reduceMaxCompletions(final AtomicInteger maxCompletions, final List<?> list) {
+        final int newVal = maxCompletions.addAndGet(list.size() * -1);
+        return Math.max(0, newVal);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public class EntityEvent {
     public EntityEvent(@JsonProperty("docRef") final DocRef docRef,
                        @JsonProperty("oldDocRef") final DocRef oldDocRef,
                        @JsonProperty("action") final EntityAction action) {
-        this.docRef = docRef;
+        this.docRef = Objects.requireNonNull(docRef);
         this.oldDocRef = oldDocRef;
         this.action = action;
     }

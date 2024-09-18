@@ -239,6 +239,11 @@ public class ExtendedUiConfig {
     }
 
     @JsonIgnore
+    public int getMaxEditorCompletionEntries() {
+        return uiConfig.getMaxEditorCompletionEntries();
+    }
+
+    @JsonIgnore
     public boolean isExternalIdentityProvider() {
         return externalIdentityProvider;
     }
