@@ -162,7 +162,7 @@ public class S3Appender extends AbstractAppender {
 
     @PipelineProperty(
             description = "Set the bucket name pattern if you want to override the one provided by the S3 config.",
-            defaultValue = "bucket-name",
+            defaultValue = "",
             displayPriority = 2)
     public void setBucketNamePattern(final String bucketNamePattern) {
         this.bucketNamePattern = bucketNamePattern;
