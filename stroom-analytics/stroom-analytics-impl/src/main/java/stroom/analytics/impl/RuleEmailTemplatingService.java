@@ -121,8 +121,16 @@ public class RuleEmailTemplatingService {
         NullSafe.consume(detection.getDefunct(), val -> context.put("defunct", val));
 
         NullSafe.consume(detection.getValues(), values -> {
-            context.put("values", values.stream()
-                    .collect(Collectors.toMap(DetectionValue::getName, DetectionValue::getValue)));
+            // Collectors.toMap() doesn't like null values, shame
+            final Map<String, String> map = new HashMap<>(values.size());
+            values.stream()
+                    .filter(Objects::nonNull)
+                    .filter(detectionValue -> detectionValue.getName() != null)
+                    .forEach(detectionValue ->
+                            map.put(detectionValue.getName(), detectionValue.getValue()));
+            if (!map.isEmpty()) {
+                context.put("values", map);
+            }
         });
         NullSafe.consume(
                 detection.getLinkedEvents(),
