@@ -42,7 +42,7 @@ public class DocumentTypeImages {
             case "ReceiveDataRuleSet":
                 return SvgImage.DOCUMENT_RECEIVE_DATA_RULE_SET;
             case S3ConfigDoc.DOCUMENT_TYPE:
-                return SvgImage.DOCUMENT_S3CONFIG;
+                return SvgImage.DOCUMENT_S3;
             case "Script":
                 return SvgImage.DOCUMENT_SCRIPT;
 //            case "searchable":

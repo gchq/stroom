@@ -249,10 +249,9 @@ public class S3Manager {
         return credentialsProvider;
     }
 
-    public String createBucketName(final Meta meta) {
-        String bucketName = NullSafe
-                .nonBlank(s3ClientConfig.getBucketName())
-                .orElse(S3ClientConfig.DEFAULT_BUCKET_NAME);
+    public String createBucketName(final String bucketNamePattern,
+                                   final Meta meta) {
+        String bucketName = bucketNamePattern;
         bucketName = pathCreator.replace(bucketName, "feed", meta::getFeedName);
         bucketName = pathCreator.replace(bucketName, "type", meta::getTypeName);
         bucketName = bucketName.toLowerCase(Locale.ROOT);
@@ -276,11 +275,31 @@ public class S3Manager {
         return s3Name;
     }
 
+    public String getBucketNamePattern() {
+        return NullSafe
+                .nonBlank(s3ClientConfig.getBucketName())
+                .orElse(S3ClientConfig.DEFAULT_BUCKET_NAME);
+    }
+
+    public String getKeyNamePattern() {
+        return NullSafe
+                .nonBlank(s3ClientConfig.getKeyPattern())
+                .orElse(S3ClientConfig.DEFAULT_KEY_PATTERN);
+    }
+
     public PutObjectResponse upload(final Meta meta,
                                     final AttributeMap attributeMap,
                                     final Path source) {
-        final String bucketName = createBucketName(meta);
-        final String key = createKey(meta);
+        return upload(getBucketNamePattern(), getKeyNamePattern(), meta, attributeMap, source);
+    }
+
+    public PutObjectResponse upload(final String bucketNamePattern,
+                                    final String keyNamePattern,
+                                    final Meta meta,
+                                    final AttributeMap attributeMap,
+                                    final Path source) {
+        final String bucketName = createBucketName(bucketNamePattern, meta);
+        final String key = createKey(keyNamePattern, meta);
 
         try {
             return tryUpload(bucketName, key, meta, attributeMap, source);
@@ -378,8 +397,8 @@ public class S3Manager {
 
     public GetObjectResponse download(final Meta meta,
                                       final Path dest) {
-        final String bucketName = createBucketName(meta);
-        final String key = createKey(meta);
+        final String bucketName = createBucketName(getBucketNamePattern(), meta);
+        final String key = createKey(getKeyNamePattern(), meta);
         final GetObjectRequest request = GetObjectRequest.builder()
                 .bucket(bucketName)
                 .key(key)
@@ -433,8 +452,8 @@ public class S3Manager {
     }
 
     public DeleteObjectResponse delete(final Meta meta) {
-        final String bucketName = createBucketName(meta);
-        final String key = createKey(meta);
+        final String bucketName = createBucketName(getBucketNamePattern(), meta);
+        final String key = createKey(getKeyNamePattern(), meta);
         final DeleteObjectRequest request = DeleteObjectRequest.builder()
                 .bucket(bucketName)
                 .key(key)
@@ -472,10 +491,8 @@ public class S3Manager {
                 .build();
     }
 
-    public String createKey(final Meta meta) {
-        String keyName = NullSafe
-                .nonBlank(s3ClientConfig.getKeyPattern())
-                .orElse(S3ClientConfig.DEFAULT_KEY_PATTERN);
+    public String createKey(final String keyPattern, final Meta meta) {
+        String keyName = keyPattern;
         final ZonedDateTime zonedDateTime =
                 ZonedDateTime.ofInstant(Instant.ofEpochMilli(meta.getCreateMs()), ZoneOffset.UTC);
         final String idPadded = padId(meta.getId());

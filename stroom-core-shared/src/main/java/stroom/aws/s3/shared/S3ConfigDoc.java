@@ -48,7 +48,7 @@ import java.util.Objects;
 public class S3ConfigDoc extends Doc implements HasData {
 
     public static final String DOCUMENT_TYPE = "S3Config";
-    public static final SvgImage ICON = SvgImage.DOCUMENT_S3CONFIG;
+    public static final SvgImage ICON = SvgImage.DOCUMENT_S3;
 
     @JsonProperty
     private String description = "";

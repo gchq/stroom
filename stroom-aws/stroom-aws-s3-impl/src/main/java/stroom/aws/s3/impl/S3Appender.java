@@ -34,6 +34,7 @@ import stroom.pipeline.writer.Output;
 import stroom.pipeline.writer.OutputFactory;
 import stroom.pipeline.writer.OutputProxy;
 import stroom.svg.shared.SvgImage;
+import stroom.util.NullSafe;
 import stroom.util.io.CompressionUtil;
 import stroom.util.io.PathCreator;
 
@@ -61,7 +62,7 @@ import java.util.Optional;
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_DESTINATION,
                 PipelineElementType.VISABILITY_STEPPING},
-        icon = SvgImage.DOCUMENT_S3CONFIG)
+        icon = SvgImage.DOCUMENT_S3)
 public class S3Appender extends AbstractAppender {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(S3Appender.class);
@@ -73,6 +74,8 @@ public class S3Appender extends AbstractAppender {
     private final MetaDataHolder metaDataHolder;
     private final MetaHolder metaHolder;
     private DocRef s3ConfigRef;
+    private String bucketNamePattern;
+    private String keyNamePattern;
     private S3ClientConfig s3ClientConfig;
 
     @Inject
@@ -123,12 +126,20 @@ public class S3Appender extends AbstractAppender {
                     super.close();
 
                     try {
+                        final S3Manager s3Manager = new S3Manager(pathCreator, s3ClientConfig);
+                        final String bucketNamePattern = NullSafe
+                                .nonBlank(S3Appender.this.bucketNamePattern)
+                                .orElse(s3Manager.getBucketNamePattern());
+                        final String keyNamePattern = NullSafe
+                                .nonBlank(S3Appender.this.keyNamePattern)
+                                .orElse(s3Manager.getKeyNamePattern());
+
                         // Upload to S3
                         // Upload the zip to S3.
                         final Meta meta = metaHolder.getMeta();
                         final AttributeMap attributeMap = metaDataHolder.getMetaData();
-                        final S3Manager s3Manager = new S3Manager(pathCreator, s3ClientConfig);
-                        s3Manager.upload(meta, attributeMap, tempFile);
+
+                        s3Manager.upload(bucketNamePattern, keyNamePattern, meta, attributeMap, tempFile);
                     } catch (final RuntimeException e) {
                         fatal(e.getMessage(), e);
                     } finally {
@@ -149,10 +160,26 @@ public class S3Appender extends AbstractAppender {
         this.s3ConfigRef = s3ConfigRef;
     }
 
+    @PipelineProperty(
+            description = "Set the bucket name pattern if you want to override the one provided by the S3 config.",
+            defaultValue = "bucket-name",
+            displayPriority = 2)
+    public void setBucketNamePattern(final String bucketNamePattern) {
+        this.bucketNamePattern = bucketNamePattern;
+    }
+
+    @PipelineProperty(
+            description = "Set the key name pattern if you want to override the one provided by the S3 config.",
+            defaultValue = "${type}/${year}/${month}/${day}/${idPath}/${feed}/${idPadded}.zip",
+            displayPriority = 3)
+    public void setKeyNamePattern(final String keyNamePattern) {
+        this.keyNamePattern = keyNamePattern;
+    }
+
     @SuppressWarnings("unused")
     @PipelineProperty(
             description = "When the current output object exceeds this size it will be closed and a new one created.",
-            displayPriority = 2)
+            displayPriority = 4)
     public void setRollSize(final String size) {
         super.setRollSize(size);
     }
@@ -160,7 +187,7 @@ public class S3Appender extends AbstractAppender {
     @PipelineProperty(
             description = "Choose if you want to split aggregated streams into separate output objects.",
             defaultValue = "false",
-            displayPriority = 3)
+            displayPriority = 5)
     public void setSplitAggregatedStreams(final boolean splitAggregatedStreams) {
         super.setSplitAggregatedStreams(splitAggregatedStreams);
     }
@@ -168,7 +195,7 @@ public class S3Appender extends AbstractAppender {
     @PipelineProperty(
             description = "Choose if you want to split individual records into separate output objects.",
             defaultValue = "false",
-            displayPriority = 4)
+            displayPriority = 6)
     public void setSplitRecords(final boolean splitRecords) {
         super.setSplitRecords(splitRecords);
     }
@@ -176,7 +203,7 @@ public class S3Appender extends AbstractAppender {
     @PipelineProperty(
             description = "Apply compression to output objects.",
             defaultValue = "false",
-            displayPriority = 5)
+            displayPriority = 7)
     public void setUseCompression(final boolean useCompression) {
         outputFactory.setUseCompression(useCompression);
     }
@@ -185,7 +212,7 @@ public class S3Appender extends AbstractAppender {
             description = "Compression method to apply, if compression is enabled. Supported values: " +
                     CompressionUtil.SUPPORTED_COMPRESSORS + ".",
             defaultValue = CompressorStreamFactory.GZIP,
-            displayPriority = 6)
+            displayPriority = 8)
     public void setCompressionMethod(final String compressionMethod) {
         try {
             outputFactory.setCompressionMethod(compressionMethod);
