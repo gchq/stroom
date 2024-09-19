@@ -1,4 +1,4 @@
-package stroom.data.store.impl.fs.shared;
+package stroom.aws.s3.shared;
 
 import stroom.docref.HasDisplayValue;
 

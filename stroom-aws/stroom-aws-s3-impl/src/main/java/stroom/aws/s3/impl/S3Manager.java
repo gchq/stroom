@@ -1,9 +1,10 @@
-package stroom.data.store.impl.fs;
+package stroom.aws.s3.impl;
 
-import stroom.data.store.impl.fs.shared.AwsHttpConfig;
-import stroom.data.store.impl.fs.shared.AwsProfileCredentials;
-import stroom.data.store.impl.fs.shared.AwsProxyConfig;
-import stroom.data.store.impl.fs.shared.S3ClientConfig;
+import stroom.aws.s3.shared.AwsHttpConfig;
+import stroom.aws.s3.shared.AwsProfileCredentials;
+import stroom.aws.s3.shared.AwsProxyConfig;
+import stroom.aws.s3.shared.AwsWebCredentials;
+import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.Meta;
 import stroom.util.NullSafe;
@@ -78,6 +79,9 @@ public class S3Manager {
     private static final Pattern LEADING_SLASH = Pattern.compile("^/+");
     private static final Pattern TRAILING_SLASH = Pattern.compile("/+$");
     private static final Pattern MULTI_SLASH = Pattern.compile("/+");
+
+    private static final String START_PREFIX = "000";
+    private static final int PAD_SIZE = 3;
 
     private final PathCreator pathCreator;
     private final S3ClientConfig s3ClientConfig;
@@ -174,15 +178,15 @@ public class S3Manager {
             switch (s3ClientConfig.getCredentialsProviderType()) {
                 case ANONYMOUS -> credentialsProvider = AnonymousCredentialsProvider.create();
                 case DEFAULT -> credentialsProvider = DefaultCredentialsProvider.create();
-                case ENVIRONMENT_VARIABLE -> EnvironmentVariableCredentialsProvider.create();
+                case ENVIRONMENT_VARIABLE -> credentialsProvider = EnvironmentVariableCredentialsProvider.create();
 //            case    LAZY -> LazyAwsCredentialsProvider.create();
 //            case    PROCESS -> ProcessCredentialsProvider.create();
                 case PROFILE -> {
-                    final stroom.data.store.impl.fs.shared.AwsCredentials awsCredentials =
+                    final stroom.aws.s3.shared.AwsCredentials awsCredentials =
                             s3ClientConfig.getCredentials();
                     if (awsCredentials instanceof final AwsProfileCredentials awsProfileCredentials) {
                         if (awsProfileCredentials.getProfileFilePath() != null &&
-                                awsProfileCredentials.getProfileFilePath().length() > 0) {
+                                !awsProfileCredentials.getProfileFilePath().isEmpty()) {
                             final Path path = Paths.get(awsProfileCredentials.getProfileFilePath());
                             credentialsProvider = ProfileCredentialsProvider
                                     .builder()
@@ -199,15 +203,15 @@ public class S3Manager {
                     }
                 }
                 case STATIC -> {
-                    final stroom.data.store.impl.fs.shared.AwsCredentials awsCredentials =
+                    final stroom.aws.s3.shared.AwsCredentials awsCredentials =
                             s3ClientConfig.getCredentials();
                     if (awsCredentials instanceof
-                            final stroom.data.store.impl.fs.shared.AwsBasicCredentials awsBasicCredentials) {
+                            final stroom.aws.s3.shared.AwsBasicCredentials awsBasicCredentials) {
                         final AwsCredentials credentials = AwsBasicCredentials
                                 .create(awsBasicCredentials.getAccessKeyId(), awsBasicCredentials.getSecretAccessKey());
                         credentialsProvider = StaticCredentialsProvider.create(credentials);
                     } else if (awsCredentials instanceof
-                            final stroom.data.store.impl.fs.shared.AwsSessionCredentials awsSessionCredentials) {
+                            final stroom.aws.s3.shared.AwsSessionCredentials awsSessionCredentials) {
                         final AwsSessionCredentials credentials = AwsSessionCredentials
                                 .builder()
                                 .accessKeyId(awsSessionCredentials.getAccessKeyId())
@@ -219,12 +223,12 @@ public class S3Manager {
                         throw new RuntimeException("No credentials");
                     }
                 }
-                case SYSTEM_PROPERTY -> SystemPropertyCredentialsProvider.create();
+                case SYSTEM_PROPERTY -> credentialsProvider = SystemPropertyCredentialsProvider.create();
                 case WEB -> {
-                    final stroom.data.store.impl.fs.shared.AwsCredentials awsCredentials =
+                    final stroom.aws.s3.shared.AwsCredentials awsCredentials =
                             s3ClientConfig.getCredentials();
                     if (awsCredentials instanceof
-                            final stroom.data.store.impl.fs.shared.AwsWebCredentials awsWebCredentials) {
+                            final AwsWebCredentials awsWebCredentials) {
                         credentialsProvider = WebIdentityTokenFileCredentialsProvider
                                 .builder()
                                 .roleArn(awsWebCredentials.getRoleArn())
@@ -474,12 +478,12 @@ public class S3Manager {
                 .orElse(S3ClientConfig.DEFAULT_KEY_PATTERN);
         final ZonedDateTime zonedDateTime =
                 ZonedDateTime.ofInstant(Instant.ofEpochMilli(meta.getCreateMs()), ZoneOffset.UTC);
-        final String idPadded = FsPrefixUtil.padId(meta.getId());
+        final String idPadded = padId(meta.getId());
         keyName = pathCreator.replaceTimeVars(keyName, zonedDateTime);
         keyName = pathCreator.replace(keyName, "feed", meta::getFeedName);
         keyName = pathCreator.replace(keyName, "type", meta::getTypeName);
         keyName = pathCreator.replace(keyName, "id", () -> String.valueOf(meta.getId()));
-        keyName = pathCreator.replace(keyName, "idPath", () -> FsPrefixUtil.getIdPath(idPadded));
+        keyName = pathCreator.replace(keyName, "idPath", () -> getIdPath(idPadded));
         keyName = pathCreator.replace(keyName, "idPadded", () -> idPadded);
 
         keyName = S3_KEY_NAME_PATTERN.matcher(keyName).replaceAll("-");
@@ -492,6 +496,36 @@ public class S3Manager {
         }
 
         return keyName;
+    }
+
+    /**
+     * Pad a prefix.
+     */
+    private String padId(final Long current) {
+        if (current == null) {
+            return START_PREFIX;
+        }
+
+        final StringBuilder sb = new StringBuilder();
+        sb.append(current);
+
+        while ((sb.length() % PAD_SIZE) != 0) {
+            sb.insert(0, "0");
+        }
+
+        return sb.toString();
+    }
+
+    private String getIdPath(final String id) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < id.length() - PAD_SIZE; i += PAD_SIZE) {
+            final String part = id.substring(i, i + PAD_SIZE);
+            if (!sb.isEmpty()) {
+                sb.append("/");
+            }
+            sb.append(part);
+        }
+        return sb.toString();
     }
 
     private PutObjectRequest createPutObjectRequest(final String bucketName,

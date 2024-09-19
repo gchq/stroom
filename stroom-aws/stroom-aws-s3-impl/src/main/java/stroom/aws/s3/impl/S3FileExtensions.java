@@ -1,4 +1,4 @@
-package stroom.data.store.impl.fs;
+package stroom.aws.s3.impl;
 
 import stroom.data.shared.StreamTypeNames;
 

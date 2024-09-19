@@ -1,45 +1,36 @@
-ext.moduleName = 'stroom.data.store.impl.fs'
+ext.moduleName = 'stroom.aws.s3.impl'
 
 dependencies {
-    implementation project(':stroom-aws:stroom-aws-s3-impl')
     implementation project(':stroom-cache:stroom-cache-api')
-    implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-meta:stroom-meta-api')
-    implementation project(':stroom-cluster:stroom-cluster-lock-api')
-    implementation project(':stroom-data:stroom-data-store-api')
-    implementation project(':stroom-data:stroom-data-store-impl')
-    implementation project(':stroom-event-logging:stroom-event-logging-api')
-    implementation project(':stroom-node:stroom-node-api')
-    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-pipeline')
+    implementation project(':stroom-resource:stroom-resource-api')
     implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-statistics:stroom-statistics-api')
     implementation project(':stroom-task:stroom-task-api')
-    implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
     implementation libs.aws_crt
     implementation libs.aws_s3_transfer_manager
     implementation libs.commons_compress
-    implementation libs.eventLogging
     implementation libs.guava
     implementation libs.guice
-    implementation libs.hikari
     implementation libs.jackson_annotations
-    implementation libs.jakarta_servlet_api
     implementation libs.jakarta_validation_api
     implementation libs.jakarta_inject
     implementation libs.jaxb_api
     implementation libs.restygwt
+//    implementation libs.saxon_he
     implementation libs.slf4j_api
-    implementation libs.vavr
-
-    testImplementation project(':stroom-security:stroom-security-mock')
-    testImplementation project(':stroom-test-common')
-
+//    implementation libs.vavr
+//    //implementation libs.xml_apis
+//
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter_api
     testImplementation libs.mockito_core

@@ -1,4 +1,4 @@
-package stroom.data.store.impl.fs.shared;
+package stroom.aws.s3.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -8,22 +8,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class AwsSessionCredentials implements AwsCredentials {
+public class AwsBasicCredentials implements AwsCredentials {
 
     @JsonProperty
     private final String accessKeyId;
     @JsonProperty
     private final String secretAccessKey;
-    @JsonProperty
-    private final String sessionToken;
 
     @JsonCreator
-    public AwsSessionCredentials(@JsonProperty("accessKeyId") final String accessKeyId,
-                                 @JsonProperty("secretAccessKey") final String secretAccessKey,
-                                 @JsonProperty("sessionToken") final String sessionToken) {
+    public AwsBasicCredentials(@JsonProperty("accessKeyId") final String accessKeyId,
+                               @JsonProperty("secretAccessKey") final String secretAccessKey) {
         this.accessKeyId = accessKeyId;
         this.secretAccessKey = secretAccessKey;
-        this.sessionToken = sessionToken;
     }
 
     public String getAccessKeyId() {
@@ -32,10 +28,6 @@ public class AwsSessionCredentials implements AwsCredentials {
 
     public String getSecretAccessKey() {
         return secretAccessKey;
-    }
-
-    public String getSessionToken() {
-        return sessionToken;
     }
 
     public Builder copy() {
@@ -54,22 +46,21 @@ public class AwsSessionCredentials implements AwsCredentials {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final AwsSessionCredentials that = (AwsSessionCredentials) o;
+        final AwsBasicCredentials that = (AwsBasicCredentials) o;
         return Objects.equals(accessKeyId, that.accessKeyId) && Objects.equals(secretAccessKey,
-                that.secretAccessKey) && Objects.equals(sessionToken, that.sessionToken);
+                that.secretAccessKey);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(accessKeyId, secretAccessKey, sessionToken);
+        return Objects.hash(accessKeyId, secretAccessKey);
     }
 
     @Override
     public String toString() {
-        return "AwsSessionCredentials{" +
+        return "AwsBasicCredentials{" +
                 "accessKeyId='" + accessKeyId + '\'' +
                 ", secretAccessKey='" + secretAccessKey + '\'' +
-                ", sessionToken='" + sessionToken + '\'' +
                 '}';
     }
 
@@ -77,15 +68,13 @@ public class AwsSessionCredentials implements AwsCredentials {
 
         private String accessKeyId;
         private String secretAccessKey;
-        private String sessionToken;
 
         public Builder() {
         }
 
-        public Builder(final AwsSessionCredentials awsSessionCredentials) {
-            this.accessKeyId = awsSessionCredentials.accessKeyId;
-            this.secretAccessKey = awsSessionCredentials.secretAccessKey;
-            this.sessionToken = awsSessionCredentials.sessionToken;
+        public Builder(final AwsBasicCredentials awsBasicCredentials) {
+            this.accessKeyId = awsBasicCredentials.accessKeyId;
+            this.secretAccessKey = awsBasicCredentials.secretAccessKey;
         }
 
         public Builder accessKeyId(final String accessKeyId) {
@@ -98,16 +87,10 @@ public class AwsSessionCredentials implements AwsCredentials {
             return this;
         }
 
-        public Builder sessionToken(final String sessionToken) {
-            this.sessionToken = sessionToken;
-            return this;
-        }
-
-        public AwsSessionCredentials build() {
-            return new AwsSessionCredentials(
+        public AwsBasicCredentials build() {
+            return new AwsBasicCredentials(
                     accessKeyId,
-                    secretAccessKey,
-                    sessionToken);
+                    secretAccessKey);
         }
     }
 }

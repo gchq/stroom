@@ -13,6 +13,8 @@ public class CoreModule extends AbstractModule {
         install(new stroom.annotation.impl.AnnotationModule());
         install(new stroom.annotation.impl.db.AnnotationDaoModule());
         install(new stroom.annotation.pipeline.AnnotationPipelineModule());
+        install(new stroom.aws.s3.impl.S3ConfigHandlerModule());
+        install(new stroom.aws.s3.impl.S3ConfigModule());
         install(new stroom.cache.impl.CacheModule());
         install(new stroom.cache.impl.CacheResourceModule());
         install(new stroom.cluster.lock.impl.db.ClusterLockModule());

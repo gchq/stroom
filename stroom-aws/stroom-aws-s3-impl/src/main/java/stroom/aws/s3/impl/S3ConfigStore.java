@@ -12,19 +12,18 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
-package stroom.kafka.client.gin;
+package stroom.aws.s3.impl;
 
-import stroom.core.client.gin.PluginModule;
-import stroom.kafka.client.KafkaConfigPlugin;
-import stroom.kafka.client.presenter.KafkaConfigPresenter;
+import stroom.aws.s3.shared.S3ConfigDoc;
+import stroom.docref.DocRef;
+import stroom.docstore.api.DocumentStore;
 
-public class KafkaConfigModule extends PluginModule {
+import java.util.List;
 
-    @Override
-    protected void configure() {
-        bindPlugin(KafkaConfigPlugin.class);
-        bind(KafkaConfigPresenter.class);
-    }
+public interface S3ConfigStore extends DocumentStore<S3ConfigDoc> {
+
+    List<DocRef> list();
 }

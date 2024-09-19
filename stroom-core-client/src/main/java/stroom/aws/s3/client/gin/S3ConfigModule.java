@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.kafka.client.gin;
+package stroom.aws.s3.client.gin;
 
+import stroom.aws.s3.client.S3ConfigPlugin;
+import stroom.aws.s3.client.presenter.S3ConfigPresenter;
 import stroom.core.client.gin.PluginModule;
-import stroom.kafka.client.KafkaConfigPlugin;
-import stroom.kafka.client.presenter.KafkaConfigPresenter;
 
-public class KafkaConfigModule extends PluginModule {
+public class S3ConfigModule extends PluginModule {
 
     @Override
     protected void configure() {
-        bindPlugin(KafkaConfigPlugin.class);
-        bind(KafkaConfigPresenter.class);
+        bindPlugin(S3ConfigPlugin.class);
+        bind(S3ConfigPresenter.class);
     }
 }

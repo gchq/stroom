@@ -1,5 +1,7 @@
 package stroom.data.store.impl.fs;
 
+import stroom.aws.s3.impl.S3FileExtensions;
+import stroom.aws.s3.impl.S3Manager;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaService;
