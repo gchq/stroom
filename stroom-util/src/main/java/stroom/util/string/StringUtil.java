@@ -1,10 +1,31 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.string;
+
+import stroom.util.logging.LogUtil;
 
 import com.google.common.base.Preconditions;
 
 import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -102,6 +123,69 @@ public class StringUtil {
             } else {
                 return str2 + ".";
             }
+        }
+    }
+
+    /**
+     * Convert a row/col position in a multi-line string into a zero based index
+     * in the string. The index includes line breaks. Assumes only '\n' line breaks
+     * are used.
+     *
+     * @param str    The string to evaluate row/col on.
+     * @param rowIdx Zero based
+     * @param colIdx Zero based
+     * @return The zero based index of the row/col position in str.
+     */
+    public static int convertRowColToIndex(final String str, final int rowIdx, final int colIdx) {
+        Objects.requireNonNull(str);
+        try {
+            int idx = 0;
+            int rowNum = rowIdx + 1;
+            // All lines up to the one we want
+            final List<String> lines = str.lines()
+                    .limit(rowNum)
+                    .collect(Collectors.toCollection(ArrayList::new));
+            // Re-add a trailing blank line
+            if (str.endsWith("\n")) {
+                lines.add("");
+            }
+
+            if (str.isEmpty()) {
+                if (rowIdx > 0) {
+                    throw new IllegalArgumentException(LogUtil.message(
+                            "rowIdx {} is invalid for an empty string.", rowIdx));
+                } else if (colIdx > 0) {
+                    throw new IllegalArgumentException(LogUtil.message(
+                            "colIdx {} is invalid for an empty string.", colIdx));
+                }
+                return 0;
+
+            } else {
+                if (rowNum > lines.size()) {
+                    throw new IllegalArgumentException(LogUtil.message(
+                            "rowIdx {} is invalid. str only has {} lines", rowIdx, lines.size()));
+                }
+
+                for (int i = 0; i <= rowIdx; i++) {
+                    // Allow for \n
+                    final int lineLen = lines.get(i).length();
+                    if (i < rowIdx) {
+                        // Not our rowIdx yet so add whole line len, add one for the \n
+                        idx += lineLen + 1;
+                    } else {
+                        // Desired rowIdx so add the col position
+                        if (colIdx > lineLen) {
+                            throw new IllegalArgumentException(LogUtil.message(
+                                    "colIdx {} is invalid for rowIdx {} which has length {}",
+                                    colIdx, rowIdx, lineLen));
+                        }
+                        idx = idx + colIdx;
+                    }
+                }
+                return idx;
+            }
+        } catch (Exception e) {
+            throw e;
         }
     }
 }

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.string;
 
 import stroom.docref.StringMatch;
@@ -7,13 +23,29 @@ import stroom.util.NullSafe;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class StringMatcher {
+
+    /**
+     * Types that will need the case of pattern to be normalised if caseSensitive is true.
+     */
+    private static final Set<MatchType> TYPES_NEEDING_CASE_CHANGE = EnumSet.of(
+            MatchType.EQUALS,
+            MatchType.NOT_EQUALS,
+            MatchType.CONTAINS,
+            MatchType.STARTS_WITH,
+            MatchType.ENDS_WITH);
+
+    private static final List<StringMatchLocation> LOCATION_ZERO = Collections.singletonList(
+            StringMatchLocation.zero());
 
     private final MatchType matchType;
     private final boolean caseSensitive;
@@ -28,22 +60,17 @@ public class StringMatcher {
             matchType = stringMatch.getMatchType();
             caseSensitive = stringMatch.isCaseSensitive();
             pattern = stringMatch.getPattern();
-            pattern = pattern == null
-                    ? ""
-                    : pattern;
-            if (MatchType.EQUALS.equals(matchType) ||
-                    MatchType.NOT_EQUALS.equals(matchType) ||
-                    MatchType.CONTAINS.equals(matchType)) {
-                if (!caseSensitive) {
-                    pattern = pattern.toLowerCase(Locale.ROOT);
-                }
-            } else if (!pattern.isEmpty()) {
-                int flags = 0;
-                if (!caseSensitive) {
-                    flags = flags | Pattern.CASE_INSENSITIVE;
-                }
-                regexPattern = Pattern.compile(pattern, flags);
+            pattern = NullSafe.string(pattern);
+            if (!caseSensitive && TYPES_NEEDING_CASE_CHANGE.contains(matchType)) {
+                pattern = normaliseCase(pattern);
             }
+//            else if (!pattern.isEmpty()) {
+//                int flags = 0;
+//                if (!caseSensitive) {
+//                    flags = flags | Pattern.CASE_INSENSITIVE;
+//                }
+//                regexPattern = Pattern.compile(pattern, flags);
+//            }
         }
     }
 
@@ -55,56 +82,31 @@ public class StringMatcher {
         return Optional.of(matches.getFirst());
     }
 
+    public List<StringMatchLocation> createZeroSingletonList(final boolean isMatch) {
+        return isMatch
+                ? LOCATION_ZERO
+                : Collections.emptyList();
+    }
+
     public List<StringMatchLocation> match(final String string, final int limit) {
-        switch (matchType) {
-            case ANY -> {
-                return Collections.singletonList(new StringMatchLocation(0, string.length()));
-            }
-            case NULL -> {
-                if (string == null) {
-                    return Collections.singletonList(new StringMatchLocation(0, 0));
-                }
-            }
-            case NON_NULL -> {
-                if (string != null && string.isBlank()) {
-                    return Collections.singletonList(new StringMatchLocation(0, 0));
-                }
-            }
-            case EMPTY -> {
-                if (string != null && string.isEmpty()) {
-                    return Collections.singletonList(new StringMatchLocation(0, 0));
-                }
-            }
-            case NULL_OR_BLANK -> {
-                if (NullSafe.isBlankString(string)) {
-                    return Collections.singletonList(new StringMatchLocation(0, 0));
-                }
-            }
-            case NULL_OR_EMPTY -> {
-                if (NullSafe.isEmptyString(string)) {
-                    return Collections.singletonList(new StringMatchLocation(0, 0));
-                }
-            }
-            case CONTAINS -> {
-                return contains(string, limit);
-            }
-            case EQUALS -> {
-                return equals(string);
-            }
-            case NOT_EQUALS -> {
-                return notEquals(string);
-            }
-            case STARTS_WITH -> {
-                return startsWith(string);
-            }
-            case ENDS_WITH -> {
-                return endsWith(string);
-            }
-            case REGEX -> {
-                return regex(string, limit);
-            }
-        }
-        return Collections.emptyList();
+        return switch (matchType) {
+            case ANY -> Collections.singletonList(new StringMatchLocation(0, string.length()));
+            case NULL -> createZeroSingletonList(string == null);
+            case NON_NULL -> createZeroSingletonList(string != null);
+            case BLANK -> createZeroSingletonList(string != null && string.isBlank());
+            case NON_BLANK -> createZeroSingletonList(string != null && !string.isBlank());
+            case EMPTY -> createZeroSingletonList(string != null && string.isEmpty());
+            case NON_EMPTY -> createZeroSingletonList(string != null && !string.isEmpty());
+            case NULL_OR_BLANK -> createZeroSingletonList(NullSafe.isBlankString(string));
+            case NULL_OR_EMPTY -> createZeroSingletonList(NullSafe.isEmptyString(string));
+            case CONTAINS -> contains(string, limit);
+            case EQUALS -> equals(string);
+            case NOT_EQUALS -> notEquals(string);
+            case STARTS_WITH -> startsWith(string);
+            case ENDS_WITH -> endsWith(string);
+            case REGEX -> regex(string, limit);
+            case CHARS_ANYWHERE -> charsAnywhere(string, limit);
+        };
     }
 
     private List<StringMatchLocation> equals(final String string) {
@@ -125,7 +127,7 @@ public class StringMatcher {
 
     private List<StringMatchLocation> notEquals(final String string) {
         if (string == null) {
-            return Collections.singletonList(new StringMatchLocation(0, 0));
+            return LOCATION_ZERO;
         }
         if (caseSensitive) {
             if (!string.equals(pattern)) {
@@ -143,7 +145,7 @@ public class StringMatcher {
         if (string == null) {
             return Collections.emptyList();
         }
-        final String alteredString = changeCase(string);
+        final String alteredString = normaliseCaseIfRequired(string);
         int index = alteredString.indexOf(pattern);
         final List<StringMatchLocation> matches = new ArrayList<>();
         for (int i = 0; i < limit && index != -1; i++) {
@@ -157,7 +159,7 @@ public class StringMatcher {
         if (string == null) {
             return Collections.emptyList();
         }
-        final String alteredString = changeCase(string);
+        final String alteredString = normaliseCaseIfRequired(string);
         if (alteredString.startsWith(pattern)) {
             return Collections.singletonList(new StringMatchLocation(0, pattern.length()));
         }
@@ -168,7 +170,7 @@ public class StringMatcher {
         if (string == null) {
             return Collections.emptyList();
         }
-        final String alteredString = changeCase(string);
+        final String alteredString = normaliseCaseIfRequired(string);
         if (alteredString.endsWith(pattern)) {
             return Collections.singletonList(new StringMatchLocation(string.length() - pattern.length(),
                     pattern.length()));
@@ -176,31 +178,71 @@ public class StringMatcher {
         return Collections.emptyList();
     }
 
-    private String changeCase(final String string) {
+    private String normaliseCaseIfRequired(final String string) {
         if (!caseSensitive) {
-            return string.toLowerCase(Locale.ROOT);
+            return normaliseCase(string);
         }
         return string;
+    }
+
+    private String normaliseCase(final String string) {
+        return string.toLowerCase(Locale.ROOT);
     }
 
     private List<StringMatchLocation> regex(final String string, final int limit) {
         if (string == null) {
             return Collections.emptyList();
         }
-        if (regexPattern != null) {
-            int flags = 0;
-            if (!caseSensitive) {
-                flags = flags | Pattern.CASE_INSENSITIVE;
+        // Compile the pattern on first use
+        if (pattern != null) {
+            if (regexPattern == null) {
+                int flags = 0;
+                if (!caseSensitive) {
+                    flags = flags | Pattern.CASE_INSENSITIVE;
+                }
+                regexPattern = Pattern.compile(pattern, flags);
             }
-            final Pattern regexPattern = Pattern.compile(pattern, flags);
+
             final Matcher matcher = regexPattern.matcher(string);
             final List<StringMatchLocation> list = new ArrayList<>();
             for (int i = 0; i < limit && matcher.find(); i++) {
                 list.add(new StringMatchLocation(matcher.start(), matcher.end() - matcher.start()));
             }
             return list;
+        } else {
+            return Collections.emptyList();
         }
-        return Collections.emptyList();
+    }
+
+    private List<StringMatchLocation> charsAnywhere(final String string, final int limit) {
+        if (string == null) {
+            return Collections.emptyList();
+        }
+        // Compile the pattern on first use
+        if (pattern != null) {
+            if (regexPattern == null) {
+                int flags = 0;
+                if (!caseSensitive) {
+                    flags = flags | Pattern.CASE_INSENSITIVE;
+                }
+                // 'abc' -> 'a.*b.*c'
+                final String effectivePattern = pattern.chars()
+                        .mapToObj(i -> (char) i)
+                        .map(chr -> Pattern.quote(String.valueOf(chr)))
+                        .collect(Collectors.joining(".*"));
+
+                regexPattern = Pattern.compile(".*" + effectivePattern + ".*", flags);
+            }
+
+            final Matcher matcher = regexPattern.matcher(string);
+            final List<StringMatchLocation> list = new ArrayList<>();
+            for (int i = 0; i < limit && matcher.find(); i++) {
+                list.add(new StringMatchLocation(matcher.start(), matcher.end() - matcher.start()));
+            }
+            return list;
+        } else {
+            return Collections.emptyList();
+        }
     }
 
     public MatchType getMatchType() {

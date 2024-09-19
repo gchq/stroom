@@ -1,8 +1,27 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.string;
 
 import stroom.test.common.TestUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import com.google.inject.TypeLiteral;
+import io.vavr.Tuple;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
@@ -15,6 +34,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 class TestStringUtil {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestStringUtil.class);
 
     @TestFactory
     Stream<DynamicTest> splitToLines_noTrim() {
@@ -223,4 +244,68 @@ class TestStringUtil {
                 .addCase("foo. ", "foo.")
                 .build();
     }
+
+    @TestFactory
+    Stream<DynamicTest> testConvertRowColToIndex() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(String.class, int.class, int.class)
+                .withOutputType(int.class)
+                .withTestFunction(testCase -> {
+                    final String str = testCase.getInput()._1;
+                    final int row = testCase.getInput()._2;
+                    final int col = testCase.getInput()._3;
+                    final int idx = StringUtil.convertRowColToIndex(str, row, col);
+                    char charAtRowCol = '?';
+                    try {
+                        charAtRowCol = str.charAt(idx);
+                    } catch (Exception e) {
+                        // swallow
+                    }
+                    LOGGER.debug("Char: '{}', row: {}, col: {}, idx: {}",
+                            charAtRowCol, row, col, idx);
+
+                    try {
+                        final Integer expectedIdx = testCase.getExpectedOutput();
+                        final char chrAtIdx = str.charAt(expectedIdx);
+                        LOGGER.debug("chrAtIdx: '{}' (code: {})",
+                                HexDumpUtil.asPrintableChar(chrAtIdx), (int) chrAtIdx);
+                    } catch (StringIndexOutOfBoundsException e) {
+                        LOGGER.debug("At end of string");
+                    }
+
+                    return idx;
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of("", 0, 0), 0)
+                .addCase(Tuple.of(" ", 0, 0), 0)
+                .addCase(Tuple.of("..", 0, 1), 1)
+                .addCase(Tuple.of("""
+                        Line 1
+                        Line 2""", 0, 0), 0)
+                .addCase(Tuple.of("""
+                        Line 1
+                        Line 2""", 0, 5), 5)
+                .addCase(Tuple.of("""
+                        Line 1
+                        Line 2""", 1, 0), 7)
+                .addCase(Tuple.of("""
+                        Line 1
+                        Line 2""", 1, 5), 12)
+                .addCase(Tuple.of("""
+                        Line 1
+                        """, 1, 0), 7)
+                .addThrowsCase(Tuple.of("", 1, 0), IllegalArgumentException.class)
+                .addThrowsCase(Tuple.of("", 0, 1), IllegalArgumentException.class)
+                .addThrowsCase(Tuple.of("""
+                        Line 1
+                        Line 2""", 0, 99), IllegalArgumentException.class)
+                .addThrowsCase(Tuple.of("""
+                        Line 1
+                        Line 2""", 1, 99), IllegalArgumentException.class)
+                .addThrowsCase(Tuple.of("""
+                        Line 1
+                        Line 2""", 2, 99), IllegalArgumentException.class)
+                .build();
+    }
+
 }

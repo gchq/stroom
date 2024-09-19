@@ -159,6 +159,11 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
             "This property controls the default value of a selection box, but the user select a different one.")
     private final HashAlgorithm defaultApiKeyHashAlgorithm;
 
+    @JsonProperty
+    @JsonPropertyDescription("The maximum number of code completion entries to show in the popup when using " +
+            "ctrl-space or live autocompletion.")
+    private final int maxEditorCompletionEntries;
+
     public UiConfig() {
         welcomeHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
         aboutHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
@@ -187,6 +192,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         referencePipelineSelectorIncludedTags = StandardExplorerTags.asTagNameSet(
                 StandardExplorerTags.REFERENCE_LOADER);
         defaultApiKeyHashAlgorithm = HashAlgorithm.SHA3_256;
+        maxEditorCompletionEntries = 1_000;
     }
 
     @JsonCreator
@@ -216,7 +222,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                     @JsonProperty("analyticUiDefaultConfig") final AnalyticUiDefaultConfig analyticUiDefaultConfig,
                     @JsonProperty("nestedIndexFieldsDelimiterPattern") final String nestedIndexFieldsDelimiterPattern,
                     @JsonProperty("referencePipelineSelectorIncludedTags") final Set<String> referencePipelineSelectorIncludedTags,
-                    @JsonProperty("defaultApiKeyHashAlgorithm") final HashAlgorithm defaultApiKeyHashAlgorithm) {
+                    @JsonProperty("defaultApiKeyHashAlgorithm") final HashAlgorithm defaultApiKeyHashAlgorithm,
+                    @JsonProperty("maxEditorCompletionEntries") final int maxEditorCompletionEntries) {
         this.welcomeHtml = welcomeHtml;
         this.aboutHtml = aboutHtml;
         this.maintenanceMessage = maintenanceMessage;
@@ -243,6 +250,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         this.nestedIndexFieldsDelimiterPattern = nestedIndexFieldsDelimiterPattern;
         this.referencePipelineSelectorIncludedTags = referencePipelineSelectorIncludedTags;
         this.defaultApiKeyHashAlgorithm = defaultApiKeyHashAlgorithm;
+        this.maxEditorCompletionEntries = maxEditorCompletionEntries;
     }
 
     public String getWelcomeHtml() {
@@ -409,6 +417,10 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         return defaultApiKeyHashAlgorithm;
     }
 
+    public int getMaxEditorCompletionEntries() {
+        return maxEditorCompletionEntries;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -442,7 +454,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 && Objects.equals(nodeMonitoring, uiConfig.nodeMonitoring)
                 && Objects.equals(nestedIndexFieldsDelimiterPattern, uiConfig.nestedIndexFieldsDelimiterPattern)
                 && Objects.equals(referencePipelineSelectorIncludedTags, uiConfig.referencePipelineSelectorIncludedTags)
-                && Objects.equals(defaultApiKeyHashAlgorithm, uiConfig.defaultApiKeyHashAlgorithm);
+                && Objects.equals(defaultApiKeyHashAlgorithm, uiConfig.defaultApiKeyHashAlgorithm)
+                && Objects.equals(maxEditorCompletionEntries, uiConfig.maxEditorCompletionEntries);
     }
 
     @Override
@@ -470,7 +483,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 analyticUiDefaultConfig,
                 nestedIndexFieldsDelimiterPattern,
                 referencePipelineSelectorIncludedTags,
-                defaultApiKeyHashAlgorithm);
+                defaultApiKeyHashAlgorithm,
+                maxEditorCompletionEntries);
     }
 
     @Override
@@ -500,6 +514,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 ", nestedIndexFieldsDelimiterPattern=" + nestedIndexFieldsDelimiterPattern +
                 ", referencePipelineSelectorIncludedTags=" + referencePipelineSelectorIncludedTags +
                 ", defaultApiKeyHashAlgorithm=" + defaultApiKeyHashAlgorithm +
+                ", maxEditorCompletionEntries=" + maxEditorCompletionEntries +
                 '}';
     }
 }

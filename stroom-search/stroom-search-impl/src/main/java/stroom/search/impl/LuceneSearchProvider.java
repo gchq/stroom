@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.search.impl;
@@ -114,8 +113,22 @@ public class LuceneSearchProvider implements SearchProvider {
     }
 
     @Override
+    public int getFieldCount(final DocRef docRef) {
+        return securityContext.useAsReadResult(() -> {
+            // Check for read permission.
+            if (!securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.READ)) {
+                // If there is no read permission then return no fields.
+                return 0;
+            } else {
+                return indexFieldService.getFieldCount(docRef);
+            }
+        });
+    }
+
+    @Override
     public Optional<String> fetchDocumentation(final DocRef docRef) {
-        return Optional.ofNullable(luceneIndexDocCache.get(docRef)).map(LuceneIndexDoc::getDescription);
+        return Optional.ofNullable(luceneIndexDocCache.get(docRef))
+                .map(LuceneIndexDoc::getDescription);
     }
 
     @Override

@@ -1,20 +1,33 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.shared;
 
 import stroom.docref.DocRef;
-import stroom.docref.StringMatch;
-import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.CriteriaFieldSort;
-import stroom.util.shared.PageRequest;
+import stroom.util.shared.GwtNullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.List;
+import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
-public class CompletionsRequest extends BaseCriteria {
+public class CompletionsRequest {
 
     @JsonProperty
     private final DocRef dataSourceRef;
@@ -25,26 +38,32 @@ public class CompletionsRequest extends BaseCriteria {
     @JsonProperty
     private final int column;
     @JsonProperty
-    private final StringMatch stringMatch;
+    private final String pattern;
     @JsonProperty
-    private final boolean showAll;
+    private final Set<QueryHelpType> includedTypes;
+    @JsonProperty
+    private final Integer maxCompletions;
 
+
+    /**
+     * @param includedTypes  Set to false to exclude datasources and structure items.
+     * @param maxCompletions
+     */
     @JsonCreator
-    public CompletionsRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                              @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                              @JsonProperty("dataSourceRef") final DocRef dataSourceRef,
+    public CompletionsRequest(@JsonProperty("dataSourceRef") final DocRef dataSourceRef,
                               @JsonProperty("text") final String text,
                               @JsonProperty("row") final int row,
                               @JsonProperty("column") final int column,
-                              @JsonProperty("stringMatch") final StringMatch stringMatch,
-                              @JsonProperty("showAll") final boolean showAll) {
-        super(pageRequest, sortList);
+                              @JsonProperty("pattern") final String pattern,
+                              @JsonProperty("includedTypes") final Set<QueryHelpType> includedTypes,
+                              @JsonProperty("maxCompletions") final Integer maxCompletions) {
         this.dataSourceRef = dataSourceRef;
         this.text = text;
         this.row = row;
         this.column = column;
-        this.stringMatch = stringMatch;
-        this.showAll = showAll;
+        this.pattern = pattern;
+        this.includedTypes = includedTypes;
+        this.maxCompletions = maxCompletions;
     }
 
     public DocRef getDataSourceRef() {
@@ -63,11 +82,36 @@ public class CompletionsRequest extends BaseCriteria {
         return column;
     }
 
-    public StringMatch getStringMatch() {
-        return stringMatch;
+    public String getPattern() {
+        return pattern;
     }
 
-    public boolean isShowAll() {
-        return showAll;
+    public Set<QueryHelpType> getIncludedTypes() {
+        return includedTypes;
+    }
+
+    public Integer getMaxCompletions() {
+        return maxCompletions;
+    }
+
+    public boolean isTypeIncluded(final QueryHelpType queryHelpType) {
+        if (queryHelpType == null || GwtNullSafe.isEmptyCollection(includedTypes)) {
+            return false;
+        } else {
+            return includedTypes.contains(queryHelpType);
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "CompletionsRequest{" +
+                "dataSourceRef=" + dataSourceRef +
+                ", text='" + text + '\'' +
+                ", row=" + row +
+                ", column=" + column +
+                ", pattern='" + pattern + '\'' +
+                ", includedTypes=" + includedTypes +
+                ", maxCompletions=" + maxCompletions +
+                '}';
     }
 }
