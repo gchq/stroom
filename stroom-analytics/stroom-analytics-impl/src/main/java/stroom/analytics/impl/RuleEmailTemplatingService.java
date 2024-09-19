@@ -13,9 +13,11 @@ import com.hubspot.jinjava.interpret.TemplateError;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class RuleEmailTemplatingService {
@@ -121,15 +123,29 @@ public class RuleEmailTemplatingService {
         NullSafe.consume(detection.getDefunct(), val -> context.put("defunct", val));
 
         NullSafe.consume(detection.getValues(), values -> {
-            // Collectors.toMap() doesn't like null values, shame
-            final Map<String, String> map = new HashMap<>(values.size());
-            values.stream()
-                    .filter(Objects::nonNull)
-                    .filter(detectionValue -> detectionValue.getName() != null)
-                    .forEach(detectionValue ->
-                            map.put(detectionValue.getName(), detectionValue.getValue()));
-            if (!map.isEmpty()) {
-                context.put("values", map);
+            if (!values.isEmpty()) {
+                // Collectors.toMap() doesn't like null values, shame
+                final Map<String, String> map = new HashMap<>(values.size());
+                final Set<String> dupKeys = new HashSet<>();
+                values.stream()
+                        .filter(Objects::nonNull)
+                        .filter(detectionValue -> detectionValue.getName() != null)
+                        .forEach(detectionValue -> {
+                            final String key = detectionValue.getName();
+                            if (map.containsKey(key)) {
+                                dupKeys.add(key);
+                            } else {
+                                map.put(detectionValue.getName(), detectionValue.getValue());
+                            }
+                        });
+                if (!map.isEmpty()) {
+                    context.put("values", map);
+                }
+                if (!dupKeys.isEmpty()) {
+                    LOGGER.warn("Duplicate names {} found in detection values for detector '{}' ({}). " +
+                                    "The first value will be used in each case.",
+                            dupKeys, detection.getDetectorName(), detection.getDetectorUuid());
+                }
             }
         });
         NullSafe.consume(

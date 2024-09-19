@@ -43,13 +43,14 @@ class TestRuleEmailTemplatingService {
     void renderDefaultTemplate() {
         final RuleEmailTemplatingService templatingService = new RuleEmailTemplatingService();
         final Detection detection = getExampleDetection(true, true);
-        @SuppressWarnings("checkstyle:LineLength") final String template = new AnalyticUiDefaultConfig()
-                .getDefaultBodyTemplate();
+        final String template = new AnalyticUiDefaultConfig().getDefaultBodyTemplate();
 
         final String output = templatingService.renderTemplate(detection, template);
 
         assertThat(output)
-                .contains("name-4")
+                .contains("name_4")
+                .contains("value_C")
+                .doesNotContain("value_C2") // The dup one
                 .contains(detection.getDetectorName());
     }
 
@@ -57,13 +58,39 @@ class TestRuleEmailTemplatingService {
     void renderDefaultTemplate_noValues_noLinkedEvents() {
         final RuleEmailTemplatingService templatingService = new RuleEmailTemplatingService();
         final Detection detection = getExampleDetection(false, false);
-        @SuppressWarnings("checkstyle:LineLength") final String template = new AnalyticUiDefaultConfig()
-                .getDefaultBodyTemplate();
+        final String template = new AnalyticUiDefaultConfig().getDefaultBodyTemplate();
 
         final String output = templatingService.renderTemplate(detection, template);
         assertThat(output)
-                .doesNotContain("name-4")
+                .doesNotContain("name_4")
                 .contains(detection.getDetectorName());
+    }
+
+    @Test
+    void variableNames() {
+        final RuleEmailTemplatingService templatingService = new RuleEmailTemplatingService();
+        final String template = """
+                    {{ values['key-1'] }}
+                    {{ values['key_2'] }}
+                    {{ values['key/3'] }}
+                    {{ values['key.4'] }}
+                """;
+
+        final Detection detection = Detection.builder()
+                .withDetectorName("MyName")
+                .addValue("key-1", "val_1")
+                .addValue("key_2", "val_2")
+                .addValue("key/3", "val_3")
+                .addValue("key.4", "val_4")
+                .build();
+
+        final String output = templatingService.renderTemplate(detection, template);
+
+        assertThat(output)
+                .contains("val_1")
+                .contains("val_2")
+                .contains("val_3")
+                .contains("val_4");
     }
 
     private Detection getExampleDetection(final boolean includeValues,
@@ -90,10 +117,11 @@ class TestRuleEmailTemplatingService {
 
         if (includeValues) {
             builder
-                    .addValue("name-1", "value-A")
-                    .addValue("name-2", "value-B")
-                    .addValue("name-3", "value-C")
-                    .addValue("name-4", null);
+                    .addValue("name_1", "value_A")
+                    .addValue("name_2", "value_B")
+                    .addValue("name_3", "value_C")
+                    .addValue("name_4", null)
+                    .addValue("name_3", "value_C2");  // Dup
         }
         if (includeLinkedEvents) {
             builder
