@@ -32,15 +32,15 @@ public class AnalyticUiDefaultConfig extends AbstractConfig implements IsStroomC
     @JsonProperty
     @JsonPropertyDescription(
             "The default email subject template to use for analytic rule emails. The template uses " +
-            "a sub-set of the Jinja templating language. If this property is not set, the user will not be presented " +
-            "with an initial subject template value.")
+                    "a sub-set of the Jinja templating language. If this property is not set, the user will not be presented " +
+                    "with an initial subject template value.")
     private final String defaultSubjectTemplate;
 
     @JsonProperty
     @JsonPropertyDescription(
             "The default email body template to use for analytic rule emails. The template uses " +
-            "a sub-set of the Jinja templating language. If this property is not set, the user will not be presented " +
-            "with an initial body template value.")
+                    "a sub-set of the Jinja templating language. If this property is not set, the user will not be presented " +
+                    "with an initial body template value.")
     private final String defaultBodyTemplate;
 
     @SuppressWarnings("checkstyle:LineLength")
@@ -52,34 +52,33 @@ public class AnalyticUiDefaultConfig extends AbstractConfig implements IsStroomC
         //noinspection TextBlockMigration // GWT no likey textblock, grrr!
         defaultBodyTemplate =
                 "<!DOCTYPE html>\n" +
-                "<html lang=\"en\">\n" +
-                "<meta charset=\"UTF-8\" />\n" +
-                "<title>Detector '{{ detectorName | escape }}' Alert</title>\n" +
-                "<body>\n" +
-                "  <p>Detector <em>{{ detectorName | escape }}</em> " +
-                "{{ detectorVersion | escape }} fired at {{ detectTime | escape }}</p>\n" +
-                "\n" +
-                "  {%- if (values | length) > 0 -%}\n" +
-                "  <p>Detail: {{ headline | escape }}</p>\n" +
-                "  <ul>\n" +
-                "    {% for key, val in values | dictsort -%}\n" +
-                "      <li><strong>{{ key | escape }}</strong>: {{ val | escape }}</li>\n" +
-                "    {% endfor %}\n" +
-                "  </ul>\n" +
-                "  {% endif -%}\n" +
-                "\n" +
-                "  {%- if (linkedEvents | length) > 0 -%}\n" +
-                "  <p>Linked Events:</p>\n" +
-                "  <ul>\n" +
-                "    {% for linkedEvent in linkedEvents -%}\n" +
-                "      <li>Environment: {{ linkedEvent.stroom | escape }}, " +
-                "Stream ID: {{ linkedEvent.streamId | escape }}, " +
-                "Event ID: {{ linkedEvent.eventId | escape }}</li>\n" +
-                "    {% endfor %}\n" +
-                "  </ul>\n" +
-                "  {% endif %}\n" +
-                "</body>\n" +
-                "{% endif %}\n";
+                        "<html lang=\"en\">\n" +
+                        "<meta charset=\"UTF-8\" />\n" +
+                        "<title>Detector '{{ detectorName | escape }}' Alert</title>\n" +
+                        "<body>\n" +
+                        "  <p>Detector <em>{{ detectorName | escape }}</em> " +
+                        "{{ detectorVersion | escape }} fired at {{ detectTime | escape }}</p>\n" +
+                        "\n" +
+                        "  {%- if (values | length) > 0 -%}\n" +
+                        "  <p>Detail: {{ headline | escape }}</p>\n" +
+                        "  <ul>\n" +
+                        "    {% for key, val in values | dictsort -%}\n" +
+                        "      <li><strong>{{ key | escape }}</strong>: {{ val | escape }}</li>\n" +
+                        "    {% endfor %}\n" +
+                        "  </ul>\n" +
+                        "  {% endif -%}\n" +
+                        "\n" +
+                        "  {%- if (linkedEvents | length) > 0 -%}\n" +
+                        "  <p>Linked Events:</p>\n" +
+                        "  <ul>\n" +
+                        "    {% for linkedEvent in linkedEvents -%}\n" +
+                        "      <li>Environment: {{ linkedEvent.stroom | escape }}, " +
+                        "Stream ID: {{ linkedEvent.streamId | escape }}, " +
+                        "Event ID: {{ linkedEvent.eventId | escape }}</li>\n" +
+                        "    {% endfor %}\n" +
+                        "  </ul>\n" +
+                        "  {% endif %}\n" +
+                        "</body>\n";
     }
 
     @JsonCreator
@@ -119,12 +118,12 @@ public class AnalyticUiDefaultConfig extends AbstractConfig implements IsStroomC
     @Override
     public String toString() {
         return "AnalyticUiDefaultConfig{" +
-               "defaultNode='" + defaultNode + '\'' +
-               ", defaultErrorFeed=" + defaultErrorFeed +
-               ", defaultDestinationFeed=" + defaultDestinationFeed +
-               ", defaultSubjectTemplate='" + defaultSubjectTemplate + '\'' +
-               ", defaultBodyTemplate='" + defaultBodyTemplate + '\'' +
-               '}';
+                "defaultNode='" + defaultNode + '\'' +
+                ", defaultErrorFeed=" + defaultErrorFeed +
+                ", defaultDestinationFeed=" + defaultDestinationFeed +
+                ", defaultSubjectTemplate='" + defaultSubjectTemplate + '\'' +
+                ", defaultBodyTemplate='" + defaultBodyTemplate + '\'' +
+                '}';
     }
 
     @Override
@@ -137,10 +136,10 @@ public class AnalyticUiDefaultConfig extends AbstractConfig implements IsStroomC
         }
         final AnalyticUiDefaultConfig that = (AnalyticUiDefaultConfig) object;
         return Objects.equals(defaultNode, that.defaultNode)
-               && Objects.equals(defaultErrorFeed, that.defaultErrorFeed)
-               && Objects.equals(defaultDestinationFeed, that.defaultDestinationFeed)
-               && Objects.equals(defaultSubjectTemplate, that.defaultSubjectTemplate)
-               && Objects.equals(defaultBodyTemplate, that.defaultBodyTemplate);
+                && Objects.equals(defaultErrorFeed, that.defaultErrorFeed)
+                && Objects.equals(defaultDestinationFeed, that.defaultDestinationFeed)
+                && Objects.equals(defaultSubjectTemplate, that.defaultSubjectTemplate)
+                && Objects.equals(defaultBodyTemplate, that.defaultBodyTemplate);
     }
 
     @Override

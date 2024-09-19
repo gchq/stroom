@@ -50,6 +50,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                 .addValue("name-1", "value-A")
                 .addValue("name-2", "value-B")
                 .addValue("name-3", "value-C")
+                .addValue("name-3", null)
                 .addLinkedEvents(new DetectionLinkedEvent(stroom, 1001L, 1L))
                 .addLinkedEvents(new DetectionLinkedEvent(stroom, 1001L, 2L))
                 .addLinkedEvents(new DetectionLinkedEvent(stroom, 2001L, 1L))
