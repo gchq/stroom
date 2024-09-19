@@ -3,6 +3,7 @@ package stroom.config.app;
 import stroom.activity.impl.db.ActivityConfig;
 import stroom.analytics.impl.AnalyticsConfig;
 import stroom.annotation.impl.AnnotationConfig;
+import stroom.aws.s3.impl.S3Config;
 import stroom.bytebuffer.ByteBufferPoolConfig;
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
@@ -94,6 +95,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_PUBLIC_URI = "publicUri";
     public static final String PROP_NAME_QUERY_HISTORY = "queryHistory";
     public static final String PROP_NAME_RECEIVE = "receive";
+    public static final String PROP_NAME_S3 = "s3";
     public static final String PROP_NAME_SEARCH = "search";
     public static final String PROP_NAME_SECURITY = "security";
     public static final String PROP_NAME_SERVICE_DISCOVERY = "serviceDiscovery";
@@ -138,6 +140,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final PublicUriConfig publicUri;
     private final IndexFieldDbConfig queryDataSourceConfig;
     private final ReceiveDataConfig receiveDataConfig;
+    private final S3Config s3Config;
     private final SearchConfig searchConfig;
     private final SecurityConfig securityConfig;
     private final ServiceDiscoveryConfig serviceDiscoveryConfig;
@@ -187,6 +190,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                 new PublicUriConfig(),
                 new IndexFieldDbConfig(),
                 new ReceiveDataConfig(),
+                new S3Config(),
                 new SearchConfig(),
                 new SecurityConfig(),
                 new ServiceDiscoveryConfig(),
@@ -235,6 +239,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_PUBLIC_URI) final PublicUriConfig publicUri,
                      @JsonProperty(PROP_NAME_QUERY_DATASOURCE) final IndexFieldDbConfig queryDataSourceConfig,
                      @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
+                     @JsonProperty(PROP_NAME_S3) final S3Config s3Config,
                      @JsonProperty(PROP_NAME_SEARCH) final SearchConfig searchConfig,
                      @JsonProperty(PROP_NAME_SECURITY) final SecurityConfig securityConfig,
                      @JsonProperty(PROP_NAME_SERVICE_DISCOVERY) final ServiceDiscoveryConfig serviceDiscoveryConfig,
@@ -279,6 +284,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.publicUri = publicUri;
         this.queryDataSourceConfig = queryDataSourceConfig;
         this.receiveDataConfig = receiveDataConfig;
+        this.s3Config = s3Config;
         this.searchConfig = searchConfig;
         this.securityConfig = securityConfig;
         this.serviceDiscoveryConfig = serviceDiscoveryConfig;
@@ -481,6 +487,12 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty(PROP_NAME_LOGGING)
     public LoggingConfig getRequestLoggingConfig() {
         return loggingConfig;
+    }
+
+    @JsonProperty(PROP_NAME_S3)
+    @JsonPropertyDescription("Default configuration settings for S3")
+    public S3Config getS3Config() {
+        return s3Config;
     }
 
     @JsonProperty(PROP_NAME_SEARCH)

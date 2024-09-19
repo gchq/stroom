@@ -711,6 +711,16 @@ appConfig:
     - "Records"
     receiptPolicyUuid: null
     tokenAuthenticationEnabled: false
+  s3:
+    s3ConfigDocCache:
+      expireAfterAccess: "PT10S"
+      expireAfterWrite: null
+      maximumSize: 1000
+      refreshAfterWrite: null
+    skeletonConfigContent: "{\n  \"credentialsProviderType\" : \"DEFAULT\",\n  \"\
+      region\" : \"eu-west-2\",\n  \"bucketName\" : \"XXXX-eu-west-2\",\n  \"keyPattern\"\
+      \ : \"${type}/${year}/${month}/${day}/${idPath}/${feed}/${idPadded}.zip\"\n\
+      }\n"
   search:
     extraction:
       extractionDelayMs: 100
