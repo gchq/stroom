@@ -1110,7 +1110,7 @@ appConfig:
         \  <ul>\n    {% for linkedEvent in linkedEvents -%}\n      <li>Environment:\
         \ {{ linkedEvent.stroom | escape }}, Stream ID: {{ linkedEvent.streamId |\
         \ escape }}, Event ID: {{ linkedEvent.eventId | escape }}</li>\n    {% endfor\
-        \ %}\n  </ul>\n  {% endif %}\n</body>\n{% endif %}\n"
+        \ %}\n  </ul>\n  {% endif %}\n</body>\n"
       defaultSubjectTemplate: "Detector '{{ detectorName | escape }}' Alert"
     defaultMaxResults: "1000000,100,10,1"
     helpSubPathDocumentation: "/user-guide/content/documentation/"
