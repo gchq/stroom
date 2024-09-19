@@ -13,6 +13,12 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.4.16] - 2024-09-19
+
+* Issue **#4412** : Fix `/` key not working in quick filter text input fields.
+
+* Issue **#4463** : Fix NPE with analytic rule email templating.
+
 * Issue **#4437** : Fix proxy not handling input files larger than 4 GiB.
 
 * Issue **#4069** : Reduce proxy memory usage.
@@ -737,7 +743,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.4.15...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.4.16...HEAD
+[v7.4.16]: https://github.com/gchq/stroom/compare/v7.4.15...v7.4.16
 [v7.4.15]: https://github.com/gchq/stroom/compare/v7.4.14...v7.4.15
 [v7.4.14]: https://github.com/gchq/stroom/compare/v7.4.13...v7.4.14
 [v7.4.13]: https://github.com/gchq/stroom/compare/v7.4.12...v7.4.13
