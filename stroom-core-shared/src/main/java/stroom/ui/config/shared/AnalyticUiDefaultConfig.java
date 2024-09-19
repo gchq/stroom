@@ -32,15 +32,15 @@ public class AnalyticUiDefaultConfig extends AbstractConfig implements IsStroomC
     @JsonProperty
     @JsonPropertyDescription(
             "The default email subject template to use for analytic rule emails. The template uses " +
-                    "a sub-set of the Jinja templating language. If this property is not set, the user will not be presented " +
-                    "with an initial subject template value.")
+                    "a sub-set of the Jinja templating language. If this property is not set, the user " +
+                    "will not be presented with an initial subject template value.")
     private final String defaultSubjectTemplate;
 
     @JsonProperty
     @JsonPropertyDescription(
             "The default email body template to use for analytic rule emails. The template uses " +
-                    "a sub-set of the Jinja templating language. If this property is not set, the user will not be presented " +
-                    "with an initial body template value.")
+                    "a sub-set of the Jinja templating language. If this property is not set, the user will " +
+                    "not be presented with an initial body template value.")
     private final String defaultBodyTemplate;
 
     @SuppressWarnings("checkstyle:LineLength")
