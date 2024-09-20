@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,9 @@ import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.ListInputComponentSettings;
 import stroom.dictionary.shared.WordListResource;
 import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.Param;
+import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -38,6 +40,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ListInputPresenter
         extends AbstractComponentPresenter<ListInputView>
@@ -74,10 +77,10 @@ public class ListInputPresenter
     @Override
     public List<Param> getParams() {
         final List<Param> list = new ArrayList<>();
-        final String key = getListInputSettings().getKey();
-        final String value = getView().getSelectedValue();
-        if (key != null && key.trim().length() > 0 && value != null && value.trim().length() > 0) {
-            final Param param = new Param(key.trim(), value.trim());
+        final String key = GwtNullSafe.trim(getListInputSettings().getKey());
+        final String value = GwtNullSafe.trim(getView().getSelectedValue());
+        if (!key.isEmpty() && !value.isEmpty()) {
+            final Param param = new Param(key, value);
             list.add(param);
         }
         return list;
@@ -101,9 +104,20 @@ public class ListInputPresenter
             restFactory
                     .create(WORD_LIST_RESOURCE)
                     .method(res -> res.getWords(settings.getDictionary().getUuid()))
-                    .onSuccess(words -> {
-                        if (words != null) {
-                            getView().setValues(words);
+                    .onSuccess(wordList -> {
+                        if (wordList != null && !wordList.isEmpty()) {
+                            final List<String> values = wordList.getSortedList()
+                                    .stream()
+                                    .map(word -> {
+                                        final String dictName = wordList.getSource(word)
+                                                .map(DocRef::getName)
+                                                .orElse(null);
+                                        return dictName != null
+                                                ? word.getWord() + " - " + dictName
+                                                : word.getWord();
+                                    })
+                                    .collect(Collectors.toList());
+                            getView().setValues(values);
                             getView().setSelectedValue(settings.getValue());
                             getView().setAllowTextEntry(settings.isAllowTextEntry());
                         }

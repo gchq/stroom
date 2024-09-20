@@ -1,0 +1,232 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.dictionary.shared;
+
+import stroom.docref.DocRef;
+
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestWordList {
+
+    @Test
+    void testAdd_deDup() {
+
+        final DocRef petsRef = DictionaryDoc.buildDocRef()
+                .uuid("200")
+                .name("Pets")
+                .build();
+        final DocRef farmAnimalsRef = DictionaryDoc.buildDocRef()
+                .uuid("100")
+                .name("Farm Animals")
+                .build();
+        final DocRef wildAnimalsRef = DictionaryDoc.buildDocRef()
+                .uuid("300")
+                .name("Wild Animals")
+                .build();
+
+        final WordList wordList = WordList.builder(true)
+                .addWord("cat", petsRef)
+                .addWord("dog", petsRef)
+                .addWord("hamster", petsRef)
+                .addWord("pig", petsRef)
+                .addWord("cow", farmAnimalsRef)
+                .addWord("goat", farmAnimalsRef)
+                .addWord("pig", farmAnimalsRef)
+                .addWord("pig", wildAnimalsRef)
+                .build();
+
+        assertThat(wordList.isEmpty())
+                .isFalse();
+        assertThat(wordList.size())
+                .isEqualTo(6);
+        assertThat(wordList.sourceCount())
+                .isEqualTo(2);
+        assertThat(wordList.getWordList())
+                .containsExactlyElementsOf(List.of(
+                        new Word("cat", petsRef.getUuid()),
+                        new Word("dog", petsRef.getUuid()),
+                        new Word("hamster", petsRef.getUuid()),
+                        new Word("pig", petsRef.getUuid()),
+                        new Word("cow", farmAnimalsRef.getUuid()),
+                        new Word("goat", farmAnimalsRef.getUuid())));
+        assertThat(wordList.getSortedList())
+                .containsExactlyElementsOf(List.of(
+                        new Word("cat", petsRef.getUuid()),
+                        new Word("cow", farmAnimalsRef.getUuid()),
+                        new Word("dog", petsRef.getUuid()),
+                        new Word("goat", farmAnimalsRef.getUuid()),
+                        new Word("hamster", petsRef.getUuid()),
+                        new Word("pig", petsRef.getUuid())));
+
+        assertThat(wordList.getSource(new Word("cat", petsRef.getUuid())))
+                .hasValue(petsRef);
+        assertThat(wordList.getSource(new Word("cow", farmAnimalsRef.getUuid())))
+                .hasValue(farmAnimalsRef);
+
+        assertThat(wordList.asString())
+                .isEqualTo("""
+                        cat
+                        dog
+                        hamster
+                        pig
+                        cow
+                        goat""");
+        assertThat(wordList.asWordArray())
+                .containsExactly(
+                        "cat",
+                        "dog",
+                        "hamster",
+                        "pig",
+                        "cow",
+                        "goat");
+        assertThat(wordList.getSources())
+                .containsExactlyInAnyOrder(petsRef, farmAnimalsRef);
+    }
+
+    @Test
+    void testAdd_noDeDup() {
+
+        final DocRef petsRef = DictionaryDoc.buildDocRef()
+                .uuid("200")
+                .name("Pets")
+                .build();
+        final DocRef farmAnimalsRef = DictionaryDoc.buildDocRef()
+                .uuid("100")
+                .name("Farm Animals")
+                .build();
+        final DocRef wildAnimalsRef = DictionaryDoc.buildDocRef()
+                .uuid("300")
+                .name("Wild Animals")
+                .build();
+
+        final WordList wordList = WordList.builder(false)
+                .addWord("cat", petsRef)
+                .addWord("dog", petsRef)
+                .addWord("hamster", petsRef)
+                .addWord("pig", petsRef)
+                .addWord("cow", farmAnimalsRef)
+                .addWord("goat", farmAnimalsRef)
+                .addWord("pig", farmAnimalsRef)
+                .addWord("pig", wildAnimalsRef)
+                .build();
+
+        assertThat(wordList.isEmpty())
+                .isFalse();
+        assertThat(wordList.size())
+                .isEqualTo(8);
+        assertThat(wordList.sourceCount())
+                .isEqualTo(3);
+        assertThat(wordList.getWordList())
+                .containsExactlyElementsOf(List.of(
+                        new Word("cat", petsRef.getUuid()),
+                        new Word("dog", petsRef.getUuid()),
+                        new Word("hamster", petsRef.getUuid()),
+                        new Word("pig", petsRef.getUuid()),
+                        new Word("cow", farmAnimalsRef.getUuid()),
+                        new Word("goat", farmAnimalsRef.getUuid()),
+                        new Word("pig", farmAnimalsRef.getUuid()),
+                        new Word("pig", wildAnimalsRef.getUuid())));
+        assertThat(wordList.getSortedList())
+                .containsExactlyElementsOf(List.of(
+                        new Word("cat", petsRef.getUuid()),
+                        new Word("cow", farmAnimalsRef.getUuid()),
+                        new Word("dog", petsRef.getUuid()),
+                        new Word("goat", farmAnimalsRef.getUuid()),
+                        new Word("hamster", petsRef.getUuid()),
+                        new Word("pig", farmAnimalsRef.getUuid()),
+                        new Word("pig", petsRef.getUuid()),
+                        new Word("pig", wildAnimalsRef.getUuid())));
+
+        assertThat(wordList.getSource(new Word("cat", petsRef.getUuid())))
+                .hasValue(petsRef);
+        assertThat(wordList.getSource(new Word("cow", farmAnimalsRef.getUuid())))
+                .hasValue(farmAnimalsRef);
+
+        assertThat(wordList.asString())
+                .isEqualTo("""
+                        cat
+                        dog
+                        hamster
+                        pig
+                        cow
+                        goat
+                        pig
+                        pig""");
+        assertThat(wordList.asWordArray())
+                .containsExactly(
+                        "cat",
+                        "dog",
+                        "hamster",
+                        "pig",
+                        "cow",
+                        "goat",
+                        "pig",
+                        "pig");
+        assertThat(wordList.getSources())
+                .containsExactlyInAnyOrder(petsRef, farmAnimalsRef, wildAnimalsRef);
+    }
+
+    @Test
+    void testGetSource() {
+
+        final DocRef petsRef = DictionaryDoc.buildDocRef()
+                .uuid("200")
+                .name("Pets")
+                .build();
+        final DocRef farmAnimalsRef = DictionaryDoc.buildDocRef()
+                .uuid("100")
+                .name("Farm Animals")
+                .build();
+
+        final WordList wordList = WordList.builder(false)
+                .addWord("cat", petsRef)
+                .addWord("dog", petsRef)
+                .addWord("pig", petsRef)
+                .build();
+
+        assertThat(wordList.getSource(new Word("pig", petsRef.getUuid())))
+                .hasValue(petsRef);
+        assertThat(wordList.getSource(new Word("pig", farmAnimalsRef.getUuid())))
+                .isEmpty();
+    }
+
+    @Test
+    void testNullsAndBlanks() {
+        final DocRef petsRef = DictionaryDoc.buildDocRef()
+                .uuid("200")
+                .name("Pets")
+                .build();
+        final WordList wordList = WordList.builder(false)
+                .addWord("cat", petsRef)
+                .addWord(null, petsRef)
+                .addWord("", petsRef)
+                .addWord(" ", petsRef)
+                .addWord("\t ", petsRef)
+                .build();
+
+        assertThat(wordList.getWordList())
+                .extracting(Word::getWord)
+                .containsExactly(
+                        "cat");
+        assertThat(wordList.size())
+                .isEqualTo(1);
+    }
+}

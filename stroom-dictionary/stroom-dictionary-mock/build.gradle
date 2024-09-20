@@ -1,6 +1,7 @@
 ext.moduleName = 'stroom.dictionary.mock'
 
 dependencies {
+    implementation project(':stroom-core-shared')
     implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-docref')
 

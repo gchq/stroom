@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2017-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,6 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
 
-import java.util.List;
-
 @Tag(name = "Word List (v1)")
 @Path("/wordList" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
@@ -42,5 +40,5 @@ public interface WordListResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Fetch a list of words from a dictionary by its UUID",
             operationId = "getWords")
-    List<String> getWords(@PathParam("uuid") String uuid);
+    WordList getWords(@PathParam("uuid") String uuid);
 }
