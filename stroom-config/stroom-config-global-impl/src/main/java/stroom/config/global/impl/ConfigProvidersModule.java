@@ -54,6 +54,15 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.aws.s3.impl.S3Config getS3Config(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.aws.s3.impl.S3Config.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.bytebuffer.ByteBufferPoolConfig getByteBufferPoolConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(

@@ -24,6 +24,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class BasicContentIndex implements ContentIndex {
 
+    private static final int MAX_HIGHLIGHTS = 100;
+
     private final Map<String, ContentIndexable> indexableMap;
 
     @Inject
@@ -72,7 +74,7 @@ public class BasicContentIndex implements ContentIndex {
             if (map != null) {
                 final String data = map.get(request.getExtension());
                 if (data != null) {
-                    final List<StringMatchLocation> matchList = highlighter.getHighlights(null, data, 100);
+                    final List<StringMatchLocation> matchList = highlighter.getHighlights(data, MAX_HIGHLIGHTS);
                     if (!matchList.isEmpty()) {
                         return new DocContentHighlights(request.getDocRef(), data, matchList);
                     }

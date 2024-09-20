@@ -16,6 +16,7 @@
 
 package stroom.data.store.impl.fs;
 
+import stroom.aws.s3.impl.S3FileExtensions;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;

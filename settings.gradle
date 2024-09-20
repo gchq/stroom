@@ -32,12 +32,15 @@ include 'stroom-analytics:stroom-analytics-rule-impl'
 include 'stroom-analytics:stroom-analytics-impl-db'
 include 'stroom-analytics:stroom-analytics-impl-db-jooq'
 
-// Annotations project.
+// Annotations
 include 'stroom-annotation:stroom-annotation-api'
 include 'stroom-annotation:stroom-annotation-impl'
 include 'stroom-annotation:stroom-annotation-impl-db'
 include 'stroom-annotation:stroom-annotation-impl-db-jooq'
 include 'stroom-annotation:stroom-annotation-pipeline'
+
+// AWS
+include 'stroom-aws:stroom-aws-s3-impl'
 
 // App.
 include 'stroom-app'
