@@ -23,7 +23,7 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.RefreshDocumentEvent;
-import stroom.explorer.client.event.ExplorerTaskListener;
+import stroom.explorer.client.event.ExplorerTaskMonitorFactory;
 import stroom.explorer.client.event.ShowEditNodeTagsDialogEvent;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsProxy;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsView;
@@ -105,7 +105,7 @@ public class ExplorerNodeEditTagsPresenter
                                         forceReveal();
                                     })
                                     .onFailure(this::handleFailure)
-                                    .taskListener(new ExplorerTaskListener(this))
+                                    .taskMonitorFactory(new ExplorerTaskMonitorFactory(this))
                                     .exec();
                         } else {
                             // Adding to multiple so don't need to know what tags the nodes have
@@ -114,7 +114,7 @@ public class ExplorerNodeEditTagsPresenter
                         }
                     })
                     .onFailure(this::handleFailure)
-                    .taskListener(new ExplorerTaskListener(this))
+                    .taskMonitorFactory(new ExplorerTaskMonitorFactory(this))
                     .exec();
 
         }
@@ -184,7 +184,7 @@ public class ExplorerNodeEditTagsPresenter
                     event.hide();
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskListener(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 
@@ -203,7 +203,7 @@ public class ExplorerNodeEditTagsPresenter
                     event.hide();
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskListener(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 

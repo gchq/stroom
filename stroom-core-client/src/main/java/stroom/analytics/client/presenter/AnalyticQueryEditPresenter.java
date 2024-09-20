@@ -23,7 +23,7 @@ import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.query.client.presenter.QueryEditPresenter;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
@@ -81,8 +81,8 @@ public class AnalyticQueryEditPresenter
     }
 
     @Override
-    public void setTaskListener(final TaskListener taskListener) {
-        super.setTaskListener(taskListener);
-        queryEditPresenter.setTaskListener(taskListener);
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        super.setTaskMonitorFactory(taskMonitorFactory);
+        queryEditPresenter.setTaskMonitorFactory(taskMonitorFactory);
     }
 }

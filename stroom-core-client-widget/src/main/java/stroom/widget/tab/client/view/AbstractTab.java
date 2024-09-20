@@ -16,12 +16,14 @@
 
 package stroom.widget.tab.client.view;
 
-import stroom.task.client.TaskListener;
+import stroom.task.client.Task;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
 
-public abstract class AbstractTab extends Widget implements TaskListener {
+public abstract class AbstractTab extends Widget implements TaskMonitorFactory {
 
     private boolean hidden;
 
@@ -52,12 +54,17 @@ public abstract class AbstractTab extends Widget implements TaskListener {
     }
 
     @Override
-    public void incrementTaskCount() {
+    public TaskMonitor createTaskMonitor() {
+        return new TaskMonitor() {
+            @Override
+            public void onStart(final Task task) {
 
-    }
+            }
 
-    @Override
-    public void decrementTaskCount() {
+            @Override
+            public void onEnd(final Task task) {
 
+            }
+        };
     }
 }

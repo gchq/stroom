@@ -19,6 +19,7 @@ package stroom.data.store.impl.fs;
 import stroom.util.io.FileUtil;
 
 import jakarta.validation.constraints.NotNull;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -29,7 +30,6 @@ import java.nio.LongBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.zip.GZIPInputStream;
 
 /**
  * Class used to check a Block GZIP file.
@@ -136,11 +136,12 @@ class BlockGZIPFileVerifier {
             System.out.println("Checking Block " + i + " GZIP Format");
 
             ByteArrayInputStream is = new ByteArrayInputStream(buffer.getRawBuffer(), 0, buffer.size());
-            GZIPInputStream gzip = new GZIPInputStream(is);
-            int byteRead;
-            while ((byteRead = gzip.read()) != -1) {
-                // Do something to get around check style
-                byteRead += byteRead;
+            try (final GzipCompressorInputStream gzip = new GzipCompressorInputStream(is)) {
+                int byteRead;
+                while ((byteRead = gzip.read()) != -1) {
+                    // Do something to get around check style
+                    byteRead += byteRead;
+                }
             }
         }
     }

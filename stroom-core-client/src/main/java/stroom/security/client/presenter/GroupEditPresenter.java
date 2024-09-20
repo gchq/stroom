@@ -18,7 +18,7 @@ package stroom.security.client.presenter;
 
 import stroom.security.client.presenter.GroupEditPresenter.UserGroupEditView;
 import stroom.security.shared.User;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -81,10 +81,10 @@ public class GroupEditPresenter
     }
 
     @Override
-    public void setTaskListener(final TaskListener taskListener) {
-        super.setTaskListener(taskListener);
-        this.addRemoveUsersPresenter.setTaskListener(taskListener);
-        this.appPermissionsPresenter.setTaskListener(taskListener);
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        super.setTaskMonitorFactory(taskMonitorFactory);
+        this.addRemoveUsersPresenter.setTaskMonitorFactory(taskMonitorFactory);
+        this.appPermissionsPresenter.setTaskMonitorFactory(taskMonitorFactory);
     }
 
     public interface UserGroupEditView extends View {

@@ -16,7 +16,9 @@
 
 package stroom.widget.spinner.client;
 
-import stroom.task.client.TaskListener;
+import stroom.task.client.Task;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -25,7 +27,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
-public class SpinnerLarge extends Composite implements TaskListener {
+public class SpinnerLarge extends Composite implements TaskMonitorFactory {
 
     private static final Binder uiBinder = GWT.create(Binder.class);
 
@@ -45,20 +47,25 @@ public class SpinnerLarge extends Composite implements TaskListener {
     }
 
     @Override
-    public void incrementTaskCount() {
-        taskCount++;
-        setVisible(taskCount > 0);
-    }
+    public TaskMonitor createTaskMonitor() {
+        return new TaskMonitor() {
+            @Override
+            public void onStart(final Task task) {
+                taskCount++;
+                setVisible(taskCount > 0);
+            }
 
-    @Override
-    public void decrementTaskCount() {
-        taskCount--;
+            @Override
+            public void onEnd(final Task task) {
+                taskCount--;
 
-        if (taskCount < 0) {
-            GWT.log("Negative task count");
-        }
+                if (taskCount < 0) {
+                    GWT.log("Negative task count");
+                }
 
-        setVisible(taskCount > 0);
+                setVisible(taskCount > 0);
+            }
+        };
     }
 
     @Override

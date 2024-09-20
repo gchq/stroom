@@ -90,7 +90,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
                         .method(JobResource::list)
                         .onSuccess(dataConsumer)
                         .onFailure(restErrorHandler)
-                        .taskListener(view)
+                        .taskMonitorFactory(view)
                         .exec();
             }
 
@@ -134,7 +134,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
 //                                                    changeHandler.accept(job);
 //                                                }
                                             })
-                                            .taskListener(getView())
+                                            .taskMonitorFactory(getView())
                                             .exec();
                                 }
                         )

@@ -16,9 +16,9 @@ dependencies {
     implementation libs.jackson_annotations
     implementation libs.jakarta_inject
     implementation libs.jooq
+    implementation libs.mysql_connector_java
     implementation libs.slf4j_api
 
-    runtimeOnly libs.mysql_connector_java
 
     testImplementation project(':stroom-cache:stroom-cache-api')
     testImplementation project(':stroom-cache:stroom-cache-impl')

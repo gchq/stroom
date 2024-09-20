@@ -24,7 +24,7 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.FindUserNameCriteria;
 import stroom.security.shared.UserNameResource;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserName;
 
@@ -61,7 +61,7 @@ public class UserNameDataProvider implements Refreshable {
         });
     }
 
-    public void setCriteria(final FindUserNameCriteria criteria, final TaskListener taskListener) {
+    public void setCriteria(final FindUserNameCriteria criteria, final TaskMonitorFactory taskMonitorFactory) {
         this.criteria = criteria;
         if (dataProvider == null) {
             this.dataProvider = new RestDataProvider<UserName, ResultPage<UserName>>(eventBus) {
@@ -75,7 +75,7 @@ public class UserNameDataProvider implements Refreshable {
                             .method(res -> res.findAssociates(criteria))
                             .onSuccess(dataConsumer)
                             .onFailure(errorHandler)
-                            .taskListener(taskListener)
+                            .taskMonitorFactory(taskMonitorFactory)
                             .exec();
                 }
 

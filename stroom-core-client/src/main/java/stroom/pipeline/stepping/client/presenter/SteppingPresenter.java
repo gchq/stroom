@@ -47,8 +47,9 @@ import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskEndEvent;
-import stroom.task.client.TaskStartEvent;
+import stroom.task.client.SimpleTask;
+import stroom.task.client.Task;
+import stroom.task.client.TaskMonitor;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Indicators;
@@ -373,7 +374,7 @@ public class SteppingPresenter
                 final List<PipelineProperty> properties = pipelineModel.getProperties(element);
 
                 final ElementPresenter presenter = elementPresenterProvider.get();
-                presenter.setTaskListener(this);
+                presenter.setTaskMonitorFactory(this);
                 presenter.setElement(element);
                 presenter.setProperties(properties);
                 presenter.setFeedName(meta.getFeedName());
@@ -575,7 +576,7 @@ public class SteppingPresenter
                                 stepLocation.getRecordIndex()));
                     }
                 })
-                .taskListener(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 
@@ -670,7 +671,7 @@ public class SteppingPresenter
                     .onSuccess(response -> {
                         // Ignore response, we will assume we have stopped.
                     })
-                    .taskListener(this)
+                    .taskMonitorFactory(this)
                     .exec();
         }
     }
@@ -839,7 +840,9 @@ public class SteppingPresenter
 
     private void onSelect(final PipelineElement element) {
         if (element != null) {
-            TaskStartEvent.fire(SteppingPresenter.this);
+            final TaskMonitor taskMonitor = createTaskMonitor();
+            final Task task = new SimpleTask("Stepping");
+            taskMonitor.onStart(task);
             Scheduler.get().scheduleDeferred(() -> {
                 final PresenterWidget<?> content = getContent(element);
                 if (content != null) {
@@ -848,8 +851,7 @@ public class SteppingPresenter
 
                     updateElementSeverities();
                 }
-
-                TaskEndEvent.fire(SteppingPresenter.this);
+                taskMonitor.onEnd(task);
             });
         }
     }

@@ -57,6 +57,7 @@ dependencies {
     implementation project(':stroom-annotation:stroom-annotation-impl-db')
     implementation project(':stroom-annotation:stroom-annotation-impl-db-jooq')
     implementation project(':stroom-annotation:stroom-annotation-pipeline')
+    implementation project(':stroom-aws:stroom-aws-s3-impl')
     implementation project(':stroom-bytebuffer')
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-cache:stroom-cache-impl')
@@ -190,6 +191,7 @@ dependencies {
     implementation project(':stroom-view:stroom-view-impl')
     implementation project(':stroom-view:stroom-view-api')
 
+    implementation libs.commons_compress
     implementation libs.dropwizard_assets
     implementation libs.dropwizard_client
     implementation libs.dropwizard_configuration

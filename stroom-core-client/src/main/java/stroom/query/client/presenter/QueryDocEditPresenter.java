@@ -40,7 +40,7 @@ import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryResource;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.AnalyticUiDefaultConfig;
 import stroom.util.shared.time.SimpleDuration;
@@ -142,7 +142,7 @@ public class QueryDocEditPresenter
                             .onFailure(restError -> {
                                 AlertEvent.fireErrorFromException(this, restError.getException(), null);
                             })
-                            .taskListener(this)
+                            .taskMonitorFactory(this)
                             .exec();
                 }
             }
@@ -173,7 +173,7 @@ public class QueryDocEditPresenter
                             true,
                             newDocumentConsumer);
                 })
-                .taskListener(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 
@@ -198,7 +198,7 @@ public class QueryDocEditPresenter
                             createDefaultStreamingRule(ruleDocRef, doc, analyticUiDefaultConfig, query, timeRange);
                     }
                 })
-                .taskListener(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 
@@ -303,7 +303,7 @@ public class QueryDocEditPresenter
                         ruleDocRef,
                         true,
                         false))
-                .taskListener(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 
@@ -336,8 +336,8 @@ public class QueryDocEditPresenter
     }
 
     @Override
-    public void setTaskListener(final TaskListener taskListener) {
-        super.setTaskListener(taskListener);
-        queryEditPresenter.setTaskListener(taskListener);
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        super.setTaskMonitorFactory(taskMonitorFactory);
+        queryEditPresenter.setTaskMonitorFactory(taskMonitorFactory);
     }
 }

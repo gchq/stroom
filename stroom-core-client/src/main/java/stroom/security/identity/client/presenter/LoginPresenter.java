@@ -25,7 +25,7 @@ import stroom.security.identity.client.presenter.LoginPresenter.LoginView;
 import stroom.security.identity.shared.AuthenticationResource;
 import stroom.security.identity.shared.ChangePasswordRequest;
 import stroom.security.identity.shared.LoginRequest;
-import stroom.task.client.DefaultTaskListener;
+import stroom.task.client.DefaultTaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -74,7 +74,7 @@ public class LoginPresenter extends MyPresenter<LoginView, LoginProxy> implement
                 .method(AuthenticationResource::fetchPasswordPolicy)
                 .onSuccess(result -> getView().setAllowPasswordResets(result.isAllowPasswordResets()))
                 .onFailure(new DefaultErrorHandler(this, null))
-                .taskListener(new DefaultTaskListener(this))
+                .taskMonitorFactory(new DefaultTaskMonitorFactory(this))
                 .exec();
     }
 
@@ -95,7 +95,7 @@ public class LoginPresenter extends MyPresenter<LoginView, LoginProxy> implement
                         }
                     })
                     .onFailure(new DefaultErrorHandler(this, getView()::reset))
-                    .taskListener(new DefaultTaskListener(this))
+                    .taskMonitorFactory(new DefaultTaskMonitorFactory(this))
                     .exec();
         } else {
             getView().reset();
@@ -130,7 +130,7 @@ public class LoginPresenter extends MyPresenter<LoginView, LoginProxy> implement
                                 }
                             })
                             .onFailure(RestErrorHandler.forPopup(this, e))
-                            .taskListener(new DefaultTaskListener(this))
+                            .taskMonitorFactory(new DefaultTaskMonitorFactory(this))
                             .exec();
 
                 } else {

@@ -49,7 +49,7 @@ public class KeyBinding {
     private static final int CREATE_DOC_FIRST_KEY = KeyCodes.KEY_C;
     private static final int SUB_TAB_FIRST_KEY = KeyCodes.KEY_T;
 
-    private static final int KEY_SEQUENCE_TIMER_DELAY = 1_000;
+    private static final int KEY_SEQUENCE_TIMER_DELAY = 500;
     private static final Timer KEY_SEQUENCE_TIMER = new Timer() {
         @Override
         public void run() {
@@ -203,8 +203,8 @@ public class KeyBinding {
         logKey(e);
 
         // We don't want to test key binds in text input else we pick up things like the user typing '/'
-        if (shouldCheckKeySequence(e)) {
-            if (BrowserEvents.KEYDOWN.equals(e.getType())) {
+        if (BrowserEvents.KEYDOWN.equals(e.getType())) {
+            if (shouldCheckKeySequence(e)) {
                 final Shortcut shortcut = getShortcut(e);
                 action = testKeyDownEvent(e, shortcut);
                 if (action == null) {
@@ -223,7 +223,9 @@ public class KeyBinding {
                     // Clear the action as we have executed the command
                     action = null;
                 }
-            } else if (BrowserEvents.KEYUP.equals(e.getType())) {
+            }
+        } else if (BrowserEvents.KEYUP.equals(e.getType())) {
+            if (shouldCheckKeySequence(e)) {
                 final Shortcut shortcut = getShortcut(e);
                 testKeyUpEvent(e, shortcut);
             }
@@ -232,29 +234,66 @@ public class KeyBinding {
     }
 
     private static boolean shouldCheckKeySequence(final NativeEvent e) {
+        if (isInput(e)) {
+            if (KeyCodes.KEY_SHIFT == e.getKeyCode() || KeyCodes.KEY_ESCAPE == e.getKeyCode()) {
+                return true;
+            }
+
+            // Only consider key sequences from inputs if a modifier key is pressed.
+            if (isModifierKey(e)) {
+                return true;
+            }
+            if (isFunctionKey(e)) {
+                return true;
+            }
+        } else {
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean isFunctionKey(final NativeEvent e) {
+        return KeyCodes.KEY_F1 == e.getKeyCode() ||
+                KeyCodes.KEY_F2 == e.getKeyCode() ||
+                KeyCodes.KEY_F3 == e.getKeyCode() ||
+                KeyCodes.KEY_F4 == e.getKeyCode() ||
+                KeyCodes.KEY_F5 == e.getKeyCode() ||
+                KeyCodes.KEY_F6 == e.getKeyCode() ||
+                KeyCodes.KEY_F7 == e.getKeyCode() ||
+                KeyCodes.KEY_F8 == e.getKeyCode() ||
+                KeyCodes.KEY_F9 == e.getKeyCode() ||
+                KeyCodes.KEY_F10 == e.getKeyCode() ||
+                KeyCodes.KEY_F11 == e.getKeyCode() ||
+                KeyCodes.KEY_F12 == e.getKeyCode();
+    }
+
+    private static boolean isModifierKey(final NativeEvent e) {
+        return e.getAltKey() || e.getCtrlKey() || e.getMetaKey();
+    }
+
+    private static boolean isInput(final NativeEvent e) {
         final EventTarget eventTarget = e.getEventTarget();
-        final boolean shouldCheck;
+        final boolean isInput;
         if (eventTarget != null) {
             if (Element.is(eventTarget)) {
                 final Element element = Element.as(eventTarget);
                 final String tagName = element.getTagName();
                 // TODO this is really clunky. Need to create our own textbox and text area
                 //  components so that we can control the key events
-                shouldCheck = !isTextBox(element, tagName)
-                        && !"TEXTAREA".equalsIgnoreCase(tagName);
+                isInput = isTextBox(element, tagName)
+                        || "TEXTAREA".equalsIgnoreCase(tagName);
 
 //                final String className = GwtNullSafe.string(element.getClassName());
 //                final String type = element.getAttribute("type");
 //                GWT.log("className: " + className + " tagName: " + element.getTagName()
 //                        + " type: " + type + " shouldCheck: " + shouldCheck);
             } else {
-                shouldCheck = true;
+                isInput = false;
             }
         } else {
-            shouldCheck = true;
+            isInput = false;
         }
-//        GWT.log("shouldCheck: " + shouldCheck);
-        return shouldCheck;
+        return isInput;
     }
 
     private static boolean isTextBox(final Element element, final String tagName) {
@@ -344,20 +383,20 @@ public class KeyBinding {
     }
 
     private static void logKey(final NativeEvent e) {
-        final List<String> keys = new ArrayList<>();
-        if (e.getShiftKey()) {
-            keys.add("Shift");
-        }
-        if (e.getCtrlKey()) {
-            keys.add("Ctrl");
-        }
-        if (e.getAltKey()) {
-            keys.add("Alt");
-        }
-        if (e.getMetaKey()) {
-            keys.add("Meta");
-        }
-        keys.add(KeyBinding.keyCodeToString(e.getKeyCode()));
+//        final List<String> keys = new ArrayList<>();
+//        if (e.getShiftKey()) {
+//            keys.add("Shift");
+//        }
+//        if (e.getCtrlKey()) {
+//            keys.add("Ctrl");
+//        }
+//        if (e.getAltKey()) {
+//            keys.add("Alt");
+//        }
+//        if (e.getMetaKey()) {
+//            keys.add("Meta");
+//        }
+//        keys.add(KeyBinding.keyCodeToString(e.getKeyCode()));
 //        GWT.log(e.getType()
 //                + " (" + e.getKeyCode() + ") - "
 //                + String.join("+", keys)

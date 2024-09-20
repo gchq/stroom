@@ -16,6 +16,7 @@
 
 package stroom.ui.config.shared;
 
+import stroom.security.shared.HashAlgorithm;
 import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -208,11 +209,6 @@ public class ExtendedUiConfig {
     }
 
     @JsonIgnore
-    public Boolean getRequireReactWrapper() {
-        return uiConfig.getRequireReactWrapper();
-    }
-
-    @JsonIgnore
     public NodeMonitoringConfig getNodeMonitoring() {
         return uiConfig.getNodeMonitoring();
     }
@@ -230,6 +226,16 @@ public class ExtendedUiConfig {
     @JsonIgnore
     public Set<String> getReferencePipelineSelectorIncludedTags() {
         return uiConfig.getReferencePipelineSelectorIncludedTags();
+    }
+
+    @JsonIgnore
+    public HashAlgorithm getDefaultApiKeyHashAlgorithm() {
+        return uiConfig.getDefaultApiKeyHashAlgorithm();
+    }
+
+    @JsonIgnore
+    public int getMaxEditorCompletionEntries() {
+        return uiConfig.getMaxEditorCompletionEntries();
     }
 
     @JsonIgnore

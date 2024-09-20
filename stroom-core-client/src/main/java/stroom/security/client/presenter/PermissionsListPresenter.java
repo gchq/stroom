@@ -210,7 +210,7 @@ public class PermissionsListPresenter
                         .collect(Collectors.toMap(
                                 DocumentType::getType,
                                 DocumentType::getIcon)))
-                .taskListener(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 

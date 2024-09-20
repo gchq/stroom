@@ -107,7 +107,7 @@ public class TableBuilderProcessingPresenter
                         final SafeHtml safeHtml = getInfo(result);
                         getView().setInfo(safeHtml);
                     })
-                    .taskListener(this)
+                    .taskMonitorFactory(this)
                     .exec();
         }
     }

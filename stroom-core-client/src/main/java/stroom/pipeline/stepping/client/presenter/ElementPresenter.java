@@ -140,7 +140,7 @@ public class ElementPresenter
                                 clearAllIndicators();
                                 consumer.accept(false);
                             })
-                            .taskListener(this)
+                            .taskMonitorFactory(this)
                             .exec();
 
                     loading = true;

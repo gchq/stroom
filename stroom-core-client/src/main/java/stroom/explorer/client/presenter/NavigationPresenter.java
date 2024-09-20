@@ -60,7 +60,8 @@ import stroom.query.shared.QueryDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
 import stroom.util.shared.GwtNullSafe;
@@ -307,10 +308,11 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         registerHandler(getEventBus().addHandler(FocusExplorerTreeEvent.getType(), this));
 
         // Deal with task listeners.
+        final TaskMonitor taskMonitor = getView().getTaskListener().createTaskMonitor();
         registerHandler(getEventBus().addHandler(ExplorerStartTaskEvent.getType(), e ->
-                getView().getTaskListener().incrementTaskCount()));
+                taskMonitor.onStart(e.getTask())));
         registerHandler(getEventBus().addHandler(ExplorerEndTaskEvent.getType(), e ->
-                getView().getTaskListener().decrementTaskCount()));
+                taskMonitor.onEnd(e.getTask())));
 
         registerHandler(typeFilterPresenter.addDataSelectionHandler(event -> explorerTree.setIncludedTypeSet(
                 typeFilterPresenter.getIncludedTypes().orElse(null))));
@@ -499,6 +501,6 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
 
         void focusQuickFilter();
 
-        TaskListener getTaskListener();
+        TaskMonitorFactory getTaskListener();
     }
 }

@@ -36,7 +36,7 @@ import stroom.statistics.impl.hbase.shared.StatisticRollUpType;
 import stroom.statistics.impl.hbase.shared.StatisticType;
 import stroom.statistics.impl.hbase.shared.StatsStoreResource;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -107,7 +107,7 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
     private void doConfirmSave(final DocumentEditPresenter<?, StroomStatsStoreDoc> presenter,
                                final StroomStatsStoreDoc entity,
                                final StroomStatsStoreDoc entityFromDb,
-                               final TaskListener taskListener) {
+                               final TaskMonitorFactory taskMonitorFactory) {
         // get the persisted versions of the fields we care about
         final StatisticType prevType = entityFromDb.getStatisticType();
         final StatisticRollUpType prevRollUpType = entityFromDb.getRollUpType();
@@ -135,7 +135,7 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
                             "the change.<br/><br/>" + "Do you wish to continue?"),
                     result -> {
                         if (result) {
-                            doSave(presenter, entity, taskListener);
+                            doSave(presenter, entity, taskMonitorFactory);
                         } else {
                             // Re-enable popup buttons.
                         }
@@ -143,32 +143,32 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
         } else {
             // user has changed some attributes we don't care about so just do
             // the save
-            doSave(presenter, entity, taskListener);
+            doSave(presenter, entity, taskMonitorFactory);
         }
     }
 
     private void doSave(final DocumentEditPresenter<?, StroomStatsStoreDoc> presenter,
                         final StroomStatsStoreDoc entity,
-                        final TaskListener taskListener) {
+                        final TaskMonitorFactory taskMonitorFactory) {
         save(DocRefUtil.create(entity), entity, doc ->
                         presenter.read(DocRefUtil.create(doc), doc,
                                 presenter.isReadOnly()),
                 throwable -> {
                 },
-                taskListener);
+                taskMonitorFactory);
     }
 
     @Override
     public void load(final DocRef docRef,
                      final Consumer<StroomStatsStoreDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskListener taskListener) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(STATS_STORE_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskListener(taskListener)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
@@ -177,13 +177,13 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
                      final StroomStatsStoreDoc document,
                      final Consumer<StroomStatsStoreDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskListener taskListener) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(STATS_STORE_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
-                .taskListener(taskListener)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 }

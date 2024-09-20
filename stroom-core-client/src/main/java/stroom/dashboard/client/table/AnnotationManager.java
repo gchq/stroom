@@ -23,7 +23,7 @@ import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.EventId;
 import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.TableComponentSettings;
-import stroom.dispatch.client.QuietTaskListener;
+import stroom.dispatch.client.QuietTaskMonitorFactory;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.Column;
 import stroom.query.client.presenter.TableRow;
@@ -258,7 +258,7 @@ public class AnnotationManager {
 
                     ShowAnnotationEvent.fire(changeStatusPresenter, annotation, eventIdList);
                 })
-                .taskListener(new QuietTaskListener())
+                .taskMonitorFactory(new QuietTaskMonitorFactory())
                 .exec();
     }
 

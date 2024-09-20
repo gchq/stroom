@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.index.mock;
@@ -64,13 +63,11 @@ public class MockIndexFieldService implements IndexFieldService {
 
     @Override
     public ResultPage<IndexField> findFields(final FindFieldCriteria criteria) {
-        if (criteria.getDataSourceRef() != null && !loadedIndexes.contains(criteria.getDataSourceRef())) {
-            transferFieldsToDB(criteria.getDataSourceRef());
-            loadedIndexes.add(criteria.getDataSourceRef());
-        }
+        final DocRef dataSourceRef = criteria.getDataSourceRef();
+        ensureLoaded(dataSourceRef);
 
         final StringMatcher stringMatcher = new StringMatcher(criteria.getStringMatch());
-        final Set<IndexField> set = map.get(criteria.getDataSourceRef());
+        final Set<IndexField> set = map.get(dataSourceRef);
         final List<IndexField> filtered = set
                 .stream()
                 .filter(field -> {
@@ -81,6 +78,13 @@ public class MockIndexFieldService implements IndexFieldService {
                 })
                 .toList();
         return ResultPage.createPageLimitedList(filtered, criteria.getPageRequest());
+    }
+
+    private void ensureLoaded(final DocRef dataSourceRef) {
+        if (dataSourceRef != null && !loadedIndexes.contains(dataSourceRef)) {
+            transferFieldsToDB(dataSourceRef);
+            loadedIndexes.add(dataSourceRef);
+        }
     }
 
     @Override
@@ -99,6 +103,15 @@ public class MockIndexFieldService implements IndexFieldService {
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         }
+    }
+
+    @Override
+    public int getFieldCount(final DocRef dataSourceRef) {
+        ensureLoaded(dataSourceRef);
+        return NullSafe.getOrElse(
+                map.get(dataSourceRef),
+                Set::size,
+                0);
     }
 
     @Override

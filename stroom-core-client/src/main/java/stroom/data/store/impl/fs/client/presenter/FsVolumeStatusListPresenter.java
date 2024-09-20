@@ -16,6 +16,7 @@
 
 package stroom.data.store.impl.fs.client.presenter;
 
+import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
@@ -28,7 +29,6 @@ import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeResource;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
-import stroom.data.store.impl.fs.shared.S3ClientConfig;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
@@ -98,7 +98,7 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
                             .method(resource -> resource.find(criteria))
                             .onSuccess(dataConsumer)
                             .onFailure(errorHandler)
-                            .taskListener(getView())
+                            .taskMonitorFactory(getView())
                             .exec();
                 }
             };
@@ -252,7 +252,6 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
                         .enabledWhen(this::isEnabled)
                         .build(),
                 DataGridUtil.headingBuilder("Usage Date")
-                        .centerAligned()
                         .withToolTip("The date/time this volume was last written to.")
                         .build(),
                 ColumnSizeConstants.DATE_AND_DURATION_COL);

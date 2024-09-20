@@ -55,14 +55,14 @@ public class SelectionSummaryPresenter
                                 .create(META_RESOURCE)
                                 .method(res -> res.getReprocessSelectionSummary(criteria))
                                 .onSuccess(result -> update(postAction, action, result))
-                                .taskListener(this)
+                                .taskMonitorFactory(this)
                                 .exec();
                     } else {
                         restFactory
                                 .create(META_RESOURCE)
                                 .method(res -> res.getSelectionSummary(criteria))
                                 .onSuccess(result -> update(postAction, action, result))
-                                .taskListener(this)
+                                .taskMonitorFactory(this)
                                 .exec();
                     }
                 })

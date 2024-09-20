@@ -31,7 +31,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.node.client.NodeManager;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
@@ -162,16 +162,16 @@ public class AnalyticDataShardListPresenter
     public void fetchNodes(final Range range,
                            final Consumer<ResultPage<AnalyticDataShard>> dataConsumer,
                            final RestErrorHandler errorHandler,
-                           final TaskListener taskListener) {
+                           final TaskMonitorFactory taskMonitorFactory) {
         nodeManager.listAllNodes(
-                nodeNames -> fetchTasksForNodes(range, dataConsumer, nodeNames, taskListener),
-                errorHandler, taskListener);
+                nodeNames -> fetchTasksForNodes(range, dataConsumer, nodeNames, taskMonitorFactory),
+                errorHandler, taskMonitorFactory);
     }
 
     private void fetchTasksForNodes(final Range range,
                                     final Consumer<ResultPage<AnalyticDataShard>> dataConsumer,
                                     final List<String> nodeNames,
-                                    final TaskListener taskListener) {
+                                    final TaskMonitorFactory taskMonitorFactory) {
         responseMap.clear();
         for (final String nodeName : nodeNames) {
             if (criteria.getAnalyticDocUuid() != null) {
@@ -189,7 +189,7 @@ public class AnalyticDataShardListPresenter
                             errorMap.put(nodeName, Collections.singletonList(throwable.getMessage()));
                             delayedUpdate.update();
                         })
-                        .taskListener(taskListener)
+                        .taskMonitorFactory(taskMonitorFactory)
                         .exec();
             }
 

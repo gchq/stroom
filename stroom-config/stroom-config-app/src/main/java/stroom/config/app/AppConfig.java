@@ -1,8 +1,25 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.config.app;
 
 import stroom.activity.impl.db.ActivityConfig;
 import stroom.analytics.impl.AnalyticsConfig;
 import stroom.annotation.impl.AnnotationConfig;
+import stroom.aws.s3.impl.S3Config;
 import stroom.bytebuffer.ByteBufferPoolConfig;
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
@@ -10,6 +27,7 @@ import stroom.config.common.CommonDbConfig;
 import stroom.config.common.NodeUriConfig;
 import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
+import stroom.dashboard.impl.DashboardConfig;
 import stroom.docstore.impl.db.DocStoreConfig;
 import stroom.event.logging.impl.LoggingConfig;
 import stroom.explorer.impl.ExplorerConfig;
@@ -71,6 +89,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_CONTENT_INDEX = "contentIndex";
     public static final String PROP_NAME_CONTENT_PACK_IMPORT = "contentPackImport";
     public static final String PROP_NAME_CORE = "core";
+    public static final String PROP_NAME_DASHBOARD = "dashboard";
     public static final String PROP_NAME_DATA = "data";
     public static final String PROP_NAME_DOCSTORE = "docstore";
     public static final String PROP_NAME_ELASTIC = "elastic";
@@ -94,6 +113,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_PUBLIC_URI = "publicUri";
     public static final String PROP_NAME_QUERY_HISTORY = "queryHistory";
     public static final String PROP_NAME_RECEIVE = "receive";
+    public static final String PROP_NAME_S3 = "s3";
     public static final String PROP_NAME_SEARCH = "search";
     public static final String PROP_NAME_SECURITY = "security";
     public static final String PROP_NAME_SERVICE_DISCOVERY = "serviceDiscovery";
@@ -118,6 +138,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final ContentIndexConfig contentIndexConfig;
     private final ContentPackImportConfig contentPackImportConfig;
     private final LegacyConfig legacyConfig;
+    private final DashboardConfig dashboardConfig;
     private final DataConfig dataConfig;
     private final DocStoreConfig docStoreConfig;
     private final ElasticConfig elasticConfig;
@@ -138,6 +159,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final PublicUriConfig publicUri;
     private final IndexFieldDbConfig queryDataSourceConfig;
     private final ReceiveDataConfig receiveDataConfig;
+    private final S3Config s3Config;
     private final SearchConfig searchConfig;
     private final SecurityConfig securityConfig;
     private final ServiceDiscoveryConfig serviceDiscoveryConfig;
@@ -167,6 +189,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                 new ContentIndexConfig(),
                 new ContentPackImportConfig(),
                 new LegacyConfig(),
+                new DashboardConfig(),
                 new DataConfig(),
                 new DocStoreConfig(),
                 new ElasticConfig(),
@@ -187,6 +210,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                 new PublicUriConfig(),
                 new IndexFieldDbConfig(),
                 new ReceiveDataConfig(),
+                new S3Config(),
                 new SearchConfig(),
                 new SecurityConfig(),
                 new ServiceDiscoveryConfig(),
@@ -215,6 +239,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_CONTENT_INDEX) final ContentIndexConfig contentIndexConfig,
                      @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT) final ContentPackImportConfig contentPackImportConfig,
                      @JsonProperty(PROP_NAME_CORE) final LegacyConfig legacyConfig,
+                     @JsonProperty(PROP_NAME_DASHBOARD) final DashboardConfig dashboardConfig,
                      @JsonProperty(PROP_NAME_DATA) final DataConfig dataConfig,
                      @JsonProperty(PROP_NAME_DOCSTORE) final DocStoreConfig docStoreConfig,
                      @JsonProperty(PROP_NAME_ELASTIC) final ElasticConfig elasticConfig,
@@ -235,6 +260,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_PUBLIC_URI) final PublicUriConfig publicUri,
                      @JsonProperty(PROP_NAME_QUERY_DATASOURCE) final IndexFieldDbConfig queryDataSourceConfig,
                      @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
+                     @JsonProperty(PROP_NAME_S3) final S3Config s3Config,
                      @JsonProperty(PROP_NAME_SEARCH) final SearchConfig searchConfig,
                      @JsonProperty(PROP_NAME_SECURITY) final SecurityConfig securityConfig,
                      @JsonProperty(PROP_NAME_SERVICE_DISCOVERY) final ServiceDiscoveryConfig serviceDiscoveryConfig,
@@ -259,6 +285,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.contentIndexConfig = contentIndexConfig;
         this.contentPackImportConfig = contentPackImportConfig;
         this.legacyConfig = legacyConfig;
+        this.dashboardConfig = dashboardConfig;
         this.dataConfig = dataConfig;
         this.docStoreConfig = docStoreConfig;
         this.elasticConfig = elasticConfig;
@@ -279,6 +306,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.publicUri = publicUri;
         this.queryDataSourceConfig = queryDataSourceConfig;
         this.receiveDataConfig = receiveDataConfig;
+        this.s3Config = s3Config;
         this.searchConfig = searchConfig;
         this.securityConfig = securityConfig;
         this.serviceDiscoveryConfig = serviceDiscoveryConfig;
@@ -361,6 +389,12 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonPropertyDescription("Configuration for the core stroom DB")
     public LegacyConfig getLegacyConfig() {
         return legacyConfig;
+    }
+
+    @JsonProperty(PROP_NAME_DASHBOARD)
+    @JsonPropertyDescription("Configuration for the dashboards")
+    public DashboardConfig getDashboardConfig() {
+        return dashboardConfig;
     }
 
     @JsonProperty(PROP_NAME_DATA)
@@ -481,6 +515,12 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty(PROP_NAME_LOGGING)
     public LoggingConfig getRequestLoggingConfig() {
         return loggingConfig;
+    }
+
+    @JsonProperty(PROP_NAME_S3)
+    @JsonPropertyDescription("Default configuration settings for S3")
+    public S3Config getS3Config() {
+        return s3Config;
     }
 
     @JsonProperty(PROP_NAME_SEARCH)

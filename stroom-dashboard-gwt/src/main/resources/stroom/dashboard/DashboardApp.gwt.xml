@@ -91,6 +91,7 @@
     <inherits name="stroom.receive.rules.RuleSet"/>
     <inherits name="stroom.data.Data"/>
     <inherits name="stroom.data.store.impl.fs.FsVolume" />
+    <inherits name="stroom.aws.s3.S3Config" />
     <inherits name="stroom.streamtask.StreamTask"/>
     <inherits name="stroom.task.Task"/>
     <inherits name="stroom.processor.Processor"/>

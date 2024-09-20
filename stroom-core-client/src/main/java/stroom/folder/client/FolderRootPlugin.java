@@ -28,7 +28,7 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.inject.Inject;
@@ -109,7 +109,7 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
     public void load(final DocRef docRef,
                      final Consumer<DocRef> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskListener taskListener) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         // Root folder is just a constant so no load needed
 //        resultConsumer.accept(ExplorerConstants.SYSTEM_DOC_REF);
     }
@@ -119,7 +119,7 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
                      final DocRef document,
                      final Consumer<DocRef> resultConsumer,
                      final RestErrorHandler errorHandler,
-                     final TaskListener taskListener) {
+                     final TaskMonitorFactory taskMonitorFactory) {
         // Nothing to do here, root folder is special
     }
 
@@ -129,18 +129,13 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
                                 final Handler closeHandler,
                                 final DocumentTabData tabData,
                                 final boolean fullScreen,
-                                final TaskListener taskListener) {
-        try {
-            if (documentEditPresenter instanceof FolderRootPresenter) {
-                ((FolderRootPresenter) documentEditPresenter).read();
-            }
-
-            // Open the tab.
-            contentManager.open(closeHandler, tabData, documentEditPresenter);
-        } finally {
-            // Stop spinning.
-            taskListener.decrementTaskCount();
+                                final TaskMonitorFactory taskMonitorFactory) {
+        if (documentEditPresenter instanceof FolderRootPresenter) {
+            ((FolderRootPresenter) documentEditPresenter).read();
         }
+
+        // Open the tab.
+        contentManager.open(closeHandler, tabData, documentEditPresenter);
     }
 
     @Override

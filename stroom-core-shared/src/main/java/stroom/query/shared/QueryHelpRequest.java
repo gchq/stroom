@@ -1,9 +1,26 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.shared;
 
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -14,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
@@ -28,7 +46,7 @@ public class QueryHelpRequest extends BaseCriteria {
     @JsonProperty
     private final StringMatch stringMatch;
     @JsonProperty
-    private final boolean showAll;
+    private final Set<QueryHelpType> includedTypes;
 
     @JsonCreator
     public QueryHelpRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
@@ -37,13 +55,13 @@ public class QueryHelpRequest extends BaseCriteria {
                             @JsonProperty("dataSourceRef") final DocRef dataSourceRef,
                             @JsonProperty("parentPath") final String parentPath,
                             @JsonProperty("stringMatch") final StringMatch stringMatch,
-                            @JsonProperty("showAll") final boolean showAll) {
+                            @JsonProperty("includedTypes") final Set<QueryHelpType> includedTypes) {
         super(pageRequest, sortList);
         this.query = query;
         this.dataSourceRef = dataSourceRef;
         this.parentPath = parentPath;
         this.stringMatch = stringMatch;
-        this.showAll = showAll;
+        this.includedTypes = includedTypes;
     }
 
     public DocRef getDataSourceRef() {
@@ -62,8 +80,16 @@ public class QueryHelpRequest extends BaseCriteria {
         return stringMatch;
     }
 
-    public boolean isShowAll() {
-        return showAll;
+    public Set<QueryHelpType> getIncludedTypes() {
+        return includedTypes;
+    }
+
+    public boolean isTypeIncluded(final QueryHelpType queryHelpType) {
+        if (queryHelpType == null || GwtNullSafe.isEmptyCollection(includedTypes)) {
+            return false;
+        } else {
+            return includedTypes.contains(queryHelpType);
+        }
     }
 
     @Override
@@ -78,7 +104,7 @@ public class QueryHelpRequest extends BaseCriteria {
             return false;
         }
         final QueryHelpRequest request = (QueryHelpRequest) o;
-        return showAll == request.showAll &&
+        return includedTypes == request.includedTypes &&
                 Objects.equals(query, request.query) &&
                 Objects.equals(dataSourceRef, request.dataSourceRef) &&
                 Objects.equals(parentPath, request.parentPath) &&
@@ -87,6 +113,6 @@ public class QueryHelpRequest extends BaseCriteria {
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), query, dataSourceRef, parentPath, stringMatch, showAll);
+        return Objects.hash(super.hashCode(), query, dataSourceRef, parentPath, stringMatch, includedTypes);
     }
 }

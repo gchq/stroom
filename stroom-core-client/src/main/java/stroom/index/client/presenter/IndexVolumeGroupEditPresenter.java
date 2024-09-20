@@ -117,7 +117,7 @@ public class IndexVolumeGroupEditPresenter
                                             .onSuccess(response -> delayedUpdate.update())
                                             .onFailure(throwable -> {
                                             })
-                                            .taskListener(this)
+                                            .taskMonitorFactory(this)
                                             .exec()
                             ),
                     throwable -> {
@@ -139,7 +139,7 @@ public class IndexVolumeGroupEditPresenter
                     .create(INDEX_VOLUME_RESOURCE)
                     .method(res -> res.fetch(volume.getId()))
                     .onSuccess(result -> editVolume(result, "Edit Volume"))
-                    .taskListener(volumeStatusListPresenter.getTaskListener())
+                    .taskMonitorFactory(volumeStatusListPresenter.getTaskListener())
                     .exec();
         }
     }
@@ -169,7 +169,7 @@ public class IndexVolumeGroupEditPresenter
                                         .create(INDEX_VOLUME_RESOURCE)
                                         .method(res -> res.delete(volume.getId()))
                                         .onSuccess(response -> volumeStatusListPresenter.refresh())
-                                        .taskListener(this)
+                                        .taskMonitorFactory(this)
                                         .exec();
                             }
                         }
@@ -265,7 +265,7 @@ public class IndexVolumeGroupEditPresenter
                         }
                     })
                     .onFailure(RestErrorHandler.forPopup(this, event))
-                    .taskListener(this)
+                    .taskMonitorFactory(this)
                     .exec();
         }
     }
@@ -281,9 +281,13 @@ public class IndexVolumeGroupEditPresenter
                     event.hide();
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
-                .taskListener(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface IndexVolumeGroupEditView extends View, Focus {
 

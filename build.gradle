@@ -167,10 +167,11 @@ ext.libs = [
         aws_s3_transfer_manager             : "software.amazon.awssdk:s3-transfer-manager", // version controlled by AWS BOM
         aws_sqs                             : "software.amazon.awssdk:sqs", // version controlled by AWS BOM
         bcrypt                              : 'de.svenkubiak:jBCrypt:0.4.1',
+        bouncy_castle                       : 'org.bouncycastle:bcprov-jdk18on:1.78.1',
         caffeine                            : "com.github.ben-manes.caffeine:caffeine", // version controlled by dropwizard-dependencies
         commons_beanutils                   : "commons-beanutils:commons-beanutils:1.9.4",
         commons_codec                       : "commons-codec:commons-codec", // version controlled by dropwizard-dependencies
-        commons_compress                    : "org.apache.commons:commons-compress:1.24.0",
+        commons_compress                    : "org.apache.commons:commons-compress:1.27.1",
         commons_csv                         : "org.apache.commons:commons-csv:1.10.0",
         commons_fileupload                  : "org.apache.commons:commons-fileupload2-jakarta:2.0.0-M1",
         commons_io                          : "commons-io:commons-io:2.15.0",

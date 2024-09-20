@@ -114,7 +114,7 @@ public class DatabaseTablesMonitoringPresenter
                         .method(res -> res.findSystemTableStatus(criteria))
                         .onSuccess(dataConsumer)
                         .onFailure(errorHandler)
-                        .taskListener(view)
+                        .taskMonitorFactory(view)
                         .exec();
             }
         };

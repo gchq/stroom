@@ -34,7 +34,7 @@ import stroom.search.solr.shared.SolrConnectionConfig.InstanceType;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexResource;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -88,7 +88,7 @@ public class SolrIndexSettingsPresenter
     }
 
     @Override
-    public void onTestConnection(final TaskListener taskListener) {
+    public void onTestConnection(final TaskMonitorFactory taskMonitorFactory) {
         getView().setTestingConnection(true);
         final SolrIndexDoc index = onWrite(new SolrIndexDoc());
         restFactory
@@ -104,7 +104,7 @@ public class SolrIndexSettingsPresenter
                     }
                 })
                 .onFailure(new DefaultErrorHandler(this, () -> getView().setTestingConnection(false)))
-                .taskListener(taskListener)
+                .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
@@ -152,9 +152,9 @@ public class SolrIndexSettingsPresenter
     }
 
     @Override
-    public synchronized void setTaskListener(final TaskListener taskListener) {
-        super.setTaskListener(taskListener);
-        fieldSelectionBoxModel.setTaskListener(taskListener);
+    public synchronized void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        super.setTaskMonitorFactory(taskMonitorFactory);
+        fieldSelectionBoxModel.setTaskMonitorFactory(taskMonitorFactory);
     }
 
     public interface SolrIndexSettingsView

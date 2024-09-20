@@ -7,6 +7,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.EditApiKeyPresenter.EditApiKeyView;
 import stroom.security.shared.ApiKeyResource;
 import stroom.security.shared.CreateHashedApiKeyRequest;
+import stroom.security.shared.HashAlgorithm;
 import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserResource;
@@ -64,7 +65,7 @@ public class EditApiKeyPresenter
                 .method(res -> res.getAssociates(null))
                 .onSuccess(userNames ->
                         getView().setUserNames(userNames))
-                .taskListener(this)
+                .taskMonitorFactory(this)
                 .exec();
 
         reset();
@@ -90,19 +91,27 @@ public class EditApiKeyPresenter
         }
 
         final PopupSize popupSize = PopupSize.resizableX(600);
-        ShowPopupEvent.builder(this)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(popupSize)
-                .caption(caption)
-                .onShow(e ->
-                        getView().focus())
-                .onHideRequest(this)
-                .fire();
+        uiConfigCache.get(uiConfigCache -> {
+            if (Mode.PRE_CREATE.equals(mode)) {
+                getView().setHashAlgorithm(GwtNullSafe.requireNonNullElse(
+                        uiConfigCache.getDefaultApiKeyHashAlgorithm(),
+                        HashAlgorithm.DEFAULT));
+            }
+            ShowPopupEvent.builder(this)
+                    .popupType(PopupType.OK_CANCEL_DIALOG)
+                    .popupSize(popupSize)
+                    .caption(caption)
+                    .onShow(e ->
+                            getView().focus())
+                    .onHideRequest(this)
+                    .fire();
+        });
     }
 
     private void reset() {
         uiConfigCache.get(uiConfig ->
-                getView().reset(System.currentTimeMillis() + uiConfig.getMaxApiKeyExpiryAgeMs()), this);
+                        getView().reset(System.currentTimeMillis() + uiConfig.getMaxApiKeyExpiryAgeMs()),
+                this);
     }
 
     public void showEditDialog(final HashedApiKey apiKey,
@@ -119,6 +128,7 @@ public class EditApiKeyPresenter
         getView().setComments(apiKey.getComments());
         getView().setExpiresOn(apiKey.getExpireTimeMs());
         getView().setEnabled(apiKey.getEnabled());
+        getView().setHashAlgorithm(apiKey.getHashAlgorithm());
 
         final PopupSize popupSize = PopupSize.resizableX(600);
         ShowPopupEvent.builder(this)
@@ -178,7 +188,7 @@ public class EditApiKeyPresenter
                         .onFailure(throwable ->
                                 AlertEvent.fireError(this, "Error updating API key: "
                                         + throwable.getMessage(), e::reset))
-                        .taskListener(this)
+                        .taskMonitorFactory(this)
                         .exec();
             }
         } else {
@@ -216,7 +226,7 @@ public class EditApiKeyPresenter
                                     .onFailure(throwable ->
                                             AlertEvent.fireError(this, "Error deleting API key: "
                                                     + throwable.getMessage(), e::reset))
-                                    .taskListener(this)
+                                    .taskMonitorFactory(this)
                                     .exec();
                         } else {
                             e.reset();
@@ -247,7 +257,8 @@ public class EditApiKeyPresenter
                     expireTimeEpochMs,
                     getView().getName(),
                     getView().getComments(),
-                    getView().isEnabled());
+                    getView().isEnabled(),
+                    getView().getHashAlgorithm());
 //            GWT.log("sending create req");
             restFactory
                     .create(API_KEY_RESOURCE)
@@ -265,6 +276,7 @@ public class EditApiKeyPresenter
                         getView().setEnabled(apiKey.getEnabled());
                         getView().setApiKey(response.getApiKey());
                         getView().setPrefix(apiKey.getApiKeyPrefix());
+                        getView().setHashAlgorithm(apiKey.getHashAlgorithm());
 
                         event.reset();
                         onChangeHandler.run();
@@ -272,7 +284,7 @@ public class EditApiKeyPresenter
                     .onFailure(throwable ->
                             AlertEvent.fireError(this, "Error creating API key: "
                                     + throwable.getMessage(), event::reset))
-                    .taskListener(this)
+                    .taskMonitorFactory(this)
                     .exec();
         }
     }
@@ -286,12 +298,12 @@ public class EditApiKeyPresenter
          */
         PRE_CREATE,
         /**
-         * Immediately after creation of the key, when the API key is still in memory and
-         * can be shown.
+         * Immediately after creation of the key, when the API key string is
+         * still in memory and can be shown.
          */
         POST_CREATE,
         /**
-         * Editing of the record at a later date when the API key is no longer
+         * Editing of the record at a later date when the API key string is no longer
          * available to show to the user.
          */
         EDIT
@@ -338,5 +350,9 @@ public class EditApiKeyPresenter
         void focus();
 
         void reset(Long milliseconds);
+
+        void setHashAlgorithm(HashAlgorithm hashAlgorithm);
+
+        HashAlgorithm getHashAlgorithm();
     }
 }

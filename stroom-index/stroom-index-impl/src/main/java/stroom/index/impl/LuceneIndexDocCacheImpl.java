@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.index.impl;
@@ -23,10 +22,6 @@ import stroom.docref.DocRef;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.NullSafe;
-import stroom.util.entityevent.EntityAction;
-import stroom.util.entityevent.EntityEvent;
-import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.PermissionException;
@@ -40,10 +35,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Objects;
 
 @Singleton
-@EntityEventHandler(
-        type = LuceneIndexDoc.DOCUMENT_TYPE,
-        action = {EntityAction.DELETE, EntityAction.UPDATE, EntityAction.CLEAR_CACHE})
-public class LuceneIndexDocCacheImpl implements LuceneIndexDocCache, Clearable, EntityEvent.Handler {
+// EntityEvents are handled by IndexConfigCacheEntityEventHandler
+public class LuceneIndexDocCacheImpl implements LuceneIndexDocCache, Clearable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LuceneIndexDocCacheImpl.class);
 
@@ -90,34 +83,14 @@ public class LuceneIndexDocCacheImpl implements LuceneIndexDocCache, Clearable, 
     }
 
     @Override
-    public void remove(final DocRef key) {
-        cache.invalidate(key);
+    public void remove(final DocRef docRef) {
+        LOGGER.debug("Invalidating docRef {}", docRef);
+        cache.invalidate(docRef);
     }
 
     @Override
     public void clear() {
+        LOGGER.debug("Clearing cache");
         cache.clear();
-    }
-
-    @Override
-    public void onChange(final EntityEvent event) {
-        LOGGER.debug("Received event {}", event);
-        final EntityAction eventAction = event.getAction();
-
-        switch (eventAction) {
-            case CLEAR_CACHE -> {
-                LOGGER.debug("Clearing cache");
-                clear();
-            }
-            case UPDATE, DELETE -> {
-                NullSafe.consume(
-                        event.getDocRef(),
-                        docRef -> {
-                            LOGGER.debug("Invalidating docRef {}", docRef);
-                            cache.invalidate(docRef);
-                        });
-            }
-            default -> LOGGER.debug("Unexpected event action {}", eventAction);
-        }
     }
 }

@@ -19,6 +19,7 @@ package stroom.dashboard.client.text;
 import stroom.dashboard.client.text.TextPresenter.TextView;
 import stroom.data.client.view.ClassificationLabel;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.TaskMonitor;
 import stroom.widget.button.client.FabButton;
 import stroom.widget.spinner.client.SpinnerLarge;
 
@@ -80,17 +81,9 @@ public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements 
     }
 
     @Override
-    public void incrementTaskCount() {
-        spinner.incrementTaskCount();
+    public TaskMonitor createTaskMonitor() {
+        return spinner.createTaskMonitor();
     }
-
-    @Override
-    public void decrementTaskCount() {
-        spinner.decrementTaskCount();
-    }
-
-    // --------------------------------------------------------------------------------
-
 
     public interface Binder extends UiBinder<Widget, TextViewImpl> {
 

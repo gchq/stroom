@@ -74,7 +74,7 @@ public class IndexVolumeGroupListPresenter extends MyPresenterWidget<PagerView> 
                         .method(res -> res.find(criteria))
                         .onSuccess(dataConsumer)
                         .onFailure(errorHandler)
-                        .taskListener(view)
+                        .taskMonitorFactory(view)
                         .exec();
             }
         };

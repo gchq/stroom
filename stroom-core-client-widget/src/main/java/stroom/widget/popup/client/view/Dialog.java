@@ -17,7 +17,8 @@
 package stroom.widget.popup.client.view;
 
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskListener;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.spinner.client.SpinnerLarge;
 import stroom.widget.util.client.MouseUtil;
 
@@ -43,7 +44,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
-public class Dialog extends AbstractPopupPanel implements TaskListener {
+public class Dialog extends AbstractPopupPanel implements TaskMonitorFactory {
 
     private static final Binder binder = GWT.create(Binder.class);
     private final int clientLeft;
@@ -270,13 +271,8 @@ public class Dialog extends AbstractPopupPanel implements TaskListener {
     }
 
     @Override
-    public void incrementTaskCount() {
-        spinner.incrementTaskCount();
-    }
-
-    @Override
-    public void decrementTaskCount() {
-        spinner.decrementTaskCount();
+    public TaskMonitor createTaskMonitor() {
+        return spinner.createTaskMonitor();
     }
 
     public interface Binder extends UiBinder<Widget, Dialog> {
