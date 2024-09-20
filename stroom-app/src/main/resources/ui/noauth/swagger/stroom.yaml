@@ -6500,6 +6500,26 @@ paths:
       summary: Step a pipeline
       tags:
       - Stepping
+  /stepping/v1/terminateStepping:
+    post:
+      operationId: terminateStepping
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PipelineStepRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Terminate pipeline stepping process
+      tags:
+      - Stepping
   /storedQuery/v1/create:
     post:
       operationId: createStoredQuery
@@ -8337,22 +8357,26 @@ components:
           format: int32
         dataSourceRef:
           $ref: '#/components/schemas/DocRef'
-        pageRequest:
-          $ref: '#/components/schemas/PageRequest'
+        includedTypes:
+          type: array
+          items:
+            type: string
+            enum:
+            - DATA_SOURCE
+            - FIELD
+            - FUNCTION
+            - TITLE
+            - STRUCTURE
+            - VISUALISATION
+          uniqueItems: true
+        maxCompletions:
+          type: integer
+          format: int32
+        pattern:
+          type: string
         row:
           type: integer
           format: int32
-        showAll:
-          type: boolean
-        sort:
-          type: string
-          writeOnly: true
-        sortList:
-          type: array
-          items:
-            $ref: '#/components/schemas/CriteriaFieldSort'
-        stringMatch:
-          $ref: '#/components/schemas/StringMatch'
         text:
           type: string
     ComponentConfig:
@@ -12851,6 +12875,8 @@ components:
           $ref: '#/components/schemas/FindMetaCriteria'
         pipeline:
           $ref: '#/components/schemas/DocRef'
+        sessionUuid:
+          type: string
         stepFilterMap:
           type: object
           additionalProperties:
@@ -12868,6 +12894,9 @@ components:
           - BACKWARD
           - LAST
           - REFRESH
+        timeout:
+          type: integer
+          format: int64
     ProcessConfig:
       type: object
       properties:
@@ -13374,14 +13403,6 @@ components:
           type: string
       required:
       - type
-    QueryHelpDataSource:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/QueryHelpData'
-      - type: object
-        properties:
-          docRef:
-            $ref: '#/components/schemas/DocRef'
     QueryHelpDetail:
       type: object
       properties:
@@ -13396,6 +13417,14 @@ components:
           - SNIPPET
           - BLANK
           - NOT_INSERTABLE
+    QueryHelpDocument:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/QueryHelpData'
+      - type: object
+        properties:
+          docRef:
+            $ref: '#/components/schemas/DocRef'
     QueryHelpField:
       type: object
       allOf:
@@ -13453,14 +13482,24 @@ components:
       properties:
         dataSourceRef:
           $ref: '#/components/schemas/DocRef'
+        includedTypes:
+          type: array
+          items:
+            type: string
+            enum:
+            - DATA_SOURCE
+            - FIELD
+            - FUNCTION
+            - TITLE
+            - STRUCTURE
+            - VISUALISATION
+          uniqueItems: true
         pageRequest:
           $ref: '#/components/schemas/PageRequest'
         parentPath:
           type: string
         query:
           type: string
-        showAll:
-          type: boolean
         sort:
           type: string
           writeOnly: true
@@ -13671,6 +13710,8 @@ components:
           - USERS
           - VOLUMES
           - WARNING
+        iconTooltip:
+          type: string
         id:
           type: string
         title:
@@ -13683,6 +13724,7 @@ components:
           - FUNCTION
           - TITLE
           - STRUCTURE
+          - VISUALISATION
     QueryKey:
       type: object
       description: A unique key to identify the instance of the search by. This key
@@ -15288,6 +15330,8 @@ components:
     SteppingResult:
       type: object
       properties:
+        complete:
+          type: boolean
         currentStreamOffset:
           type: integer
           format: int32
@@ -15300,6 +15344,8 @@ components:
           uniqueItems: true
         segmentedData:
           type: boolean
+        sessionUuid:
+          type: string
         stepData:
           $ref: '#/components/schemas/SharedStepData'
         stepFilterMap:
@@ -15443,7 +15489,9 @@ components:
           - "NULL"
           - NON_NULL
           - BLANK
+          - NON_BLANK
           - EMPTY
+          - NON_EMPTY
           - NULL_OR_BLANK
           - NULL_OR_EMPTY
           - CONTAINS
@@ -15452,6 +15500,7 @@ components:
           - STARTS_WITH
           - ENDS_WITH
           - REGEX
+          - CHARS_ANYWHERE
         pattern:
           type: string
     StringMatchLocation:
@@ -16036,6 +16085,9 @@ components:
           type: string
         maintenanceMessage:
           type: string
+        maxEditorCompletionEntries:
+          type: integer
+          format: int32
         namePattern:
           type: string
         nestedIndexFieldsDelimiterPattern:

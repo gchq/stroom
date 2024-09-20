@@ -23,27 +23,34 @@ import stroom.pipeline.shared.stepping.GetPipelineForMetaRequest;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
 import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TaskManager;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jakarta.inject.Singleton;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.concurrent.atomic.AtomicReference;
 
+@Singleton
 public class SteppingService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SteppingService.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SteppingService.class);
 
     static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Stepping");
 
@@ -56,6 +63,8 @@ public class SteppingService {
     private final PipelineScopeRunnable pipelineScopeRunnable;
     private final ElementRegistryFactory pipelineElementRegistryFactory;
     private final ElementFactory elementFactory;
+    private final Map<Key, SteppingRequestHandler> currentHandlers = new ConcurrentHashMap<>();
+    private final TaskManager taskManager;
 
     @Inject
     public SteppingService(final TaskContextFactory taskContextFactory,
@@ -66,7 +75,8 @@ public class SteppingService {
                            final SecurityContext securityContext,
                            final PipelineScopeRunnable pipelineScopeRunnable,
                            final ElementRegistryFactory pipelineElementRegistryFactory,
-                           final ElementFactory elementFactory) {
+                           final ElementFactory elementFactory,
+                           final TaskManager taskManager) {
         this.taskContextFactory = taskContextFactory;
         this.steppingRequestHandlerProvider = steppingRequestHandlerProvider;
         this.executorProvider = executorProvider;
@@ -76,17 +86,96 @@ public class SteppingService {
         this.pipelineScopeRunnable = pipelineScopeRunnable;
         this.pipelineElementRegistryFactory = pipelineElementRegistryFactory;
         this.elementFactory = elementFactory;
+        this.taskManager = taskManager;
     }
 
     public SteppingResult step(final PipelineStepRequest request) {
-        // Execute the stepping task.
-        final Function<TaskContext, SteppingResult> function = taskContext -> {
-            final SteppingRequestHandler steppingRequestHandler = steppingRequestHandlerProvider.get();
-            return steppingRequestHandler.exec(taskContext, request);
-        };
-        final Supplier<SteppingResult> supplier = taskContextFactory.contextResult("Translation stepping", function);
-        final Executor executor = executorProvider.get(THREAD_POOL);
-        return CompletableFuture.supplyAsync(supplier, executor).join();
+        LOGGER.trace(() -> "step() - " + request);
+        final UserIdentity userIdentity = securityContext.getUserIdentity();
+
+        final Key key;
+        final SteppingResult result;
+        if (request.getSessionUuid() == null) {
+            LOGGER.debug("New Stepping Session");
+
+            // Create a new session UUID on the request.
+            final PipelineStepRequest modifiedRequest = request
+                    .copy()
+                    .sessionUuid(UUID.randomUUID().toString())
+                    .build();
+            key = new Key(userIdentity, modifiedRequest.getSessionUuid());
+            final SteppingRequestHandler handler = currentHandlers.computeIfAbsent(key, k -> {
+                final AtomicReference<SteppingRequestHandler> reference = new AtomicReference<>();
+                final CountDownLatch countDownLatch = new CountDownLatch(1);
+                final Executor executor = executorProvider.get(THREAD_POOL);
+
+                CompletableFuture.runAsync(taskContextFactory.context("Translation stepping", taskContext -> {
+                    final SteppingRequestHandler steppingRequestHandler = steppingRequestHandlerProvider.get();
+                    reference.set(steppingRequestHandler);
+                    countDownLatch.countDown();
+                    steppingRequestHandler.exec(taskContext, modifiedRequest);
+                }), executor);
+
+                try {
+                    countDownLatch.await();
+                } catch (final InterruptedException e) {
+                    // Continue to interrupt this thread.
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException(e.getMessage(), e);
+                }
+
+                return reference.get();
+            });
+            result = handler.getResult(modifiedRequest);
+
+        } else {
+            LOGGER.debug(() -> "Polling stepping session: " + request.getSessionUuid());
+
+            key = new Key(userIdentity, request.getSessionUuid());
+            final SteppingRequestHandler handler = currentHandlers.get(key);
+            if (handler == null) {
+                throw new RuntimeException("No stepping session found for key: " + request.getSessionUuid());
+            }
+
+            result = handler.getResult(request);
+        }
+
+        // Remove handler if complete.
+        if (result.isComplete()) {
+            currentHandlers.remove(key);
+        }
+
+        // Also remove old handlers for dead stepping tasks and terminate them.
+        final Instant oldest = Instant.now().minusSeconds(10);
+        currentHandlers.entrySet().forEach(entry -> {
+            if (entry.getValue().getLastRequestTime().isBefore(oldest)) {
+                terminate(entry.getKey());
+            }
+        });
+
+        return result;
+    }
+
+    public Boolean terminateStepping(final PipelineStepRequest request) {
+        LOGGER.trace(() -> "terminateStepping() - " + request);
+
+        if (request.getSessionUuid() != null) {
+            LOGGER.debug(() -> "Terminate stepping: " + request.getSessionUuid());
+            final UserIdentity userIdentity = securityContext.getUserIdentity();
+            final Key key = new Key(userIdentity, request.getSessionUuid());
+            return terminate(key);
+        }
+        return false;
+    }
+
+    private Boolean terminate(final Key key) {
+        LOGGER.debug(() -> "Terminate: " + key);
+        final SteppingRequestHandler handler = currentHandlers.remove(key);
+        if (handler != null) {
+            taskManager.terminate(handler.getTaskContext().getTaskId());
+            return true;
+        }
+        return false;
     }
 
     public DocRef getPipelineForStepping(final GetPipelineForMetaRequest request) {
@@ -199,4 +288,7 @@ public class SteppingService {
         });
     }
 
+    public record Key(UserIdentity userIdentity, String uuid) {
+
+    }
 }

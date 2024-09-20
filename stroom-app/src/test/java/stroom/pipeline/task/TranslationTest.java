@@ -17,7 +17,6 @@
 
 package stroom.pipeline.task;
 
-
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.SourceUtil;
@@ -579,34 +578,44 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(expression);
 
-        final PipelineStepRequest action = new PipelineStepRequest();
-        action.setPipeline(pipelineRef);
-        action.setCriteria(findMetaCriteria);
+        final PipelineStepRequest.Builder requestBuilder = PipelineStepRequest.builder();
+        requestBuilder.pipeline(pipelineRef);
+        requestBuilder.criteria(findMetaCriteria);
+        requestBuilder.timeout(Long.MAX_VALUE);
 
-        SteppingResult response = new SteppingResult();
-        response = step(StepType.FORWARD, 40, action, response);
+        SteppingResult response = new SteppingResult(
+                null,
+                null,
+                null,
+                null,
+                null,
+                false,
+                null,
+                false,
+                false);
+        response = step(StepType.FORWARD, 40, requestBuilder, response);
         // Check that we get no overflow.
-        response = step(StepType.FORWARD, 10, action, response);
-        response = step(StepType.BACKWARD, 9, action, response);
-        response = step(StepType.REFRESH, 9, action, response);
-        response = step(StepType.BACKWARD, 30, action, response);
+        response = step(StepType.FORWARD, 10, requestBuilder, response);
+        response = step(StepType.BACKWARD, 9, requestBuilder, response);
+        response = step(StepType.REFRESH, 9, requestBuilder, response);
+        response = step(StepType.BACKWARD, 30, requestBuilder, response);
         // Check that we get no overflow.
-        response = step(StepType.BACKWARD, 10, action, response);
-        response = step(StepType.FORWARD, 9, action, response);
-        response = step(StepType.REFRESH, 9, action, response);
+        response = step(StepType.BACKWARD, 10, requestBuilder, response);
+        response = step(StepType.FORWARD, 9, requestBuilder, response);
+        response = step(StepType.REFRESH, 9, requestBuilder, response);
 
         // Jump to the last record.
-        response = step(StepType.LAST, 2, action, response);
+        response = step(StepType.LAST, 2, requestBuilder, response);
         // Make sure there is no overflow.
-        response = step(StepType.FORWARD, 1, action, response);
+        response = step(StepType.FORWARD, 1, requestBuilder, response);
         // Come back 2.
-        response = step(StepType.BACKWARD, 2, action, response);
+        response = step(StepType.BACKWARD, 2, requestBuilder, response);
         // Jump to the first record.
-        response = step(StepType.FIRST, 2, action, response);
+        response = step(StepType.FIRST, 2, requestBuilder, response);
         // Make sure there is no overflow.
-        response = step(StepType.BACKWARD, 1, action, response);
+        response = step(StepType.BACKWARD, 1, requestBuilder, response);
         // Go forward 2.
-        response = step(StepType.FORWARD, 2, action, response);
+        response = step(StepType.FORWARD, 2, requestBuilder, response);
 
         final SharedStepData stepData = response.getStepData();
         for (final String elementId : stepData.getElementMap().keySet()) {
@@ -638,13 +647,13 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
     private SteppingResult step(final StepType direction,
                                 final int steps,
-                                final PipelineStepRequest request,
+                                final PipelineStepRequest.Builder requestBuilder,
                                 final SteppingResult existingResponse) {
         SteppingResult newResponse = existingResponse;
 
         for (int i = 0; i < steps; i++) {
-            request.setStepType(direction);
-            final SteppingResult stepResponse = steppingService.step(request);
+            requestBuilder.stepType(direction);
+            final SteppingResult stepResponse = steppingService.step(requestBuilder.build());
 
             if (stepResponse.getGeneralErrors() != null && stepResponse.getGeneralErrors().size() > 0) {
                 throw new RuntimeException(stepResponse.getGeneralErrors().iterator().next());
@@ -710,19 +719,21 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                         }
                         newStepData.getElementMap().put(elementId, newElementData);
                         newResponse = new SteppingResult(
+                                null,
                                 stepResponse.getStepFilterMap(),
                                 stepResponse.getStepLocation(),
                                 newStepData,
                                 stepResponse.getCurrentStreamOffset(),
                                 stepResponse.isFoundRecord(),
                                 null,
-                                stepResponse.isSegmentedData());
+                                stepResponse.isSegmentedData(),
+                                true);
                     }
                 }
 
                 // Set the request to use the last response location to move on
                 // from.
-                request.setStepLocation(stepResponse.getStepLocation());
+                requestBuilder.stepLocation(stepResponse.getStepLocation());
             }
         }
 
