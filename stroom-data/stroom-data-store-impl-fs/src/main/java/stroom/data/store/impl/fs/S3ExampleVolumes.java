@@ -1,7 +1,6 @@
 package stroom.data.store.impl.fs;
 
 import stroom.aws.s3.shared.AwsBasicCredentials;
-import stroom.aws.s3.shared.AwsCredentialsProviderType;
 import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
@@ -36,7 +35,6 @@ public class S3ExampleVolumes {
         if (existing.isEmpty()) {
             final S3ClientConfig s3ClientConfig = S3ClientConfig
                     .builder()
-                    .credentialsProviderType(AwsCredentialsProviderType.STATIC)
                     .credentials(AwsBasicCredentials
                             .builder()
                             .accessKeyId("AKIAIOSFODNN7EXAMPLE")

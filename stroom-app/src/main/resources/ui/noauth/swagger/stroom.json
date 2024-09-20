@@ -11540,6 +11540,12 @@
           }
         }
       },
+      "AwsAnonymousCredentials" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AwsCredentials"
+        } ]
+      },
       "AwsBasicCredentials" : {
         "type" : "object",
         "allOf" : [ {
@@ -11567,6 +11573,18 @@
           }
         },
         "required" : [ "type" ]
+      },
+      "AwsDefaultCredentials" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AwsCredentials"
+        } ]
+      },
+      "AwsEnvironmentVariableCredentials" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AwsCredentials"
+        } ]
       },
       "AwsHttpConfig" : {
         "type" : "object",
@@ -11639,6 +11657,12 @@
               "type" : "string"
             }
           }
+        } ]
+      },
+      "AwsSystemPropertyCredentials" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AwsCredentials"
         } ]
       },
       "AwsWebCredentials" : {
@@ -18607,10 +18631,6 @@
           },
           "credentials" : {
             "$ref" : "#/components/schemas/AwsCredentials"
-          },
-          "credentialsProviderType" : {
-            "type" : "string",
-            "enum" : [ "ANONYMOUS", "DEFAULT", "ENVIRONMENT_VARIABLE", "PROFILE", "STATIC", "SYSTEM_PROPERTY", "WEB" ]
           },
           "crossRegionAccessEnabled" : {
             "type" : "boolean"

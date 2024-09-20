@@ -9,11 +9,15 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         property = "type"
 )
 @JsonSubTypes({
+        @Type(value = AwsAnonymousCredentials.class, name = "anonymous"),
         @Type(value = AwsBasicCredentials.class, name = "basic"),
-        @Type(value = AwsSessionCredentials.class, name = "session"),
+        @Type(value = AwsDefaultCredentials.class, name = "default"),
+        @Type(value = AwsEnvironmentVariableCredentials.class, name = "environment"),
         @Type(value = AwsProfileCredentials.class, name = "profile"),
+        @Type(value = AwsSessionCredentials.class, name = "session"),
+        @Type(value = AwsSystemPropertyCredentials.class, name = "system"),
         @Type(value = AwsWebCredentials.class, name = "web")
 })
 public interface AwsCredentials {
-
+    // TODO: Make sealed class when GWT supports them.
 }

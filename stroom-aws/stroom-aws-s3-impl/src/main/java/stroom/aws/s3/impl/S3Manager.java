@@ -1,5 +1,6 @@
 package stroom.aws.s3.impl;
 
+import stroom.aws.s3.shared.AwsAnonymousCredentials;
 import stroom.aws.s3.shared.AwsHttpConfig;
 import stroom.aws.s3.shared.AwsProfileCredentials;
 import stroom.aws.s3.shared.AwsProxyConfig;
@@ -173,80 +174,82 @@ public class S3Manager {
     }
 
     private AwsCredentialsProvider createCredentialsProvider(final S3ClientConfig s3ClientConfig) {
-        AwsCredentialsProvider credentialsProvider = DefaultCredentialsProvider.create();
-        if (s3ClientConfig.getCredentialsProviderType() != null) {
-            switch (s3ClientConfig.getCredentialsProviderType()) {
-                case ANONYMOUS -> credentialsProvider = AnonymousCredentialsProvider.create();
-                case DEFAULT -> credentialsProvider = DefaultCredentialsProvider.create();
-                case ENVIRONMENT_VARIABLE -> credentialsProvider = EnvironmentVariableCredentialsProvider.create();
-//            case    LAZY -> LazyAwsCredentialsProvider.create();
-//            case    PROCESS -> ProcessCredentialsProvider.create();
-                case PROFILE -> {
-                    final stroom.aws.s3.shared.AwsCredentials awsCredentials =
-                            s3ClientConfig.getCredentials();
-                    if (awsCredentials instanceof final AwsProfileCredentials awsProfileCredentials) {
-                        if (awsProfileCredentials.getProfileFilePath() != null &&
-                                !awsProfileCredentials.getProfileFilePath().isEmpty()) {
-                            final Path path = Paths.get(awsProfileCredentials.getProfileFilePath());
-                            credentialsProvider = ProfileCredentialsProvider
-                                    .builder()
-                                    .profileFile(ProfileFile.builder().content(path).build())
-                                    .build();
-                        } else {
-                            credentialsProvider = ProfileCredentialsProvider
-                                    .builder()
-                                    .profileName(awsProfileCredentials.getProfileName())
-                                    .build();
-                        }
-                    } else {
-                        credentialsProvider = ProfileCredentialsProvider.create();
-                    }
+        final stroom.aws.s3.shared.AwsCredentials awsCredentials = s3ClientConfig.getCredentials();
+
+        if (awsCredentials != null) {
+            switch (awsCredentials) {
+                case stroom.aws.s3.shared.AwsAnonymousCredentials awsAnonymousCredentials -> {
+                    LOGGER.debug("Using AWS anonymous credentials");
+                    return AnonymousCredentialsProvider.create();
                 }
-                case STATIC -> {
-                    final stroom.aws.s3.shared.AwsCredentials awsCredentials =
-                            s3ClientConfig.getCredentials();
-                    if (awsCredentials instanceof
-                            final stroom.aws.s3.shared.AwsBasicCredentials awsBasicCredentials) {
-                        final AwsCredentials credentials = AwsBasicCredentials
-                                .create(awsBasicCredentials.getAccessKeyId(), awsBasicCredentials.getSecretAccessKey());
-                        credentialsProvider = StaticCredentialsProvider.create(credentials);
-                    } else if (awsCredentials instanceof
-                            final stroom.aws.s3.shared.AwsSessionCredentials awsSessionCredentials) {
-                        final AwsSessionCredentials credentials = AwsSessionCredentials
-                                .builder()
-                                .accessKeyId(awsSessionCredentials.getAccessKeyId())
-                                .secretAccessKey(awsSessionCredentials.getSecretAccessKey())
-                                .sessionToken(awsSessionCredentials.getSessionToken())
-                                .build();
-                        credentialsProvider = StaticCredentialsProvider.create(credentials);
-                    } else {
-                        throw new RuntimeException("No credentials");
-                    }
+                case final stroom.aws.s3.shared.AwsBasicCredentials awsBasicCredentials -> {
+                    LOGGER.debug("Using AWS basic credentials");
+                    final AwsCredentials credentials = AwsBasicCredentials
+                            .create(awsBasicCredentials.getAccessKeyId(), awsBasicCredentials.getSecretAccessKey());
+                    return StaticCredentialsProvider.create(credentials);
+
                 }
-                case SYSTEM_PROPERTY -> credentialsProvider = SystemPropertyCredentialsProvider.create();
-                case WEB -> {
-                    final stroom.aws.s3.shared.AwsCredentials awsCredentials =
-                            s3ClientConfig.getCredentials();
-                    if (awsCredentials instanceof
-                            final AwsWebCredentials awsWebCredentials) {
-                        credentialsProvider = WebIdentityTokenFileCredentialsProvider
+                case stroom.aws.s3.shared.AwsDefaultCredentials awsDefaultCredentials -> {
+                    LOGGER.debug("Using AWS default credentials");
+                    return DefaultCredentialsProvider.create();
+                }
+                case stroom.aws.s3.shared.AwsEnvironmentVariableCredentials awsEnvironmentVariableCredentials -> {
+                    LOGGER.debug("Using AWS environment variable credentials");
+                    return EnvironmentVariableCredentialsProvider.create();
+                }
+                case final stroom.aws.s3.shared.AwsProfileCredentials awsProfileCredentials -> {
+                    LOGGER.debug("Using AWS profile credentials");
+                    if (!NullSafe.isBlankString(awsProfileCredentials.getProfileFilePath())) {
+                        final Path path = Paths.get(awsProfileCredentials.getProfileFilePath());
+                        return ProfileCredentialsProvider
                                 .builder()
-                                .roleArn(awsWebCredentials.getRoleArn())
-                                .roleSessionName(awsWebCredentials.getRoleSessionName())
-                                .webIdentityTokenFile(Paths.get(awsWebCredentials.getWebIdentityTokenFile()))
-                                .asyncCredentialUpdateEnabled(awsWebCredentials.getAsyncCredentialUpdateEnabled())
-                                .prefetchTime(Duration.parse(awsWebCredentials.getPrefetchTime()))
-                                .staleTime(Duration.parse(awsWebCredentials.getStaleTime()))
-                                .roleSessionDuration(Duration.parse(awsWebCredentials.getSessionDuration()))
+                                .profileFile(ProfileFile.builder().content(path).build())
                                 .build();
                     } else {
-                        throw new RuntimeException("No credentials");
+                        return ProfileCredentialsProvider
+                                .builder()
+                                .profileName(awsProfileCredentials.getProfileName())
+                                .build();
                     }
+                }
+                case final stroom.aws.s3.shared.AwsSessionCredentials awsSessionCredentials -> {
+                    LOGGER.debug("Using AWS session credentials");
+                    final AwsSessionCredentials credentials = AwsSessionCredentials
+                            .builder()
+                            .accessKeyId(awsSessionCredentials.getAccessKeyId())
+                            .secretAccessKey(awsSessionCredentials.getSecretAccessKey())
+                            .sessionToken(awsSessionCredentials.getSessionToken())
+                            .build();
+                    return StaticCredentialsProvider.create(credentials);
+
+                }
+                case stroom.aws.s3.shared.AwsSystemPropertyCredentials awsSystemPropertyCredentials -> {
+                    LOGGER.debug("Using AWS system property credentials");
+                    return SystemPropertyCredentialsProvider.create();
+                }
+                case final stroom.aws.s3.shared.AwsWebCredentials awsWebCredentials -> {
+                    LOGGER.debug("Using AWS web identity credentials");
+                    return WebIdentityTokenFileCredentialsProvider
+                            .builder()
+                            .roleArn(awsWebCredentials.getRoleArn())
+                            .roleSessionName(awsWebCredentials.getRoleSessionName())
+                            .webIdentityTokenFile(Paths.get(awsWebCredentials.getWebIdentityTokenFile()))
+                            .asyncCredentialUpdateEnabled(awsWebCredentials.getAsyncCredentialUpdateEnabled())
+                            .prefetchTime(Duration.parse(awsWebCredentials.getPrefetchTime()))
+                            .staleTime(Duration.parse(awsWebCredentials.getStaleTime()))
+                            .roleSessionDuration(Duration.parse(awsWebCredentials.getSessionDuration()))
+                            .build();
+                }
+                default -> {
+                    final String message = "Unknown AWS credentials type: " + awsCredentials.getClass().getName();
+                    LOGGER.error(() -> message);
+                    throw new RuntimeException(message);
                 }
             }
         }
 
-        return credentialsProvider;
+        LOGGER.debug("No AWS credentials provided, using default");
+        return DefaultCredentialsProvider.create();
     }
 
     public String createBucketName(final String bucketNamePattern,

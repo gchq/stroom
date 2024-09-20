@@ -7936,6 +7936,10 @@ components:
           type: boolean
         refreshInterval:
           type: string
+    AwsAnonymousCredentials:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AwsCredentials'
     AwsBasicCredentials:
       type: object
       allOf:
@@ -7955,6 +7959,14 @@ components:
           type: string
       required:
       - type
+    AwsDefaultCredentials:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AwsCredentials'
+    AwsEnvironmentVariableCredentials:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AwsCredentials'
     AwsHttpConfig:
       type: object
       properties:
@@ -8002,6 +8014,10 @@ components:
             type: string
           sessionToken:
             type: string
+    AwsSystemPropertyCredentials:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AwsCredentials'
     AwsWebCredentials:
       type: object
       allOf:
@@ -14324,16 +14340,6 @@ components:
           type: boolean
         credentials:
           $ref: '#/components/schemas/AwsCredentials'
-        credentialsProviderType:
-          type: string
-          enum:
-          - ANONYMOUS
-          - DEFAULT
-          - ENVIRONMENT_VARIABLE
-          - PROFILE
-          - STATIC
-          - SYSTEM_PROPERTY
-          - WEB
         crossRegionAccessEnabled:
           type: boolean
         endpointOverride:

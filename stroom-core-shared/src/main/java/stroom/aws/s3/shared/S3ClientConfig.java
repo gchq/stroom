@@ -15,8 +15,6 @@ public class S3ClientConfig {
             "${type}/${year}/${month}/${day}/${idPath}/${feed}/${idPadded}.zip";
 
     @JsonProperty
-    private final AwsCredentialsProviderType credentialsProviderType;
-    @JsonProperty
     private final AwsCredentials credentials;
 
     @JsonProperty
@@ -59,9 +57,7 @@ public class S3ClientConfig {
     private final String keyPattern;
 
     @JsonCreator
-    public S3ClientConfig(@JsonProperty("credentialsProviderType") final
-                          AwsCredentialsProviderType credentialsProviderType,
-                          @JsonProperty("credentials") final AwsCredentials credentials,
+    public S3ClientConfig(@JsonProperty("credentials") final AwsCredentials credentials,
                           @JsonProperty("readBufferSizeInBytes") final Long readBufferSizeInBytes,
                           @JsonProperty("region") final String region,
                           @JsonProperty("minimalPartSizeInBytes") final Long minimalPartSizeInBytes,
@@ -80,7 +76,6 @@ public class S3ClientConfig {
                           @JsonProperty("createBuckets") final boolean createBuckets,
                           @JsonProperty("bucketName") final String bucketName,
                           @JsonProperty("keyPattern") final String keyPattern) {
-        this.credentialsProviderType = credentialsProviderType;
         this.credentials = credentials;
         this.readBufferSizeInBytes = readBufferSizeInBytes;
         this.region = region;
@@ -100,10 +95,6 @@ public class S3ClientConfig {
         this.createBuckets = createBuckets;
         this.bucketName = bucketName;
         this.keyPattern = keyPattern;
-    }
-
-    public AwsCredentialsProviderType getCredentialsProviderType() {
-        return credentialsProviderType;
     }
 
     public AwsCredentials getCredentials() {
@@ -204,7 +195,6 @@ public class S3ClientConfig {
                 async == that.async &&
                 multipart == that.multipart &&
                 createBuckets == that.createBuckets &&
-                credentialsProviderType == that.credentialsProviderType &&
                 Objects.equals(credentials, that.credentials) &&
                 Objects.equals(readBufferSizeInBytes, that.readBufferSizeInBytes) &&
                 Objects.equals(region, that.region) &&
@@ -224,7 +214,7 @@ public class S3ClientConfig {
 
     @Override
     public int hashCode() {
-        return Objects.hash(credentialsProviderType,
+        return Objects.hash(
                 credentials,
                 readBufferSizeInBytes,
                 region,
@@ -249,8 +239,7 @@ public class S3ClientConfig {
     @Override
     public String toString() {
         return "S3ClientConfig{" +
-                "credentialsProviderType=" + credentialsProviderType +
-                ", credentials=" + credentials +
+                "credentials=" + credentials +
                 ", readBufferSizeInBytes=" + readBufferSizeInBytes +
                 ", region='" + region + '\'' +
                 ", minimalPartSizeInBytes=" + minimalPartSizeInBytes +
@@ -274,7 +263,6 @@ public class S3ClientConfig {
 
     public static class Builder {
 
-        private AwsCredentialsProviderType credentialsProviderType;
         private AwsCredentials credentials;
 
         private Long readBufferSizeInBytes;
@@ -301,7 +289,6 @@ public class S3ClientConfig {
         }
 
         public Builder(final S3ClientConfig s3ClientConfig) {
-            this.credentialsProviderType = s3ClientConfig.credentialsProviderType;
             this.credentials = s3ClientConfig.credentials;
 
             this.readBufferSizeInBytes = s3ClientConfig.readBufferSizeInBytes;
@@ -324,11 +311,6 @@ public class S3ClientConfig {
             this.createBuckets = s3ClientConfig.createBuckets;
             this.bucketName = s3ClientConfig.bucketName;
             this.keyPattern = s3ClientConfig.keyPattern;
-        }
-
-        public Builder credentialsProviderType(final AwsCredentialsProviderType credentialsProviderType) {
-            this.credentialsProviderType = credentialsProviderType;
-            return this;
         }
 
         public Builder credentials(final AwsCredentials credentials) {
@@ -428,7 +410,6 @@ public class S3ClientConfig {
 
         public S3ClientConfig build() {
             return new S3ClientConfig(
-                    credentialsProviderType,
                     credentials,
                     readBufferSizeInBytes,
                     region,
