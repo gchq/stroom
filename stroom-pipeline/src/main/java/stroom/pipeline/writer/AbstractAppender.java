@@ -44,7 +44,7 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
     boolean splitAggregatedStreams;
     boolean splitRecords;
 
-    AbstractAppender(final ErrorReceiverProxy errorReceiverProxy) {
+    public AbstractAppender(final ErrorReceiverProxy errorReceiverProxy) {
         this.errorReceiverProxy = errorReceiverProxy;
     }
 

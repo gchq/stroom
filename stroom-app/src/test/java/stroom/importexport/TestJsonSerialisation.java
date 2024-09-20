@@ -43,6 +43,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -295,11 +296,18 @@ class TestJsonSerialisation {
                 final Set<String> constructorPropNames = new HashSet<>();
                 final Set<String> fieldPropNames;
 
+                // If we only have a default constructor then we don't want the JsonCreator annotation to be
+                // used as it breaks RestyGWT.
+                final AtomicBoolean singleEmptyConstructor = new AtomicBoolean(true);
+
                 for (final Constructor<?> constructor : clazz.getDeclaredConstructors()) {
                     final JsonCreator jsonCreator = constructor.getAnnotation(JsonCreator.class);
                     if (jsonCreator != null) {
                         jsonCreatorCount.incrementAndGet();
                         constructorPropNames.addAll(getConstructorPropNames(constructor));
+                    }
+                    if (constructor.getParameterCount() > 0) {
+                        singleEmptyConstructor.set(false);
                     }
                 }
 
@@ -350,11 +358,21 @@ class TestJsonSerialisation {
 //                                softly.assertThat(hasJsonPropertyOrder)
 //                                        .withFailMessage("No JsonPropertyOrder")
 //                                        .isTrue();
-                    softly.assertThat(jsonCreatorCount)
-                            .withFailMessage(
-                                    "%s - Should have exactly one JsonCreator, found %s",
-                                    clazz.getName(), jsonCreatorCount.get())
-                            .hasValue(1);
+                    if (singleEmptyConstructor.get()) {
+                        // If we only have a default constructor then we don't want the JsonCreator annotation to be
+                        // used as it breaks RestyGWT.
+                        softly.assertThat(jsonCreatorCount)
+                                .withFailMessage(
+                                        "%s - Should have no JsonCreator on default constructor, found %s",
+                                        clazz.getName(), jsonCreatorCount.get())
+                                .hasValue(0);
+                    } else {
+                        softly.assertThat(jsonCreatorCount)
+                                .withFailMessage(
+                                        "%s - Should have exactly one JsonCreator, found %s",
+                                        clazz.getName(), jsonCreatorCount.get())
+                                .hasValue(1);
+                    }
                     softly.assertThat(fieldsWithoutAnnotations)
                             .withFailMessage(
                                     "%s - Fields without annotations: %s",

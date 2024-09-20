@@ -1,5 +1,6 @@
 package stroom.docstore.shared;
 
+import stroom.aws.s3.shared.S3ConfigDoc;
 import stroom.state.shared.ScyllaDbDoc;
 import stroom.state.shared.StateDoc;
 import stroom.svg.shared.SvgImage;
@@ -40,6 +41,8 @@ public class DocumentTypeImages {
                 return SvgImage.DOCUMENT_QUERY;
             case "ReceiveDataRuleSet":
                 return SvgImage.DOCUMENT_RECEIVE_DATA_RULE_SET;
+            case S3ConfigDoc.DOCUMENT_TYPE:
+                return SvgImage.DOCUMENT_S3;
             case "Script":
                 return SvgImage.DOCUMENT_SCRIPT;
 //            case "searchable":
