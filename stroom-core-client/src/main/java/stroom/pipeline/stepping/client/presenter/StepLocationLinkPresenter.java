@@ -68,6 +68,16 @@ public class StepLocationLinkPresenter
 
     public void setStepLocation(final StepLocation stepLocation) {
         this.stepLocation = stepLocation;
+        updateLabel(stepLocation);
+    }
+
+    public void setStepLocationLabelOnly(final StepLocation stepLocation) {
+        if (stepLocation != null && stepLocation.getMetaId() > 0) {
+            updateLabel(stepLocation);
+        }
+    }
+
+    private void updateLabel(final StepLocation stepLocation) {
         getView().getLabel().getElement().setInnerHTML("[" +
                 stepLocation.getMetaId() + ":" +
                 (stepLocation.getPartIndex() + 1) + ":" +

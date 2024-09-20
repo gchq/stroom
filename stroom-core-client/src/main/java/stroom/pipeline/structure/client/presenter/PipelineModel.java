@@ -487,13 +487,9 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
      * Set the provided filters on the pipeline elements in our model
      */
     public void setStepFilters(final Map<String, SteppingFilterSettings> elementIdToStepFilterMap) {
-        GwtNullSafe.map(elementIdToStepFilterMap)
-                .forEach((elementId, steppingFilterSettings) -> {
-                    final PipelineElement pipelineElement = combinedData.getElement(elementId);
-                    if (pipelineElement != null) {
-                        pipelineElement.setSteppingFilterSettings(steppingFilterSettings);
-                    }
-                });
+        GwtNullSafe.map(combinedData.getElements()).values().forEach(element -> {
+            element.setSteppingFilterSettings(GwtNullSafe.map(elementIdToStepFilterMap).get(element.getId()));
+        });
         refresh();
     }
 
@@ -510,9 +506,4 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     public void fireEvent(final GwtEvent<?> event) {
         eventBus.fireEventFromSource(event, this);
     }
-
-//    private void log(String message) {
-////        LoggerFactory.getLogger(PipelineModel.class).info(message);
-////        GWT.log(message);
-//    }
 }

@@ -78,6 +78,7 @@ public class SteppingContentTabPresenter
                         result -> {
                             event.getCallback().closeTab(result);
                             if (result) {
+                                steppingPresenter.terminate();
                                 unbind();
                                 hasSaveRegistry.unregister(SteppingContentTabPresenter.this);
                             }
@@ -85,6 +86,7 @@ public class SteppingContentTabPresenter
             }
         } else {
             event.getCallback().closeTab(true);
+            steppingPresenter.terminate();
             unbind();
             hasSaveRegistry.unregister(SteppingContentTabPresenter.this);
         }
