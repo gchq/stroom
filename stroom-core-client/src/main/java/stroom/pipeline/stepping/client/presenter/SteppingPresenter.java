@@ -657,7 +657,7 @@ public class SteppingPresenter
                     AlertEvent.fireErrorFromException(SteppingPresenter.this, restError.getException(), null);
                     busyTranslating = false;
                 })
-                .taskListener(this)
+                .taskMonitorFactory(this)
                 .exec();
     }
 
