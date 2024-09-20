@@ -1068,15 +1068,16 @@ paths:
       summary: Log a user out of their session
       tags:
       - Authentication
-  /authentication/v1/noauth/reset/{email}:
-    get:
+  /authentication/v1/noauth/reset:
+    post:
       operationId: resetEmail
-      parameters:
-      - in: path
-        name: email
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+        description: email
         required: true
-        schema:
-          type: string
       responses:
         default:
           content:
@@ -1331,19 +1332,6 @@ paths:
                 $ref: '#/components/schemas/ExtendedUiConfig'
           description: default response
       summary: Fetch the extended UI configuration
-      tags:
-      - Global Config
-  /config/v1/noauth/fetchUiConfig:
-    get:
-      operationId: fetchUiConfig
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UiConfig'
-          description: default response
-      summary: Fetch the UI configuration
       tags:
       - Global Config
   /config/v1/nodeProperties/{nodeName}:
@@ -6446,6 +6434,26 @@ paths:
                 $ref: '#/components/schemas/SteppingResult'
           description: default response
       summary: Step a pipeline
+      tags:
+      - Stepping
+  /stepping/v1/terminateStepping:
+    post:
+      operationId: terminateStepping
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PipelineStepRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Terminate pipeline stepping process
       tags:
       - Stepping
   /storedQuery/v1/create:
@@ -12754,6 +12762,8 @@ components:
           $ref: '#/components/schemas/FindMetaCriteria'
         pipeline:
           $ref: '#/components/schemas/DocRef'
+        sessionUuid:
+          type: string
         stepFilterMap:
           type: object
           additionalProperties:
@@ -12771,6 +12781,9 @@ components:
           - BACKWARD
           - LAST
           - REFRESH
+        timeout:
+          type: integer
+          format: int64
     ProcessConfig:
       type: object
       properties:
@@ -15173,6 +15186,8 @@ components:
     SteppingResult:
       type: object
       properties:
+        complete:
+          type: boolean
         currentStreamOffset:
           type: integer
           format: int32
@@ -15185,6 +15200,8 @@ components:
           uniqueItems: true
         segmentedData:
           type: boolean
+        sessionUuid:
+          type: string
         stepData:
           $ref: '#/components/schemas/SharedStepData'
         stepFilterMap:
@@ -15892,6 +15909,8 @@ components:
           $ref: '#/components/schemas/ActivityConfig'
         analyticUiDefaultConfig:
           $ref: '#/components/schemas/AnalyticUiDefaultConfig'
+        authErrorMessage:
+          type: string
         defaultMaxResults:
           type: string
         helpSubPathDocumentation:

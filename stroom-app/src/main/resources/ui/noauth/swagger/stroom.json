@@ -1545,17 +1545,20 @@
         "tags" : [ "Authentication" ]
       }
     },
-    "/authentication/v1/noauth/reset/{email}" : {
-      "get" : {
+    "/authentication/v1/noauth/reset" : {
+      "post" : {
         "operationId" : "resetEmail",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "email",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          },
+          "description" : "email",
+          "required" : true
+        },
         "responses" : {
           "default" : {
             "content" : {
@@ -1925,25 +1928,6 @@
           }
         },
         "summary" : "Fetch the extended UI configuration",
-        "tags" : [ "Global Config" ]
-      }
-    },
-    "/config/v1/noauth/fetchUiConfig" : {
-      "get" : {
-        "operationId" : "fetchUiConfig",
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/UiConfig"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Fetch the UI configuration",
         "tags" : [ "Global Config" ]
       }
     },
@@ -9391,6 +9375,36 @@
         "tags" : [ "Stepping" ]
       }
     },
+    "/stepping/v1/terminateStepping" : {
+      "post" : {
+        "operationId" : "terminateStepping",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PipelineStepRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Terminate pipeline stepping process",
+        "tags" : [ "Stepping" ]
+      }
+    },
     "/storedQuery/v1/create" : {
       "post" : {
         "operationId" : "createStoredQuery",
@@ -16822,6 +16836,9 @@
           "pipeline" : {
             "$ref" : "#/components/schemas/DocRef"
           },
+          "sessionUuid" : {
+            "type" : "string"
+          },
           "stepFilterMap" : {
             "type" : "object",
             "additionalProperties" : {
@@ -16838,6 +16855,10 @@
           "stepType" : {
             "type" : "string",
             "enum" : [ "FIRST", "FORWARD", "BACKWARD", "LAST", "REFRESH" ]
+          },
+          "timeout" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       },
@@ -19717,6 +19738,9 @@
       "SteppingResult" : {
         "type" : "object",
         "properties" : {
+          "complete" : {
+            "type" : "boolean"
+          },
           "currentStreamOffset" : {
             "type" : "integer",
             "format" : "int32"
@@ -19733,6 +19757,9 @@
           },
           "segmentedData" : {
             "type" : "boolean"
+          },
+          "sessionUuid" : {
+            "type" : "string"
           },
           "stepData" : {
             "$ref" : "#/components/schemas/SharedStepData"
@@ -20661,6 +20688,9 @@
           },
           "analyticUiDefaultConfig" : {
             "$ref" : "#/components/schemas/AnalyticUiDefaultConfig"
+          },
+          "authErrorMessage" : {
+            "type" : "string"
           },
           "defaultMaxResults" : {
             "type" : "string"

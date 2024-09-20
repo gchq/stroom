@@ -606,7 +606,8 @@ public class SteppingPresenter
 
                 final Map<String, SteppingFilterSettings> stepFilterMap = requestBuilder.build().getStepFilterMap();
                 if (stepFilterMap != null) {
-                    stepFilterMap.values().forEach(steppingFilterSettings -> steppingFilterSettings.clearUniqueValues());
+                    stepFilterMap.values().forEach(steppingFilterSettings ->
+                            steppingFilterSettings.clearUniqueValues());
                 }
             }
 
