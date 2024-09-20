@@ -1,17 +1,49 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.item.client;
 
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.GwtNullSafe;
+
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 import java.util.Objects;
+import java.util.function.BiFunction;
 
 public class SimpleSelectionItemWrapper<T> implements SelectionItem {
 
     private final String label;
     private final T item;
+    private final RenderFunction<T> renderFunction;
 
-    public SimpleSelectionItemWrapper(final String label, final T item) {
+    public SimpleSelectionItemWrapper(final String label,
+                                      final T item,
+                                      final RenderFunction<T> renderFunction) {
         this.label = label;
         this.item = item;
+        this.renderFunction = renderFunction;
+    }
+
+    public SimpleSelectionItemWrapper(final String label,
+                                      final T item) {
+        this.label = label;
+        this.item = item;
+        this.renderFunction = null;
     }
 
     public T getItem() {
@@ -21,6 +53,22 @@ public class SimpleSelectionItemWrapper<T> implements SelectionItem {
     @Override
     public String getLabel() {
         return label;
+    }
+
+    @Override
+    public SafeHtml getRenderedLabel() {
+        if (renderFunction != null) {
+            final SafeHtml safeHtml = renderFunction.apply(label, item);
+            return GwtNullSafe.requireNonNullElse(safeHtml, SafeHtmlUtils.EMPTY_SAFE_HTML);
+        } else {
+            // No render func so let the default method handle it as simple text with no markup
+            return SelectionItem.super.getRenderedLabel();
+        }
+    }
+
+    @Override
+    public boolean hasRenderedLabel() {
+        return renderFunction != null;
     }
 
     @Override
@@ -56,5 +104,15 @@ public class SimpleSelectionItemWrapper<T> implements SelectionItem {
                 "label='" + label + '\'' +
                 ", item=" + item +
                 '}';
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public interface RenderFunction<T> extends BiFunction<String, T, SafeHtml> {
+
+        @Override
+        SafeHtml apply(String label, T item);
     }
 }

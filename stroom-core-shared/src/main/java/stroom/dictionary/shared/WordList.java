@@ -82,10 +82,22 @@ public class WordList {
     /**
      * @return The word list sorted by word (case-insensitive), then by source UUID (if duplicates are allowed).
      */
+    @JsonIgnore
     public List<Word> getSortedList() {
         return wordList.stream()
                 .sorted(Word.CASE_INSENSE_WORD_COMPARATOR)
                 .collect(Collectors.toList());
+    }
+
+    @JsonIgnore
+    public Optional<Word> getWord(final String word) {
+        if (GwtNullSafe.isNonBlankString(word)) {
+            return wordList.stream()
+                    .filter(wordObj -> Objects.equals(wordObj.getWord(), word))
+                    .findFirst();
+        } else {
+            return Optional.empty();
+        }
     }
 
     public boolean isEmpty() {

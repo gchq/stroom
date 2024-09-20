@@ -543,6 +543,29 @@
     padding: 0 0.4rem 0.4rem 0.4rem;
 }
 
+.selectionItemCell-content .listInputItem-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 2em;
+    width: 390px;
+}
+
+.listInputItem-container .listInputItem-word {
+    display: inline-block;
+}
+
+.listInputItem-container .listInputItem-source {
+    display: flex;
+    flex-direction: row;
+    gap: 0.25em;
+}
+
+.listInputItem-container .listInputItem-source-text {
+    display: inline-block;
+    color: var(--text-color--disabled);
+}
+
 .VisFrame-container {
     position: absolute;
     margin: 0;
