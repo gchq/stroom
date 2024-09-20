@@ -16,27 +16,31 @@ import org.apache.lucene980.search.vectorhighlight.FieldQuery;
 import org.apache.lucene980.search.vectorhighlight.SimpleFieldFragList;
 import org.apache.lucene980.search.vectorhighlight.SimpleFragmentsBuilder;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LuceneContentHighlighter implements Highlighter {
+public class LuceneContentHighlighter implements ContentHighlighter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LuceneContentHighlighter.class);
 
+    private final IndexReader indexReader;
+    private final int docId;
     private final String field;
     private final Query query;
 
-    public LuceneContentHighlighter(final String field, final Query query) {
+    public LuceneContentHighlighter(final IndexReader indexReader,
+                                    final int docId,
+                                    final String field,
+                                    final Query query) {
+        this.indexReader = indexReader;
+        this.docId = docId;
         this.field = field;
         this.query = query;
     }
 
     @Override
-    public List<StringMatchLocation> getHighlights(final IndexReader indexReader,
-                                                   final int docId,
-                                                   final String text,
-                                                   final int maxMatches) throws IOException {
+    public List<StringMatchLocation> getHighlights(final String text,
+                                                   final int maxMatches) {
         final List<StringMatchLocation> list = new ArrayList<>();
         try {
             final BaseFragListBuilder fragListBuilder = new BaseFragListBuilder() {
@@ -98,11 +102,6 @@ public class LuceneContentHighlighter implements Highlighter {
         }
 
         return list;
-    }
-
-    @Override
-    public boolean filter(final String text) {
-        return true;
     }
 
     private static class ListFullException extends RuntimeException {
