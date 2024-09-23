@@ -2314,3 +2314,8 @@ button.main-menu svg {
 .DuplicateManagementViewImpl {
     border-top: 1px solid var(--splitter__background-color);
 }
+
+/* Add a smidge of a gap between the split and the next form group */
+.DictionarySettingViewImpl .thinSplitLayoutPanel-Dragger-Outer + div > div.form-group > div.form-group-label-container {
+    margin-top: 0.5em;
+}

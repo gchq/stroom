@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,9 @@ public class DictionarySettingsViewImpl extends ViewImpl implements DictionarySe
     private final Widget widget;
 
     @UiField
-    SimplePanel imports;
+    SimplePanel importsPanel;
+    @UiField
+    SimplePanel wordsPanel;
 
     @Inject
     public DictionarySettingsViewImpl(final Binder binder) {
@@ -45,8 +47,16 @@ public class DictionarySettingsViewImpl extends ViewImpl implements DictionarySe
 
     @Override
     public void setImportList(final View view) {
-        imports.setWidget(view.asWidget());
+        importsPanel.setWidget(view.asWidget());
     }
+
+    @Override
+    public void setWordList(final View view) {
+        wordsPanel.setWidget(view.asWidget());
+    }
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, DictionarySettingsViewImpl> {
 

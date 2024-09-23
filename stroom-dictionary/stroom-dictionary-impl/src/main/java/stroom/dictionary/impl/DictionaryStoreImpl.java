@@ -167,12 +167,44 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
     @Override
     public DictionaryDoc readDocument(final DocRef docRef) {
-        return store.readDocument(docRef);
+        final DictionaryDoc dictionaryDoc = store.readDocument(docRef);
+        decorateImports(dictionaryDoc);
+        return dictionaryDoc;
     }
 
     @Override
     public DictionaryDoc writeDocument(final DictionaryDoc document) {
+        decorateImports(document);
         return store.writeDocument(document);
+    }
+
+    /**
+     * Ensure all the imports have the correct names. Modifies the import list.
+     */
+    private void decorateImports(final DictionaryDoc dictionaryDoc) {
+        if (dictionaryDoc != null && NullSafe.hasItems(dictionaryDoc.getImports())) {
+            final List<DocRef> decoratedImports = dictionaryDoc.getImports()
+                    .stream()
+                    .map(this::decorateDocRef)
+                    .toList();
+            dictionaryDoc.setImports(decoratedImports);
+        }
+    }
+
+    private DocRef decorateDocRef(final DocRef docRef) {
+        if (docRef == null) {
+            return null;
+        } else {
+            try {
+                return docRefInfoService.decorate(docRef, true);
+            } catch (Exception e) {
+                // Likely docRef doesn't exist, so we will just leave it as is, i.e.
+                // a broken dep
+                LOGGER.debug(() -> LogUtil.message("Unable to decorate docRef {}: {}",
+                        docRef, LogUtil.exceptionMessage(e)), e);
+                return docRef;
+            }
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -290,8 +322,8 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
                                        final Stack<DocRef> visitPath) {
 
         // As we are adding the docRef to the WordList, we want to ensure it
-        // has a name.
-        final DocRef decorateDocRef = docRefInfoService.decorate(docRef);
+        // has a name and the correct name
+        final DocRef decorateDocRef = decorateDocRef(docRef);
         LOGGER.debug(() -> LogUtil.message("decorateDocRef: {}, visitPath: {}",
                 decorateDocRef.toShortString(), docRefsToStr(visitPath)));
         visitPath.push(decorateDocRef);
@@ -333,7 +365,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
                         decorateDocRef, e.getMessage()), e);
             }
         } else {
-            LOGGER.warn(() -> LogUtil.message("Found circular import, ignoring {}, visitPath: {}",
+            LOGGER.debug(() -> LogUtil.message("Found circular import, ignoring {}, visitPath: {}",
                     decorateDocRef.toShortString(), docRefsToStr(visitPath)));
         }
 

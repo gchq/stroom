@@ -39,7 +39,7 @@ import java.util.Objects;
 public class Word {
 
     public static final Comparator<Word> CASE_INSENSE_WORD_COMPARATOR = Comparator.nullsFirst(
-            Comparator.comparing(Word::getWord, String.CASE_INSENSITIVE_ORDER)
+            Comparator.comparing(Word::getWord, Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER))
                     .thenComparing(Word::getSourceUuid));
 
     @JsonProperty

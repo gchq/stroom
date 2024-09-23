@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,9 +46,23 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
 
     private static final DictionaryResource DICTIONARY_RESOURCE = GWT.create(DictionaryResource.class);
 
-    private static final TabData IMPORTS = new TabDataImpl("Imports");
-    private static final TabData WORDS = new TabDataImpl("Words");
-    private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
+    private static final TabData WORDS = TabDataImpl.builder()
+            .withLabel("Words")
+            .withTooltip("List of 'words' held in this Dictionary.")
+            .build();
+    private static final TabData IMPORTS = TabDataImpl.builder()
+            .withLabel("Imports")
+            .withTooltip("Other dictionaries from which words will be imported.")
+            .build();
+    private static final TabData EFFECTIVE_WORDS = TabDataImpl.builder()
+            .withLabel("Effective Words")
+            .withTooltip("The combined list of 'words' held in this Dictionary and its imports.")
+            .build();
+    private static final TabData DOCUMENTATION = TabDataImpl.builder()
+            .withLabel("Documentation")
+            .withTooltip(TabData.createDocumentationTooltip(DictionaryDoc.DOCUMENT_TYPE))
+            .build();
+
     private final ButtonView downloadButton;
     private final RestFactory restFactory;
     private final LocationManager locationManager;
@@ -58,9 +72,10 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
     @Inject
     public DictionaryPresenter(final EventBus eventBus,
                                final LinkTabPanelView view,
-                               final Provider<DictionarySettingsPresenter> settingsPresenterProvider,
+                               final Provider<DictionarySettingsPresenter> dictionarySettingsPresenterProvider,
                                final Provider<EditorPresenter> editorPresenterProvider,
                                final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                               final Provider<WordListPresenter> wordListPresenterProvider,
                                final RestFactory restFactory,
                                final LocationManager locationManager) {
         super(eventBus, view);
@@ -99,7 +114,9 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
                 return document;
             }
         });
-        addTab(IMPORTS, new DocumentEditTabProvider<>(settingsPresenterProvider::get));
+        addTab(IMPORTS, new DocumentEditTabProvider<>(dictionarySettingsPresenterProvider::get));
+        addTab(EFFECTIVE_WORDS, createEffectiveWordsTabProvider(eventBus, wordListPresenterProvider));
+
         addTab(DOCUMENTATION, new MarkdownTabProvider<DictionaryDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
@@ -118,6 +135,27 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
             }
         });
         selectTab(WORDS);
+    }
+
+    private static AbstractTabProvider<DictionaryDoc, WordListPresenter> createEffectiveWordsTabProvider(
+            final EventBus eventBus,
+            final Provider<WordListPresenter> wordListPresenterProvider) {
+
+        return new AbstractTabProvider<DictionaryDoc, WordListPresenter>(eventBus) {
+
+            @Override
+            protected WordListPresenter createPresenter() {
+                return wordListPresenterProvider.get();
+            }
+
+            @Override
+            public void onRead(final WordListPresenter wordListPresenter,
+                               final DocRef docRef,
+                               final DictionaryDoc document,
+                               final boolean readOnly) {
+                wordListPresenter.setDocRef(docRef);
+            }
+        };
     }
 
     @Override
